@@ -285,5 +285,15 @@ footer{
   text-decoration:underline;
   text-decoration-thickness:1px;
   text-underline-offset:3px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  vertical-align:middle;
+}
+.credit-icon{
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  object-fit:contain;
 }
 .credit-link:hover{opacity:.68}
