@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#cfd9d0">
+  <meta name="theme-color" content="#b8c7c0">
   <meta name="description" content="Kairo — bot para Discord com moderação, economia, XP, missões, utilidades e personalidade própria.">
   <meta property="og:title" content="Kairo — Discord Bot">
   <meta property="og:description" content="Você cuida da comunidade. O Kairo ajuda com o resto.">
@@ -12,32 +12,27 @@
 </head>
 <body>
   <header class="hero" id="inicio">
-    <div class="hero-scene" aria-hidden="true">
-      <div class="orb orb-a"></div>
-      <div class="orb orb-b"></div>
-      <div class="orb orb-c"></div>
-      <div class="mountain mountain-back"></div>
-      <div class="mountain mountain-front"></div>
-      <div class="server-glass server-glass-a">
-        <span class="dot"></span><span class="line long"></span><span class="line"></span>
-      </div>
-      <div class="server-glass server-glass-b">
-        <span class="avatar-mini">K</span>
-        <div><span class="line long"></span><span class="line small"></span></div>
-      </div>
+    <div class="hero-bg" aria-hidden="true">
+      <div class="sky-glow sky-glow-a"></div>
+      <div class="sky-glow sky-glow-b"></div>
+      <div class="ridge ridge-back"></div>
+      <div class="ridge ridge-mid"></div>
+      <div class="ridge ridge-front"></div>
     </div>
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-vignette" aria-hidden="true"></div>
 
-    <div class="grid-overlay" aria-hidden="true"></div>
-    <div class="stars" aria-hidden="true"><i></i><i></i><i></i></div>
-
-    <nav class="topbar" aria-label="Navegação principal">
-      <a class="wordmark" href="#inicio" aria-label="Kairo, início">
-        <span class="wordmark-k">K</span>
+    <nav class="topbar liquid-surface" data-liquid-glass aria-label="Navegação principal">
+      <a class="brand" href="#inicio" aria-label="Kairo, início">
+        <span class="brand-mark">K</span>
         <span>Kairo</span>
       </a>
+
       <button class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="false">
-        <span></span><span></span>
+        <span></span>
+        <span></span>
       </button>
+
       <div class="menu-panel" aria-hidden="true">
         <a href="#recursos">Recursos</a>
         <a href="#comandos">Comandos</a>
@@ -47,89 +42,130 @@
     </nav>
 
     <div class="hero-copy">
-      <p class="micro">KAIRO · DISCORD BOT</p>
+      <p class="eyebrow">KAIRO · DISCORD BOT</p>
       <h1>Você cuida da <em>comunidade.</em><br>O Kairo ajuda com o resto.</h1>
-      <p class="hero-sub">Moderação, economia, XP, missões, utilidades e um mascote que realmente parece fazer parte do servidor.</p>
-      <a class="primary-pill" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-        Adicionar ao Discord <span>⟶</span>
-      </a>
+      <p class="hero-lead">Moderação, economia, XP, missões, utilidades e um mascote com personalidade própria.</p>
+
+      <div class="hero-actions">
+        <a class="cta-primary" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
+          Adicionar ao Discord
+          <span>⟶</span>
+        </a>
+        <a class="cta-secondary" href="#recursos">Ver recursos</a>
+      </div>
     </div>
 
-    <a class="scroll-cue" href="#recursos" aria-label="Ver recursos">
-      <span>explorar</span><i></i>
+    <div class="hero-status liquid-surface" data-liquid-glass>
+      <div class="status-avatar">K</div>
+      <div class="status-copy">
+        <span>Kairo V2</span>
+        <strong><i></i> Em desenvolvimento</strong>
+      </div>
+      <span class="status-chip">Discord</span>
+    </div>
+
+    <a class="scroll-cue" href="#recursos" aria-label="Ir para recursos">
+      <span>explorar</span>
+      <i></i>
     </a>
   </header>
 
   <main>
     <section class="paper intro" id="recursos">
-      <div class="section-kicker">
-        <span class="script">How</span>
-        <h2>você quer que o Kairo<br>ajude seu servidor?</h2>
+      <div class="intro-head">
+        <div>
+          <span class="script-word">How</span>
+          <h2>você quer que o Kairo<br>ajude seu servidor?</h2>
+        </div>
+        <p>Escolha o que precisa. O Kairo junta ferramentas de comunidade em uma experiência simples, rápida e menos robótica.</p>
       </div>
-      <p class="intro-copy">Escolha o que precisa. O Kairo reúne ferramentas de comunidade em um só bot — com comandos claros, respostas rápidas e uma presença mais humana no chat.</p>
-      <p class="serif-note">Sem transformar seu servidor em um painel de controle sem graça.</p>
 
-      <div class="feature-stage">
-        <article class="feature-card feature-main">
-          <div class="feature-top">
+      <p class="serif-note">Você não precisa transformar seu servidor num painel de controle sem alma.</p>
+
+      <div class="feature-grid">
+        <article class="feature-card feature-large">
+          <div class="feature-meta">
             <span>01</span>
             <span>MODERAÇÃO</span>
           </div>
-          <div class="feature-visual moderation-visual" aria-hidden="true">
-            <div class="chat-window">
-              <div class="chat-rail"><b>K</b><i></i><i></i><i></i></div>
-              <div class="chat-main">
-                <div class="chat-header"># geral <span>•••</span></div>
-                <div class="message-row"><span class="fake-avatar"></span><div><b>Kairo</b><p>Pronto. O canal foi protegido.</p></div></div>
-                <div class="message-row faded"><span class="fake-avatar second"></span><div><b>membro</b><p>valeu kairo</p></div></div>
-                <div class="action-chip">Automod ativo</div>
+
+          <div class="discord-preview" aria-hidden="true">
+            <div class="server-rail">
+              <b>K</b>
+              <i></i>
+              <i></i>
+              <i></i>
+            </div>
+            <div class="channel-preview">
+              <div class="channel-head"># geral <span>•••</span></div>
+              <div class="message">
+                <span class="fake-avatar pink"></span>
+                <div><b>Kairo</b><p>Automod ativado e canal protegido.</p></div>
               </div>
+              <div class="message muted-message">
+                <span class="fake-avatar green"></span>
+                <div><b>membro</b><p>valeu kairo</p></div>
+              </div>
+              <span class="floating-badge">Proteção ativa</span>
             </div>
           </div>
-          <div class="feature-bottom">
+
+          <div class="feature-copy">
             <h3>Seu servidor mais organizado.</h3>
-            <p>Ban, kick, timeout, avisos, limpeza, slowmode, lock, unlock e automod.</p>
+            <p>Ban, kick, timeout, warns, limpeza, slowmode, lock, unlock e automod.</p>
           </div>
         </article>
 
-        <div class="feature-side">
-          <article class="feature-card compact">
-            <div class="feature-top"><span>02</span><span>ECONOMIA</span></div>
-            <div class="metric"><strong>12.480</strong><small>Kairo coins</small></div>
-            <p>Daily, trabalho, banco, transferências, loja e inventário.</p>
-          </article>
-          <article class="feature-card compact dark">
-            <div class="feature-top"><span>03</span><span>PROGRESSÃO</span></div>
-            <div class="level-ring"><span>27</span></div>
-            <p>XP, ranking, reputação, conquistas e níveis de amizade.</p>
-          </article>
-        </div>
+        <article class="feature-card">
+          <div class="feature-meta">
+            <span>02</span>
+            <span>ECONOMIA</span>
+          </div>
+          <div class="big-number">
+            <strong>12.480</strong>
+            <small>Kairo coins</small>
+          </div>
+          <p>Daily, trabalho, banco, transferências, loja e inventário.</p>
+        </article>
+
+        <article class="feature-card feature-dark">
+          <div class="feature-meta">
+            <span>03</span>
+            <span>PROGRESSÃO</span>
+          </div>
+          <div class="level-ring"><span>27</span></div>
+          <p>XP, ranking, reputação, conquistas e níveis de amizade.</p>
+        </article>
       </div>
     </section>
 
-    <section class="dark-section personality">
-      <div class="dark-grid" aria-hidden="true"></div>
+    <section class="personality-section">
+      <div class="personality-grid" aria-hidden="true"></div>
+
       <div class="personality-copy">
-        <span class="micro light">PERSONALIDADE</span>
+        <p class="eyebrow eyebrow-dark">PERSONALIDADE</p>
         <h2>Um bot que não parece<br><em>só</em> um bot.</h2>
-        <p>O Kairo tem mascote, check-in, amizade, missões e pequenas reações que deixam a comunidade com mais vida.</p>
-        <button class="ghost-pill" type="button" id="demoButton">Falar com o Kairo <span>⟶</span></button>
+        <p>O Kairo tem mascote, check-in, amizade, missões e pequenas reações para deixar o chat com mais vida.</p>
+        <button class="ghost-button" id="demoButton" type="button">
+          Falar com o Kairo
+          <span>⟶</span>
+        </button>
       </div>
 
-      <div class="discord-bubble" aria-live="polite">
-        <div class="avatar-big">K</div>
-        <div class="bubble-copy">
-          <div class="bubble-name">Kairo <b>BOT</b></div>
+      <div class="bot-message">
+        <div class="bot-avatar">K</div>
+        <div>
+          <span class="bot-name">Kairo <b>BOT</b></span>
           <p id="demoReply">me chamou?</p>
         </div>
-        <div class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
       </div>
     </section>
 
     <section class="paper commands-section" id="comandos">
-      <div class="section-label">
-        <span class="micro dark-text">COMANDOS</span>
-        <span class="command-count" id="commandCount">— comandos</span>
+      <div class="section-row">
+        <p class="eyebrow eyebrow-light">COMANDOS</p>
+        <span id="commandCount" class="command-count">— comandos</span>
       </div>
 
       <div class="commands-head">
@@ -141,41 +177,47 @@
         <label for="q">Buscar</label>
         <input id="q" type="search" placeholder="ex.: perfil, daily, ban..." autocomplete="off">
       </div>
-      <div class="filters" id="filters" aria-label="Filtros de comando"></div>
+
+      <div class="filters" id="filters" aria-label="Filtros de comandos"></div>
       <div class="commands" id="grid"></div>
-      <p class="copy-notice" id="copyNotice" aria-live="polite"></p>
+      <p id="copyNotice" class="copy-notice" aria-live="polite"></p>
     </section>
 
     <section class="paper status-section" id="status">
       <div class="status-card">
         <div>
-          <span class="micro dark-text">AGORA</span>
+          <p class="eyebrow eyebrow-light">STATUS</p>
           <h2>Kairo V2</h2>
-          <p>Desenvolvimento ativo, focado em estabilidade, comandos e personalidade.</p>
+          <p>Desenvolvimento ativo com foco em estabilidade, comandos e personalidade.</p>
         </div>
+
         <div class="status-list">
           <div><span>Plataforma</span><strong>Discord</strong></div>
-          <div><span>Estado</span><strong><i class="status-dot"></i> Em desenvolvimento</strong></div>
+          <div><span>Estado</span><strong><i class="online-dot"></i> Em desenvolvimento</strong></div>
           <div><span>Convite</span><strong>Disponível para teste</strong></div>
         </div>
       </div>
 
       <div class="final-cta">
-        <span class="script small-script">Ready?</span>
+        <span class="script-word script-small">Ready?</span>
         <h2>Leva o Kairo<br>pro seu servidor.</h2>
-        <a class="black-pill" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-          Abrir convite <span>⟶</span>
+        <a class="final-button" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
+          Abrir convite
+          <span>⟶</span>
         </a>
       </div>
     </section>
   </main>
 
   <footer>
-    <a class="wordmark footer-brand" href="#inicio"><span class="wordmark-k">K</span><span>Kairo</span></a>
-    <p>Discord bot · Kairo V2</p>
+    <a class="brand footer-brand" href="#inicio">
+      <span class="brand-mark">K</span>
+      <span>Kairo</span>
+    </a>
+    <p>Kairo V2 · Discord bot</p>
     <a href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ao Discord ↗</a>
   </footer>
 
-  <script src="/script.js"></script>
+  <script type="module" src="/script.js"></script>
 </body>
 </html>
