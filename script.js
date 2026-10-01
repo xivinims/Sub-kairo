@@ -1,5 +1,3 @@
-import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
-
 const commands = [
   {name:'ajuda',desc:'Central de ajuda interativa.',cat:'Geral'},
   {name:'ping',desc:'Mostra a latência do bot.',cat:'Geral'},
@@ -62,7 +60,6 @@ const demoButton = document.querySelector('#demoButton');
 const demoReply = document.querySelector('#demoReply');
 
 let current = 'Todos';
-
 const categories = ['Todos', ...new Set(commands.map(command => command.cat))];
 
 filters.innerHTML = categories
@@ -71,7 +68,6 @@ filters.innerHTML = categories
 
 function renderCommands() {
   const term = query.value.trim().toLowerCase();
-
   const list = commands.filter(command => {
     const categoryMatches = current === 'Todos' || command.cat === current;
     const searchable = `/${command.name} ${command.desc} ${command.cat}`.toLowerCase();
@@ -92,12 +88,8 @@ function renderCommands() {
 filters.addEventListener('click', event => {
   const button = event.target.closest('.filter');
   if (!button) return;
-
   current = button.dataset.cat;
-  document.querySelectorAll('.filter').forEach(item => {
-    item.classList.toggle('active', item === button);
-  });
-
+  document.querySelectorAll('.filter').forEach(item => item.classList.toggle('active', item === button));
   renderCommands();
 });
 
@@ -106,7 +98,6 @@ query.addEventListener('input', renderCommands);
 grid.addEventListener('click', async event => {
   const card = event.target.closest('.command');
   if (!card) return;
-
   const command = card.dataset.command;
 
   try {
@@ -116,10 +107,8 @@ grid.addEventListener('click', async event => {
     notice.textContent = `Comando: ${command}`;
   }
 
-  window.clearTimeout(window.__copyTimer);
-  window.__copyTimer = window.setTimeout(() => {
-    notice.textContent = '';
-  }, 1800);
+  clearTimeout(window.__copyTimer);
+  window.__copyTimer = setTimeout(() => notice.textContent = '', 1800);
 });
 
 function closeMenu() {
@@ -142,55 +131,28 @@ menuPanel.addEventListener('click', event => {
 });
 
 document.addEventListener('click', event => {
-  if (!menuPanel.contains(event.target) && !menuButton.contains(event.target)) {
-    closeMenu();
-  }
+  if (!menuPanel.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
 });
 
 const replies = [
-  'me chamou?',
-  'tô aqui ué',
-  'aoba!',
-  'qual foi 😭',
-  'manda.',
-  'já vi tudo, relaxa',
-  '😠 ... brincadeira'
+  'me chamou? :3',
+  'oi oi, tô aqui ✦',
+  'manda, eu vejo pra você',
+  'aoba! chegou alguém',
+  'hmm... gostei dessa ideia',
+  'já tô cuidando daqui',
+  'não mexe muito que eu organizei tudo'
 ];
 
 let replyIndex = 0;
-
 demoButton.addEventListener('click', () => {
   replyIndex = (replyIndex + 1) % replies.length;
-
   demoReply.animate(
-    [
-      {opacity: 0, transform: 'translateY(5px)'},
-      {opacity: 1, transform: 'translateY(0)'}
-    ],
-    {duration: 220, easing: 'ease-out'}
+    [{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],
+    {duration:220,easing:'ease-out'}
   );
-
   demoReply.textContent = replies[replyIndex];
 });
 
-async function setupLiquidGlass() {
-  const root = document.querySelector('.hero');
-  const topbar = document.querySelector('.topbar');
-
-  if (!root || !topbar) return;
-
-  try {
-    const instance = await LiquidGlass.init({
-      root,
-      glassElements: [topbar]
-    });
-
-    window.__kairoLiquidGlass = instance;
-  } catch (error) {
-    console.error('LiquidGlass não pôde ser inicializado.', error);
-  }
-}
-
 count.textContent = `${commands.length} comandos`;
 renderCommands();
-setupLiquidGlass();
