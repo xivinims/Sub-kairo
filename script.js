@@ -1,4 +1,4 @@
-const commands=[
+const commands = [
   {name:'ajuda',desc:'Central de ajuda interativa.',cat:'Geral'},
   {name:'ping',desc:'Mostra a latência do bot.',cat:'Geral'},
   {name:'perfil',desc:'Card de perfil em Canvas.',cat:'Perfil'},
@@ -49,53 +49,121 @@ const commands=[
   {name:'config',desc:'Configura recursos do servidor.',cat:'Configuração'}
 ];
 
-const grid=document.querySelector('#grid');
-const query=document.querySelector('#q');
-const filters=document.querySelector('#filters');
-const notice=document.querySelector('#copyNotice');
-const count=document.querySelector('#commandCount');
-let current='Todos';
+const grid = document.querySelector('#grid');
+const query = document.querySelector('#q');
+const filters = document.querySelector('#filters');
+const notice = document.querySelector('#copyNotice');
+const count = document.querySelector('#commandCount');
+const menuButton = document.querySelector('.menu-button');
+const menuPanel = document.querySelector('.menu-panel');
+const demoButton = document.querySelector('#demoButton');
+const demoReply = document.querySelector('#demoReply');
 
-const cats=['Todos',...new Set(commands.map(c=>c.cat))];
-filters.innerHTML=cats.map(c=>'<button class="filter'+(c==='Todos'?' active':'')+'" data-cat="'+c+'">'+c+'</button>').join('');
+let current = 'Todos';
 
-function render(){
-  const term=query.value.trim().toLowerCase();
-  const list=commands.filter(c=>(current==='Todos'||c.cat===current)&&('/'+c.name+' '+c.desc+' '+c.cat).toLowerCase().includes(term));
-  grid.innerHTML=list.map(c=>'<button class="command" data-command="/'+c.name+'" type="button"><code>/'+c.name+'</code><p>'+c.desc+'</p><small>'+c.cat+'</small></button>').join('');
-  if(!list.length) grid.innerHTML='<p class="muted">Nenhum comando encontrado.</p>';
+const categories = ['Todos', ...new Set(commands.map(command => command.cat))];
+
+filters.innerHTML = categories
+  .map(cat => `<button class="filter${cat === 'Todos' ? ' active' : ''}" data-cat="${cat}" type="button">${cat}</button>`)
+  .join('');
+
+function renderCommands() {
+  const term = query.value.trim().toLowerCase();
+  const list = commands.filter(command => {
+    const matchesCategory = current === 'Todos' || command.cat === current;
+    const searchable = `/${command.name} ${command.desc} ${command.cat}`.toLowerCase();
+    return matchesCategory && searchable.includes(term);
+  });
+
+  grid.innerHTML = list.length
+    ? list.map(command => `
+      <button class="command" data-command="/${command.name}" type="button">
+        <code>/${command.name}</code>
+        <p>${command.desc}</p>
+        <small>${command.cat}</small>
+      </button>
+    `).join('')
+    : '<p>Nenhum comando encontrado.</p>';
 }
 
-filters.addEventListener('click',e=>{
-  const btn=e.target.closest('.filter');
-  if(!btn)return;
-  current=btn.dataset.cat;
-  document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b===btn));
-  render();
+filters.addEventListener('click', event => {
+  const button = event.target.closest('.filter');
+  if (!button) return;
+
+  current = button.dataset.cat;
+  document.querySelectorAll('.filter').forEach(item => {
+    item.classList.toggle('active', item === button);
+  });
+  renderCommands();
 });
 
-query.addEventListener('input',render);
+query.addEventListener('input', renderCommands);
 
-grid.addEventListener('click',async e=>{
-  const card=e.target.closest('.command');
-  if(!card)return;
-  const cmd=card.dataset.command;
-  try{
-    await navigator.clipboard.writeText(cmd);
-    notice.textContent=cmd+' copiado.';
-  }catch{
-    notice.textContent='Comando: '+cmd;
+grid.addEventListener('click', async event => {
+  const card = event.target.closest('.command');
+  if (!card) return;
+
+  const command = card.dataset.command;
+
+  try {
+    await navigator.clipboard.writeText(command);
+    notice.textContent = `${command} copiado.`;
+  } catch {
+    notice.textContent = `Comando: ${command}`;
   }
-  clearTimeout(window.__noticeTimer);
-  window.__noticeTimer=setTimeout(()=>notice.textContent='',1800);
+
+  window.clearTimeout(window.__copyTimer);
+  window.__copyTimer = window.setTimeout(() => {
+    notice.textContent = '';
+  }, 1800);
 });
 
-const replies=['Oiie!','aoba!','eu?','que foi? 😭','tô aqui ué','me chamou? 👀','😠😠'];
-let replyIndex=0;
-document.querySelector('#demoButton').addEventListener('click',()=>{
-  replyIndex=(replyIndex+1)%replies.length;
-  document.querySelector('#demoReply').textContent=replies[replyIndex];
+function closeMenu() {
+  menuButton.classList.remove('is-open');
+  menuPanel.classList.remove('is-open');
+  menuButton.setAttribute('aria-expanded', 'false');
+  menuPanel.setAttribute('aria-hidden', 'true');
+}
+
+menuButton.addEventListener('click', () => {
+  const open = !menuButton.classList.contains('is-open');
+  menuButton.classList.toggle('is-open', open);
+  menuPanel.classList.toggle('is-open', open);
+  menuButton.setAttribute('aria-expanded', String(open));
+  menuPanel.setAttribute('aria-hidden', String(!open));
 });
 
-count.textContent=commands.length;
-render();
+menuPanel.addEventListener('click', event => {
+  if (event.target.closest('a')) closeMenu();
+});
+
+document.addEventListener('click', event => {
+  if (!menuPanel.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
+});
+
+const replies = [
+  'me chamou?',
+  'tô aqui ué',
+  'aoba!',
+  'qual foi 😭',
+  'manda.',
+  'já vi tudo, relaxa',
+  '😠 ... brincadeira'
+];
+
+let replyIndex = 0;
+
+demoButton.addEventListener('click', () => {
+  replyIndex = (replyIndex + 1) % replies.length;
+  demoReply.animate(
+    [
+      {opacity: 0, transform: 'translateY(5px)'},
+      {opacity: 1, transform: 'translateY(0)'}
+    ],
+    {duration: 220, easing: 'ease-out'}
+  );
+  demoReply.textContent = replies[replyIndex];
+});
+
+count.textContent = `${commands.length} comandos`;
+renderCommands();
