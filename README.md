@@ -4,7 +4,19 @@ Landing page oficial do Kairo, construída em HTML, CSS e JavaScript puro e prep
 
 ## Design
 
-A interface segue uma direção editorial/mobile-first: hero visual em tela cheia, grid fino sobre o fundo, tipografia grande, detalhes em rosa, cards arredondados, seção escura de personalidade e blocos claros para recursos/comandos.
+A interface segue uma direção editorial/mobile-first inspirada na referência visual enviada: hero em tela cheia, grid fino, paisagem abstrata, tipografia grande, detalhes em rosa, cards arredondados e seções claras/escuras com bastante contraste.
+
+## Liquid Glass
+
+O hero usa o projeto [@ybouane/liquidglass](https://github.com/ybouane/liquidglass) via CDN para aplicar refração WebGL real na barra superior e no card de status.
+
+Import usado:
+
+```js
+import('https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js')
+```
+
+Se WebGL ou o CDN não estiver disponível, o site mantém um fallback em CSS com `backdrop-filter`, então a interface continua utilizável.
 
 ## Conteúdo
 
