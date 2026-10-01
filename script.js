@@ -175,14 +175,14 @@ demoButton.addEventListener('click', () => {
 
 async function setupLiquidGlass() {
   const root = document.querySelector('.hero');
-  const glassElements = document.querySelectorAll('.liquid-surface');
+  const topbar = document.querySelector('.topbar');
 
-  if (!root || !glassElements.length) return;
+  if (!root || !topbar) return;
 
   try {
     const instance = await LiquidGlass.init({
       root,
-      glassElements
+      glassElements: [topbar]
     });
 
     window.__kairoLiquidGlass = instance;
