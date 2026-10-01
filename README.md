@@ -8,15 +8,18 @@ A interface segue uma direção editorial/mobile-first inspirada na referência 
 
 ## Liquid Glass
 
-O hero usa o projeto [@ybouane/liquidglass](https://github.com/ybouane/liquidglass) via CDN para aplicar refração WebGL real na barra superior e no card de status.
-
-Import usado:
+O hero usa o pacote oficial [@ybouane/liquidglass](https://github.com/ybouane/liquidglass) diretamente pelo CDN, seguindo a integração documentada pelo repositório.
 
 ```js
-import('https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js')
+import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
+
+const instance = await LiquidGlass.init({
+  root,
+  glassElements
+});
 ```
 
-Se WebGL ou o CDN não estiver disponível, o site mantém um fallback em CSS com `backdrop-filter`, então a interface continua utilizável.
+Não há shader modificado, configuração visual customizada nem imitação do efeito com `backdrop-filter` nos elementos Liquid Glass.
 
 ## Conteúdo
 
