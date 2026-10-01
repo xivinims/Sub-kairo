@@ -279,3 +279,11 @@ footer{
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   html{scroll-behavior:auto}
 }
+.credit-link{
+  color:inherit;
+  font-weight:700;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+}
+.credit-link:hover{opacity:.68}
