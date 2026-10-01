@@ -3,52 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#bfe3ff">
-  <meta name="description" content="Kairo 4.0 — Discord bot com 93 comandos principais, economia, XP, carreira, mascote, Canvas, utilidades, games e moderação.">
-  <meta property="og:title" content="Kairo 4.0 — Discord Bot">
-  <meta property="og:description" content="Conteúdo do site sincronizado com o código real do Kairo.">
-  <title>Kairo 4.0 — Discord Bot</title>
+  <meta name="theme-color" content="#cfe6f7">
+  <meta name="description" content="Kairo — bot para Discord com moderação, economia, carreira, mascote e progressão.">
+  <meta property="og:title" content="Kairo — Discord Bot">
+  <meta property="og:description" content="Um bot para deixar seu servidor mais organizado e mais vivo.">
+  <title>Kairo — Discord Bot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <header class="hero" id="inicio">
-    <div class="sky" aria-hidden="true">
-      <div class="cloud cloud-a"></div>
-      <div class="cloud cloud-b"></div>
-      <div class="cloud cloud-c"></div>
-      <div class="bubble-layer">
-        <i class="bubble b1"></i><i class="bubble b2"></i><i class="bubble b3"></i><i class="bubble b4"></i>
-        <i class="bubble b5"></i><i class="bubble b6"></i><i class="bubble b7"></i><i class="bubble b8"></i>
-      </div>
-      <div class="sun-soft"></div>
-      <div class="hill hill-back"></div>
-      <div class="hill hill-mid"></div>
-      <div class="hill hill-front"></div>
+    <div class="landscape" aria-hidden="true">
+      <div class="sun"></div>
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="mountain m1"></div>
+      <div class="mountain m2"></div>
+      <div class="mountain m3"></div>
+      <div class="meadow"></div>
       <div class="tree">
-        <span class="trunk"></span>
-        <span class="leaf l1"></span><span class="leaf l2"></span><span class="leaf l3"></span>
-        <span class="leaf l4"></span><span class="leaf l5"></span>
+        <i class="trunk"></i>
+        <i class="crown crown-a"></i>
+        <i class="crown crown-b"></i>
+        <i class="crown crown-c"></i>
       </div>
-      <div class="flowers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="grass g1"></div>
+      <div class="grass g2"></div>
+      <div class="grass g3"></div>
     </div>
 
-    <nav class="topbar" aria-label="Navegação principal">
-      <a class="brand" href="#inicio" aria-label="Kairo, início">
-        <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=3" alt="" aria-hidden="true"></span>
+    <nav class="nav" aria-label="Navegação principal">
+      <a class="brand" href="#inicio">
+        <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt=""></span>
         <span>Kairo</span>
       </a>
 
       <div class="nav-links">
         <a href="#recursos">Recursos</a>
-        <a href="#falas">Falas</a>
         <a href="#comandos">Comandos</a>
-        <a href="#status">Status</a>
+        <a href="#sobre">Sobre</a>
       </div>
 
-      <a class="mini-cta" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar</a>
+      <a class="nav-cta" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar</a>
 
       <button class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="false">
         <span></span><span></span>
@@ -57,239 +55,154 @@
 
     <div class="menu-panel" aria-hidden="true">
       <a href="#recursos">Recursos</a>
-      <a href="#falas">Falas</a>
       <a href="#comandos">Comandos</a>
-      <a href="#status">Status</a>
+      <a href="#sobre">Sobre</a>
       <a href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ao Discord</a>
     </div>
 
-    <div class="hero-inner">
-      <div class="hero-copy">
-        <p class="eyebrow">KAIRO 4.0 · DISCORD BOT</p>
-        <h1>Economia, carreira, mascote,<br><em>XP, Canvas e moderação.</em></h1>
-        <p class="hero-text">O site agora mostra somente recursos, comandos e falas que existem no código real do Kairo.</p>
+    <div class="hero-content">
+      <p class="eyebrow">KAIRO · DISCORD BOT</p>
+      <h1>Seu servidor,<br><em>mais vivo.</em></h1>
+      <p class="hero-copy">Moderação, economia, carreira, progressão e interações com o Kairo sem transformar tudo em uma interface complicada.</p>
 
-        <div class="launch-note">
-          <span class="launch-dot"></span>
-          <div>
-            <strong>Lançamento em 08/01/2027</strong>
-            <p>Versão atual em beta, feita por um único programador.</p>
-          </div>
-        </div>
-
-        <div class="hero-actions">
-          <a class="primary-button" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-            Adicionar ao Discord <span>↗</span>
-          </a>
-          <a class="soft-button" href="#falas">Ver falas reais</a>
-        </div>
+      <div class="hero-actions">
+        <a class="button primary" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
+          Adicionar ao Discord <span>↗</span>
+        </a>
+        <a class="button secondary" href="#recursos">Ver recursos</a>
       </div>
 
-      <div class="hero-cards">
-        <article class="profile-card floating-card">
-          <div class="profile-head">
-            <div class="big-avatar"><img src="/assets/kairo-avatar.jpg?v=3" alt="Avatar do Kairo"></div>
-            <div>
-              <span class="tiny-label">STATUS REAL DO CÓDIGO</span>
-              <h2>Kairo 4.0.0</h2>
-              <p>discord.js v14 · SQLite persistente</p>
-            </div>
-          </div>
-          <div class="profile-bubble">
-            <span>/botinfo</span>
-            <strong>Bot multifuncional com economia, progressão, carreira, mascote, Canvas, utilidades, games e moderação.</strong>
-          </div>
-          <div class="mini-stats">
-            <div><span>Slash commands</span><strong>93</strong></div>
-            <div><span>Áreas</span><strong>13</strong></div>
-            <div><span>Funções</span><strong>39</strong></div>
-          </div>
-        </article>
-
-        <article class="agenda-card floating-card" id="falas">
-          <div class="agenda-top">
-            <span>Quando você marca o Kairo</span>
-            <b>mensagem real</b>
-          </div>
-          <div class="real-reply-card">
-            <div class="reply-avatar"><img src="/assets/kairo-avatar.jpg?v=3" alt=""></div>
-            <div>
-              <strong>Kairo</strong>
-              <p id="mentionReply">Oiie!</p>
-            </div>
-          </div>
-          <button class="cycle-button" id="mentionButton" type="button">Outra resposta real</button>
-          <p class="source-note">Essas respostas vêm do array usado no evento de menção do bot.</p>
-        </article>
+      <div class="release-line">
+        <span class="dot"></span>
+        <strong>Lançamento em 08/01/2027</strong>
+        <span>Beta atual · 1 programador</span>
       </div>
+    </div>
+
+    <div class="mention-card">
+      <div class="mention-head">
+        <span class="mention-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt="Avatar do Kairo"></span>
+        <div>
+          <strong>Kairo</strong>
+          <small>quando você marca o bot</small>
+        </div>
+      </div>
+      <p id="mentionReply">Oiie!</p>
+      <button id="mentionButton" type="button">outra resposta real</button>
     </div>
   </header>
 
   <main>
-    <section class="cream-section intro-section" id="recursos">
-      <div class="section-heading">
-        <p class="kicker">RECURSOS QUE EXISTEM</p>
-        <h2>Sem demo inventada.<br><em>Só o que está no projeto.</em></h2>
-        <p>Os blocos abaixo usam dados e nomes reais encontrados em <code>commands.js</code>, <code>progression.js</code>, <code>jobs.js</code>, <code>shop.js</code> e <code>profile-card.js</code>.</p>
+    <section class="section" id="recursos">
+      <div class="section-head">
+        <p class="eyebrow dark">RECURSOS</p>
+        <h2>O necessário,<br><em>sem exagero.</em></h2>
+        <p>Um resumo das áreas principais que realmente existem no Kairo.</p>
       </div>
 
-      <div class="feature-grid">
-        <article class="feature-card mint">
-          <span class="feature-number">01</span>
-          <div class="feature-icon">93</div>
-          <h3>Comandos principais</h3>
-          <p>O código registra 93 slash commands principais, além de vários subcomandos.</p>
-          <span class="feature-chip">commandData.length</span>
-        </article>
-
-        <article class="feature-card yellow">
-          <span class="feature-number">02</span>
-          <div class="feature-icon">13</div>
-          <h3>Carreiras</h3>
-          <p>13 áreas profissionais, 39 funções, 5 cargos por função, salário, XP profissional, habilidade e eventos de turno.</p>
-          <span class="feature-chip">jobs.js</span>
-        </article>
-
-        <article class="feature-card lilac">
-          <span class="feature-number">03</span>
-          <div class="feature-icon">364</div>
-          <h3>XP por nível</h3>
-          <p>A regra real é fixa: 364 XP por nível. O nível é calculado com <code>floor(XP / 364)</code>.</p>
-          <span class="feature-chip">progression.js</span>
-        </article>
-      </div>
-
-      <div class="facts-grid">
-        <article class="fact-card">
-          <span class="fact-kicker">PERFIL CANVAS</span>
-          <h3>Campos reais do card</h3>
-          <p>Avatar, nome, username, rank, level, $, XP, banco, reputação, vínculo, emprego, tier, título, bio e cor personalizada.</p>
-        </article>
-
-        <article class="fact-card">
-          <span class="fact-kicker">VÍNCULO</span>
-          <h3>5 estágios reais</h3>
-          <p>Recém-conhecido → Colega do Kairo → Conhecido → Amigo do Kairo → Bestie do Kairo.</p>
-        </article>
-
-        <article class="fact-card">
-          <span class="fact-kicker">LOJA</span>
-          <h3>10 itens reais</h3>
-          <p>Cookie Cósmico, Café do Kairo, Estrelinha, Gatinho Pixel, Coroa do Kairo, Caderninho de Missões, Broche de Amizade, Kairo de Pelúcia, Ticket Dourado e Lua de Bolso.</p>
-        </article>
-
-        <article class="fact-card">
-          <span class="fact-kicker">CONQUISTAS</span>
-          <h3>21 conquistas</h3>
-          <p>Incluem Primeiro oi, Mora no chat, Primeiro emblema, Cofrinho sério, Amizade de verdade e Rotina do Kairo.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="garden-section">
-      <div class="garden-decoration" aria-hidden="true">
-        <div class="garden-cloud"></div>
-        <div class="garden-hill"></div>
-        <div class="garden-plant p1"></div>
-        <div class="garden-plant p2"></div>
-        <div class="garden-plant p3"></div>
-      </div>
-
-      <div class="garden-copy">
-        <p class="kicker white-kicker">FALAS REAIS DO MASCOTE</p>
-        <h2>As respostas abaixo são<br><em>do próprio código.</em></h2>
-        <p>Nada aqui foi escrito para “parecer” com o Kairo. O botão só percorre respostas que já existem no projeto.</p>
-        <button class="dark-button" id="mascotButton" type="button">Trocar fala <span>→</span></button>
-      </div>
-
-      <div class="chat-card">
-        <div class="chat-card-head">
-          <div class="chat-avatar"><img src="/assets/kairo-avatar.jpg?v=3" alt="Avatar do Kairo"></div>
+      <div class="feature-list">
+        <article class="feature">
+          <span>01</span>
           <div>
-            <strong>Kairo</strong>
-            <span>fala de /mascote ou /checkin</span>
+            <h3>Moderação</h3>
+            <p>Ban, kick, timeout, warns, limpeza, slowmode, lock e outras ferramentas de administração.</p>
           </div>
-        </div>
-        <div class="chat-message" id="mascotReply">O Kairo ficou quietinho recebendo cafuné. <strong>+5 vínculo</strong></div>
-        <div class="source-note source-note-dark">Texto extraído do handler real dos comandos.</div>
-      </div>
-    </section>
+        </article>
 
-    <section class="cream-section work-section">
-      <div class="commands-heading">
-        <div>
-          <p class="kicker">CARREIRA REAL</p>
-          <h2>Até as falas de trabalho<br><em>já existem no bot.</em></h2>
-        </div>
-        <p>Exemplos abaixo vêm diretamente de <code>jobs.js</code>, sem frases criadas para o site.</p>
-      </div>
-
-      <div class="work-card">
-        <span class="work-area">💻 Tecnologia · Desenvolvimento</span>
-        <blockquote id="workReply">Você corrigiu um bug que só aparecia quando ninguém estava olhando.</blockquote>
-        <button class="cycle-button dark-cycle" id="workButton" type="button">Outra fala real de turno</button>
-      </div>
-    </section>
-
-    <section class="cream-section commands-section" id="comandos">
-      <div class="commands-heading">
-        <div>
-          <p class="kicker">93 COMANDOS REAIS</p>
-          <h2>Lista sincronizada<br><em>com commands.js.</em></h2>
-        </div>
-        <p>Nome e descrição abaixo foram copiados das definições reais dos slash commands.</p>
-      </div>
-
-      <div class="search-wrap">
-        <span>⌕</span>
-        <input id="q" type="search" placeholder="Buscar comando..." autocomplete="off">
-        <b id="commandCount">93 comandos</b>
-      </div>
-
-      <div class="filters" id="filters" aria-label="Filtros de comandos"></div>
-      <div class="commands" id="grid"></div>
-      <p id="copyNotice" class="copy-notice" aria-live="polite"></p>
-    </section>
-
-    <section class="cream-section status-section" id="status">
-      <div class="status-card">
-        <div class="status-illustration">
-          <div class="status-sun"></div>
-          <div class="status-ground"></div>
-          <div class="status-tree"><i></i><b></b><span></span></div>
-        </div>
-
-        <div class="status-copy">
-          <p class="kicker">STATUS DO PROJETO</p>
-          <h2>Kairo 4.0.0</h2>
-          <p>A versão atual do arquivo enviado usa Node.js 20+, discord.js 14, better-sqlite3 e Canvas com @napi-rs/canvas.</p>
-
-          <div class="status-list">
-            <div><span>Versão do package</span><strong>4.0.0</strong></div>
-            <div><span>Banco</span><strong>SQLite persistente</strong></div>
-            <div><span>Comandos principais</span><strong>93</strong></div>
-            <div><span>Lançamento informado</span><strong>08/01/2027</strong></div>
+        <article class="feature">
+          <span>02</span>
+          <div>
+            <h3>Economia & progressão</h3>
+            <p>Saldo, daily, banco, loja, inventário, XP, ranking, conquistas e missões.</p>
           </div>
-        </div>
+        </article>
+
+        <article class="feature">
+          <span>03</span>
+          <div>
+            <h3>Carreira</h3>
+            <p>Emprego, turnos, treino, currículo e progresso profissional dentro do bot.</p>
+          </div>
+        </article>
+
+        <article class="feature">
+          <span>04</span>
+          <div>
+            <h3>Kairo & perfil</h3>
+            <p>Mascote, vínculo, check-in, perfil, carteirinha, títulos e interações sociais.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="quote-section">
+      <div class="quote-copy">
+        <p class="eyebrow light">UMA FALA REAL</p>
+        <blockquote id="mascotReply">O Kairo ficou quietinho recebendo cafuné.</blockquote>
+        <p class="quote-extra" id="mascotExtra">+5 vínculo</p>
+        <button class="button dark-button" id="mascotButton" type="button">Trocar fala</button>
       </div>
 
-      <div class="final-cta">
-        <span class="script-word">Kairo</span>
-        <h2>O site agora segue<br>o bot de verdade.</h2>
-        <a class="primary-button dark-primary" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-          Abrir convite <span>↗</span>
-        </a>
+      <div class="quote-art" aria-hidden="true">
+        <div class="mini-sun"></div>
+        <div class="mini-hill h-back"></div>
+        <div class="mini-hill h-front"></div>
+        <div class="mini-tree">
+          <i></i><b></b><span></span>
+        </div>
       </div>
+    </section>
+
+    <section class="section commands-section" id="comandos">
+      <div class="section-head split">
+        <div>
+          <p class="eyebrow dark">ALGUNS COMANDOS</p>
+          <h2>Só uma amostra.</h2>
+        </div>
+        <p>Os nomes abaixo são comandos reais do bot.</p>
+      </div>
+
+      <div class="command-grid">
+        <button class="command-chip" data-command="/perfil">/perfil</button>
+        <button class="command-chip" data-command="/daily">/daily</button>
+        <button class="command-chip" data-command="/mascote">/mascote</button>
+        <button class="command-chip" data-command="/carreira">/carreira</button>
+        <button class="command-chip" data-command="/loja">/loja</button>
+        <button class="command-chip" data-command="/ranking">/ranking</button>
+        <button class="command-chip" data-command="/missoes">/missoes</button>
+        <button class="command-chip" data-command="/conquistas">/conquistas</button>
+        <button class="command-chip" data-command="/ban">/ban</button>
+        <button class="command-chip" data-command="/enquete">/enquete</button>
+        <button class="command-chip" data-command="/rep">/rep</button>
+        <button class="command-chip" data-command="/botinfo">/botinfo</button>
+      </div>
+      <p class="copy-notice" id="copyNotice" aria-live="polite"></p>
+    </section>
+
+    <section class="about" id="sobre">
+      <div>
+        <p class="eyebrow dark">SOBRE</p>
+        <h2>Kairo está em beta.</h2>
+      </div>
+      <p>A versão atual é feita por um único programador. O lançamento informado para a versão final é <strong>08/01/2027</strong>.</p>
     </section>
   </main>
 
+  <div class="rubber-card" data-rubber aria-label="Kairo Beta, arraste e solte">
+    <span class="brand-avatar small"><img src="/assets/kairo-avatar.jpg?v=4" alt=""></span>
+    <div>
+      <strong>Kairo Beta</strong>
+      <small>arraste</small>
+    </div>
+  </div>
+
   <footer>
     <a class="brand footer-brand" href="#inicio">
-      <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=3" alt="" aria-hidden="true"></span>
+      <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt=""></span>
       <span>Kairo</span>
     </a>
-    <p>Kairo 4.0.0 · beta · lançamento 08/01/2027</p>
-    <a href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ao Discord ↗</a>
+    <p>Beta · lançamento 08/01/2027</p>
+    <a href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ↗</a>
   </footer>
 
   <script src="/script.js"></script>
