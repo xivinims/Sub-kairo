@@ -1,3 +1,5 @@
+import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
+
 const commands = [
   {name:'ajuda',desc:'Central de ajuda interativa.',cat:'Geral'},
   {name:'ping',desc:'Mostra a latência do bot.',cat:'Geral'},
@@ -173,62 +175,19 @@ demoButton.addEventListener('click', () => {
 
 async function setupLiquidGlass() {
   const root = document.querySelector('.hero');
-  const topbar = document.querySelector('.topbar[data-liquid-glass]');
-  const status = document.querySelector('.hero-status[data-liquid-glass]');
+  const glassElements = document.querySelectorAll('.liquid-surface');
 
-  if (!root || !topbar || !status || !window.WebGLRenderingContext) return;
-
-  topbar.dataset.config = JSON.stringify({
-    blurAmount: 0.22,
-    refraction: 0.68,
-    chromAberration: 0.045,
-    edgeHighlight: 0.16,
-    specular: 0.18,
-    fresnel: 0.9,
-    distortion: 0.018,
-    cornerRadius: 28,
-    zRadius: 22,
-    opacity: 0.92,
-    saturation: 0.06,
-    tintStrength: 0.035,
-    shadowOpacity: 0.18,
-    shadowSpread: 18,
-    shadowOffsetY: 5,
-    button: false
-  });
-
-  status.dataset.config = JSON.stringify({
-    blurAmount: 0.26,
-    refraction: 0.72,
-    chromAberration: 0.05,
-    edgeHighlight: 0.18,
-    specular: 0.2,
-    fresnel: 0.92,
-    distortion: 0.02,
-    cornerRadius: 27,
-    zRadius: 21,
-    opacity: 0.9,
-    saturation: 0.08,
-    tintStrength: 0.04,
-    shadowOpacity: 0.2,
-    shadowSpread: 16,
-    shadowOffsetY: 5,
-    button: false
-  });
+  if (!root || !glassElements.length) return;
 
   try {
-    const { LiquidGlass } = await import('https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js');
-
     const instance = await LiquidGlass.init({
       root,
-      glassElements: [topbar, status]
+      glassElements
     });
 
-    document.documentElement.dataset.liquidGlass = 'ready';
     window.__kairoLiquidGlass = instance;
   } catch (error) {
-    document.documentElement.dataset.liquidGlass = 'fallback';
-    console.warn('LiquidGlass não carregou; usando o fallback CSS.', error);
+    console.error('LiquidGlass não pôde ser inicializado.', error);
   }
 }
 
