@@ -4,22 +4,16 @@ Landing page oficial do Kairo, construída em HTML, CSS e JavaScript puro e prep
 
 ## Design
 
-A interface segue uma direção editorial/mobile-first inspirada na referência visual enviada: hero em tela cheia, grid fino, paisagem abstrata, tipografia grande, detalhes em rosa, cards arredondados e seções claras/escuras com bastante contraste.
+A interface atual usa uma direção visual suave e lúdica, inspirada em páginas editoriais com natureza:
 
-## Liquid Glass
+- céu azul claro, nuvens, colinas, árvore e flores;
+- cards arredondados e cores pastel;
+- fontes Fredoka e DM Serif Display;
+- bolhas animadas no fundo;
+- layout responsivo para celular e desktop;
+- avatar do Kairo integrado à identidade visual.
 
-O hero usa o pacote oficial [@ybouane/liquidglass](https://github.com/ybouane/liquidglass) diretamente pelo CDN, seguindo a integração documentada pelo repositório.
-
-```js
-import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
-
-const instance = await LiquidGlass.init({
-  root,
-  glassElements
-});
-```
-
-Não há shader modificado, configuração visual customizada nem imitação do efeito com `backdrop-filter` nos elementos Liquid Glass.
+O LiquidGlass foi removido completamente.
 
 ## Conteúdo
 
@@ -30,12 +24,9 @@ Não há shader modificado, configuração visual customizada nem imitação do 
 - Perfil e utilidades
 - Interações com o mascote Kairo
 - Busca e filtro de comandos
-- Layout responsivo para celular e desktop
+- Status da versão beta
+- Lançamento em 08/01/2027
 
 ## Convite do bot
 
 https://discord.com/oauth2/authorize?client_id=1519161870815072286
-
-## Deploy
-
-O projeto continua compatível com Vercel usando o `vercel.json` existente.
