@@ -128,8 +128,32 @@ img{display:block}
   font-size:12px;
   font-weight:600;
 }
-.menu-button{display:none;width:42px;height:42px;border:0;background:transparent;place-content:center;gap:5px}
-.menu-button span{display:block;width:18px;height:2px;border-radius:2px;background:#26343b}
+.menu-button{
+  display:none;
+  width:46px;
+  height:46px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.26);
+  border-radius:15px;
+  background:rgba(255,255,255,.12);
+  place-items:center;
+  cursor:pointer;
+  box-shadow:0 8px 22px rgba(0,30,44,.12), inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform .16s ease, background .16s ease, border-color .16s ease;
+}
+.menu-button:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.18);
+  border-color:rgba(255,255,255,.34);
+}
+.menu-button:active{transform:scale(.96)}
+.menu-icon-doodle{
+  width:24px;
+  height:24px;
+  display:block;
+  object-fit:contain;
+  pointer-events:none;
+}
 .menu-panel{
   position:absolute;z-index:30;top:92px;right:18px;
   width:220px;padding:10px;display:grid;gap:3px;
@@ -797,5 +821,18 @@ html[data-liquid-glass="ready"] .liquid-target{
   }
   .mention-card{
     display:none;
+  }
+}
+
+@media(max-width:680px){
+  .menu-button{
+    display:grid;
+    width:44px;
+    height:44px;
+    border-radius:14px;
+  }
+  .menu-icon-doodle{
+    width:23px;
+    height:23px;
   }
 }
