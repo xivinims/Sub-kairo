@@ -776,3 +776,36 @@ footer>a:last-child{justify-self:end;font-weight:800}
   }
   .motion-enhanced .reveal-item{opacity:1;transform:none;transition:none}
 }
+
+/* Cute Aurivane GitHub icon */
+.aurivane-link{
+  display:inline-flex!important;
+  align-items:center;
+  gap:7px;
+  font-weight:800;
+}
+.aurivane-icon{
+  width:20px;
+  height:20px;
+  display:block;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+.hero-meta .aurivane-link{
+  text-decoration:none!important;
+}
+.hero-meta .aurivane-link span{
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.about-aurivane{
+  padding-left:9px!important;
+}
+.about-aurivane .aurivane-icon{
+  width:22px;
+  height:22px;
+}
+@media(max-width:680px){
+  .aurivane-icon{width:18px;height:18px}
+  .about-aurivane .aurivane-icon{width:20px;height:20px}
+}
