@@ -230,3 +230,84 @@ async function setupLiquidGlass() {
 }
 
 setupLiquidGlass();
+
+
+function installDepthMotion() {
+  const hero = document.querySelector('.hero');
+  const objects = [...document.querySelectorAll('[data-depth]')];
+  if (!hero || !objects.length) return;
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) return;
+
+  const finePointer = window.matchMedia('(pointer:fine)').matches;
+
+  const update = (x, y) => {
+    objects.forEach(object => {
+      const depth = Number(object.dataset.depth || 1);
+      object.style.setProperty('--dx', `${x * depth}px`);
+      object.style.setProperty('--dy', `${y * depth}px`);
+    });
+  };
+
+  if (finePointer) {
+    hero.addEventListener('pointermove', event => {
+      const rect = hero.getBoundingClientRect();
+      const nx = (event.clientX - rect.left) / rect.width - .5;
+      const ny = (event.clientY - rect.top) / rect.height - .5;
+      update(nx * 24, ny * 20);
+    }, {passive:true});
+
+    hero.addEventListener('pointerleave', () => update(0, 0), {passive:true});
+  }
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const rect = hero.getBoundingClientRect();
+      const progress = Math.max(-1, Math.min(1, -rect.top / Math.max(rect.height, 1)));
+      objects.forEach(object => {
+        const depth = Number(object.dataset.depth || 1);
+        object.style.setProperty('--scroll-depth', `${progress * depth * -12}px`);
+      });
+      ticking = false;
+    });
+  };
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+}
+
+function installRevealMotion() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const items = [
+    ...document.querySelectorAll('.section-head, .feature, .command-chip, .about > *, .mention-card')
+  ];
+
+  if (!items.length) return;
+
+  document.body.classList.add('motion-enhanced');
+  items.forEach(item => item.classList.add('reveal-item'));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    });
+  }, {
+    rootMargin:'0px 0px -8% 0px',
+    threshold:.12
+  });
+
+  items.forEach((item, index) => {
+    item.style.transitionDelay = `${Math.min((index % 4) * 70, 210)}ms`;
+    observer.observe(item);
+  });
+}
+
+installDepthMotion();
+installRevealMotion();
