@@ -367,3 +367,23 @@ footer{
   .morph-frame{display:none}
   .morph-frame.frame-0{display:block;opacity:1}
 }
+
+.credit-text{
+  display:inline-flex;
+  align-items:baseline;
+  gap:3px;
+}
+.credit-aurivane{
+  font-family:"Baloo 2","DM Sans",sans-serif;
+  font-size:1.16em;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.01em;
+  color:#c45d78;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+}
+.credit-works{
+  font-family:"DM Sans",sans-serif;
+  font-weight:600;
+  color:inherit;
+}
