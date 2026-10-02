@@ -1,3 +1,5 @@
+import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
+
 const mentionReplies = [
   'Oiie!',
   'aoba!',
@@ -205,3 +207,25 @@ function installMorphIcon() {
 }
 
 installMorphIcon();
+
+
+async function setupLiquidGlass() {
+  const root = document.body;
+  const glassElements = [...document.querySelectorAll('[data-liquid-glass]')];
+
+  if (!glassElements.length) return;
+
+  try {
+    const instance = await LiquidGlass.init({
+      root,
+      glassElements
+    });
+
+    document.documentElement.dataset.liquidGlass = 'ready';
+    window.__kairoLiquidGlass = instance;
+  } catch (error) {
+    console.warn('LiquidGlass não pôde ser inicializado; mantendo o fallback visual.', error);
+  }
+}
+
+setupLiquidGlass();
