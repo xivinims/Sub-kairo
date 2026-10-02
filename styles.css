@@ -32,7 +32,7 @@ img{display:block}
   isolation:isolate;
   background:
     linear-gradient(180deg,rgba(20,53,32,.08) 0%,rgba(15,49,29,.03) 46%,rgba(247,245,238,0) 68%),
-    url("/assets/kairo-meadow-bg.webp") center center / cover no-repeat;
+    url("/assets/3443C736-60F8-49F2-9DB9-8E6A46361340.png") center center / cover no-repeat;
 }
 .hero::before{
   content:"";
