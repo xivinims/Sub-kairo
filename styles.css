@@ -169,8 +169,8 @@ img{max-width:100%}
   margin:0 auto;
   padding:148px clamp(22px,5vw,70px) 46px;
   display:grid;
-  grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);
-  gap:46px;
+  grid-template-columns:1fr;
+  gap:0;
   align-items:center;
   overflow:hidden;
   border:1px solid rgba(23,24,23,.11);
