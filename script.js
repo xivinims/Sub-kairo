@@ -285,8 +285,10 @@ function installNatureScene() {
   ];
 
   leafData.forEach(([x,size,delay,duration,rot,opacity,a,b]) => {
-    const leaf = document.createElement('i');
+    const leaf = document.createElement('img');
     leaf.className = 'flying-leaf';
+    leaf.src = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Pear_LeafTransparent.png';
+    leaf.alt = '';
     leaf.style.setProperty('--x', x);
     leaf.style.setProperty('--size', size);
     leaf.style.setProperty('--delay', delay);
