@@ -809,3 +809,69 @@ footer>a:last-child{justify-self:end;font-weight:800}
   .aurivane-icon{width:18px;height:18px}
   .about-aurivane .aurivane-icon{width:20px;height:20px}
 }
+
+
+/* Discord server widget */
+.discord-widget-card{
+  justify-self:end;
+  min-width:210px;
+  min-height:54px;
+  padding:9px 12px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--ink);
+  border-radius:18px;
+  background:rgba(255,255,255,.78);
+  box-shadow:4px 4px 0 var(--ink);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.discord-widget-card:hover{
+  transform:translate(2px,2px);
+  box-shadow:2px 2px 0 var(--ink);
+}
+.discord-widget-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#9aa09a;
+  box-shadow:0 0 0 4px rgba(154,160,154,.12);
+}
+.discord-widget-card.is-online .discord-widget-dot{
+  background:#57d163;
+  box-shadow:0 0 0 4px rgba(87,209,99,.16);
+}
+.discord-widget-copy{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.discord-widget-copy strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-family:var(--display);
+  font-size:13px;
+  line-height:1;
+}
+.discord-widget-copy small{
+  color:#666a62;
+  font-size:9px;
+  font-weight:700;
+}
+.discord-widget-arrow{
+  font-size:14px;
+  font-weight:800;
+}
+
+@media(max-width:680px){
+  .discord-widget-card{
+    min-width:0;
+    width:auto;
+    padding:8px 10px;
+    grid-template-columns:auto 1fr auto;
+  }
+  .discord-widget-copy strong{font-size:12px}
+  .discord-widget-copy small{font-size:8px}
+}
