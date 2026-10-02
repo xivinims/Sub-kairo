@@ -16,19 +16,40 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <header class="hero" id="inicio">
-    <div class="depth-stage" aria-hidden="true">
-      <div class="float-3d orb-pulse" data-depth="1.25"></div>
-      <div class="float-3d candy-capsule" data-depth=".82"></div>
-      <div class="float-3d soft-cube" data-depth="1.05"></div>
-      <div class="float-3d halo-ring" data-depth=".62"></div>
-      <div class="float-3d gummy-star" data-depth="1.4"></div>
-      <div class="float-3d mini-flower" data-depth=".95">
-        <i></i><i></i><i></i><i></i><i></i><b></b>
-      </div>
-      <span class="depth-glow glow-a"></span>
-      <span class="depth-glow glow-b"></span>
+  <div class="world-scene" aria-hidden="true">
+    <div class="world-day"></div>
+    <div class="world-night"></div>
+
+    <div class="tree-sway tree-left">
+      <i class="tree-branch"></i>
+      <i class="leaf-cluster l1"></i>
+      <i class="leaf-cluster l2"></i>
+      <i class="leaf-cluster l3"></i>
     </div>
+
+    <div class="tree-sway tree-right">
+      <i class="tree-branch"></i>
+      <i class="leaf-cluster l1"></i>
+      <i class="leaf-cluster l2"></i>
+      <i class="leaf-cluster l3"></i>
+    </div>
+
+    <div class="butterfly butterfly-a">
+      <span class="wing wing-left"></span>
+      <span class="butterfly-body"></span>
+      <span class="wing wing-right"></span>
+    </div>
+
+    <div class="butterfly butterfly-b">
+      <span class="wing wing-left"></span>
+      <span class="butterfly-body"></span>
+      <span class="wing wing-right"></span>
+    </div>
+
+    <div class="leaf-layer" id="leafLayer"></div>
+    <div class="firefly-layer" id="fireflyLayer"></div>
+  </div>
+  <header class="hero" id="inicio">
 
     <div class="landscape" aria-hidden="true">
       <div class="sun"></div>
