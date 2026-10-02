@@ -232,54 +232,6 @@ async function setupLiquidGlass() {
 setupLiquidGlass();
 
 
-function installDepthMotion() {
-  const hero = document.querySelector('.hero');
-  const objects = [...document.querySelectorAll('[data-depth]')];
-  if (!hero || !objects.length) return;
-
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) return;
-
-  const finePointer = window.matchMedia('(pointer:fine)').matches;
-
-  const update = (x, y) => {
-    objects.forEach(object => {
-      const depth = Number(object.dataset.depth || 1);
-      object.style.setProperty('--dx', `${x * depth}px`);
-      object.style.setProperty('--dy', `${y * depth}px`);
-    });
-  };
-
-  if (finePointer) {
-    hero.addEventListener('pointermove', event => {
-      const rect = hero.getBoundingClientRect();
-      const nx = (event.clientX - rect.left) / rect.width - .5;
-      const ny = (event.clientY - rect.top) / rect.height - .5;
-      update(nx * 24, ny * 20);
-    }, {passive:true});
-
-    hero.addEventListener('pointerleave', () => update(0, 0), {passive:true});
-  }
-
-  let ticking = false;
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      const rect = hero.getBoundingClientRect();
-      const progress = Math.max(-1, Math.min(1, -rect.top / Math.max(rect.height, 1)));
-      objects.forEach(object => {
-        const depth = Number(object.dataset.depth || 1);
-        object.style.setProperty('--scroll-depth', `${progress * depth * -12}px`);
-      });
-      ticking = false;
-    });
-  };
-
-  window.addEventListener('scroll', onScroll, {passive:true});
-  onScroll();
-}
-
 function installRevealMotion() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -309,5 +261,91 @@ function installRevealMotion() {
   });
 }
 
-installDepthMotion();
 installRevealMotion();
+
+
+function installNatureScene() {
+  const leafLayer = document.querySelector('#leafLayer');
+  const fireflyLayer = document.querySelector('#fireflyLayer');
+  if (!leafLayer || !fireflyLayer) return;
+
+  const leafData = [
+    ['8%','18px','-3s','11s','-22deg','.72','#9fbd6a','#547e4c'],
+    ['18%','14px','-7s','13s','30deg','.60','#c5cf78','#739058'],
+    ['29%','21px','-5s','15s','-40deg','.68','#8aae63','#446f4a'],
+    ['41%','12px','-1s','10s','18deg','.55','#d2d68a','#789258'],
+    ['53%','17px','-9s','14s','-35deg','.66','#93b665','#527d4e'],
+    ['64%','23px','-4s','16s','26deg','.62','#b6c977','#638b53'],
+    ['73%','15px','-11s','12s','-28deg','.58','#d7d78c','#7a9156'],
+    ['83%','19px','-6s','15s','38deg','.67','#8eaf62','#4c7649'],
+    ['92%','13px','-2s','11s','-12deg','.52','#becd7d','#6d8b56'],
+    ['35%','16px','-12s','17s','22deg','.48','#9eb86b','#5e7e50'],
+    ['57%','11px','-8s','12s','-18deg','.50','#d2d98e','#7e955c'],
+    ['76%','20px','-13s','18s','34deg','.54','#9fbd6d','#547c4c']
+  ];
+
+  leafData.forEach(([x,size,delay,duration,rot,opacity,a,b]) => {
+    const leaf = document.createElement('i');
+    leaf.className = 'flying-leaf';
+    leaf.style.setProperty('--x', x);
+    leaf.style.setProperty('--size', size);
+    leaf.style.setProperty('--delay', delay);
+    leaf.style.setProperty('--duration', duration);
+    leaf.style.setProperty('--rot', rot);
+    leaf.style.setProperty('--opacity', opacity);
+    leaf.style.setProperty('--leaf-a', a);
+    leaf.style.setProperty('--leaf-b', b);
+    leafLayer.appendChild(leaf);
+  });
+
+  const fireflies = [
+    ['8%','18%','5px','2.1s','6.2s','-.8s'],
+    ['15%','43%','4px','2.7s','7.4s','-2.2s'],
+    ['24%','67%','6px','2.3s','8.1s','-1.4s'],
+    ['31%','32%','4px','3.1s','6.9s','-3.5s'],
+    ['39%','76%','5px','2.5s','8.6s','-.3s'],
+    ['47%','54%','4px','2.9s','7.1s','-4.1s'],
+    ['55%','24%','6px','2.2s','7.8s','-2.8s'],
+    ['62%','71%','5px','3.2s','8.4s','-1.7s'],
+    ['69%','39%','4px','2.4s','6.7s','-3.2s'],
+    ['77%','61%','6px','2.8s','9.1s','-.9s'],
+    ['84%','28%','5px','2.1s','7.6s','-2.5s'],
+    ['91%','73%','4px','3.0s','8.7s','-4.6s'],
+    ['12%','83%','4px','2.5s','7.2s','-1.1s'],
+    ['44%','88%','5px','2.6s','8.8s','-3.7s'],
+    ['71%','86%','4px','2.2s','7.9s','-2.0s'],
+    ['88%','49%','5px','2.7s','8.2s','-4.0s']
+  ];
+
+  fireflies.forEach(([x,y,size,blink,wander,delay]) => {
+    const fly = document.createElement('i');
+    fly.className = 'firefly';
+    fly.style.setProperty('--x', x);
+    fly.style.setProperty('--y', y);
+    fly.style.setProperty('--size', size);
+    fly.style.setProperty('--blink', blink);
+    fly.style.setProperty('--wander', wander);
+    fly.style.setProperty('--delay', delay);
+    fireflyLayer.appendChild(fly);
+  });
+
+  let ticking = false;
+  const updateNight = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const maxScroll = Math.max(document.documentElement.scrollHeight - innerHeight, 1);
+      const progress = Math.max(0, Math.min(1, scrollY / maxScroll));
+      const night = Math.max(0, Math.min(1, (progress - .18) / .62));
+      document.documentElement.style.setProperty('--night', night.toFixed(3));
+      document.body.classList.toggle('night-mode', night > .42);
+      ticking = false;
+    });
+  };
+
+  addEventListener('scroll', updateNight, {passive:true});
+  addEventListener('resize', updateNight, {passive:true});
+  updateNight();
+}
+
+installNatureScene();
