@@ -167,31 +167,39 @@ function installMorphIcon() {
   let direction = 1;
   let timer = null;
 
+  const HOLD_MS = 1100;
+  const STEP_MS = 240;
+  const keyFrames = new Set([0, 4, frames.length - 1]);
+
   const show = next => {
     frames.forEach((frame, i) => frame.classList.toggle('is-active', i === next));
   };
 
-  const tick = () => {
-    show(index);
+  const scheduleNext = () => {
+    const delay = keyFrames.has(index) ? HOLD_MS : STEP_MS;
 
-    if (index === frames.length - 1) direction = -1;
-    else if (index === 0) direction = 1;
+    timer = window.setTimeout(() => {
+      if (index === frames.length - 1) direction = -1;
+      else if (index === 0) direction = 1;
 
-    index += direction;
+      index += direction;
+      show(index);
+      scheduleNext();
+    }, delay);
   };
 
   show(0);
 
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    timer = window.setInterval(tick, 115);
+    scheduleNext();
   }
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && timer) {
-      clearInterval(timer);
+      clearTimeout(timer);
       timer = null;
     } else if (!document.hidden && !timer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      timer = window.setInterval(tick, 115);
+      scheduleNext();
     }
   });
 }
