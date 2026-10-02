@@ -157,3 +157,43 @@ function installRubberDrag(element) {
 }
 
 document.querySelectorAll('[data-rubber]').forEach(installRubberDrag);
+
+
+function installMorphIcon() {
+  const frames = [...document.querySelectorAll('.morph-frame')];
+  if (!frames.length) return;
+
+  let index = 0;
+  let direction = 1;
+  let timer = null;
+
+  const show = next => {
+    frames.forEach((frame, i) => frame.classList.toggle('is-active', i === next));
+  };
+
+  const tick = () => {
+    show(index);
+
+    if (index === frames.length - 1) direction = -1;
+    else if (index === 0) direction = 1;
+
+    index += direction;
+  };
+
+  show(0);
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    timer = window.setInterval(tick, 115);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && timer) {
+      clearInterval(timer);
+      timer = null;
+    } else if (!document.hidden && !timer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      timer = window.setInterval(tick, 115);
+    }
+  });
+}
+
+installMorphIcon();
