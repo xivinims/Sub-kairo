@@ -3,39 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1713">
+  <meta name="theme-color" content="#d8ff7a">
   <meta name="description" content="Kairo — bot para Discord com moderação, economia, carreira, mascote e progressão.">
   <meta property="og:title" content="Kairo — Discord Bot">
-  <meta property="og:description" content="Um bot para deixar seu servidor mais organizado e mais vivo.">
+  <meta property="og:description" content="Seu servidor, mais vivo.">
   <title>Kairo — Discord Bot</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=DynaPuff:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="sketchfab-bg" aria-hidden="true">
-    <iframe
-      title="FLORESTA ENCANTADA"
-      src="https://sketchfab.com/models/4c2fcdb9447a4a099e99ad17eff88826/embed?autostart=1&preload=1&autospin=0.08&ui_controls=0&ui_infos=0&ui_help=0&ui_settings=0&ui_fullscreen=0&ui_annotations=0"
-      frameborder="0"
-      allow="autoplay; fullscreen; xr-spatial-tracking"
-      allowfullscreen
-      loading="eager"
-    ></iframe>
-    <div class="sketchfab-shade"></div>
-  </div>
-  <div class="sketchfab-credit">
-    <a href="https://sketchfab.com/3d-models/floresta-encantada-4c2fcdb9447a4a099e99ad17eff88826" target="_blank" rel="nofollow noreferrer">FLORESTA ENCANTADA</a>
-    <span>by</span>
-    <a href="https://sketchfab.com/Guega" target="_blank" rel="nofollow noreferrer">Guega</a>
-    <span>on Sketchfab</span>
-  </div>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
 
   <header class="hero" id="inicio">
-
     <nav class="nav" aria-label="Navegação principal">
       <a class="brand" href="#inicio">
         <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt=""></span>
@@ -49,110 +33,103 @@
         <a href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer">Server do Kairo</a>
       </div>
 
-      <a class="nav-cta liquid-target" data-liquid-glass href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar</a>
+      <a class="nav-cta" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ↗</a>
 
       <button class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="false">
         <img class="menu-icon-doodle" src="/assets/19%20Sem%20Ti%CC%81tulo_20261001215914.png" alt="" aria-hidden="true">
       </button>
     </nav>
 
-    <div class="menu-panel liquid-target" data-liquid-glass aria-hidden="true">
-      <div class="menu-panel-inner">
-        <a class="menu-item" href="#recursos"><span>Recursos</span><b>↘</b></a>
-        <a class="menu-item" href="#comandos"><span>Comandos</span><b>↘</b></a>
-        <a class="menu-item" href="#sobre"><span>Sobre</span><b>↘</b></a>
-
-        <div class="menu-divider"></div>
-
-        <a class="menu-item menu-item-external" href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer">
-          <span>Server do Kairo</span><b>↗</b>
-        </a>
-        <a class="menu-item menu-item-primary" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-          <span>Adicionar ao Discord</span><b>↗</b>
-        </a>
-      </div>
+    <div class="menu-panel" aria-hidden="true">
+      <a href="#recursos">Recursos <span>↘</span></a>
+      <a href="#comandos">Comandos <span>↘</span></a>
+      <a href="#sobre">Sobre <span>↘</span></a>
+      <a href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer">Server do Kairo <span>↗</span></a>
+      <a class="menu-add" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ao Discord <span>↗</span></a>
     </div>
 
-    <div class="hero-content hero-reference">
-      <p class="eyebrow hero-kicker">DISCORD BOT · 2026</p>
-      <h1><span>KAIRO</span><i aria-hidden="true"></i></h1>
-      <p class="hero-copy"><strong>Seu servidor, mais vivo.</strong> Moderação, economia, carreira, progressão e interações em uma experiência só.</p>
+    <div class="hero-shell">
+      <section class="hero-copy">
+        <p class="eyebrow">KAIRO · DISCORD BOT</p>
+        <h1>Seu server<br><span>fica mais vivo.</span></h1>
+        <p class="hero-lead">Moderação, economia, carreira, perfil e as interações do Kairo em um bot só.</p>
 
-      <div class="hero-actions">
-        <a class="button primary liquid-target" data-liquid-glass href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
-          Adicionar ao Discord <span class="cta-dot">↗</span>
-        </a>
-      </div>
-
-      <div class="release-line">
-        <span class="dot"></span>
-        <strong>Beta · lançamento em 08/01/2027</strong>
-        <span>feito por <a class="credit-link" href="https://github.com/Aurivane-Works" target="_blank" rel="noreferrer"><img class="credit-icon" src="/assets/aurivane-works-icon.png" alt="" aria-hidden="true"><span class="credit-text"><span class="credit-aurivane">Aurivane</span> <span class="credit-works">Works</span></span></a></span>
-      </div>
-    </div>
-
-    <div class="mention-card liquid-target" data-liquid-glass>
-      <div class="mention-head">
-        <span class="mention-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt="Avatar do Kairo"></span>
-        <div>
-          <strong>Kairo</strong>
-          <small>quando você marca o bot</small>
+        <div class="hero-actions">
+          <a class="button button-dark" href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">
+            Adicionar ao Discord <b>↗</b>
+          </a>
+          <a class="button button-soft" href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer">Entrar no server</a>
         </div>
-      </div>
-      <p id="mentionReply">Oiie!</p>
-      <button id="mentionButton" type="button">outra resposta real</button>
+
+        <div class="hero-meta">
+          <span><i></i> Beta · 08/01/2027</span>
+          <span>feito por <a href="https://github.com/Aurivane-Works" target="_blank" rel="noreferrer">Aurivane Works</a></span>
+        </div>
+      </section>
+
+      <section class="mascot-panel" aria-label="Kairo">
+        <span class="mascot-label">fala comigo :)</span>
+        <div class="mascot-image-wrap">
+          <img src="/assets/design/kairo-cute.webp" alt="Bichinho fofo em estilo pixel">
+        </div>
+
+        <div class="mention-card">
+          <small>quando você marca o Kairo</small>
+          <p id="mentionReply">Oiie!</p>
+          <button id="mentionButton" type="button">outra fala</button>
+        </div>
+
+        <span class="floating-note note-a">cute mode</span>
+        <span class="floating-note note-b">+ carinho</span>
+      </section>
+
+      <img class="hero-island" src="/assets/design/floating-island.webp" alt="" aria-hidden="true">
+      <img class="hero-log" src="/assets/design/moss-log.webp" alt="" aria-hidden="true">
     </div>
   </header>
 
   <main>
-    <section class="section" id="recursos">
-      <div class="section-head">
-        <p class="eyebrow dark">01 · SISTEMA</p>
-        <h2>Feito para<br><em>movimentar</em> o servidor.</h2>
-        <p>As partes principais do Kairo organizadas de um jeito direto, visual e rápido.</p>
+    <section class="section features-section" id="recursos">
+      <div class="section-intro">
+        <p class="eyebrow">01 · RECURSOS</p>
+        <h2>Grande,<br><span>fofo</span> e útil.</h2>
+        <p>O visual é brincalhão, mas as funções continuam diretas.</p>
       </div>
 
-      <div class="feature-list">
-        <article class="feature">
-          <span>01</span>
-          <div>
-            <h3>Moderação</h3>
-            <p>Ban, kick, timeout, warns, limpeza, slowmode, lock e outras ferramentas de administração.</p>
-          </div>
+      <div class="feature-grid">
+        <article class="feature feature-lime">
+          <span class="feature-number">01</span>
+          <h3>Moderação</h3>
+          <p>Ban, kick, timeout, warns, limpeza, slowmode, lock e outras ferramentas de administração.</p>
         </article>
 
-        <article class="feature">
-          <span>02</span>
-          <div>
-            <h3>Economia & progressão</h3>
-            <p>Saldo, daily, banco, loja, inventário, XP, ranking, conquistas e missões.</p>
-          </div>
+        <article class="feature feature-pink">
+          <span class="feature-number">02</span>
+          <h3>Economia</h3>
+          <p>Saldo, daily, banco, loja, inventário, XP, ranking, conquistas e missões.</p>
         </article>
 
-        <article class="feature">
-          <span>03</span>
-          <div>
-            <h3>Carreira</h3>
-            <p>Emprego, turnos, treino, currículo e progresso profissional dentro do bot.</p>
-          </div>
+        <article class="feature feature-blue">
+          <span class="feature-number">03</span>
+          <h3>Carreira</h3>
+          <p>Emprego, turnos, treino, currículo e progresso profissional dentro do bot.</p>
         </article>
 
-        <article class="feature">
-          <span>04</span>
-          <div>
-            <h3>Kairo & perfil</h3>
-            <p>Mascote, vínculo, check-in, perfil, carteirinha, títulos e interações sociais.</p>
-          </div>
+        <article class="feature feature-cream">
+          <span class="feature-number">04</span>
+          <h3>Kairo & perfil</h3>
+          <p>Mascote, vínculo, check-in, perfil, títulos e interações sociais.</p>
         </article>
       </div>
+
+      <img class="section-island" src="/assets/design/floating-island.webp" alt="" aria-hidden="true">
     </section>
-<section class="section commands-section" id="comandos">
-      <div class="section-head split">
-        <div>
-          <p class="eyebrow dark">02 · COMANDOS</p>
-          <h2>Digite.<br><em>Pronto.</em></h2>
-        </div>
-        <p>Os nomes abaixo são comandos reais do bot.</p>
+
+    <section class="commands-section" id="comandos">
+      <div class="commands-copy">
+        <p class="eyebrow">02 · COMANDOS</p>
+        <h2>Um toque.<br><span>Um comando.</span></h2>
+        <p>Toque em um comando para copiar.</p>
       </div>
 
       <div class="command-grid">
@@ -173,11 +150,15 @@
     </section>
 
     <section class="about" id="sobre">
+      <img class="about-log" src="/assets/design/moss-log.webp" alt="" aria-hidden="true">
       <div>
-        <p class="eyebrow dark">03 · SOBRE</p>
-        <h2>Um bot com<br><em>personalidade.</em></h2>
+        <p class="eyebrow">03 · SOBRE</p>
+        <h2>Kairo tem<br><span>personalidade.</span></h2>
       </div>
-      <p>A versão atual foi feita por <a class="credit-link" href="https://github.com/Aurivane-Works" target="_blank" rel="noreferrer"><img class="credit-icon" src="/assets/aurivane-works-icon.png" alt="" aria-hidden="true"><span class="credit-text"><span class="credit-aurivane">Aurivane</span> <span class="credit-works">Works</span></span></a>. O lançamento informado para a versão final é <strong>08/01/2027</strong>.</p>
+      <div class="about-card">
+        <p>Um bot feito para deixar o servidor mais movimentado sem transformar tudo em uma tela cheia de informação.</p>
+        <a href="https://github.com/Aurivane-Works" target="_blank" rel="noreferrer">Aurivane Works ↗</a>
+      </div>
     </section>
   </main>
 
@@ -189,7 +170,7 @@
       <span>Kairo</span>
     </a>
     <p>Beta · lançamento 08/01/2027</p>
-    <a href="https://discord.com/oauth2/authorize?client_id=1519161870815072286" target="_blank" rel="noreferrer">Adicionar ↗</a>
+    <a href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer">Server do Kairo ↗</a>
   </footer>
 
   <script src="/script.js"></script>
