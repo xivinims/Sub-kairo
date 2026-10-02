@@ -1,5 +1,3 @@
-import { LiquidGlass } from 'https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js';
-
 const mentionReplies = [
   'Oiie!',
   'aoba!',
@@ -65,16 +63,18 @@ mentionButton.addEventListener('click', () => {
 });
 
 let mascotIndex = 0;
-mascotButton.addEventListener('click', () => {
-  mascotIndex = (mascotIndex + 1) % mascotReplies.length;
-  const [text, extra] = mascotReplies[mascotIndex];
-  mascotReply.animate(
-    [{opacity:0, transform:'translateY(7px)'},{opacity:1, transform:'translateY(0)'}],
-    {duration:220, easing:'ease-out'}
-  );
-  mascotReply.textContent = text;
-  mascotExtra.textContent = extra;
-});
+if (mascotButton && mascotReply && mascotExtra) {
+  mascotButton.addEventListener('click', () => {
+    mascotIndex = (mascotIndex + 1) % mascotReplies.length;
+    const [text, extra] = mascotReplies[mascotIndex];
+    mascotReply.animate(
+      [{opacity:0, transform:'translateY(7px)'},{opacity:1, transform:'translateY(0)'}],
+      {duration:220, easing:'ease-out'}
+    );
+    mascotReply.textContent = text;
+    mascotExtra.textContent = extra;
+  });
+}
 
 commandGrid.addEventListener('click', async event => {
   const button = event.target.closest('.command-chip');
@@ -216,6 +216,7 @@ async function setupLiquidGlass() {
   if (!glassElements.length) return;
 
   try {
+    const { LiquidGlass } = await import('https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js');
     const instance = await LiquidGlass.init({
       root,
       glassElements
