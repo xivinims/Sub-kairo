@@ -1397,3 +1397,66 @@ body.night-mode .firefly-layer{
   .sprite-butterfly,
   .flying-leaf{animation:none!important}
 }
+
+
+/* Final generated-frame assets */
+.frame-sprite{
+  overflow:visible!important;
+  contain:none!important;
+  background:none!important;
+}
+.nature-frame-img{
+  position:relative!important;
+  inset:auto!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  display:block;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.sprite-tree{
+  width:min(30vw,330px)!important;
+  aspect-ratio:1!important;
+}
+.sprite-tree.tree-left{
+  left:-72px!important;
+}
+.sprite-tree.tree-right{
+  right:-78px!important;
+}
+.sprite-butterfly{
+  width:82px!important;
+  aspect-ratio:1!important;
+  overflow:visible!important;
+}
+.sprite-butterfly.butterfly-b{
+  width:58px!important;
+}
+.flying-leaf{
+  width:var(--size)!important;
+  height:auto!important;
+  aspect-ratio:auto!important;
+  overflow:visible!important;
+  object-fit:contain!important;
+  display:block!important;
+  background:none!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 7px 7px rgba(28,54,31,.14));
+  will-change:transform;
+}
+
+@media(max-width:720px){
+  .sprite-tree{
+    width:220px!important;
+    top:-20px!important;
+  }
+  .sprite-tree.tree-left{left:-92px!important}
+  .sprite-tree.tree-right{right:-96px!important}
+  .sprite-butterfly{width:64px!important}
+  .sprite-butterfly.butterfly-b{width:47px!important}
+}
