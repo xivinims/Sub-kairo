@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#cfe6f7">
+  <meta name="theme-color" content="#0b1713">
   <meta name="description" content="Kairo — bot para Discord com moderação, economia, carreira, mascote e progressão.">
   <meta property="og:title" content="Kairo — Discord Bot">
   <meta property="og:description" content="Um bot para deixar seu servidor mais organizado e mais vivo.">
@@ -16,47 +16,25 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="world-scene" aria-hidden="true">
-    <div class="world-day"></div>
-    <div class="world-night"></div>
-
-    <div class="frame-sprite sprite-tree tree-left">
-      <img class="nature-frame-img" src="/assets/nature/tree-wind.webp" alt="">
-    </div>
-    <div class="frame-sprite sprite-tree tree-right">
-      <img class="nature-frame-img" src="/assets/nature/tree-wind.webp" alt="">
-    </div>
-
-    <div class="frame-sprite sprite-butterfly butterfly-a">
-      <img class="nature-frame-img" src="/assets/nature/butterfly-flight.webp" alt="">
-    </div>
-    <div class="frame-sprite sprite-butterfly butterfly-b">
-      <img class="nature-frame-img" src="/assets/nature/butterfly-flight.webp" alt="">
-    </div>
-
-    <div class="leaf-layer" id="leafLayer"></div>
-    <div class="firefly-layer" id="fireflyLayer"></div>
+  <div class="sketchfab-bg" aria-hidden="true">
+    <iframe
+      title="FLORESTA ENCANTADA"
+      src="https://sketchfab.com/models/4c2fcdb9447a4a099e99ad17eff88826/embed?autostart=1&preload=1&autospin=0.08&ui_controls=0&ui_infos=0&ui_help=0&ui_settings=0&ui_fullscreen=0&ui_annotations=0"
+      frameborder="0"
+      allow="autoplay; fullscreen; xr-spatial-tracking"
+      allowfullscreen
+      loading="eager"
+    ></iframe>
+    <div class="sketchfab-shade"></div>
   </div>
-  <header class="hero" id="inicio">
+  <div class="sketchfab-credit">
+    <a href="https://sketchfab.com/3d-models/floresta-encantada-4c2fcdb9447a4a099e99ad17eff88826" target="_blank" rel="nofollow noreferrer">FLORESTA ENCANTADA</a>
+    <span>by</span>
+    <a href="https://sketchfab.com/Guega" target="_blank" rel="nofollow noreferrer">Guega</a>
+    <span>on Sketchfab</span>
+  </div>
 
-    <div class="landscape" aria-hidden="true">
-      <div class="sun"></div>
-      <div class="cloud c1"></div>
-      <div class="cloud c2"></div>
-      <div class="mountain m1"></div>
-      <div class="mountain m2"></div>
-      <div class="mountain m3"></div>
-      <div class="meadow"></div>
-      <div class="tree">
-        <i class="trunk"></i>
-        <i class="crown crown-a"></i>
-        <i class="crown crown-b"></i>
-        <i class="crown crown-c"></i>
-      </div>
-      <div class="grass g1"></div>
-      <div class="grass g2"></div>
-      <div class="grass g3"></div>
-    </div>
+  <header class="hero" id="inicio">
 
     <nav class="nav" aria-label="Navegação principal">
       <a class="brand" href="#inicio">
