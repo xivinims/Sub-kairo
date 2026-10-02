@@ -316,6 +316,7 @@ footer{
 .morph-frame{
   fill:#65b839;
   opacity:0;
+  transition:opacity 170ms ease-in-out;
 }
 .morph-frame.is-active{opacity:1}
 @media(max-width:680px){
