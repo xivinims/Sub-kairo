@@ -52,15 +52,6 @@ document.addEventListener('click', event => {
   if (!menuPanel.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
 });
 
-let mentionIndex = 0;
-mentionButton.addEventListener('click', () => {
-  mentionIndex = (mentionIndex + 1) % mentionReplies.length;
-  mentionReply.animate(
-    [{opacity:0, transform:'translateY(5px)'},{opacity:1, transform:'translateY(0)'}],
-    {duration:180, easing:'ease-out'}
-  );
-  mentionReply.textContent = mentionReplies[mentionIndex];
-});
 
 let mascotIndex = 0;
 if (mascotButton && mascotReply && mascotExtra) {
