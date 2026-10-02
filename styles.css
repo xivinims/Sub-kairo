@@ -159,15 +159,80 @@ img{display:block}
   pointer-events:none;
 }
 .menu-panel{
-  position:absolute;z-index:30;top:92px;right:18px;
-  width:220px;padding:10px;display:grid;gap:3px;
-  border:1px solid #e4e8e4;border-radius:18px;background:#fffdf8;
-  box-shadow:0 14px 32px rgba(66,86,94,.14);
-  opacity:0;transform:translateY(-8px);pointer-events:none;transition:.18s
+  position:absolute;
+  z-index:30;
+  top:84px;
+  right:18px;
+  width:min(286px,calc(100vw - 24px));
+  padding:8px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:24px;
+  background:rgba(21,49,60,.34);
+  color:white;
+  box-shadow:0 20px 48px rgba(0,28,40,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  backdrop-filter:blur(22px) saturate(125%);
+  -webkit-backdrop-filter:blur(22px) saturate(125%);
+  opacity:0;
+  transform:translateY(-8px) scale(.97);
+  transform-origin:top right;
+  pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
 }
-.menu-panel.is-open{opacity:1;transform:none;pointer-events:auto}
-.menu-panel a{padding:11px 12px;border-radius:11px;font-size:13px}
-.menu-panel a:hover{background:#eef3ed}
+.menu-panel.is-open{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+}
+.menu-panel-inner{
+  display:grid;
+  gap:4px;
+}
+.menu-item{
+  min-height:46px;
+  padding:0 13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border-radius:16px;
+  color:rgba(255,255,255,.92);
+  font-size:13px;
+  font-weight:600;
+  transition:background .16s ease, transform .16s ease;
+}
+.menu-item b{
+  font-size:12px;
+  font-weight:500;
+  opacity:.64;
+}
+.menu-item:hover,
+.menu-item:active{
+  background:rgba(255,255,255,.11);
+}
+.menu-item:active{
+  transform:scale(.985);
+}
+.menu-divider{
+  height:1px;
+  margin:5px 8px;
+  background:rgba(255,255,255,.12);
+}
+.menu-item-external{
+  background:rgba(255,255,255,.06);
+}
+.menu-item-primary{
+  margin-top:2px;
+  background:rgba(255,255,255,.90);
+  color:#243139;
+  box-shadow:0 8px 20px rgba(0,0,0,.10);
+}
+.menu-item-primary b{
+  opacity:.78;
+}
+.menu-item-primary:hover,
+.menu-item-primary:active{
+  background:#fff;
+}
 
 .hero-content{
   position:relative;z-index:5;
@@ -837,5 +902,20 @@ html[data-liquid-glass="ready"] .liquid-target{
   .menu-icon-doodle{
     width:50px;
     height:50px;
+  }
+}
+
+@media(max-width:680px){
+  .menu-panel{
+    top:78px;
+    right:10px;
+    width:min(280px,calc(100vw - 20px));
+    border-radius:22px;
+  }
+  .menu-item{
+    min-height:50px;
+    padding:0 14px;
+    border-radius:15px;
+    font-size:14px;
   }
 }
