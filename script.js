@@ -262,3 +262,37 @@ function installRevealMotion() {
 }
 
 installRevealMotion();
+
+
+async function loadDiscordWidget() {
+  const card = document.querySelector('#discordWidgetCard');
+  const name = document.querySelector('#discordWidgetName');
+  const status = document.querySelector('#discordWidgetStatus');
+
+  if (!card || !name || !status) return;
+
+  try {
+    const response = await fetch('https://discord.com/api/guilds/1553848194687836344/widget.json', {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) throw new Error('Discord widget indisponível');
+
+    const data = await response.json();
+    const online = Number(data.presence_count || 0);
+
+    if (data.name) name.textContent = data.name;
+    status.textContent = online === 1 ? '1 pessoa online' : `${online} pessoas online`;
+    card.classList.add('is-online');
+
+    if (data.instant_invite) {
+      card.href = data.instant_invite;
+    }
+  } catch (error) {
+    name.textContent = 'Server do Kairo';
+    status.textContent = 'entrar no servidor';
+    card.classList.remove('is-online');
+  }
+}
+
+loadDiscordWidget();
