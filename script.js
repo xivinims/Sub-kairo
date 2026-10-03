@@ -287,3 +287,58 @@ async function loadDiscordWidget() {
 }
 
 loadDiscordWidget();
+
+
+function installVersionHistory() {
+  const trigger = document.querySelector('#versionTrigger');
+  const tray = document.querySelector('#versionTray');
+  const close = document.querySelector('#versionClose');
+
+  if (!trigger || !tray || !close) return;
+
+  let timer = null;
+  const autoCloseMs = 8000;
+
+  const hide = () => {
+    tray.classList.remove('is-open');
+    tray.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+
+  const show = () => {
+    if (timer) clearTimeout(timer);
+
+    tray.classList.remove('is-open');
+    void tray.offsetWidth;
+    tray.classList.add('is-open');
+    tray.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+
+    timer = window.setTimeout(hide, autoCloseMs);
+  };
+
+  trigger.addEventListener('click', event => {
+    event.stopPropagation();
+    if (tray.classList.contains('is-open')) hide();
+    else show();
+  });
+
+  close.addEventListener('click', hide);
+
+  document.addEventListener('click', event => {
+    if (!tray.classList.contains('is-open')) return;
+    if (tray.contains(event.target) || trigger.contains(event.target)) return;
+    hide();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') hide();
+  });
+}
+
+installVersionHistory();
