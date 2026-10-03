@@ -73,7 +73,7 @@
         </div>
 
         <div class="hero-meta">
-          <span><i></i> Beta · 08/01/2027</span>
+          <span class="version-meta"><i></i> Kairo Beta · <button class="version-trigger" id="versionTrigger" type="button" aria-expanded="false" aria-controls="versionTray">V5.5</button></span>
           <span>feito por <a class="aurivane-link" href="https://github.com/Aurivane-Works" target="_blank" rel="noreferrer"><img class="aurivane-icon" src="/assets/aurivane-works-icon.png" alt="" aria-hidden="true"><span>Aurivane Works</span></a></span>
         </div>
       </section>
@@ -169,7 +169,7 @@
       <span class="brand-avatar"><img src="/assets/kairo-avatar.jpg?v=4" alt=""></span>
       <span>Kairo</span>
     </a>
-    <p>Beta · lançamento 08/01/2027</p>
+    <p>Beta V5.5 · lançamento 08/01/2027</p>
     <a class="discord-widget-card" id="discordWidgetCard" href="https://discord.gg/KG28SXrMj7" target="_blank" rel="noreferrer" aria-label="Entrar no Server do Kairo">
       <span class="discord-widget-dot"></span>
       <span class="discord-widget-copy">
@@ -179,6 +179,44 @@
       <span class="discord-widget-arrow">↗</span>
     </a>
   </footer>
+
+  <aside class="version-tray" id="versionTray" aria-hidden="true" aria-live="polite">
+    <div class="version-tray-head">
+      <div>
+        <small>HISTÓRICO DO KAIRO</small>
+        <strong>Versões</strong>
+      </div>
+      <button class="version-close" id="versionClose" type="button" aria-label="Fechar histórico">×</button>
+    </div>
+
+    <div class="version-list">
+      <div class="version-item">
+        <b>V1</b>
+        <span>Base</span>
+      </div>
+      <div class="version-item">
+        <b>V1.5</b>
+        <span>Base corrigida</span>
+      </div>
+      <div class="version-item">
+        <b>V2.2</b>
+        <span>Oficial</span>
+      </div>
+      <div class="version-item">
+        <b>V3</b>
+        <span>Erros encontrados e visão ampla foi aplicada</span>
+      </div>
+      <div class="version-item is-current">
+        <b>V4.3</b>
+        <span>Atual</span>
+      </div>
+      <div class="version-item is-next">
+        <b>V5.5</b>
+        <span>Versão oficial disponível · 08/01/2027</span>
+      </div>
+    </div>
+    <div class="version-timer" aria-hidden="true"><i></i></div>
+  </aside>
 
   <script src="/script.js"></script>
 </body>
