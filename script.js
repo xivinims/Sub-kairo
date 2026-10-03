@@ -297,7 +297,7 @@ function installVersionHistory() {
   if (!trigger || !tray || !close) return;
 
   let timer = null;
-  const autoCloseMs = 8000;
+  const autoCloseMs = 15000;
 
   const hide = () => {
     tray.classList.remove('is-open');
