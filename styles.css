@@ -1033,3 +1033,53 @@ footer>a:last-child{justify-self:end;font-weight:800}
   .version-item b{font-size:16px}
   .version-item span{font-size:9px}
 }
+
+
+/* V5.5 — AI Support */
+.feature-support{
+  grid-column:1/-1;
+  min-height:220px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  background:var(--lav);
+}
+.feature-support .support-copy{
+  max-width:760px;
+  display:grid;
+  gap:10px;
+}
+.feature-support h3{
+  margin:0;
+  font-size:clamp(34px,4vw,58px);
+}
+.feature-support p{
+  max-width:680px;
+  font-size:13px;
+}
+.support-badge{
+  width:max-content;
+  max-width:100%;
+  padding:7px 10px;
+  border:1px solid var(--ink);
+  border-radius:999px;
+  background:white;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.2;
+}
+@media(max-width:680px){
+  .feature-support{
+    grid-column:auto;
+    min-height:260px;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .feature-support .support-copy{
+    margin-top:auto;
+  }
+  .support-badge{
+    white-space:normal;
+  }
+}
