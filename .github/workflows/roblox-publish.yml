@@ -1,0 +1,37 @@
+name: Publish Roblox Place
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "roblox-publisher/**"
+      - ".github/workflows/roblox-publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Roblox secret
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          if [ -z "$ROBLOX_API_KEY" ]; then
+            echo "::error::ROBLOX_API_KEY repository secret is missing."
+            exit 2
+          fi
+          echo "Roblox API key is available to the workflow."
+
+      - name: Publish patch to Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node roblox-publisher/publish.mjs
