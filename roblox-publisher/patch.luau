@@ -11,9 +11,9 @@ local SPS=game:GetService("StarterPlayer").StarterPlayerScripts
 local Lighting=game:GetService("Lighting")
 
 local LOGO="rbxassetid://127912605246110"
-local PLAYER_BASE_SPEED=16
-local PLAYER_MAX_SPEED=36
-local BOT_SPEED=35.28
+local PLAYER_BASE_SPEED=10
+local PLAYER_MAX_SPEED=50
+local BOT_SPEED=48.5
 
 Players.CharacterAutoLoads=false
 
@@ -72,7 +72,7 @@ local menuState=net:WaitForChild("MenuState")
 local INTERMISSION=25
 local ROUND_TIME=120
 local MAX_BOTS=6
-local PLAYER_BASE_SPEED=16
+local PLAYER_BASE_SPEED=10
 
 local lastMap=nil
 local currentMapName=nil
@@ -417,7 +417,7 @@ local function spawnBots(map)
    b.Parent=folder
 
    local hum=b:FindFirstChildOfClass("Humanoid")
-   if hum then hum.WalkSpeed=35.28 end
+   if hum then hum.WalkSpeed=48.5 end
 
    for _,d in ipairs(b:GetDescendants()) do
     if d:IsA("LuaSourceContainer") then d.Disabled=true end
@@ -553,7 +553,7 @@ assert(director,"NextbotDirector missing")
 director.Source=[==[
 local Players=game:GetService("Players")
 local PathfindingService=game:GetService("PathfindingService")
-local BOT_SPEED=35.28
+local BOT_SPEED=48.5
 
 local function nearestTarget(pos)
  local best=nil
@@ -642,42 +642,71 @@ local TweenService=game:GetService("TweenService")
 local RunService=game:GetService("RunService")
 
 local player=Players.LocalPlayer
-local BASE_SPEED=16
-local MAX_SPEED=36
-local ACCEL_TIME=2.8
+local BASE_SPEED=10
+local MAX_SPEED=50
+local ACCEL_TIME=10
+local RUN_THRESHOLD=20
+local RUN_ANIMATION="rbxassetid://10902697177"
 
-local currentTween=nil
-local moveConn=nil
+local renderConn=nil
+local runTrack=nil
+local speed=BASE_SPEED
+local moving=false
+
+local function stopTrack()
+ if runTrack then
+  pcall(function()runTrack:Stop(.12)end)
+  runTrack=nil
+ end
+end
 
 local function setup(char)
- if moveConn then moveConn:Disconnect();moveConn=nil end
- if currentTween then currentTween:Cancel();currentTween=nil end
+ if renderConn then renderConn:Disconnect();renderConn=nil end
+ stopTrack()
 
  local hum=char:WaitForChild("Humanoid",8)
  if not hum then return end
+ local animator=hum:FindFirstChildOfClass("Animator") or Instance.new("Animator",hum)
+
+ local anim=Instance.new("Animation")
+ anim.AnimationId=RUN_ANIMATION
+ local ok,track=pcall(function()return animator:LoadAnimation(anim)end)
+ if ok then
+  runTrack=track
+  runTrack.Priority=Enum.AnimationPriority.Movement
+  runTrack.Looped=true
+ end
+
+ speed=BASE_SPEED
  hum.WalkSpeed=BASE_SPEED
+ local cam=workspace.CurrentCamera
 
- local moving=false
- moveConn=RunService.RenderStepped:Connect(function()
+ renderConn=RunService.RenderStepped:Connect(function(dt)
   if not char.Parent or hum.Health<=0 then return end
-  local nowMoving=hum.MoveDirection.Magnitude>.05
 
-  if nowMoving~=moving then
-   moving=nowMoving
-   if currentTween then currentTween:Cancel() end
+  local isMoving=hum.MoveDirection.Magnitude>.05
+  if isMoving then
+   speed=math.min(MAX_SPEED,speed+((MAX_SPEED-BASE_SPEED)/ACCEL_TIME)*dt)
+  else
+   speed=BASE_SPEED
+  end
+  hum.WalkSpeed=speed
 
-   if moving then
-    local remaining=math.max(.1,(MAX_SPEED-hum.WalkSpeed)/(MAX_SPEED-BASE_SPEED))
-    currentTween=TweenService:Create(
-     hum,
-     TweenInfo.new(ACCEL_TIME*remaining,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),
-     {WalkSpeed=MAX_SPEED}
-    )
-    currentTween:Play()
-   else
-    hum.WalkSpeed=BASE_SPEED
+  -- FOV behavior from the supplied evade movement asset: 70 idle -> 80 running.
+  local targetFov=isMoving and 80 or 70
+  cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*7)
+
+  if runTrack then
+   if isMoving and speed>=RUN_THRESHOLD then
+    if not runTrack.IsPlaying then runTrack:Play(.10) end
+    -- Keep foot cadence synced with actual acceleration.
+    runTrack:AdjustSpeed(math.clamp(1.15+(speed-RUN_THRESHOLD)/(MAX_SPEED-RUN_THRESHOLD)*.65,1.15,1.8))
+   elseif runTrack.IsPlaying then
+    runTrack:Stop(.10)
    end
   end
+
+  moving=isMoving
  end)
 end
 
@@ -685,6 +714,132 @@ player.CharacterAdded:Connect(setup)
 if player.Character then task.spawn(setup,player.Character) end
 ]==]
 move.Parent=SPS
+
+-- Directional R6 keyframes remain active, but their playback speed now follows
+-- the actual acceleration instead of playing at one fixed cadence.
+local oldMotion=SPS:FindFirstChild("NB_R6MotionController")
+if oldMotion then oldMotion:Destroy() end
+local motion=Instance.new("LocalScript")
+motion.Name="NB_R6MotionController"
+motion.Source=[==[
+local Players=game:GetService("Players")
+local RS=game:GetService("ReplicatedStorage")
+local RunService=game:GetService("RunService")
+
+local player=Players.LocalPlayer
+local clips=RS:WaitForChild("NB_R6Animations")
+local conn
+
+local function flattenPose(p,map)
+ if p:IsA("Pose") then map[p.Name]=p.CFrame end
+ for _,c in ipairs(p:GetChildren()) do
+  if c:IsA("Pose") then flattenPose(c,map) end
+ end
+end
+
+local function bake(seq)
+ local frames={}
+ for _,kf in ipairs(seq:GetKeyframes()) do
+  local poses={}
+  for _,p in ipairs(kf:GetChildren()) do
+   if p:IsA("Pose") then flattenPose(p,poses) end
+  end
+  table.insert(frames,{t=kf.Time,poses=poses})
+ end
+ table.sort(frames,function(a,b)return a.t<b.t end)
+ local duration=(frames[#frames] and frames[#frames].t) or 1
+ return {frames=frames,duration=math.max(duration,.05),looped=seq.Loop}
+end
+
+local baked={}
+for _,seq in ipairs(clips:GetChildren()) do
+ if seq:IsA("KeyframeSequence") then baked[seq.Name]=bake(seq) end
+end
+
+local function sample(clip,t)
+ if not clip or #clip.frames==0 then return {} end
+ local time=clip.looped and (t%clip.duration) or math.min(t,clip.duration)
+ local a,b=clip.frames[1],clip.frames[#clip.frames]
+ for i=1,#clip.frames-1 do
+  if time>=clip.frames[i].t and time<=clip.frames[i+1].t then
+   a,b=clip.frames[i],clip.frames[i+1]
+   break
+  end
+ end
+ local alpha=math.clamp((time-a.t)/math.max(.0001,b.t-a.t),0,1)
+ local out={}
+ for part,cf in pairs(a.poses) do out[part]=cf:Lerp(b.poses[part] or cf,alpha) end
+ for part,cf in pairs(b.poses) do if not out[part] then out[part]=cf end end
+ return out
+end
+
+local function setup(char)
+ if conn then conn:Disconnect();conn=nil end
+ local hum=char:WaitForChild("Humanoid",8)
+ local root=char:WaitForChild("HumanoidRootPart",8)
+ if not hum or not root or hum.RigType~=Enum.HumanoidRigType.R6 then return end
+
+ local motors={}
+ for _,d in ipairs(char:GetDescendants()) do
+  if d:IsA("Motor6D") and d.Part1 then motors[d.Part1.Name]=d end
+ end
+
+ local current="idle"
+ local started=os.clock()
+ local transition=os.clock()
+ local from={}
+
+ local function desired()
+  local st=hum:GetState()
+  if st==Enum.HumanoidStateType.Jumping or st==Enum.HumanoidStateType.Freefall then
+   return baked.jump and "jump" or "idle"
+  end
+  if hum.MoveDirection.Magnitude<.05 then return "idle" end
+
+  local localDir=root.CFrame:VectorToObjectSpace(hum.MoveDirection)
+  local x,z=localDir.X,localDir.Z
+  if z<-.35 then
+   if x<-.30 and baked.FLeft then return "FLeft" end
+   if x>.30 and baked.FRight then return "FRight" end
+   return baked.Forward and "Forward" or "forward"
+  elseif z>.35 then
+   return baked.back and "back" or "idle"
+  elseif x<0 then
+   return baked.left and "left" or "idle"
+  else
+   return baked.right and "right" or "idle"
+  end
+ end
+
+ conn=RunService.RenderStepped:Connect(function()
+  if not char.Parent or hum.Health<=0 then return end
+
+  local nextName=desired()
+  if not baked[nextName] then nextName="idle" end
+
+  if nextName~=current then
+   from={}
+   for part,m in pairs(motors) do from[part]=m.Transform end
+   current=nextName
+   started=os.clock()
+   transition=started
+  end
+
+  local isMove=current~="idle" and current~="jump"
+  local playbackRate=isMove and math.clamp(hum.WalkSpeed/20,.75,2.25) or 1
+  local poses=sample(baked[current],(os.clock()-started)*playbackRate)
+  local alpha=math.clamp((os.clock()-transition)/.10,0,1)
+
+  for part,m in pairs(motors) do
+   m.Transform=(from[part] or m.Transform):Lerp(poses[part] or CFrame.new(),alpha)
+  end
+ end)
+end
+
+player.CharacterAdded:Connect(setup)
+if player.Character then task.spawn(setup,player.Character) end
+]==]
+motion.Parent=SPS
 
 -- old HUD conflicts with the rebuilt interface
 local oldHud=SPS:FindFirstChild("NBReferenceHUDClient")
@@ -1104,7 +1259,7 @@ local modalBody=label(modal,"Body","",UDim2.fromScale(.08,.28),UDim2.fromScale(.
 local modalClose=textButton(modal,"Close","VOLTAR",UDim2.fromScale(.34,.82),UDim2.fromScale(.32,.12),Color3.fromRGB(175,58,65),Color3.fromRGB(220,80,90),202)
 
 -- camera button in round
-local camBtn=textButton(ui,"CameraModeButton","3P",UDim2.fromScale(.91,.86),UDim2.fromScale(.055,.06),Color3.fromRGB(25,25,28),Color3.fromRGB(100,120,155),150)
+local camBtn=textButton(ui,"CameraModeButton","3P",UDim2.fromScale(.875,.13),UDim2.fromScale(.07,.055),Color3.fromRGB(25,25,28),Color3.fromRGB(100,120,155),150)
 camBtn.Visible=false
 
 -- =========================================================
@@ -1181,6 +1336,21 @@ RunService:BindToRenderStep("NB_MenuCamera",Enum.RenderPriority.Camera.Value+10,
   end
  end
 end)
+
+RunService:BindToRenderStep("NB_FixedZoom",Enum.RenderPriority.Camera.Value+11,function()
+ if not menuMode then
+  if cameraMode=="1P" then
+   player.CameraMode=Enum.CameraMode.LockFirstPerson
+   player.CameraMinZoomDistance=.5
+   player.CameraMaxZoomDistance=.5
+  else
+   player.CameraMode=Enum.CameraMode.Classic
+   player.CameraMinZoomDistance=9
+   player.CameraMaxZoomDistance=9
+  end
+ end
+end)
+
 
 local function animate(btn)
  local scale=btn:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",btn)
@@ -1398,6 +1568,9 @@ return {
  playerBaseSpeed=PLAYER_BASE_SPEED,
  playerMaxSpeed=PLAYER_MAX_SPEED,
  botSpeed=BOT_SPEED,
+ fixedZoom=true,
+ cameraButtonSafe=true,
+ runAsset="12962987574",
  intermissionAvatarOnMap=true,
  botSpawnFolder=true,
  exactLogo=LOGO,
