@@ -53,18 +53,51 @@ local function getLobbyCF()
   return spawn.CFrame+Vector3.new(0,4,0)
  end
 
- local fallback=workspace:FindFirstChild("NB_LobbySpawn")
- if not fallback then
-  fallback=Instance.new("Part")
-  fallback.Name="NB_LobbySpawn"
-  fallback.Size=Vector3.new(16,1,16)
-  fallback.Anchored=true
-  fallback.CanCollide=true
-  fallback.Transparency=1
-  fallback.CFrame=CFrame.new(0,10,-500)
-  fallback.Parent=workspace
+ -- Never use an invented world coordinate. Build a guaranteed-safe
+ -- lobby pad relative to the currently loaded map so there is always floor.
+ local map=workspace:FindFirstChild("ActiveMap")
+ if not map then
+  map=workspace:WaitForChild("ActiveMap",10)
  end
- return fallback.CFrame+Vector3.new(0,4,0)
+
+ local cf,size
+ if map then
+  cf,size=map:GetBoundingBox()
+ else
+  -- Last-resort: use an actual collidable Workspace part, never empty space.
+  local best=nil
+  for _,d in ipairs(workspace:GetDescendants()) do
+   if d:IsA("BasePart") and d.CanCollide and d.Anchored
+    and d.Name~="NB_LobbyPlatform" then
+    if not best or d.Size.X*d.Size.Z>best.Size.X*best.Size.Z then best=d end
+   end
+  end
+  if best then
+   return best.CFrame+Vector3.new(0,best.Size.Y*.5+4,0)
+  end
+  error("No safe lobby surface exists")
+ end
+
+ local pad=workspace:FindFirstChild("NB_LobbyPlatform")
+ if not pad then
+  pad=Instance.new("Part")
+  pad.Name="NB_LobbyPlatform"
+  pad.Size=Vector3.new(44,2,44)
+  pad.Anchored=true
+  pad.CanCollide=true
+  pad.CanTouch=true
+  pad.CanQuery=true
+  pad.Transparency=1
+  pad.Parent=workspace
+ end
+
+ local half=size*.5
+ -- Far enough outside ActiveMap bounds that NBInMap can never become true,
+ -- but vertically aligned to the map instead of floating in the void.
+ local padPos=cf.Position+cf.RightVector*(half.X+90)
+ pad.CFrame=CFrame.new(padPos.X,cf.Position.Y+math.max(4,half.Y*.05),padPos.Z)
+
+ return pad.CFrame+Vector3.new(0,pad.Size.Y*.5+4,0)
 end
 
 local function availableMaps()
@@ -159,14 +192,54 @@ local function spawnPoints(map)
  return best and {best} or {}
 end
 
+local function groundCF(map,origin)
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={map}
+ params.IgnoreWater=false
+
+ local result=workspace:Raycast(origin,Vector3.new(0,-1000,0),params)
+ if result then
+  return CFrame.new(result.Position+Vector3.new(0,4,0))
+ end
+ return nil
+end
+
 local function spawnCF(map)
  local points=spawnPoints(map)
- if #points==0 then
-  local cf,size=map:GetBoundingBox()
-  return CFrame.new(cf.Position+Vector3.new(0,size.Y*.5+8,0))
+
+ -- Explicit spawn points are only accepted if there is real map geometry below.
+ if #points>0 then
+  for _=1,math.min(12,#points*2) do
+   local p=points[math.random(1,#points)]
+   local x=p.Position.X+math.random(-3,3)
+   local z=p.Position.Z+math.random(-3,3)
+   local cf=groundCF(map,Vector3.new(x,p.Position.Y+80,z))
+   if cf then return cf end
+  end
  end
- local p=points[math.random(1,#points)]
- return p.CFrame+Vector3.new(math.random(-4,4),p.Size.Y*.5+4,math.random(-4,4))
+
+ -- No usable SpawnLocation: probe the actual map surface instead of using
+ -- the bounding-box center, which may be empty/void.
+ local cf,size=map:GetBoundingBox()
+ local half=size*.5
+ for _=1,28 do
+  local lx=(math.random()*2-1)*math.max(2,half.X*.78)
+  local lz=(math.random()*2-1)*math.max(2,half.Z*.78)
+  local world=(cf*CFrame.new(lx,half.Y+120,lz)).Position
+  local hit=groundCF(map,world)
+  if hit then return hit end
+ end
+
+ -- Guaranteed final fallback: use the top of a real collidable map part.
+ local best=nil
+ for _,d in ipairs(map:GetDescendants()) do
+  if d:IsA("BasePart") and d.CanCollide and d.Transparency<.98 then
+   if not best or d.Size.X*d.Size.Z>best.Size.X*best.Size.Z then best=d end
+  end
+ end
+ assert(best,"ActiveMap has no safe collidable spawn surface")
+ return best.CFrame+Vector3.new(0,best.Size.Y*.5+4,0)
 end
 
 local function copyUserAppearance(plr,char)
