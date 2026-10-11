@@ -48,6 +48,41 @@ end
 day.Parent=SSS
 
 -- =========================================================
+-- EXACT EVADE RUN KEYFRAMES
+-- Import the Run animation from evade-movement so playback does not depend
+-- on cross-experience AnimationId permissions.
+-- =========================================================
+local oldRunSeq=RS:FindFirstChild("NB_EvadeRunKeyframes")
+if oldRunSeq then oldRunSeq:Destroy() end
+
+local runSeq=nil
+local okRun,runAsset=pcall(function()
+ return AS:LoadAssetAsync(10902697177)
+end)
+if okRun and runAsset then
+ local seq=runAsset:FindFirstChildWhichIsA("KeyframeSequence",true)
+ if seq then
+  runSeq=seq:Clone()
+  runSeq.Name="NB_EvadeRunKeyframes"
+  runSeq.Loop=true
+  runSeq.Parent=RS
+ end
+ runAsset:Destroy()
+end
+
+if not runSeq then
+ local clips=RS:FindFirstChild("NB_R6Animations")
+ local fallback=clips and (clips:FindFirstChild("Forward") or clips:FindFirstChild("forward"))
+ if fallback and fallback:IsA("KeyframeSequence") then
+  runSeq=fallback:Clone()
+  runSeq.Name="NB_EvadeRunKeyframes"
+  runSeq.Loop=true
+  runSeq.Parent=RS
+ end
+end
+assert(runSeq and #runSeq:GetKeyframes()>1,"No usable Evade running keyframes")
+
+-- =========================================================
 -- ROUND SERVER
 -- Avatar exists during intermission and is already on ActiveMap.
 -- Bots spawn only when the round begins, from dedicated bot spawns.
@@ -127,23 +162,132 @@ local function rayGround(map,world)
  return workspace:Raycast(world,Vector3.new(0,-1600,0),p)
 end
 
-local function createMenuCamera(map)
+local function interiorGround(map,localX,localZ)
  local cf,size=map:GetBoundingBox()
- local center=cf.Position
- local radius=math.max(size.X,size.Z)
- local probes={
-  cf*CFrame.new(0,size.Y*.5+120,size.Z*.30),
-  cf*CFrame.new(size.X*.22,size.Y*.5+120,size.Z*.22),
-  cf*CFrame.new(-size.X*.22,size.Y*.5+120,size.Z*.22)
- }
- local ground=nil
- for _,pcf in ipairs(probes) do
-  local r=rayGround(map,pcf.Position)
-  if r then ground=r.Position break end
- end
- ground=ground or center
 
- local pos=ground+Vector3.new(radius*.18,math.max(24,size.Y*.22),radius*.30)
+ -- Start the ray around the middle of the model, not above the whole map.
+ -- This avoids selecting roofs / exterior scenery as the playable floor.
+ local midOrigin=(cf*CFrame.new(
+  math.clamp(localX,-size.X*.32,size.X*.32),
+  size.Y*.18,
+  math.clamp(localZ,-size.Z*.32,size.Z*.32)
+ )).Position
+
+ local r=rayGround(map,midOrigin+Vector3.new(0,8,0))
+ if r then return r.Position end
+
+ -- Fallback from above but still strictly inside the central 64% of the map.
+ local top=(cf*CFrame.new(
+  math.clamp(localX,-size.X*.32,size.X*.32),
+  size.Y*.5+120,
+  math.clamp(localZ,-size.Z*.32,size.Z*.32)
+ )).Position
+ r=rayGround(map,top)
+ if r then return r.Position end
+
+ return nil
+end
+
+local function createPlayerSpawns(map)
+ local old=map:FindFirstChild("NBPlayerSpawnPoints")
+ if old then old:Destroy() end
+
+ local folder=Instance.new("Folder")
+ folder.Name="NBPlayerSpawnPoints"
+ folder.Parent=map
+
+ local cf,size=map:GetBoundingBox()
+ local candidates={
+  Vector2.new(0,0),
+  Vector2.new(-.14,-.12),Vector2.new(.14,-.12),
+  Vector2.new(-.14,.12),Vector2.new(.14,.12),
+  Vector2.new(0,-.18),Vector2.new(0,.18),
+  Vector2.new(-.20,0),Vector2.new(.20,0)
+ }
+
+ for _,v in ipairs(candidates) do
+  local g=interiorGround(map,size.X*v.X,size.Z*v.Y)
+  if g then
+   local p=Instance.new("Part")
+   p.Name="PlayerSpawn"
+   p.Size=Vector3.new(3,.5,3)
+   p.Anchored=true
+   p.CanCollide=false
+   p.CanTouch=false
+   p.CanQuery=false
+   p.Transparency=1
+   p.CFrame=CFrame.new(g+Vector3.new(0,3.5,0))
+   p.Parent=folder
+  end
+ end
+
+ -- If a map has authored SpawnLocations, accept only those that are
+ -- genuinely inside the inner map rectangle.
+ for _,d in ipairs(map:GetDescendants()) do
+  if d:IsA("SpawnLocation") then
+   local lp=cf:PointToObjectSpace(d.Position)
+   if math.abs(lp.X)<=size.X*.32 and math.abs(lp.Z)<=size.Z*.32 then
+    local p=Instance.new("Part")
+    p.Name="PlayerSpawn"
+    p.Size=Vector3.new(3,.5,3)
+    p.Anchored=true
+    p.CanCollide=false
+    p.CanTouch=false
+    p.CanQuery=false
+    p.Transparency=1
+    p.CFrame=d.CFrame+Vector3.new(0,d.Size.Y*.5+3,0)
+    p.Parent=folder
+   end
+  end
+ end
+
+ assert(#folder:GetChildren()>0,"Could not create an interior player spawn")
+ return folder
+end
+
+local function safePlayerCF(map)
+ local folder=map:FindFirstChild("NBPlayerSpawnPoints") or createPlayerSpawns(map)
+ local points=folder:GetChildren()
+ assert(#points>0,"No interior player spawns")
+
+ local p=points[math.random(1,#points)]
+ return p.CFrame
+end
+
+local function createMenuCamera(map)
+ local old=workspace:FindFirstChild("MenuCameraAnchor")
+ if old then old:Destroy() end
+
+ local cf,size=map:GetBoundingBox()
+
+ -- Both the camera and its target are deliberately chosen from the central
+ -- interior region. The menu therefore looks FROM INSIDE the current map.
+ local camGround=
+  interiorGround(map,size.X*.12,size.Z*.16)
+  or interiorGround(map,0,size.Z*.12)
+  or interiorGround(map,0,0)
+
+ local targetGround=
+  interiorGround(map,-size.X*.10,-size.Z*.10)
+  or interiorGround(map,0,-size.Z*.16)
+  or interiorGround(map,0,0)
+
+ assert(camGround and targetGround,"Could not place menu camera inside map")
+
+ local pos=camGround+Vector3.new(0,7.5,0)
+ local target=targetGround+Vector3.new(0,5.0,0)
+
+ if (target-pos).Magnitude<10 then
+  local forward=cf.LookVector
+  target=pos+forward*math.clamp(math.min(size.X,size.Z)*.20,14,38)+Vector3.new(0,-1.5,0)
+ end
+
+ local localPos=cf:PointToObjectSpace(pos)
+ assert(
+  math.abs(localPos.X)<=size.X*.36 and math.abs(localPos.Z)<=size.Z*.36,
+  "Menu camera escaped interior bounds"
+ )
+
  local anchor=Instance.new("Part")
  anchor.Name="MenuCameraAnchor"
  anchor.Size=Vector3.new(1,1,1)
@@ -152,54 +296,9 @@ local function createMenuCamera(map)
  anchor.CanCollide=false
  anchor.CanTouch=false
  anchor.CanQuery=false
- anchor.CFrame=CFrame.lookAt(pos,ground+Vector3.new(0,5,0))
+ anchor.CFrame=CFrame.lookAt(pos,target)
+ anchor:SetAttribute("InsideActiveMap",true)
  anchor.Parent=workspace
-end
-
-local function collectPlayerSpawns(map)
- local points={}
- local folder=map:FindFirstChild("SpawnPoints")
- if folder then
-  for _,d in ipairs(folder:GetChildren()) do
-   if d:IsA("BasePart") then table.insert(points,d) end
-  end
- end
- for _,d in ipairs(map:GetDescendants()) do
-  if d:IsA("SpawnLocation") then table.insert(points,d) end
- end
- return points
-end
-
-local function safePlayerCF(map)
- local points=collectPlayerSpawns(map)
- for _=1,math.max(8,#points*2) do
-  if #points>0 then
-   local p=points[math.random(1,#points)]
-   local r=rayGround(map,p.Position+Vector3.new(math.random(-3,3),100,math.random(-3,3)))
-   if r then return CFrame.new(r.Position+Vector3.new(0,4,0)) end
-  else
-   break
-  end
- end
-
- local cf,size=map:GetBoundingBox()
- local half=size*.5
- for _=1,30 do
-  local localX=(math.random()*2-1)*math.max(3,half.X*.70)
-  local localZ=(math.random()*2-1)*math.max(3,half.Z*.70)
-  local top=(cf*CFrame.new(localX,half.Y+150,localZ)).Position
-  local r=rayGround(map,top)
-  if r then return CFrame.new(r.Position+Vector3.new(0,4,0)) end
- end
-
- local best=nil
- for _,d in ipairs(map:GetDescendants()) do
-  if d:IsA("BasePart") and d.CanCollide and d.Transparency<.98 then
-   if not best or d.Size.X*d.Size.Z>best.Size.X*best.Size.Z then best=d end
-  end
- end
- assert(best,"ActiveMap has no collidable player spawn surface")
- return CFrame.new(best.Position+best.CFrame.UpVector*(best.Size.Y*.5+4))
 end
 
 local function createBotSpawns(map)
@@ -261,6 +360,7 @@ local function loadMap(name)
  currentMapName=name
  currentMapCF,currentMapSize=map:GetBoundingBox()
 
+ createPlayerSpawns(map)
  createBotSpawns(map)
  createMenuCamera(map)
  return map
@@ -546,7 +646,7 @@ end)
 
 -- =========================================================
 -- NEXTBOT DIRECTOR
--- Common bot speed = 98% of player's 36 max ~= 35.28.
+-- Common bot speed stays just below the player maximum.
 -- =========================================================
 local director=SSS:FindFirstChild("NextbotDirector")
 assert(director,"NextbotDirector missing")
@@ -638,75 +738,39 @@ local move=Instance.new("LocalScript")
 move.Name="NB_EvadeMovement"
 move.Source=[==[
 local Players=game:GetService("Players")
-local TweenService=game:GetService("TweenService")
 local RunService=game:GetService("RunService")
 
 local player=Players.LocalPlayer
 local BASE_SPEED=10
 local MAX_SPEED=50
 local ACCEL_TIME=10
-local RUN_THRESHOLD=20
-local RUN_ANIMATION="rbxassetid://10902697177"
 
-local renderConn=nil
-local runTrack=nil
+local conn=nil
 local speed=BASE_SPEED
-local moving=false
-
-local function stopTrack()
- if runTrack then
-  pcall(function()runTrack:Stop(.12)end)
-  runTrack=nil
- end
-end
 
 local function setup(char)
- if renderConn then renderConn:Disconnect();renderConn=nil end
- stopTrack()
-
+ if conn then conn:Disconnect();conn=nil end
  local hum=char:WaitForChild("Humanoid",8)
  if not hum then return end
- local animator=hum:FindFirstChildOfClass("Animator") or Instance.new("Animator",hum)
-
- local anim=Instance.new("Animation")
- anim.AnimationId=RUN_ANIMATION
- local ok,track=pcall(function()return animator:LoadAnimation(anim)end)
- if ok then
-  runTrack=track
-  runTrack.Priority=Enum.AnimationPriority.Movement
-  runTrack.Looped=true
- end
 
  speed=BASE_SPEED
  hum.WalkSpeed=BASE_SPEED
- local cam=workspace.CurrentCamera
 
- renderConn=RunService.RenderStepped:Connect(function(dt)
+ conn=RunService.RenderStepped:Connect(function(dt)
   if not char.Parent or hum.Health<=0 then return end
 
-  local isMoving=hum.MoveDirection.Magnitude>.05
-  if isMoving then
+  local moving=hum.MoveDirection.Magnitude>.05
+  if moving then
    speed=math.min(MAX_SPEED,speed+((MAX_SPEED-BASE_SPEED)/ACCEL_TIME)*dt)
   else
    speed=BASE_SPEED
   end
+
   hum.WalkSpeed=speed
 
-  -- FOV behavior from the supplied evade movement asset: 70 idle -> 80 running.
-  local targetFov=isMoving and 80 or 70
+  local cam=workspace.CurrentCamera
+  local targetFov=moving and 80 or 70
   cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*7)
-
-  if runTrack then
-   if isMoving and speed>=RUN_THRESHOLD then
-    if not runTrack.IsPlaying then runTrack:Play(.10) end
-    -- Keep foot cadence synced with actual acceleration.
-    runTrack:AdjustSpeed(math.clamp(1.15+(speed-RUN_THRESHOLD)/(MAX_SPEED-RUN_THRESHOLD)*.65,1.15,1.8))
-   elseif runTrack.IsPlaying then
-    runTrack:Stop(.10)
-   end
-  end
-
-  moving=isMoving
  end)
 end
 
@@ -715,123 +779,157 @@ if player.Character then task.spawn(setup,player.Character) end
 ]==]
 move.Parent=SPS
 
--- Directional R6 keyframes remain active, but their playback speed now follows
--- the actual acceleration instead of playing at one fixed cadence.
+-- ONE animation writer only. It plays the imported Evade Run keyframes
+-- directly on R6 Motor6D.Transform, avoiding AnimationId permission failures
+-- and avoiding the previous conflict between AnimationTrack + manual poses.
 local oldMotion=SPS:FindFirstChild("NB_R6MotionController")
 if oldMotion then oldMotion:Destroy() end
-local motion=Instance.new("LocalScript")
-motion.Name="NB_R6MotionController"
-motion.Source=[==[
+
+local animatorScript=Instance.new("LocalScript")
+animatorScript.Name="NB_R6MotionController"
+animatorScript.Source=[==[
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
 
 local player=Players.LocalPlayer
+local runSequence=RS:WaitForChild("NB_EvadeRunKeyframes")
 local clips=RS:WaitForChild("NB_R6Animations")
-local conn
+local idleSequence=clips:FindFirstChild("idle") or clips:FindFirstChild("Idle")
+local jumpSequence=clips:FindFirstChild("jump") or clips:FindFirstChild("Jump")
 
-local function flattenPose(p,map)
+local conn=nil
+
+local function flatten(p,map)
  if p:IsA("Pose") then map[p.Name]=p.CFrame end
  for _,c in ipairs(p:GetChildren()) do
-  if c:IsA("Pose") then flattenPose(c,map) end
+  if c:IsA("Pose") then flatten(c,map) end
  end
 end
 
 local function bake(seq)
+ if not seq then return nil end
  local frames={}
  for _,kf in ipairs(seq:GetKeyframes()) do
   local poses={}
   for _,p in ipairs(kf:GetChildren()) do
-   if p:IsA("Pose") then flattenPose(p,poses) end
+   if p:IsA("Pose") then flatten(p,poses) end
   end
-  table.insert(frames,{t=kf.Time,poses=poses})
+  table.insert(frames,{time=kf.Time,poses=poses})
  end
- table.sort(frames,function(a,b)return a.t<b.t end)
- local duration=(frames[#frames] and frames[#frames].t) or 1
- return {frames=frames,duration=math.max(duration,.05),looped=seq.Loop}
+ table.sort(frames,function(a,b)return a.time<b.time end)
+ if #frames==0 then return nil end
+ return {
+  frames=frames,
+  duration=math.max(.05,frames[#frames].time),
+  looped=seq.Loop
+ }
 end
 
-local baked={}
-for _,seq in ipairs(clips:GetChildren()) do
- if seq:IsA("KeyframeSequence") then baked[seq.Name]=bake(seq) end
-end
+local RUN=bake(runSequence)
+local IDLE=bake(idleSequence)
+local JUMP=bake(jumpSequence)
+assert(RUN and #RUN.frames>1,"Evade Run sequence did not bake")
 
 local function sample(clip,t)
- if not clip or #clip.frames==0 then return {} end
+ if not clip then return {} end
  local time=clip.looped and (t%clip.duration) or math.min(t,clip.duration)
  local a,b=clip.frames[1],clip.frames[#clip.frames]
+
  for i=1,#clip.frames-1 do
-  if time>=clip.frames[i].t and time<=clip.frames[i+1].t then
-   a,b=clip.frames[i],clip.frames[i+1]
+  local f1,f2=clip.frames[i],clip.frames[i+1]
+  if time>=f1.time and time<=f2.time then
+   a,b=f1,f2
    break
   end
  end
- local alpha=math.clamp((time-a.t)/math.max(.0001,b.t-a.t),0,1)
+
+ local alpha=math.clamp((time-a.time)/math.max(.0001,b.time-a.time),0,1)
  local out={}
- for part,cf in pairs(a.poses) do out[part]=cf:Lerp(b.poses[part] or cf,alpha) end
- for part,cf in pairs(b.poses) do if not out[part] then out[part]=cf end end
+
+ for part,cf in pairs(a.poses) do
+  out[part]=cf:Lerp(b.poses[part] or cf,alpha)
+ end
+ for part,cf in pairs(b.poses) do
+  if out[part]==nil then out[part]=cf end
+ end
  return out
 end
 
 local function setup(char)
  if conn then conn:Disconnect();conn=nil end
+
  local hum=char:WaitForChild("Humanoid",8)
- local root=char:WaitForChild("HumanoidRootPart",8)
- if not hum or not root or hum.RigType~=Enum.HumanoidRigType.R6 then return end
+ if not hum or hum.RigType~=Enum.HumanoidRigType.R6 then return end
+
+ -- There must be no other Roblox animation script fighting these transforms.
+ local animate=char:FindFirstChild("Animate")
+ if animate then animate:Destroy() end
+ local animator=hum:FindFirstChildOfClass("Animator")
+ if animator then
+  for _,track in ipairs(animator:GetPlayingAnimationTracks()) do
+   track:Stop(0)
+  end
+ end
 
  local motors={}
  for _,d in ipairs(char:GetDescendants()) do
-  if d:IsA("Motor6D") and d.Part1 then motors[d.Part1.Name]=d end
+  if d:IsA("Motor6D") then
+   if d.Part1 then motors[d.Part1.Name]=d end
+   motors[d.Name]=motors[d.Name] or d
+  end
  end
 
- local current="idle"
- local started=os.clock()
- local transition=os.clock()
+ local state="Idle"
+ local stateStart=os.clock()
+ local blendStart=os.clock()
  local from={}
 
- local function desired()
-  local st=hum:GetState()
-  if st==Enum.HumanoidStateType.Jumping or st==Enum.HumanoidStateType.Freefall then
-   return baked.jump and "jump" or "idle"
+ local function setState(nextState)
+  if nextState==state then return end
+  from={}
+  for name,m in pairs(motors) do
+   if from[name]==nil then from[name]=m.Transform end
   end
-  if hum.MoveDirection.Magnitude<.05 then return "idle" end
-
-  local localDir=root.CFrame:VectorToObjectSpace(hum.MoveDirection)
-  local x,z=localDir.X,localDir.Z
-  if z<-.35 then
-   if x<-.30 and baked.FLeft then return "FLeft" end
-   if x>.30 and baked.FRight then return "FRight" end
-   return baked.Forward and "Forward" or "forward"
-  elseif z>.35 then
-   return baked.back and "back" or "idle"
-  elseif x<0 then
-   return baked.left and "left" or "idle"
-  else
-   return baked.right and "right" or "idle"
-  end
+  state=nextState
+  stateStart=os.clock()
+  blendStart=stateStart
  end
 
  conn=RunService.RenderStepped:Connect(function()
   if not char.Parent or hum.Health<=0 then return end
 
-  local nextName=desired()
-  if not baked[nextName] then nextName="idle" end
-
-  if nextName~=current then
-   from={}
-   for part,m in pairs(motors) do from[part]=m.Transform end
-   current=nextName
-   started=os.clock()
-   transition=started
+  local hs=hum:GetState()
+  if hs==Enum.HumanoidStateType.Jumping or hs==Enum.HumanoidStateType.Freefall then
+   setState("Jump")
+  elseif hum.MoveDirection.Magnitude>.05 then
+   setState("Run")
+  else
+   setState("Idle")
   end
 
-  local isMove=current~="idle" and current~="jump"
-  local playbackRate=isMove and math.clamp(hum.WalkSpeed/20,.75,2.25) or 1
-  local poses=sample(baked[current],(os.clock()-started)*playbackRate)
-  local alpha=math.clamp((os.clock()-transition)/.10,0,1)
+  local clip
+  local rate=1
+  if state=="Run" then
+   clip=RUN
+   -- The actual running pose speeds up as the Evade acceleration rises.
+   rate=math.clamp(.85+(hum.WalkSpeed-10)/40*1.10,.85,1.95)
+  elseif state=="Jump" then
+   clip=JUMP
+  else
+   clip=IDLE
+  end
 
-  for part,m in pairs(motors) do
-   m.Transform=(from[part] or m.Transform):Lerp(poses[part] or CFrame.new(),alpha)
+  local poses=sample(clip,(os.clock()-stateStart)*rate)
+  local blend=math.clamp((os.clock()-blendStart)/.09,0,1)
+
+  for key,m in pairs(motors) do
+   local goal=poses[key]
+   if goal then
+    m.Transform=(from[key] or m.Transform):Lerp(goal,blend)
+   elseif state=="Idle" and not IDLE then
+    m.Transform=m.Transform:Lerp(CFrame.new(),math.min(1,.18))
+   end
   end
  end)
 end
@@ -839,7 +937,7 @@ end
 player.CharacterAdded:Connect(setup)
 if player.Character then task.spawn(setup,player.Character) end
 ]==]
-motion.Parent=SPS
+animatorScript.Parent=SPS
 
 -- old HUD conflicts with the rebuilt interface
 local oldHud=SPS:FindFirstChild("NBReferenceHUDClient")
@@ -1571,6 +1669,10 @@ return {
  fixedZoom=true,
  cameraButtonSafe=true,
  runAsset="12962987574",
+ runKeyframes=#runSeq:GetKeyframes(),
+ singleAnimationWriter=true,
+ interiorPlayerSpawnLogic=true,
+ interiorMenuCameraLogic=true,
  intermissionAvatarOnMap=true,
  botSpawnFolder=true,
  exactLogo=LOGO,
