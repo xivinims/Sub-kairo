@@ -162,30 +162,64 @@ local function rayGround(map,world)
  return workspace:Raycast(world,Vector3.new(0,-1600,0),p)
 end
 
-local function interiorGround(map,localX,localZ)
- local cf,size=map:GetBoundingBox()
+local function insideXZ(cf,size,pos,ratio)
+ local lp=cf:PointToObjectSpace(pos)
+ return math.abs(lp.X)<=size.X*ratio and math.abs(lp.Z)<=size.Z*ratio
+end
 
- -- Start the ray around the middle of the model, not above the whole map.
- -- This avoids selecting roofs / exterior scenery as the playable floor.
- local midOrigin=(cf*CFrame.new(
-  math.clamp(localX,-size.X*.32,size.X*.32),
-  size.Y*.18,
-  math.clamp(localZ,-size.Z*.32,size.Z*.32)
- )).Position
+local function clearAbove(map,groundPos,boxSize)
+ local params=OverlapParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={map}
+ params.MaxParts=32
 
- local r=rayGround(map,midOrigin+Vector3.new(0,8,0))
- if r then return r.Position end
+ local center=groundPos+Vector3.new(0,(boxSize.Y*.5)+.35,0)
+ local hits=workspace:GetPartBoundsInBox(CFrame.new(center),boxSize,params)
+ for _,part in ipairs(hits) do
+  if part:IsA("BasePart") and part.CanCollide and part.Transparency<.98 then
+   return false
+  end
+ end
+ return true
+end
 
- -- Fallback from above but still strictly inside the central 64% of the map.
- local top=(cf*CFrame.new(
-  math.clamp(localX,-size.X*.32,size.X*.32),
-  size.Y*.5+120,
-  math.clamp(localZ,-size.Z*.32,size.Z*.32)
- )).Position
- r=rayGround(map,top)
- if r then return r.Position end
+local function addHiddenPoint(folder,name,pos)
+ local p=Instance.new("Part")
+ p.Name=name
+ p.Size=Vector3.new(3,.5,3)
+ p.Anchored=true
+ p.CanCollide=false
+ p.CanTouch=false
+ p.CanQuery=false
+ p.Transparency=1
+ p.CFrame=CFrame.new(pos)
+ p.Parent=folder
+ return p
+end
 
- return nil
+local function surfaceTop(part)
+ return part.Position+part.CFrame.UpVector*(part.Size.Y*.5)
+end
+
+local function surfaceScore(part,cf,size)
+ local lp=cf:PointToObjectSpace(part.Position)
+ local area=math.max(1,part.Size.X*part.Size.Z)
+ local central=1-math.clamp(
+  math.max(math.abs(lp.X)/(size.X*.5),math.abs(lp.Z)/(size.Z*.5)),
+  0,1
+ )
+ local score=math.min(area,4000)*.025+central*65
+
+ local n=string.lower(part.Name)
+ if string.find(n,"spawn",1,true) then score+=120 end
+ if string.find(n,"floor",1,true) or string.find(n,"ground",1,true) then score+=105 end
+ if string.find(n,"road",1,true) or string.find(n,"street",1,true) then score+=75 end
+ if string.find(n,"base",1,true) or string.find(n,"platform",1,true) then score+=45 end
+ if string.find(n,"roof",1,true) or string.find(n,"ceiling",1,true) then score-=150 end
+
+ -- Prefer ordinary playable floors over very high roofs/scenery.
+ score-=math.max(0,lp.Y-size.Y*.05)*.45
+ return score
 end
 
 local function createPlayerSpawns(map)
@@ -197,61 +231,119 @@ local function createPlayerSpawns(map)
  folder.Parent=map
 
  local cf,size=map:GetBoundingBox()
- local candidates={
-  Vector2.new(0,0),
-  Vector2.new(-.14,-.12),Vector2.new(.14,-.12),
-  Vector2.new(-.14,.12),Vector2.new(.14,.12),
-  Vector2.new(0,-.18),Vector2.new(0,.18),
-  Vector2.new(-.20,0),Vector2.new(.20,0)
- }
+ local used={}
 
- for _,v in ipairs(candidates) do
-  local g=interiorGround(map,size.X*v.X,size.Z*v.Y)
-  if g then
-   local p=Instance.new("Part")
-   p.Name="PlayerSpawn"
-   p.Size=Vector3.new(3,.5,3)
-   p.Anchored=true
-   p.CanCollide=false
-   p.CanTouch=false
-   p.CanQuery=false
-   p.Transparency=1
-   p.CFrame=CFrame.new(g+Vector3.new(0,3.5,0))
-   p.Parent=folder
+ local function tryAdd(pos)
+  if not insideXZ(cf,size,pos,.34) then return false end
+  if not clearAbove(map,pos,Vector3.new(3.6,5.8,3.6)) then return false end
+
+  for _,u in ipairs(used) do
+   if (Vector3.new(u.X,0,u.Z)-Vector3.new(pos.X,0,pos.Z)).Magnitude<6 then
+    return false
+   end
+  end
+
+  table.insert(used,pos)
+  addHiddenPoint(folder,"PlayerSpawn",pos+Vector3.new(0,3.4,0))
+  return true
+ end
+
+ -- Authored SpawnLocations are the best signal of the intended playable area.
+ for _,d in ipairs(map:GetDescendants()) do
+  if d:IsA("SpawnLocation") and insideXZ(cf,size,d.Position,.38) then
+   local top=d.Position+d.CFrame.UpVector*(d.Size.Y*.5)
+   tryAdd(top)
   end
  end
 
- -- If a map has authored SpawnLocations, accept only those that are
- -- genuinely inside the inner map rectangle.
+ -- Then score real, horizontal, collidable floor parts.
+ local surfaces={}
  for _,d in ipairs(map:GetDescendants()) do
-  if d:IsA("SpawnLocation") then
-   local lp=cf:PointToObjectSpace(d.Position)
-   if math.abs(lp.X)<=size.X*.32 and math.abs(lp.Z)<=size.Z*.32 then
-    local p=Instance.new("Part")
-    p.Name="PlayerSpawn"
-    p.Size=Vector3.new(3,.5,3)
-    p.Anchored=true
-    p.CanCollide=false
-    p.CanTouch=false
-    p.CanQuery=false
-    p.Transparency=1
-    p.CFrame=d.CFrame+Vector3.new(0,d.Size.Y*.5+3,0)
-    p.Parent=folder
+  if d:IsA("BasePart")
+   and not d:IsA("SpawnLocation")
+   and d.CanCollide
+   and d.Transparency<.98
+   and d.CFrame.UpVector.Y>.72
+   and d.Size.X*d.Size.Z>=20
+   and insideXZ(cf,size,d.Position,.36) then
+
+   local top=surfaceTop(d)
+   if clearAbove(map,top,Vector3.new(3.6,5.8,3.6)) then
+    table.insert(surfaces,{part=d,pos=top,score=surfaceScore(d,cf,size)})
+   end
+  end
+ end
+ table.sort(surfaces,function(a,b)return a.score>b.score end)
+
+ for _,s in ipairs(surfaces) do
+  if #folder:GetChildren()>=12 then break end
+  tryAdd(s.pos)
+ end
+
+ -- Terrain / unusual maps fallback: raycast only through the inner map.
+ if #folder:GetChildren()<4 then
+  local probes={
+   Vector2.new(0,0),
+   Vector2.new(-.12,-.10),Vector2.new(.12,-.10),
+   Vector2.new(-.12,.10),Vector2.new(.12,.10),
+   Vector2.new(0,-.18),Vector2.new(0,.18),
+   Vector2.new(-.20,0),Vector2.new(.20,0)
+  }
+
+  for _,v in ipairs(probes) do
+   local origin=(cf*CFrame.new(size.X*v.X,size.Y*.5+160,size.Z*v.Y)).Position
+   local hit=rayGround(map,origin)
+   if hit and hit.Normal.Y>.60 then
+    tryAdd(hit.Position)
    end
   end
  end
 
- assert(#folder:GetChildren()>0,"Could not create an interior player spawn")
+ assert(#folder:GetChildren()>0,"No safe interior player spawn could be built")
+ folder:SetAttribute("Validated",true)
+ folder:SetAttribute("Count",#folder:GetChildren())
  return folder
 end
 
 local function safePlayerCF(map)
  local folder=map:FindFirstChild("NBPlayerSpawnPoints") or createPlayerSpawns(map)
  local points=folder:GetChildren()
- assert(#points>0,"No interior player spawns")
-
+ assert(#points>0,"No validated player spawns")
  local p=points[math.random(1,#points)]
  return p.CFrame
+end
+
+local function lineClear(map,a,b)
+ local delta=b-a
+ if delta.Magnitude<2 then return false end
+
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={map}
+ params.IgnoreWater=true
+
+ local hit=workspace:Raycast(a,delta,params)
+ if not hit then return true end
+ return (hit.Position-a).Magnitude>=delta.Magnitude-1.5
+end
+
+local function cameraSpaceClear(map,pos)
+ local params=OverlapParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={map}
+ params.MaxParts=16
+
+ local hits=workspace:GetPartBoundsInBox(
+  CFrame.new(pos),
+  Vector3.new(2.4,3.2,2.4),
+  params
+ )
+ for _,p in ipairs(hits) do
+  if p:IsA("BasePart") and p.CanCollide and p.Transparency<.98 then
+   return false
+  end
+ end
+ return true
 end
 
 local function createMenuCamera(map)
@@ -259,33 +351,59 @@ local function createMenuCamera(map)
  if old then old:Destroy() end
 
  local cf,size=map:GetBoundingBox()
+ local folder=map:FindFirstChild("NBPlayerSpawnPoints") or createPlayerSpawns(map)
+ local points=folder:GetChildren()
+ assert(#points>0,"Menu camera needs validated interior points")
 
- -- Both the camera and its target are deliberately chosen from the central
- -- interior region. The menu therefore looks FROM INSIDE the current map.
- local camGround=
-  interiorGround(map,size.X*.12,size.Z*.16)
-  or interiorGround(map,0,size.Z*.12)
-  or interiorGround(map,0,0)
+ local bestCF=nil
+ local bestScore=-math.huge
 
- local targetGround=
-  interiorGround(map,-size.X*.10,-size.Z*.10)
-  or interiorGround(map,0,-size.Z*.16)
-  or interiorGround(map,0,0)
-
- assert(camGround and targetGround,"Could not place menu camera inside map")
-
- local pos=camGround+Vector3.new(0,7.5,0)
- local target=targetGround+Vector3.new(0,5.0,0)
-
- if (target-pos).Magnitude<10 then
-  local forward=cf.LookVector
-  target=pos+forward*math.clamp(math.min(size.X,size.Z)*.20,14,38)+Vector3.new(0,-1.5,0)
+ -- Use pairs of actual playable spawn points. That guarantees the view is
+ -- from the same interior space where players can really stand.
+ for i,a in ipairs(points) do
+  local camPos=a.Position+Vector3.new(0,3.0,0)
+  if cameraSpaceClear(map,camPos) then
+   for j,b in ipairs(points) do
+    if i~=j then
+     local target=b.Position+Vector3.new(0,2.0,0)
+     local dist=(target-camPos).Magnitude
+     if dist>=12 and dist<=70 and lineClear(map,camPos,target) then
+      local score=dist
+      if score>bestScore then
+       bestScore=score
+       bestCF=CFrame.lookAt(camPos,target)
+      end
+     end
+    end
+   end
+  end
  end
 
- local localPos=cf:PointToObjectSpace(pos)
+ -- If the validated spawn points happen to be clustered, search clear
+ -- directions from one valid interior point instead of moving outside.
+ if not bestCF then
+  local base=points[1].Position+Vector3.new(0,3.0,0)
+  local dirs={
+   cf.LookVector,-cf.LookVector,cf.RightVector,-cf.RightVector,
+   (cf.LookVector+cf.RightVector).Unit,
+   (cf.LookVector-cf.RightVector).Unit
+  }
+
+  for _,dir in ipairs(dirs) do
+   local target=base+dir*math.clamp(math.min(size.X,size.Z)*.22,14,34)
+   if cameraSpaceClear(map,base) and lineClear(map,base,target) then
+    bestCF=CFrame.lookAt(base,target+Vector3.new(0,-.6,0))
+    break
+   end
+  end
+ end
+
+ assert(bestCF,"Could not create an unobstructed interior menu camera")
+
+ local localPos=cf:PointToObjectSpace(bestCF.Position)
  assert(
-  math.abs(localPos.X)<=size.X*.36 and math.abs(localPos.Z)<=size.Z*.36,
-  "Menu camera escaped interior bounds"
+  math.abs(localPos.X)<=size.X*.40 and math.abs(localPos.Z)<=size.Z*.40,
+  "Menu camera is not inside ActiveMap"
  )
 
  local anchor=Instance.new("Part")
@@ -296,56 +414,122 @@ local function createMenuCamera(map)
  anchor.CanCollide=false
  anchor.CanTouch=false
  anchor.CanQuery=false
- anchor.CFrame=CFrame.lookAt(pos,target)
+ anchor.CFrame=bestCF
  anchor:SetAttribute("InsideActiveMap",true)
+ anchor:SetAttribute("ClearLineOfSight",true)
  anchor.Parent=workspace
 end
 
 local function createBotSpawns(map)
  local old=map:FindFirstChild("NextbotSpawnPoints")
  if old then old:Destroy() end
+
  local folder=Instance.new("Folder")
  folder.Name="NextbotSpawnPoints"
  folder.Parent=map
 
  local cf,size=map:GetBoundingBox()
- local hx,hz=size.X*.43,size.Z*.43
- local offsets={
-  Vector3.new(-hx,0,-hz),Vector3.new(0,0,-hz),Vector3.new(hx,0,-hz),
-  Vector3.new(-hx,0,0),Vector3.new(hx,0,0),
-  Vector3.new(-hx,0,hz),Vector3.new(0,0,hz),Vector3.new(hx,0,hz)
- }
+ local playersFolder=map:FindFirstChild("NBPlayerSpawnPoints") or createPlayerSpawns(map)
+ local playerPoints=playersFolder:GetChildren()
 
- for _,off in ipairs(offsets) do
-  local top=(cf*CFrame.new(off.X,size.Y*.5+160,off.Z)).Position
-  local r=rayGround(map,top)
-  if r then
-   local p=Instance.new("Part")
-   p.Name="NextbotSpawn"
-   p.Size=Vector3.new(4,.5,4)
-   p.Anchored=true
-   p.CanCollide=false
-   p.CanTouch=false
-   p.CanQuery=false
-   p.Transparency=1
-   p.CFrame=CFrame.new(r.Position+Vector3.new(0,3,0))
-   p.Parent=folder
+ local function farFromPlayers(pos,minDist)
+  for _,p in ipairs(playerPoints) do
+   if (Vector3.new(p.Position.X,0,p.Position.Z)-Vector3.new(pos.X,0,pos.Z)).Magnitude<minDist then
+    return false
+   end
+  end
+  return true
+ end
+
+ local candidates={}
+ for _,d in ipairs(map:GetDescendants()) do
+  if d:IsA("BasePart")
+   and d.CanCollide
+   and d.Transparency<.98
+   and d.CFrame.UpVector.Y>.68
+   and d.Size.X*d.Size.Z>=16 then
+
+   local lp=cf:PointToObjectSpace(d.Position)
+   local ring=math.max(
+    math.abs(lp.X)/math.max(1,size.X*.5),
+    math.abs(lp.Z)/math.max(1,size.Z*.5)
+   )
+
+   if ring>=.46 and ring<=.80 then
+    local top=surfaceTop(d)
+    if insideXZ(cf,size,top,.43)
+     and clearAbove(map,top,Vector3.new(4.2,6.2,4.2))
+     and farFromPlayers(top,28) then
+     table.insert(candidates,{
+      pos=top,
+      score=surfaceScore(d,cf,size)+ring*65
+     })
+    end
+   end
+  end
+ end
+ table.sort(candidates,function(a,b)return a.score>b.score end)
+
+ local used={}
+ for _,c in ipairs(candidates) do
+  if #folder:GetChildren()>=8 then break end
+  local separated=true
+  for _,u in ipairs(used) do
+   if (Vector3.new(u.X,0,u.Z)-Vector3.new(c.pos.X,0,c.pos.Z)).Magnitude<14 then
+    separated=false
+    break
+   end
+  end
+  if separated then
+   table.insert(used,c.pos)
+   addHiddenPoint(folder,"NextbotSpawn",c.pos+Vector3.new(0,3,0))
   end
  end
 
- if #folder:GetChildren()==0 then
-  local fallback=safePlayerCF(map)
-  local p=Instance.new("Part")
-  p.Name="NextbotSpawn"
-  p.Size=Vector3.new(4,.5,4)
-  p.Anchored=true
-  p.CanCollide=false
-  p.CanTouch=false
-  p.CanQuery=false
-  p.Transparency=1
-  p.CFrame=fallback
-  p.Parent=folder
+ -- Terrain / sparse-map fallback: still keep bot points inside the map.
+ if #folder:GetChildren()<4 then
+  local ratios={
+   Vector2.new(-.30,-.30),Vector2.new(0,-.34),Vector2.new(.30,-.30),
+   Vector2.new(-.34,0),Vector2.new(.34,0),
+   Vector2.new(-.30,.30),Vector2.new(0,.34),Vector2.new(.30,.30)
+  }
+  for _,v in ipairs(ratios) do
+   if #folder:GetChildren()>=8 then break end
+   local origin=(cf*CFrame.new(size.X*v.X,size.Y*.5+160,size.Z*v.Y)).Position
+   local hit=rayGround(map,origin)
+   if hit and hit.Normal.Y>.55
+    and insideXZ(cf,size,hit.Position,.43)
+    and clearAbove(map,hit.Position,Vector3.new(4.2,6.2,4.2))
+    and farFromPlayers(hit.Position,24) then
+    addHiddenPoint(folder,"NextbotSpawn",hit.Position+Vector3.new(0,3,0))
+   end
+  end
  end
+
+ -- Small maps may not have enough ring space. Use the validated point that
+ -- is farthest from the player-spawn centroid rather than spawning outside.
+ if #folder:GetChildren()==0 then
+  local centroid=Vector3.zero
+  for _,p in ipairs(playerPoints) do centroid+=p.Position end
+  centroid/=math.max(1,#playerPoints)
+
+  local farthest=nil
+  local farDist=-1
+  for _,s in ipairs(map:GetDescendants()) do
+   if s:IsA("BasePart") and s.CanCollide and s.CFrame.UpVector.Y>.65 then
+    local top=surfaceTop(s)
+    if insideXZ(cf,size,top,.40) and clearAbove(map,top,Vector3.new(4.2,6.2,4.2)) then
+     local d=(Vector3.new(top.X,0,top.Z)-Vector3.new(centroid.X,0,centroid.Z)).Magnitude
+     if d>farDist then farDist=d;farthest=top end
+    end
+   end
+  end
+  assert(farthest,"No safe Nextbot spawn inside map")
+  addHiddenPoint(folder,"NextbotSpawn",farthest+Vector3.new(0,3,0))
+ end
+
+ folder:SetAttribute("Validated",true)
+ folder:SetAttribute("Count",#folder:GetChildren())
  return folder
 end
 
@@ -488,7 +672,15 @@ end
 local function joinRound(plr)
  local map=workspace:FindFirstChild("ActiveMap")
  if not map or not plr.Parent then return end
- local ch=ensureOnMap(plr,map)
+
+ -- Do NOT teleport again if the player is already standing safely in the
+ -- selected map from intermission. JOIN only changes participation state.
+ local ch=plr.Character
+ local hum=ch and ch:FindFirstChildOfClass("Humanoid")
+ if not ch or not hum or hum.Health<=0 or not isPhysicallyInsideMap(plr) then
+  ch=ensureOnMap(plr,map)
+ end
+
  plr:SetAttribute("NBState","InRound")
  plr:SetAttribute("NBInMap",roundActive and isPhysicallyInsideMap(plr) or false)
  attachDeath(plr,ch)
@@ -575,13 +767,33 @@ for _,p in ipairs(Players:GetPlayers()) do task.spawn(initPlayer,p) end
 
 task.spawn(function()
  while true do
+  local map=workspace:FindFirstChild("ActiveMap")
+
   for _,p in ipairs(Players:GetPlayers()) do
+   local ch=p.Character
+   local root=ch and ch:FindFirstChild("HumanoidRootPart")
+   local hum=ch and ch:FindFirstChildOfClass("Humanoid")
+
+   -- Last-resort safety: if physics ever throws a live character into void
+   -- or far outside this map, put the SAME avatar back on a validated spawn.
+   if map and currentMapCF and currentMapSize and root and hum and hum.Health>0 then
+    local lp=currentMapCF:PointToObjectSpace(root.Position)
+    local tooLow=lp.Y<-(currentMapSize.Y*.5+45)
+    local tooFar=math.abs(lp.X)>currentMapSize.X*.62 or math.abs(lp.Z)>currentMapSize.Z*.62
+    if tooLow or tooFar then
+     ch:PivotTo(safePlayerCF(map))
+     root.AssemblyLinearVelocity=Vector3.zero
+     root.AssemblyAngularVelocity=Vector3.zero
+    end
+   end
+
    local targetable=roundActive
     and p:GetAttribute("NBState")=="InRound"
     and isPhysicallyInsideMap(p)
    p:SetAttribute("NBInMap",targetable)
   end
-  task.wait(.25)
+
+  task.wait(.20)
  end
 end)
 
@@ -653,7 +865,13 @@ assert(director,"NextbotDirector missing")
 director.Source=[==[
 local Players=game:GetService("Players")
 local PathfindingService=game:GetService("PathfindingService")
+
 local BOT_SPEED=48.5
+local PATH_REFRESH=.65
+local THINK_RATE=.12
+local HIT_DISTANCE=4.2
+
+local memory=setmetatable({},{__mode="k"})
 
 local function nearestTarget(pos)
  local best=nil
@@ -667,18 +885,45 @@ local function nearestTarget(pos)
    if hum and root and hum.Health>0 then
     local d=(root.Position-pos).Magnitude
     if not bestDistance or d<bestDistance then
-     best={player=p,hum=hum,root=root}
+     best={player=p,char=ch,hum=hum,root=root}
      bestDistance=d
     end
    end
   end
  end
+
  return best,bestDistance
+end
+
+local function hasLineOfSight(bot,target)
+ local delta=target.root.Position-bot.Position
+ if delta.Magnitude<1 then return true end
+
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Exclude
+ params.FilterDescendantsInstances={
+  bot.Parent,
+  target.char,
+  workspace:FindFirstChild("ActiveNextbots")
+ }
+ params.IgnoreWater=true
+
+ local hit=workspace:Raycast(bot.Position,delta,params)
+ return hit==nil
+end
+
+local function predictedTarget(root)
+ local v=root.AssemblyLinearVelocity
+ local horizontal=Vector3.new(v.X,0,v.Z)
+ return root.Position+horizontal*.12
 end
 
 while true do
  local folder=workspace:FindFirstChild("ActiveNextbots")
+
  if workspace:GetAttribute("NBRoundActive") and folder then
+  local now=os.clock()
+
   for _,bot in ipairs(folder:GetChildren()) do
    if bot:IsA("Model") then
     local hum=bot:FindFirstChildOfClass("Humanoid")
@@ -686,22 +931,40 @@ while true do
      or bot.PrimaryPart
      or bot:FindFirstChildWhichIsA("BasePart",true)
 
-    if root then
-     local target,distance=nearestTarget(root.Position)
-     if target then
-      if hum then hum.WalkSpeed=BOT_SPEED end
+    if hum and root and hum.Health>0 then
+     hum.WalkSpeed=BOT_SPEED
+     hum.AutoRotate=true
 
-      if distance and distance<4.2 then
-       if target.player:GetAttribute("NBInMap")==true then
+     local target,distance=nearestTarget(root.Position)
+     local mem=memory[bot]
+     if not mem then
+      mem={
+       lastPath=0,
+       lastMoveCheck=now,
+       lastPos=root.Position
+      }
+      memory[bot]=mem
+     end
+
+     if target then
+      if distance and distance<=HIT_DISTANCE then
+       if target.player:GetAttribute("NBInMap")==true
+        and target.player:GetAttribute("NBState")=="InRound" then
         target.hum.Health=0
        end
-      elseif hum then
+      elseif hasLineOfSight(root,target) then
+       -- Open hallway / room: don't waste pathfinding. Chase smoothly.
+       hum:MoveTo(predictedTarget(target.root))
+      elseif now-mem.lastPath>=PATH_REFRESH then
+       mem.lastPath=now
+
        local ok,path=pcall(function()
         local p=PathfindingService:CreatePath({
          AgentRadius=2,
          AgentHeight=5,
          AgentCanJump=true,
-         WaypointSpacing=6
+         AgentCanClimb=true,
+         WaypointSpacing=5
         })
         p:ComputeAsync(root.Position,target.root.Position)
         return p
@@ -715,17 +978,29 @@ while true do
          hum:MoveTo(wp.Position)
         end
        else
-        hum:MoveTo(target.root.Position)
+        hum:MoveTo(predictedTarget(target.root))
        end
       end
-     elseif hum then
+
+      -- Small stuck recovery, without teleporting the bot.
+      if now-mem.lastMoveCheck>=1.25 then
+       local moved=(root.Position-mem.lastPos).Magnitude
+       if moved<1.25 and distance and distance>8 then
+        hum.Jump=true
+        hum:MoveTo(predictedTarget(target.root))
+       end
+       mem.lastPos=root.Position
+       mem.lastMoveCheck=now
+      end
+     else
       hum:MoveTo(root.Position)
      end
     end
    end
   end
  end
- task.wait(.35)
+
+ task.wait(THINK_RATE)
 end
 ]==]
 
@@ -734,6 +1009,7 @@ end
 -- =========================================================
 local oldMove=SPS:FindFirstChild("NB_EvadeMovement")
 if oldMove then oldMove:Destroy() end
+
 local move=Instance.new("LocalScript")
 move.Name="NB_EvadeMovement"
 move.Source=[==[
@@ -746,14 +1022,15 @@ local MAX_SPEED=50
 local ACCEL_TIME=10
 
 local conn=nil
-local speed=BASE_SPEED
+local movingTime=0
 
 local function setup(char)
  if conn then conn:Disconnect();conn=nil end
+
  local hum=char:WaitForChild("Humanoid",8)
  if not hum then return end
 
- speed=BASE_SPEED
+ movingTime=0
  hum.WalkSpeed=BASE_SPEED
 
  conn=RunService.RenderStepped:Connect(function(dt)
@@ -761,16 +1038,22 @@ local function setup(char)
 
   local moving=hum.MoveDirection.Magnitude>.05
   if moving then
-   speed=math.min(MAX_SPEED,speed+((MAX_SPEED-BASE_SPEED)/ACCEL_TIME)*dt)
+   movingTime=math.min(ACCEL_TIME,movingTime+dt)
   else
-   speed=BASE_SPEED
+   movingTime=0
   end
 
-  hum.WalkSpeed=speed
+  -- This reproduces the Sine/Out feel of the supplied Evade movement tween.
+  local linear=math.clamp(movingTime/ACCEL_TIME,0,1)
+  local eased=math.sin(linear*math.pi*.5)
+  local speed=BASE_SPEED+(MAX_SPEED-BASE_SPEED)*eased
+  hum.WalkSpeed=moving and speed or BASE_SPEED
 
   local cam=workspace.CurrentCamera
-  local targetFov=moving and 80 or 70
-  cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*7)
+  if cam then
+   local targetFov=moving and (70+10*eased) or 70
+   cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*8)
+  end
  end)
 end
 
@@ -779,9 +1062,6 @@ if player.Character then task.spawn(setup,player.Character) end
 ]==]
 move.Parent=SPS
 
--- ONE animation writer only. It plays the imported Evade Run keyframes
--- directly on R6 Motor6D.Transform, avoiding AnimationId permission failures
--- and avoiding the previous conflict between AnimationTrack + manual poses.
 local oldMotion=SPS:FindFirstChild("NB_R6MotionController")
 if oldMotion then oldMotion:Destroy() end
 
@@ -795,8 +1075,14 @@ local RunService=game:GetService("RunService")
 local player=Players.LocalPlayer
 local runSequence=RS:WaitForChild("NB_EvadeRunKeyframes")
 local clips=RS:WaitForChild("NB_R6Animations")
-local idleSequence=clips:FindFirstChild("idle") or clips:FindFirstChild("Idle")
-local jumpSequence=clips:FindFirstChild("jump") or clips:FindFirstChild("Jump")
+
+local function getClip(...)
+ for _,name in ipairs({...}) do
+  local x=clips:FindFirstChild(name)
+  if x and x:IsA("KeyframeSequence") then return x end
+ end
+ return nil
+end
 
 local conn=nil
 
@@ -810,6 +1096,7 @@ end
 local function bake(seq)
  if not seq then return nil end
  local frames={}
+
  for _,kf in ipairs(seq:GetKeyframes()) do
   local poses={}
   for _,p in ipairs(kf:GetChildren()) do
@@ -817,8 +1104,10 @@ local function bake(seq)
   end
   table.insert(frames,{time=kf.Time,poses=poses})
  end
+
  table.sort(frames,function(a,b)return a.time<b.time end)
  if #frames==0 then return nil end
+
  return {
   frames=frames,
   duration=math.max(.05,frames[#frames].time),
@@ -826,13 +1115,22 @@ local function bake(seq)
  }
 end
 
-local RUN=bake(runSequence)
-local IDLE=bake(idleSequence)
-local JUMP=bake(jumpSequence)
-assert(RUN and #RUN.frames>1,"Evade Run sequence did not bake")
+local CLIPS={
+ Idle=bake(getClip("idle","Idle")),
+ Jump=bake(getClip("jump","Jump")),
+ Forward=bake(getClip("Forward","forward")),
+ FLeft=bake(getClip("FLeft","left")),
+ FRight=bake(getClip("FRight","right")),
+ Back=bake(getClip("back")),
+ Left=bake(getClip("left")),
+ Right=bake(getClip("right")),
+ Run=bake(runSequence)
+}
+assert(CLIPS.Run and #CLIPS.Run.frames>1,"Evade Run sequence did not bake")
 
 local function sample(clip,t)
  if not clip then return {} end
+
  local time=clip.looped and (t%clip.duration) or math.min(t,clip.duration)
  local a,b=clip.frames[1],clip.frames[#clip.frames]
 
@@ -853,6 +1151,7 @@ local function sample(clip,t)
  for part,cf in pairs(b.poses) do
   if out[part]==nil then out[part]=cf end
  end
+
  return out
 end
 
@@ -860,11 +1159,12 @@ local function setup(char)
  if conn then conn:Disconnect();conn=nil end
 
  local hum=char:WaitForChild("Humanoid",8)
- if not hum or hum.RigType~=Enum.HumanoidRigType.R6 then return end
+ local root=char:WaitForChild("HumanoidRootPart",8)
+ if not hum or not root or hum.RigType~=Enum.HumanoidRigType.R6 then return end
 
- -- There must be no other Roblox animation script fighting these transforms.
  local animate=char:FindFirstChild("Animate")
  if animate then animate:Destroy() end
+
  local animator=hum:FindFirstChildOfClass("Animator")
  if animator then
   for _,track in ipairs(animator:GetPlayingAnimationTracks()) do
@@ -872,25 +1172,58 @@ local function setup(char)
   end
  end
 
- local motors={}
+ local motorList={}
+ local rootMotor=nil
  for _,d in ipairs(char:GetDescendants()) do
   if d:IsA("Motor6D") then
-   if d.Part1 then motors[d.Part1.Name]=d end
-   motors[d.Name]=motors[d.Name] or d
+   table.insert(motorList,d)
+   if d.Name=="RootJoint" or (d.Part1 and d.Part1.Name=="Torso") then
+    rootMotor=rootMotor or d
+   end
   end
  end
 
  local state="Idle"
  local stateStart=os.clock()
  local blendStart=os.clock()
- local from={}
+ local from=setmetatable({},{__mode="k"})
 
- local function setState(nextState)
-  if nextState==state then return end
-  from={}
-  for name,m in pairs(motors) do
-   if from[name]==nil then from[name]=m.Transform end
+ local function chooseState()
+  local hs=hum:GetState()
+  if hs==Enum.HumanoidStateType.Jumping
+   or hs==Enum.HumanoidStateType.Freefall then
+   return "Jump"
   end
+
+  if hum.MoveDirection.Magnitude<.05 then
+   return "Idle"
+  end
+
+  if hum.WalkSpeed>=20 then
+   return "Run"
+  end
+
+  local localDir=root.CFrame:VectorToObjectSpace(hum.MoveDirection)
+  local x,z=localDir.X,localDir.Z
+
+  if z<-.35 then
+   if x<-.30 and CLIPS.FLeft then return "FLeft" end
+   if x>.30 and CLIPS.FRight then return "FRight" end
+   return CLIPS.Forward and "Forward" or "Run"
+  elseif z>.35 and CLIPS.Back then
+   return "Back"
+  elseif x<0 and CLIPS.Left then
+   return "Left"
+  elseif CLIPS.Right then
+   return "Right"
+  end
+
+  return CLIPS.Forward and "Forward" or "Run"
+ end
+
+ local function changeState(nextState)
+  if nextState==state then return end
+  for _,m in ipairs(motorList) do from[m]=m.Transform end
   state=nextState
   stateStart=os.clock()
   blendStart=stateStart
@@ -899,37 +1232,33 @@ local function setup(char)
  conn=RunService.RenderStepped:Connect(function()
   if not char.Parent or hum.Health<=0 then return end
 
-  local hs=hum:GetState()
-  if hs==Enum.HumanoidStateType.Jumping or hs==Enum.HumanoidStateType.Freefall then
-   setState("Jump")
-  elseif hum.MoveDirection.Magnitude>.05 then
-   setState("Run")
-  else
-   setState("Idle")
-  end
+  changeState(chooseState())
 
-  local clip
+  local clip=CLIPS[state] or CLIPS.Idle
   local rate=1
+
   if state=="Run" then
-   clip=RUN
-   -- The actual running pose speeds up as the Evade acceleration rises.
-   rate=math.clamp(.85+(hum.WalkSpeed-10)/40*1.10,.85,1.95)
-  elseif state=="Jump" then
-   clip=JUMP
-  else
-   clip=IDLE
+   rate=math.clamp(.90+(hum.WalkSpeed-20)/30*.85,.90,1.75)
+  elseif state~="Idle" and state~="Jump" then
+   rate=math.clamp(hum.WalkSpeed/13,.75,1.55)
   end
 
   local poses=sample(clip,(os.clock()-stateStart)*rate)
-  local blend=math.clamp((os.clock()-blendStart)/.09,0,1)
+  local blend=math.clamp((os.clock()-blendStart)/.11,0,1)
+  local localDir=root.CFrame:VectorToObjectSpace(hum.MoveDirection)
 
-  for key,m in pairs(motors) do
-   local goal=poses[key]
-   if goal then
-    m.Transform=(from[key] or m.Transform):Lerp(goal,blend)
-   elseif state=="Idle" and not IDLE then
-    m.Transform=m.Transform:Lerp(CFrame.new(),math.min(1,.18))
+  for _,m in ipairs(motorList) do
+   local key=m.Part1 and m.Part1.Name or m.Name
+   local goal=poses[key] or poses[m.Name] or CFrame.new()
+
+   if state=="Run" and m==rootMotor then
+    local speedAlpha=math.clamp((hum.WalkSpeed-20)/30,0,1)
+    local leanForward=math.rad(-4-4*speedAlpha)
+    local leanSide=math.rad(-localDir.X*5)
+    goal=goal*CFrame.Angles(leanForward,0,leanSide)
    end
+
+   m.Transform=(from[m] or m.Transform):Lerp(goal,blend)
   end
  end)
 end
@@ -1109,6 +1438,10 @@ loadLogo.Image=LOGO
 loadLogo.ScaleType=Enum.ScaleType.Fit
 loadLogo.ZIndex=1001
 loadLogo.Parent=loading
+local loadLogoAspect=Instance.new("UIAspectRatioConstraint")
+loadLogoAspect.AspectRatio=640/483
+loadLogoAspect.DominantAxis=Enum.DominantAxis.Width
+loadLogoAspect.Parent=loadLogo
 
 local loadText=label(loading,"LoadingText","CARREGANDO...",UDim2.fromScale(.37,.66),UDim2.fromScale(.26,.055),Enum.Font.GothamBlack,1002)
 loadText.TextColor3=Color3.fromRGB(235,235,240)
@@ -1137,6 +1470,10 @@ logo.Image=LOGO
 logo.ScaleType=Enum.ScaleType.Fit
 logo.ZIndex=25
 logo.Parent=menu
+local logoAspect=Instance.new("UIAspectRatioConstraint")
+logoAspect.AspectRatio=640/483
+logoAspect.DominantAxis=Enum.DominantAxis.Width
+logoAspect.Parent=logo
 
 local function card(name,x,txt,border,imageId)
  local b=Instance.new("TextButton")
@@ -1153,6 +1490,10 @@ local function card(name,x,txt,border,imageId)
  b.Parent=menu
  corner(b,7)
  stroke(b,border,3,.02)
+ local cardAspect=Instance.new("UIAspectRatioConstraint")
+ cardAspect.AspectRatio=1.78
+ cardAspect.DominantAxis=Enum.DominantAxis.Width
+ cardAspect.Parent=b
 
  local art=Instance.new("ImageLabel")
  art.Name="CardArt"
@@ -1374,6 +1715,17 @@ local UserInputService=game:GetService("UserInputService")
 
 local player=Players.LocalPlayer
 local gui=script.Parent
+
+local controls=nil
+pcall(function()
+ local PlayerModule=require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+ controls=PlayerModule:GetControls()
+end)
+
+local function setControlsEnabled(enabled)
+ if not controls then return end
+ if enabled then controls:Enable() else controls:Disable() end
+end
 local loading=gui:WaitForChild("Background")
 local loadText=loading:WaitForChild("LoadingText")
 local menu=gui:WaitForChild("MainMenu")
@@ -1401,12 +1753,15 @@ end
 
 local function setMenuCamera()
  menuMode=true
+ setControlsEnabled(false)
  camera.CameraType=Enum.CameraType.Scriptable
+ camera.FieldOfView=70
  camBtn.Visible=false
 end
 
 local function setGameCamera()
  menuMode=false
+ setControlsEnabled(true)
  local ch=player.Character
  local hum=ch and ch:FindFirstChildOfClass("Humanoid")
  if cameraMode=="1P" then
@@ -1430,7 +1785,17 @@ RunService:BindToRenderStep("NB_MenuCamera",Enum.RenderPriority.Camera.Value+10,
   local a=workspace:FindFirstChild("MenuCameraAnchor")
   if a then
    camera.CameraType=Enum.CameraType.Scriptable
-   camera.CFrame=a.CFrame
+   camera.FieldOfView=70
+
+   -- Tiny cinematic movement while staying around the validated interior anchor.
+   local t=os.clock()
+   local drift=CFrame.new(
+    math.sin(t*.32)*.10,
+    math.sin(t*.27)*.04,
+    0
+   )*CFrame.Angles(0,math.rad(math.sin(t*.20)*.35),0)
+
+   camera.CFrame=a.CFrame*drift
   end
  end
 end)
@@ -1520,10 +1885,25 @@ menu.InventoryButton.MouseButton1Click:Connect(function()
    for _,d in ipairs(clone:GetDescendants()) do
     if d:IsA("LuaSourceContainer") then d:Destroy() end
    end
+   for _,d in ipairs(clone:GetDescendants()) do
+    if d:IsA("BasePart") then
+     d.Anchored=true
+     d.CanCollide=false
+    end
+   end
    clone:PivotTo(CFrame.new())
    clone.Parent=world
+
+   local cf,size=clone:GetBoundingBox()
+   local focus=cf.Position+Vector3.new(0,size.Y*.05,0)
+   local distance=math.max(6,size.Y*1.35,size.X*1.9)
+
    local cam=Instance.new("Camera")
-   cam.CFrame=CFrame.lookAt(Vector3.new(0,2.5,8),Vector3.new(0,2.5,0))
+   cam.FieldOfView=35
+   cam.CFrame=CFrame.lookAt(
+    focus+Vector3.new(0,size.Y*.03,distance),
+    focus
+   )
    cam.Parent=vf
    vf.CurrentCamera=cam
   end
@@ -1581,6 +1961,24 @@ for _,a in ipairs({"NBLevel","NBCoins","NBTokens","NBWins","NBRevives"}) do
 end
 updateStats()
 
+local dailyTimer=daily:FindFirstChild("Timer")
+task.spawn(function()
+ while gui.Parent do
+  if dailyTimer then
+   local utc=os.date("!*t")
+   local remaining=(23-utc.hour)*3600+(59-utc.min)*60+(60-utc.sec)
+   remaining=math.max(0,remaining)
+   dailyTimer.Text=string.format(
+    "Atualiza em %02d:%02d:%02d",
+    math.floor(remaining/3600),
+    math.floor((remaining%3600)/60),
+    remaining%60
+   )
+  end
+  task.wait(1)
+ end
+end)
+
 camBtn.MouseButton1Click:Connect(function()
  cameraMode=(cameraMode=="3P") and "1P" or "3P"
  setGameCamera()
@@ -1635,6 +2033,7 @@ end)
 
 -- exact 3-second loading, exact logo + CARREGANDO...
 loading.Visible=true
+setControlsEnabled(false)
 menu.Visible=false
 status.Visible=false
 hidePanels()
@@ -1673,6 +2072,15 @@ return {
  singleAnimationWriter=true,
  interiorPlayerSpawnLogic=true,
  interiorMenuCameraLogic=true,
+ spawnClearanceValidation=true,
+ voidRescue=true,
+ joinKeepsIntermissionPosition=true,
+ botLineOfSightChase=true,
+ botCachedPathfinding=true,
+ menuControlsLocked=true,
+ menuCameraDrift=true,
+ inventoryAutoFit=true,
+ liveDailyTimer=true,
  intermissionAvatarOnMap=true,
  botSpawnFolder=true,
  exactLogo=LOGO,
