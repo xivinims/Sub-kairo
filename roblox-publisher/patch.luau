@@ -2256,6 +2256,8 @@ for _,d in ipairs(gui:GetDescendants()) do
  if d:IsA("TextButton") then animate(d) end
 end
 
+local hidePanels
+
 local function renderAvatar(viewport,withRoom)
  viewport:ClearAllChildren()
 
@@ -2328,7 +2330,7 @@ local function openInventoryScreen()
  renderAvatar(inv:FindFirstChild("AvatarViewport"),false)
 end
 
-local function hidePanels()
+hidePanels=function()
  shopScene.Visible=false
  shopPanel.Visible=false
  daily.Visible=false
