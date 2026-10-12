@@ -183,6 +183,7 @@ local function preprocessMapSpawns(map)
  end
 
  -- 2. Find horizontal collidable floor surfaces.
+ -- Include small floor tiles too: Rocket Arena uses a dense 4x4 tile grid.
  local surfaces={}
  for _,d in ipairs(map:GetDescendants()) do
   if d:IsA("BasePart")
@@ -190,7 +191,7 @@ local function preprocessMapSpawns(map)
    and d.CanCollide
    and d.Transparency<.98
    and d.CFrame.UpVector.Y>.84
-   and d.Size.X*d.Size.Z>=80
+   and d.Size.X*d.Size.Z>=12
    and mapInsideXZ(cf,size,d.Position,.48) then
 
    local top=topOf(d)
@@ -211,8 +212,36 @@ local function preprocessMapSpawns(map)
 
  if not floorBand then
   assert(#surfaces>0,"No horizontal floor surfaces in "..map.Name)
-  -- Choose the lowest actual surface band. This specifically avoids roofs.
-  floorBand=surfaces[1].localY
+
+  -- Group surfaces into 0.5-stud vertical bands. A real floor is usually
+  -- either one huge slab or many tiles at the exact same elevation.
+  -- Cap per-part weight so one giant roof cannot beat a dense ground grid.
+  local bands={}
+  local maxScore=0
+
+  for _,s in ipairs(surfaces) do
+   local key=math.floor(s.localY*2+.5)/2
+   local b=bands[key]
+   if not b then
+    b={y=key,score=0,count=0}
+    bands[key]=b
+   end
+   b.count+=1
+   b.score+=math.min(s.area,400)
+   maxScore=math.max(maxScore,b.score)
+  end
+
+  local candidates={}
+  for _,b in pairs(bands) do
+   -- Keep meaningful structural bands, then choose the LOWEST one.
+   if b.score>=math.max(120,maxScore*.20) or b.count>=8 then
+    table.insert(candidates,b)
+   end
+  end
+  table.sort(candidates,function(a,b)return a.y<b.y end)
+
+  assert(#candidates>0,"No coherent floor band in "..map.Name)
+  floorBand=candidates[1].y
  end
 
  -- If authored spawns did not provide enough points, sample only surfaces
@@ -228,7 +257,7 @@ local function preprocessMapSpawns(map)
  if #playerFolder:GetChildren()<6 then
   for _,s in ipairs(surfaces) do
    if #playerFolder:GetChildren()>=12 then break end
-   if math.abs(s.localY-floorBand)<=3.0 then
+   if math.abs(s.localY-floorBand)<=1.75 then
     local part=s.part
     for _,v in ipairs(patterns) do
      if #playerFolder:GetChildren()>=12 then break end
@@ -261,7 +290,7 @@ local function preprocessMapSpawns(map)
  }
 
  for _,s in ipairs(surfaces) do
-  if math.abs(s.localY-floorBand)<=3.0 then
+  if math.abs(s.localY-floorBand)<=1.75 then
    local part=s.part
    for _,v in ipairs(botPatterns) do
     local pos=part.CFrame:PointToWorldSpace(Vector3.new(
@@ -2078,6 +2107,7 @@ return {
  singleAnimationWriter=true,
 
  persistentGroundSpawns=true,
+ denseTileFloorDetection=true,
  rejectsUpperSpawnLocations=true,
  runtimeFloorValidation=true,
  spawnAudit=spawnAudit,
