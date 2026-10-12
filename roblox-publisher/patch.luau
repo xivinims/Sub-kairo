@@ -542,70 +542,19 @@ local function createMenuCamera(map)
  if old then old:Destroy() end
 
  local cf,size=map:GetBoundingBox()
- local folder=createPlayerSpawns(map)
- local points=folder:GetChildren()
- local valid={}
+ local center=cf.Position
 
- for _,p in ipairs(points) do
-  local groundCF=validatedPointCF(map,p)
-  if groundCF then table.insert(valid,groundCF.Position) end
- end
- local bestCF=nil
- if #valid==0 then
-  -- Emergency fallback from persistent spawn parts without runtime ray validation.
-  for _,p in ipairs(points) do
-   if p:IsA("BasePart") then table.insert(valid,p.Position) end
-  end
- end
+ -- Menu background is intentionally a fixed invisible aerial camera.
+ -- It never follows the player's character.
+ local span=math.max(size.X,size.Z)
+ local height=math.clamp(span*.62,55,170)
+ local back=math.clamp(size.Z*.16,12,48)
 
- if #valid==0 then
-  local cf,size=map:GetBoundingBox()
-  table.insert(valid,cf.Position+Vector3.new(0,math.max(4,size.Y*.05),0))
- end
- local bestScore=-math.huge
+ local pos=center
+  + Vector3.new(0,height,0)
+  - cf.LookVector*back
 
- for i,a in ipairs(valid) do
-  local camPos=a+Vector3.new(0,3.0,0)
-  if cameraSpaceClear(map,camPos) then
-   for j,b in ipairs(valid) do
-    if i~=j then
-     local target=b+Vector3.new(0,2.0,0)
-     local dist=(target-camPos).Magnitude
-     if dist>=10 and dist<=75 and lineClear(map,camPos,target) then
-      if dist>bestScore then
-       bestScore=dist
-       bestCF=CFrame.lookAt(camPos,target)
-      end
-     end
-    end
-   end
-  end
- end
-
- if not bestCF then
-  local pos=valid[1]+Vector3.new(0,3.0,0)
-  local target=pos+cf.LookVector*18+Vector3.new(0,-.5,0)
-  bestCF=CFrame.lookAt(pos,target)
- end
-
- local lp=cf:PointToObjectSpace(bestCF.Position)
- if math.abs(lp.X)>size.X*.48 or math.abs(lp.Z)>size.Z*.48 then
-  local pos=valid[1]+Vector3.new(0,3.0,0)
-  local flatTarget=Vector3.new(cf.Position.X,pos.Y-1,cf.Position.Z)
-  if (flatTarget-pos).Magnitude<8 then
-   flatTarget=pos+cf.LookVector*18+Vector3.new(0,-1,0)
-  end
-  bestCF=CFrame.lookAt(pos,flatTarget)
- end
-
- -- Never allow a sky-facing menu camera.
- local look=bestCF.LookVector
- if look.Y>.02 then
-  local pos=bestCF.Position
-  local flat=Vector3.new(look.X,-.10,look.Z)
-  if flat.Magnitude<.1 then flat=cf.LookVector+Vector3.new(0,-.10,0) end
-  bestCF=CFrame.lookAt(pos,pos+flat.Unit*20)
- end
+ local target=center+Vector3.new(0,math.max(-2,size.Y*.02),0)
 
  local anchor=Instance.new("Part")
  anchor.Name="MenuCameraAnchor"
@@ -615,11 +564,12 @@ local function createMenuCamera(map)
  anchor.CanCollide=false
  anchor.CanTouch=false
  anchor.CanQuery=false
- anchor.CFrame=bestCF
- anchor:SetAttribute("InsideActiveMap",true)
+ anchor.CastShadow=false
+ anchor.CFrame=CFrame.lookAt(pos,target)
+ anchor:SetAttribute("MenuAerialCamera",true)
+ anchor:SetAttribute("MapName",map.Name)
  anchor.Parent=workspace
 end
-
 local function createBotSpawns(map)
  local folder=map:FindFirstChild("NextbotSpawnPoints")
  assert(
@@ -731,8 +681,11 @@ local function loadMap(name)
   anchor.CanCollide=false
   anchor.CanTouch=false
   anchor.CanQuery=false
-  local pos=base+Vector3.new(0,3.8,9)
-  anchor.CFrame=CFrame.lookAt(pos,base+Vector3.new(0,1.8,0))
+  local cf,size=map:GetBoundingBox()
+  local span=math.max(size.X,size.Z)
+  local pos=cf.Position+Vector3.new(0,math.clamp(span*.62,55,170),0)-cf.LookVector*math.clamp(size.Z*.16,12,48)
+  anchor.CFrame=CFrame.lookAt(pos,cf.Position)
+  anchor:SetAttribute("MenuAerialCamera",true)
   anchor.Parent=workspace
  end
 
@@ -2138,36 +2091,44 @@ local function clock(n)
  return string.format("%d:%02d",math.floor(n/60),n%60)
 end
 
+local function setCharacterLocalVisible(visible)
+ local ch=player.Character
+ if not ch then return end
+
+ for _,d in ipairs(ch:GetDescendants()) do
+  if d:IsA("BasePart") then
+   d.LocalTransparencyModifier=visible and 0 or 1
+  elseif d:IsA("Decal") then
+   d.Transparency=visible and 0 or 1
+  end
+ end
+end
+
 local function setMenuCamera()
  menuMode=true
  setControlsEnabled(false)
+ setCharacterLocalVisible(false)
+
+ player.CameraMode=Enum.CameraMode.Classic
+ player.CameraMinZoomDistance=9
+ player.CameraMaxZoomDistance=9
+
  camera.CameraType=Enum.CameraType.Scriptable
  camera.FieldOfView=70
  camBtn.Visible=false
  inGameActions.Visible=false
 end
 
-local function setFreeRoamMenu()
- menuMode=false
- setControlsEnabled(true)
-
- local ch=player.Character
- local hum=ch and ch:FindFirstChildOfClass("Humanoid")
- if hum then camera.CameraSubject=hum end
-
- player.CameraMode=Enum.CameraMode.Classic
- player.CameraMinZoomDistance=9
- player.CameraMaxZoomDistance=9
- camera.CameraType=Enum.CameraType.Custom
- camera.FieldOfView=70
-
- camBtn.Visible=false
- inGameActions.Visible=false
+local function setMenuCamera()
+ -- Kept only as a compatibility alias. Menu is ALWAYS the fixed aerial camera.
+ setMenuCamera()
 end
 
 local function setGameCamera()
  menuMode=false
  setControlsEnabled(true)
+ setCharacterLocalVisible(true)
+
  local ch=player.Character
  local hum=ch and ch:FindFirstChildOfClass("Humanoid")
  if cameraMode=="1P" then
@@ -2193,32 +2154,25 @@ RunService:BindToRenderStep("NB_MenuCamera",Enum.RenderPriority.Camera.Value+10,
  camera.CameraType=Enum.CameraType.Scriptable
  camera.FieldOfView=70
 
- local baseCF=nil
  local a=workspace:FindFirstChild("MenuCameraAnchor")
  if a then
-  baseCF=a.CFrame
- else
-  local map=workspace:FindFirstChild("ActiveMap")
-  local pf=map and map:FindFirstChild("NBPlayerSpawnPoints")
-  local p=pf and pf:FindFirstChildWhichIsA("BasePart")
-  if p then
-   local pos=p.Position+Vector3.new(0,5,10)
-   baseCF=CFrame.lookAt(pos,p.Position+Vector3.new(0,2,0))
-  else
-   local ch=player.Character
-   local root=ch and ch:FindFirstChild("HumanoidRootPart")
-   if root then
-    local pos=root.Position+Vector3.new(0,5,10)
-    baseCF=CFrame.lookAt(pos,root.Position+Vector3.new(0,2,0))
-   else
-    baseCF=CFrame.lookAt(Vector3.new(0,8,16),Vector3.new(0,3,0))
-   end
-  end
+  camera.CFrame=a.CFrame
+  return
  end
 
- local t=os.clock()
- local drift=CFrame.new(math.sin(t*.32)*.08,math.sin(t*.27)*.03,0)
- camera.CFrame=baseCF*drift
+ -- Absolute fallback: derive another aerial view from ActiveMap only.
+ -- Never fall back to the player's root/camera.
+ local map=workspace:FindFirstChild("ActiveMap")
+ if map then
+  local cf,size=map:GetBoundingBox()
+  local span=math.max(size.X,size.Z)
+  local pos=cf.Position
+   + Vector3.new(0,math.clamp(span*.62,55,170),0)
+   - cf.LookVector*math.clamp(size.Z*.16,12,48)
+  camera.CFrame=CFrame.lookAt(pos,cf.Position)
+ else
+  camera.CFrame=CFrame.lookAt(Vector3.new(0,90,35),Vector3.new(0,0,0))
+ end
 end)
 
 RunService:BindToRenderStep("NB_FixedZoom",Enum.RenderPriority.Camera.Value+11,function()
@@ -2343,7 +2297,7 @@ local function showMenu()
  hidePanels()
  menu.Visible=true
  status.Visible=true
- setFreeRoamMenu()
+ setMenuCamera()
 end
 
 menu.ShopButton.MouseButton1Click:Connect(function()
@@ -2515,7 +2469,7 @@ if roundState then roundState.OnClientEvent:Connect(function(kind,a,b,c)
   status.Text="INTERMISSION\n"..clock(a)
   if player:GetAttribute("NBState")=="Menu" and not queued and not loading.Visible then
    menu.Visible=true
-   setFreeRoamMenu()
+   setMenuCamera()
   end
  elseif kind=="Results" then
   local survivors=type(a)=="table" and a or {}
@@ -2534,7 +2488,7 @@ if roundState then roundState.OnClientEvent:Connect(function(kind,a,b,c)
  else
   status.Text=tostring(b or "ROUND").."\n"..clock(a)
  end
-end) endd
+end) end
 
 player:GetAttributeChangedSignal("NBState"):Connect(function()
  local s=player:GetAttribute("NBState")
@@ -2781,6 +2735,10 @@ return {
  emergencyLoader=true,
  menuCameraFallback=true,
  menuCameraNeverLooksUp=true,
+ fixedAerialMenuCamera=true,
+ menuNeverUsesPlayerCamera=true,
+ menuHidesLocalAvatar=true,
+ menuSyntaxEnddFixed=true,
  inGameMenuButton=true,
  inGameEmotesButton=true,
  inGameItemsButton=true,
