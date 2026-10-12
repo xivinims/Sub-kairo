@@ -911,10 +911,31 @@ local function spawnBots(map)
    if hum then hum.WalkSpeed=48.5 end
 
    for _,d in ipairs(b:GetDescendants()) do
-    if d:IsA("LuaSourceContainer") then d.Disabled=true end
-    if d:IsA("BasePart") then
+    if d:IsA("LuaSourceContainer") then
+     d.Disabled=true
+    elseif d:IsA("BasePart") then
+     -- Several toolbox Nextbots arrive anchored. That was why some of them
+     -- could "target" a player but never physically chase them.
+     d.Anchored=false
      d.CanCollide=false
-     d.CanTouch=false
+     d.CanTouch=true
+     d.CanQuery=true
+     pcall(function()d:SetNetworkOwner(nil)end)
+
+     d.Touched:Connect(function(hit)
+      local char=hit and hit:FindFirstAncestorOfClass("Model")
+      local plr=char and Players:GetPlayerFromCharacter(char)
+      if not plr then return end
+      if plr:GetAttribute("NBState")~="InRound"
+       or plr:GetAttribute("NBInMap")~=true then
+       return
+      end
+
+      local targetHum=char:FindFirstChildOfClass("Humanoid")
+      if targetHum and targetHum.Health>0 then
+       targetHum.Health=0
+      end
+     end)
     elseif d:IsA("Sound") then
      d:SetAttribute("NBOriginalVolume",d.Volume)
      d.RollOffMaxDistance=100
@@ -1060,8 +1081,20 @@ task.spawn(function()
    
      roundActive=false
      workspace:SetAttribute("NBRoundActive",false)
+
+     local survivors={}
+     for _,p in ipairs(Players:GetPlayers()) do
+      local ch=p.Character
+      local hum=ch and ch:FindFirstChildOfClass("Humanoid")
+      if p:GetAttribute("NBState")=="InRound" and hum and hum.Health>0 then
+       table.insert(survivors,p.DisplayName)
+      end
+     end
+     roundState:FireAllClients("Results",survivors,ROUND_TIME,pretty)
+
      local bots=workspace:FindFirstChild("ActiveNextbots")
      if bots then bots:Destroy() end
+     setBotSpawnMarkers(map,true)
    
      for _,p in ipairs(Players:GetPlayers()) do
       p:SetAttribute("NBInMap",false)
@@ -1092,27 +1125,36 @@ local Players=game:GetService("Players")
 local PathfindingService=game:GetService("PathfindingService")
 
 local BOT_SPEED=48.5
-local PATH_REFRESH=.65
-local THINK_RATE=.12
-local HIT_DISTANCE=4.2
+local PATH_REFRESH=.55
+local THINK_RATE=.10
+local HIT_DISTANCE=5.2
 
 local memory=setmetatable({},{__mode="k"})
 
+local function validTarget(p)
+ if p:GetAttribute("NBState")~="InRound" or p:GetAttribute("NBInMap")~=true then
+  return nil
+ end
+
+ local ch=p.Character
+ local hum=ch and ch:FindFirstChildOfClass("Humanoid")
+ local root=ch and ch:FindFirstChild("HumanoidRootPart")
+ if not hum or not root or hum.Health<=0 then return nil end
+
+ return {player=p,char=ch,hum=hum,root=root}
+end
+
 local function nearestTarget(pos)
  local best=nil
- local bestDistance=nil
+ local bestDistance=math.huge
 
  for _,p in ipairs(Players:GetPlayers()) do
-  if p:GetAttribute("NBInMap")==true and p:GetAttribute("NBState")=="InRound" then
-   local ch=p.Character
-   local hum=ch and ch:FindFirstChildOfClass("Humanoid")
-   local root=ch and ch:FindFirstChild("HumanoidRootPart")
-   if hum and root and hum.Health>0 then
-    local d=(root.Position-pos).Magnitude
-    if not bestDistance or d<bestDistance then
-     best={player=p,char=ch,hum=hum,root=root}
-     bestDistance=d
-    end
+  local t=validTarget(p)
+  if t then
+   local d=(t.root.Position-pos).Magnitude
+   if d<bestDistance then
+    best=t
+    bestDistance=d
    end
   end
  end
@@ -1120,27 +1162,37 @@ local function nearestTarget(pos)
  return best,bestDistance
 end
 
-local function hasLineOfSight(bot,target)
- local delta=target.root.Position-bot.Position
+local function botRoot(bot)
+ return bot:FindFirstChild("HumanoidRootPart")
+  or bot.PrimaryPart
+  or bot:FindFirstChildWhichIsA("BasePart",true)
+end
+
+local function hasLineOfSight(bot,root,target)
+ local delta=target.root.Position-root.Position
  if delta.Magnitude<1 then return true end
 
  local params=RaycastParams.new()
  params.FilterType=Enum.RaycastFilterType.Exclude
- params.FilterDescendantsInstances={
-  bot.Parent,
-  target.char,
-  workspace:FindFirstChild("ActiveNextbots")
- }
+ params.FilterDescendantsInstances={bot,target.char,workspace:FindFirstChild("ActiveNextbots")}
  params.IgnoreWater=true
 
- local hit=workspace:Raycast(bot.Position,delta,params)
- return hit==nil
+ return workspace:Raycast(root.Position,delta,params)==nil
 end
 
 local function predictedTarget(root)
  local v=root.AssemblyLinearVelocity
- local horizontal=Vector3.new(v.X,0,v.Z)
- return root.Position+horizontal*.12
+ return root.Position+Vector3.new(v.X,0,v.Z)*.12
+end
+
+local function modelContactDistance(bot,targetPos)
+ local cf,size=bot:GetBoundingBox()
+ local lp=cf:PointToObjectSpace(targetPos)
+ local hx,hy,hz=size.X*.5,size.Y*.5,size.Z*.5
+ local dx=math.max(math.abs(lp.X)-hx,0)
+ local dy=math.max(math.abs(lp.Y)-hy,0)
+ local dz=math.max(math.abs(lp.Z)-hz,0)
+ return Vector3.new(dx,dy,dz).Magnitude
 end
 
 while true do
@@ -1151,73 +1203,87 @@ while true do
 
   for _,bot in ipairs(folder:GetChildren()) do
    if bot:IsA("Model") then
+    local root=botRoot(bot)
     local hum=bot:FindFirstChildOfClass("Humanoid")
-    local root=bot:FindFirstChild("HumanoidRootPart")
-     or bot.PrimaryPart
-     or bot:FindFirstChildWhichIsA("BasePart",true)
 
-    if hum and root and hum.Health>0 then
-     hum.WalkSpeed=BOT_SPEED
-     hum.AutoRotate=true
+    if root then
+     root.Anchored=false
+     pcall(function()root:SetNetworkOwner(nil)end)
 
      local target,distance=nearestTarget(root.Position)
      local mem=memory[bot]
      if not mem then
-      mem={
-       lastPath=0,
-       lastMoveCheck=now,
-       lastPos=root.Position
-      }
+      mem={lastPath=0,lastMoveCheck=now,lastPos=root.Position}
       memory[bot]=mem
      end
 
      if target then
-      if distance and distance<=HIT_DISTANCE then
-       if target.player:GetAttribute("NBInMap")==true
-        and target.player:GetAttribute("NBState")=="InRound" then
-        target.hum.Health=0
-       end
-      elseif hasLineOfSight(root,target) then
-       -- Open hallway / room: don't waste pathfinding. Chase smoothly.
-       hum:MoveTo(predictedTarget(target.root))
-      elseif now-mem.lastPath>=PATH_REFRESH then
-       mem.lastPath=now
+      -- Use model bounds, not only root-to-root distance. Large flat Nextbots
+      -- now kill correctly when the player stands on/touches the image/model.
+      local contactDistance=modelContactDistance(bot,target.root.Position)
+      if contactDistance<=HIT_DISTANCE then
+       local still=validTarget(target.player)
+       if still then still.hum.Health=0 end
+      elseif hum then
+       hum.WalkSpeed=BOT_SPEED
+       hum.AutoRotate=true
 
-       local ok,path=pcall(function()
-        local p=PathfindingService:CreatePath({
-         AgentRadius=2,
-         AgentHeight=5,
-         AgentCanJump=true,
-         AgentCanClimb=true,
-         WaypointSpacing=5
-        })
-        p:ComputeAsync(root.Position,target.root.Position)
-        return p
-       end)
+       if hasLineOfSight(bot,root,target) then
+        hum:MoveTo(predictedTarget(target.root))
+       elseif now-mem.lastPath>=PATH_REFRESH then
+        mem.lastPath=now
 
-       if ok and path and path.Status==Enum.PathStatus.Success then
-        local points=path:GetWaypoints()
-        local wp=points[math.min(2,#points)]
-        if wp then
-         if wp.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end
-         hum:MoveTo(wp.Position)
+        local ok,path=pcall(function()
+         local p=PathfindingService:CreatePath({
+          AgentRadius=2,
+          AgentHeight=5,
+          AgentCanJump=true,
+          AgentCanClimb=true,
+          WaypointSpacing=5
+         })
+         p:ComputeAsync(root.Position,target.root.Position)
+         return p
+        end)
+
+        if ok and path and path.Status==Enum.PathStatus.Success then
+         local points=path:GetWaypoints()
+         local wp=points[math.min(2,#points)]
+         if wp then
+          if wp.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end
+          hum:MoveTo(wp.Position)
+         end
+        else
+         hum:MoveTo(predictedTarget(target.root))
         end
-       else
-        hum:MoveTo(predictedTarget(target.root))
        end
-      end
 
-      -- Small stuck recovery, without teleporting the bot.
-      if now-mem.lastMoveCheck>=1.25 then
-       local moved=(root.Position-mem.lastPos).Magnitude
-       if moved<1.25 and distance and distance>8 then
-        hum.Jump=true
-        hum:MoveTo(predictedTarget(target.root))
+       if now-mem.lastMoveCheck>=1 then
+        local moved=(root.Position-mem.lastPos).Magnitude
+        if moved<.8 and distance>8 then
+         hum.Jump=true
+         hum:MoveTo(predictedTarget(target.root))
+        end
+        mem.lastPos=root.Position
+        mem.lastMoveCheck=now
        end
-       mem.lastPos=root.Position
-       mem.lastMoveCheck=now
+      else
+       -- Image/Part-only Nextbots have no Humanoid. Move the whole model at a
+       -- fixed server-authoritative speed instead of leaving them frozen.
+       local destination=predictedTarget(target.root)
+       local delta=destination-root.Position
+       if delta.Magnitude>.05 then
+        local step=math.min(delta.Magnitude,BOT_SPEED*THINK_RATE)
+        local nextPos=root.Position+delta.Unit*step
+        local facing=CFrame.lookAt(nextPos,Vector3.new(destination.X,nextPos.Y,destination.Z))
+        local currentPivot=bot:GetPivot()
+        local rotation=currentPivot-currentPivot.Position
+        if math.abs(delta.X)+math.abs(delta.Z)>.05 then
+         rotation=facing-facing.Position
+        end
+        bot:PivotTo(CFrame.new(nextPos)*rotation)
+       end
       end
-     else
+     elseif hum then
       hum:MoveTo(root.Position)
      end
     end
@@ -1464,6 +1530,14 @@ local function setup(char)
   for _,m in ipairs(motors) do
    local key=m.Part1 and m.Part1.Name or m.Name
    local goal=poses[key] or poses[m.Name] or CFrame.new()
+
+   -- The StarterCharacter jump contains root translation. Applied directly to
+   -- RootJoint it can visually push the R6 torso/legs into the floor. Preserve
+   -- the exact jump ROTATION but remove root translation.
+   if state=="Jump" and (m.Name=="RootJoint" or key=="Torso") then
+    goal=goal.Rotation
+   end
+
    m.Transform=(from[m] or m.Transform):Lerp(goal,blend)
   end
  end)
@@ -2525,6 +2599,11 @@ return {
  joinKeepsIntermissionPosition=true,
  botLineOfSightChase=true,
  botCachedPathfinding=true,
+ botPartsForcedUnanchored=true,
+ botTouchKills=true,
+ nonHumanoidBotChase=true,
+ jumpRootTranslationRemoved=true,
+ roundResultsEvent=true,
  menuControlsLocked=true,
  menuCameraDrift=true,
  inventoryAutoFit=true,
