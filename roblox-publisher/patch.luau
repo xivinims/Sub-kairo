@@ -379,10 +379,10 @@ Players.CharacterAutoLoads=false
 local maps=SS:WaitForChild("NB_Maps")
 local templates=SS:WaitForChild("NB_Templates")
 local baseCharacter=SS:WaitForChild("NB_StarterCharacterBase")
-local net=RS:WaitForChild("NB_Remotes")
-local join=net:WaitForChild("JoinGame")
-local roundState=net:WaitForChild("RoundState")
-local menuState=net:WaitForChild("MenuState")
+local net=RS:WaitForChild("NB_Remotes",15)
+local join=net and net:FindFirstChild("JoinGame")
+local roundState=net and net:FindFirstChild("RoundState")
+local menuState=net and net:FindFirstChild("MenuState")
 
 local INTERMISSION=25
 local ROUND_TIME=120
@@ -542,9 +542,18 @@ local function createMenuCamera(map)
   local groundCF=validatedPointCF(map,p)
   if groundCF then table.insert(valid,groundCF.Position) end
  end
- assert(#valid>0,"No valid interior camera anchors")
-
  local bestCF=nil
+ if #valid==0 then
+  -- Emergency fallback from persistent spawn parts without runtime ray validation.
+  for _,p in ipairs(points) do
+   if p:IsA("BasePart") then table.insert(valid,p.Position) end
+  end
+ end
+
+ if #valid==0 then
+  local cf,size=map:GetBoundingBox()
+  table.insert(valid,cf.Position+Vector3.new(0,math.max(4,size.Y*.05),0))
+ end
  local bestScore=-math.huge
 
  for i,a in ipairs(valid) do
@@ -601,18 +610,51 @@ end
 
 local function loadMap(name)
  cleanupWorld()
- local src=maps:FindFirstChild(name)
- assert(src,"missing "..name)
 
- local map=src:Clone()
+ local source=maps:FindFirstChild(name)
+ if not source then
+  for _,candidate in ipairs(maps:GetChildren()) do
+   if candidate:IsA("Model") then source=candidate break end
+  end
+ end
+ if not source then
+  warn("NEXTBOTS BRASIL: no maps available")
+  return nil
+ end
+
+ local map=source:Clone()
  map.Name="ActiveMap"
  map.Parent=workspace
- currentMapName=name
+ currentMapName=source.Name
  currentMapCF,currentMapSize=map:GetBoundingBox()
 
- createPlayerSpawns(map)
- createBotSpawns(map)
- createMenuCamera(map)
+ -- Spawn folders were prebuilt in ServerStorage. Never let one bad validation
+ -- kill the entire round/menu loop.
+ pcall(function()createPlayerSpawns(map)end)
+ pcall(function()createBotSpawns(map)end)
+ local camOK=pcall(function()createMenuCamera(map)end)
+
+ if not camOK or not workspace:FindFirstChild("MenuCameraAnchor") then
+  local cf,size=map:GetBoundingBox()
+  local base=cf.Position
+  local pf=map:FindFirstChild("NBPlayerSpawnPoints")
+  local first=pf and pf:FindFirstChildWhichIsA("BasePart")
+  if first then base=first.Position end
+
+  local anchor=Instance.new("Part")
+  anchor.Name="MenuCameraAnchor"
+  anchor.Size=Vector3.new(1,1,1)
+  anchor.Transparency=1
+  anchor.Anchored=true
+  anchor.CanCollide=false
+  anchor.CanTouch=false
+  anchor.CanQuery=false
+  local pos=base+Vector3.new(0,5,10)
+  anchor.CFrame=CFrame.lookAt(pos,base+Vector3.new(0,2,0))
+  anchor:SetAttribute("Fallback",true)
+  anchor.Parent=workspace
+ end
+
  return map
 end
 
@@ -868,56 +910,65 @@ workspace:SetAttribute("NBIntermission",INTERMISSION)
 
 task.spawn(function()
  while true do
-  roundActive=false
-  workspace:SetAttribute("NBRoundActive",false)
+  local ok,err=pcall(function()
+     roundActive=false
+     workspace:SetAttribute("NBRoundActive",false)
+   
+     local picked=chooseMap()
+     local map=loadMap(picked)
+     local pretty=displayNames[picked] or picked
+   
+     -- Everyone is already physically on the selected map for intermission.
+     for _,p in ipairs(Players:GetPlayers()) do
+      p:SetAttribute("NBInMap",false)
+      p:SetAttribute("NBState","Menu")
+      ensureOnMap(p,map)
+      menuState:FireClient(p,"Show","Intermission")
+     end
+   
+     for t=INTERMISSION,0,-1 do
+      workspace:SetAttribute("NBIntermission",t)
+      roundState:FireAllClients("Intermission",t,pretty)
+      task.wait(1)
+     end
+   
+     roundActive=true
+     workspace:SetAttribute("NBRoundActive",true)
+     spawnBots(map)
+   
+     for _,p in ipairs(Players:GetPlayers()) do
+      if p:GetAttribute("NBState")=="Queued" then
+       joinRound(p)
+      else
+       p:SetAttribute("NBInMap",false)
+      end
+     end
+   
+     for t=ROUND_TIME,0,-1 do
+      if not workspace:FindFirstChild("ActiveMap") then break end
+      roundState:FireAllClients("Round",t,pretty)
+      task.wait(1)
+     end
+   
+     roundActive=false
+     workspace:SetAttribute("NBRoundActive",false)
+     local bots=workspace:FindFirstChild("ActiveNextbots")
+     if bots then bots:Destroy() end
+   
+     for _,p in ipairs(Players:GetPlayers()) do
+      p:SetAttribute("NBInMap",false)
+      p:SetAttribute("NBState","Menu")
+      menuState:FireClient(p,"Show","RoundEnd")
+     end
+     task.wait(.5)
+  end)
 
-  local picked=chooseMap()
-  local map=loadMap(picked)
-  local pretty=displayNames[picked] or picked
-
-  -- Everyone is already physically on the selected map for intermission.
-  for _,p in ipairs(Players:GetPlayers()) do
-   p:SetAttribute("NBInMap",false)
-   p:SetAttribute("NBState","Menu")
-   ensureOnMap(p,map)
-   menuState:FireClient(p,"Show","Intermission")
-  end
-
-  for t=INTERMISSION,0,-1 do
-   workspace:SetAttribute("NBIntermission",t)
-   roundState:FireAllClients("Intermission",t,pretty)
+  if not ok then
+   warn("NEXTBOTS BRASIL round loop recovered:",err)
+   roundActive=false
+   workspace:SetAttribute("NBRoundActive",false)
    task.wait(1)
   end
-
-  roundActive=true
-  workspace:SetAttribute("NBRoundActive",true)
-  spawnBots(map)
-
-  for _,p in ipairs(Players:GetPlayers()) do
-   if p:GetAttribute("NBState")=="Queued" then
-    joinRound(p)
-   else
-    p:SetAttribute("NBInMap",false)
-   end
-  end
-
-  for t=ROUND_TIME,0,-1 do
-   if not workspace:FindFirstChild("ActiveMap") then break end
-   roundState:FireAllClients("Round",t,pretty)
-   task.wait(1)
-  end
-
-  roundActive=false
-  workspace:SetAttribute("NBRoundActive",false)
-  local bots=workspace:FindFirstChild("ActiveNextbots")
-  if bots then bots:Destroy() end
-
-  for _,p in ipairs(Players:GetPlayers()) do
-   p:SetAttribute("NBInMap",false)
-   p:SetAttribute("NBState","Menu")
-   menuState:FireClient(p,"Show","RoundEnd")
-  end
-  task.wait(.5)
  end
 end)
 ]==]
@@ -1376,6 +1427,7 @@ local ui=Instance.new("ScreenGui")
 ui.Name="NextbotsBrasilUI"
 ui.IgnoreGuiInset=true
 ui.ResetOnSpawn=false
+ui.Enabled=true
 ui.DisplayOrder=40
 ui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 ui.Parent=SG
@@ -1812,23 +1864,37 @@ local function setGameCamera()
 end
 
 RunService:BindToRenderStep("NB_MenuCamera",Enum.RenderPriority.Camera.Value+10,function()
- if menuMode then
-  local a=workspace:FindFirstChild("MenuCameraAnchor")
-  if a then
-   camera.CameraType=Enum.CameraType.Scriptable
-   camera.FieldOfView=70
+ if not menuMode then return end
 
-   -- Tiny cinematic movement while staying around the validated interior anchor.
-   local t=os.clock()
-   local drift=CFrame.new(
-    math.sin(t*.32)*.10,
-    math.sin(t*.27)*.04,
-    0
-   )*CFrame.Angles(0,math.rad(math.sin(t*.20)*.35),0)
+ camera.CameraType=Enum.CameraType.Scriptable
+ camera.FieldOfView=70
 
-   camera.CFrame=a.CFrame*drift
+ local baseCF=nil
+ local a=workspace:FindFirstChild("MenuCameraAnchor")
+ if a then
+  baseCF=a.CFrame
+ else
+  local map=workspace:FindFirstChild("ActiveMap")
+  local pf=map and map:FindFirstChild("NBPlayerSpawnPoints")
+  local p=pf and pf:FindFirstChildWhichIsA("BasePart")
+  if p then
+   local pos=p.Position+Vector3.new(0,5,10)
+   baseCF=CFrame.lookAt(pos,p.Position+Vector3.new(0,2,0))
+  else
+   local ch=player.Character
+   local root=ch and ch:FindFirstChild("HumanoidRootPart")
+   if root then
+    local pos=root.Position+Vector3.new(0,5,10)
+    baseCF=CFrame.lookAt(pos,root.Position+Vector3.new(0,2,0))
+   else
+    baseCF=CFrame.lookAt(Vector3.new(0,8,16),Vector3.new(0,3,0))
+   end
   end
  end
+
+ local t=os.clock()
+ local drift=CFrame.new(math.sin(t*.32)*.08,math.sin(t*.27)*.03,0)
+ camera.CFrame=baseCF*drift
 end)
 
 RunService:BindToRenderStep("NB_FixedZoom",Enum.RenderPriority.Camera.Value+11,function()
@@ -1949,7 +2015,7 @@ menu.PlayButton.MouseButton1Click:Connect(function()
  menu.Visible=false
  status.Visible=true
  status.Text="INTERMISSION\nAGUARDANDO..."
- join:FireServer()
+ if join then join:FireServer() end
  setGameCamera()
 end)
 
@@ -2022,7 +2088,7 @@ UserInputService.InputBegan:Connect(function(input,processed)
  end
 end)
 
-menuState.OnClientEvent:Connect(function(mode)
+if menuState then menuState.OnClientEvent:Connect(function(mode)
  if mode=="InRound" then
   queued=false
   hidePanels()
@@ -2038,9 +2104,9 @@ menuState.OnClientEvent:Connect(function(mode)
  elseif mode=="Show" then
   showMenu()
  end
-end)
+end) end
 
-roundState.OnClientEvent:Connect(function(kind,timeLeft,mapName)
+if roundState then roundState.OnClientEvent:Connect(function(kind,timeLeft,mapName)
  if kind=="Intermission" then
   status.Text="INTERMISSION\n"..clock(timeLeft)
   if player:GetAttribute("NBState")=="Menu" and not queued and not loading.Visible then
@@ -2050,7 +2116,7 @@ roundState.OnClientEvent:Connect(function(kind,timeLeft,mapName)
  else
   status.Text=tostring(mapName or "ROUND").."\n"..clock(timeLeft)
  end
-end)
+end) end
 
 player:GetAttributeChangedSignal("NBState"):Connect(function()
  local s=player:GetAttribute("NBState")
@@ -2086,6 +2152,110 @@ status.Visible=true
 showMenu()
 ]==]
 client.Parent=ui
+
+-- =========================================================
+-- PLAYERGUI BOOTSTRAP
+-- Do not rely on StarterGui replication. Keep the finished UI as a template
+-- in ReplicatedStorage and inject it into PlayerGui from StarterPlayerScripts.
+-- =========================================================
+local oldTemplate=RS:FindFirstChild("NB_UI_TEMPLATE")
+if oldTemplate then oldTemplate:Destroy() end
+ui.Name="NB_UI_TEMPLATE"
+ui.Enabled=true
+ui.Parent=RS
+
+local oldBoot=SPS:FindFirstChild("NB_UIBootstrap")
+if oldBoot then oldBoot:Destroy() end
+
+local boot=Instance.new("LocalScript")
+boot.Name="NB_UIBootstrap"
+boot.Source=[==[
+local Players=game:GetService("Players")
+local RS=game:GetService("ReplicatedStorage")
+local RunService=game:GetService("RunService")
+
+local player=Players.LocalPlayer
+local pg=player:WaitForChild("PlayerGui")
+
+-- Emergency loader is generated locally, so it appears even if the menu
+-- template or a Remote is late.
+local emergency=Instance.new("ScreenGui")
+emergency.Name="NB_EmergencyLoader"
+emergency.IgnoreGuiInset=true
+emergency.ResetOnSpawn=false
+emergency.DisplayOrder=10000
+emergency.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+emergency.Parent=pg
+
+local bg=Instance.new("Frame")
+bg.Size=UDim2.fromScale(1,1)
+bg.BackgroundColor3=Color3.new(0,0,0)
+bg.BorderSizePixel=0
+bg.ZIndex=1
+bg.Parent=emergency
+
+local logo=Instance.new("ImageLabel")
+logo.AnchorPoint=Vector2.new(.5,.5)
+logo.Position=UDim2.fromScale(.5,.43)
+logo.Size=UDim2.fromScale(.48,.34)
+logo.BackgroundTransparency=1
+logo.Image="rbxassetid://127912605246110"
+logo.ScaleType=Enum.ScaleType.Fit
+logo.ZIndex=2
+logo.Parent=bg
+
+local text=Instance.new("TextLabel")
+text.AnchorPoint=Vector2.new(.5,.5)
+text.Position=UDim2.fromScale(.5,.68)
+text.Size=UDim2.fromScale(.30,.06)
+text.BackgroundTransparency=1
+text.Text="CARREGANDO..."
+text.TextColor3=Color3.fromRGB(245,245,245)
+text.TextStrokeTransparency=.25
+text.TextScaled=true
+text.Font=Enum.Font.GothamBlack
+text.ZIndex=2
+text.Parent=bg
+
+local started=os.clock()
+local template=RS:WaitForChild("NB_UI_TEMPLATE",20)
+
+local old=pg:FindFirstChild("NextbotsBrasilUI")
+if old then old:Destroy() end
+
+local gui=nil
+if template then
+ gui=template:Clone()
+ gui.Name="NextbotsBrasilUI"
+ gui.Enabled=true
+ gui.Parent=pg
+end
+
+-- Keep exact loading visible for at least 3 seconds.
+while os.clock()-started<3 do
+ local dots=(math.floor((os.clock()-started)*3)%3)+1
+ text.Text="CARREGANDO"..string.rep(".",dots)
+ task.wait(.08)
+end
+
+if gui then
+ local ownLoading=gui:FindFirstChild("Background")
+ if ownLoading then ownLoading.Visible=false end
+
+ local menu=gui:FindFirstChild("MainMenu")
+ local state=player:GetAttribute("NBState")
+ if menu and state~="InRound" and state~="Queued" then
+  menu.Visible=true
+ end
+
+ local status=gui:FindFirstChild("RoundStatus")
+ if status then status.Visible=true end
+end
+
+emergency:Destroy()
+]==]
+boot.Parent=SPS
+
 
 AS:SavePlaceAsync()
 
@@ -2128,5 +2298,9 @@ return {
  botSpawnFolder=true,
  exactLogo=LOGO,
  uiRebuilt=true,
+ playerGuiBootstrap=true,
+ emergencyLoader=true,
+ menuCameraFallback=true,
+ roundLoopRecovery=true,
  loadingText="CARREGANDO..."
 }
