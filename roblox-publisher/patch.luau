@@ -362,6 +362,17 @@ for _,map in ipairs(mapsFolder:GetChildren()) do
  if map:IsA("Model") then preprocessMapSpawns(map) end
 end
 
+
+-- In-game MENU button remote. Returning to menu never destroys the avatar.
+local nbRemotes=RS:FindFirstChild("NB_Remotes")
+assert(nbRemotes,"NB_Remotes missing")
+local returnToMenuRemote=nbRemotes:FindFirstChild("ReturnToMenu")
+if not returnToMenuRemote then
+ returnToMenuRemote=Instance.new("RemoteEvent")
+ returnToMenuRemote.Name="ReturnToMenu"
+ returnToMenuRemote.Parent=nbRemotes
+end
+
 -- =========================================================
 -- ROUND SERVER
 -- Avatar exists during intermission and is already on ActiveMap.
@@ -383,6 +394,7 @@ local net=RS:WaitForChild("NB_Remotes",15)
 local join=net and net:FindFirstChild("JoinGame")
 local roundState=net and net:FindFirstChild("RoundState")
 local menuState=net and net:FindFirstChild("MenuState")
+local returnToMenu=net and net:FindFirstChild("ReturnToMenu")
 
 local INTERMISSION=25
 local ROUND_TIME=120
@@ -581,10 +593,23 @@ local function createMenuCamera(map)
  end
 
  local lp=cf:PointToObjectSpace(bestCF.Position)
- assert(
-  math.abs(lp.X)<=size.X*.48 and math.abs(lp.Z)<=size.Z*.48,
-  "Menu camera outside map bounds"
- )
+ if math.abs(lp.X)>size.X*.48 or math.abs(lp.Z)>size.Z*.48 then
+  local pos=valid[1]+Vector3.new(0,3.0,0)
+  local flatTarget=Vector3.new(cf.Position.X,pos.Y-1,cf.Position.Z)
+  if (flatTarget-pos).Magnitude<8 then
+   flatTarget=pos+cf.LookVector*18+Vector3.new(0,-1,0)
+  end
+  bestCF=CFrame.lookAt(pos,flatTarget)
+ end
+
+ -- Never allow a sky-facing menu camera.
+ local look=bestCF.LookVector
+ if look.Y>.02 then
+  local pos=bestCF.Position
+  local flat=Vector3.new(look.X,-.10,look.Z)
+  if flat.Magnitude<.1 then flat=cf.LookVector+Vector3.new(0,-.10,0) end
+  bestCF=CFrame.lookAt(pos,pos+flat.Unit*20)
+ end
 
  local anchor=Instance.new("Part")
  anchor.Name="MenuCameraAnchor"
@@ -838,6 +863,18 @@ local function spawnBots(map)
    end
   end
  end
+end
+
+if returnToMenu then
+ returnToMenu.OnServerEvent:Connect(function(plr)
+  local state=plr:GetAttribute("NBState")
+  if state~="InRound" and state~="Queued" then return end
+
+  -- Same avatar, same map, just leave the targetable round state.
+  plr:SetAttribute("NBInMap",false)
+  plr:SetAttribute("NBState","Menu")
+  menuState:FireClient(plr,"Show","PlayerMenu")
+ end)
 end
 
 join.OnServerEvent:Connect(function(plr)
@@ -1126,74 +1163,43 @@ end
 -- =========================================================
 local oldMove=SPS:FindFirstChild("NB_EvadeMovement")
 if oldMove then oldMove:Destroy() end
-
-local move=Instance.new("LocalScript")
-move.Name="NB_EvadeMovement"
-move.Source=[==[
-local Players=game:GetService("Players")
-local RunService=game:GetService("RunService")
-
-local player=Players.LocalPlayer
-local BASE_SPEED=10
-local MAX_SPEED=50
-local ACCEL_TIME=10
-
-local conn=nil
-local movingTime=0
-
-local function setup(char)
- if conn then conn:Disconnect();conn=nil end
- local hum=char:WaitForChild("Humanoid",8)
- if not hum then return end
-
- movingTime=0
- hum.WalkSpeed=BASE_SPEED
-
- conn=RunService.RenderStepped:Connect(function(dt)
-  if not char.Parent or hum.Health<=0 then return end
-
-  local moving=hum.MoveDirection.Magnitude>.05
-  if moving then
-   movingTime=math.min(ACCEL_TIME,movingTime+dt)
-  else
-   movingTime=0
-  end
-
-  local t=math.clamp(movingTime/ACCEL_TIME,0,1)
-  local eased=math.sin(t*math.pi*.5)
-  hum.WalkSpeed=moving and (BASE_SPEED+(MAX_SPEED-BASE_SPEED)*eased) or BASE_SPEED
-
-  local cam=workspace.CurrentCamera
-  if cam then
-   local targetFov=moving and (70+10*eased) or 70
-   cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*8)
-  end
- end)
-end
-
-player.CharacterAdded:Connect(setup)
-if player.Character then task.spawn(setup,player.Character) end
-]==]
-move.Parent=SPS
-
 local oldMotion=SPS:FindFirstChild("NB_R6MotionController")
 if oldMotion then oldMotion:Destroy() end
+local oldUnified=SPS:FindFirstChild("NB_EvadeCharacterController")
+if oldUnified then oldUnified:Destroy() end
 
-local animatorScript=Instance.new("LocalScript")
-animatorScript.Name="NB_R6MotionController"
-animatorScript.Source=[==[
+-- ONE controller owns WalkSpeed, FOV and every Motor6D.Transform.
+-- It writes on PreSimulation, after Roblox animation evaluation, so no
+-- Animate/Animator track can overwrite the Evade keyframes on the same frame.
+local controller=Instance.new("LocalScript")
+controller.Name="NB_EvadeCharacterController"
+controller.Source=[==[
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
+local TweenService=game:GetService("TweenService")
 
 local player=Players.LocalPlayer
 local clips=RS:WaitForChild("NB_R6Animations")
-assert(clips:GetAttribute("SourceAssetId")=="14026023204","Wrong animation source")
+assert(clips:GetAttribute("SourceAssetId")=="14026023204","Wrong Evade animation source")
 
-local conn=nil
+local BASE_SPEED=10
+local MAX_SPEED=50
+local ACCEL_TIME=10
+local RUN_THRESHOLD=20
+
+local frameConn=nil
+local animPlayedConn=nil
+local movingTime=0
 
 local function flatten(p,map)
- if p:IsA("Pose") then map[p.Name]=p.CFrame end
+ if p:IsA("Pose") then
+  map[p.Name]={
+   cf=p.CFrame,
+   style=p.EasingStyle,
+   direction=p.EasingDirection
+  }
+ end
  for _,c in ipairs(p:GetChildren()) do
   if c:IsA("Pose") then flatten(c,map) end
  end
@@ -1210,6 +1216,7 @@ local function bake(name)
   table.insert(frames,{time=kf.Time,poses=poses})
  end
  table.sort(frames,function(a,b)return a.time<b.time end)
+ assert(#frames>0,"Empty Evade clip "..name)
  return {
   frames=frames,
   duration=math.max(.05,frames[#frames].time),
@@ -1217,20 +1224,31 @@ local function bake(name)
  }
 end
 
--- Every single clip below is from 14026023204.
+-- All animation data comes directly from asset 14026023204.
 local CLIPS={
  Idle=bake("idle"),
  Jump=bake("jump"),
-
  WalkForward=bake("forward"),
  WalkBack=bake("back"),
  WalkLeft=bake("left"),
  WalkRight=bake("right"),
-
  RunForward=bake("Forward"),
  RunLeft=bake("FLeft"),
  RunRight=bake("FRight")
 }
+
+local function ease(raw,aPose,bPose)
+ local pose=bPose or aPose
+ if not pose then return raw end
+ local ok,value=pcall(
+  TweenService.GetValue,
+  TweenService,
+  raw,
+  pose.style or Enum.EasingStyle.Linear,
+  pose.direction or Enum.EasingDirection.InOut
+ )
+ return ok and value or raw
+end
 
 local function sample(clip,t)
  local time=clip.looped and (t%clip.duration) or math.min(t,clip.duration)
@@ -1244,28 +1262,47 @@ local function sample(clip,t)
   end
  end
 
- local alpha=math.clamp((time-a.time)/math.max(.0001,b.time-a.time),0,1)
+ local raw=math.clamp((time-a.time)/math.max(.0001,b.time-a.time),0,1)
  local out={}
- for key,cf in pairs(a.poses) do out[key]=cf:Lerp(b.poses[key] or cf,alpha) end
- for key,cf in pairs(b.poses) do if out[key]==nil then out[key]=cf end end
+ for key,av in pairs(a.poses) do
+  local bv=b.poses[key] or av
+  out[key]=av.cf:Lerp(bv.cf,ease(raw,av,bv))
+ end
+ for key,bv in pairs(b.poses) do
+  if out[key]==nil then out[key]=bv.cf end
+ end
  return out
 end
 
 local function setup(char)
- if conn then conn:Disconnect();conn=nil end
+ if frameConn then frameConn:Disconnect();frameConn=nil end
+ if animPlayedConn then animPlayedConn:Disconnect();animPlayedConn=nil end
 
  local hum=char:WaitForChild("Humanoid",8)
  local root=char:WaitForChild("HumanoidRootPart",8)
  if not hum or not root or hum.RigType~=Enum.HumanoidRigType.R6 then return end
 
- local animate=char:FindFirstChild("Animate")
- if animate then animate:Destroy() end
+ -- Remove all default animation writers from this character.
+ for _,d in ipairs(char:GetDescendants()) do
+  if d:IsA("LocalScript") and d.Name=="Animate" then
+   d.Disabled=true
+   d:Destroy()
+  end
+ end
 
  local animator=hum:FindFirstChildOfClass("Animator")
  if animator then
   for _,track in ipairs(animator:GetPlayingAnimationTracks()) do
-   track:Stop(0)
+   pcall(function()track:Stop(0)end)
   end
+  animPlayedConn=animator.AnimationPlayed:Connect(function(track)
+   -- Any late track from another script is stopped immediately.
+   task.defer(function()
+    if track and track.IsPlaying then
+     pcall(function()track:Stop(0)end)
+    end
+   end)
+  end)
  end
 
  local motors={}
@@ -1273,12 +1310,15 @@ local function setup(char)
   if d:IsA("Motor6D") then table.insert(motors,d) end
  end
 
+ movingTime=0
+ hum.WalkSpeed=BASE_SPEED
+
  local state="Idle"
  local stateStart=os.clock()
  local blendStart=os.clock()
  local from=setmetatable({},{__mode="k"})
 
- local function choose()
+ local function chooseState()
   local hs=hum:GetState()
   if hs==Enum.HumanoidStateType.Jumping
    or hs==Enum.HumanoidStateType.Freefall then
@@ -1289,18 +1329,14 @@ local function setup(char)
 
   local localDir=root.CFrame:VectorToObjectSpace(hum.MoveDirection)
   local x,z=localDir.X,localDir.Z
-  local running=hum.WalkSpeed>=20
+  local running=hum.WalkSpeed>=RUN_THRESHOLD
 
   if running then
-   -- These are the actual high-speed directional sequences in the
-   -- StarterCharacter asset.
    if z<-.20 then
     if x<-.28 then return "RunLeft" end
     if x>.28 then return "RunRight" end
     return "RunForward"
    end
-   -- The asset has no separate uppercase back-run. Keep its own back/side
-   -- movement instead of fabricating an animation.
    if z>.30 then return "WalkBack" end
    if x<0 then return "RunLeft" end
    return "RunRight"
@@ -1312,7 +1348,7 @@ local function setup(char)
   return "WalkRight"
  end
 
- local function change(nextState)
+ local function changeState(nextState)
   if nextState==state then return end
   for _,m in ipairs(motors) do from[m]=m.Transform end
   state=nextState
@@ -1320,15 +1356,32 @@ local function setup(char)
   blendStart=stateStart
  end
 
- conn=RunService.RenderStepped:Connect(function()
+ frameConn=RunService.PreSimulation:Connect(function(dt)
   if not char.Parent or hum.Health<=0 then return end
 
-  change(choose())
+  local moving=hum.MoveDirection.Magnitude>.05
+  if moving then
+   movingTime=math.min(ACCEL_TIME,movingTime+dt)
+  else
+   movingTime=0
+  end
+
+  local t=math.clamp(movingTime/ACCEL_TIME,0,1)
+  local accel=math.sin(t*math.pi*.5)
+  hum.WalkSpeed=moving and (BASE_SPEED+(MAX_SPEED-BASE_SPEED)*accel) or BASE_SPEED
+
+  local cam=workspace.CurrentCamera
+  if cam then
+   local targetFov=moving and (70+10*accel) or 70
+   cam.FieldOfView=cam.FieldOfView+(targetFov-cam.FieldOfView)*math.min(1,dt*8)
+  end
+
+  changeState(chooseState())
+
   local clip=CLIPS[state] or CLIPS.Idle
   local rate=1
-
   if string.sub(state,1,3)=="Run" then
-   local a=math.clamp((hum.WalkSpeed-20)/30,0,1)
+   local a=math.clamp((hum.WalkSpeed-RUN_THRESHOLD)/(MAX_SPEED-RUN_THRESHOLD),0,1)
    rate=.95+a*.35
   elseif string.sub(state,1,4)=="Walk" then
    rate=math.clamp(hum.WalkSpeed/12,.80,1.35)
@@ -1348,7 +1401,7 @@ end
 player.CharacterAdded:Connect(setup)
 if player.Character then task.spawn(setup,player.Character) end
 ]==]
-animatorScript.Parent=SPS
+controller.Parent=SPS
 
 -- old HUD conflicts with the rebuilt interface
 local oldHud=SPS:FindFirstChild("NBReferenceHUDClient")
@@ -1784,6 +1837,32 @@ local modalClose=textButton(modal,"Close","VOLTAR",UDim2.fromScale(.34,.82),UDim
 local camBtn=textButton(ui,"CameraModeButton","3P",UDim2.fromScale(.875,.13),UDim2.fromScale(.07,.055),Color3.fromRGB(25,25,28),Color3.fromRGB(100,120,155),150)
 camBtn.Visible=false
 
+local inGameActions=Instance.new("Frame")
+inGameActions.Name="InGameActions"
+inGameActions.Position=UDim2.fromScale(.875,.245)
+inGameActions.Size=UDim2.fromScale(.095,.245)
+inGameActions.BackgroundTransparency=1
+inGameActions.ZIndex=145
+inGameActions.Visible=false
+inGameActions.Parent=ui
+
+local gameMenuBtn=textButton(
+ inGameActions,"MenuButton","☰\nMENU",
+ UDim2.fromScale(0,0),UDim2.fromScale(1,.27),
+ Color3.fromRGB(24,24,27),Color3.fromRGB(170,180,200),150
+)
+local gameEmotesBtn=textButton(
+ inGameActions,"EmotesButton","♪\nEMOTES",
+ UDim2.fromScale(0,.365),UDim2.fromScale(1,.27),
+ Color3.fromRGB(24,24,27),Color3.fromRGB(225,190,105),150
+)
+local gameItemsBtn=textButton(
+ inGameActions,"ItemsButton","▣\nITENS",
+ UDim2.fromScale(0,.73),UDim2.fromScale(1,.27),
+ Color3.fromRGB(24,24,27),Color3.fromRGB(105,165,235),150
+)
+
+
 -- =========================================================
 -- MENU CLIENT
 -- =========================================================
@@ -1818,11 +1897,16 @@ local daily=gui:WaitForChild("DailyShopPanel")
 local inv=gui:WaitForChild("InventoryPanel")
 local modal=gui:WaitForChild("UtilityModal")
 local camBtn=gui:WaitForChild("CameraModeButton")
+local inGameActions=gui:WaitForChild("InGameActions")
+local gameMenuBtn=inGameActions:WaitForChild("MenuButton")
+local gameEmotesBtn=inGameActions:WaitForChild("EmotesButton")
+local gameItemsBtn=inGameActions:WaitForChild("ItemsButton")
 
-local net=RS:WaitForChild("NB_Remotes")
-local join=net:WaitForChild("JoinGame")
-local roundState=net:WaitForChild("RoundState")
-local menuState=net:WaitForChild("MenuState")
+local net=RS:WaitForChild("NB_Remotes",15)
+local join=net and net:FindFirstChild("JoinGame")
+local roundState=net and net:FindFirstChild("RoundState")
+local menuState=net and net:FindFirstChild("MenuState")
+local returnToMenu=net and net:FindFirstChild("ReturnToMenu")
 
 local camera=workspace.CurrentCamera
 local menuMode=true
@@ -1840,6 +1924,7 @@ local function setMenuCamera()
  camera.CameraType=Enum.CameraType.Scriptable
  camera.FieldOfView=70
  camBtn.Visible=false
+ inGameActions.Visible=false
 end
 
 local function setGameCamera()
@@ -1861,6 +1946,7 @@ local function setGameCamera()
  if hum then camera.CameraSubject=hum end
  camera.CameraType=Enum.CameraType.Custom
  camBtn.Visible=true
+ inGameActions.Visible=true
 end
 
 RunService:BindToRenderStep("NB_MenuCamera",Enum.RenderPriority.Camera.Value+10,function()
@@ -2006,7 +2092,14 @@ menu.InventoryButton.MouseButton1Click:Connect(function()
   end
  end
 end)
-inv.Exit.MouseButton1Click:Connect(showMenu)
+inv.Exit.MouseButton1Click:Connect(function()
+ if player:GetAttribute("NBState")=="InRound" then
+  inv.Visible=false
+  setGameCamera()
+ else
+  showMenu()
+ end
+end)
 
 menu.PlayButton.MouseButton1Click:Connect(function()
  if queued then return end
@@ -2073,6 +2166,56 @@ task.spawn(function()
    )
   end
   task.wait(1)
+ end
+end)
+
+gameMenuBtn.MouseButton1Click:Connect(function()
+ if returnToMenu then
+  returnToMenu:FireServer()
+ else
+  showMenu()
+ end
+end)
+
+gameEmotesBtn.MouseButton1Click:Connect(function()
+ modal.Title.Text="EMOTES"
+ modal.Body.Text="Escolha seus emotes durante a partida."
+ modal.Visible=true
+end)
+
+gameItemsBtn.MouseButton1Click:Connect(function()
+ -- Stay in the live game camera; this is an overlay, not a menu return.
+ inv.Visible=true
+ inGameActions.Visible=false
+ setControlsEnabled(false)
+
+ local vf=inv:FindFirstChild("AvatarViewport")
+ if vf then
+  vf:ClearAllChildren()
+  local char=player.Character
+  if char then
+   local world=Instance.new("WorldModel")
+   world.Parent=vf
+   char.Archivable=true
+   local clone=char:Clone()
+   for _,d in ipairs(clone:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then d:Destroy() end
+    if d:IsA("BasePart") then
+     d.Anchored=true
+     d.CanCollide=false
+    end
+   end
+   clone:PivotTo(CFrame.new())
+   clone.Parent=world
+   local cf,size=clone:GetBoundingBox()
+   local focus=cf.Position+Vector3.new(0,size.Y*.05,0)
+   local distance=math.max(6,size.Y*1.35,size.X*1.9)
+   local vcam=Instance.new("Camera")
+   vcam.FieldOfView=35
+   vcam.CFrame=CFrame.lookAt(focus+Vector3.new(0,size.Y*.03,distance),focus)
+   vcam.Parent=vf
+   vf.CurrentCamera=vcam
+  end
  end
 end)
 
@@ -2275,6 +2418,9 @@ return {
  walkForwardFrames=#animFolder.forward:GetKeyframes(),
  jumpFrames=#animFolder.jump:GetKeyframes(),
  singleAnimationWriter=true,
+ unifiedEvadeController=true,
+ animationPhase="PreSimulation",
+ stopsForeignAnimationTracks=true,
 
  persistentGroundSpawns=true,
  denseTileFloorDetection=true,
@@ -2301,6 +2447,11 @@ return {
  playerGuiBootstrap=true,
  emergencyLoader=true,
  menuCameraFallback=true,
+ menuCameraNeverLooksUp=true,
+ inGameMenuButton=true,
+ inGameEmotesButton=true,
+ inGameItemsButton=true,
+ returnToMenuKeepsAvatar=true,
  roundLoopRecovery=true,
  loadingText="CARREGANDO..."
 }
