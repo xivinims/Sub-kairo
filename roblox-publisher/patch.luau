@@ -1727,6 +1727,27 @@ loadLogoAspect.Parent=loadLogo
 local loadText=label(loading,"LoadingText","CARREGANDO...",UDim2.fromScale(.37,.66),UDim2.fromScale(.26,.055),Enum.Font.GothamBlack,1002)
 loadText.TextColor3=Color3.fromRGB(235,235,240)
 
+local loadStatus=label(loading,"LoadingStatus","PREPARANDO MAPA",UDim2.fromScale(.39,.715),UDim2.fromScale(.22,.028),Enum.Font.GothamBold,1002)
+loadStatus.TextColor3=Color3.fromRGB(145,155,175)
+loadStatus.TextTransparency=.10
+
+local loadBar=frame(loading,"LoadingBar",UDim2.fromScale(.34,.765),UDim2.fromScale(.32,.014),Color3.fromRGB(32,35,42),0,1002,8)
+local loadFill=Instance.new("Frame")
+loadFill.Name="Fill"
+loadFill.Size=UDim2.fromScale(0,1)
+loadFill.BackgroundColor3=Color3.fromRGB(230,235,245)
+loadFill.BorderSizePixel=0
+loadFill.ZIndex=1003
+loadFill.Parent=loadBar
+corner(loadFill,8)
+
+local loadingGradient=Instance.new("UIGradient")
+loadingGradient.Color=ColorSequence.new({
+ ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+ ColorSequenceKeypoint.new(1,Color3.fromRGB(120,170,255))
+})
+loadingGradient.Parent=loadFill
+
 -- MAIN MENU
 local menu=Instance.new("Frame")
 menu.Name="MainMenu"
@@ -1876,6 +1897,36 @@ local b2=textButton(bottom,"ModeBrowser","▰\nMODE BROWSER",UDim2.fromScale(.35
 local b3=textButton(bottom,"Spectate","◉\nOBSERVAR",UDim2.fromScale(.71,0),UDim2.fromScale(.29,1),Color3.fromRGB(25,25,28),Color3.fromRGB(120,105,170),22)
 
 -- SHOP ROOT: left-side panel from reference
+local shopScene=frame(ui,"ShopScene",UDim2.fromScale(0,0),UDim2.fromScale(1,1),Color3.fromRGB(18,22,28),.05,90,0)
+shopScene.Visible=false
+
+local shopSceneShade=Instance.new("UIGradient")
+shopSceneShade.Color=ColorSequence.new({
+ ColorSequenceKeypoint.new(0,Color3.fromRGB(17,20,25)),
+ ColorSequenceKeypoint.new(.55,Color3.fromRGB(28,34,44)),
+ ColorSequenceKeypoint.new(1,Color3.fromRGB(12,14,18))
+})
+shopSceneShade.Rotation=0
+shopSceneShade.Parent=shopScene
+
+local shopAvatar=Instance.new("ViewportFrame")
+shopAvatar.Name="ShopAvatarViewport"
+shopAvatar.Position=UDim2.fromScale(.48,.12)
+shopAvatar.Size=UDim2.fromScale(.47,.74)
+shopAvatar.BackgroundColor3=Color3.fromRGB(24,29,36)
+shopAvatar.BackgroundTransparency=.05
+shopAvatar.BorderSizePixel=0
+shopAvatar.Ambient=Color3.fromRGB(220,225,235)
+shopAvatar.LightColor=Color3.fromRGB(255,255,255)
+shopAvatar.LightDirection=Vector3.new(-.7,-1,-.5)
+shopAvatar.ZIndex=92
+shopAvatar.Parent=shopScene
+corner(shopAvatar,12)
+stroke(shopAvatar,Color3.fromRGB(65,72,84),2,.25)
+
+local shopAvatarTitle=label(shopScene,"AvatarTitle","SEU PERSONAGEM",UDim2.fromScale(.59,.06),UDim2.fromScale(.25,.045),Enum.Font.GothamBlack,93)
+shopAvatarTitle.TextColor3=Color3.fromRGB(220,225,235)
+
 local shopRoot=frame(ui,"ShopPanel",UDim2.fromScale(.075,.17),UDim2.fromScale(.28,.61),Color3.fromRGB(20,17,14),.18,100,8)
 shopRoot.Visible=false
 local header=frame(shopRoot,"Header",UDim2.fromScale(0,0),UDim2.fromScale(1,.12),Color3.fromRGB(65,43,23),.12,101,8)
@@ -1926,7 +1977,8 @@ local dailyBack=textButton(daily,"Back","Voltar",UDim2.fromScale(.40,.90),UDim2.
 local inv=Instance.new("Frame")
 inv.Name="InventoryPanel"
 inv.Size=UDim2.fromScale(1,1)
-inv.BackgroundTransparency=1
+inv.BackgroundColor3=Color3.fromRGB(22,24,29)
+inv.BackgroundTransparency=.10
 inv.Visible=false
 inv.ZIndex=100
 inv.Parent=ui
@@ -1977,6 +2029,25 @@ modal.Visible=false
 local modalTitle=label(modal,"Title","",UDim2.fromScale(.08,.08),UDim2.fromScale(.75,.16),Enum.Font.GothamBlack,201)
 local modalBody=label(modal,"Body","",UDim2.fromScale(.08,.28),UDim2.fromScale(.84,.50),Enum.Font.Gotham,201)
 local modalClose=textButton(modal,"Close","VOLTAR",UDim2.fromScale(.34,.82),UDim2.fromScale(.32,.12),Color3.fromRGB(175,58,65),Color3.fromRGB(220,80,90),202)
+
+local results=frame(ui,"RoundResults",UDim2.fromScale(.19,.24),UDim2.fromScale(.62,.30),Color3.fromRGB(11,13,17),.04,230,10)
+results.Visible=false
+stroke(results,Color3.fromRGB(90,110,145),2,.15)
+
+local resultsHeader=frame(results,"Header",UDim2.fromScale(0,0),UDim2.fromScale(1,.24),Color3.fromRGB(35,48,68),.02,231,10)
+local resultsTitle=label(resultsHeader,"Title","RODADA FINALIZADA",UDim2.fromScale(.17,.08),UDim2.fromScale(.66,.70),Enum.Font.GothamBlack,232)
+
+local resultsTime=label(results,"Time","TEMPO 2:00",UDim2.fromScale(.34,.25),UDim2.fromScale(.32,.10),Enum.Font.GothamBold,232)
+resultsTime.TextColor3=Color3.fromRGB(180,195,220)
+
+local survivorTitle=label(results,"SurvivorTitle","SOBREVIVENTES",UDim2.fromScale(.08,.39),UDim2.fromScale(.84,.10),Enum.Font.GothamBlack,232)
+survivorTitle.TextColor3=Color3.fromRGB(115,235,140)
+
+local survivorNames=label(results,"SurvivorNames","",UDim2.fromScale(.07,.50),UDim2.fromScale(.86,.18),Enum.Font.GothamBold,232)
+survivorNames.TextColor3=Color3.fromRGB(240,240,245)
+
+local resultsExit=textButton(results,"Exit","SAÍDA",UDim2.fromScale(.39,.78),UDim2.fromScale(.22,.13),Color3.fromRGB(185,60,68),Color3.fromRGB(230,85,95),233)
+
 
 -- camera button in round
 local camBtn=textButton(ui,"CameraModeButton","3P",UDim2.fromScale(.875,.13),UDim2.fromScale(.07,.055),Color3.fromRGB(25,25,28),Color3.fromRGB(100,120,155),150)
@@ -2037,10 +2108,13 @@ local loading=gui:WaitForChild("Background")
 local loadText=loading:WaitForChild("LoadingText")
 local menu=gui:WaitForChild("MainMenu")
 local status=gui:WaitForChild("RoundStatus")
+local shopScene=gui:WaitForChild("ShopScene")
 local shopPanel=gui:WaitForChild("ShopPanel")
+local shopAvatarViewport=shopScene:WaitForChild("ShopAvatarViewport")
 local daily=gui:WaitForChild("DailyShopPanel")
 local inv=gui:WaitForChild("InventoryPanel")
 local modal=gui:WaitForChild("UtilityModal")
+local results=gui:WaitForChild("RoundResults")
 local camBtn=gui:WaitForChild("CameraModeButton")
 local inGameActions=gui:WaitForChild("InGameActions")
 local gameMenuBtn=inGameActions:WaitForChild("MenuButton")
@@ -2057,6 +2131,7 @@ local camera=workspace.CurrentCamera
 local menuMode=true
 local queued=false
 local cameraMode="3P"
+local pendingInventory=false
 
 local function clock(n)
  n=math.max(0,math.floor(tonumber(n) or 0))
@@ -2181,7 +2256,80 @@ for _,d in ipairs(gui:GetDescendants()) do
  if d:IsA("TextButton") then animate(d) end
 end
 
+local function renderAvatar(viewport,withRoom)
+ viewport:ClearAllChildren()
+
+ local char=player.Character
+ if not char then return end
+
+ local world=Instance.new("WorldModel")
+ world.Parent=viewport
+
+ char.Archivable=true
+ local clone=char:Clone()
+
+ for _,d in ipairs(clone:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") then
+   d:Destroy()
+  elseif d:IsA("BasePart") then
+   d.Anchored=true
+   d.CanCollide=false
+  end
+ end
+
+ clone:PivotTo(CFrame.new())
+ clone.Parent=world
+
+ local cf,size=clone:GetBoundingBox()
+ local focus=cf.Position+Vector3.new(0,size.Y*.04,0)
+ local distance=math.max(7,size.Y*1.45,size.X*2.1)
+
+ if withRoom then
+  local floor=Instance.new("Part")
+  floor.Name="PreviewFloor"
+  floor.Size=Vector3.new(18,.4,18)
+  floor.Anchored=true
+  floor.CanCollide=false
+  floor.Material=Enum.Material.SmoothPlastic
+  floor.Color=Color3.fromRGB(42,47,55)
+  floor.Position=Vector3.new(0,-3.15,0)
+  floor.Parent=world
+
+  local back=Instance.new("Part")
+  back.Name="PreviewBack"
+  back.Size=Vector3.new(18,12,.35)
+  back.Anchored=true
+  back.CanCollide=false
+  back.Material=Enum.Material.SmoothPlastic
+  back.Color=Color3.fromRGB(30,35,43)
+  back.Position=Vector3.new(0,2.6,4.2)
+  back.Parent=world
+ end
+
+ local vcam=Instance.new("Camera")
+ vcam.FieldOfView=34
+
+ -- Roblox characters face -Z by default. Put camera on -Z to see the FRONT,
+ -- not the back.
+ vcam.CFrame=CFrame.lookAt(
+  focus+Vector3.new(0,size.Y*.03,-distance),
+  focus
+ )
+ vcam.Parent=viewport
+ viewport.CurrentCamera=vcam
+end
+
+local function openInventoryScreen()
+ hidePanels()
+ menu.Visible=false
+ shopScene.Visible=false
+ inv.Visible=true
+ setMenuCamera()
+ renderAvatar(inv:FindFirstChild("AvatarViewport"),false)
+end
+
 local function hidePanels()
+ shopScene.Visible=false
  shopPanel.Visible=false
  daily.Visible=false
  inv.Visible=false
@@ -2199,69 +2347,33 @@ end
 menu.ShopButton.MouseButton1Click:Connect(function()
  menu.Visible=false
  hidePanels()
+ shopScene.Visible=true
  shopPanel.Visible=true
  setMenuCamera()
+ renderAvatar(shopAvatarViewport,true)
 end)
 
-shopPanel.Exit.MouseButton1Click:Connect(showMenu)
+shopPanel.Exit.MouseButton1Click:Connect(function()
+ shopScene.Visible=false
+ showMenu()
+end)
 shopPanel.DailyShop.MouseButton1Click:Connect(function()
  shopPanel.Visible=false
+ shopScene.Visible=true
  daily.Visible=true
 end)
 daily.Back.MouseButton1Click:Connect(function()
  daily.Visible=false
+ shopScene.Visible=true
  shopPanel.Visible=true
 end)
 
 menu.InventoryButton.MouseButton1Click:Connect(function()
- menu.Visible=false
- hidePanels()
- inv.Visible=true
- setMenuCamera()
-
- local vf=inv:FindFirstChild("AvatarViewport")
- if vf then
-  vf:ClearAllChildren()
-  local char=player.Character
-  if char then
-   local world=Instance.new("WorldModel")
-   world.Parent=vf
-   char.Archivable=true
-   local clone=char:Clone()
-   for _,d in ipairs(clone:GetDescendants()) do
-    if d:IsA("LuaSourceContainer") then d:Destroy() end
-   end
-   for _,d in ipairs(clone:GetDescendants()) do
-    if d:IsA("BasePart") then
-     d.Anchored=true
-     d.CanCollide=false
-    end
-   end
-   clone:PivotTo(CFrame.new())
-   clone.Parent=world
-
-   local cf,size=clone:GetBoundingBox()
-   local focus=cf.Position+Vector3.new(0,size.Y*.05,0)
-   local distance=math.max(6,size.Y*1.35,size.X*1.9)
-
-   local cam=Instance.new("Camera")
-   cam.FieldOfView=35
-   cam.CFrame=CFrame.lookAt(
-    focus+Vector3.new(0,size.Y*.03,distance),
-    focus
-   )
-   cam.Parent=vf
-   vf.CurrentCamera=cam
-  end
- end
+ openInventoryScreen()
 end)
 inv.Exit.MouseButton1Click:Connect(function()
- if player:GetAttribute("NBState")=="InRound" then
-  inv.Visible=false
-  setGameCamera()
- else
-  showMenu()
- end
+ inv.Visible=false
+ showMenu()
 end)
 
 menu.PlayButton.MouseButton1Click:Connect(function()
@@ -2299,6 +2411,7 @@ for name,data in pairs(info) do
  end
 end
 modal.Close.MouseButton1Click:Connect(function()modal.Visible=false end)
+results.Exit.MouseButton1Click:Connect(function()results.Visible=false end)
 
 local left=menu:WaitForChild("ReferenceLeftHUD")
 local function updateStats()
@@ -2347,38 +2460,17 @@ gameEmotesBtn.MouseButton1Click:Connect(function()
 end)
 
 gameItemsBtn.MouseButton1Click:Connect(function()
- -- Stay in the live game camera; this is an overlay, not a menu return.
- inv.Visible=true
+ -- Never open the heavy inventory while the player is still targetable in a
+ -- live round. Leave the round first, then open the equipment screen.
+ pendingInventory=true
  inGameActions.Visible=false
- setControlsEnabled(false)
 
- local vf=inv:FindFirstChild("AvatarViewport")
- if vf then
-  vf:ClearAllChildren()
-  local char=player.Character
-  if char then
-   local world=Instance.new("WorldModel")
-   world.Parent=vf
-   char.Archivable=true
-   local clone=char:Clone()
-   for _,d in ipairs(clone:GetDescendants()) do
-    if d:IsA("LuaSourceContainer") then d:Destroy() end
-    if d:IsA("BasePart") then
-     d.Anchored=true
-     d.CanCollide=false
-    end
-   end
-   clone:PivotTo(CFrame.new())
-   clone.Parent=world
-   local cf,size=clone:GetBoundingBox()
-   local focus=cf.Position+Vector3.new(0,size.Y*.05,0)
-   local distance=math.max(6,size.Y*1.35,size.X*1.9)
-   local vcam=Instance.new("Camera")
-   vcam.FieldOfView=35
-   vcam.CFrame=CFrame.lookAt(focus+Vector3.new(0,size.Y*.03,distance),focus)
-   vcam.Parent=vf
-   vf.CurrentCamera=vcam
-  end
+ if returnToMenu then
+  returnToMenu:FireServer()
+ else
+  pendingInventory=false
+  showMenu()
+  openInventoryScreen()
  end
 end)
 
@@ -2409,20 +2501,38 @@ if menuState then menuState.OnClientEvent:Connect(function(mode)
   setGameCamera()
  elseif mode=="Show" then
   showMenu()
+  if pendingInventory then
+   pendingInventory=false
+   task.defer(openInventoryScreen)
+  end
  end
 end) end
 
-if roundState then roundState.OnClientEvent:Connect(function(kind,timeLeft,mapName)
+if roundState then roundState.OnClientEvent:Connect(function(kind,a,b,c)
  if kind=="Intermission" then
-  status.Text="INTERMISSION\n"..clock(timeLeft)
+  status.Text="INTERMISSION\n"..clock(a)
   if player:GetAttribute("NBState")=="Menu" and not queued and not loading.Visible then
    menu.Visible=true
    setFreeRoamMenu()
   end
+ elseif kind=="Results" then
+  local survivors=type(a)=="table" and a or {}
+  local roundTime=tonumber(b) or 0
+  local mapName=tostring(c or "MAPA")
+
+  results.Time.Text=mapName.."   •   TEMPO "..clock(roundTime)
+
+  if #survivors==0 then
+   results.SurvivorNames.Text="Ninguém sobreviveu"
+  else
+   results.SurvivorNames.Text=table.concat(survivors,"   •   ")
+  end
+
+  results.Visible=true
  else
-  status.Text=tostring(mapName or "ROUND").."\n"..clock(timeLeft)
+  status.Text=tostring(b or "ROUND").."\n"..clock(a)
  end
-end) end
+end) endd
 
 player:GetAttributeChangedSignal("NBState"):Connect(function()
  local s=player:GetAttribute("NBState")
@@ -2442,17 +2552,27 @@ status.Visible=false
 hidePanels()
 setMenuCamera()
 
+local loadingStarted=os.clock()
 task.spawn(function()
  local dots=0
  while loading.Visible do
   dots=(dots%3)+1
   loadText.Text="CARREGANDO"..string.rep(".",dots)
-  task.wait(.35)
+
+  local bar=loading:FindFirstChild("LoadingBar")
+  local fill=bar and bar:FindFirstChild("Fill")
+  if fill then
+   local p=math.clamp((os.clock()-loadingStarted)/3,0,1)
+   fill.Size=UDim2.fromScale(p,1)
+  end
+
+  task.wait(.08)
  end
 end)
 
 if not game:IsLoaded() then game.Loaded:Wait() end
-task.wait(3)
+local remaining=3-(os.clock()-loadingStarted)
+if remaining>0 then task.wait(remaining) end
 loading.Visible=false
 status.Visible=true
 showMenu()
@@ -2523,6 +2643,40 @@ text.Font=Enum.Font.GothamBlack
 text.ZIndex=2
 text.Parent=bg
 
+local sub=Instance.new("TextLabel")
+sub.AnchorPoint=Vector2.new(.5,.5)
+sub.Position=UDim2.fromScale(.5,.73)
+sub.Size=UDim2.fromScale(.28,.03)
+sub.BackgroundTransparency=1
+sub.Text="PREPARANDO MAPA"
+sub.TextColor3=Color3.fromRGB(145,155,175)
+sub.TextScaled=true
+sub.Font=Enum.Font.GothamBold
+sub.ZIndex=2
+sub.Parent=bg
+
+local bar=Instance.new("Frame")
+bar.AnchorPoint=Vector2.new(.5,.5)
+bar.Position=UDim2.fromScale(.5,.79)
+bar.Size=UDim2.fromScale(.32,.014)
+bar.BackgroundColor3=Color3.fromRGB(32,35,42)
+bar.BorderSizePixel=0
+bar.ZIndex=2
+bar.Parent=bg
+local bc=Instance.new("UICorner")
+bc.CornerRadius=UDim.new(1,0)
+bc.Parent=bar
+
+local fill=Instance.new("Frame")
+fill.Size=UDim2.fromScale(0,1)
+fill.BackgroundColor3=Color3.fromRGB(225,235,255)
+fill.BorderSizePixel=0
+fill.ZIndex=3
+fill.Parent=bar
+local fc=Instance.new("UICorner")
+fc.CornerRadius=UDim.new(1,0)
+fc.Parent=fill
+
 local started=os.clock()
 local template=RS:WaitForChild("NB_UI_TEMPLATE",20)
 
@@ -2539,10 +2693,13 @@ end
 
 -- Keep exact loading visible for at least 3 seconds.
 while os.clock()-started<3 do
- local dots=(math.floor((os.clock()-started)*3)%3)+1
+ local elapsed=os.clock()-started
+ local dots=(math.floor(elapsed*3)%3)+1
  text.Text="CARREGANDO"..string.rep(".",dots)
+ fill.Size=UDim2.fromScale(math.clamp(elapsed/3,0,1),1)
  task.wait(.08)
 end
+fill.Size=UDim2.fromScale(1,1)
 
 if gui then
  local ownLoading=gui:FindFirstChild("Background")
@@ -2604,6 +2761,12 @@ return {
  nonHumanoidBotChase=true,
  jumpRootTranslationRemoved=true,
  roundResultsEvent=true,
+ resultsPanel=true,
+ shopSeparateScene=true,
+ shopAvatarPreview=true,
+ inventoryFrontFacingAvatar=true,
+ itemsLeaveRoundBeforeOpen=true,
+ improvedLoadingProgress=true,
  menuControlsLocked=true,
  menuCameraDrift=true,
  inventoryAutoFit=true,
