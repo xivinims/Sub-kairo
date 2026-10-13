@@ -28,4 +28,6 @@ Pesquisa de iluminação:
 - https://create.roblox.com/docs/environment/post-processing-effects
 - https://create.roblox.com/docs/workspace/streaming
 
-Consulte audit.json para o resultado efetivo da publicação e da verificação em nova sessão. A publicação usa o workflow do GitHub já disponível, pois a Vercel atingiu a cota diária de deploys.
+**Publicada em 2026-10-13T22:42:36Z; versão 87 confirmada em nova sessão às 22:42:37Z, com `ok=true` e `forestOnly=true`.** Todos os testes foram aprovados novamente a partir da versão salva. O relatório está em audit.json.
+
+Execução: https://github.com/xivinims/Sub-kairo/actions/runs/38479564162. Fonte aprovada: commit 1008d1c99cd8938f4092eb711d8fb5efeda1cc4c; SHA-256 do instalador 54a359da78b1f46b02fafc34ee8e10201c87b22fdb61645c8de3adb9ad2f14fe. A publicação usou o workflow do GitHub já disponível, pois a Vercel atingiu a cota diária de deploys.
