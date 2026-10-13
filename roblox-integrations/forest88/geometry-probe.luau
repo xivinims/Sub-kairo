@@ -20,6 +20,8 @@ for _,p in ipairs(examples)do
   local verts=e:GetVertices()local lo,hi=Vector3.one*math.huge,Vector3.one*-math.huge
   for _,vid in ipairs(verts)do local pos=e:GetPosition(vid)lo=lo:Min(pos)hi=hi:Max(pos)end
   r.vertices=#verts r.lo=v(lo)r.hi=v(hi)
+  r.bindBones={}
+  for _,bid in ipairs(e:GetBones())do if #r.bindBones<12 then r.bindBones[#r.bindBones+1]={name=e:GetBoneName(bid),cf={e:GetBoneCFrame(bid):GetComponents()}}end end
   local methods={"GetBones","GetVertexBoneWeights","GetVertexBones"}
   for _,method in ipairs(methods)do local good,res=pcall(function()return e[method](e,verts[1])end)r[method]=good and res or tostring(res)end
   e:Destroy()
@@ -41,7 +43,7 @@ local sound=Instance.new("Sound")sound.SoundId="rbxassetid://9059051593"sound.Vo
 local statuses={}
 local good,err=pcall(function()game:GetService("ContentProvider"):PreloadAsync({sound},function(id,status)statuses[#statuses+1]={id=id,status=tostring(status)}end)end)
 output.audio.preload={ok=good,error=good and nil or tostring(err),statuses=statuses,loaded=sound.IsLoaded,length=sound.TimeLength}sound:Destroy()
-local params=AudioSearchParams.new()params.SearchKeyword="yay"
+local params=Instance.new("AudioSearchParams")params.SearchKeyword="yay"
 local searchOk,pages=pcall(function()return A:SearchAudioAsync(params)end)
 if searchOk then output.audio.yaySearch=pages:GetCurrentPage()else output.audio.searchError=tostring(pages)end
 return output
