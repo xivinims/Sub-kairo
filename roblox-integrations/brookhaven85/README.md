@@ -34,7 +34,7 @@ A amplitude do movimento foi reduzida em 10% na grama e nas árvores. O Wind Eff
 
 ## Iluminação
 
-LightingStyle Realistic e PrioritizeLightingQuality são configurados na edição publicada. Há sombras globais, sombras das luzes da cidade, céu do Stud Pack, Atmosphere, ColorCorrection, Bloom, SunRays e reflexos/ondas da água nativa.
+LightingStyle Realistic e PrioritizeLightingQuality são ativados pelo controlador publicado na inicialização do servidor e de cada cliente. A edição Luau recarrega inicialmente essas duas propriedades como Soft/false; a verificação reproduz a inicialização real antes de conferir o renderizador. Há sombras globais, sombras das luzes da cidade, céu do Stud Pack, Atmosphere, ColorCorrection, Bloom, SunRays e reflexos/ondas da água nativa.
 
 Estes são efeitos reais do motor gráfico do Roblox. Não há injeção externa de shaders. A composição foi verificada por propriedades do motor; não houve renderização no Roblox Studio nem teste visual em cliente real.
 
@@ -52,4 +52,4 @@ verify.luau exige uma sessão nova da versão 85. publisher.cjs executa o instal
 
 A montagem de teste passou com 9.105 partes, 6.612 partes restantes marcadas com o material Studs, 19 scripts compilados, 18.190 pontos verdes conferidos sem lacuna no índice, 1.987 raízes válidas conferidas em 28 células e 309 células sobre ruas/telhados descartadas. Nametags, spawn, portas, permissões do dono e configuração Realistic também passaram.
 
-audit.json registra a publicação e a conferência em sessão nova. A versão 84 continua no histórico como recuperação.
+A publicação foi confirmada por uma sessão nova da versão 85, com 19 scripts compilados e todas as verificações passando. audit.json registra a publicação, a particularidade da inicialização do renderizador e essa conferência em sessão nova. A versão 84 continua no histórico como recuperação.
