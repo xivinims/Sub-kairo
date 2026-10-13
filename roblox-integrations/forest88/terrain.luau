@@ -41,6 +41,9 @@ function TerrainBuilder.build(Scene)
 			chunks += 1 task.wait()
 		end
 	end
+	-- Extend water beyond the visible shoreline; swimming must not lead straight off the terrain edge.
+	for _,z in ipairs({-768,768})do terrain:FillBlock(CFrame.new(0,Scene.SeaY-12,z),Vector3.new(2048,24,512),Enum.Material.Water)end
+	for _,x in ipairs({-768,768})do terrain:FillBlock(CFrame.new(x,Scene.SeaY-12,0),Vector3.new(512,24,1024),Enum.Material.Water)end
 	terrain.WaterColor = Color3.fromRGB(49, 100, 106)
 	terrain.WaterTransparency = 0.34 terrain.WaterReflectance = 0.20 terrain.WaterWaveSize = 0.055 terrain.WaterWaveSpeed = 7
 	pcall(function() terrain.Decoration = true end)

@@ -138,6 +138,9 @@ function TerrainBuilder.build(Scene)
 			chunks += 1 task.wait()
 		end
 	end
+	-- Extend water beyond the visible shoreline; swimming must not lead straight off the terrain edge.
+	for _,z in ipairs({-768,768})do terrain:FillBlock(CFrame.new(0,Scene.SeaY-12,z),Vector3.new(2048,24,512),Enum.Material.Water)end
+	for _,x in ipairs({-768,768})do terrain:FillBlock(CFrame.new(x,Scene.SeaY-12,0),Vector3.new(512,24,1024),Enum.Material.Water)end
 	terrain.WaterColor = Color3.fromRGB(49, 100, 106)
 	terrain.WaterTransparency = 0.34 terrain.WaterReflectance = 0.20 terrain.WaterWaveSize = 0.055 terrain.WaterWaveSpeed = 7
 	pcall(function() terrain.Decoration = true end)
@@ -1552,6 +1555,7 @@ local stroke=Instance.new("UIStroke")stroke.Color=Color3.fromRGB(130,162,127)str
 local title=Instance.new("TextLabel")title.BackgroundTransparency=1 title.Position=UDim2.new(0,18,0,12)title.Size=UDim2.new(1,-65,0,22)title.Font=Enum.Font.GothamBold title.TextSize=17 title.TextColor3=Color3.fromRGB(226,235,218)title.TextXAlignment=Enum.TextXAlignment.Left title.Text="ch_ckz2n"title.Parent=panel
 local close=Instance.new("TextButton")close.Name="Close"close.BackgroundTransparency=1 close.Position=UDim2.new(1,-46,0,5)close.Size=UDim2.fromOffset(40,40)close.Text="×"close.TextSize=28 close.Font=Enum.Font.Gotham close.TextColor3=Color3.fromRGB(225,235,224)close.Parent=panel
 local message=Instance.new("TextLabel")message.BackgroundTransparency=1 message.Position=UDim2.new(0,18,0,43)message.Size=UDim2.new(1,-36,0,58)message.Font=Enum.Font.Gotham message.TextSize=15 message.TextColor3=Color3.fromRGB(215,228,214)message.TextWrapped=true message.TextXAlignment=Enum.TextXAlignment.Left message.TextYAlignment=Enum.TextYAlignment.Top message.Parent=panel
+message.TextScaled=true local textLimit=Instance.new("UITextSizeConstraint")textLimit.MinTextSize=12 textLimit.MaxTextSize=15 textLimit.Parent=message
 local options=Instance.new("ScrollingFrame")options.Name="Replies"options.BackgroundTransparency=1 options.BorderSizePixel=0 options.Position=UDim2.new(0,14,0,108)options.Size=UDim2.new(1,-28,0,94)options.CanvasSize=UDim2.new()options.AutomaticCanvasSize=Enum.AutomaticSize.Y options.ScrollBarThickness=3 options.ScrollBarImageColor3=Color3.fromRGB(151,178,144)options.Parent=panel
 local layout=Instance.new("UIListLayout")layout.Padding=UDim.new(0,7)layout.Parent=options
 local function hide()panelOpen=false panel.Visible=false end
@@ -1672,6 +1676,9 @@ for z=-288,288,8 do
  riverProbes+=1
 end
 assert(workspace.Terrain.WaterWaveSize>0 and workspace.Terrain.WaterReflectance<.3 and Scene.SeaY==Scene.RiverY)
+for _,p in ipairs({Vector2.new(-750,0),Vector2.new(750,0),Vector2.new(0,-750),Vector2.new(0,750)})do
+ local h=assert(ground(p.X,p.Y))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-Scene.SeaY)<.10,"Outer water has an abrupt edge")
+end
 local bridges=world.Amenities.WoodenBridges
 assert(#bridges:GetChildren()==2)
 local walks=0
@@ -1788,7 +1795,7 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  woodenBridges=2,continuousWalkwayProbes=walks,logSeats=seats,cutTrunks=world:GetAttribute("CutTrunkCount"),lanterns=#lights,
  grassSampledZones=zones,validGrassRoots=roots,grassCoveragePoints=coveragePoints,grassCoverageMisses=misses,grassRootOverlap=hi.X-lo.X-Scene.Spacing,
  grassPriorityCorrect=true,grassRootWindStable=true,ownerAvatarUserId=8344738123,npcSeated=true,npcWaveAndLookKeepBodyFixed=true,
- greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,
+ greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,extendedWaterSurface=true,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
 local audioSearch={}
