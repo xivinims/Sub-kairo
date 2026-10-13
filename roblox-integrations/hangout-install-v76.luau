@@ -396,7 +396,8 @@ local client=Instance.new("LocalScript") client.Name="HangoutClient" client.Sour
 SP.LoadCharacterAppearance=true SP.CameraMode=Enum.CameraMode.Classic SP.CameraMinZoomDistance=.5 SP.CameraMaxZoomDistance=18
 SP.CharacterWalkSpeed=16 SP.CharacterJumpPower=50
 SP.DevComputerMovementMode=Enum.DevComputerMovementMode.UserChoice SP.DevTouchMovementMode=Enum.DevTouchMovementMode.UserChoice
-workspace.StreamingEnabled=true workspace.StreamingMinRadius=64 workspace.StreamingTargetRadius=256
+workspace.StreamingEnabled=true
+game.Players.CharacterAutoLoads=true
 workspace.FallenPartsDestroyHeight=-100 workspace:SetAttribute("HangoutVersion",1)
 workspace:SetAttribute("HangoutWeather","Sol") workspace:SetAttribute("HangoutPhase","Manhã") workspace:SetAttribute("HangoutHour",9)
 workspace:SetAttribute("NBRoundActive",false)
