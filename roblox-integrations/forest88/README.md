@@ -42,4 +42,4 @@ Imported map scripts are removed. The Extreme shaders script is inspected rather
 
 See the saved stage/publication results for measurements. These checks run in Roblox's native execution environment; they are not screenshots or an FPS measurement on the user's phone. Final visual appearance still depends on device rendering quality and needs an in-game visual check.
 
-The previous live version is 87. The intended saved release is 88. Join a new game server after publication to load the new version.
+Release 88 was saved on 2026-10-13 at 23:51:43 UTC and independently verified in a fresh native session at 23:51:53 UTC. Publication and all native regressions passed in workflow run `38486776784`. See `publication-result.json` and `audit.json` for the saved evidence. The previous live version is 87. Join a new game server to load version 88.
