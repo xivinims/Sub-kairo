@@ -1,0 +1,84 @@
+{
+  "version": 79,
+  "publishedAt": "2026-10-13T03:22:37.67Z",
+  "validation": {
+    "published": true,
+    "sourceVersion": 78,
+    "clients": {
+      "actualClientSources": true,
+      "grassBudgets": [
+        {
+          "mobile": false,
+          "blades": 819
+        },
+        {
+          "mobile": true,
+          "blades": 519
+        }
+      ],
+      "rainAndFountainStarted": true,
+      "apple3DPreview": true,
+      "shopOpenBuyUseAndCooldown": true
+    },
+    "scene": {
+      "maxTrunkGap": -0.64996337890625,
+      "routeSamples": 189,
+      "grassContactAndRecovery": true,
+      "treesRelocated": 1,
+      "minDeckClearance": 0.3169517517089844,
+      "bridgeSamples": 152,
+      "maxBridgeGrade": 0.31142616271972656,
+      "treesGrounded": 111,
+      "compiledScripts": 7,
+      "climateCases": 21,
+      "parts": 5340,
+      "skyPackImported": true
+    },
+    "items": {
+      "saveFailureSafe": true,
+      "threeSecondEffect": true,
+      "storageWrites": 13,
+      "sixtySecondCooldown": true,
+      "initialBalance": 50,
+      "noDuplicateCharge": true,
+      "noClientCoinClaim": true,
+      "restoreAccessoryProperties": true,
+      "actualServer": true,
+      "price": 30,
+      "serverMinuteReward": 10,
+      "respawnSafe": true
+    }
+  },
+  "verification": {
+    "parts": 5340,
+    "renderingStartupChecked": true,
+    "hdSky": true,
+    "interactiveGrass": true,
+    "item": {
+      "cooldownSeconds": 60,
+      "invisibleSeconds": 3,
+      "price": 30
+    },
+    "savedRenderingStyle": "Soft",
+    "version": 79,
+    "scriptNames": [
+      "SerenaAmbienceServer",
+      "SerenaShopServer",
+      "SerenaAmbienceClient",
+      "SerenaGrassClient",
+      "SerenaShopClient",
+      "RbxCharacterSounds",
+      "PlayerScriptsLoader"
+    ],
+    "nativeWaterCells": 60,
+    "maxTrunkGap": -0.6499652862548828,
+    "singleScene": [
+      "Terrain",
+      "Camera",
+      "IlhaSerena"
+    ],
+    "trees": 111,
+    "compiledScripts": 7,
+    "ok": true
+  }
+}
