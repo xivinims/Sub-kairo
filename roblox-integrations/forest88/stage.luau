@@ -1619,20 +1619,23 @@ assert(world:GetAttribute("TreeCount")>350 and world:GetAttribute("PlantCount")>
 local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}
 local function ground(x,z)return workspace:Raycast(Vector3.new(x,220,z),Vector3.new(0,-340,0),ray)end
 local treeCount,plantCount,supports,maxGap,maxBurial,tallest,shortest=0,0,0,0,0,0,math.huge
+local buriedExamples={}
 for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do
  for _,model in ipairs(folder:GetChildren())do
   local profile=assert(runtime.GroundingProfiles:FindFirstChild(model.Name),"Missing root profile")
   local pivot=model:GetPivot()local scale=model:GetAttribute("GroundingScale")
   assert(model:GetAttribute("SupportGeometryProbes")>0,model.Name.." has no lower geometry ray samples")
+  local localBurial=0
   for _,point in ipairs(profile:GetChildren())do
    local p=pivot:PointToWorldSpace(point.Value*scale)
    local h=assert(ground(p.X,p.Z),"No terrain under lower geometry")
    if h.Material~=Enum.Material.Water then
     local gap=p.Y-h.Position.Y
     assert(gap<.035,model.Name.." floats at a lower contact: "..gap)
-    supports+=1 maxGap=math.max(maxGap,gap)maxBurial=math.max(maxBurial,-gap)
+    supports+=1 maxGap=math.max(maxGap,gap)maxBurial=math.max(maxBurial,-gap)localBurial=math.max(localBurial,-gap)
    end
   end
+  if localBurial>1 then buriedExamples[#buriedExamples+1]={kind=folder.Name,name=model.Name,burial=localBurial,position={pivot.X,pivot.Y,pivot.Z},scale=scale}end
   local p=pivot.Position local h=assert(ground(p.X,p.Z))
   assert(h.Material~=Enum.Material.Water,"Vegetation root is submerged")
   if folder==world.Decor.Trees then
@@ -1765,7 +1768,9 @@ for _,parent in ipairs({game.ServerScriptService,game.StarterPlayer.StarterPlaye
 end
 for _,s in ipairs(runtime:GetDescendants())do if s:IsA("ModuleScript")then local ok,result=pcall(require,s)assert(ok,s.Name..": "..tostring(result))compiled+=1 end end
 assert(workspace.StreamingEnabled and #game.ServerScriptService:GetChildren()==1)
-return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,foreignScripts=foreign,trees=treeCount,plants=plantCount,
+table.sort(buriedExamples,function(a,b)return a.burial>b.burial end)
+while#buriedExamples>12 do table.remove(buriedExamples)end
+return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,foreignScripts=foreign,trees=treeCount,plants=plantCount,buriedExamples=buriedExamples,
  supportPoints=supports,maximumSupportGap=maxGap,maximumSupportBurial=maxBurial,treeHeightRange={shortest,tallest},
  terrainProbes=probes,greenTerrainProbes=green,waterProbes=water,trailProbes=trail,riverContinuityProbes=riverProbes,
  woodenBridges=2,continuousWalkwayProbes=walks,logSeats=seats,cutTrunks=world:GetAttribute("CutTrunkCount"),lanterns=#lights,
@@ -1775,7 +1780,9 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
 local audioSearch={}
-local params=Instance.new("AudioSearchParams")params.AudioSubType=Enum.AudioSubType.SoundEffect params.MaxDuration=4 params.SearchKeyword="yay"
-local ok,pages=pcall(function()return game:GetService("AssetService"):SearchAudioAsync(params)end)
-if ok then for i,item in ipairs(pages:GetCurrentPage())do if i<=14 then audioSearch[#audioSearch+1]={id=item.Id,title=item.Title,duration=item.Duration,creator=item.Creator.Name}end end end
+for _,keyword in ipairs({"yay","cheer"})do
+ local params=Instance.new("AudioSearchParams")params.AudioSubType=Enum.AudioSubType.SoundEffect params.MaxDuration=4 params.SearchKeyword=keyword params.Artist="Roblox"
+ local ok,pages=pcall(function()return game:GetService("AssetService"):SearchAudioAsync(params)end)
+ if ok then for i,item in ipairs(pages:GetCurrentPage())do if i<=16 then audioSearch[#audioSearch+1]={id=item.Id,title=item.Title,duration=item.Duration,creator=item.Creator.Name}end end end
+end
 return{staged=true,baseVersion=game.PlaceVersion,geometry=geometry,amenities=amenities,shader=shader,tests=tests,audioSearch=audioSearch}

@@ -41,9 +41,11 @@ body += 'require(runtime.Visuals).apply()\n'
 body += 'run(game.ServerScriptService.ForestServer.Source)\n'
 body += 'local tests=run(' + quote(read('tests.luau')) + ')\n'
 stage_extra = '''local audioSearch={}
-local params=Instance.new("AudioSearchParams")params.AudioSubType=Enum.AudioSubType.SoundEffect params.MaxDuration=4 params.SearchKeyword="yay"
-local ok,pages=pcall(function()return game:GetService("AssetService"):SearchAudioAsync(params)end)
-if ok then for i,item in ipairs(pages:GetCurrentPage())do if i<=14 then audioSearch[#audioSearch+1]={id=item.Id,title=item.Title,duration=item.Duration,creator=item.Creator.Name}end end end
+for _,keyword in ipairs({"yay","cheer"})do
+ local params=Instance.new("AudioSearchParams")params.AudioSubType=Enum.AudioSubType.SoundEffect params.MaxDuration=4 params.SearchKeyword=keyword params.Artist="Roblox"
+ local ok,pages=pcall(function()return game:GetService("AssetService"):SearchAudioAsync(params)end)
+ if ok then for i,item in ipairs(pages:GetCurrentPage())do if i<=16 then audioSearch[#audioSearch+1]={id=item.Id,title=item.Title,duration=item.Duration,creator=item.Creator.Name}end end end
+end
 '''
 (root / 'stage.luau').write_text(body + stage_extra + 'return{staged=true,baseVersion=game.PlaceVersion,geometry=geometry,amenities=amenities,shader=shader,tests=tests,audioSearch=audioSearch}\n')
 (root / 'install.luau').write_text(body + '''local baseVersion=game.PlaceVersion
