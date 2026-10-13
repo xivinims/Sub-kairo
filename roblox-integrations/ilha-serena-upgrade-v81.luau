@@ -2131,12 +2131,10 @@ function SkinnedGrass:Step(deltaTime : number, collisions : {}, targetPos : Vect
 		end
 
 		for bone,displaceInfo in self.DisplaceBones do
-			local origRotX, origRotY, origRotZ = displaceInfo[4]:ToEulerAnglesYXZ()
-			local newRot = CFrame.fromEulerAnglesXYZ(origRotX * displaceInfo[2], origRotY * displaceInfo[2], origRotZ * displaceInfo[2])
-			local newPos = CFrame.new(displaceInfo[4].Position.X * displaceInfo[2], displaceInfo[4].Position.Y * displaceInfo[2], displaceInfo[4].Position.Z * displaceInfo[2])
-
 			local windRot = utils.CalculateWindAtPoint(bone, self.WindAnimation, windDir, minAngle, maxAngle, minTranslation, maxTranslation, settingsTable.WindNoiseSize, settingsTable.WindNoiseIntensity)
-			bone.Transform = CFrame.new(Vector3.zero) * windRot:Lerp(newRot * newPos, displaceInfo[2])
+			-- Keep the terrain translation fixed while blades bend. Rotating or
+			-- scaling that translation lifts roots off slopes during partial contact.
+			bone.Transform = windRot:Lerp(displaceInfo[4], math.clamp(displaceInfo[2], 0, 1))
 
 			if displaceInfo[3] <= 0 or table.find(transformedBones, bone) == nil then --out of range, do return
 				local returnInfo = {}
@@ -2176,7 +2174,8 @@ function SkinnedGrass:Step(deltaTime : number, collisions : {}, targetPos : Vect
 
 end
 
-return SkinnedGrass]========])skin:SetAttribute("SourceAssetId",87377915371959)
+return SkinnedGrass
+]========])skin:SetAttribute("SourceAssetId",87377915371959)
 
 source(skin,"ModuleScript","SkinnedGrassUtils",[========[local module = {}
 
@@ -4143,6 +4142,9 @@ assert(simulation.Settings.RenderInAnimation==false,"False settings ignored")sim
 local point=first:GetAttribute("SerenaGroundPoint")simulation:Step(.04,{point},point)
 local collisions=0 for _ in pairs(simulation.DisplaceBones)do collisions+=1 end assert(collisions>0,"Skinned grass does not respond to walking")
 for _,bone in ipairs(mesh:GetDescendants())do if bone:IsA("Bone")then for _,v in ipairs({bone.Transform:GetComponents()})do assert(v==v and math.abs(v)<100000,"Invalid grass deformation")end end end
+local offset=first:GetAttribute("SerenaTerrainOffset")assert((first.Transform.Position-offset.Position).Magnitude<.02,"Walking moved a grass root off the terrain")
+simulation:Step(.04,{point+Vector3.new(1.9,0,0)},point)
+assert((first.Transform.Position-offset.Position).Magnitude<.02,"Partial contact lifted a grass root")
 simulation:Step(.04,{},point)task.wait(1.1)simulation:Step(.04,{},point)
 assert(next(simulation.ReturnBones)==nil,"Grass recovery never finishes")
 -- Execute the actual grass loader on native, saved coverage cells.
@@ -4158,12 +4160,14 @@ local before=rootPart.CFrame rootPart.CFrame=CFrame.new(cells[1]:GetAttribute("C
 execute("ActualGrassCoverageLoader",SPS.SerenaGrassClient.Source:gsub('local runtime=RS:WaitForChild%("SerenaRuntime"%)',"local runtime=env.runtime\n"))
 assert(attrs.SerenaGrassLoadedPatches==2 and attrs.SerenaWholeMapGrassReady,"Actual grass loader did not finish")
 run.RenderStepped:Fire(.06)
+task.wait(.4)run.RenderStepped:Fire(.06)
 local field=workspace.SerenaInteractiveGrass local patchCount=0 local nativeRoots=0
 for _,patch in ipairs(field:GetChildren())do
  patchCount+=1 local part=patch:FindFirstChildOfClass("MeshPart")assert(part.MeshId=="rbxassetid://80159239673273"and not part.CanCollide,"Fine grass loader changed the mesh")
  for _,bone in ipairs(part:GetDescendants())do if bone:IsA("Bone")and bone:GetAttribute("SerenaGreenRoot")then
   nativeRoots+=1 local ground=bone:GetAttribute("SerenaGroundPoint")local offset=bone:GetAttribute("SerenaTerrainOffset")
   assert(math.abs((bone.WorldCFrame*offset).Y-ground.Y)<.02,"Grass terrain placement changed")
+  assert(math.abs(bone.TransformedWorldCFrame.Y-ground.Y)<.02,"Animated grass left the terrain")
  end end
 end
 assert(patchCount==2 and nativeRoots>150,"Whole-map volumes did not load and render")
