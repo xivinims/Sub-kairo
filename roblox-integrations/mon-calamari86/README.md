@@ -20,4 +20,9 @@ Pesquisa oficial realizada antes da implementação:
 
 A sessão temporária passou: 1.906 peças, 542 unions, 331 wedges, nove verificações de piso, corpo do avatar livre, oceano Terrain, emissão e limpeza do Trail do vento, três portas e onze scripts/módulos compilados. Sem teste visual em Studio, cliente real ou medição de FPS.
 
-Publicação inicialmente bloqueada por limite diário de deploys da Vercel. O instalador validado também está em roblox-publisher/patch.luau e o publicador em roblox-publisher/publish.mjs; o workflow existente usa somente o secret ROBLOX_API_KEY do GitHub e verifica uma nova sessão após salvar. Consulte audit.json para o resultado efetivo da publicação.
+**Publicação concluída em 2026-10-13T22:02:17Z; versão 86 confirmada em nova sessão às 22:02:19Z.** O relatório independente confirmou `ok=true`, asset 485800451 e todos os testes novamente aprovados, incluindo o bootstrap Realistic do renderer.
+
+A Vercel atingiu o limite diário de deploys após a preparação aprovada. A publicação foi concluída pelo workflow existente do GitHub, usando somente o secret ROBLOX_API_KEY configurado, sem expor a chave. Execução: https://github.com/xivinims/Sub-kairo/actions/runs/38474945375. Fonte aprovada: commit 7f2b5e92d915f3f944a167ababbb1619e237b7b3, SHA-256 do instalador f4f3215d81335dacf528cfe7853734627d53bb0c4c1303c3abea9ea201393bbe.
+
+O instalador também está em roblox-publisher/patch.luau e o publicador em roblox-publisher/publish.mjs. A instalação exige a base 85, portanto uma repetição sobre a versão 86 para antes de modificar ou salvar o jogo. Consulte audit.json para os relatórios de instalação e verificação.
+
