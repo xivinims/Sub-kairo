@@ -1,107 +1,110 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
-assert(game.PlaceVersion==86,"Expected published city version 86")
-local runtime=assert(game.ReplicatedStorage:FindFirstChild("MonCalamariRuntime"))
-assert(game.ServerScriptService.MonCalamariServer.Source:find('require(runtime:WaitForChild("Visuals")).apply()',1,true),"Server rendering bootstrap missing")
-assert(game.StarterPlayer.StarterPlayerScripts.MonCalamariClient.Source:find("Visuals.apply()",1,true),"Client rendering bootstrap missing")
+assert(game.PlaceVersion==87,"Forest version 87 was not saved")
+local runtime=assert(game.ReplicatedStorage:FindFirstChild("ForestRuntime"))
+assert(game.ServerScriptService.ForestServer.Source:find('require(runtime:WaitForChild("Visuals")).apply()',1,true))
 local rendererBeforeStartup=tostring(game.Lighting.LightingStyle)
 require(runtime.Visuals).apply()
 local function run(code)
  local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage
- local result=require(m)()m:Destroy()return result
+ local v=require(m)()m:Destroy()return v
 end
-local tests=run([============[local world = assert(workspace:FindFirstChild("MonCalamariWorld"), "City world missing")
-local city = assert(world:FindFirstChild("MonCalamariCity"), "Full city missing")
-local runtime = assert(game.ReplicatedStorage:FindFirstChild("MonCalamariRuntime"), "City runtime missing")
-assert(world:GetAttribute("SourceAssetId") == 485800451 and city:GetAttribute("SourceAssetId") == 485800451)
-assert(world:GetAttribute("UpgradeVersion") == 86 and not workspace:FindFirstChild("IlhaSerena"))
-local parts, unions, wedges, scripts, materials = 0, 0, 0, 0, {}
-for _, d in ipairs(city:GetDescendants()) do
-	if d:IsA("BasePart") then
-		parts += 1 assert(d.Anchored, "Unanchored imported map")
-		materials[d.Material.Name] = (materials[d.Material.Name] or 0) + 1
-		assert(d.MaterialVariant:sub(1, 11) ~= "SerenaStud_", "Retired theme altered the map")
-		if d:IsA("UnionOperation") then unions += 1 elseif d:IsA("WedgePart") then wedges += 1 end
-	elseif d:IsA("LuaSourceContainer") then scripts += 1 end
+local tests=run([============[local world = assert(workspace:FindFirstChild("ForestWorld"), "Forest world missing")
+local runtime = assert(game.ReplicatedStorage:FindFirstChild("ForestRuntime"))
+assert(not workspace:FindFirstChild("MonCalamariWorld") and not workspace:FindFirstChild("IlhaSerena"), "Retired maps remain")
+assert(world:GetAttribute("ForestOnly") and world:GetAttribute("ForestAssetId") == 6432306802 and world:GetAttribute("UpgradeVersion") == 87)
+local Scene = require(runtime.Scene)
+local parts, meshes, appearances, foreign = 0, 0, 0, 0
+for _, d in ipairs(world:GetDescendants()) do
+	if d:IsA("BasePart") then parts += 1 assert(d.Anchored, "Forest prop unanchored") end
+	if d:IsA("MeshPart") then meshes += 1 end
+	if d:IsA("SurfaceAppearance") then appearances += 1 end
+	if d:IsA("LuaSourceContainer") then foreign += 1 end
 end
-assert(parts == 1906 and unions == 542 and wedges == 331 and scripts == 0, "Original map incomplete")
-local lo, hi = world:GetAttribute("CityBoundsMin"), world:GetAttribute("CityBoundsMax")
-assert(hi.X - lo.X > 2300 and hi.Z - lo.Z > 3000 and hi.Y - lo.Y > 430, "City extent incomplete")
-local spawnCF = world:GetAttribute("MainSpawnCF")
-assert((spawnCF.Position - runtime:GetAttribute("MainSpawnCF").Position).Magnitude < 0.001)
-local ray = RaycastParams.new() ray.FilterType = Enum.RaycastFilterType.Include
-ray.FilterDescendantsInstances = {city} ray.RespectCanCollide = true
-local checkedFloors = 0
-for _, x in ipairs({-3, 0, 3}) do for _, z in ipairs({-3, 0, 3}) do
-	local floor = assert(workspace:Raycast(Vector3.new(spawnCF.X + x, 10, spawnCF.Z + z), Vector3.new(0, -20, 0), ray), "Spawn floor missing")
-	assert(floor.Normal.Y > 0.99 and math.abs(floor.Position.Y) < 0.03 and floor.Material ~= Enum.Material.Water,
-		"Spawn floor uneven or underwater")
-	checkedFloors += 1
+assert(foreign == 0 and meshes > 1800 and appearances > 1600, "Official PBR vegetation incomplete")
+assert(world:GetAttribute("TreeCount") > 300 and world:GetAttribute("PlantCount") > 1000 and world:GetAttribute("FlowerCount") > 150)
+local terrainParams = RaycastParams.new() terrainParams.FilterType = Enum.RaycastFilterType.Include terrainParams.FilterDescendantsInstances = {workspace.Terrain}
+local function ground(x, z) return workspace:Raycast(Vector3.new(x, 220, z), Vector3.new(0, -340, 0), terrainParams) end
+local count, heights, rivers, green, trail = 0, {}, 0, 0, 0
+for x = -360, 360, 24 do for z = -336, 336, 24 do
+	local hit = ground(x, z)
+	if hit then
+		count += 1 heights[#heights + 1] = hit.Position.Y
+		if hit.Material == Enum.Material.Water then rivers += 1
+		elseif hit.Material == Enum.Material.Grass or hit.Material == Enum.Material.LeafyGrass then green += 1
+		elseif hit.Material == Enum.Material.Ground then trail += 1 end
+	end
 end end
-for _, y in ipairs({1.2, 3, 5}) do
-	for _, direction in ipairs({Vector3.xAxis, -Vector3.xAxis, Vector3.zAxis, -Vector3.zAxis}) do
-		assert(not workspace:Raycast(Vector3.new(spawnCF.X, y, spawnCF.Z), direction * 3, ray), "Spawn body blocked")
-	end
+table.sort(heights)
+assert(count > 600 and green > 250 and rivers > 25 and trail > 10 and heights[#heights] - heights[1] > 45, "Terrain lacks variation, water or trails")
+local roots = 0
+for _, tree in ipairs(world.Decor.Trees:GetChildren()) do
+	local point = tree:GetAttribute("GroundPoint") local planted = tree:GetAttribute("PlantingPoint")
+	local hit = assert(ground(point.X, point.Z))
+	assert(hit.Material ~= Enum.Material.Water and math.abs(hit.Position.Y - point.Y) < 0.06, "Tree ground reference wrong")
+	assert(planted.Y <= point.Y + 0.02 and point.Y - planted.Y < 3.5, "Tree floats or is too buried")
+	assert(tree:FindFirstChild("TrunkCollision") and tree.ModelStreamingMode == Enum.ModelStreamingMode.Atomic)
+	roots += 1
 end
-assert(math.abs(spawnCF.Y - 3.5) < 0.03 and world.MonCalamariSpawn.Enabled and world.MonCalamariSpawn.Neutral)
-assert(game.Players.CharacterAutoLoads and game.StarterPlayer.CharacterWalkSpeed == 16 and #game.StarterGui:GetChildren() == 0)
-local sea = world:GetAttribute("OceanSurfaceY")
-assert(sea == -10 and spawnCF.Y - sea > 10 and workspace.Terrain.WaterWaveSize > 0 and workspace.Terrain.WaterWaveSpeed > 0)
-local oceanPoint = Vector3.new(hi.X + 80, -24, (lo.Z + hi.Z) * 0.5)
-local region = Region3.new(oceanPoint - Vector3.one * 4, oceanPoint + Vector3.one * 4):ExpandToGrid(4)
-local waterMaterials, occupancy = workspace.Terrain:ReadVoxels(region, 4)
-local water = 0
-for x = 1, #waterMaterials do for y = 1, #waterMaterials[x] do for z = 1, #waterMaterials[x][y] do
-	if waterMaterials[x][y][z] == Enum.Material.Water and occupancy[x][y][z] > 0 then water += 1 end
-end end end
-assert(water > 0, "Ocean was not saved as native Terrain water")
-assert(workspace.Terrain.MonCalamariClouds and workspace.GlobalWind.Magnitude > 7)
-
-local doors = 0
-for _, panel in ipairs(game:GetService("CollectionService"):GetTagged("MonCalamariDoor")) do
-	if panel:IsDescendantOf(city) then
-		doors += 1 assert(panel:GetAttribute("ClosedTransparency") ~= nil and panel:FindFirstChild("DoorPrompt"))
-	end
-end
-assert(doors == 3, "Original doors missing")
-local lighting = game.Lighting
-assert(lighting.LightingStyle == Enum.LightingStyle.Realistic and lighting.PrioritizeLightingQuality and lighting.GlobalShadows)
-assert(lighting.EnvironmentDiffuseScale == 1 and lighting.EnvironmentSpecularScale == 1)
-assert(lighting.MonCalamariColor.Enabled and lighting.MonCalamariBloom.Enabled and lighting.MonCalamariSunRays.Enabled)
-assert(lighting.MonCalamariAtmosphere.Density > 0 and lighting.MonCalamariSky)
-assert(runtime.WindEffects:GetAttribute("SourceAssetId") == 11946229834)
-local WindLines = require(runtime.WindEffects.WindLines)
-WindLines:Init({Speed = 12, Lifetime = 2, SpawnRate = 7, Direction = workspace.GlobalWind.Unit})
-WindLines:Create({Position = spawnCF.Position + Vector3.new(0, 10, 0), Lifetime = 2, Speed = 12})
-assert(#WindLines.UpdateQueue >= 1 and WindLines.UpdateQueue[1].Attachment0.Parent == workspace.Terrain,
-	"Wind asset failed to create its real Trail effect")
-WindLines:Cleanup()
-assert(#WindLines.UpdateQueue == 0 and WindLines.UpdateConnection == nil, "Wind asset did not clean up")
-local compiled = 0
-for _, parent in ipairs({game.ServerScriptService, game.StarterPlayer.StarterPlayerScripts}) do
-	for _, scriptObject in ipairs(parent:GetChildren()) do
-		assert(scriptObject.Name:sub(1, 6) ~= "Serena", "Retired gameplay still runs")
-		if scriptObject:IsA("Script") or scriptObject:IsA("LocalScript") then
-			local m = Instance.new("ModuleScript") m.Source = "return function()\n" .. scriptObject.Source .. "\nend" m.Parent = game.ServerStorage
-			local ok, result = pcall(require, m) m:Destroy()
-			assert(ok, scriptObject.Name .. ": " .. tostring(result)) compiled += 1
+local spawn = world:GetAttribute("MainSpawnCF")
+local floor = assert(ground(spawn.X, spawn.Z))
+assert(floor.Material ~= Enum.Material.Water and math.abs(spawn.Y - floor.Position.Y - 3.5) < 0.05 and floor.Normal.Y > 0.65, "Forest spawn unsafe")
+local bodyRay = RaycastParams.new() bodyRay.FilterType = Enum.RaycastFilterType.Include bodyRay.FilterDescendantsInstances = {world.Decor} bodyRay.RespectCanCollide = true
+for _, y in ipairs({1.4, 3.2, 5}) do for _, d in ipairs({Vector3.xAxis, -Vector3.xAxis, Vector3.zAxis, -Vector3.zAxis}) do
+	assert(not workspace:Raycast(floor.Position + Vector3.new(0, y, 0), d * 3, bodyRay), "Forest spawn blocked by decoration")
+end end
+local template = runtime.SkinnedGrassTemplates.GrassCard
+assert(template:GetAttribute("SourceAssetId") == 87377915371959 and template:GetAttribute("SourceVariant") == "GrassCard")
+local mesh = template:FindFirstChildOfClass("MeshPart") local bones, offsets = {}, {}
+for _, b in ipairs(mesh:GetChildren()) do if b:IsA("Bone") then bones[#bones + 1] = b end end
+table.sort(bones, function(a, b) return a.Name < b.Name end) assert(#bones == 100)
+for i, b in ipairs(bones) do offsets[i] = template:GetPivot():PointToObjectSpace(b.WorldCFrame.Position) end
+local sampler = require(runtime.GrassSampler).new(world)
+local tested, validRoots = 0, 0
+for _, point in ipairs({Vector3.new(spawn.X, 0, spawn.Z), Vector3.new(-220, 0, 50), Vector3.new(160, 0, -180), Vector3.new(240, 0, 210)}) do
+	for _, cell in ipairs(Scene.around(point, 36)) do
+		local heights, anchor, valid = sampler:sample(cell, offsets)
+		if anchor and valid > 30 then
+			tested += 1 validRoots += valid
+			for i, y in pairs(heights) do
+				local hit = ground(cell.center.X + offsets[i].X, cell.center.Z + offsets[i].Z)
+				assert(hit and (hit.Material == Enum.Material.Grass or hit.Material == Enum.Material.LeafyGrass) and math.abs(hit.Position.Y - y) < 0.01, "Grass root is off Terrain")
+			end
+			break
 		end
 	end
 end
-for _, d in ipairs(runtime:GetDescendants()) do if d:IsA("ModuleScript") then
-	local ok, result = pcall(require, d) assert(ok, d.Name .. ": " .. tostring(result)) compiled += 1
-end end
-assert(#game.ServerScriptService:GetChildren() == 1 and #game.StarterPack:GetChildren() == 0)
-assert(#game.ReplicatedStorage:GetChildren() == 1 and not game.ReplicatedStorage:FindFirstChild("SerenaRuntime"))
-assert(workspace.StreamingEnabled and city.ModelStreamingMode == Enum.ModelStreamingMode.Default)
-local function optionalProperty(property)
-	local ok, value = pcall(function() return workspace[property] end)
-	return ok and value or "Unavailable in this edit-session engine"
+assert(tested >= 3 and validRoots > 150, "Skinned grass field missing in forest zones")
+local Skinned = require(runtime.SkinnedGrass)
+local storage = Instance.new("Folder") storage.Parent = game.ReplicatedStorage
+local grass = Skinned.new({MeshStorage = storage, RenderDistanceEnabled = false, WindEnabled = true, WindStrengthScale = 0.82})
+local sample = template:Clone() sample:PivotTo(CFrame.new(-210, 40, 30)) sample.Parent = workspace
+local b = sample:FindFirstChildOfClass("MeshPart"):FindFirstChildWhichIsA("Bone")
+b:SetAttribute("SerenaTerrainOffset", CFrame.new(0, 1.25, 0))
+b:SetAttribute("SerenaGroundPoint", b.WorldCFrame.Position + Vector3.new(0, 1.25, 0))
+grass:AddMeshes({sample})
+grass:Step(1/30, {}, b.TransformedWorldCFrame.Position)
+assert(math.abs(b.Transform.Y - 1.25) < 0.01, "Wind displaced the grass root")
+grass:RemoveMeshes({sample}) assert(next(grass.MeshRecords) == nil) grass:Destroy() sample:Destroy() storage:Destroy()
+assert(runtime.WindEffects:GetAttribute("SourceAssetId") == 11946229834 and workspace.GlobalWind.Magnitude > 6)
+local Wind = require(runtime.WindEffects.WindLines)
+Wind:Init({Direction = workspace.GlobalWind.Unit, Speed = 10, Lifetime = 2, SpawnRate = 5})
+Wind:Create({Position = spawn.Position + Vector3.new(0, 8, 0), Speed = 10, Lifetime = 2}) assert(#Wind.UpdateQueue >= 1) Wind:Cleanup()
+assert(game.Lighting.LightingStyle == Enum.LightingStyle.Realistic and game.Lighting.ForestColor.Enabled and game.Lighting.ForestSunRays.Enabled)
+local compiled = 0
+for _, parent in ipairs({game.ServerScriptService, game.StarterPlayer.StarterPlayerScripts}) do
+	for _, s in ipairs(parent:GetChildren()) do if s:IsA("Script") or s:IsA("LocalScript") then
+		local m = Instance.new("ModuleScript") m.Source = "return function()\n" .. s.Source .. "\nend" m.Parent = game.ServerStorage
+		local ok, result = pcall(require, m) m:Destroy() assert(ok, s.Name .. ": " .. tostring(result)) compiled += 1
+	end end
 end
-return {parts = parts, originalUnions = unions, originalWedges = wedges, importedScripts = scripts, materials = materials,
-	safeSpawnFloorChecks = checkedFloors, spawnBodyClear = true, originalDoors = doors, nativeOceanSamples = water,
-	nativeWindTrail = true, compiledScriptsAndModules = compiled, retiredGameplayRemoved = true,
-	realisticRendering = true, nativePostProcessing = true, streamingEnabled = workspace.StreamingEnabled,
-	streamingMinRadius = optionalProperty("StreamingMinRadius"), streamingTargetRadius = optionalProperty("StreamingTargetRadius")}
+for _, s in ipairs(runtime:GetDescendants()) do if s:IsA("ModuleScript") then local ok, result = pcall(require, s) assert(ok, s.Name .. ": " .. tostring(result)) compiled += 1 end end
+assert(#game.ServerScriptService:GetChildren() == 1 and #game.StarterGui:GetChildren() == 0 and #game.StarterPack:GetChildren() == 0)
+assert(workspace.StreamingEnabled and world:GetAttribute("Crossings") == 2)
+return {forestOnly = true, parts = parts, realMeshParts = meshes, pbrAppearances = appearances, foreignMapScripts = foreign,
+	trees = roots, plants = world:GetAttribute("PlantCount"), flowers = world:GetAttribute("FlowerCount"), terrainProbes = count,
+	greenTerrainProbes = green, waterProbes = rivers, trailProbes = trail, terrainHeightRange = heights[#heights] - heights[1],
+	grassSampledZones = tested, grassValidSampledRoots = validRoots, grassRootWindStable = true, safeSpawn = true,
+	nativeWindWorking = true, compiledScriptsAndModules = compiled, streamingEnabled = true, realisticRendering = true}
 ]============])
-run(game.ServerScriptService.MonCalamariServer.Source)
-return{ok=true,version=game.PlaceVersion,assetId=workspace.MonCalamariWorld:GetAttribute("SourceAssetId"),rendererBeforeStartup=rendererBeforeStartup,renderingBootstrapVerified=true,tests=tests}
+run(game.ServerScriptService.ForestServer.Source)
+return{ok=true,version=game.PlaceVersion,forestOnly=true,rendererBeforeStartup=rendererBeforeStartup,renderingBootstrapVerified=true,tests=tests}

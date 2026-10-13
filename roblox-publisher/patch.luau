@@ -1226,4 +1226,6 @@ return {forestOnly = true, parts = parts, realMeshParts = meshes, pbrAppearances
 	nativeWindWorking = true, compiledScriptsAndModules = compiled, streamingEnabled = true, realisticRendering = true}
 ]============])
 run(game.ServerScriptService.ForestServer.Source)
-return{staged=true,baseVersion=game.PlaceVersion,geometry=geometry,tests=tests}
+local baseVersion=game.PlaceVersion
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,baseVersion=baseVersion,expectedVersion=87,geometry=geometry,tests=tests}
