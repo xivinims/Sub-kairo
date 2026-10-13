@@ -30,11 +30,15 @@ async function main() {
   }
   const script = fs.readFileSync('script.luau', 'utf8');
   const installation = await execute(script);
+  // Saving succeeds before the independent fresh-session check. Log it immediately.
+  const sourceSha256 = crypto.createHash('sha256').update(script).digest('hex');
+  console.log(JSON.stringify({installationState: installation.state,
+    published: installation.output?.results?.[0]?.published, sourceSha256}));
   let freshVerification = null;
   if (installation.output?.results?.[0]?.published === true) {
     freshVerification = await execute(fs.readFileSync('verify.luau', 'utf8'));
   }
-  const report = {sourceSha256: crypto.createHash('sha256').update(script).digest('hex'), installation, freshVerification};
+  const report = {sourceSha256, installation, freshVerification};
   fs.mkdirSync('out', {recursive: true});
   fs.writeFileSync('out/result.json', JSON.stringify(report, null, 2));
   fs.writeFileSync('out/index.html', '<!doctype html><title>Overyard publisher</title>Completed');
