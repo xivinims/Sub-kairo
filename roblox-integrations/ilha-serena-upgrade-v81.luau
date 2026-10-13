@@ -4155,7 +4155,7 @@ local grassRS={}
 function grassRS:WaitForChild(name)assert(name=="SerenaRuntime")return runtimeProxy end
 services.ReplicatedStorage=game.ReplicatedStorage envRuntime=runtimeProxy run.RenderStepped=signal()scriptMock={Destroying=signal(),Parent=sandbox}
 local before=rootPart.CFrame rootPart.CFrame=CFrame.new(cells[1]:GetAttribute("Center")+Vector3.new(0,3,0))
-execute("ActualGrassCoverageLoader",SPS.SerenaGrassClient.Source:gsub('local runtime=RS:WaitForChild%("SerenaRuntime"%)',"local runtime=env.runtime"))
+execute("ActualGrassCoverageLoader",SPS.SerenaGrassClient.Source:gsub('local runtime=RS:WaitForChild%("SerenaRuntime"%)',"local runtime=env.runtime\n"))
 assert(attrs.SerenaGrassLoadedPatches==2 and attrs.SerenaWholeMapGrassReady,"Actual grass loader did not finish")
 run.RenderStepped:Fire(.06)
 local field=workspace.SerenaInteractiveGrass local patchCount=0 local nativeRoots=0
