@@ -113,7 +113,7 @@ function Amenities.install(Scene)
    local t=(i-.5)/boardCount
    part(bridge,"DeckBoard",Vector3.new(length/boardCount-.055,.28,width-.9),cf*CFrame.new((t-.5)*length,-.14,0),Enum.Material.WoodPlanks,Color3.fromRGB(131+(i%3)*3,98+(i%3)*2,69+(i%3)*2),false)
   end
-  local floor=part(bridge,"WalkwayCollision",Vector3.new(length,.35,width-1.0),cf*CFrame.new(0,-.185,0),Enum.Material.WoodPlanks,Color3.fromRGB(115,83,57),true)floor.Transparency=1
+  local floor=part(bridge,"WalkwayCollision",Vector3.new(length+.50,.35,width-1.0),cf*CFrame.new(0,-.185,0),Enum.Material.WoodPlanks,Color3.fromRGB(115,83,57),true)floor.Transparency=1
   for _,side in ipairs({-1,1})do
    local rail=part(bridge,"RailingCollision",Vector3.new(length,2.7,.22),cf*CFrame.new(0,1.20,side*(width*.5-.35)),Enum.Material.Wood,Color3.fromRGB(105,74,51),true)rail.Transparency=1
   end

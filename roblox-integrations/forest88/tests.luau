@@ -65,7 +65,7 @@ for _,bridge in ipairs(bridges:GetChildren())do
  for i=0,40 do
   local p=a:Lerp(b,i/40)
   local h=workspace:Raycast(p+Vector3.new(0,4,0),Vector3.new(0,-8,0),include)
-  assert(h and h.Instance.Name=="WalkwayCollision" and math.abs(h.Position.Y-p.Y)<.05,"Wooden walkway has a collision hole")walks+=1
+  assert(h and h.Instance.Name=="WalkwayCollision" and math.abs(h.Position.Y-p.Y)<.05,"Wooden walkway collision: "..bridge.Name.." step "..i.." hit "..(h and h.Instance.Name or "none"))walks+=1
  end
  for _,p in ipairs({a,b})do local h=assert(ground(p.X,p.Z))assert(h.Material~=Enum.Material.Water and h.Position.Y>=p.Y-1.1,"Bridge does not reach the bank")end
 end

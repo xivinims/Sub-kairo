@@ -519,7 +519,7 @@ function Amenities.install(Scene)
    local t=(i-.5)/boardCount
    part(bridge,"DeckBoard",Vector3.new(length/boardCount-.055,.28,width-.9),cf*CFrame.new((t-.5)*length,-.14,0),Enum.Material.WoodPlanks,Color3.fromRGB(131+(i%3)*3,98+(i%3)*2,69+(i%3)*2),false)
   end
-  local floor=part(bridge,"WalkwayCollision",Vector3.new(length,.35,width-1.0),cf*CFrame.new(0,-.185,0),Enum.Material.WoodPlanks,Color3.fromRGB(115,83,57),true)floor.Transparency=1
+  local floor=part(bridge,"WalkwayCollision",Vector3.new(length+.50,.35,width-1.0),cf*CFrame.new(0,-.185,0),Enum.Material.WoodPlanks,Color3.fromRGB(115,83,57),true)floor.Transparency=1
   for _,side in ipairs({-1,1})do
    local rail=part(bridge,"RailingCollision",Vector3.new(length,2.7,.22),cf*CFrame.new(0,1.20,side*(width*.5-.35)),Enum.Material.Wood,Color3.fromRGB(105,74,51),true)rail.Transparency=1
   end
@@ -1668,7 +1668,7 @@ for _,bridge in ipairs(bridges:GetChildren())do
  for i=0,40 do
   local p=a:Lerp(b,i/40)
   local h=workspace:Raycast(p+Vector3.new(0,4,0),Vector3.new(0,-8,0),include)
-  assert(h and h.Instance.Name=="WalkwayCollision" and math.abs(h.Position.Y-p.Y)<.05,"Wooden walkway has a collision hole")walks+=1
+  assert(h and h.Instance.Name=="WalkwayCollision" and math.abs(h.Position.Y-p.Y)<.05,"Wooden walkway collision: "..bridge.Name.." step "..i.." hit "..(h and h.Instance.Name or "none"))walks+=1
  end
  for _,p in ipairs({a,b})do local h=assert(ground(p.X,p.Z))assert(h.Material~=Enum.Material.Water and h.Position.Y>=p.Y-1.1,"Bridge does not reach the bank")end
 end
