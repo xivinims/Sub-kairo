@@ -141,13 +141,17 @@ function Builder.install(Scene, TerrainBuilder)
 			if right.Magnitude>.1 then right=right.Unit rotation=CFrame.fromMatrix(Vector3.zero,right,up,right:Cross(up))end
 		end
 		local rootY = hit.Position.Y
-		local tested=0
+		local tested=0 local supportFloors={}
 		for _,point in ipairs(src.support)do
 			local offset=rotation:VectorToWorldSpace(point*scale)
 			local h=ground(x+offset.X,z+offset.Z)
-			if h and h.Material~=Enum.Material.Water then rootY=math.min(rootY,h.Position.Y-offset.Y) tested+=1 end
+			if h and h.Material~=Enum.Material.Water then rootY=math.min(rootY,h.Position.Y-offset.Y) tested+=1 supportFloors[#supportFloors+1]={floor=h.Position.Y,offset=offset.Y}
+			elseif kind=="trees" or kind=="plants" then copy:Destroy()return nil end
 		end
 		local depth = kind == "rocks" and .65 or (kind == "trees" and .45 or .13)
+		local maximumBurial=0
+		for _,s in ipairs(supportFloors)do maximumBurial=math.max(maximumBurial,s.floor-(rootY-depth+s.offset))end
+		if (kind=="trees"and maximumBurial>2.8)or(kind=="plants"and maximumBurial>1.15)then copy:Destroy()return nil end
 		local pivot = CFrame.new(x, rootY - depth, z)*rotation
 		copy:PivotTo(pivot) copy.Name = name copy.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 		copy:SetAttribute("SourceAssetId", 6432306802) copy:SetAttribute("GroundPoint", hit.Position)
@@ -175,7 +179,7 @@ function Builder.install(Scene, TerrainBuilder)
 		return copy
 	end
 	local treeNames = {"RedwoodTree-Var01", "BeechwoodTree_Var03", "BroadLeafTree_Var01", "BeechwoodTree_Var02", "DogwoodTree_Var01", "MapleLeafTreeVar01", "BeechwoodTree_Var01"}
-	for attempt = 1, 5200 do
+	for attempt = 1, 10000 do
 		if stats.trees >= 490 then break end
 		local x, z = rng:NextNumber(-408, 408), rng:NextNumber(-376, 376)
 		local y, material, water, shore, path, river = Scene.sample(x, z)
@@ -190,7 +194,7 @@ function Builder.install(Scene, TerrainBuilder)
 		if place(name, x, z, height, trees, "trees") then occupied[#occupied + 1] = Vector2.new(x, z) end
 	end
 	local plantNames = {"Fern_Var01", "FernTallVar01", "MountainLaurelBush_Var01", "RhododendronVar01", "RhododendronVar02", "CloverPatch", "DenseLeafPatch", "BeechwoodSapling_Var01", "WildFlower01", "Wildflower02", "WildFlower03", "WildFlower04"}
-	for attempt = 1, 3400 do
+	for attempt = 1, 5200 do
 		if stats.plants >= 1650 then break end
 		local x, z = rng:NextNumber(-394, 394), rng:NextNumber(-360, 360)
 		local y, material, water, shore, path = Scene.sample(x, z)

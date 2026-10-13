@@ -41,7 +41,7 @@ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do
   else plantCount+=1 end
  end
 end
-assert(supports>10000 and tallest>95 and tallest-shortest>45,"Tree size variation or contact coverage insufficient")
+assert(supports>10000 and tallest>95 and tallest-shortest>45 and maxBurial<2.85,"Tree size variation or contact coverage insufficient")
 local probes,green,water,trail,minY,maxY=0,0,0,0,math.huge,-math.huge
 for x=-360,360,24 do for z=-336,336,24 do
  local h=ground(x,z)if h then probes+=1 minY=math.min(minY,h.Position.Y)maxY=math.max(maxY,h.Position.Y)
@@ -141,8 +141,9 @@ local looked=Pose.look(neck:GetAttribute("OriginalC0"),Vector3.new(5,1,-3))
 assert((looked.Position-neck.C0.Position).Magnitude<.001 and npc.HumanoidRootPart.CFrame==rootCF)
 assert(runtime:FindFirstChild("OwnerDialogue")and npc.Head:FindFirstChild("TalkPrompt"))
 local statuses={}
-game:GetService("ContentProvider"):PreloadAsync({npc.Head.HiVoice},function(id,status)statuses[#statuses+1]=tostring(status)end)
+game:GetService("ContentProvider"):PreloadAsync({npc.Head.HiVoice,npc.Head.YayVoice},function(id,status)statuses[#statuses+1]=tostring(status)end)
 assert(npc.Head.HiVoice.IsLoaded and npc.Head.HiVoice.TimeLength>0,"Requested greeting audio is unavailable in this experience")
+assert(npc.Head.YayVoice.IsLoaded and npc.Head.YayVoice.TimeLength>0,"Yay voice is unavailable in this experience")
 local Cycle=require(runtime.Cycle)local Visuals=require(runtime.Visuals)
 assert(Cycle.clock(0,0)==6 and Cycle.clock(720,0)==18 and Cycle.clock(960,0)==6)
 local epsilon=.001 local before=Cycle.clock(720-epsilon,0)local after=Cycle.clock(720+epsilon,0)
@@ -173,5 +174,5 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  woodenBridges=2,continuousWalkwayProbes=walks,logSeats=seats,cutTrunks=world:GetAttribute("CutTrunkCount"),lanterns=#lights,
  grassSampledZones=zones,validGrassRoots=roots,grassCoveragePoints=coveragePoints,grassCoverageMisses=misses,grassRootOverlap=hi.X-lo.X-Scene.Spacing,
  grassPriorityCorrect=true,grassRootWindStable=true,ownerAvatarUserId=8344738123,npcSeated=true,npcWaveAndLookKeepBodyFixed=true,
- greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,
+ greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}

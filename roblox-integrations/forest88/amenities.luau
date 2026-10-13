@@ -200,11 +200,12 @@ function Amenities.install(Scene)
  npc:SetAttribute("SeatCFrame",npcCF)npc.Parent=world Collection:AddTag(npc,"ForestOwnerNPC")
  local prompt=Instance.new("ProximityPrompt")prompt.Name="TalkPrompt"prompt.ActionText="Conversar"prompt.ObjectText="ch_ckz2n"prompt.MaxActivationDistance=11 prompt.HoldDuration=0 prompt.RequiresLineOfSight=false prompt.KeyboardKeyCode=Enum.KeyCode.E prompt.Parent=npc.Head
  local sound=Instance.new("Sound")sound.Name="HiVoice"sound.SoundId="rbxassetid://9059051593"sound.Volume=.28 sound.RollOffMinDistance=4 sound.RollOffMaxDistance=20 sound.RollOffMode=Enum.RollOffMode.InverseTapered sound.Parent=npc.Head
+ local yay=sound:Clone()yay.Name="YayVoice"yay.SoundId="rbxassetid://125673289337492"yay.Volume=.22 yay.Parent=npc.Head
  local remote=Instance.new("RemoteEvent")remote.Name="OwnerDialogue"remote.Parent=runtime
  lantern(npcFloor.Position+Vector3.new(2.8,4.2,2.8),0,true)
  world:SetAttribute("TreeCount",#world.Decor.Trees:GetChildren())world:SetAttribute("PlantCount",#world.Decor.Plants:GetChildren())
  world:SetAttribute("WoodenBridgeCount",#bridgeReport)world:SetAttribute("CutTrunkCount",stumpCount+1)world:SetAttribute("LogBenchCount",benchCount)world:SetAttribute("LanternCount",lanternCount)
  for _,raw in ipairs({rawBridge,rawStump,rawLantern,rawForest})do raw:Destroy()end
- return{bridges=bridgeReport,cutTrunks=stumpCount+1,logBenches=benchCount,lanterns=lanternCount,ownerAvatarUserId=8344738123,greetingAudio=9059051593}
+ return{bridges=bridgeReport,cutTrunks=stumpCount+1,logBenches=benchCount,lanterns=lanternCount,ownerAvatarUserId=8344738123,greetingAudio=9059051593,yayAudio=125673289337492}
 end
 return Amenities

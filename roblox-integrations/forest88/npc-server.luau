@@ -3,7 +3,7 @@ local Players=game:GetService("Players")local Run=game:GetService("RunService")
 function Controller.start(runtime,world)
  local npc=assert(world:FindFirstChild("OwnerNPC"))local root=npc.HumanoidRootPart
  require(runtime.NPCPose).seat(npc)
- local remote=runtime.OwnerDialogue local last={}local inside={}local globalVoice=-math.huge
+ local remote=runtime.OwnerDialogue local last={}local lastCommand={}local inside={}local globalVoice=-math.huge
  local phrases={"Olá!","Oiii!"}local sequence=0
  local function aliveRoot(player)
   local c=player.Character local h=c and c:FindFirstChildOfClass("Humanoid")local r=c and c:FindFirstChild("HumanoidRootPart")
@@ -19,19 +19,25 @@ function Controller.start(runtime,world)
   last[player]=now sequence+=1
   local line=phrases[sequence%2+1]npc:SetAttribute("WaveStarted",now)
   remote:FireClient(player,conversation and "dialogue"or "greeting",line)
-  if now-globalVoice>20 and sequence%3~=0 then globalVoice=now npc.Head.HiVoice.PlaybackSpeed=sequence%2==0 and 1 or 1.025 npc.Head.HiVoice:Play()end
+  if now-globalVoice>20 and sequence%3~=0 then
+   globalVoice=now
+   if sequence%4==0 then npc.Head.YayVoice:Play()
+   else npc.Head.HiVoice.PlaybackSpeed=sequence%2==0 and 1 or 1.025 npc.Head.HiVoice:Play()end
+  end
   return true
  end
  npc.Head.TalkPrompt.Triggered:Connect(function(player)greet(player,true)end)
  remote.OnServerEvent:Connect(function(player,choice)
   if type(choice)~="string"or#choice>12 then return end
   local r=aliveRoot(player)if not r or(r.Position-root.Position).Magnitude>16 then return end
-  local now=workspace:GetServerTimeNow()if now-(last[player]or 0)<.75 then return end last[player]=now
-  if choice=="hello"then npc:SetAttribute("WaveStarted",now)remote:FireClient(player,"reply","Que bom te ver por aqui! 😄")
+  local now=workspace:GetServerTimeNow()if now-(lastCommand[player]or 0)<.75 then return end lastCommand[player]=now
+  if choice=="hello"then
+   npc:SetAttribute("WaveStarted",now)remote:FireClient(player,"reply","Que bom te ver por aqui! 😄")
+   if now-globalVoice>20 then globalVoice=now npc.Head.YayVoice:Play()end
   elseif choice=="forest"then remote:FireClient(player,"reply","Siga as trilhas, atravesse o rio pelas pontes e aproveite a floresta. À noite, as lanternas iluminam o caminho.")
   elseif choice=="bye"then remote:FireClient(player,"close","Até mais!")end
  end)
- Players.PlayerRemoving:Connect(function(player)last[player]=nil inside[player]=nil end)
+ Players.PlayerRemoving:Connect(function(player)last[player]=nil lastCommand[player]=nil inside[player]=nil end)
  local elapsed=0
  Run.Heartbeat:Connect(function(dt)
   elapsed+=dt if elapsed<.25 then return end elapsed=0

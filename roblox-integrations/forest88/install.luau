@@ -291,13 +291,17 @@ function Builder.install(Scene, TerrainBuilder)
 			if right.Magnitude>.1 then right=right.Unit rotation=CFrame.fromMatrix(Vector3.zero,right,up,right:Cross(up))end
 		end
 		local rootY = hit.Position.Y
-		local tested=0
+		local tested=0 local supportFloors={}
 		for _,point in ipairs(src.support)do
 			local offset=rotation:VectorToWorldSpace(point*scale)
 			local h=ground(x+offset.X,z+offset.Z)
-			if h and h.Material~=Enum.Material.Water then rootY=math.min(rootY,h.Position.Y-offset.Y) tested+=1 end
+			if h and h.Material~=Enum.Material.Water then rootY=math.min(rootY,h.Position.Y-offset.Y) tested+=1 supportFloors[#supportFloors+1]={floor=h.Position.Y,offset=offset.Y}
+			elseif kind=="trees" or kind=="plants" then copy:Destroy()return nil end
 		end
 		local depth = kind == "rocks" and .65 or (kind == "trees" and .45 or .13)
+		local maximumBurial=0
+		for _,s in ipairs(supportFloors)do maximumBurial=math.max(maximumBurial,s.floor-(rootY-depth+s.offset))end
+		if (kind=="trees"and maximumBurial>2.8)or(kind=="plants"and maximumBurial>1.15)then copy:Destroy()return nil end
 		local pivot = CFrame.new(x, rootY - depth, z)*rotation
 		copy:PivotTo(pivot) copy.Name = name copy.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 		copy:SetAttribute("SourceAssetId", 6432306802) copy:SetAttribute("GroundPoint", hit.Position)
@@ -325,7 +329,7 @@ function Builder.install(Scene, TerrainBuilder)
 		return copy
 	end
 	local treeNames = {"RedwoodTree-Var01", "BeechwoodTree_Var03", "BroadLeafTree_Var01", "BeechwoodTree_Var02", "DogwoodTree_Var01", "MapleLeafTreeVar01", "BeechwoodTree_Var01"}
-	for attempt = 1, 5200 do
+	for attempt = 1, 10000 do
 		if stats.trees >= 490 then break end
 		local x, z = rng:NextNumber(-408, 408), rng:NextNumber(-376, 376)
 		local y, material, water, shore, path, river = Scene.sample(x, z)
@@ -340,7 +344,7 @@ function Builder.install(Scene, TerrainBuilder)
 		if place(name, x, z, height, trees, "trees") then occupied[#occupied + 1] = Vector2.new(x, z) end
 	end
 	local plantNames = {"Fern_Var01", "FernTallVar01", "MountainLaurelBush_Var01", "RhododendronVar01", "RhododendronVar02", "CloverPatch", "DenseLeafPatch", "BeechwoodSapling_Var01", "WildFlower01", "Wildflower02", "WildFlower03", "WildFlower04"}
-	for attempt = 1, 3400 do
+	for attempt = 1, 5200 do
 		if stats.plants >= 1650 then break end
 		local x, z = rng:NextNumber(-394, 394), rng:NextNumber(-360, 360)
 		local y, material, water, shore, path = Scene.sample(x, z)
@@ -606,12 +610,13 @@ function Amenities.install(Scene)
  npc:SetAttribute("SeatCFrame",npcCF)npc.Parent=world Collection:AddTag(npc,"ForestOwnerNPC")
  local prompt=Instance.new("ProximityPrompt")prompt.Name="TalkPrompt"prompt.ActionText="Conversar"prompt.ObjectText="ch_ckz2n"prompt.MaxActivationDistance=11 prompt.HoldDuration=0 prompt.RequiresLineOfSight=false prompt.KeyboardKeyCode=Enum.KeyCode.E prompt.Parent=npc.Head
  local sound=Instance.new("Sound")sound.Name="HiVoice"sound.SoundId="rbxassetid://9059051593"sound.Volume=.28 sound.RollOffMinDistance=4 sound.RollOffMaxDistance=20 sound.RollOffMode=Enum.RollOffMode.InverseTapered sound.Parent=npc.Head
+ local yay=sound:Clone()yay.Name="YayVoice"yay.SoundId="rbxassetid://125673289337492"yay.Volume=.22 yay.Parent=npc.Head
  local remote=Instance.new("RemoteEvent")remote.Name="OwnerDialogue"remote.Parent=runtime
  lantern(npcFloor.Position+Vector3.new(2.8,4.2,2.8),0,true)
  world:SetAttribute("TreeCount",#world.Decor.Trees:GetChildren())world:SetAttribute("PlantCount",#world.Decor.Plants:GetChildren())
  world:SetAttribute("WoodenBridgeCount",#bridgeReport)world:SetAttribute("CutTrunkCount",stumpCount+1)world:SetAttribute("LogBenchCount",benchCount)world:SetAttribute("LanternCount",lanternCount)
  for _,raw in ipairs({rawBridge,rawStump,rawLantern,rawForest})do raw:Destroy()end
- return{bridges=bridgeReport,cutTrunks=stumpCount+1,logBenches=benchCount,lanterns=lanternCount,ownerAvatarUserId=8344738123,greetingAudio=9059051593}
+ return{bridges=bridgeReport,cutTrunks=stumpCount+1,logBenches=benchCount,lanterns=lanternCount,ownerAvatarUserId=8344738123,greetingAudio=9059051593,yayAudio=125673289337492}
 end
 return Amenities
 ]============]).install(Scene)
@@ -831,7 +836,7 @@ local Players=game:GetService("Players")local Run=game:GetService("RunService")
 function Controller.start(runtime,world)
  local npc=assert(world:FindFirstChild("OwnerNPC"))local root=npc.HumanoidRootPart
  require(runtime.NPCPose).seat(npc)
- local remote=runtime.OwnerDialogue local last={}local inside={}local globalVoice=-math.huge
+ local remote=runtime.OwnerDialogue local last={}local lastCommand={}local inside={}local globalVoice=-math.huge
  local phrases={"Olá!","Oiii!"}local sequence=0
  local function aliveRoot(player)
   local c=player.Character local h=c and c:FindFirstChildOfClass("Humanoid")local r=c and c:FindFirstChild("HumanoidRootPart")
@@ -847,19 +852,25 @@ function Controller.start(runtime,world)
   last[player]=now sequence+=1
   local line=phrases[sequence%2+1]npc:SetAttribute("WaveStarted",now)
   remote:FireClient(player,conversation and "dialogue"or "greeting",line)
-  if now-globalVoice>20 and sequence%3~=0 then globalVoice=now npc.Head.HiVoice.PlaybackSpeed=sequence%2==0 and 1 or 1.025 npc.Head.HiVoice:Play()end
+  if now-globalVoice>20 and sequence%3~=0 then
+   globalVoice=now
+   if sequence%4==0 then npc.Head.YayVoice:Play()
+   else npc.Head.HiVoice.PlaybackSpeed=sequence%2==0 and 1 or 1.025 npc.Head.HiVoice:Play()end
+  end
   return true
  end
  npc.Head.TalkPrompt.Triggered:Connect(function(player)greet(player,true)end)
  remote.OnServerEvent:Connect(function(player,choice)
   if type(choice)~="string"or#choice>12 then return end
   local r=aliveRoot(player)if not r or(r.Position-root.Position).Magnitude>16 then return end
-  local now=workspace:GetServerTimeNow()if now-(last[player]or 0)<.75 then return end last[player]=now
-  if choice=="hello"then npc:SetAttribute("WaveStarted",now)remote:FireClient(player,"reply","Que bom te ver por aqui! 😄")
+  local now=workspace:GetServerTimeNow()if now-(lastCommand[player]or 0)<.75 then return end lastCommand[player]=now
+  if choice=="hello"then
+   npc:SetAttribute("WaveStarted",now)remote:FireClient(player,"reply","Que bom te ver por aqui! 😄")
+   if now-globalVoice>20 then globalVoice=now npc.Head.YayVoice:Play()end
   elseif choice=="forest"then remote:FireClient(player,"reply","Siga as trilhas, atravesse o rio pelas pontes e aproveite a floresta. À noite, as lanternas iluminam o caminho.")
   elseif choice=="bye"then remote:FireClient(player,"close","Até mais!")end
  end)
- Players.PlayerRemoving:Connect(function(player)last[player]=nil inside[player]=nil end)
+ Players.PlayerRemoving:Connect(function(player)last[player]=nil lastCommand[player]=nil inside[player]=nil end)
  local elapsed=0
  Run.Heartbeat:Connect(function(dt)
   elapsed+=dt if elapsed<.25 then return end elapsed=0
@@ -1644,7 +1655,7 @@ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do
   else plantCount+=1 end
  end
 end
-assert(supports>10000 and tallest>95 and tallest-shortest>45,"Tree size variation or contact coverage insufficient")
+assert(supports>10000 and tallest>95 and tallest-shortest>45 and maxBurial<2.85,"Tree size variation or contact coverage insufficient")
 local probes,green,water,trail,minY,maxY=0,0,0,0,math.huge,-math.huge
 for x=-360,360,24 do for z=-336,336,24 do
  local h=ground(x,z)if h then probes+=1 minY=math.min(minY,h.Position.Y)maxY=math.max(maxY,h.Position.Y)
@@ -1744,8 +1755,9 @@ local looked=Pose.look(neck:GetAttribute("OriginalC0"),Vector3.new(5,1,-3))
 assert((looked.Position-neck.C0.Position).Magnitude<.001 and npc.HumanoidRootPart.CFrame==rootCF)
 assert(runtime:FindFirstChild("OwnerDialogue")and npc.Head:FindFirstChild("TalkPrompt"))
 local statuses={}
-game:GetService("ContentProvider"):PreloadAsync({npc.Head.HiVoice},function(id,status)statuses[#statuses+1]=tostring(status)end)
+game:GetService("ContentProvider"):PreloadAsync({npc.Head.HiVoice,npc.Head.YayVoice},function(id,status)statuses[#statuses+1]=tostring(status)end)
 assert(npc.Head.HiVoice.IsLoaded and npc.Head.HiVoice.TimeLength>0,"Requested greeting audio is unavailable in this experience")
+assert(npc.Head.YayVoice.IsLoaded and npc.Head.YayVoice.TimeLength>0,"Yay voice is unavailable in this experience")
 local Cycle=require(runtime.Cycle)local Visuals=require(runtime.Visuals)
 assert(Cycle.clock(0,0)==6 and Cycle.clock(720,0)==18 and Cycle.clock(960,0)==6)
 local epsilon=.001 local before=Cycle.clock(720-epsilon,0)local after=Cycle.clock(720+epsilon,0)
@@ -1776,7 +1788,7 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  woodenBridges=2,continuousWalkwayProbes=walks,logSeats=seats,cutTrunks=world:GetAttribute("CutTrunkCount"),lanterns=#lights,
  grassSampledZones=zones,validGrassRoots=roots,grassCoveragePoints=coveragePoints,grassCoverageMisses=misses,grassRootOverlap=hi.X-lo.X-Scene.Spacing,
  grassPriorityCorrect=true,grassRootWindStable=true,ownerAvatarUserId=8344738123,npcSeated=true,npcWaveAndLookKeepBodyFixed=true,
- greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,
+ greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
 local baseVersion=game.PlaceVersion
