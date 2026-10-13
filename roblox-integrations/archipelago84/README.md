@@ -24,7 +24,7 @@ O URL usado para “pessoa” apontava novamente à ilha 8143419396, que não co
 ## Como jogar
 
 - Duas ilhas públicas alinhadas às praias com nível do mar Y=0. A ilha secreta fica distante do conjunto principal.
-- Suba numa das duas pedras místicas na margem para montar a ponte de pedra em arco. O piso permanece fixo durante a animação. A ponte desaparece somente após 60 segundos sem pessoas na ponte nem sobre as pedras.
+- Suba numa das duas pedras místicas na margem para montar a ponte de pedra em arco. O piso e as proteções laterais permanecem fixos durante a animação. A travessia acompanha as alturas naturais das margens; seus 918 pontos de conferência estão livres do terreno. A ponte desaparece somente após 60 segundos sem pessoas na ponte nem sobre as pedras.
 - Toque/clique duas vezes no Viajante, próximo ao coqueiro, em até 0,7 segundo. O diálogo oferece maçã, vara, venda dos peixes, acesso à ilha secreta e fechar. A ilha secreta tem uma opção de retorno.
 - Maçã: 30 moedas, invisibilidade de 3 segundos, intervalo de 60 segundos. Vara: 20 moedas. Novos perfis começam com 50 moedas e recebem 10 moedas por minuto. Compras são persistidas quando o DataStore está disponível.
 - O píer de madeira liga uma praia baixa ao embarque. O barco nasce em água livre; desembarcar perto do píer retorna à praia.
@@ -43,9 +43,11 @@ Foram removidos os caminhos de execução dos modelos importados. O pacote admin
 
 ## Publicação e verificação
 
-`install.luau` é autocontido e exige a versão 83 como base; instala e testa tudo antes de `SavePlaceAsync`. Não é para executar de novo em uma versão posterior. A versão 83 preserva o mapa anterior no histórico do Roblox.
+`install.luau` é autocontido e exige a versão 83 como base; instala e testa tudo antes de `SavePlaceAsync`. Não é para executar de novo em uma versão posterior. A versão 83 preserva o mapa anterior no histórico do Roblox. A atualização 84 foi salva pelo publicador Vercel; entre em um servidor novo para carregar o novo mapa.
 
-`verify.luau` é somente leitura e verifica uma sessão nova da versão 84. `audit.json` registra os resultados nativos e a publicação.
+`verify.luau` é somente leitura e verifica uma sessão nova da versão 84. `audit.json` registra os resultados nativos e a publicação. O salvamento foi confirmado por uma tarefa COMPLETE com published=true. A checagem adicional em sessão nova não foi executada: a Vercel retornou 402 api-deployments-free-per-day ao ultrapassar 100 deploys por dia. O script está pronto para executar após a liberação do limite; isso não desfaz a publicação.
+
+A cobertura foi conferida em 3.185 pontos verdes das três ilhas, sem ponto a mais de 0,53 stud de uma raiz válida. Isso verifica a distribuição geométrica; não é medição visual de densidade em cliente.
 
 Verificações executadas: geometria, água sob o embarque, pisos e inclinação da ponte, permanência de 60 segundos, gatilho sobre a pedra, diálogo por dois cliques, migração dos itens, vara sem peças ancoradas, comandos administrativos bloqueados para outras contas, interface real do proprietário e compilação dos 20 scripts ativos. Comandos reais de chat, expulsão e banimento não foram enviados durante os testes.
 
