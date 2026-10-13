@@ -1798,10 +1798,6 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,extendedWaterSurface=true,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
-local audioSearch={}
-for _,keyword in ipairs({"yay","cheer"})do
- local params=Instance.new("AudioSearchParams")params.AudioSubType=Enum.AudioSubType.SoundEffect params.MaxDuration=4 params.SearchKeyword=keyword params.Artist="Roblox"
- local ok,pages=pcall(function()return game:GetService("AssetService"):SearchAudioAsync(params)end)
- if ok then for i,item in ipairs(pages:GetCurrentPage())do if i<=16 then audioSearch[#audioSearch+1]={id=item.Id,title=item.Title,duration=item.Duration,creator=item.Creator.Name}end end end
-end
-return{staged=true,baseVersion=game.PlaceVersion,geometry=geometry,amenities=amenities,shader=shader,tests=tests,audioSearch=audioSearch}
+local baseVersion=game.PlaceVersion
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,baseVersion=baseVersion,expectedVersion=88,geometry=geometry,amenities=amenities,shader=shader,tests=tests}
