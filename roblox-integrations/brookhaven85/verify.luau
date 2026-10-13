@@ -2,6 +2,12 @@ assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 assert(game.PlaceVersion==85,"New city was not saved as version 85")
 assert(workspace.IlhaSerena:GetAttribute("UpgradeVersion")==85)
 local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local v=require(m)()m:Destroy()return v end
+local savedClimate=game.ReplicatedStorage.SerenaRuntime.Climate
+assert(game.ServerScriptService.SerenaAmbienceServer.Source:find("Climate.rendering(Lighting)",1,true),"Rendering bootstrap missing")
+local rendererBeforeStartup=tostring(game.Lighting.LightingStyle)
+local Climate=require(savedClimate)
+assert(Climate.rendering(game.Lighting),"Published runtime cannot activate Realistic")
+local profile=Climate.profile(12,0,1,0)profile.hour=12 Climate.apply(game.Lighting,workspace.Terrain,profile)
 local tests=run([============[local world=workspace.IlhaSerena local runtime=game.ReplicatedStorage.SerenaRuntime local Collection=game:GetService("CollectionService")
 assert(world:GetAttribute("MapAssetId")==115377891476033 and world:GetAttribute("ThemeAssetId")==128071741625902)
 assert(not world.Islands:FindFirstChild("IlhaDoFarol")and not world:FindFirstChild("TrilhasEMirante")and not world:GetAttribute("SecretSpawnCF"),"Old archipelago remains")
@@ -76,4 +82,4 @@ return{parts=parts,themedParts=theme,seats=seats,foreignScripts=foreign,greenSur
  realGrassSampledCells=tested,validSampledRoots=validRoots,roadOrRoofCellsRejected=rejectedRoadCells,nametags=true,
  windStrengthScale=.9,ownerOnlyAdmin=true,cityDoors=doors,compiledScripts=compiled,realisticRendering=true,safeSpawn=true}
 ]============])
-return {ok=true,version=game.PlaceVersion,upgrade=workspace.IlhaSerena:GetAttribute("UpgradeVersion"),map=workspace.IlhaSerena:GetAttribute("MapAssetId"),theme=workspace.IlhaSerena:GetAttribute("ThemeAssetId"),nametags=workspace.IlhaSerena:GetAttribute("NametagAssetId"),tests=tests,lighting=tostring(game.Lighting.LightingStyle)}
+return {ok=true,rendererBeforeStartup=rendererBeforeStartup,renderingBootstrapVerified=true,version=game.PlaceVersion,upgrade=workspace.IlhaSerena:GetAttribute("UpgradeVersion"),map=workspace.IlhaSerena:GetAttribute("MapAssetId"),theme=workspace.IlhaSerena:GetAttribute("ThemeAssetId"),nametags=workspace.IlhaSerena:GetAttribute("NametagAssetId"),tests=tests,lighting=tostring(game.Lighting.LightingStyle)}
