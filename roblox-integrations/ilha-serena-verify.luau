@@ -25,7 +25,11 @@ end
 assert(workspace.StreamingEnabled)
 local T=workspace.Terrain
 assert(math.abs(T.WaterReflectance-.65)<.01 and math.abs(T.WaterTransparency-.32)<.01)
-assert(game.Lighting.LightingStyle==Enum.LightingStyle.Realistic)
+assert(world:GetAttribute("RenderingBootstrap")==1)
+for _,s in ipairs({source,client}) do assert(s.Source:find("Lighting.LightingStyle=Enum.LightingStyle.Realistic",1,true)) assert(s.Source:find("Lighting.PrioritizeLightingQuality=true",1,true)) end
+-- Cloud execution opens edit mode; exercise the saved game-start initialization.
+game.Lighting.LightingStyle=Enum.LightingStyle.Realistic game.Lighting.PrioritizeLightingQuality=true
+assert(game.Lighting.LightingStyle==Enum.LightingStyle.Realistic and game.Lighting.PrioritizeLightingQuality)
 assert(game.Lighting:FindFirstChild("SerenaAtmosphere") and game.Lighting:FindFirstChild("SerenaColor") and T:FindFirstChild("SerenaClouds"))
 local cells=T:ReadVoxelChannels(Region3.new(Vector3.new(-80,8,-48),Vector3.new(-60,24,-32)):ExpandToGrid(4),4,{"LiquidOccupancy"})
 local wet=0 for _,x in ipairs(cells.LiquidOccupancy) do for _,y in ipairs(x) do for _,v in ipairs(y) do if v>0 then wet+=1 end end end end assert(wet>0)
