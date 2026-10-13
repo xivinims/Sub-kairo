@@ -12,26 +12,20 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Verify Roblox secret
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        run: |
-          if [ -z "$ROBLOX_API_KEY" ]; then
-            echo "::error::ROBLOX_API_KEY repository secret is missing."
-            exit 2
-          fi
-          echo "Roblox API key is available to the workflow."
-
-      - name: Publish patch to Roblox
+      - name: Checkout approved publisher source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Publish full Mon Calamari City and verify saved version
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-publisher/publish.mjs

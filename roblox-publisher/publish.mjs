@@ -1,100 +1,54 @@
-import fs from "node:fs/promises";
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 
-const universeId = "9421311218";
-const placeId = "118064584465155";
-const apiKey = process.env.ROBLOX_API_KEY;
-
-if (!apiKey) {
-  console.error("ROBLOX_API_KEY secret is missing.");
-  process.exit(2);
+async function main() {
+  const key = process.env.ROBLOX_API_KEY;
+  if (!key) throw new Error('Missing ROBLOX_API_KEY');
+  const api = 'https://apis.roblox.com/cloud/v2/';
+  const target = 'universes/9421311218/places/118064584465155/';
+  async function request(path, body) {
+    const response = await fetch(api + path, {
+      method: body ? 'POST' : 'GET',
+      headers: {'x-api-key': key, 'content-type': 'application/json'},
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(30000),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(JSON.stringify(data));
+    return data;
+  }
+  async function execute(script) {
+    let task = await request(target + 'luau-execution-session-tasks', {timeout: '180s', script});
+    const deadline = Date.now() + 240000;
+    while (['QUEUED', 'PENDING', 'PROCESSING'].includes(task.state)) {
+      if (Date.now() > deadline || !task.path.startsWith(target)) throw new Error('Task timeout or wrong target');
+      await new Promise(resolve => setTimeout(resolve, 1600));
+      task = await request(task.path);
+    }
+    if (task.state !== 'COMPLETE' || task.error) throw new Error(JSON.stringify(task));
+    return task;
+  }
+  const script = fs.readFileSync(new URL('./patch.luau', import.meta.url), 'utf8');
+  const installation = await execute(script);
+  // Saving succeeds before the independent fresh-session check. Log it immediately.
+  const sourceSha256 = crypto.createHash('sha256').update(script).digest('hex');
+  console.log(JSON.stringify({installationState: installation.state,
+    published: installation.output?.results?.[0]?.published, sourceSha256}));
+  let freshVerification = null;
+  if (installation.output?.results?.[0]?.published === true) {
+    freshVerification = await execute(fs.readFileSync(new URL('./verify.luau', import.meta.url), 'utf8'));
+  }
+  const report = {sourceSha256, installation, freshVerification};
+  fs.mkdirSync('out', {recursive: true});
+  fs.writeFileSync('out/result.json', JSON.stringify(report, null, 2));
+  fs.writeFileSync('out/index.html', '<!doctype html><title>Overyard publisher</title>Completed');
+  console.log(JSON.stringify({state: installation.state, published: installation.output?.results?.[0]?.published,
+    freshVersion: freshVerification?.output?.results?.[0]?.version, sourceSha256: report.sourceSha256}));
+  const text = JSON.stringify(report);
+  for (let i=0; i<text.length; i+=1200) console.log(JSON.stringify({offset: i, length: text.length, data: text.slice(i,i+1200)}));
 }
-
-const script = await fs.readFile(new URL("./patch.luau", import.meta.url), "utf8");
-
-const base = "https://apis.roblox.com/cloud/v2/";
-const createUrl =
-  base +
-  "universes/" +
-  universeId +
-  "/places/" +
-  placeId +
-  "/luau-execution-session-tasks";
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const create = await fetch(createUrl, {
-  method: "POST",
-  headers: {
-    "x-api-key": apiKey,
-    "content-type": "application/json",
-  },
-  body: JSON.stringify({
-    timeout: "180s",
-    script,
-  }),
+main().catch(error => {
+  const key = process.env.ROBLOX_API_KEY;
+  console.error(key ? String(error.message).split(key).join('[REDACTED]') : error.message);
+  process.exit(1);
 });
-
-const createText = await create.text();
-let task;
-try {
-  task = JSON.parse(createText);
-} catch {
-  throw new Error("Roblox returned non-JSON: " + createText);
-}
-
-if (!create.ok) {
-  throw new Error(
-    "Failed to create Luau task (" +
-      create.status +
-      "): " +
-      JSON.stringify(task),
-  );
-}
-
-for (let i = 0; i < 120; i += 1) {
-  const state = String(task?.state ?? "").toUpperCase();
-
-  if (!["PROCESSING", "QUEUED", "PENDING", ""].includes(state)) {
-    break;
-  }
-
-  if (!task?.path) {
-    throw new Error("Roblox task did not return an operation path.");
-  }
-
-  await sleep(1500);
-
-  const poll = await fetch(base + task.path, {
-    headers: { "x-api-key": apiKey },
-  });
-
-  const pollText = await poll.text();
-  try {
-    task = JSON.parse(pollText);
-  } catch {
-    throw new Error("Roblox poll returned non-JSON: " + pollText);
-  }
-
-  if (!poll.ok) {
-    throw new Error(
-      "Failed to poll Luau task (" +
-        poll.status +
-        "): " +
-        JSON.stringify(task),
-    );
-  }
-}
-
-console.log(JSON.stringify(task, null, 2));
-
-if (task?.error) {
-  console.error("Roblox Luau task failed:", JSON.stringify(task.error));
-  process.exit(3);
-}
-
-const state = String(task?.state ?? "").toUpperCase();
-if (["FAILED", "ERROR", "CANCELLED", "CANCELED"].includes(state)) {
-  process.exit(4);
-}
-
-console.log("Roblox patch completed.");

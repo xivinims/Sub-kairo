@@ -1,0 +1,124 @@
+{
+  "status": "prepared_and_staged",
+  "published": false,
+  "target": {
+    "universe": 9421311218,
+    "place": 118064584465155,
+    "baseVersion": 85,
+    "expectedVersion": 86
+  },
+  "assets": {
+    "map": 485800451,
+    "wind": 11946229834
+  },
+  "stage": {
+    "sourceSha256": "8e3bd7c6b5123040920859c55d7883322dbb47337f5448208603b6c56e8cd085",
+    "installation": {
+      "path": "universes/9421311218/places/118064584465155/versions/85/luau-execution-sessions/bbb0d7a6-d507-4466-beeb-b0572bb81699/tasks/bbb0d7a6-d507-4466-beeb-b0572bb81699",
+      "createTime": "2026-10-13T21:55:21.413Z",
+      "updateTime": "2026-10-13T21:55:25.866Z",
+      "user": "8344738123",
+      "state": "COMPLETE",
+      "timeout": "180s",
+      "output": {
+        "results": [
+          {
+            "geometry": {
+              "removedImportedScripts": 6,
+              "oceanSize": [
+                4160,
+                60,
+                4812
+              ],
+              "windAsset": 11946229834,
+              "bounds": {
+                "max": [
+                  1153.775146484375,
+                  402.1970520019531,
+                  1447.7421875
+                ],
+                "min": [
+                  -1202.367919921875,
+                  -37.76841735839844,
+                  -1560.983154296875
+                ]
+              },
+              "assetId": 485800451,
+              "streaming": {
+                "StreamingEnabled": {
+                  "actual": "true",
+                  "applied": true
+                },
+                "ModelStreamingBehavior": {
+                  "actual": "Unavailable in this edit-session engine",
+                  "applied": false
+                },
+                "StreamingMinRadius": {
+                  "actual": "Unavailable in this edit-session engine",
+                  "applied": false
+                },
+                "StreamOutBehavior": {
+                  "actual": "Unavailable in this edit-session engine",
+                  "applied": false
+                },
+                "StreamingTargetRadius": {
+                  "actual": "Unavailable in this edit-session engine",
+                  "applied": false
+                },
+                "StreamingIntegrityMode": {
+                  "actual": "Unavailable in this edit-session engine",
+                  "applied": false
+                }
+              },
+              "originalGeometryPreserved": 1906,
+              "originalDoors": 3,
+              "waterSurface": -10,
+              "entry": [
+                -11.591092109680176,
+                3.499969482421875,
+                -3.105823278427124
+              ]
+            },
+            "baseVersion": 85,
+            "staged": true,
+            "tests": {
+              "nativePostProcessing": true,
+              "retiredGameplayRemoved": true,
+              "nativeWindTrail": true,
+              "originalUnions": 542,
+              "safeSpawnFloorChecks": 9,
+              "parts": 1906,
+              "materials": {
+                "Metal": 920,
+                "Neon": 6,
+                "SmoothPlastic": 134,
+                "Plastic": 820,
+                "Concrete": 18,
+                "Foil": 8
+              },
+              "streamingTargetRadius": "Unavailable in this edit-session engine",
+              "spawnBodyClear": true,
+              "streamingMinRadius": "Unavailable in this edit-session engine",
+              "originalWedges": 331,
+              "originalDoors": 3,
+              "realisticRendering": true,
+              "streamingEnabled": true,
+              "importedScripts": 0,
+              "compiledScriptsAndModules": 11,
+              "nativeOceanSamples": 18
+            }
+          }
+        ]
+      },
+      "enableBinaryOutput": false
+    },
+    "freshVerification": null
+  },
+  "publicationBlock": {
+    "service": "Vercel",
+    "code": "api-deployments-free-per-day",
+    "message": "100 deployment daily quota reached"
+  },
+  "visualClientTest": false,
+  "fpsMeasured": false
+}
