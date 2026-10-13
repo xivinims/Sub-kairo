@@ -18,7 +18,10 @@ for _,id in ipairs({6432306802,87377915371959})do
   if d:IsA("LuaSourceContainer")then sources[#sources+1]={path=d:GetFullName(),name=d.Name,class=d.ClassName,source=d.Source}
   elseif d:IsA("Model")or d:IsA("Folder")or d:IsA("MeshPart")or d:IsA("SurfaceAppearance")then
    local r=info(d)r.path=d:GetFullName()
-   if d:IsA("SurfaceAppearance")then r.colorMap=d.ColorMap r.normalMap=d.NormalMap r.roughnessMap=d.RoughnessMap r.alphaMode=d.AlphaMode.Name end
+   if d:IsA("SurfaceAppearance")then
+    r.pbr=true
+    for _,key in ipairs({"ColorMap","NormalMap","RoughnessMap","AlphaMode"})do local ok,value=pcall(function()return tostring(d[key])end)if ok then r[key]=value end end
+   end
    items[#items+1]=r
   end
  end
