@@ -1,4 +1,4 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==95,"Published base changed")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==96,"Published base changed")
 game:GetService("ServerStorage")
 local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
 local function run(code)return factory("return function()\n"..code.."\nend")()end
@@ -9,12 +9,12 @@ local Collection=game:GetService("CollectionService")
 local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}ray.IgnoreWater=true
 local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.yAxis*-310,ray)end
 function M.place(template,parent,x,z,height,yaw)
- local g=ground(x,z)if not g or g.Position.Y<7.4 or g.Normal.Y<.72 then return end
+ local g=ground(x,z)if not g or g.Position.Y<7.4 or g.Normal.Y<.78 then return end
  local m=template:Clone()local scale=height/template:GetAttribute("TemplateHeight")m:ScaleTo(template:GetScale()*scale)
- local rotation=CFrame.Angles(0,yaw,0)local y=g.Position.Y-1.15
+ local rotation=CFrame.Angles(0,yaw,0)local y=g.Position.Y-1.65
  local points=template:GetAttribute("RootProfile")local values=game:GetService("HttpService"):JSONDecode(points)
- for _,p in ipairs(values)do local off=rotation:VectorToWorldSpace(Vector3.new(unpack(p))*scale)local hit=ground(x+off.X,z+off.Z)if not hit or hit.Position.Y<7 then m:Destroy()return end y=math.min(y,hit.Position.Y-off.Y-1.15)end
- m:PivotTo(CFrame.new(x,y,z)*rotation)m:SetAttribute("ActualRootPoint",Vector3.new(x,y,z))m:SetAttribute("FreshReferenceTree",true)m:SetAttribute("RootEmbedDepth",1.15)
+ for _,p in ipairs(values)do local off=rotation:VectorToWorldSpace(Vector3.new(unpack(p))*scale)local hit=ground(x+off.X,z+off.Z)if not hit or hit.Position.Y<7 then m:Destroy()return end y=math.min(y,hit.Position.Y-off.Y-1.65)end
+ m:PivotTo(CFrame.new(x,y,z)*rotation)m:SetAttribute("ActualRootPoint",Vector3.new(x,y,z))m:SetAttribute("FreshReferenceTree",true)m:SetAttribute("RootEmbedDepth",1.65)
  -- Apply the current season before parenting; new chunks must not flash green
  -- while waiting for descendant signals to be delivered.
  local index=game.ReplicatedStorage.ForestRuntime:GetAttribute("SeasonIndex")or 1
@@ -61,6 +61,26 @@ function M.install()
   for _,p in ipairs(model:GetDescendants())do if p:IsA("BasePart")then p.CanQuery=p==trunk p.CastShadow=true if p:IsA("MeshPart")then p.RenderFidelity=Enum.RenderFidelity.Performance end end end
   model.Parent=folder templates[#templates+1]=model
  end
+ -- Extra visual variants keep the same proven root profiles/meshes but vary
+ -- crown tone and proportions through placement height. They remain fully
+ -- seasonal because SeasonBaseColor is stored per foliage part.
+ local originals={templates[1],templates[2]}
+ local specs={
+  {source=1,name="BroadleafFresh",tint=Color3.fromRGB(112,170,76),mix=.16},
+  {source=1,name="BroadleafDeep",tint=Color3.fromRGB(70,130,61),mix=.18},
+  {source=2,name="PineFresh",tint=Color3.fromRGB(93,148,72),mix=.13},
+  {source=2,name="PineDeep",tint=Color3.fromRGB(58,112,66),mix=.18},
+ }
+ for _,spec in ipairs(specs)do
+  local clone=originals[spec.source]:Clone()clone.Name=spec.name clone:SetAttribute("TreeVariant",#templates+1)
+  for _,p in ipairs(clone:GetDescendants())do if p:IsA("BasePart")and p:GetAttribute("SeasonBaseColor")then
+   local base=p:GetAttribute("SeasonBaseColor"):Lerp(spec.tint,spec.mix)
+   p:SetAttribute("SeasonBaseColor",base)p.Color=base
+   local appearance=p:FindFirstChildOfClass("SurfaceAppearance")if appearance then appearance.Color=base end
+  end end
+  clone.Parent=folder templates[#templates+1]=clone
+ end
+ runtime:SetAttribute("NativeTreeVarietyCount",#templates)
  raw:Destroy()forest:Destroy()
  local protected={}
  for _,m in ipairs({world.Amenities.ForestRuins,world.Amenities.RiversideGarden.WaterCottage})do local cf,size=m:GetBoundingBox()protected[#protected+1]={x=cf.X,z=cf.Z,r=math.max(size.X,size.Z)*.55+8}end
@@ -71,13 +91,15 @@ function M.install()
   local lake=world:GetAttribute("CentralLake")if math.sqrt(((x-lake.X)/76)^2+((z-lake.Z)/52)^2)<1.15 then continue end
   local blocked=false for _,p in ipairs(protected)do if(Vector2.new(x-p.x,z-p.z)).Magnitude<p.r then blocked=true break end end
   for _,p in ipairs(placed)do if(p-Vector2.new(x,z)).Magnitude<18 then blocked=true break end end if blocked then continue end
-  local index=count%4==0 and 2 or 1 local tree=M.place(templates[index],world.Decor.Trees,x,z,rng:NextNumber(index==1 and 23 or 28,index==1 and 36 or 45),rng:NextNumber(0,math.pi*2))
+  local index=rng:NextInteger(1,#templates)local template=templates[index]
+  local pine=template:GetAttribute("SourceAssetId")==6432306802
+  local tree=M.place(template,world.Decor.Trees,x,z,rng:NextNumber(pine and 27 or 22,pine and 46 or 39),rng:NextNumber(0,math.pi*2))
   if tree then count+=1 placed[#placed+1]=Vector2.new(x,z)end
   if attempt%100==0 then task.wait()end
  end
  local chunks=world.Decor:FindFirstChild("ActiveForestChunks")if chunks then chunks:Destroy()end chunks=Instance.new("Folder")chunks.Name="ActiveForestChunks"chunks.Parent=world.Decor
- world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",removed)runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",20)
- return{removedTrees=removed,newTrees=count,treeAssets={580221169,6432306802},chunkLimit=20}
+ world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",removed)runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",32)runtime:SetAttribute("ForestChunkRadius",3)
+ return{removedTrees=removed,newTrees=count,treeAssets={580221169,6432306802},chunkLimit=32,varieties=#templates}
 end
 function M.makeChunk(runtime,world,cx,cz)
  if math.abs(cx*128)<448 and math.abs(cz*128)<448 then return end
@@ -85,8 +107,9 @@ function M.makeChunk(runtime,world,cx,cz)
  local rng=Random.new((cx*73856093+cz*19349663)%2147483647)local templates=runtime.NativeTreeTemplates local count=0
  for ix=0,2 do for iz=0,2 do local x,z=cx*128+20+ix*40+rng:NextNumber(-6,6),cz*128+20+iz*40+rng:NextNumber(-6,6)
   if math.abs(x)>1980 or math.abs(z)>1980 then continue end
-  local template=(ix+iz)%4==0 and templates.GreenPine or templates.GreenBroadleaf
-  if M.place(template,m,x,z,rng:NextNumber(24,40),rng:NextNumber(0,6.28))then count+=1 end
+  local choices=templates:GetChildren()local template=choices[rng:NextInteger(1,#choices)]
+  local pine=template:GetAttribute("SourceAssetId")==6432306802
+  if M.place(template,m,x,z,rng:NextNumber(pine and 27 or 22,pine and 45 or 39),rng:NextNumber(0,6.28))then count+=1 end
  end end
  if count==0 then m:Destroy()return end m:SetAttribute("TreeCount",count)m.Parent=world.Decor.ActiveForestChunks return m
 end
@@ -96,11 +119,11 @@ function M.start(runtime,world)
   elapsed+=dt if elapsed<1 then return end elapsed=0 if runtime:GetAttribute("ForestTestMode")then return end
   local wanted={}
   for _,player in ipairs(game.Players:GetPlayers())do local r=player.Character and player.Character:FindFirstChild("HumanoidRootPart")if r then local cx,cz=math.floor(r.Position.X/128),math.floor(r.Position.Z/128)
-   for dx=-2,2 do for dz=-2,2 do local x,z=cx+dx,cz+dz if math.abs(x*128)>448 or math.abs(z*128)>448 then local k=x..":"..z wanted[k]={x=x,z=z,d=(Vector2.new(x*128+64-r.Position.X,z*128+64-r.Position.Z)).Magnitude}end end end
+   for dx=-3,3 do for dz=-3,3 do local x,z=cx+dx,cz+dz if math.abs(x*128)>448 or math.abs(z*128)>448 then local k=x..":"..z wanted[k]={x=x,z=z,d=(Vector2.new(x*128+64-r.Position.X,z*128+64-r.Position.Z)).Magnitude}end end end
   end end
-  local order={}for k,v in pairs(wanted)do v.k=k order[#order+1]=v end table.sort(order,function(a,b)return a.d<b.d end)while #order>20 do table.remove(order)end
+  local order={}for k,v in pairs(wanted)do v.k=k order[#order+1]=v end table.sort(order,function(a,b)return a.d<b.d end)while #order>32 do table.remove(order)end
   local keep={}for _,v in ipairs(order)do keep[v.k]=true end for k,m in pairs(active)do if not keep[k]then m:Destroy()active[k]=nil end end
-  local added=0 for _,v in ipairs(order)do if not active[v.k]then local m=M.makeChunk(runtime,world,v.x,v.z)if m then active[v.k]=m added+=1 if added>=2 then break end end end end
+  local added=0 for _,v in ipairs(order)do if not active[v.k]then local m=M.makeChunk(runtime,world,v.x,v.z)if m then active[v.k]=m added+=1 if added>=4 then break end end end end
  end)
 end
 return M
@@ -168,6 +191,16 @@ function M.build(parent,tracks)
 end
 return M
 ]============])
+local oldSeasons=runtime:FindFirstChild("Seasons")if oldSeasons then oldSeasons:Destroy()end
+source(runtime,"ModuleScript","Seasons",[============[local S={}
+S.Names={"Primavera","Verão","Outono","Inverno"}
+S.Duration=1200
+S.Transition=12
+function S.index(now,epoch)
+ return math.floor(math.max(0,now-epoch)/S.Duration)%4+1
+end
+return S
+]============])
 source(runtime,"ModuleScript","SeasonController",[============[local Controller={}
 function Controller.start(runtime,world)
  local Seasons=require(runtime.Seasons)local Scene=require(runtime.Scene)local Terrain=workspace.Terrain
@@ -201,7 +234,12 @@ function Controller.start(runtime,world)
  streamed.ChildAdded:Connect(function(chunk)record(chunk,"trees")end)
  streamed.DescendantRemoving:Connect(function(part)parts[part]=nil end)
  local function surface(index)
-  Terrain:SetMaterialColor(Enum.Material.Grass,index==3 and Color3.fromRGB(153,134,78)or index==2 and Color3.fromRGB(111,160,65)or Color3.fromRGB(107,153,64))
+  local grass=index==1 and Color3.fromRGB(107,153,64)or index==2 and Color3.fromRGB(82,139,57)or index==3 and Color3.fromRGB(153,134,78)or Color3.fromRGB(176,183,176)
+  local groundColor=index==1 and Color3.fromRGB(114,91,66)or index==2 and Color3.fromRGB(105,86,59)or index==3 and Color3.fromRGB(128,92,57)or Color3.fromRGB(116,108,96)
+  local mudColor=index==1 and Color3.fromRGB(96,79,62)or index==2 and Color3.fromRGB(88,75,55)or index==3 and Color3.fromRGB(108,75,52)or Color3.fromRGB(101,94,87)
+  Terrain:SetMaterialColor(Enum.Material.Grass,grass)Terrain:SetMaterialColor(Enum.Material.LeafyGrass,grass)
+  Terrain:SetMaterialColor(Enum.Material.Ground,groundColor)Terrain:SetMaterialColor(Enum.Material.Mud,mudColor)
+  Terrain:SetMaterialColor(Enum.Material.Snow,Color3.fromRGB(224,229,231))
   if index~=4 and previousIndex~=4 then return end
   local extent=(world:GetAttribute("WorldExtent")or 1024)*.5
   local batch=0
@@ -535,7 +573,7 @@ function B.install()
    contacts={Vector3.new((lo.X+hi.X)*.5,lo.Y,(lo.Z+hi.Z)*.5)}m:SetAttribute("GroundingMethod","PlacedMeshBounds")
   else m:SetAttribute("GroundingMethod","PlacedMeshRaycast")end
   assert(#contacts>0,"No real base geometry: "..m.Name)
-  local shift=math.huge local center=Vector3.zero local depth=tree and 1.15 or .18
+  local shift=math.huge local center=Vector3.zero local depth=tree and 1.55 or .18
   for _,point in ipairs(contacts)do local h=assert(ground(point.X,point.Z),"No ground beneath visible root")shift=math.min(shift,h.Position.Y-point.Y-depth)center+=point end
   center/= #contacts m:PivotTo(m:GetPivot()+Vector3.yAxis*shift)
   local finalCenter=center+Vector3.yAxis*shift m:SetAttribute("ActualRootPoint",finalCenter)m:SetAttribute("RootEmbedDepth",depth)
@@ -555,10 +593,16 @@ function B.install()
  for _,m in ipairs(world.Decor.Plants:GetChildren())do
   if m.Name=="DenseLeafPatch"or m.Name=="CloverPatch"then m:Destroy()report.removedPlants+=1 end
  end
- for _,m in ipairs(world.Amenities.CutTrunks:GetChildren())do local cf,size=m:GetBoundingBox()local h=ground(cf.X,cf.Z)if h then m:PivotTo(m:GetPivot()+Vector3.yAxis*(h.Position.Y-(cf.Y-size.Y*.5)-.3))end end
+ local cut=world.Amenities:FindFirstChild("CutTrunks")
+ if cut then report.removedDecor+=#cut:GetChildren()cut:ClearAllChildren()end
  for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do
-  local pivot=m:GetPivot()local h=ground(pivot.X,pivot.Z)
-  if h and h.Position.Y>6 then local cf,size=m:GetBoundingBox()m:PivotTo(pivot+Vector3.yAxis*(h.Position.Y-(cf.Y-size.Y*.5)-.3))end
+  local name=m.Name:lower()
+  if name:find("log",1,true)or name:find("stump",1,true)or name:find("trunk",1,true)or name:find("fallen",1,true)then
+   report.removedDecor+=1 m:Destroy()
+  else
+   local pivot=m:GetPivot()local h=ground(pivot.X,pivot.Z)
+   if h and h.Position.Y>6 then local cf,size=m:GetBoundingBox()m:PivotTo(pivot+Vector3.yAxis*(h.Position.Y-(cf.Y-size.Y*.5)-.3))end
+  end
  end
  world:SetAttribute("TreeCount",#world.Decor.Trees:GetChildren())world:SetAttribute("PlantCount",#world.Decor.Plants:GetChildren())runtime:SetAttribute("GrassRenderer","NativeTerrain")runtime:SetAttribute("GrassMotionEnabled",false)
  return report
@@ -622,7 +666,7 @@ function B.install()
 end
 return B
 ]============]).install()
-workspace.ForestWorld:SetAttribute("UpgradeVersion",96)
+workspace.ForestWorld:SetAttribute("UpgradeVersion",97)
 source(game.ServerScriptService,"Script","ForestServer",[============[local Players = game:GetService("Players")
 local Run = game:GetService("RunService")
 local runtime = game.ReplicatedStorage:WaitForChild("ForestRuntime")
@@ -638,6 +682,31 @@ require(runtime:WaitForChild("SeasonController")).start(runtime,world)
 require(runtime:WaitForChild("RuinController")).start(runtime,world)
 require(runtime:WaitForChild("MusicController")).start(runtime,world)
 require(runtime:WaitForChild("Foliage")).start(runtime,world)
+runtime:SetAttribute("StreamingPrefetchEnabled",true)
+runtime:SetAttribute("StreamingPrefetchDistance",360)
+local function startStreamingPrefetch(player)
+ task.spawn(function()
+  while player.Parent do
+   local model=player.Character local root=model and model:FindFirstChild("HumanoidRootPart")
+   if root then
+    local velocity=root.AssemblyLinearVelocity
+    local forward=velocity.Magnitude>3 and velocity.Unit or root.CFrame.LookVector
+    local right=root.CFrame.RightVector
+    local points={
+     root.Position,
+     root.Position+forward*360,
+     root.Position+right*220,
+     root.Position-right*220,
+    }
+    for _,point in ipairs(points)do
+     pcall(function()player:RequestStreamAroundAsync(point,1.25)end)
+     task.wait(.03)
+    end
+   end
+   task.wait(2.5)
+  end
+ end)
+end
 local Collection=game:GetService("CollectionService")
 for _,seat in ipairs(world.Amenities.LogBenches:GetDescendants())do if seat:IsA("Seat")then
 	local prompt=seat:FindFirstChild("SitPrompt")
@@ -658,8 +727,8 @@ local function playerAdded(player)
 	player.CharacterAdded:Connect(function(model) character(player, model) end)
 	if player.Character then task.spawn(character, player, player.Character) end
 end
-Players.PlayerAdded:Connect(playerAdded)
-for _, player in ipairs(Players:GetPlayers()) do playerAdded(player) end
+Players.PlayerAdded:Connect(function(player)playerAdded(player)startStreamingPrefetch(player)end)
+for _, player in ipairs(Players:GetPlayers()) do playerAdded(player)startStreamingPrefetch(player)end
 local elapsed = 0
 Run.Heartbeat:Connect(function(dt)
 	elapsed += dt if elapsed < 1 then return end elapsed = 0
@@ -717,13 +786,17 @@ Run.Heartbeat:Connect(function(dt)
   end
  end
  rainRoot.CFrame=CFrame.new((root and root.Position or pos)+Vector3.yAxis*18)
- if spawnClock>.45 and h and h:GetState()~=Enum.HumanoidStateType.Swimming and #nearby>0 and runtime:GetAttribute("SeasonName")~="Inverno"then
+ local seasonIndex=runtime:GetAttribute("SeasonIndex")or 1
+ local leafInterval=seasonIndex==1 and .62 or seasonIndex==2 and .78 or seasonIndex==3 and .22 or math.huge
+ if spawnClock>leafInterval and h and h:GetState()~=Enum.HumanoidStateType.Swimming and #nearby>0 and seasonIndex~=4 then
   spawnClock=0 leafIndex=leafIndex%cap+1 local e=leaves[leafIndex]local p=nearby[rng:NextInteger(1,#nearby)]
   local focus=root and root.Position or pos
   local x=math.clamp(p.X,focus.X-10,focus.X+10)+rng:NextNumber(-3,3)local z=math.clamp(p.Z,focus.Z-10,focus.Z+10)+rng:NextNumber(-3,3)
-  e.start=Vector3.new(x,focus.Y+rng:NextNumber(6,9),z)e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=6
-
-  e.part.Color=runtime:GetAttribute("SeasonName")=="Outono"and Color3.fromRGB(181,134,66)or Color3.fromRGB(128,153,93)e.part.Transparency=.12
+  e.start=Vector3.new(x,focus.Y+rng:NextNumber(6,9),z)e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=seasonIndex==3 and 7 or 6
+  if seasonIndex==1 then e.part.Color=Color3.fromRGB(132,164,91)
+  elseif seasonIndex==2 then e.part.Color=Color3.fromRGB(88,132,68)
+  else e.part.Color=Color3.fromRGB(rng:NextInteger(168,213),rng:NextInteger(91,145),rng:NextInteger(45,72))end
+  e.part.Transparency=.12
  end
  for _,e in ipairs(leaves)do local age=now-e.birth if age< (e.life or 0)then local drift=Vector3.new(age*.25+math.sin(age*1.6+e.phase)*.4,-age*1.35,math.cos(age*1.2+e.phase)*.3)
   e.part.CFrame=CFrame.new(e.start+drift)*CFrame.Angles(age*.7,e.phase+age*.9,.3*math.sin(age*2))e.part.Transparency=.12+.88*math.clamp((age-e.life+1.5)/1.5,0,1)
@@ -763,7 +836,7 @@ script.Destroying:Connect(function()if reflection then reflection.destroy()end e
 ]============])
 run(game.ServerScriptService.ForestServer.Source)
 reports.tests=run([============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
-assert(world:GetAttribute("UpgradeVersion")==96)
+assert(world:GetAttribute("UpgradeVersion")==97)
 local report={trees=0,plants=0,actualRootProbes=0,walkProbes=0,teaTables=0,teaCups=0,ruins=4,audio=0}
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGrassClient")and not runtime:FindFirstChild("SkinnedGrassTemplates"),"Skeletal spike grass remains")
 assert(runtime:GetAttribute("GrassRenderer")=="NativeTerrain")
@@ -909,6 +982,11 @@ assert(maximumSeamStep<3,"A steep ledge remains at the expanded terrain edge")re
 local lakes=game:GetService("HttpService"):JSONDecode(runtime:GetAttribute("LakeLocations"))for i=3,#lakes do local p=lakes[i]local h=assert(workspace:Raycast(Vector3.new(p[1],150,p[3]),Vector3.yAxis*-250,water))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.15)end
 local Foliage=require(runtime.Foliage)local chunk=assert(Foliage.makeChunk(runtime,world,10,6))local streamedTrees=chunk:GetAttribute("TreeCount")assert(streamedTrees>0 and streamedTrees<=9)
 for _,m in ipairs(chunk:GetChildren())do local p=m:GetAttribute("ActualRootPoint")assert(p and p.Y<ground(p.X,p.Z).Position.Y-.5)end chunk:Destroy()
+local SeasonConfig=require(runtime.Seasons)assert(SeasonConfig.Duration==1200,"Seasons must change every 20 minutes")
+assert(runtime:GetAttribute("ForestLiveChunkLimit")==32 and runtime:GetAttribute("ForestChunkRadius")==3)
+assert((runtime:GetAttribute("NativeTreeVarietyCount")or 0)>=6)
+assert(#world.Amenities.CutTrunks:GetChildren()==0,"Cut trunks remain in TreeWorld")
+for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()assert(not(n:find("log",1,true)or n:find("stump",1,true)or n:find("trunk",1,true)or n:find("fallen",1,true)),"Loose cut log remains: "..m.Name)end
 local seasons=require(runtime.SeasonController).start(runtime,world)
 assert(seasons.apply(4,true),"Could not enter winter")
 assert(ground(1500,1200).Material==Enum.Material.Snow,"Expanded terrain missed the global season")
@@ -923,7 +1001,7 @@ for _,p in ipairs(winterChunk:GetDescendants())do if p:IsA("BasePart")and p:GetA
 end end
 assert(coloredLeaves>0)winterChunk:Destroy()
 assert(seasons.apply(1,true))assert(ground(1500,1200).Material==Enum.Material.Grass,"Grass did not return after winter")
-report.globalExtendedSeasons=true
+report.globalExtendedSeasons=true report.seasonDurationSeconds=1200 report.treeVarieties=runtime:GetAttribute("NativeTreeVarietyCount") report.chunkLimit=runtime:GetAttribute("ForestLiveChunkLimit") report.cutTrunksRemoved=true report.streamingPrefetch=true
 local Mirror=require(runtime.RiverReflection)local actor=Instance.new("Model")actor.Parent=game.ServerStorage local head=Instance.new("Part")head.Name="Head"head.Size=Vector3.one head.CFrame=CFrame.new(0,9,0)head.Parent=actor
 local parent=Instance.new("Folder")parent.Parent=game.ServerStorage local reflection=Mirror.create(actor,parent,workspace)
 assert(reflection.surface.CanvasSize==Vector2.new(96,144)and reflection.view.ImageTransparency>=.88 and #reflection.pairs<=32)
@@ -938,6 +1016,6 @@ return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
 game:GetService("AssetService"):SavePlaceAsync()
-return{published=true,expectedVersion=96,baseVersion=95,reports=reports}
+return{published=true,expectedVersion=97,baseVersion=96,reports=reports}
 
 -- FINAL_TREEWORLD96_TRIGGER
