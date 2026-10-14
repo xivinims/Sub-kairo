@@ -17,10 +17,21 @@ function B.install()
  end
  raw:Destroy()
  local count=0 local centers={{-145,-120},{-115,170},{105,-80},{110,0},{-230,90},{-120,-210}}
+ local collision=RaycastParams.new()collision.FilterType=Enum.RaycastFilterType.Include collision.FilterDescendantsInstances={workspace.Terrain,workspace.ForestWorld.Decor,workspace.ForestWorld.Amenities}collision.RespectCanCollide=true collision.IgnoreWater=true
  for i,center in ipairs(centers)do
   local points={}
-  for j=0,31 do local a=j*math.pi*2/32 local p=floor(center[1]+math.cos(a)*9,center[2]+math.sin(a)*7)
-   if not p then points={}break end points[#points+1]={p.X,p.Y+.03,p.Z}
+  for attempt=0,24 do
+   points={}local shift=attempt*2.4 local cx=center[1]+math.cos(attempt*2.4)*shift local cz=center[2]+math.sin(attempt*2.4)*shift
+   for j=0,31 do local a=j*math.pi*2/32 local p=floor(cx+math.cos(a)*9,cz+math.sin(a)*7)
+    if not p then points={}break end points[#points+1]={p.X,p.Y+.03,p.Z}
+   end
+   if #points==32 then
+    for j=1,32 do local a=Vector3.new(unpack(points[j]))local b=Vector3.new(unpack(points[j%32+1]))
+     for _,height in ipairs({.6,1.2})do if workspace:Raycast(a+Vector3.yAxis*height,b-a,collision)then points={}break end end
+     if #points==0 then break end
+    end
+   end
+   if #points==32 then break end
   end
   if #points==32 then local r=Instance.new("StringValue")r.Name="AnimalRoute"r.Value=game:GetService("HttpService"):JSONEncode(points)r:SetAttribute("Species",i%2==0 and "Zorro"or"Conejo")r:SetAttribute("Speed",i%2==0 and 1.8 or 1.1)r:SetAttribute("Phase",i*7)r.Parent=routes count+=1 end
  end

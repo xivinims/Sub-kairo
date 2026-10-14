@@ -266,9 +266,9 @@ for i,rig in ipairs({Enum.HumanoidRigType.R6,Enum.HumanoidRigType.R15})do
  local player={Character=m,Backpack=backpack,UserId=i+100}
  W.give(player)mock[#mock+1]=player
 end
-task.wait(1)
+task.wait(.2)for _=1,20 do W.tick(.11)end
 for _,player in ipairs(mock)do local m=player.Character local t=assert(m:FindFirstChildOfClass("Tool"))local motor=assert(m.HumanoidRootPart:FindFirstChild("UmbrellaHold"))
- assert(t:GetAttribute("SharingWith")and m.HumanoidRootPart.Anchored,"Sharing changes player state")
+ assert(t:GetAttribute("SharingWith")and m.HumanoidRootPart.Anchored,"Sharing state: rig="..m.Humanoid.RigType.Name.." share="..tostring(t:GetAttribute("SharingWith")).." health="..m.Humanoid.Health.." sit="..tostring(m.Humanoid.Sit))
  assert(not m:FindFirstChild("RightGrip",true),"Umbrella fought the default hand grip")
  local expected=W.canopy(mock[1].Character,mock[2].Character)-Vector3.yAxis*3.2
  assert((m.HumanoidRootPart.CFrame:PointToWorldSpace(motor.C0.Position)-expected).Magnitude<.4,"Shared umbrella did not converge to the midpoint")

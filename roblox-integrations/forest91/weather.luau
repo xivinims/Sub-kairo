@@ -36,7 +36,7 @@ function W.start(runtime,world)
  local function joined(player)player.CharacterAdded:Connect(function()remove(player)task.delay(1.5,function()if runtime:GetAttribute("Raining")then give(player)end end)end)end
  Players.PlayerAdded:Connect(joined)Players.PlayerRemoving:Connect(remove)for _,p in ipairs(Players:GetPlayers())do joined(p)end
  local elapsed=0
- Run.Heartbeat:Connect(function(dt)
+ local function tick(dt)
   elapsed+=dt if elapsed<.1 then return end elapsed=0
   local rain=W.raining(workspace:GetServerTimeNow(),epoch)
   if rain~=cloudy then cloudy=rain runtime:SetAttribute("Raining",rain)for _,p in ipairs(Players:GetPlayers())do if rain then give(p)else remove(p)end end end
@@ -56,7 +56,8 @@ function W.start(runtime,world)
     joint.C0=joint.C0:Lerp(CFrame.new(base.Position)*CFrame.Angles(math.rad(angle),0,math.rad(shoulder and tilt or 0))*base.Rotation,.2)
    end end
   end
- end)
+ end
+ W.tick=tick Run.Heartbeat:Connect(tick)
  return W
 end
 return W
