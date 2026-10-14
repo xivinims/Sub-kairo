@@ -1,4 +1,5 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==92,"Saved version mismatch")
+game:GetService("ServerStorage")
 local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local v=require(m)()m:Destroy()return v end
 local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)
 run(game.ServerScriptService.ForestServer.Source)
