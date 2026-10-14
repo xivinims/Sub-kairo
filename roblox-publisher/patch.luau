@@ -87,7 +87,12 @@ function M.install()
  runtime:SetAttribute("NativeTreeVarietyCount",#templates)
  raw:Destroy()forest:Destroy()
  local protected={}
- for _,m in ipairs({world.Amenities.ForestRuins,world.Amenities.RiversideGarden.WaterCottage})do local cf,size=m:GetBoundingBox()protected[#protected+1]={x=cf.X,z=cf.Z,r=math.max(size.X,size.Z)*.55+8}end
+ local protectModels={world.Amenities.ForestRuins}
+ local oldCottage=world.Amenities.RiversideGarden:FindFirstChild("WaterCottage")
+ if oldCottage then protectModels[#protectModels+1]=oldCottage end
+ local existingMansion=world.Amenities:FindFirstChild("RuinMansion")
+ if existingMansion then protectModels[#protectModels+1]=existingMansion end
+ for _,m in ipairs(protectModels)do local cf,size=m:GetBoundingBox()protected[#protected+1]={x=cf.X,z=cf.Z,r=math.max(size.X,size.Z)*.55+8}end
  for _,m in ipairs(world.Amenities.ForestLandmarks:GetChildren())do local p=m:GetAttribute("Origin")protected[#protected+1]={x=p.X,z=p.Z,r=36}end
  local rng=Random.new(96014)local placed={}local count=0
  for attempt=1,9000 do if count>=280 then break end local x,z=rng:NextNumber(-390,390),rng:NextNumber(-350,350)
