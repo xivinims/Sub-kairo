@@ -1,4 +1,4 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==97,"Published base changed")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==98,"Published base changed")
 game:GetService("ServerStorage")
 local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
 local function run(code)return factory("return function()\n"..code.."\nend")()end
@@ -68,8 +68,12 @@ function M.install()
  local specs={
   {source=1,name="BroadleafFresh",tint=Color3.fromRGB(112,170,76),mix=.16},
   {source=1,name="BroadleafDeep",tint=Color3.fromRGB(70,130,61),mix=.18},
+  {source=1,name="BroadleafMeadow",tint=Color3.fromRGB(139,184,83),mix=.20},
+  {source=1,name="BroadleafOld",tint=Color3.fromRGB(82,119,54),mix=.24},
   {source=2,name="PineFresh",tint=Color3.fromRGB(93,148,72),mix=.13},
   {source=2,name="PineDeep",tint=Color3.fromRGB(58,112,66),mix=.18},
+  {source=2,name="PineSilver",tint=Color3.fromRGB(96,132,105),mix=.18},
+  {source=2,name="PineYoung",tint=Color3.fromRGB(112,158,82),mix=.15},
  }
  for _,spec in ipairs(specs)do
   local clone=originals[spec.source]:Clone()clone.Name=spec.name clone:SetAttribute("TreeVariant",#templates+1)
@@ -98,7 +102,7 @@ function M.install()
   if attempt%100==0 then task.wait()end
  end
  local chunks=world.Decor:FindFirstChild("ActiveForestChunks")if chunks then chunks:Destroy()end chunks=Instance.new("Folder")chunks.Name="ActiveForestChunks"chunks.Parent=world.Decor
- world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",math.max(previousRemoved,removed))runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",32)runtime:SetAttribute("ForestChunkRadius",3)
+ world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",math.max(previousRemoved,removed))runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",36)runtime:SetAttribute("ForestChunkRadius",4)
  return{removedTrees=removed,newTrees=count,treeAssets={580221169,6432306802},chunkLimit=32,varieties=#templates}
 end
 function M.makeChunk(runtime,world,cx,cz)
@@ -119,9 +123,9 @@ function M.start(runtime,world)
   elapsed+=dt if elapsed<1 then return end elapsed=0 if runtime:GetAttribute("ForestTestMode")then return end
   local wanted={}
   for _,player in ipairs(game.Players:GetPlayers())do local r=player.Character and player.Character:FindFirstChild("HumanoidRootPart")if r then local cx,cz=math.floor(r.Position.X/128),math.floor(r.Position.Z/128)
-   for dx=-3,3 do for dz=-3,3 do local x,z=cx+dx,cz+dz if math.abs(x*128)>448 or math.abs(z*128)>448 then local k=x..":"..z wanted[k]={x=x,z=z,d=(Vector2.new(x*128+64-r.Position.X,z*128+64-r.Position.Z)).Magnitude}end end end
+   for dx=-4,4 do for dz=-4,4 do local x,z=cx+dx,cz+dz if math.abs(x*128)>448 or math.abs(z*128)>448 then local k=x..":"..z wanted[k]={x=x,z=z,d=(Vector2.new(x*128+64-r.Position.X,z*128+64-r.Position.Z)).Magnitude}end end end
   end end
-  local order={}for k,v in pairs(wanted)do v.k=k order[#order+1]=v end table.sort(order,function(a,b)return a.d<b.d end)while #order>32 do table.remove(order)end
+  local order={}for k,v in pairs(wanted)do v.k=k order[#order+1]=v end table.sort(order,function(a,b)return a.d<b.d end)while #order>36 do table.remove(order)end
   local keep={}for _,v in ipairs(order)do keep[v.k]=true end for k,m in pairs(active)do if not keep[k]then m:Destroy()active[k]=nil end end
   local added=0 for _,v in ipairs(order)do if not active[v.k]then local m=M.makeChunk(runtime,world,v.x,v.z)if m then active[v.k]=m added+=1 if added>=4 then break end end end end
  end)
@@ -644,11 +648,11 @@ function B.install()
 
  -- STREAMING: large visual radius, while dynamic forest chunks still protect mobile memory.
  workspace.StreamingEnabled=true
- pcall(function()workspace.StreamingMinRadius=256 end)
- pcall(function()workspace.StreamingTargetRadius=768 end)
- runtime:SetAttribute("StreamingMinRadiusStuds",256)
- runtime:SetAttribute("StreamingTargetRadiusStuds",768)
- runtime:SetAttribute("StreamingPrefetchDistance",520)
+ pcall(function()workspace.StreamingMinRadius=320 end)
+ pcall(function()workspace.StreamingTargetRadius=896 end)
+ runtime:SetAttribute("StreamingMinRadiusStuds",320)
+ runtime:SetAttribute("StreamingTargetRadiusStuds",896)
+ runtime:SetAttribute("StreamingPrefetchDistance",640)
 
  -- ANIMATION CLEANUP: TreeWorld uses the Roblox avatar Animate controller only.
  for _,container in ipairs({game.StarterPlayer.StarterPlayerScripts,game.StarterPlayer.StarterCharacterScripts})do
@@ -896,6 +900,461 @@ end
 return B
 ]============]).install()
 
+
+-- =========================================================
+-- TREEWORLD 99: RUIN MANSION + RIVER DETAIL
+-- =========================================================
+reports.mansion=factory([============[
+local B={}
+function B.install()
+ local AS=game:GetService("AssetService")
+ local Terrain=workspace.Terrain
+ local world=workspace.ForestWorld
+ local runtime=game.ReplicatedStorage.ForestRuntime
+ local Scene=require(runtime.Scene)
+ local Foliage=require(runtime.Foliage)
+ local ruin=world.Amenities.ForestRuins
+ local origin=ruin:GetAttribute("Origin")or ruin:GetPivot().Position
+ local ruinPivot=ruin:GetPivot()
+ local report={
+  seats=0,portraits=0,rooms=0,decor=0,ruinFragments=0,
+  submergedPlantsRemoved=0,riverStones=0,ringTrees=0,externalAssets=0
+ }
+
+ local old=world.Amenities:FindFirstChild("RuinMansion")
+ if old then old:Destroy()end
+
+ local mansion=Instance.new("Model")
+ mansion.Name="RuinMansion"
+ mansion.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+ mansion:SetAttribute("Style","AncientRichRuin")
+ mansion:SetAttribute("Reference","ForestRuins")
+ mansion.Parent=world.Amenities
+
+ local terrainRay=RaycastParams.new()
+ terrainRay.FilterType=Enum.RaycastFilterType.Include
+ terrainRay.FilterDescendantsInstances={Terrain}
+ terrainRay.IgnoreWater=true
+ local hit=workspace:Raycast(Vector3.new(origin.X,220,origin.Z),Vector3.yAxis*-360,terrainRay)
+ local groundY=hit and hit.Position.Y or origin.Y
+ local basis=CFrame.new(origin.X,groundY,origin.Z)*ruinPivot.Rotation
+
+ local stoneColor=Color3.fromRGB(172,169,154)
+ local stoneMaterial=Enum.Material.Slate
+ local woodColor=Color3.fromRGB(74,50,35)
+ for _,p in ipairs(ruin:GetDescendants())do
+  if p:IsA("BasePart")and p.Transparency<.8 and p.Size.Magnitude>5 then
+   stoneColor=p.Color
+   stoneMaterial=p.Material
+   break
+  end
+ end
+
+ local function part(parent,name,size,cf,color,material,collide,transparency)
+  local p=Instance.new("Part")
+  p.Name=name
+  p.Size=size
+  p.CFrame=basis*cf
+  p.Color=color or stoneColor
+  p.Material=material or stoneMaterial
+  p.Anchored=true
+  p.CanCollide=collide~=false
+  p.CanTouch=true
+  p.CanQuery=true
+  p.Transparency=transparency or 0
+  p.CastShadow=true
+  p.Parent=parent
+  return p
+ end
+
+ local function cylinder(parent,name,size,cf,color,material)
+  local p=part(parent,name,size,cf,color,material,true,0)
+  p.Shape=Enum.PartType.Cylinder
+  return p
+ end
+
+ local function seat(parent,name,size,cf,color)
+  local s=Instance.new("Seat")
+  s.Name=name
+  s.Size=size
+  s.CFrame=basis*cf
+  s.Color=color or woodColor
+  s.Material=Enum.Material.Wood
+  s.Anchored=true
+  s.CanCollide=true
+  s.CanTouch=true
+  s.CanQuery=true
+  s.Parent=parent
+  report.seats+=1
+  return s
+ end
+
+ local shell=Instance.new("Folder")shell.Name="Architecture"shell.Parent=mansion
+ local interior=Instance.new("Folder")interior.Name="Interior"interior.Parent=mansion
+ local decor=Instance.new("Folder")decor.Name="Decor"decor.Parent=mansion
+ local portraits=Instance.new("Folder")portraits.Name="Portraits"portraits.Parent=mansion
+ local eventFolder=Instance.new("Folder")eventFolder.Name="BreakEvent"eventFolder.Parent=mansion
+
+ -- Foundation/floors.
+ part(shell,"Foundation",Vector3.new(72,1.4,52),CFrame.new(0,.7,0),stoneColor,Enum.Material.Cobblestone,true)
+ part(shell,"GroundFloor",Vector3.new(68,.55,48),CFrame.new(0,1.5,0),Color3.fromRGB(84,68,50),Enum.Material.WoodPlanks,true)
+ part(shell,"UpperFloor",Vector3.new(68,.55,48),CFrame.new(0,14.3,0),Color3.fromRGB(81,64,47),Enum.Material.WoodPlanks,true)
+
+ -- Exterior wall helpers with window gaps.
+ local wallColor=stoneColor:Lerp(Color3.fromRGB(208,203,188),.16)
+ local function wall(name,size,cf)
+  return part(shell,name,size,cf,wallColor,stoneMaterial,true)
+ end
+ -- Front wall with large broken entrance.
+ wall("FrontLeft",Vector3.new(29,12.5,1.3),CFrame.new(-21.5,7.7,-24.3))
+ wall("FrontRight",Vector3.new(29,12.5,1.3),CFrame.new(21.5,7.7,-24.3))
+ wall("FrontUpper",Vector3.new(14,4,1.3),CFrame.new(0,12,-24.3))
+ wall("BackWall",Vector3.new(72,12.5,1.3),CFrame.new(0,7.7,24.3))
+ wall("LeftWall",Vector3.new(1.3,12.5,50),CFrame.new(-35.3,7.7,0))
+ wall("RightWall",Vector3.new(1.3,12.5,50),CFrame.new(35.3,7.7,0))
+
+ -- Upper floor shell.
+ wall("UpperFrontLeft",Vector3.new(30,12,1.2),CFrame.new(-20.5,20.5,-24.2))
+ wall("UpperFrontRight",Vector3.new(30,12,1.2),CFrame.new(20.5,20.5,-24.2))
+ wall("UpperFrontCenter",Vector3.new(10,6,1.2),CFrame.new(0,23.4,-24.2))
+ wall("UpperBack",Vector3.new(72,12,1.2),CFrame.new(0,20.5,24.2))
+ wall("UpperLeft",Vector3.new(1.2,12,50),CFrame.new(-35.2,20.5,0))
+ wall("UpperRight",Vector3.new(1.2,12,50),CFrame.new(35.2,20.5,0))
+
+ -- Roof: dark old slate with partial damage.
+ local roofColor=Color3.fromRGB(58,55,54)
+ part(shell,"RoofMain",Vector3.new(73,1.2,53),CFrame.new(0,27,0)*CFrame.Angles(math.rad(-2),0,0),roofColor,Enum.Material.Slate,true)
+ part(shell,"RoofBrokenSection",Vector3.new(18,.8,16),CFrame.new(21,27.5,-9)*CFrame.Angles(math.rad(7),math.rad(2),math.rad(-4)),Color3.fromRGB(48,45,43),Enum.Material.Slate,true)
+
+ -- Front columns and old stone porch.
+ for _,x in ipairs({-28,-17,17,28})do
+  cylinder(shell,"FacadeColumn",Vector3.new(1.8,11,1.8),CFrame.new(x,7,-26.4)*CFrame.Angles(0,0,math.pi/2),wallColor,stoneMaterial)
+  part(shell,"ColumnCap",Vector3.new(3.2,.65,3.2),CFrame.new(x,12.55,-26.4),wallColor,stoneMaterial,true)
+  part(shell,"ColumnFoot",Vector3.new(3.2,.65,3.2),CFrame.new(x,1.75,-26.4),wallColor,stoneMaterial,true)
+ end
+ for i=0,5 do
+  part(shell,"PorchStep",Vector3.new(28+i*5,.55,3.3),CFrame.new(0,.25-i*.22,-28.2-i*1.9),stoneColor,Enum.Material.Cobblestone,true)
+ end
+
+ -- Broken double door.
+ local doorLeft=part(shell,"BrokenDoorLeft",Vector3.new(4.1,9,.55),CFrame.new(-2.2,6.1,-24.9)*CFrame.Angles(0,math.rad(-22),math.rad(-4)),woodColor,Enum.Material.WoodPlanks,true)
+ doorLeft:SetAttribute("BrokenDoor",true)
+ local doorRight=part(shell,"BrokenDoorRight",Vector3.new(4.1,9,.55),CFrame.new(3.3,3.1,-20.4)*CFrame.Angles(math.rad(82),math.rad(8),math.rad(11)),woodColor,Enum.Material.WoodPlanks,true)
+ doorRight:SetAttribute("BrokenDoor",true)
+
+ -- Tall windows, dark glass with old stone frames.
+ local function window(name,cf)
+  local glass=part(shell,name,Vector3.new(7.2,7.8,.18),cf,Color3.fromRGB(92,110,108),Enum.Material.Glass,false,.48)
+  glass.CastShadow=false
+  local frameCF=cf
+  part(shell,name.."Top",Vector3.new(8,.45,.55),frameCF*CFrame.new(0,4.05,0),wallColor,stoneMaterial,true)
+  part(shell,name.."Bottom",Vector3.new(8,.45,.55),frameCF*CFrame.new(0,-4.05,0),wallColor,stoneMaterial,true)
+  part(shell,name.."Left",Vector3.new(.45,8.5,.55),frameCF*CFrame.new(-3.85,0,0),wallColor,stoneMaterial,true)
+  part(shell,name.."Right",Vector3.new(.45,8.5,.55),frameCF*CFrame.new(3.85,0,0),wallColor,stoneMaterial,true)
+ end
+ for _,x in ipairs({-25,-12,12,25})do window("FrontWindow"..x,CFrame.new(x,20.5,-24.85))end
+ for _,x in ipairs({-25,-8,8,25})do window("BackWindow"..x,CFrame.new(x,20.5,24.85)*CFrame.Angles(0,math.pi,0))end
+
+ -- Interior room walls and doors.
+ wall("GroundDividerLeft",Vector3.new(1,11.5,19),CFrame.new(-14,7.4,12))
+ wall("GroundDividerRight",Vector3.new(1,11.5,19),CFrame.new(14,7.4,12))
+ wall("UpperDividerLeft",Vector3.new(1,11.2,25),CFrame.new(-14,20.3,8))
+ wall("UpperDividerRight",Vector3.new(1,11.2,25),CFrame.new(14,20.3,8))
+ report.rooms=8
+
+ -- Grand staircase with landing and railing.
+ for i=0,15 do
+  local y=1.85+i*.78
+  local z=-4+i*1.35
+  part(interior,"GrandStep",Vector3.new(14,.65,1.45),CFrame.new(0,y,z),stoneColor:Lerp(Color3.fromRGB(205,199,182),.22),stoneMaterial,true)
+ end
+ part(interior,"UpperLanding",Vector3.new(18,.65,8),CFrame.new(0,14.65,19),stoneColor,stoneMaterial,true)
+ for _,side in ipairs({-1,1})do
+  for i=0,7 do
+   local y=3+i*1.45 local z=-3+i*2.55
+   cylinder(interior,"StairRailPost",Vector3.new(.38,2.6,.38),CFrame.new(side*7.2,y,z)*CFrame.Angles(0,0,math.pi/2),Color3.fromRGB(82,62,44),Enum.Material.Wood)
+  end
+ end
+
+ -- Rugs.
+ part(decor,"GrandRug",Vector3.new(18,.08,11),CFrame.new(0,1.86,-11),Color3.fromRGB(96,26,30),Enum.Material.Fabric,false)
+ part(decor,"LibraryRug",Vector3.new(15,.08,12),CFrame.new(-23,1.86,10),Color3.fromRGB(46,62,72),Enum.Material.Fabric,false)
+ part(decor,"DiningRug",Vector3.new(17,.08,13),CFrame.new(23,1.86,10),Color3.fromRGB(91,67,38),Enum.Material.Fabric,false)
+
+ -- Dining room.
+ part(interior,"DiningTable",Vector3.new(14,.8,5.2),CFrame.new(23,4,9),Color3.fromRGB(89,55,34),Enum.Material.Wood,true)
+ for _,z in ipairs({6.1,11.9})do
+  for _,x in ipairs({18.5,21.5,24.5,27.5})do
+   seat(interior,"DiningChair",Vector3.new(2.1,.55,2.1),CFrame.new(x,2.35,z),Color3.fromRGB(92,57,35))
+   part(interior,"ChairBack",Vector3.new(2.1,3.2,.35),CFrame.new(x,3.8,z+(z<9 and -.85 or .85)),Color3.fromRGB(92,57,35),Enum.Material.Wood,true)
+  end
+ end
+
+ -- Lounge seating / tables.
+ for _,z in ipairs({-2.5,3.5})do
+  for _,x in ipairs({-25,-21,-17})do
+   seat(interior,"LoungeSeat",Vector3.new(3,.6,2.4),CFrame.new(x,2.35,z),Color3.fromRGB(68,55,48))
+  end
+  part(interior,"SofaBack",Vector3.new(11,3.6,.55),CFrame.new(-21,4,z+1.15),Color3.fromRGB(68,55,48),Enum.Material.Fabric,true)
+ end
+ part(interior,"CoffeeTable",Vector3.new(7,.55,3.5),CFrame.new(-21,2.5,.5),Color3.fromRGB(83,52,34),Enum.Material.Wood,true)
+
+ -- Piano.
+ part(interior,"OldPianoBody",Vector3.new(8,4.8,2.5),CFrame.new(22,4.2,-11),Color3.fromRGB(35,29,27),Enum.Material.Wood,true)
+ part(interior,"PianoKeys",Vector3.new(7.2,.15,1.2),CFrame.new(22,4.65,-12.3),Color3.fromRGB(224,220,204),Enum.Material.SmoothPlastic,false)
+ seat(interior,"PianoBench",Vector3.new(3,.55,1.6),CFrame.new(22,2.3,-15),Color3.fromRGB(54,39,31))
+
+ -- Upper floor beds/benches/side tables.
+ for _,x in ipairs({-24,24})do
+  part(interior,"BedFrame",Vector3.new(11,1.1,7),CFrame.new(x,15.4,8),Color3.fromRGB(79,51,34),Enum.Material.Wood,true)
+  part(interior,"Mattress",Vector3.new(10.3,.8,6.3),CFrame.new(x,16.25,8),Color3.fromRGB(207,198,178),Enum.Material.Fabric,true)
+  part(interior,"Pillow",Vector3.new(3,.45,1.5),CFrame.new(x,16.8,10.1),Color3.fromRGB(226,221,208),Enum.Material.Fabric,false)
+  seat(interior,"BedroomBench",Vector3.new(4,.55,2),CFrame.new(x,15.4,-1),Color3.fromRGB(86,56,39))
+  part(interior,"SideTable",Vector3.new(2.5,2.2,2.5),CFrame.new(x+(x<0 and 7 or -7),15.55,8),Color3.fromRGB(85,53,34),Enum.Material.Wood,true)
+ end
+
+ -- Small decorative tables/vases/candles.
+ for _,o in ipairs({
+  Vector3.new(-29,2.4,-14),Vector3.new(29,2.4,-14),
+  Vector3.new(-29,15.5,16),Vector3.new(29,15.5,16)
+ })do
+  part(decor,"SideConsole",Vector3.new(5,1.8,1.6),CFrame.new(o),Color3.fromRGB(84,52,34),Enum.Material.Wood,true)
+  cylinder(decor,"Vase",Vector3.new(1.1,2.3,1.1),CFrame.new(o+Vector3.new(0,1.8,0))*CFrame.Angles(0,0,math.pi/2),Color3.fromRGB(69,91,96),Enum.Material.SmoothPlastic)
+  report.decor+=2
+ end
+
+ -- Portrait frames. Images are filled at runtime from players currently in the server.
+ local portraitPositions={
+  {-24,7.2,23.55,math.pi},{-12,7.2,23.55,math.pi},{12,7.2,23.55,math.pi},{24,7.2,23.55,math.pi},
+  {-24,20.1,23.55,math.pi},{-8,20.1,23.55,math.pi},{8,20.1,23.55,math.pi},{24,20.1,23.55,math.pi},
+ }
+ for i,v in ipairs(portraitPositions)do
+  local frame=part(portraits,"PortraitFrame"..i,Vector3.new(6.2,7.5,.45),CFrame.new(v[1],v[2],v[3])*CFrame.Angles(0,v[4],0),Color3.fromRGB(98,70,39),Enum.Material.Wood,false)
+  local inner=part(portraits,"PortraitCanvas"..i,Vector3.new(5.3,6.55,.12),CFrame.new(v[1],v[2],v[3]-.28)*CFrame.Angles(0,v[4],0),Color3.fromRGB(35,35,35),Enum.Material.SmoothPlastic,false)
+  inner:SetAttribute("PortraitIndex",i)
+  local gui=Instance.new("SurfaceGui")gui.Name="PortraitGui"gui.Face=Enum.NormalId.Front gui.CanvasSize=Vector2.new(420,520)gui.LightInfluence=.15 gui.Parent=inner
+  local image=Instance.new("ImageLabel")image.Name="PlayerImage"image.Size=UDim2.fromScale(1,.86)image.BackgroundColor3=Color3.fromRGB(20,20,20)image.BorderSizePixel=0 image.ScaleType=Enum.ScaleType.Crop image.Parent=gui
+  local label=Instance.new("TextLabel")label.Name="PlayerName"label.Position=UDim2.fromScale(0,.86)label.Size=UDim2.fromScale(1,.14)label.BackgroundColor3=Color3.fromRGB(19,17,15)label.BackgroundTransparency=.08 label.TextColor3=Color3.fromRGB(235,226,210)label.Font=Enum.Font.Garamond label.TextScaled=true label.Text="Visitante"label.Parent=gui
+  report.portraits+=1
+ end
+
+ -- Reuse actual ruin geometry as facade fragments so the mansion visually belongs to the ruins.
+ local candidates={}
+ for _,p in ipairs(ruin:GetDescendants())do if p:IsA("BasePart")and p.Transparency<.95 then candidates[#candidates+1]=p end end
+ table.sort(candidates,function(a,b)return a.Size.Magnitude>b.Size.Magnitude end)
+ local fragmentFolder=Instance.new("Folder")fragmentFolder.Name="SalvagedRuinFragments"fragmentFolder.Parent=mansion
+ local fragmentOffsets={
+  CFrame.new(-32,4,-22)*CFrame.Angles(0,.18,.08),
+  CFrame.new(32,4,-21)*CFrame.Angles(0,-.2,-.05),
+  CFrame.new(-34,3,19)*CFrame.Angles(0,.3,.1),
+  CFrame.new(34,3,18)*CFrame.Angles(0,-.28,-.08),
+  CFrame.new(-19,15,-24)*CFrame.Angles(0,.12,.04),
+  CFrame.new(19,15,-24)*CFrame.Angles(0,-.12,-.04),
+ }
+ for i=1,math.min(#fragmentOffsets,#candidates)do
+  local clone=candidates[i]:Clone()
+  for _,d in ipairs(clone:GetDescendants())do if d:IsA("LuaSourceContainer")or d:IsA("Constraint")or d:IsA("JointInstance")then d:Destroy()end end
+  clone.Name="RuinFragment"..i
+  clone.Anchored=true clone.CanTouch=false clone.CanQuery=true
+  clone.CFrame=basis*fragmentOffsets[i]
+  clone.Parent=fragmentFolder
+  report.ruinFragments+=1
+ end
+
+ -- External decor: cleaned before use. Failure falls back to the procedural interior above.
+ local function loadDecor(assetId,name,targetSpan,localCF)
+  local ok,raw=pcall(function()return AS:LoadAssetAsync(assetId)end)
+  if not ok or not raw then return nil end
+  local found=raw:FindFirstChildWhichIsA("Model",true)or raw:FindFirstChildWhichIsA("BasePart",true)
+  if not found then raw:Destroy()return nil end
+  local model=Instance.new("Model")model.Name=name
+  if found:IsA("Model")then
+   for _,child in ipairs(found:GetChildren())do child:Clone().Parent=model end
+  else found:Clone().Parent=model end
+  for _,d in ipairs(model:GetDescendants())do
+   if d:IsA("LuaSourceContainer")or d:IsA("Sound")or d:IsA("Fire")or d:IsA("Smoke")or d:IsA("ParticleEmitter")then d:Destroy()
+   elseif d:IsA("BasePart")then d.Anchored=true d.CanTouch=false d.CanQuery=true if d:IsA("MeshPart")then d.RenderFidelity=Enum.RenderFidelity.Performance end end
+  end
+  model.Parent=decor
+  local cf,size=model:GetBoundingBox()
+  local scale=targetSpan/math.max(size.X,size.Y,size.Z)
+  if scale==scale and scale>0 then model:ScaleTo(model:GetScale()*math.clamp(scale,.15,4))end
+  model:PivotTo(basis*localCF)
+  cf,size=model:GetBoundingBox()
+  local targetY=(basis*localCF).Position.Y
+  local bottom=cf.Y-size.Y*.5
+  model:PivotTo(model:GetPivot()+Vector3.yAxis*(targetY-bottom))
+  model:SetAttribute("SourceAssetId",assetId)
+  raw:Destroy()
+  report.externalAssets+=1
+  return model
+ end
+ loadDecor(98956442023011,"AntiqueBookshelf",8,CFrame.new(-30,1.8,12))
+ loadDecor(98956442023011,"AntiqueBookshelf2",8,CFrame.new(-30,1.8,4))
+ loadDecor(6204470031,"StoneFireplace",10,CFrame.new(-1,1.8,23))
+ local chandelier=loadDecor(4646397018,"GrandChandelier",8,CFrame.new(0,20.8,-7))
+ if chandelier then
+  for _,p in ipairs(chandelier:GetDescendants())do if p:IsA("BasePart")then p.CanCollide=false end end
+ end
+
+ -- Safe visual break event: an old ceiling beam drops when a player approaches, never damages players.
+ local beam=part(eventFolder,"FallingBeam",Vector3.new(12,.8,.8),CFrame.new(12,11,-7)*CFrame.Angles(0,0,math.rad(4)),Color3.fromRGB(72,50,34),Enum.Material.Wood,true)
+ beam:SetAttribute("BreakAnimation",true)
+ beam:SetAttribute("RestCF",beam.CFrame)
+ local dust=Instance.new("ParticleEmitter")
+ dust.Name="Dust"
+ dust.Texture="rbxasset://textures/particles/smoke_main.dds"
+ dust.Rate=0 dust.Lifetime=NumberRange.new(.45,.8)dust.Speed=NumberRange.new(1.5,3.2)
+ dust.Size=NumberSequence.new({NumberSequenceKeypoint.new(0,.5),NumberSequenceKeypoint.new(1,1.5)})
+ dust.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.25),NumberSequenceKeypoint.new(1,1)})
+ dust.Color=ColorSequence.new(Color3.fromRGB(164,151,132))dust.Parent=beam
+ local trigger=part(eventFolder,"BreakTrigger",Vector3.new(16,8,16),CFrame.new(12,5,-7),Color3.new(1,1,1),Enum.Material.SmoothPlastic,false,1)
+ trigger.CanQuery=false trigger.CanTouch=false
+
+ -- Extra seasonal forest volume around the ruin/mansion.
+ local templates=runtime.NativeTreeTemplates:GetChildren()
+ local contacts=runtime:FindFirstChild("ActualRootContacts")
+ local rng=Random.new(99031)
+ for i=1,42 do
+  local angle=(i/42)*math.pi*2+rng:NextNumber(-.09,.09)
+  local radius=62+(i%4)*13+rng:NextNumber(-5,5)
+  local x=origin.X+math.cos(angle)*radius
+  local z=origin.Z+math.sin(angle)*radius
+  if Scene.pathDistance(x,z)>11 and math.abs(x-Scene.riverX(z))>Scene.riverWidth(z)+7 then
+   local t=templates[(i-1)%#templates+1]
+   local pine=t:GetAttribute("SourceAssetId")==6432306802
+   local tree=Foliage.place(t,world.Decor.Trees,x,z,rng:NextNumber(pine and 30 or 20,pine and 57 or 47),angle+.4)
+   if tree then
+    report.ringTrees+=1
+    if contacts then local ref=Instance.new("ObjectValue")ref.Name="RuinRingTree"ref.Value=tree ref.Parent=contacts end
+   end
+  end
+ end
+
+ -- Remove plants whose root is actually inside water. Keep stones in water.
+ local waterRay=RaycastParams.new()
+ waterRay.FilterType=Enum.RaycastFilterType.Include
+ waterRay.FilterDescendantsInstances={Terrain}
+ waterRay.IgnoreWater=false
+ for _,m in ipairs(world.Decor.Plants:GetChildren())do
+  if m:IsA("Model")then
+   local p=m:GetAttribute("ActualRootPoint")or m:GetPivot().Position
+   local wh=workspace:Raycast(Vector3.new(p.X,180,p.Z),Vector3.yAxis*-300,waterRay)
+   if wh and wh.Material==Enum.Material.Water and p.Y<=wh.Position.Y+2.2 then
+    m:Destroy()report.submergedPlantsRemoved+=1
+   end
+  end
+ end
+
+ -- Natural river stones only in water.
+ local oldRiverStones=world.Decor:FindFirstChild("RiverStones")
+ if oldRiverStones then oldRiverStones:Destroy()end
+ local riverStones=Instance.new("Folder")riverStones.Name="RiverStones"riverStones.Parent=world.Decor
+ local stoneRng=Random.new(99113)
+ for z=-270,270,18 do
+  local width=Scene.riverWidth(z)
+  local x=Scene.riverX(z)+stoneRng:NextNumber(-width*.62,width*.62)
+  local wh=workspace:Raycast(Vector3.new(x,170,z),Vector3.yAxis*-280,waterRay)
+  if wh and wh.Material==Enum.Material.Water then
+   local p=Instance.new("Part")
+   p.Name="RiverStone"
+   p.Shape=Enum.PartType.Ball
+   p.Size=Vector3.new(stoneRng:NextNumber(2.8,6.5),stoneRng:NextNumber(1.2,2.5),stoneRng:NextNumber(2.8,6.2))
+   p.CFrame=CFrame.new(wh.Position+Vector3.new(0,-p.Size.Y*.25,0))*CFrame.Angles(stoneRng:NextNumber(-.18,.18),stoneRng:NextNumber(0,6.28),stoneRng:NextNumber(-.12,.12))
+   p.Color=Color3.fromRGB(stoneRng:NextInteger(92,122),stoneRng:NextInteger(101,126),stoneRng:NextInteger(105,132))
+   p.Material=Enum.Material.Slate
+   p.Anchored=true p.CanCollide=true p.CanTouch=true p.CanQuery=true p.CastShadow=true p.Parent=riverStones
+   report.riverStones+=1
+  end
+ end
+
+ Terrain.WaterColor=Color3.fromRGB(55,150,181)
+ Terrain.WaterTransparency=.16
+ Terrain.WaterReflectance=.24
+ Terrain.WaterWaveSize=.052
+ Terrain.WaterWaveSpeed=6.4
+
+ mansion:SetAttribute("RoomCount",report.rooms)
+ mansion:SetAttribute("SeatCount",report.seats)
+ mansion:SetAttribute("PortraitCount",report.portraits)
+ mansion:SetAttribute("RiverStoneCount",report.riverStones)
+ mansion:SetAttribute("RuinTreeRingCount",report.ringTrees)
+ mansion:SetAttribute("SubmergedPlantsRemoved",report.submergedPlantsRemoved)
+ world:SetAttribute("RuinMansionAdded",true)
+ runtime:SetAttribute("RuinMansionVersion",99)
+ runtime:SetAttribute("RiverStoneCount",report.riverStones)
+ runtime:SetAttribute("SubmergedPlantsRemoved",report.submergedPlantsRemoved)
+ runtime:SetAttribute("RuinTreeRingCount",report.ringTrees)
+ return report
+end
+return B
+]============]).install()
+
+source(game.ServerScriptService,"Script","RuinMansionController",[============[
+local Players=game:GetService("Players")
+local TweenService=game:GetService("TweenService")
+local RunService=game:GetService("RunService")
+local world=workspace:WaitForChild("ForestWorld")
+local mansion=world.Amenities:WaitForChild("RuinMansion")
+local portraits=mansion:WaitForChild("Portraits")
+local event=mansion:WaitForChild("BreakEvent")
+local beam=event:WaitForChild("FallingBeam")
+local trigger=event:WaitForChild("BreakTrigger")
+local dust=beam:FindFirstChild("Dust")
+local home=beam:GetAttribute("RestCF")or beam.CFrame
+
+local function portraitFrames()
+ local list={}
+ for _,p in ipairs(portraits:GetChildren())do
+  if p:IsA("BasePart")and p:GetAttribute("PortraitIndex")then list[#list+1]=p end
+ end
+ table.sort(list,function(a,b)return a:GetAttribute("PortraitIndex")<b:GetAttribute("PortraitIndex")end)
+ return list
+end
+
+local function refreshPortraits()
+ local players=Players:GetPlayers()
+ for i,canvas in ipairs(portraitFrames())do
+  local gui=canvas:FindFirstChild("PortraitGui")
+  local image=gui and gui:FindFirstChild("PlayerImage")
+  local name=gui and gui:FindFirstChild("PlayerName")
+  if #players>0 then
+   local p=players[(i-1)%#players+1]
+   if image then image.Image="rbxthumb://type=AvatarHeadShot&id="..p.UserId.."&w=420&h=420"end
+   if name then name.Text=p.DisplayName end
+  else
+   if image then image.Image=""end
+   if name then name.Text="Visitante"end
+  end
+ end
+end
+Players.PlayerAdded:Connect(function()task.defer(refreshPortraits)end)
+Players.PlayerRemoving:Connect(function()task.defer(refreshPortraits)end)
+refreshPortraits()
+
+local broken=false
+local cooldown=false
+local elapsed=0
+RunService.Heartbeat:Connect(function(dt)
+ elapsed+=dt if elapsed<.25 or broken or cooldown then return end elapsed=0
+ for _,p in ipairs(Players:GetPlayers())do
+  local root=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+  if root and (root.Position-trigger.Position).Magnitude<11 then
+   broken=true cooldown=true
+   if dust then dust:Emit(18)end
+   local fall=home*CFrame.new(0,-3.2,1.4)*CFrame.Angles(math.rad(18),0,math.rad(27))
+   TweenService:Create(beam,TweenInfo.new(.7,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{CFrame=fall}):Play()
+   task.delay(18,function()
+    TweenService:Create(beam,TweenInfo.new(1.6,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{CFrame=home}):Play()
+    task.wait(1.7)broken=false
+    task.delay(35,function()cooldown=false end)
+   end)
+   break
+  end
+ end
+end)
+]============])
+
 -- Replace weather with a predictable, lightweight rain system.
 source(runtime,"ModuleScript","GardenWeather",[============[
 local M={}
@@ -1012,7 +1471,7 @@ task.spawn(function()while gui.Parent do updateVisible()task.wait(.25)end end)
 applyCamera()setUltra(true)updateVisible()
 ]============])
 
-workspace.ForestWorld:SetAttribute("UpgradeVersion",98)
+workspace.ForestWorld:SetAttribute("UpgradeVersion",99)
 source(game.ServerScriptService,"Script","ForestServer",[============[local Players = game:GetService("Players")
 local Run = game:GetService("RunService")
 local runtime = game.ReplicatedStorage:WaitForChild("ForestRuntime")
@@ -1029,7 +1488,7 @@ require(runtime:WaitForChild("RuinController")).start(runtime,world)
 require(runtime:WaitForChild("MusicController")).start(runtime,world)
 require(runtime:WaitForChild("Foliage")).start(runtime,world)
 runtime:SetAttribute("StreamingPrefetchEnabled",true)
-runtime:SetAttribute("StreamingPrefetchDistance",520)
+runtime:SetAttribute("StreamingPrefetchDistance",640)
 local function startStreamingPrefetch(player)
  task.spawn(function()
   while player.Parent do
@@ -1040,9 +1499,9 @@ local function startStreamingPrefetch(player)
     local right=root.CFrame.RightVector
     local points={
      root.Position,
-     root.Position+forward*520,
-     root.Position+right*300,
-     root.Position-right*300,
+     root.Position+forward*640,
+     root.Position+right*360,
+     root.Position-right*360,
     }
     for _,point in ipairs(points)do
      pcall(function()player:RequestStreamAroundAsync(point,1.25)end)
@@ -1186,14 +1645,14 @@ local world=workspace.ForestWorld
 local runtime=game.ReplicatedStorage.ForestRuntime
 local Lighting=game:GetService("Lighting")
 local Terrain=workspace.Terrain
-assert(world:GetAttribute("UpgradeVersion")==98)
+assert(world:GetAttribute("UpgradeVersion")==99)
 assert(runtime:GetAttribute("NoDecorativeRocks")==true)
 assert(runtime:GetAttribute("RiversideCottageRemoved")==true)
 assert(runtime:GetAttribute("AnimationMode")=="RobloxDefault")
 assert(runtime:GetAttribute("GraphicsPreset")=="Ultra")
-assert(runtime:GetAttribute("StreamingMinRadiusStuds")==256)
-assert(runtime:GetAttribute("StreamingTargetRadiusStuds")==768)
-assert(runtime:GetAttribute("StreamingPrefetchDistance")==520)
+assert(runtime:GetAttribute("StreamingMinRadiusStuds")==320)
+assert(runtime:GetAttribute("StreamingTargetRadiusStuds")==896)
+assert(runtime:GetAttribute("StreamingPrefetchDistance")==640)
 assert(require(runtime.Seasons).Duration==1200)
 
 local garden=world.Amenities.RiversideGarden
@@ -1238,9 +1697,9 @@ for _,container in ipairs({game.StarterPlayer.StarterPlayerScripts,game.StarterP
  end
 end
 
-assert((runtime:GetAttribute("NativeTreeVarietyCount")or 0)>=6)
-assert(runtime:GetAttribute("ForestLiveChunkLimit")==32)
-assert(runtime:GetAttribute("ForestChunkRadius")==3)
+assert((runtime:GetAttribute("NativeTreeVarietyCount")or 0)>=10)
+assert(runtime:GetAttribute("ForestLiveChunkLimit")==36)
+assert(runtime:GetAttribute("ForestChunkRadius")==4)
 local contacts=runtime:FindFirstChild("ActualRootContacts")
 assert(contacts and #contacts:GetChildren()>200,"Tree/root grounding probes missing")
 for _,entry in ipairs(contacts:GetChildren())do
@@ -1254,6 +1713,21 @@ for _,entry in ipairs(contacts:GetChildren())do
   end
  end
 end
+
+
+local mansion=assert(world.Amenities:FindFirstChild("RuinMansion"),"Ruin mansion missing")
+assert(mansion.ModelStreamingMode==Enum.ModelStreamingMode.Atomic)
+assert((mansion:GetAttribute("RoomCount")or 0)>=8)
+assert((mansion:GetAttribute("SeatCount")or 0)>=10)
+assert((mansion:GetAttribute("PortraitCount")or 0)>=8)
+assert(mansion:FindFirstChild("BrokenDoorLeft",true)and mansion:FindFirstChild("BrokenDoorRight",true),"Broken entrance missing")
+assert(mansion:FindFirstChild("GrandStep",true),"Grand staircase missing")
+assert(mansion:FindFirstChild("FallingBeam",true),"Mansion break animation missing")
+assert(game.ServerScriptService:FindFirstChild("RuinMansionController"),"Mansion runtime controller missing")
+local riverStones=assert(world.Decor:FindFirstChild("RiverStones"),"River stones missing")
+assert(#riverStones:GetChildren()>=20,"Too few water stones")
+assert((runtime:GetAttribute("RuinTreeRingCount")or 0)>=20,"Ruin forest ring too sparse")
+assert((runtime:GetAttribute("StreamingTargetRadiusStuds")or 0)==896)
 
 local weather=require(runtime.GardenWeather).start(runtime,world)
 weather.setRain(true)assert(runtime:GetAttribute("Raining")==true)
@@ -1273,10 +1747,15 @@ return{
  streamingTarget=runtime:GetAttribute("StreamingTargetRadiusStuds"),
  graphics=runtime:GetAttribute("GraphicsPreset"),
  treeVarieties=runtime:GetAttribute("NativeTreeVarietyCount"),
- noRocks=true,
+ mansionRooms=mansion:GetAttribute("RoomCount"),
+ mansionSeats=mansion:GetAttribute("SeatCount"),
+ portraits=mansion:GetAttribute("PortraitCount"),
+ riverStones=#riverStones:GetChildren(),
+ ruinTrees=runtime:GetAttribute("RuinTreeRingCount"),
+ noLandDecorativeRocks=true,
  noRiverHouse=true
 }
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
 game:GetService("AssetService"):SavePlaceAsync()
-return{published=true,expectedVersion=98,baseVersion=97,reports=reports}
+return{published=true,expectedVersion=99,baseVersion=98,reports=reports}
