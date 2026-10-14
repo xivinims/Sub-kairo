@@ -1147,10 +1147,11 @@ local animator=npc.Humanoid.Animator local track
 for _,candidate in ipairs(animator:GetPlayingAnimationTracks())do if candidate.Animation and candidate.Animation.AnimationId=="rbxassetid://92824429927180"then track=candidate break end end
 assert(track and track.Length>2 and track.IsPlaying and track.Looped,"Exact emote playback missing: "..tostring(track and track.Length).." / "..tostring(track and track.IsPlaying))
 local original=root.CFrame
+track:AdjustWeight(1,0)animator:StepAnimations(.4)
 track.TimePosition=.8 animator:StepAnimations(0)
 local done={[root]=true}local motors={}for _,m in ipairs(npc:GetDescendants())do if m:IsA("Motor6D")then motors[#motors+1]=m end end
 for _=1,18 do for _,m in ipairs(motors)do if done[m.Part0]and not done[m.Part1]then m.Part1.CFrame=m.Part0.CFrame*m.C0*m.Transform*m.C1:Inverse()done[m.Part1]=true end end end
-local contactY=npc.LowerTorso.Position.Y-npc:GetAttribute("SeatedTorsoHalfY")assert(math.abs(contactY-npc:GetAttribute("SeatTop").Y-.05)<.18,"Cat Bath avatar is not seated on the cut trunk")
+local contactY=npc.LowerTorso.Position.Y-npc:GetAttribute("SeatedTorsoHalfY")assert(math.abs(contactY-npc:GetAttribute("SeatTop").Y-.05)<.18,"Cat Bath avatar is not seated on the cut trunk: contact="..contactY.." seat="..npc:GetAttribute("SeatTop").Y.." weight="..track.WeightCurrent)
 for _,sound in ipairs({npc.Head.HiVoice,npc.Head.YayVoice})do game:GetService("ContentProvider"):PreloadAsync({sound})assert(sound.IsLoaded and sound.TimeLength>0 and sound.RollOffMaxDistance<=24)sound:Play()end
 assert(root.CFrame==original and track.IsPlaying,"Greeting interrupts the emote or moves the avatar")
 report.catBathLength=track.Length report.currentAvatar=true report.noDialogue=true report.catBathSeatGap=contactY-npc:GetAttribute("SeatTop").Y
