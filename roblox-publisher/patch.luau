@@ -1,3 +1,6 @@
+local warnings={}game:GetService("LogService").MessageOut:Connect(function(m,t)if t==Enum.MessageType.MessageError or t==Enum.MessageType.MessageWarning then warnings[#warnings+1]=m end end)
+game:GetService("ServerStorage")
+local m=Instance.new("ModuleScript")m.Source=[================[return function()
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==92,"Published base changed")
 game:GetService("ServerStorage")
 local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
@@ -132,3 +135,7 @@ return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
 return{staged=true,baseVersion=92,roots=roots,tests=tests}
+
+end]================]m.Parent=game.ServerStorage
+local ok,v=xpcall(function()return require(m)()end,debug.traceback)
+return{readOnly=true,ok=ok,result=ok and v or nil,error=not ok and v or nil,warnings=warnings}
