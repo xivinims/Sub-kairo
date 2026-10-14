@@ -31,7 +31,7 @@ function M.place(template,parent,x,z,height,yaw)
 end
 function M.install()
  local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local Scene=require(runtime.Scene)
- local removed=#world.Decor.Trees:GetChildren()world.Decor.Trees:ClearAllChildren()
+ local previousRemoved=world:GetAttribute("PreviousTreesRemoved")or 0 local removed=#world.Decor.Trees:GetChildren()world.Decor.Trees:ClearAllChildren()
  local folder=runtime:FindFirstChild("NativeTreeTemplates")if folder then folder:Destroy()end folder=Instance.new("Folder")folder.Name="NativeTreeTemplates"folder.Parent=runtime
  local raw=game:GetService("AssetService"):LoadAssetAsync(580221169)local forest=game:GetService("AssetService"):LoadAssetAsync(6432306802)
  local broad=assert(raw:FindFirstChildOfClass("Model"))local pine=forest["Forest Pack"]["RedwoodTree-Var01"]
@@ -98,7 +98,7 @@ function M.install()
   if attempt%100==0 then task.wait()end
  end
  local chunks=world.Decor:FindFirstChild("ActiveForestChunks")if chunks then chunks:Destroy()end chunks=Instance.new("Folder")chunks.Name="ActiveForestChunks"chunks.Parent=world.Decor
- world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",removed)runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",32)runtime:SetAttribute("ForestChunkRadius",3)
+ world:SetAttribute("TreeCount",count)world:SetAttribute("PreviousTreesRemoved",math.max(previousRemoved,removed))runtime:SetAttribute("ForestChunkSize",128)runtime:SetAttribute("ForestLiveChunkLimit",32)runtime:SetAttribute("ForestChunkRadius",3)
  return{removedTrees=removed,newTrees=count,treeAssets={580221169,6432306802},chunkLimit=32,varieties=#templates}
 end
 function M.makeChunk(runtime,world,cx,cz)
