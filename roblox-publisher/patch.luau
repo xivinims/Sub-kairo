@@ -140,7 +140,6 @@ end
 return Controller
 ]============])
 source(runtime,"ModuleScript","SeasonController",[============[local Controller={}
-local Tween=game:GetService("TweenService")
 function Controller.start(runtime,world)
  local Seasons=require(runtime.Seasons)local Scene=require(runtime.Scene)local Terrain=workspace.Terrain
  local busy=false local parts={}local lights={}
@@ -169,9 +168,9 @@ function Controller.start(runtime,world)
  end
  local function apply(index,instant)
   if busy then return false end busy=true local name=Seasons.Names[index]
-  local info=TweenInfo.new(instant and 0 or Seasons.Transition,Enum.EasingStyle.Sine)
   runtime:SetAttribute("SeasonName",name)runtime:SetAttribute("SeasonIndex",index)runtime:SetAttribute("SeasonChanging",true)
-  for i,entry in ipairs(parts)do
+  local changes={}
+  for _,entry in ipairs(parts)do
    local p=entry.part
    if p.Parent then
     local base=entry.base local color=base
@@ -180,11 +179,20 @@ function Controller.start(runtime,world)
     elseif index==3 then color=base:Lerp(Color3.fromRGB(191,134,63),entry.flower and .22 or .72)
     elseif index==4 then color=base:Lerp(Color3.fromRGB(144,165,153),.50)end
     local hidden=index==4 and entry.kind=="plants"or index==3 and entry.flower
-    local transparency=hidden and 1 or entry.transparency
-    if instant then p.Color=color p.Transparency=transparency if entry.appearance then entry.appearance.Color=color end
-    else Tween:Create(p,info,{Color=color,Transparency=transparency}):Play()if entry.appearance then Tween:Create(entry.appearance,info,{Color=color}):Play()end end
+    changes[#changes+1]={entry=entry,from=p.Color,to=color,fromTransparency=p.Transparency,toTransparency=hidden and 1 or entry.transparency}
    end
-   if i%250==0 then task.wait()end
+  end
+  -- Eighteen bounded updates avoid thousands of per-frame replicated server tweens on mobile.
+  local frames=instant and 1 or 18
+  for frame=1,frames do
+   local t=instant and 1 or(frame-1)/(frames-1)local alpha=t*t*(3-2*t)
+   for i,c in ipairs(changes)do local e=c.entry
+    if e.part.Parent then local color=c.from:Lerp(c.to,alpha)e.part.Color=color e.part.Transparency=c.fromTransparency+(c.toTransparency-c.fromTransparency)*alpha
+     if e.appearance and e.appearance.Parent then e.appearance.Color=color end
+    end
+    if i%250==0 then task.wait()end
+   end
+   if frame<frames then task.wait(Seasons.Transition/(frames-1))end
   end
   surface(index)
   runtime:SetAttribute("SeasonChanging",false)runtime:SetAttribute("SeasonRevision",(runtime:GetAttribute("SeasonRevision")or 0)+1)busy=false return true
@@ -807,6 +815,7 @@ function Builder.install()
  local tea=world.Amenities.ForestRuins.TeaCorner
  for _,info in ipairs({{mist,mc*CFrame.new(21,0,5)},{torii,tc*CFrame.new(20,0,2)}})do
   local patio=info[2]local position=patio.Position
+  p(info[1],"PatioLink",Vector3.new(4,.6,7),patio*CFrame.new(-7,-.3,0),STONE,Enum.Material.Limestone,true)
   p(info[1],"TeaPatioFloor",Vector3.new(14,.6,14),patio*CFrame.new(0,-.3,0),STONE,Enum.Material.Limestone,true)
   for x=-5,5,5 do for z=-5,5,5 do local hit=assert(ground(position.X+x,position.Z+z))
    local height=math.max(.4,position.Y-.6-hit.Position.Y+.3)local foundation=p(info[1],"LandmarkFoundation",Vector3.new(5.1,height,5.1),patio*CFrame.new(x,-.6-height*.5,z),STONE,Enum.Material.Slate,true)foundation:SetAttribute("GroundPoint",hit.Position)
@@ -814,7 +823,7 @@ function Builder.install()
   for _,group in ipairs({world.Decor.Trees,world.Decor.Plants,world.Decor.RocksAndLogs})do for _,m in ipairs(group:GetChildren())do local point=m:GetPivot().Position if(Vector2.new(point.X-position.X,point.Z-position.Z)).Magnitude<11 then m:Destroy()end end end
   local corner=tea:Clone()corner.Name="TeaCorner"local originalTable=corner.AntiqueTeaTable
   local origin=originalTable:GetPivot()local delta=info[2]*origin:Inverse()
-  for _,p in ipairs(corner:GetDescendants())do if p:IsA("BasePart")then p.CFrame=delta*p.CFrame end end corner.WorldPivot=info[2]corner.Parent=info[1]
+  corner:PivotTo(delta*corner:GetPivot())corner.Parent=info[1]
   local prompt=assert(corner:FindFirstChild("ServeTea",true))Collection:AddTag(prompt,"TreeWorldTeaPrompt")
   for _,d in ipairs(corner:GetDescendants())do if d:IsA("Seat")then local link=d:FindFirstChild("TeaPrompt")if link then link.Value=prompt end Collection:AddTag(d,"RuinSeat")end end
  end
@@ -1121,7 +1130,7 @@ for _,seat in ipairs(Collection:GetTagged("RuinSeat"))do
  if seat:IsDescendantOf(world)and seat.Name=="TeaSeat"then
   report.teaSeats+=1 local link=assert(seat:FindFirstChild("TeaPrompt"))assert(link.Value and link.Value:IsDescendantOf(world))
   local corner=seat.Parent.Parent local table=assert(corner.AntiqueTeaTable)local aim=Vector3.new(table:GetPivot().X-seat.Position.X,0,table:GetPivot().Z-seat.Position.Z).Unit
-  assert(seat.CFrame.LookVector:Dot(aim)>.85,"Chair faces away from its tea table")
+  assert(seat.CFrame.LookVector:Dot(aim)>.85,"Chair faces away from its tea table: "..seat:GetFullName().." dot="..seat.CFrame.LookVector:Dot(aim))
   local floorRay=RaycastParams.new()floorRay.FilterType=Enum.RaycastFilterType.Include floorRay.FilterDescendantsInstances={workspace.Terrain,world.Amenities}floorRay.RespectCanCollide=true
   local pivot=seat.Parent:GetPivot().Position local h=assert(workspace:Raycast(pivot+Vector3.new(0,.05,0),Vector3.new(0,-3,0),floorRay),"Antique chair has no floor")
   assert(math.abs(pivot.Y-h.Position.Y)<.2,"Antique chair floats above the floor")
