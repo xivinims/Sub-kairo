@@ -232,11 +232,33 @@ function Controller.start(runtime,world)
   end end
   local tool=runtime.TeaCupTool:Clone()tool.Name="Chá"tool:SetAttribute("RuinTeaCup",true)tool:SetAttribute("ServedToUserId",player.UserId)
   tool.Parent=backpack
+  local bases={}local tweens={}
+  local function restore()
+   for _,t in ipairs(tweens)do t:Cancel()end table.clear(tweens)
+   for joint,base in pairs(bases)do if joint.Parent then joint.C0=base end end table.clear(bases)
+  end
+  tool.Unequipped:Connect(restore)tool.Destroying:Connect(restore)
   tool.Activated:Connect(function()
    local model,hum,root=actor(player)
    if not model or tool.Parent~=model or tool:GetAttribute("ServedToUserId")~=player.UserId then return end
    local time=os.clock()if time-(sip[player]or -math.huge)<3 then return end sip[player]=time
    local original=tool.Grip
+   restore()
+   for _,joint in ipairs(model:GetDescendants())do if joint:IsA("Motor6D")then
+    local shoulder=joint.Name=="RightShoulder"or joint.Name=="Right Shoulder"
+    local elbow=joint.Name=="RightElbow"
+    if shoulder or elbow then
+     local base=joint.C0 bases[joint]=base
+     local angle=shoulder and(hum.RigType==Enum.HumanoidRigType.R6 and 105 or 65)or 90
+     local rotation=CFrame.Angles(math.rad(angle),0,math.rad(shoulder and -12 or 0))
+     local goal=CFrame.new(base.Position)*rotation*base.Rotation
+     local t=Tween:Create(joint,TweenInfo.new(.38,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{C0=goal})tweens[#tweens+1]=t t:Play()
+    end
+   end end
+   task.delay(1.1,function()
+    for joint,base in pairs(bases)do if joint.Parent then local t=Tween:Create(joint,TweenInfo.new(.45,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{C0=base})tweens[#tweens+1]=t t:Play()end end
+    task.delay(.5,restore)
+   end)
    local lift=Tween:Create(tool,TweenInfo.new(.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Grip=original*CFrame.new(.08,-.15,-.22)*CFrame.Angles(math.rad(-24),0,0)})lift:Play()
    remote:FireClient(player,"Um chá quentinho. ☕")
    task.delay(.9,function()if tool.Parent then Tween:Create(tool,TweenInfo.new(.4,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Grip=original}):Play()end end)
@@ -588,12 +610,13 @@ function Builder.install()
   local table=tableTemplate:Clone()table.Name="AntiqueTeaTable"table:SetAttribute("SourceAssetId",18831822897)table:ScaleTo(1.18)table:PivotTo(CFrame.new(centre))table.Parent=corner
   for _,p in ipairs(table:GetDescendants())do if p:IsA("BasePart")then p.Anchored=true p.CanCollide=p.Name=="table"p.CanQuery=p.CanCollide p.CanTouch=false end end
   local reference=assert(table:FindFirstChild("table",true))local tableTop=reference.Position.Y+reference.Size.Y*.5
+  local cover=table:FindFirstChild("tablecover",true)if cover then tableTop=math.max(tableTop,cover.Position.Y+cover.Size.Y*.5-.03)end
   local delta=tableTop-(origin.Y+3.21)
   -- Place the existing teapot, cups, cookies and flowers on the new table surface.
   for _,d in ipairs(corner:GetChildren())do
    if d.Name=="PinkStool"or d.Name=="TableTop"or d.Name=="TablePedestal"or d.Name=="TableFoot"then d:Destroy()
-   elseif d~=table and d:IsA("Model")then d:PivotTo(d:GetPivot()+Vector3.new(0,delta+.05,0))
-   elseif d~=table and d:IsA("BasePart")then d.CFrame+=Vector3.new(0,delta+.05,0)end
+   elseif d~=table and d:IsA("Model")then d:PivotTo(d:GetPivot()+Vector3.new(0,delta+.025,0))
+   elseif d~=table and d:IsA("BasePart")then d.CFrame+=Vector3.new(0,delta+.025,0)end
   end
   local prompt=assert(corner:FindFirstChild("ServeTea",true))Collection:AddTag(prompt,"TreeWorldTeaPrompt")
   for i=0,3 do
@@ -673,8 +696,9 @@ function Builder.install()
    local t=i/count local point=a:Lerp(b,t)
    local h=workspace:Raycast(point+Vector3.new(0,60,0),Vector3.new(0,-120,0),localRay)
    if not h then
-    local inward=i==0 and .6 or i==count and -.6 or 0
-    h=workspace:Raycast(point+forward*inward+Vector3.new(0,60,0),Vector3.new(0,-120,0),localRay)
+    for _,offset in ipairs({-.25,.25,-.5,.5,-.9,.9})do
+     h=workspace:Raycast(point+forward*offset+Vector3.new(0,60,0),Vector3.new(0,-120,0),localRay)if h then break end
+    end
    end
    assert(h,"Native bridge has no plank at "..i)nodes[#nodes+1]=Vector3.new(point.X,h.Position.Y+.015,point.Z)
   end
