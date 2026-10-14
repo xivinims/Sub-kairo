@@ -1,6 +1,6 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==95,"Unexpected base")
 local out={readOnly=true,version=game.PlaceVersion,assets={},effects={},teaTool={}}
-for _,id in ipairs({10080695893,580221169})do
+for _,id in ipairs({124879875206878,12605122162,126759970176668,301484804})do
  local ok,raw=pcall(function()return game:GetService("AssetService"):LoadAssetAsync(id)end)
  if ok then local a={items={},classes={}}
   for _,d in ipairs(raw:GetDescendants())do local r={name=d.Name,path=d:GetFullName(),class=d.ClassName}a.classes[d.ClassName]=(a.classes[d.ClassName]or 0)+1
