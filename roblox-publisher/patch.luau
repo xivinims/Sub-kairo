@@ -175,7 +175,7 @@ function B.install()
    local old=h local w=preserve(x,z)
    if h>34 then h=h+(34+(h-34)*.12-h)*(1-w)report.flattenedColumns+=1 end
    local edge=math.clamp((math.max(math.abs(x),math.abs(z))-344)/164,0,1)edge=edge*edge*(3-2*edge)
-   if edge>0 then h=h*(1-edge)+20*edge end
+   if edge>0 then h=h*(1-edge)+22*edge end
    for iy=1,54 do local low=-64+(iy-1)*4 local fill=math.clamp((h-low)/4,0,1)
     d.SolidOccupancy[ix][iy][iz]=fill
     if fill>0 then local oldMat=d.SolidMaterial[ix][iy][iz]
@@ -191,7 +191,7 @@ function B.install()
  local lakes={{900,650,110,74},{-960,-750,130,90},{760,-1000,96,80},{-1100,1000,145,86}}
  local descriptors={{27,6,-18,76,52},{39,6,157,61,62}}
  for _,l in ipairs(lakes)do local cx,cz,rx,rz=unpack(l)local reg=Region3.new(Vector3.new(cx-rx*1.3,-16,cz-rz*1.3),Vector3.new(cx+rx*1.3,40,cz+rz*1.3)):ExpandToGrid(4)local d=T:ReadVoxelChannels(reg,4,{"SolidMaterial","SolidOccupancy","LiquidOccupancy"})local lo=reg.CFrame.Position-reg.Size*.5
-  for ix=1,d.Size.X do for iz=1,d.Size.Z do local x,z=lo.X+(ix-.5)*4,lo.Z+(iz-.5)*4 local r=math.sqrt(((x-cx)/rx)^2+((z-cz)/rz)^2)local a=math.clamp((r-.56)/.7,0,1)a=a*a*(3-2*a)local h=-1+21*a
+  for ix=1,d.Size.X do for iz=1,d.Size.Z do local x,z=lo.X+(ix-.5)*4,lo.Z+(iz-.5)*4 local r=math.sqrt(((x-cx)/rx)^2+((z-cz)/rz)^2)local a=math.clamp((r-.56)/.7,0,1)a=a*a*(3-2*a)local h=-1+23*a
    for iy=1,d.Size.Y do local low=lo.Y+(iy-1)*4 local fill=math.clamp((h-low)/4,0,1)d.SolidOccupancy[ix][iy][iz]=fill d.SolidMaterial[ix][iy][iz]=fill>0 and(h-low<5 and(h<8 and Enum.Material.Ground or Enum.Material.Grass)or Enum.Material.Ground)or Enum.Material.Air d.LiquidOccupancy[ix][iy][iz]=fill<1 and math.clamp((6-low)/4,0,1)or 0 end
   end end T:WriteVoxelChannels(reg,4,{SolidMaterial=d.SolidMaterial,SolidOccupancy=d.SolidOccupancy,LiquidOccupancy=d.LiquidOccupancy})descriptors[#descriptors+1]={cx,6,cz,rx,rz}report.newLakes+=1 task.wait()
  end
@@ -733,7 +733,7 @@ assert(world:GetAttribute("WorldExtent")==4096 and world:GetAttribute("PreviousT
 for _,m in ipairs(world.Decor.Trees:GetChildren())do assert(m:GetAttribute("FreshReferenceTree")and(m:GetAttribute("SourceAssetId")==580221169 or m:GetAttribute("SourceAssetId")==6432306802),"Old tree model remains")end
 for _,click in ipairs(C:GetTagged("TreeWorldCupClick"))do if click:IsDescendantOf(world)then local cup=click.Parent:FindFirstChild("UtahCup")assert(cup and cup.MeshId=="rbxassetid://10080681533")end end
 assert(runtime.TeaCupTool.Handle:IsA("MeshPart")and runtime.TeaCupTool.Handle.MeshId=="rbxassetid://10080681533")
-local extended=0 for _,v in ipairs({Vector2.new(1500,1200),Vector2.new(-1500,-1200),Vector2.new(1800,-1400),Vector2.new(-1700,1500)})do local h=ground(v.X,v.Y)assert(math.abs(h.Position.Y-20)<.15 and h.Normal.Y>.95,"Extended ground "..tostring(v).." position="..tostring(h.Position).." normal="..tostring(h.Normal))extended+=1 end
+local extended=0 for _,v in ipairs({Vector2.new(1500,1200),Vector2.new(-1500,-1200),Vector2.new(1800,-1400),Vector2.new(-1700,1500)})do local h=ground(v.X,v.Y)assert(math.abs(h.Position.Y-22)<.15 and h.Normal.Y>.95,"Extended ground "..tostring(v).." position="..tostring(h.Position).." normal="..tostring(h.Normal))extended+=1 end
 local lakes=game:GetService("HttpService"):JSONDecode(runtime:GetAttribute("LakeLocations"))for i=3,#lakes do local p=lakes[i]local h=assert(workspace:Raycast(Vector3.new(p[1],150,p[3]),Vector3.yAxis*-250,water))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.15)end
 local Foliage=require(runtime.Foliage)local chunk=assert(Foliage.makeChunk(runtime,world,10,6))local streamedTrees=chunk:GetAttribute("TreeCount")assert(streamedTrees>0 and streamedTrees<=9)
 for _,m in ipairs(chunk:GetChildren())do local p=m:GetAttribute("ActualRootPoint")assert(p and p.Y<ground(p.X,p.Z).Position.Y-.5)end chunk:Destroy()
