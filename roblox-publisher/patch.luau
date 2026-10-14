@@ -767,4 +767,4 @@ function E.build()
  return{binaryPlaceBase64=buffer.tostring(game:GetService("EncodingService"):Base64Encode(payload)),serviceRoots=manifest,serviceProperties=properties,exportSize=buffer.len(payload)}
 end
 return E
-]============]).build()result.report=reports result.baseVersion=91 result.expectedVersion=92 result.exportOnly=true result.staged=true return result
+]============]).build()result.report=reports result.baseVersion=91 result.expectedVersion=92 result.exportOnly=false return result
