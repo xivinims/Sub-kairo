@@ -471,7 +471,7 @@ function B.install()
  local report={lamps=0,sourceAssetId=assetId,sourceFile="sei-la-sksksks.fbx",meshesPerLamp=meshCount,height=8.8}
  local points={}
  local side=1
- for z=-270,285,58 do
+ for z=-276,276,46 do
   points[#points+1]=Vector2.new(Scene.pathX(z)+side*7,z)
   side*=-1
  end
@@ -481,7 +481,7 @@ function B.install()
   for _,key in ipairs({"DeckStart","DeckEnd"})do local p=bridge:GetAttribute(key)points[#points+1]=Vector2.new(p.X,p.Z+7)end
  end
  for _,point in ipairs(points)do local hit=ground(point.X,point.Y)
-  if hit and hit.Position.Y>7.4 and hit.Normal.Y>.83 then
+  if hit and hit.Position.Y>7.4 and hit.Normal.Y>.76 then
    local m=template:Clone()m.Name="GnarledLanternPost"m:SetAttribute("SourceAssetId",assetId)m:SetAttribute("SourceFBXSHA256","02d7d43c417d633c908243ad34ca44599936876ce0a2b32926b7dc14f1012688")m:SetAttribute("GroundPoint",hit.Position)
    local tangent=Vector3.new(Scene.pathX(point.Y+6)-Scene.pathX(point.Y-6),0,12)
    if tangent.Magnitude<.1 then tangent=Vector3.zAxis end
@@ -494,7 +494,7 @@ function B.install()
    report.lamps+=1
   end
  end
- raw:Destroy()assert(report.lamps>=18,"Insufficient grounded lamp posts")world:SetAttribute("CandleLampCount",report.lamps)world:SetAttribute("LampAssetId",assetId)
+ raw:Destroy()assert(report.lamps>=14,"Insufficient grounded lamp posts")world:SetAttribute("CandleLampCount",report.lamps)world:SetAttribute("LampAssetId",assetId)
  return report
 end
 return B
