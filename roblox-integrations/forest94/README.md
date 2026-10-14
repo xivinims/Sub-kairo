@@ -15,3 +15,5 @@ A central connected lake near (27, 6, -18) is carved through 1,118 native terrai
 Native staging passed: 7,723 root/plant contacts, 855 bridge walking samples, 45 central lake liquid samples, 30 stone top collision samples, 30 original lamp posts, seven loaded audio assets, 28 compiled scripts/modules and 3,074 PBR appearances. World geometry is 10,455 parts versus 10,485 before this update. Every saved world frame is checked for finite coordinates within bounds.
 
 No actual client render, reference-image equality, phone FPS or memory measurement is available. Root checks use Roblox native mesh collision queries; alpha-card plants without an underside use their placed bounds. The requested alternate tree models were inspected but not substituted wholesale; the existing tree varieties are retained with corrected root support.
+
+Published and independently rechecked: version 94, [Actions run 38562969080](https://github.com/xivinims/Sub-kairo/actions/runs/38562969080). Every repair assertion passed against the saved version. Serialized native Terrain confirms `Decoration=true` and `GrassLength=0.4000000059604645`.

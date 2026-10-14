@@ -24,5 +24,43 @@
     "bridges.luau": "b26dca584c5ca6166ef1560ee63baab2816612bbc94a3923dfc5e304a7a6c415"
   },
   "clientRenderingMeasured": false,
-  "phone3GBPerformanceMeasured": false
+  "phone3GBPerformanceMeasured": false,
+  "publishedVersion": 94,
+  "publishRun": 38562969080,
+  "publishCommit": "fb3c2daf239d4c308452b28d2449c1f6a582d6bd",
+  "publishRunUrl": "https://github.com/xivinims/Sub-kairo/actions/runs/38562969080",
+  "verifiedAt": "2026-10-14T12:20:06.008Z",
+  "freshVerification": {
+    "version": 94,
+    "tests": {
+      "cartoonWaterTiles": 188,
+      "facetedStones": 10,
+      "exactLampPosts": 30,
+      "teaTables": 4,
+      "teaCups": 16,
+      "noAnimals": true,
+      "directCupServe": true,
+      "trees": 453,
+      "parts": 10455,
+      "actualRootProbes": 7723,
+      "nativeGrassRequested": true,
+      "lakeWaterProbes": 45,
+      "stoneWalkProbes": 30,
+      "pbr": 3074,
+      "lowLakeFlowers": 114,
+      "fogStable": true,
+      "plants": 1443,
+      "ruins": 4,
+      "noTeaPopups": true,
+      "walkProbes": 855,
+      "audio": 7,
+      "compiled": 28,
+      "finiteWorldGeometry": true
+    },
+    "ok": true,
+    "nativeGrassSettings": {
+      "Decoration": true,
+      "GrassLength": 0.4000000059604645
+    }
+  }
 }
