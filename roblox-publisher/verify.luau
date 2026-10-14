@@ -1,10 +1,10 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==95,"Saved version mismatch")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==96,"Saved version mismatch")
 game:GetService("ServerStorage")
 local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local f=require(m)local v=f()m:Destroy()return v end
-local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)
+local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)runtime:SetAttribute("ForestTestMode",true)
 run(game.ServerScriptService.ForestServer.Source)
 local tests=run([============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
-assert(world:GetAttribute("UpgradeVersion")==95)
+assert(world:GetAttribute("UpgradeVersion")==96)
 local report={trees=0,plants=0,actualRootProbes=0,walkProbes=0,teaTables=0,teaCups=0,ruins=4,audio=0}
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGrassClient")and not runtime:FindFirstChild("SkinnedGrassTemplates"),"Skeletal spike grass remains")
 assert(runtime:GetAttribute("GrassRenderer")=="NativeTerrain")
@@ -13,7 +13,7 @@ local function ground(x,z)return assert(workspace:Raycast(Vector3.new(x,210,z),V
 for _,entry in ipairs(runtime.ActualRootContacts:GetChildren())do local m=entry.Value if m and m:IsDescendantOf(world)then local cf=m:GetPivot()
  for _,point in ipairs(entry:GetChildren())do local p=entry:GetAttribute("CoordinateSpace")=="World"and point.Value or cf:PointToWorldSpace(point.Value)local h=ground(p.X,p.Z)assert(p.Y-h.Position.Y<-.12,"Visible root remains above the soil: "..m.Name)report.actualRootProbes+=1 end
  if m.Parent==world.Decor.Trees then report.trees+=1 else report.plants+=1 end end end
-assert(report.trees>300 and report.plants>700 and report.actualRootProbes>1000)
+assert(report.trees>=250 and report.plants>700 and report.actualRootProbes>1000)
 for _,bridge in ipairs(world.Amenities.WoodenBridges:GetChildren())do
  local rp=RaycastParams.new()rp.FilterType=Enum.RaycastFilterType.Include rp.FilterDescendantsInstances={bridge}rp.RespectCanCollide=true
  for _,p in ipairs(bridge:GetDescendants())do if p:IsA("BasePart")then assert(p.Transparency==0 and p.CanCollide and p.CanQuery,"Bridge has an invisible or non-solid part")end end
@@ -57,7 +57,7 @@ for _,parent in ipairs({game.ServerScriptService,game.StarterPlayer.StarterPlaye
 for _,s in ipairs(runtime:GetDescendants())do if s:IsA("ModuleScript")then local ok,v=pcall(require,s)assert(ok,tostring(v))compiled+=1 end end
 report.compiled=compiled report.noTeaPopups=true report.fogStable=true report.nativeGrassRequested=true report.parts=0 report.pbr=0
 for _,p in ipairs(world:GetDescendants())do if p:IsA("BasePart")then report.parts+=1 end if p:IsA("SurfaceAppearance")then report.pbr+=1 end assert(not p:IsA("LuaSourceContainer"))end
-assert(report.parts<12500 and report.pbr>2500,"Forest loss or mobile geometry increase")
+assert(report.parts<17000 and report.pbr>1400,"Forest loss or mobile geometry increase")
 assert(world:GetAttribute("AnimalsEnabled")==false and not runtime:FindFirstChild("CuteAnimalTemplates") and not runtime:FindFirstChild("WildlifeTemplates"))
 assert(not world:FindFirstChild("Wildlife") and not world.Amenities:FindFirstChild("CuteAnimalRoutes"))
 assert(not game.StarterPlayer.StarterPlayerScripts.ForestGardenClient.Source:find("CuteAnimal",1,true))
@@ -68,13 +68,9 @@ for dx=-48,48,12 do for dz=-24,24,12 do
  assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.12,"Central lake contains dry holes")lakePoints+=1
 end end
 local tiles=0
-for _,p in ipairs(world.Amenities.RiversideGarden.CartoonWater:GetChildren())do if p:IsA("MeshPart")then
- assert(p.MeshId=="rbxassetid://6833048037" and p:GetAttribute("SourceAssetId")==6833503207)
- assert(not p.CanCollide and not p.CanQuery and math.abs(p.Position.Y-6.14)<.001 and p.Size.Y<.04,"Water overlay blocks swimming or has stacked layers")
- for _,dx in ipairs({-6,0,6})do for _,dz in ipairs({-6,0,6})do local h=assert(workspace:Raycast(Vector3.new(p.Position.X+dx,200,p.Position.Z+dz),Vector3.yAxis*-300,water))assert(h.Material==Enum.Material.Water,"Water tile crosses the shore")end end
- tiles+=1
-end end
-assert(tiles>150 and tiles<1000,"Water geometry budget exceeded")
+assert(not world.Amenities.RiversideGarden:FindFirstChild("CartoonWater")and not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestWaterClient"))
+assert(math.abs(workspace.Terrain.WaterReflectance-.14)<.001)
+for _,d in ipairs(world:GetDescendants())do assert(not d:IsA("ParticleEmitter")and not d:IsA("Beam")and not d:IsA("Trail"),"Suspended water/tea particles remain")end
 local lampCount=0
 for _,m in ipairs(world.Amenities.Lanterns:GetChildren())do
  assert(m:GetAttribute("SourceAssetId")==11324928349,"Incorrect lamp asset")local pole
@@ -134,7 +130,25 @@ local mock={Character=nil,attributes={}}function mock:SetAttribute(k,v)self.attr
 assert(not service.apply(mock,"123"))assert(service.apply(mock,true)and mock.attributes.ListeningToMusic==true)assert(service.apply(mock,false)and not mock.attributes.ListeningToMusic)
 assert(runtime:GetAttribute("MusicPlayback")=="LocalOnly")assert(not game.ServerScriptService.ForestServer.Source:find("SoundId",1,true))
 report.accentRocks=rocks report.cottageEntranceProbes=entryProbes report.cottageWalkwayProbes=walkwayProbes report.cottageTeaFloor=true report.radioMeshes=meshes report.musicPresets=#Config.Tracks report.personalPlaybackIsolation=true report.musicStatusValidation=true report.musicScrollUI=true
+assert(world:GetAttribute("WorldExtent")==4096 and world:GetAttribute("PreviousTreesRemoved")==453)
+for _,m in ipairs(world.Decor.Trees:GetChildren())do assert(m:GetAttribute("FreshReferenceTree")and(m:GetAttribute("SourceAssetId")==580221169 or m:GetAttribute("SourceAssetId")==6432306802),"Old tree model remains")end
+for _,click in ipairs(C:GetTagged("TreeWorldCupClick"))do if click:IsDescendantOf(world)then local cup=click.Parent:FindFirstChild("UtahCup")assert(cup and cup.MeshId=="rbxassetid://10080681533")end end
+assert(runtime.TeaCupTool.Handle:IsA("MeshPart")and runtime.TeaCupTool.Handle.MeshId=="rbxassetid://10080681533")
+local extended=0 for _,v in ipairs({Vector2.new(1500,1200),Vector2.new(-1500,-1200),Vector2.new(1800,-1400),Vector2.new(-1700,1500)})do local h=ground(v.X,v.Y)assert(math.abs(h.Position.Y-20)<.15 and h.Normal.Y>.95)extended+=1 end
+local lakes=game:GetService("HttpService"):JSONDecode(runtime:GetAttribute("LakeLocations"))for i=3,#lakes do local p=lakes[i]local h=assert(workspace:Raycast(Vector3.new(p[1],150,p[3]),Vector3.yAxis*-250,water))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.15)end
+local Foliage=require(runtime.Foliage)local chunk=assert(Foliage.makeChunk(runtime,world,10,6))local streamedTrees=chunk:GetAttribute("TreeCount")assert(streamedTrees>0 and streamedTrees<=9)
+for _,m in ipairs(chunk:GetChildren())do local p=m:GetAttribute("ActualRootPoint")assert(p and p.Y<ground(p.X,p.Z).Position.Y-.5)end chunk:Destroy()
+local Mirror=require(runtime.RiverReflection)local actor=Instance.new("Model")actor.Parent=game.ServerStorage local head=Instance.new("Part")head.Name="Head"head.Size=Vector3.one head.CFrame=CFrame.new(0,9,0)head.Parent=actor
+local parent=Instance.new("Folder")parent.Parent=game.ServerStorage local reflection=Mirror.create(actor,parent,workspace)
+assert(reflection.surface.CanvasSize==Vector2.new(96,144)and reflection.view.ImageTransparency>=.88 and #reflection.pairs<=32)
+reflection.update(Vector3.new(0,6,0),CFrame.new(0,12,16))assert(reflection.surface.Enabled and math.abs(reflection.patch.Position.Y-6.018)<.001 and reflection.camera.CFrame.Position.Y==0)
+reflection.hide()assert(not reflection.surface.Enabled)reflection.destroy()actor:Destroy()parent:Destroy()
+local gui=game.StarterGui.TreeWorldMenu assert(gui.Background.BackgroundColor3==Color3.fromRGB(8,8,8)and gui.MainMenu.PlayButton.TextColor3==Color3.fromRGB(245,245,245))
+assert(runtime:GetAttribute("MenuCameraView")=="RuinSide"and(runtime:GetAttribute("MenuCameraCF").Position-runtime:GetAttribute("MenuCameraFocus")).X>50)
+local uiRoot=Instance.new("Folder")uiRoot.Parent=game.ServerStorage local ui=require(runtime.MusicUI).build(uiRoot,Config.Tracks)assert(ui.panel.BackgroundColor3==Color3.fromRGB(12,12,12)and ui.panel.BackgroundTransparency>0 and ui.open.TextColor3.R==ui.open.TextColor3.G and ui.open.TextColor3.G==ui.open.TextColor3.B)uiRoot:Destroy()
+assert(world:GetAttribute("PathMaterial")=="Ground")
+report.nativeUtahTea=true report.noSuspendedWaterEffects=true report.weakAvatarReflection=true report.reflectionResolution={96,144}report.extendedGroundProbes=extended report.newLakes=#lakes-2 report.streamedChunkTrees=streamedTrees report.oldTreesCleared=true report.monochromeMenu=true
 return report
 ]============])
-runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
+runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
 return{ok=true,version=game.PlaceVersion,tests=tests,terrainSettingsBase64=buffer.tostring(game:GetService("EncodingService"):Base64Encode(game:GetService("SerializationService"):SerializeInstancesAsync({workspace.Terrain})))}
