@@ -116,6 +116,8 @@ function Controller.start(runtime,world)
  local animator=hum:FindFirstChildOfClass("Animator")or Instance.new("Animator",hum)
  local animation=npc:WaitForChild("CatBath")local track=animator:LoadAnimation(animation)
  track.Priority=Enum.AnimationPriority.Action track.Looped=true track:Play(.3,1,.85)
+ local deadline=os.clock()+8 repeat task.wait(.1)until track.Length>0 or os.clock()>deadline
+ assert(track.Length>0,"Cat Bath playback failed to load")npc:SetAttribute("CatBathTrackLength",track.Length)
  npc:SetAttribute("EmotePlaying",true)
  local previous={}local nearSince={}local spoken={}local globalLast=-math.huge local index=0 local elapsed=0
  Run.Heartbeat:Connect(function(dt)
@@ -1141,7 +1143,7 @@ local npc=world.OwnerNPC local root=npc.HumanoidRootPart assert(npc.Humanoid.Rig
 local desc=npc.Humanoid:GetAppliedDescription()assert(desc.Shirt==npc:GetAttribute("ShirtAssetId")and desc.Pants==npc:GetAttribute("PantsAssetId")and desc.Torso==npc:GetAttribute("TorsoAssetId")and desc.Head==npc:GetAttribute("HeadAssetId"))desc:Destroy()
 local controller=require(runtime.NPCController)
 assert(controller.shouldGreet(10,36,2,false)and controller.shouldGreet(8,36,0,true)and not controller.shouldGreet(18,36,2,true)and not controller.shouldGreet(8,2,2,true))
-local animator=npc.Humanoid.Animator local track=animator:GetTrackByAnimationId("rbxassetid://92824429927180")assert(track and track.Length>2 and track.IsPlaying and track.Looped)
+local animator=npc.Humanoid.Animator local track=animator:GetTrackByAnimationId("rbxassetid://92824429927180")assert(track and track.Length>2 and track.IsPlaying and track.Looped,"Exact emote playback missing: "..tostring(track and track.Length).." / "..tostring(track and track.IsPlaying))
 local original=root.CFrame
 track.TimePosition=.8 animator:StepAnimations(0)
 local done={[root]=true}local motors={}for _,m in ipairs(npc:GetDescendants())do if m:IsA("Motor6D")then motors[#motors+1]=m end end
