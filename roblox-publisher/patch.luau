@@ -1,7 +1,10 @@
-assert(game.PlaceVersion==95)
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==95,"Published base changed")
 game:GetService("ServerStorage")
-local out={}
-do local m=Instance.new("ModuleScript")m.Name="foliage.luau"m.Source="return function()\n"..[============[local M={}
+local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
+local function run(code)return factory("return function()\n"..code.."\nend")()end
+local function source(parent,class,name,code)local s=parent:FindFirstChild(name)or Instance.new(class)s.Name=name s.Source=code s.Parent=parent return s end
+local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)runtime:SetAttribute("ForestTestMode",true)
+source(runtime,"ModuleScript","Foliage",[============[local M={}
 local Collection=game:GetService("CollectionService")
 local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}ray.IgnoreWater=true
 local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.yAxis*-310,ray)end
@@ -88,8 +91,72 @@ function M.start(runtime,world)
  end)
 end
 return M
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["foliage.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="terrain.luau"m.Source="return function()\n"..[============[local B={}
+]============])
+source(runtime,"ModuleScript","RiverReflection",[============[local M={}
+function M.create(character,guiParent,worldParent)
+ local patch=Instance.new("Part")patch.Name="LocalRiverReflection"patch.Size=Vector3.new(8,.02,12)patch.Transparency=1 patch.Anchored=true patch.CanCollide=false patch.CanQuery=false patch.CanTouch=false patch.CastShadow=false patch.Parent=worldParent
+ local surface=Instance.new("SurfaceGui")surface.Name="RiverAvatarReflection"surface.Adornee=patch surface.Face=Enum.NormalId.Top surface.CanvasSize=Vector2.new(96,144)surface.SizingMode=Enum.SurfaceGuiSizingMode.FixedSize surface.AlwaysOnTop=false surface.LightInfluence=0 surface.Enabled=false surface.Parent=guiParent
+ local view=Instance.new("ViewportFrame")view.Size=UDim2.fromScale(1,1)view.BackgroundTransparency=1 view.ImageTransparency=.90 view.ImageColor3=Color3.fromRGB(136,175,185)view.Ambient=Color3.fromRGB(180,180,180)view.LightColor=Color3.fromRGB(180,180,180)view.Parent=surface
+ local scene=Instance.new("WorldModel")scene.Parent=view local camera=Instance.new("Camera")camera.Parent=view view.CurrentCamera=camera
+ local rig=Instance.new("Model")rig.Name="ReflectedAvatar"rig.Parent=scene
+ local hum=Instance.new("Humanoid")hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.Parent=rig
+ for _,d in ipairs(character:GetChildren())do if d:IsA("Shirt")or d:IsA("Pants")or d:IsA("ShirtGraphic")then d:Clone().Parent=rig end end
+ local pairs={}local parts={}
+ for _,p in ipairs(character:GetDescendants())do if p:IsA("BasePart")and p.Name~="HumanoidRootPart"and p.Transparency<.95 then parts[#parts+1]=p end end
+ table.sort(parts,function(a,b)return(a.Parent==character and 0 or 1)<(b.Parent==character and 0 or 1)end)
+ for i=1,math.min(32,#parts)do local p=parts[i]local copy=p:Clone()
+  for _,d in ipairs(copy:GetDescendants())do if d:IsA("LuaSourceContainer")or d:IsA("JointInstance")or d:IsA("Constraint")or d:IsA("Sound")or d:IsA("ParticleEmitter")or d:IsA("WrapLayer")or d:IsA("Light")then d:Destroy()end end
+  copy.Anchored=true copy.CanCollide=false copy.CanQuery=false copy.CanTouch=false copy.LocalTransparencyModifier=0 copy.Parent=rig pairs[#pairs+1]={source=p,copy=copy}
+ end
+ local self={surface=surface,view=view,patch=patch,camera=camera,pairs=pairs}
+ function self.update(point,viewer)
+  if viewer.Position.Y<point.Y+.8 then surface.Enabled=false return end
+  patch.CFrame=CFrame.new(point+Vector3.yAxis*.018)surface.Enabled=true
+  local eye=Vector3.new(viewer.Position.X,2*point.Y-viewer.Position.Y,viewer.Position.Z)
+  camera.CFrame=CFrame.lookAt(eye,point,Vector3.zAxis)camera.FieldOfView=math.clamp(math.deg(2*math.atan(6/(eye-point).Magnitude)),20,90)
+  for _,v in ipairs(pairs)do if v.source.Parent then v.copy.CFrame=v.source.CFrame v.copy.Transparency=v.source.Position.Y<point.Y-.4 and 1 or v.source.Transparency end end
+ end
+ function self.hide()surface.Enabled=false end
+ function self.destroy()surface:Destroy()patch:Destroy()end
+ return self
+end
+return M
+]============])
+source(runtime,"ModuleScript","MusicUI",[============[local M={}
+local function create(class,parent,name)local obj=Instance.new(class)obj.Name=name obj.Parent=parent return obj end
+local function round(obj)local c=Instance.new("UICorner")c.CornerRadius=UDim.new(0,10)c.Parent=obj end
+local function label(parent,name,text,height)
+ local l=create("TextLabel",parent,name)l.Text=text l.Size=UDim2.new(1,0,0,height or 22)l.Font=Enum.Font.Gotham l.TextSize=13 l.TextColor3=Color3.fromRGB(240,240,240)l.BackgroundTransparency=1 l.TextWrapped=true l.TextXAlignment=Enum.TextXAlignment.Left return l
+end
+local function button(parent,name,text)
+ local b=create("TextButton",parent,name)b.Size=UDim2.new(1,0,0,42)b.Text=text b.Font=Enum.Font.GothamMedium b.TextSize=13 b.BackgroundColor3=Color3.fromRGB(12,12,12)b.TextColor3=Color3.fromRGB(240,240,240)b.BorderSizePixel=0 b.BackgroundTransparency=.35 round(b)return b
+end
+function M.build(parent,tracks)
+ local gui=create("ScreenGui",parent,"TreeWorldPersonalMusic")gui.ResetOnSpawn=false gui.DisplayOrder=25 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+ local open=button(gui,"Open","♫ Música")open.AnchorPoint=Vector2.new(1,0)open.Position=UDim2.new(1,-12,0,12)open.Size=UDim2.fromOffset(100,38)
+ local panel=create("Frame",gui,"Panel")panel.AnchorPoint=Vector2.new(1,0)panel.Position=UDim2.new(1,-12,0,60)panel.Size=UDim2.new(.9,0,.72,0)panel.BackgroundColor3=Color3.fromRGB(12,12,12)panel.BackgroundTransparency=.22panel.BorderSizePixel=0 panel.Visible=false round(panel)
+ local limit=create("UISizeConstraint",panel,"SizeLimit")limit.MaxSize=Vector2.new(340,490)limit.MinSize=Vector2.new(210,150)
+ local scroll=create("ScrollingFrame",panel,"Scroll")scroll.Size=UDim2.fromScale(1,1)scroll.BackgroundTransparency=1 scroll.BorderSizePixel=0 scroll.ScrollBarThickness=4 scroll.ScrollBarImageColor3=Color3.fromRGB(240,240,240)scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y scroll.CanvasSize=UDim2.new()scroll.ScrollingDirection=Enum.ScrollingDirection.Y
+ local pad=create("UIPadding",scroll,"Padding")pad.PaddingTop=UDim.new(0,14)pad.PaddingBottom=UDim.new(0,14)pad.PaddingLeft=UDim.new(0,14)pad.PaddingRight=UDim.new(0,14)
+ local layout=create("UIListLayout",scroll,"Layout")layout.Padding=UDim.new(0,8)layout.SortOrder=Enum.SortOrder.LayoutOrder
+ local refs={gui=gui,open=open,panel=panel,tracks={}}local order=0
+ local function add(obj)order+=1 obj.LayoutOrder=order return obj end
+ add(label(scroll,"Title","Seu rádio",24)).Font=Enum.Font.GothamBold
+ add(label(scroll,"Privacy","Só você ouve. A nametag mostra quando está ouvindo.",36))
+ refs.status=add(label(scroll,"Status","Escolha uma música",36))
+ for _,category in ipairs({"Em inglês","Natureza"})do add(label(scroll,"Category",category,24)).Font=Enum.Font.GothamBold
+  for _,track in ipairs(tracks)do if track.category==category then local b=add(button(scroll,"Track",track.title))b:SetAttribute("AssetId",track.id)refs.tracks[#refs.tracks+1]={button=b,track=track}end end
+ end
+ add(label(scroll,"CustomTitle","Sua música · ID do Roblox",24))
+ refs.input=add(create("TextBox",scroll,"AudioId"))refs.input.Size=UDim2.new(1,0,0,42)refs.input.PlaceholderText="Cole o ID de áudio"refs.input.Text=""refs.input.ClearTextOnFocus=false refs.input.Font=Enum.Font.Gotham refs.input.TextSize=14 refs.input.BackgroundColor3=Color3.fromRGB(12,12,12)refs.input.TextColor3=Color3.fromRGB(240,240,240)refs.input.BorderSizePixel=0 refs.input.BackgroundTransparency=.35 round(refs.input)
+ refs.play=add(button(scroll,"PlayId","Ouvir meu ID"))refs.pause=add(button(scroll,"Pause","Pausar / continuar"))refs.stop=add(button(scroll,"Stop","Parar"))
+ add(label(scroll,"VolumeTitle","Volume",22))refs.lower=add(button(scroll,"Quieter","Diminuir volume"))refs.louder=add(button(scroll,"Louder","Aumentar volume"))
+ return refs
+end
+return M
+]============])
+local reports={}
+reports.terrain=factory([============[local B={}
 function B.install()
  local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local T=workspace.Terrain local Scene=require(runtime.Scene)
  local mask={}
@@ -133,38 +200,63 @@ function B.install()
  return report
 end
 return B
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["terrain.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="tea.luau"m.Source="return function()\n"..[============[local B={}
+]============]).install()
+reports.foliage=require(runtime.Foliage).install()
+reports.bridges=factory([============[local B={}
+local WOOD=Color3.fromRGB(147,115,76)local PALE=Color3.fromRGB(182,146,101)local DARK=Color3.fromRGB(92,69,48)
 function B.install()
- local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
- local raw=game:GetService("AssetService"):LoadAssetAsync(10080695893)local set=assert(raw:FindFirstChild("Utah Teapot Set"))
- local cup=assert(set.Cup)local pot=assert(set.Teapot)local spoon=assert(set.Spoon)
- assert(cup.MeshId=="rbxassetid://10080681533"and pot.MeshId=="rbxassetid://10080686163")
- local report={tables=0,cups=0,teapots=0,sourceAssetId=10080695893}
- local corners={}
- for _,m in ipairs(world:GetDescendants())do if m:IsA("Model")and m:FindFirstChild("AntiqueTeaTable")then corners[#corners+1]=m end end
- local function put(src,parent,cf,scale,name)
-  local p=src:Clone()p.Name=name or src.Name p.Size*=scale p.CFrame=cf p.Anchored=true p.CanCollide=false p.CanQuery=true p.CanTouch=false p.Color=Color3.fromRGB(238,238,231)p:SetAttribute("SourceAssetId",10080695893)p.Parent=parent return p
+ local world=workspace.ForestWorld local Scene=require(game.ReplicatedStorage.ForestRuntime.Scene)
+ local rp=RaycastParams.new()rp.FilterType=Enum.RaycastFilterType.Include rp.FilterDescendantsInstances={workspace.Terrain}rp.IgnoreWater=true
+ local function ground(x,z)return assert(workspace:Raycast(Vector3.new(x,210,z),Vector3.yAxis*-310,rp)).Position end
+ local folder=world.Amenities.WoodenBridges folder:ClearAllChildren()
+ local report={bridges=0,parts=0}
+ local function part(parent,name,size,cf,color,material)
+  local p=Instance.new("Part")p.Name=name p.Size=size p.CFrame=cf p.Color=color or WOOD p.Material=material or Enum.Material.Wood p.Anchored=true p.CanCollide=true p.CanQuery=true p.CanTouch=false p.Transparency=0 p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth p.Parent=parent report.parts+=1 return p
  end
- for _,corner in ipairs(corners)do
-  for _,d in ipairs(corner:GetChildren())do if d.Name=="TeaCup"or d.Name=="Teapot"or d.Name=="SilverSpoon"or d.Name=="UtahSpoon"then d:Destroy()end end
-  local top=assert(corner.AntiqueTeaTable:FindFirstChild("table",true))local y=top.Position.Y+top.Size.Y*.5+.04 local x,z=top.Position.X,top.Position.Z
-  for i=0,3 do local a=i*math.pi*.5 local m=Instance.new("Model")m.Name="TeaCup"m:SetAttribute("SourceAssetId",10080695893)m.Parent=corner
-   local scale=.82 local p=put(cup,m,CFrame.new(x+math.cos(a)*1.7,y+cup.Size.Y*scale*.5,z+math.sin(a)*1.7)*CFrame.Angles(0,-a,0),scale,"UtahCup")m.PrimaryPart=p
-   local click=Instance.new("ClickDetector")click.Name="TakeCup"click.MaxActivationDistance=9 click.Parent=m C:AddTag(click,"TreeWorldCupClick")report.cups+=1
-   put(spoon,corner,CFrame.new(x+math.cos(a)*1.7+math.sin(a)*.55,y+.055,z+math.sin(a)*1.7-math.cos(a)*.55)*CFrame.Angles(0,-a,0),.8,"UtahSpoon")
+ local function beam(parent,name,a,b,width,height,color)return part(parent,name,Vector3.new(width,height,(b-a).Magnitude+.03),CFrame.lookAt((a+b)*.5,b),color)end
+ for index,z in ipairs({-108,176})do
+  local cx=Scene.riverX(z)local xa,xb=cx-8,cx+8
+  while ground(xa,z).Y<9 do xa-=2 end while ground(xb,z).Y<9 do xb+=2 end xa-=2 xb+=2
+  local a,b=ground(xa,z),ground(xb,z)local W=11 local N=math.ceil((b-a).Magnitude/3.0)
+  local m=Instance.new("Model")m.Name="WoodlandBridge"..index m.ModelStreamingMode=Enum.ModelStreamingMode.Atomic m:SetAttribute("DeckWidth",W)m:SetAttribute("ReferenceStyle","Wide carved woodland arch, longitudinal timber boards and scalloped support corbels")m.Parent=folder
+  local function point(t)return a:Lerp(b,t)+Vector3.yAxis*(.08+2.4*math.sin(math.pi*t))end
+  local nodes={}
+  for i=0,N do local p=point(i/N)nodes[#nodes+1]={p.X,p.Y,p.Z}end
+  for i=1,N do
+   local aa,bb=point((i-1)/N),point(i/N)local cf=CFrame.lookAt((aa+bb)*.5,bb)local len=(bb-aa).Magnitude+.08
+   for lane=0,7 do local x=-W*.5+(lane+.5)*W/8
+    part(m,"SolidDeckPlank",Vector3.new(W/8+.012,.38,len),cf*CFrame.new(x,-.19,0),WOOD:Lerp(PALE,((lane+i)%5)*.09))
+   end
+   if i%3==1 then
+    part(m,"UnderDeckCrossbeam",Vector3.new(W+1.3,.55,.7),cf*CFrame.new(0,-.66,0),DARK)
+    for _,s in ipairs({-1,1})do
+     local tip=cf:PointToWorldSpace(Vector3.new(s*(W/2+.45),-.65,0))
+     for j=0,2 do part(m,"CarvedCorbel",Vector3.new(.64,.4,.75-j*.1),CFrame.new(tip+Vector3.new(0,-.4*j,j*.14))*cf.Rotation,WOOD:Lerp(PALE,j*.16))end
+    end
+   end
+   for _,s in ipairs({-1,1})do
+    part(m,"TimberHandrail",Vector3.new(.58,.32,len),cf*CFrame.new(s*(W/2-.25),2.65,0),PALE)
+    part(m,"FramedLowerRail",Vector3.new(.28,.23,len),cf*CFrame.new(s*(W/2-.25),1.05,0),WOOD)
+    beam(m,"ArchedFoundationTimber",aa+Vector3.new(0,-1.2,s*(W/2-.2)),bb+Vector3.new(0,-1.2,s*(W/2-.2)),.6,.85,DARK)
+   end
   end
-  local m=Instance.new("Model")m.Name="Teapot"m:SetAttribute("SourceAssetId",10080695893)m.Parent=corner local scale=.66
-  m.PrimaryPart=put(pot,m,CFrame.new(x,y+pot.Size.Y*scale*.5,z),scale,"UtahTeapot")report.teapots+=1 report.tables+=1
+  local postCount=math.ceil((b-a).Magnitude/10)
+  for i=0,postCount do local t=i/postCount local c=point(t)
+   for _,s in ipairs({-1,1})do local pos=c+Vector3.zAxis*s*(W/2-.25)local g=ground(pos.X,pos.Z)local top=pos.Y+3.2 local base=g.Y-.45
+    part(m,"GroundedCarvedPost",Vector3.new(1,top-base,1),CFrame.new(pos.X,(top+base)*.5,pos.Z),DARK)
+    for _,h in ipairs({.75,2.42})do part(m,"CarvedPostCollar",Vector3.new(1.16,.16,1.16),CFrame.new(pos+Vector3.yAxis*h),WOOD)end
+    part(m,"PostCapital",Vector3.new(1.34,.25,1.34),CFrame.new(pos+Vector3.yAxis*3.1),PALE)
+    part(m,"PostCapFinial",Vector3.new(.68,.2,.68),CFrame.new(pos+Vector3.yAxis*3.32),WOOD)
+   end
+  end
+  for _,endpoint in ipairs({a,b})do part(m,"BankApron",Vector3.new(2.6,.3,W),CFrame.new(endpoint-Vector3.yAxis*.08),WOOD)end
+  m:SetAttribute("DeckStart",point(0))m:SetAttribute("DeckEnd",point(1))m:SetAttribute("WalkNodes",game:GetService("HttpService"):JSONEncode(nodes))report.bridges+=1
  end
- local old=runtime:FindFirstChild("TeaCupTool")if old then old:Destroy()end
- local tool=Instance.new("Tool")tool.Name="TeaCupTool"tool.CanBeDropped=false tool.RequiresHandle=true tool:SetAttribute("SourceAssetId",10080695893)tool.Grip=CFrame.new(0,-.08,-.08)
- local handle=put(cup,tool,CFrame.identity,.74,"Handle")handle.Anchored=false handle.CanQuery=false handle.Massless=true tool.Parent=runtime raw:Destroy()
  return report
 end
 return B
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["tea.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="water.luau"m.Source="return function()\n"..[============[local B={}
+]============]).install()
+reports.water=factory([============[local B={}
 local C=game:GetService("CollectionService")
 local function P(parent,name,size,cf,color,mat,collide,class)
  local p=Instance.new(class or"Part")p.Name=name p.Size=size p.CFrame=cf p.Color=color p.Material=mat or Enum.Material.Slate p.Anchored=true p.CanCollide=collide==true p.CanQuery=collide==true p.CanTouch=false p.CastShadow=collide==true p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth p.Parent=parent return p
@@ -219,44 +311,146 @@ function B.install()
  return report
 end
 return B
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["water.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="reflection.luau"m.Source="return function()\n"..[============[local M={}
-function M.create(character,guiParent,worldParent)
- local patch=Instance.new("Part")patch.Name="LocalRiverReflection"patch.Size=Vector3.new(8,.02,12)patch.Transparency=1 patch.Anchored=true patch.CanCollide=false patch.CanQuery=false patch.CanTouch=false patch.CastShadow=false patch.Parent=worldParent
- local surface=Instance.new("SurfaceGui")surface.Name="RiverAvatarReflection"surface.Adornee=patch surface.Face=Enum.NormalId.Top surface.CanvasSize=Vector2.new(96,144)surface.SizingMode=Enum.SurfaceGuiSizingMode.FixedSize surface.AlwaysOnTop=false surface.LightInfluence=0 surface.Enabled=false surface.Parent=guiParent
- local view=Instance.new("ViewportFrame")view.Size=UDim2.fromScale(1,1)view.BackgroundTransparency=1 view.ImageTransparency=.90 view.ImageColor3=Color3.fromRGB(136,175,185)view.Ambient=Color3.fromRGB(180,180,180)view.LightColor=Color3.fromRGB(180,180,180)view.Parent=surface
- local scene=Instance.new("WorldModel")scene.Parent=view local camera=Instance.new("Camera")camera.Parent=view view.CurrentCamera=camera
- local rig=Instance.new("Model")rig.Name="ReflectedAvatar"rig.Parent=scene
- local hum=Instance.new("Humanoid")hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.Parent=rig
- for _,d in ipairs(character:GetChildren())do if d:IsA("Shirt")or d:IsA("Pants")or d:IsA("ShirtGraphic")then d:Clone().Parent=rig end end
- local pairs={}local parts={}
- for _,p in ipairs(character:GetDescendants())do if p:IsA("BasePart")and p.Name~="HumanoidRootPart"and p.Transparency<.95 then parts[#parts+1]=p end end
- table.sort(parts,function(a,b)return(a.Parent==character and 0 or 1)<(b.Parent==character and 0 or 1)end)
- for i=1,math.min(32,#parts)do local p=parts[i]local copy=p:Clone()
-  for _,d in ipairs(copy:GetDescendants())do if d:IsA("LuaSourceContainer")or d:IsA("JointInstance")or d:IsA("Constraint")or d:IsA("Sound")or d:IsA("ParticleEmitter")or d:IsA("WrapLayer")or d:IsA("Light")then d:Destroy()end end
-  copy.Anchored=true copy.CanCollide=false copy.CanQuery=false copy.CanTouch=false copy.LocalTransparencyModifier=0 copy.Parent=rig pairs[#pairs+1]={source=p,copy=copy}
+]============]).install()
+reports.lamps=factory([============[local B={}
+function B.install()
+ local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local Scene=require(runtime.Scene)local C=game:GetService("CollectionService")
+ local raw=game:GetService("AssetService"):LoadAssetAsync(11324928349)
+ local template=assert(raw:FindFirstChildOfClass("Model"),"Requested lamp model missing")
+ for _,d in ipairs(template:GetDescendants())do if d:IsA("LuaSourceContainer")or d:IsA("Camera")then d:Destroy()end end
+ local pole
+ for _,d in ipairs(template:GetDescendants())do if d:IsA("MeshPart")and d.MeshId=="rbxassetid://11161434042"then pole=d end end
+ assert(pole,"Requested lamp post mesh missing")
+ local base=pole.Position-Vector3.yAxis*pole.Size.Y*.5
+ template:PivotTo(template:GetPivot()-base)template.PrimaryPart=nil template.WorldPivot=CFrame.identity template:ScaleTo(template:GetScale()*.67)
+ local folder=world.Amenities.Lanterns folder:ClearAllChildren()
+ local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}ray.IgnoreWater=true
+ local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.yAxis*-310,ray)end
+ local report={lamps=0,sourceAssetId=11324928349}
+ local points={}
+ for z=-260,280,45 do points[#points+1]=Vector2.new(Scene.pathX(z)+7,z)points[#points+1]=Vector2.new(145+30*math.sin(z/100)-7,z+9)end
+ local lake=world:GetAttribute("CentralLake")for i=0,5 do local a=i*math.pi/3 points[#points+1]=Vector2.new(lake.X+math.cos(a)*88,lake.Z+math.sin(a)*66)end
+ for _,bridge in ipairs(world.Amenities.WoodenBridges:GetChildren())do for _,key in ipairs({"DeckStart","DeckEnd"})do local p=bridge:GetAttribute(key)points[#points+1]=Vector2.new(p.X,p.Z+8)end end
+ for _,point in ipairs(points)do local hit=ground(point.X,point.Y)
+  if hit and hit.Position.Y>7.4 and hit.Normal.Y>.83 then
+   local m=template:Clone()m.Name="CandleLampPost"m:SetAttribute("SourceAssetId",11324928349)m:SetAttribute("GroundPoint",hit.Position)m:PivotTo(CFrame.new(hit.Position-Vector3.yAxis*.2))m.Parent=folder m.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+   for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")then p.Anchored=true p.CanTouch=false p.CanCollide=p:IsA("MeshPart")p.CanQuery=p.CanCollide p.CastShadow=p:IsA("MeshPart")
+    elseif p:IsA("Light")then p.Enabled=false p.Shadows=false p.Range=14 p.Brightness=1.1 p.Color=Color3.fromRGB(255,210,151)C:AddTag(p,"ForestNightLight")
+    elseif p:IsA("Fire")then p.Size=.25 p.Heat=0 C:AddTag(p,"RuinVFX")end
+   end
+   report.lamps+=1
+  end
  end
- local self={surface=surface,view=view,patch=patch,camera=camera,pairs=pairs}
- function self.update(point,viewer)
-  if viewer.Position.Y<point.Y+.8 then surface.Enabled=false return end
-  patch.CFrame=CFrame.new(point+Vector3.yAxis*.018)surface.Enabled=true
-  local eye=Vector3.new(viewer.Position.X,2*point.Y-viewer.Position.Y,viewer.Position.Z)
-  camera.CFrame=CFrame.lookAt(eye,point,Vector3.zAxis)camera.FieldOfView=math.clamp(math.deg(2*math.atan(6/(eye-point).Magnitude)),20,90)
-  for _,v in ipairs(pairs)do if v.source.Parent then v.copy.CFrame=v.source.CFrame v.copy.Transparency=v.source.Position.Y<point.Y-.4 and 1 or v.source.Transparency end end
- end
- function self.hide()surface.Enabled=false end
- function self.destroy()surface:Destroy()patch:Destroy()end
- return self
+ raw:Destroy()assert(report.lamps>=18,"Insufficient grounded lamp posts")world:SetAttribute("CandleLampCount",report.lamps)world:SetAttribute("LampAssetId",11324928349)
+ return report
 end
-return M
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["reflection.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="theme.luau"m.Source="return function()\n"..[============[local B={}
+return B
+]============]).install()
+reports.roots=factory([============[local B={}
+function B.install()
+ local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
+ for _,name in ipairs({"ForestGrassClient"})do local old=game.StarterPlayer.StarterPlayerScripts:FindFirstChild(name)if old then old:Destroy()end end
+ for _,name in ipairs({"SkinnedGrassTemplates","GrassSampler","GrassPriority"})do local old=runtime:FindFirstChild(name)if old then old:Destroy()end end
+ local terrainRay=RaycastParams.new()terrainRay.FilterType=Enum.RaycastFilterType.Include terrainRay.FilterDescendantsInstances={workspace.Terrain}terrainRay.IgnoreWater=true
+ local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.new(0,-310,0),terrainRay)end
+ local report={trees=0,plants=0,rootProbes=0,removedPlants=0,removedDecor=0}
+ if runtime:FindFirstChild("ActualRootContacts")then runtime.ActualRootContacts:Destroy()end
+ local probeFolder=Instance.new("Folder")probeFolder.Name="ActualRootContacts"probeFolder.Parent=runtime
+ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do for _,p in ipairs(folder:GetDescendants())do if p:IsA("BasePart")then p.CanQuery=true end end end
+ task.wait(.15)
+ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do for _,m in ipairs(folder:GetChildren())do
+  local tree=folder==world.Decor.Trees local parts={}local lo,hi=Vector3.one*math.huge,Vector3.one*-math.huge
+  for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")and p.Name~="TrunkCollision"and(tree and p.Name:lower():find("trunk",1,true)or not tree)then
+   parts[#parts+1]=p p.CanQuery=true
+   for _,x in ipairs({-1,1})do for _,y in ipairs({-1,1})do for _,z in ipairs({-1,1})do local point=p.CFrame:PointToWorldSpace(p.Size*Vector3.new(x,y,z)*.5)lo=lo:Min(point)hi=hi:Max(point)end end end
+  end end
+  local own=RaycastParams.new()own.FilterType=Enum.RaycastFilterType.Include own.FilterDescendantsInstances=parts
+  local samples={}local minimum=math.huge
+  -- Sample the actual placed mesh from below. Source scale attributes are not trusted.
+  local n=tree and 13 or 5
+  for ix=0,n-1 do for iz=0,n-1 do local x=lo.X+(hi.X-lo.X)*(ix+.5)/n local z=lo.Z+(hi.Z-lo.Z)*(iz+.5)/n
+   local h=workspace:Raycast(Vector3.new(x,lo.Y-3,z),Vector3.yAxis*(hi.Y-lo.Y+6),own)
+   if h then minimum=math.min(minimum,h.Position.Y)samples[#samples+1]=h.Position end
+  end end
+  if tree and minimum>lo.Y+1 then
+   for ix=0,30 do for iz=0,30 do local x=lo.X+(hi.X-lo.X)*(ix+.5)/31 local z=lo.Z+(hi.Z-lo.Z)*(iz+.5)/31
+    local h=workspace:Raycast(Vector3.new(x,lo.Y-3,z),Vector3.yAxis*(hi.Y-lo.Y+6),own)if h then minimum=math.min(minimum,h.Position.Y)samples[#samples+1]=h.Position end
+   end end
+  end
+  local contacts={}
+  for _,v in ipairs(samples)do if v.Y<minimum+(tree and 2.2 or .3)then contacts[#contacts+1]=v end end
+  if #contacts==0 and not tree then
+   -- Flat alpha cards can have no underside for an upward ray; use the actual placed mesh bounds for these plants.
+   contacts={Vector3.new((lo.X+hi.X)*.5,lo.Y,(lo.Z+hi.Z)*.5)}m:SetAttribute("GroundingMethod","PlacedMeshBounds")
+  else m:SetAttribute("GroundingMethod","PlacedMeshRaycast")end
+  assert(#contacts>0,"No real base geometry: "..m.Name)
+  local shift=math.huge local center=Vector3.zero local depth=tree and 1.15 or .18
+  for _,point in ipairs(contacts)do local h=assert(ground(point.X,point.Z),"No ground beneath visible root")shift=math.min(shift,h.Position.Y-point.Y-depth)center+=point end
+  center/= #contacts m:PivotTo(m:GetPivot()+Vector3.yAxis*shift)
+  local finalCenter=center+Vector3.yAxis*shift m:SetAttribute("ActualRootPoint",finalCenter)m:SetAttribute("RootEmbedDepth",depth)
+  local entry=Instance.new("ObjectValue")entry.Name="RootContact"entry.Value=m entry:SetAttribute("CoordinateSpace","World")entry.Parent=probeFolder
+  local cf=m:GetPivot()
+  for i,point in ipairs(contacts)do local v=Instance.new("Vector3Value")v.Name=tostring(i)v.Value=point+Vector3.yAxis*shift v.Parent=entry report.rootProbes+=1 end
+  if tree then
+   C:AddTag(m,"ForestTree")report.trees+=1
+   local trunk=m:FindFirstChild("TrunkCollision")if trunk then local h=assert(ground(finalCenter.X,finalCenter.Z))trunk.CFrame=CFrame.new(finalCenter.X,h.Position.Y+trunk.Size.X*.5-.15,finalCenter.Z)*CFrame.Angles(0,0,math.pi*.5)end
+  else report.plants+=1 end
+  for _,p in ipairs(m:GetDescendants())do if p:IsA("MeshPart")then p.RenderFidelity=Enum.RenderFidelity.Performance p.CastShadow=tree
+   if not p.CanCollide then p.CanQuery=false end
+   if p:GetAttribute("ForestRestCF")then p:SetAttribute("ForestRestCF",p.CFrame)end
+  end end
+ end end
+ -- Dense leaf carpets and oversized broad weeds are removed; native grass supplies continuous cover.
+ for _,m in ipairs(world.Decor.Plants:GetChildren())do
+  if m.Name=="DenseLeafPatch"or m.Name=="CloverPatch"then m:Destroy()report.removedPlants+=1 end
+ end
+ for _,m in ipairs(world.Amenities.CutTrunks:GetChildren())do local cf,size=m:GetBoundingBox()local h=ground(cf.X,cf.Z)if h then m:PivotTo(m:GetPivot()+Vector3.yAxis*(h.Position.Y-(cf.Y-size.Y*.5)-.3))end end
+ for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do
+  local pivot=m:GetPivot()local h=ground(pivot.X,pivot.Z)
+  if h and h.Position.Y>6 then local cf,size=m:GetBoundingBox()m:PivotTo(pivot+Vector3.yAxis*(h.Position.Y-(cf.Y-size.Y*.5)-.3))end
+ end
+ world:SetAttribute("TreeCount",#world.Decor.Trees:GetChildren())world:SetAttribute("PlantCount",#world.Decor.Plants:GetChildren())runtime:SetAttribute("GrassRenderer","NativeTerrain")runtime:SetAttribute("GrassMotionEnabled",false)
+ return report
+end
+return B
+]============]).install()
+reports.tea=factory([============[local B={}
+function B.install()
+ local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
+ local raw=game:GetService("AssetService"):LoadAssetAsync(10080695893)local set=assert(raw:FindFirstChild("Utah Teapot Set"))
+ local cup=assert(set.Cup)local pot=assert(set.Teapot)local spoon=assert(set.Spoon)
+ assert(cup.MeshId=="rbxassetid://10080681533"and pot.MeshId=="rbxassetid://10080686163")
+ local report={tables=0,cups=0,teapots=0,sourceAssetId=10080695893}
+ local corners={}
+ for _,m in ipairs(world:GetDescendants())do if m:IsA("Model")and m:FindFirstChild("AntiqueTeaTable")then corners[#corners+1]=m end end
+ local function put(src,parent,cf,scale,name)
+  local p=src:Clone()p.Name=name or src.Name p.Size*=scale p.CFrame=cf p.Anchored=true p.CanCollide=false p.CanQuery=true p.CanTouch=false p.Color=Color3.fromRGB(238,238,231)p:SetAttribute("SourceAssetId",10080695893)p.Parent=parent return p
+ end
+ for _,corner in ipairs(corners)do
+  for _,d in ipairs(corner:GetChildren())do if d.Name=="TeaCup"or d.Name=="Teapot"or d.Name=="SilverSpoon"or d.Name=="UtahSpoon"then d:Destroy()end end
+  local top=assert(corner.AntiqueTeaTable:FindFirstChild("table",true))local y=top.Position.Y+top.Size.Y*.5+.04 local x,z=top.Position.X,top.Position.Z
+  for i=0,3 do local a=i*math.pi*.5 local m=Instance.new("Model")m.Name="TeaCup"m:SetAttribute("SourceAssetId",10080695893)m.Parent=corner
+   local scale=.82 local p=put(cup,m,CFrame.new(x+math.cos(a)*1.7,y+cup.Size.Y*scale*.5,z+math.sin(a)*1.7)*CFrame.Angles(0,-a,0),scale,"UtahCup")m.PrimaryPart=p
+   local click=Instance.new("ClickDetector")click.Name="TakeCup"click.MaxActivationDistance=9 click.Parent=m C:AddTag(click,"TreeWorldCupClick")report.cups+=1
+   put(spoon,corner,CFrame.new(x+math.cos(a)*1.7+math.sin(a)*.55,y+.055,z+math.sin(a)*1.7-math.cos(a)*.55)*CFrame.Angles(0,-a,0),.8,"UtahSpoon")
+  end
+  local m=Instance.new("Model")m.Name="Teapot"m:SetAttribute("SourceAssetId",10080695893)m.Parent=corner local scale=.66
+  m.PrimaryPart=put(pot,m,CFrame.new(x,y+pot.Size.Y*scale*.5,z),scale,"UtahTeapot")report.teapots+=1 report.tables+=1
+ end
+ local old=runtime:FindFirstChild("TeaCupTool")if old then old:Destroy()end
+ local tool=Instance.new("Tool")tool.Name="TeaCupTool"tool.CanBeDropped=false tool.RequiresHandle=true tool:SetAttribute("SourceAssetId",10080695893)tool.Grip=CFrame.new(0,-.08,-.08)
+ local handle=put(cup,tool,CFrame.identity,.74,"Handle")handle.Anchored=false handle.CanQuery=false handle.Massless=true tool.Parent=runtime raw:Destroy()
+ return report
+end
+return B
+]============]).install()
+reports.theme=factory([============[local B={}
 function B.install()
  local runtime=game.ReplicatedStorage.ForestRuntime local world=workspace.ForestWorld local gui=game.StarterGui.TreeWorldMenu
  for _,d in ipairs(gui:GetDescendants())do
   if d:IsA("GuiObject")then d.BackgroundColor3=Color3.fromRGB(8,8,8)d.BorderSizePixel=0
    if d:IsA("TextLabel")or d:IsA("TextButton")or d:IsA("TextBox")then d.TextColor3=Color3.fromRGB(245,245,245)end
-   if d:IsA("ImageLabel")or d:IsA("ImageButton")then d.ImageColor3=Color3.fromRGB(230,230,230)d.ImageTransparency=1end
+   if d:IsA("ImageLabel")or d:IsA("ImageButton")then d.ImageColor3=Color3.fromRGB(230,230,230)d.ImageTransparency=1 end
   end
  end
  local loading=gui.Background loading.BackgroundTransparency=0 loading.GameTitle.Text="TreeWorld"loading.Description.Text="Explorar. Descansar."
@@ -267,8 +461,148 @@ function B.install()
  runtime:SetAttribute("MenuTheme","Monochrome")runtime:SetAttribute("MusicTheme","MonochromeTransparent")return{menuTheme="Monochrome",camera="RuinSide"}
 end
 return B
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["theme.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="tests.luau"m.Source="return function()\n"..[============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
+]============]).install()
+workspace.ForestWorld:SetAttribute("UpgradeVersion",96)
+source(game.ServerScriptService,"Script","ForestServer",[============[local Players = game:GetService("Players")
+local Run = game:GetService("RunService")
+local runtime = game.ReplicatedStorage:WaitForChild("ForestRuntime")
+local Visuals=require(runtime:WaitForChild("Visuals"))Visuals.apply()
+local Cycle=require(runtime:WaitForChild("Cycle"))
+runtime:SetAttribute("CycleEpoch",Cycle.epoch(workspace:GetServerTimeNow()))
+runtime:SetAttribute("CycleSeconds",Cycle.Duration)
+local world = workspace:WaitForChild("ForestWorld")
+local spawn = world:WaitForChild("ForestSpawn")
+local spawnCF = runtime:GetAttribute("MainSpawnCF")
+require(runtime:WaitForChild("GardenWeather")).start(runtime,world)
+require(runtime:WaitForChild("SeasonController")).start(runtime,world)
+require(runtime:WaitForChild("RuinController")).start(runtime,world)
+require(runtime:WaitForChild("MusicController")).start(runtime,world)
+require(runtime:WaitForChild("Foliage")).start(runtime,world)
+local Collection=game:GetService("CollectionService")
+for _,seat in ipairs(world.Amenities.LogBenches:GetDescendants())do if seat:IsA("Seat")then
+	local prompt=seat:FindFirstChild("SitPrompt")
+	if prompt then prompt.Triggered:Connect(function(player)
+		local c=player.Character local h=c and c:FindFirstChildOfClass("Humanoid")local r=c and c:FindFirstChild("HumanoidRootPart")
+		if h and h.Health>0 and r and not seat.Occupant and(r.Position-seat.Position).Magnitude<9 then seat:Sit(h)end
+	end)end
+end end
+local function character(player, model)
+	local humanoid = model:WaitForChild("Humanoid", 10) local root = model:WaitForChild("HumanoidRootPart", 10)
+	if not humanoid or not root or player.Character ~= model then return end
+	root.Anchored = false humanoid.PlatformStand = false humanoid.AutoRotate = true
+	humanoid.WalkSpeed = 16 humanoid.UseJumpPower = true humanoid.JumpPower = 50
+	if (root.Position - spawnCF.Position).Magnitude > 28 then model:PivotTo(spawnCF) root.AssemblyLinearVelocity = Vector3.zero end
+end
+local function playerAdded(player)
+	player.RespawnLocation = spawn
+	player.CharacterAdded:Connect(function(model) character(player, model) end)
+	if player.Character then task.spawn(character, player, player.Character) end
+end
+Players.PlayerAdded:Connect(playerAdded)
+for _, player in ipairs(Players:GetPlayers()) do playerAdded(player) end
+local elapsed = 0
+Run.Heartbeat:Connect(function(dt)
+	elapsed += dt if elapsed < 1 then return end elapsed = 0
+	local time = workspace:GetServerTimeNow()
+	local clock=Cycle.clock(time,runtime:GetAttribute("CycleEpoch"))Visuals.clock(clock)
+	for _,light in ipairs(Collection:GetTagged("ForestNightLight"))do light.Enabled=Cycle.night(clock)>.015 light.Brightness=Cycle.night(clock)*1.25 end
+	local strength = 2.8 + math.sin(time * 0.047) * 0.25 + math.sin(time * 0.023) * 0.15
+	workspace.GlobalWind = Vector3.new(strength, 0, strength * 0.267)
+	for _, player in ipairs(Players:GetPlayers()) do
+		local model = player.Character local root = model and model:FindFirstChild("HumanoidRootPart")
+		if root and root.Position.Y < -100 then model:PivotTo(spawnCF) root.AssemblyLinearVelocity = Vector3.zero root.AssemblyAngularVelocity = Vector3.zero end
+	end
+end)
+]============])
+source(game.StarterPlayer.StarterPlayerScripts,"LocalScript","ForestGardenClient",[============[local Run=game:GetService("RunService")local Players=game:GetService("Players")local UIS=game:GetService("UserInputService")local Tween=game:GetService("TweenService")
+local player=Players.LocalPlayer local runtime=game.ReplicatedStorage:WaitForChild("ForestRuntime")local world=workspace:WaitForChild("ForestWorld")
+local localWorld=Instance.new("Folder")localWorld.Name="TreeWorldGardenEffects"localWorld.Parent=workspace
+local rng=Random.new()local leaves={}local cap=UIS.TouchEnabled and 14 or 24
+for i=1,cap do local p=Instance.new("Part")p.Name="FallingLeaf"p.Shape=Enum.PartType.Ball p.Size=Vector3.new(.23,.035,.43)p.Anchored=true p.CanCollide=false p.CanTouch=false p.CanQuery=false p.CastShadow=false p.Material=Enum.Material.SmoothPlastic p.Transparency=1 p.Parent=localWorld leaves[i]={part=p,birth=-100}end
+local canopies={}local Collection=game:GetService("CollectionService")
+local function tree(m)if m:IsA("Model")then canopies[m]=true end end
+for _,m in ipairs(Collection:GetTagged("ForestTree"))do tree(m)end
+Collection:GetInstanceAddedSignal("ForestTree"):Connect(tree)Collection:GetInstanceRemovedSignal("ForestTree"):Connect(function(m)canopies[m]=nil end)
+local soundFolder=runtime:WaitForChild("GardenSounds")
+local function sound(name,parent,volume)local s=soundFolder[name]:Clone()s.Parent=parent s.Volume=volume or s.Volume return s end
+local birds=sound("Forest",game:GetService("SoundService"),.27)birds:Play()
+local wind=sound("Wind",game:GetService("SoundService"),.12)wind:Play()
+local river=sound("River",game:GetService("SoundService"),0)river:Play()
+local rain=sound("Rain",game:GetService("SoundService"),0)rain:Play()
+local foot local footChar local footTime=0
+local rainRoot=Instance.new("Part")rainRoot.Name="LocalRainCeiling"rainRoot.Size=Vector3.new(35,.1,35)rainRoot.Anchored=true rainRoot.Transparency=1 rainRoot.CanCollide=false rainRoot.CanTouch=false rainRoot.CanQuery=false rainRoot.Parent=localWorld
+local emitter=Instance.new("ParticleEmitter")emitter.Name="GentleRain"emitter.Texture="rbxasset://textures/particles/sparkles_main.dds"emitter.Rate=0 emitter.Lifetime=NumberRange.new(.45,.65)emitter.Speed=NumberRange.new(32,40)emitter.EmissionDirection=Enum.NormalId.Bottom emitter.Size=NumberSequence.new(.045)emitter.Color=ColorSequence.new(Color3.fromRGB(191,224,228))emitter.Transparency=NumberSequence.new(.65)emitter.Acceleration=Vector3.new(4,-18,1)emitter.SpreadAngle=Vector2.new(4,4)emitter.Parent=rainRoot
+local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.RespectCanCollide=true
+local scan,elapsed,spawnClock,leafIndex=0,0,0,0 local nearby={}
+Run.Heartbeat:Connect(function(dt)
+ elapsed+=dt scan+=dt spawnClock+=dt if elapsed<1/18 then return end local step=elapsed elapsed=0
+ local camera=workspace.CurrentCamera if not camera then return end local pos=camera.CFrame.Position local now=workspace:GetServerTimeNow()
+ local c=player.Character local h=c and c:FindFirstChildOfClass("Humanoid")local root=c and c:FindFirstChild("HumanoidRootPart")
+ if scan>1.2 then
+  scan=0 table.clear(nearby)
+  for m in pairs(canopies)do if m.Parent then local p=m:GetAttribute("ActualRootPoint")or m:GetPivot().Position if(Vector2.new(p.X-pos.X,p.Z-pos.Z)).Magnitude<24 then nearby[#nearby+1]=p end end end
+  if #nearby>8 then while #nearby>8 do table.remove(nearby)end end
+  if root then
+   ray.FilterDescendantsInstances={world.Amenities,workspace.Terrain,world.Decor}
+   local roof=workspace:Raycast(root.Position+Vector3.yAxis*2,Vector3.yAxis*24,ray)
+   local raining=runtime:GetAttribute("Raining")
+   emitter.Rate=raining and not roof and(UIS.TouchEnabled and 65 or 100)or 0
+   Tween:Create(rain,TweenInfo.new(1),{Volume=raining and(roof and .035 or .14)or 0}):Play()
+   local riverX=require(runtime.Scene).riverX(root.Position.Z)local riverWidth=require(runtime.Scene).riverWidth(root.Position.Z)
+   local proximity=math.clamp(1-(math.abs(root.Position.X-riverX)-riverWidth)/40,0,1)
+   local lake=world:GetAttribute("CentralLake")
+   if lake then local r=math.sqrt(((root.Position.X-lake.X)/76)^2+((root.Position.Z-lake.Z)/52)^2)proximity=math.max(proximity,math.clamp((1.35-r)*2,0,1))end
+   if math.abs(root.Position.Z)>295 then proximity=0 end
+   Tween:Create(river,TweenInfo.new(1),{Volume=.24*proximity}):Play()
+  end
+ end
+ rainRoot.CFrame=CFrame.new((root and root.Position or pos)+Vector3.yAxis*18)
+ if spawnClock>.45 and h and h:GetState()~=Enum.HumanoidStateType.Swimming and #nearby>0 and runtime:GetAttribute("SeasonName")~="Inverno"then
+  spawnClock=0 leafIndex=leafIndex%cap+1 local e=leaves[leafIndex]local p=nearby[rng:NextInteger(1,#nearby)]
+  local focus=root and root.Position or pos
+  local x=math.clamp(p.X,focus.X-10,focus.X+10)+rng:NextNumber(-3,3)local z=math.clamp(p.Z,focus.Z-10,focus.Z+10)+rng:NextNumber(-3,3)
+  e.start=Vector3.new(x,focus.Y+rng:NextNumber(6,9),z)e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=6
+
+  e.part.Color=runtime:GetAttribute("SeasonName")=="Outono"and Color3.fromRGB(181,134,66)or Color3.fromRGB(128,153,93)e.part.Transparency=.12
+ end
+ for _,e in ipairs(leaves)do local age=now-e.birth if age< (e.life or 0)then local drift=Vector3.new(age*.25+math.sin(age*1.6+e.phase)*.4,-age*1.35,math.cos(age*1.2+e.phase)*.3)
+  e.part.CFrame=CFrame.new(e.start+drift)*CFrame.Angles(age*.7,e.phase+age*.9,.3*math.sin(age*2))e.part.Transparency=.12+.88*math.clamp((age-e.life+1.5)/1.5,0,1)
+ else e.part.Transparency=1 end end
+ if c~=footChar then if foot then foot:Destroy()end footChar=c foot=root and sound("GrassStep",root,.055)or nil if foot then foot.Looped=false end end
+ if h and root and foot then
+  local default=root:FindFirstChild("Running")if default then default.Volume=0 end
+  local moving=h.MoveDirection.Magnitude>.1 and h.FloorMaterial~=Enum.Material.Air and h.Health>0 and not h.Sit and h:GetState()~=Enum.HumanoidStateType.Swimming
+  local material=h.FloorMaterial local name=(material==Enum.Material.Wood or material==Enum.Material.WoodPlanks)and"WoodStep"or(material==Enum.Material.Grass or material==Enum.Material.LeafyGrass or material==Enum.Material.Ground or material==Enum.Material.Mud)and"GrassStep"or"StoneStep"
+  local id=soundFolder[name].SoundId if foot.SoundId~=id then foot:Stop()foot.SoundId=id end foot.Looped=name~="GrassStep"
+  foot.PlaybackSpeed=math.clamp(root.AssemblyLinearVelocity.Magnitude/14,.7,1.25)
+  footTime+=step
+  if moving then if foot.Looped then if not foot.IsPlaying then foot:Play()end elseif footTime>.42/foot.PlaybackSpeed then footTime=0 foot:Play()end elseif foot.IsPlaying then foot:Stop()end
+ end
+end)
+]============])
+source(game.StarterPlayer.StarterPlayerScripts,"LocalScript","ForestReflectionClient",[============[local player=game.Players.LocalPlayer local runtime=game.ReplicatedStorage:WaitForChild("ForestRuntime")local Mirror=require(runtime:WaitForChild("RiverReflection"))
+local reflection local character local elapsed=0 local scan=0 local point
+local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}
+game:GetService("RunService").Heartbeat:Connect(function(dt)
+ elapsed+=dt scan+=dt if elapsed<.125 then return end elapsed=0 local camera=workspace.CurrentCamera local c=player.Character local root=c and c:FindFirstChild("HumanoidRootPart")
+ if not camera or not root then if reflection then reflection.hide()end return end
+ if c~=character then if reflection then reflection.destroy()end character=c reflection=Mirror.create(c,player:WaitForChild("PlayerGui"),workspace)scan=1 end
+ if player:GetAttribute("TreeWorldMenuOpen")then reflection.hide()return end
+ if scan>.5 then scan=0 point=nil
+  for _,r in ipairs({0,3,6,10,14})do for k=0,7 do local a=k*math.pi/4 local x,z=root.Position.X+math.cos(a)*r,root.Position.Z+math.sin(a)*r
+   local h=workspace:Raycast(Vector3.new(x,150,z),Vector3.yAxis*-250,ray)
+   if h and h.Material==Enum.Material.Water then local safe=true
+    for _,dx in ipairs({-4,4})do for _,dz in ipairs({-6,6})do local edge=workspace:Raycast(Vector3.new(x+dx,150,z+dz),Vector3.yAxis*-250,ray)if not edge or edge.Material~=Enum.Material.Water then safe=false end end end
+    if safe then point=h.Position break end
+   end
+  end if point then break end end
+ end
+ if point then reflection.update(point,camera.CFrame)else reflection.hide()end
+end)
+script.Destroying:Connect(function()if reflection then reflection.destroy()end end)
+]============])
+run(game.ServerScriptService.ForestServer.Source)
+reports.tests=run([============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
 assert(world:GetAttribute("UpgradeVersion")==96)
 local report={trees=0,plants=0,actualRootProbes=0,walkProbes=0,teaTables=0,teaCups=0,ruins=4,audio=0}
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGrassClient")and not runtime:FindFirstChild("SkinnedGrassTemplates"),"Skeletal spike grass remains")
@@ -414,26 +748,6 @@ local uiRoot=Instance.new("Folder")uiRoot.Parent=game.ServerStorage local ui=req
 assert(world:GetAttribute("PathMaterial")=="Ground")
 report.nativeUtahTea=true report.noSuspendedWaterEffects=true report.weakAvatarReflection=true report.reflectionResolution={96,144}report.extendedGroundProbes=extended report.newLakes=#lakes-2 report.streamedChunkTrees=streamedTrees report.oldTreesCleared=true report.monochromeMenu=true
 return report
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["tests.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-do local m=Instance.new("ModuleScript")m.Name="reflection-client.luau"m.Source="return function()\n"..[============[local player=game.Players.LocalPlayer local runtime=game.ReplicatedStorage:WaitForChild("ForestRuntime")local Mirror=require(runtime:WaitForChild("RiverReflection"))
-local reflection local character local elapsed=0 local scan=0 local point
-local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}
-game:GetService("RunService").Heartbeat:Connect(function(dt)
- elapsed+=dt scan+=dt if elapsed<.125 then return end elapsed=0 local camera=workspace.CurrentCamera local c=player.Character local root=c and c:FindFirstChild("HumanoidRootPart")
- if not camera or not root then if reflection then reflection.hide()end return end
- if c~=character then if reflection then reflection.destroy()end character=c reflection=Mirror.create(c,player:WaitForChild("PlayerGui"),workspace)scan=1 end
- if player:GetAttribute("TreeWorldMenuOpen")then reflection.hide()return end
- if scan>.5 then scan=0 point=nil
-  for _,r in ipairs({0,3,6,10,14})do for k=0,7 do local a=k*math.pi/4 local x,z=root.Position.X+math.cos(a)*r,root.Position.Z+math.sin(a)*r
-   local h=workspace:Raycast(Vector3.new(x,150,z),Vector3.yAxis*-250,ray)
-   if h and h.Material==Enum.Material.Water then local safe=true
-    for _,dx in ipairs({-4,4})do for _,dz in ipairs({-6,6})do local edge=workspace:Raycast(Vector3.new(x+dx,150,z+dz),Vector3.yAxis*-250,ray)if not edge or edge.Material~=Enum.Material.Water then safe=false end end end
-    if safe then point=h.Position break end
-   end
-  end if point then break end end
- end
- if point then reflection.update(point,camera.CFrame)else reflection.hide()end
-end)
-script.Destroying:Connect(function()if reflection then reflection.destroy()end end)
-]============].."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)out["reflection-client.luau"]={ok=ok,error=ok and nil or tostring(v)}m:Destroy()end
-return out
+]============])
+runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
+return{staged=true,baseVersion=95,reports=reports}
