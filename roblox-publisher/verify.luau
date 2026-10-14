@@ -1,10 +1,10 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==94,"Saved version mismatch")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==95,"Saved version mismatch")
 game:GetService("ServerStorage")
 local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local f=require(m)local v=f()m:Destroy()return v end
 local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)
 run(game.ServerScriptService.ForestServer.Source)
 local tests=run([============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
-assert(world:GetAttribute("UpgradeVersion")==94)
+assert(world:GetAttribute("UpgradeVersion")==95)
 local report={trees=0,plants=0,actualRootProbes=0,walkProbes=0,teaTables=0,teaCups=0,ruins=4,audio=0}
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGrassClient")and not runtime:FindFirstChild("SkinnedGrassTemplates"),"Skeletal spike grass remains")
 assert(runtime:GetAttribute("GrassRenderer")=="NativeTerrain")
@@ -99,6 +99,41 @@ local flowers=0 for _,m in ipairs(world.Decor.Plants:GetChildren())do if m:GetAt
 local Scene=require(runtime.Scene)
 for _,m in ipairs(world.Amenities.CutTrunks:GetChildren())do local cf,size=m:GetBoundingBox()assert(Scene.pathDistance(cf.X,cf.Z)>=8+math.min(11,math.max(size.X,size.Z)*.5),"Stump blocks trail")end
 report.lakeWaterProbes=lakePoints report.cartoonWaterTiles=tiles report.exactLampPosts=lampCount report.facetedStones=stoneCount report.stoneWalkProbes=stoneProbes report.lowLakeFlowers=flowers report.noAnimals=true report.finiteWorldGeometry=true
+assert(world:GetAttribute("TerrainOrganized")==true)
+local rocks=0 for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()if n:find("rock",1,true)or n:find("boulder",1,true)then rocks+=1 end end assert(rocks<=48,"Excess rock clutter")
+local house=world.Amenities.RiversideGarden.WaterCottage assert(house:GetAttribute("RebuiltEntrance"))
+local O=house:GetAttribute("Origin")local path=game:GetService("HttpService"):JSONDecode(house:GetAttribute("EntryPath"))
+local collision=RaycastParams.new()collision.FilterType=Enum.RaycastFilterType.Include collision.FilterDescendantsInstances={house}collision.RespectCanCollide=true
+local entryProbes=0
+for i=1,#path-1 do local a,b=Vector3.new(unpack(path[i])),Vector3.new(unpack(path[i+1]))
+ for _,offset in ipairs({-1.0,0,1.0})do for _,height in ipairs({1.0,2.6,4.4})do
+  local start=a+Vector3.new(0,height,offset)local hit=workspace:Raycast(start,b-a,collision)assert(not hit,"Cottage entrance blocked: "..(hit and hit.Instance.Name or ""))entryProbes+=1
+ end end
+end
+local boardwalk=world.Amenities.RiversideGarden.LakesideBoardwalk local nodes=game:GetService("HttpService"):JSONDecode(boardwalk:GetAttribute("WalkNodes"))
+local walkwayRay=RaycastParams.new()walkwayRay.FilterType=Enum.RaycastFilterType.Include walkwayRay.FilterDescendantsInstances={boardwalk}walkwayRay.RespectCanCollide=true
+local walkwayProbes=0
+for i=1,#nodes-1 do local a,b=Vector3.new(unpack(nodes[i])),Vector3.new(unpack(nodes[i+1]))
+ for _,t in ipairs({0,.5,.95})do for _,offset in ipairs({-2.1,0,2.1})do local p=a:Lerp(b,t)+Vector3.zAxis*offset local h=assert(workspace:Raycast(p+Vector3.yAxis*.65,Vector3.yAxis*-1.5,walkwayRay),"Cottage walkway has a hole")assert(h.Instance.Name=="BoardwalkPlank"or h.Instance.Name=="BankApron")assert(math.abs(h.Position.Y-p.Y)<.18)walkwayProbes+=1 end end
+end
+local cf,size=house.CottageTeaCorner.AntiqueTeaTable:GetBoundingBox()assert(math.abs(cf.Y-size.Y*.5-(O.Y+.31))<.06,"Cottage tea table sank into floor")
+local Player=require(runtime.MusicPlayer)local Config=require(runtime.MusicConfig)
+assert(Config.parse("123456")==123456 and Config.parse("rbxassetid://123456")==123456 and not Config.parse("-1") and not Config.parse("12.5") and not Config.parse("abc") and not Config.parse(string.rep("9",20)))
+for _,track in ipairs(Config.Tracks)do local s=Instance.new("Sound")s.SoundId="rbxassetid://"..track.id s.Parent=game:GetService("SoundService")game:GetService("ContentProvider"):PreloadAsync({s})assert(s.IsLoaded and s.TimeLength>5,"Preset music unavailable: "..track.title)s:Destroy()end
+local listeners={false,false}local a=Instance.new("Folder")a.Parent=game:GetService("SoundService")local b=Instance.new("Folder")b.Parent=game:GetService("SoundService")
+local A=Player.new(a,function(state)listeners[1]=state end,function()end)local B=Player.new(b,function(state)listeners[2]=state end,function()end)
+assert(A.play(Config.Tracks[1].id,"A")and B.play(Config.Tracks[4].id,"B"))assert(A.sound.Parent==a and B.sound.Parent==b and listeners[1]and listeners[2])
+A.pause()assert(not listeners[1]and listeners[2]and not A.sound.IsPlaying and B.sound.IsPlaying)
+A.stop()assert(B.sound.IsPlaying and listeners[2])B.stop()assert(not listeners[2])a:Destroy()b:Destroy()
+local root=Instance.new("Folder")root.Parent=game.ServerStorage local UI=require(runtime.MusicUI).build(root,Config.Tracks)
+assert(UI.panel.Scroll:IsA("ScrollingFrame")and UI.panel.Scroll.AutomaticCanvasSize==Enum.AutomaticSize.Y and UI.input:IsA("TextBox")and #UI.tracks==#Config.Tracks and not UI.panel.Visible)root:Destroy()
+local radio=house.PersonalRadio assert(radio:GetAttribute("SourceAssetId")==15855506991)local meshes=0
+for _,d in ipairs(radio:GetDescendants())do assert(not d:IsA("Sound")and not d:IsA("LuaSourceContainer"),"Shared original radio playback remains")if d:IsA("MeshPart")then meshes+=1 end end assert(meshes==8)
+local service=require(runtime.MusicController).start(runtime,world)
+local mock={Character=nil,attributes={}}function mock:SetAttribute(k,v)self.attributes[k]=v end
+assert(not service.apply(mock,"123"))assert(service.apply(mock,true)and mock.attributes.ListeningToMusic==true)assert(service.apply(mock,false)and not mock.attributes.ListeningToMusic)
+assert(runtime:GetAttribute("MusicPlayback")=="LocalOnly")assert(not game.ServerScriptService.ForestServer.Source:find("SoundId",1,true))
+report.accentRocks=rocks report.cottageEntranceProbes=entryProbes report.cottageWalkwayProbes=walkwayProbes report.cottageTeaFloor=true report.radioMeshes=meshes report.musicPresets=#Config.Tracks report.personalPlaybackIsolation=true report.musicStatusValidation=true report.musicScrollUI=true
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
