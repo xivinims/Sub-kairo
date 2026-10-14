@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import {editPlace} from './place-settings.mjs';
+import {editPlace,wrapServices} from './place-settings.mjs';
 
 async function main() {
   const key = process.env.ROBLOX_API_KEY;
@@ -36,7 +36,7 @@ async function main() {
   if (result?.binaryPlaceBase64) {
     const original = Buffer.from(result.binaryPlaceBase64, 'base64');
     delete result.binaryPlaceBase64;
-    const edited = editPlace(original);
+    const edited = editPlace(result.serviceRoots ? wrapServices(original,result.serviceRoots,result.serviceProperties) : original);
     const sha256 = crypto.createHash('sha256').update(edited.buffer).digest('hex');
     publication = {bytes: edited.buffer.length, sha256, changes: edited.changes, classCount: edited.classes.length};
     fs.mkdirSync('out', {recursive: true});

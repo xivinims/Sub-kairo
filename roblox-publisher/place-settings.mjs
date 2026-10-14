@@ -22,6 +22,35 @@ export function inspectPlace(input){
  return{chunks,properties,classes};
 }
 function number(data,offset,type){if(type===2)return Boolean(data[offset]);const v=data.readUInt32BE(offset);if(type===3)return(v>>>1)^-(v&1);if(type===4){const b=Buffer.alloc(4);b.writeUInt32LE(((v>>>1)|(v<<31))>>>0);return b.readFloatLE();}throw Error('Unsupported scalar type '+type);}
+function zigzag(value){return((value<<1)^(value>>31))>>>0;}
+function ints(values,delta=false){const out=Buffer.alloc(values.length*4);let previous=0;for(let i=0;i<values.length;i++){const n=values[i];const v=zigzag(delta?n-previous:n);previous=n;for(let byte=0;byte<4;byte++)out[byte*values.length+i]=(v>>>(24-byte*8))&255;}return out;}
+function decodeInts(data,count,delta=false){const out=[];let prior=0;for(let i=0;i<count;i++){let v=0;for(let byte=0;byte<4;byte++)v=(v<<8)|data[byte*count+i];v=(v>>>1)^-(v&1);if(delta){prior+=v;v=prior;}out.push(v);}return out;}
+function string(value){const b=Buffer.from(value);const n=Buffer.alloc(4);n.writeUInt32LE(b.length);return Buffer.concat([n,b]);}
+function uint(n){const b=Buffer.alloc(4);b.writeUInt32LE(n);return b;}
+function chunk(kind,data){const header=Buffer.alloc(16);header.write(kind,0,'latin1');header.writeUInt32LE(data.length,8);return Buffer.concat([header,data]);}
+export function wrapServices(input,manifest,serviceProperties=[]){
+ const parsed=inspectPlace(input);const refs=new Map();const names=new Map();let maxRef=-1,maxClass=-1;
+ for(const c of parsed.chunks)if(c.kind==='INST'){const id=c.data.readUInt32LE();const length=c.data.readUInt32LE(4);const count=c.data.readUInt32LE(9+length);const ids=decodeInts(c.data.subarray(13+length),count,true);refs.set(id,ids);for(const n of ids)maxRef=Math.max(maxRef,n);maxClass=Math.max(maxClass,id);}
+ for(const p of parsed.properties)if(p.name==='Name'){assert.equal(p.type,1);let pos=p.offset;const ids=refs.get(p.id);for(const id of ids){const n=p.chunk.data.readUInt32LE(pos);pos+=4;names.set(id,p.chunk.data.subarray(pos,pos+n).toString());pos+=n;}}
+ const parentChunk=parsed.chunks.find(c=>c.kind==='PRNT');assert(parentChunk);const raw=input.subarray(parentChunk.start);const cLen=raw.readUInt32LE(4),size=raw.readUInt32LE(8);const bytes=input.subarray(parentChunk.start+16,parentChunk.end);const parent=cLen?lz4Block(bytes,size):bytes;const n=parent.readUInt32LE(1);const ids=decodeInts(parent.subarray(5,5+4*n),n,true),parents=decodeInts(parent.subarray(5+4*n),n,true);const byRefClass=new Map();for(const [id,list]of refs)for(const r of list)byRefClass.set(r,parsed.classes.get(id).name);
+ const serviceNames=[...new Set(manifest.map(m=>m.service))];const serviceRefs=new Map(),add=[];
+ for(const name of serviceNames){const id=++maxClass,ref=++maxRef;serviceRefs.set(name,ref);const data=Buffer.concat([uint(id),string(name),Buffer.from([1]),uint(1),ints([ref],true),Buffer.from([1])]);add.push(chunk('INST',data));
+  add.push(chunk('PROP',Buffer.concat([uint(id),string('Name'),Buffer.from([1]),string(name)])));
+  for(const prop of serviceProperties.filter(p=>p.service===name)){
+   const types={boolean:2,number:4,enum:18,vector:14,color:12};const type=types[prop.kind];let value;
+   const f32=x=>{const b=Buffer.alloc(4);b.writeFloatLE(x);const bits=b.readUInt32LE();b.writeUInt32BE(((bits<<1)|(bits>>>31))>>>0);return b;};
+   if(type===2)value=Buffer.from([Number(prop.value)]);else if(type===18){value=Buffer.alloc(4);value.writeUInt32BE(prop.value);}else if(type===4)value=f32(prop.value);else value=Buffer.concat(prop.value.map(f32));
+   add.push(chunk('PROP',Buffer.concat([uint(id),string(prop.name),Buffer.from([type]),value])));
+  }
+  if(name==='Workspace'){for(const [key,value,type]of [['StreamingEnabled',true,2],['StreamingMinRadius',64,3],['StreamingTargetRadius',128,3]])add.push(chunk('PROP',Buffer.concat([uint(id),string(key),Buffer.from([type]),type===2?Buffer.from([Number(value)]):ints([value])])));}
+ }
+ for(let i=0;i<n;i++)if(parents[i]===-1){const matches=manifest.filter(m=>m.name===names.get(ids[i])&&m.class===byRefClass.get(ids[i]));assert.equal(matches.length,1,'Ambiguous exported root '+names.get(ids[i]));parents[i]=serviceRefs.get(matches[0].service);}
+ for(const ref of serviceRefs.values()){ids.push(ref);parents.push(-1);}
+ const newParent=chunk('PRNT',Buffer.concat([Buffer.from([0]),uint(ids.length),ints(ids,true),ints(parents,true)]));
+ const header=Buffer.from(input.subarray(0,32));header.writeUInt32LE(maxClass+1,16);header.writeUInt32LE(header.readUInt32LE(20)+serviceRefs.size,20);
+ const body=[];for(const c of parsed.chunks){if(c.kind==='PRNT')body.push(...add,newParent);else body.push(input.subarray(c.start,c.end));}
+ return Buffer.concat([header,...body]);
+}
 export function editPlace(input){
  const parsed=inspectPlace(input);assert(parsed.classes.size>8,'Missing place services');for(const name of ['Workspace','Terrain','ReplicatedStorage','ServerScriptService','StarterGui','StarterPlayer'])assert([...parsed.classes.values()].some(x=>x.name===name),'Missing '+name);
  const desired={'Terrain.Decoration':true,'Terrain.GrassLength':.4,'Workspace.StreamingEnabled':true,'Workspace.StreamingMinRadius':64,'Workspace.StreamingTargetRadius':128};const replacement=new Map(),changes=[];
