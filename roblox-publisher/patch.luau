@@ -937,6 +937,7 @@ report.nativeUtahTea=true report.noSuspendedWaterEffects=true report.weakAvatarR
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
-return{staged=true,baseVersion=95,reports=reports}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=96,baseVersion=95,reports=reports}
 
 -- FINAL_TREEWORLD96_TRIGGER
