@@ -661,13 +661,13 @@ function Builder.install()
  for index,item in ipairs(endpoints)do
   local a,b=item.a,item.b local span=(Vector3.new(b.X-a.X,0,b.Z-a.Z)).Magnitude
   local model=Instance.new("Model")model.Name="ArchedWoodenBridge"..index model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic model:SetAttribute("SourceAssetId",117077041338395)model.Parent=folder
-  local visual=template:Clone()visual.Name="NativeBridge"visual:ScaleTo(span/(sourceLength-1.5))visual.Parent=model
+  local visual=template:Clone()visual.Name="NativeBridge"visual:ScaleTo((b-a).Magnitude/(sourceLength-4.0))visual.Parent=model
   for _,p in ipairs(visual:GetDescendants())do if p:IsA("BasePart")then p.Anchored=true p.CanCollide=false p.CanQuery=true p.CanTouch=false end end
   local scale=visual:GetScale()local edgeX=span*.5 local localRay=RaycastParams.new()localRay.FilterType=Enum.RaycastFilterType.Include localRay.FilterDescendantsInstances={visual}
   local sourceHit=assert(workspace:Raycast(Vector3.new(-edgeX+1,100,0),Vector3.new(0,-200,0),localRay),"Native bridge deck endpoint missing")
   local forward=(b-a).Unit local up=(Vector3.yAxis-forward*forward.Y).Unit
   local basis=CFrame.fromMatrix((a+b)*.5,forward,up)
-  visual:PivotTo(basis*CFrame.new(0,-sourceHit.Position.Y+.10,0))
+  visual:PivotTo(basis*CFrame.new(0,-sourceHit.Position.Y+.10,0))task.wait()
   local nodes={}local count=64
   for i=0,count do
    local t=i/count local point=a:Lerp(b,t)
