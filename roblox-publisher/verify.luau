@@ -1,4 +1,4 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==98,"Saved version mismatch")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==99,"Saved version mismatch")
 
 local world=workspace:WaitForChild("ForestWorld")
 local runtime=game.ReplicatedStorage:WaitForChild("ForestRuntime")
@@ -6,14 +6,14 @@ local Lighting=game:GetService("Lighting")
 local Terrain=workspace.Terrain
 local C=game:GetService("CollectionService")
 
-assert(world:GetAttribute("UpgradeVersion")==98)
+assert(world:GetAttribute("UpgradeVersion")==99)
 assert(runtime:GetAttribute("NoDecorativeRocks")==true)
 assert(runtime:GetAttribute("RiversideCottageRemoved")==true)
 assert(runtime:GetAttribute("AnimationMode")=="RobloxDefault")
 assert(runtime:GetAttribute("GraphicsPreset")=="Ultra")
-assert(runtime:GetAttribute("StreamingMinRadiusStuds")==256)
-assert(runtime:GetAttribute("StreamingTargetRadiusStuds")==768)
-assert(runtime:GetAttribute("StreamingPrefetchDistance")==520)
+assert(runtime:GetAttribute("StreamingMinRadiusStuds")==320)
+assert(runtime:GetAttribute("StreamingTargetRadiusStuds")==896)
+assert(runtime:GetAttribute("StreamingPrefetchDistance")==640)
 assert(require(runtime.Seasons).Duration==1200)
 
 local garden=world.Amenities.RiversideGarden
@@ -71,9 +71,9 @@ for _,container in ipairs({game.StarterPlayer.StarterPlayerScripts,game.StarterP
  end
 end
 
-assert((runtime:GetAttribute("NativeTreeVarietyCount")or 0)>=6,"Tree variety missing")
-assert(runtime:GetAttribute("ForestLiveChunkLimit")==32)
-assert(runtime:GetAttribute("ForestChunkRadius")==3)
+assert((runtime:GetAttribute("NativeTreeVarietyCount")or 0)>=10,"Tree variety missing")
+assert(runtime:GetAttribute("ForestLiveChunkLimit")==36)
+assert(runtime:GetAttribute("ForestChunkRadius")==4)
 assert(runtime:GetAttribute("SeasonSeconds")==1200)
 
 local roots=assert(runtime:FindFirstChild("ActualRootContacts"),"Root probes missing")
@@ -102,6 +102,34 @@ for _,click in ipairs(C:GetTagged("TreeWorldCupClick"))do
 end
 assert(liveTea>=12,"Utah tea sets missing")
 
+
+local mansion=assert(world.Amenities:FindFirstChild("RuinMansion"),"Ruin mansion missing")
+assert(mansion.ModelStreamingMode==Enum.ModelStreamingMode.Atomic,"Mansion must stream atomically")
+assert((mansion:GetAttribute("RoomCount")or 0)>=8,"Mansion rooms missing")
+assert((mansion:GetAttribute("SeatCount")or 0)>=10,"Mansion seating missing")
+assert((mansion:GetAttribute("PortraitCount")or 0)>=8,"Player portraits missing")
+assert(mansion:FindFirstChild("BrokenDoorLeft",true)and mansion:FindFirstChild("BrokenDoorRight",true),"Broken mansion door missing")
+assert(mansion:FindFirstChild("GrandStep",true),"Grand staircase missing")
+assert(mansion:FindFirstChild("FallingBeam",true),"Break-event beam missing")
+local seatCount=0
+for _,d in ipairs(mansion:GetDescendants())do
+ if d:IsA("Seat")then seatCount+=1 end
+ assert(not d:IsA("ProximityPrompt"),"Mansion seating should not require clicking")
+end
+assert(seatCount>=10,"Not enough touch seats")
+local controller=assert(game.ServerScriptService:FindFirstChild("RuinMansionController"),"Mansion controller missing")
+assert(controller.Source:find("AvatarHeadShot",1,true),"Live player portraits are not wired")
+assert(controller.Source:find("FallingBeam",1,true),"Break animation controller missing")
+local riverStones=assert(world.Decor:FindFirstChild("RiverStones"),"River stones folder missing")
+assert(#riverStones:GetChildren()>=20,"Too few stones remain in water")
+for _,p in ipairs(riverStones:GetChildren())do
+ assert(p:IsA("BasePart")and p.Material==Enum.Material.Slate,"River stone malformed")
+end
+assert((runtime:GetAttribute("RuinTreeRingCount")or 0)>=20,"Not enough trees around ruins")
+assert((runtime:GetAttribute("SubmergedPlantsRemoved")or 0)>=0)
+assert(runtime:GetAttribute("RuinMansionVersion")==99)
+assert(Terrain.WaterReflectance>=.23 and Terrain.WaterTransparency<=.17,"TreeWorld 99 river quality missing")
+
 assert(runtime:GetAttribute("WeatherLoopStarted")==true,"Weather loop did not start")
 assert(runtime:GetAttribute("WeatherName")=="Claro"or runtime:GetAttribute("WeatherName")=="Chuva")
 local gardenClient=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGardenClient"))
@@ -120,8 +148,13 @@ return{
  seasonSeconds=require(runtime.Seasons).Duration,
  streamingTarget=runtime:GetAttribute("StreamingTargetRadiusStuds"),
  waterReflectance=Terrain.WaterReflectance,
+ mansionRooms=mansion:GetAttribute("RoomCount"),
+ mansionSeats=seatCount,
+ portraits=mansion:GetAttribute("PortraitCount"),
+ riverStones=#riverStones:GetChildren(),
+ ruinTrees=runtime:GetAttribute("RuinTreeRingCount"),
  ultra=true,
- noDecorativeRocks=true,
+ noLandDecorativeRocks=true,
  noRiverHouse=true,
  groundedVegetation=grounded
 }
