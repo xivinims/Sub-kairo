@@ -928,4 +928,5 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,extendedWaterSurface=true,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
-return{staged=true,baseVersion=game.PlaceVersion,ruins=report,seasons=seasonsReport,tests=tests,forestTests=forestTests}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,baseVersion=88,expectedVersion=89,ruins=report,seasons=seasonsReport,tests=tests,forestTests=forestTests}
