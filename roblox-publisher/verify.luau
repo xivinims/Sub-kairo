@@ -158,7 +158,7 @@ task.wait(.05)
 local coloredLeaves=0
 for _,p in ipairs(winterChunk:GetDescendants())do if p:IsA("BasePart")and p:GetAttribute("SeasonBaseColor")then
  local expected=p:GetAttribute("SeasonBaseColor"):Lerp(Color3.fromRGB(144,165,153),.5)
- assert((Vector3.new(p.Color.R,p.Color.G,p.Color.B)-Vector3.new(expected.R,expected.G,expected.B)).Magnitude<.005,"New streamed foliage has the wrong season")coloredLeaves+=1
+ assert((Vector3.new(p.Color.R,p.Color.G,p.Color.B)-Vector3.new(expected.R,expected.G,expected.B)).Magnitude<.005,"New streamed foliage has the wrong season: "..p:GetFullName().." actual="..tostring(p.Color).." expected="..tostring(expected).." base="..tostring(p:GetAttribute("SeasonBaseColor")).." index="..tostring(runtime:GetAttribute("SeasonIndex")))coloredLeaves+=1
 end end
 assert(coloredLeaves>0)winterChunk:Destroy()
 assert(seasons.apply(1,true))assert(ground(1500,1200).Material==Enum.Material.Grass,"Grass did not return after winter")
