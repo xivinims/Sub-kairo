@@ -48,7 +48,47 @@ function B.install()
   model:SetAttribute("WalkTop",y)model:SetAttribute("Centre",Vector3.new(x,y,zz))nodes[#nodes+1]={x,y,zz}report.stones+=1
  end
  stones:SetAttribute("WalkNodes",game:GetService("HttpService"):JSONEncode(nodes))
- -- A few large riverbank stones use the same polygon style without filling the walking route.
+ -- Replace the old scattered rock models with sparse, broad-faced rocks too.
+ -- Keep gaps along the earth paths and bury the lower ring into the bank.
+ local candidates={}
+ for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do
+  local name=m.Name:lower()
+  if name:find("rock",1,true)or name:find("boulder",1,true)then
+   local cf,size=m:GetBoundingBox()
+   candidates[#candidates+1]={x=cf.X,z=cf.Z,size=size}
+   m:Destroy()
+  end
+ end
+ table.sort(candidates,function(a,b)if a.x==b.x then return a.z<b.z end return a.x<b.x end)
+ local accents=0
+ for i,old in ipairs(candidates)do
+  if accents>=24 then break end
+  local x,zz=old.x,old.z
+  local h=ground(x,zz)
+  if h.Y<7 or Scene.pathDistance(x,zz)<9 or i%3==0 then continue end
+  local width=math.clamp(math.max(old.size.X,old.size.Z),4,9)
+  local height=math.clamp(old.size.Y*.65,1.6,3.6)
+  local model=Instance.new("Model")model.Name="PaleFacetedRock"model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+  model:SetAttribute("ReferenceStyle","Irregular broad pale top with bevelled slate sides")model.Parent=world.Decor.RocksAndLogs
+  local bottom=h.Y-.45 local upper,lower={},{}
+  local center=Vector3.new(x,h.Y+height,zz)
+  local rotation=rng:NextNumber(0,math.pi*2)
+  for k=0,5 do
+   local angle=rotation+k*math.pi/3 local spread=rng:NextNumber(.84,1.08)
+   local dx,dz=math.cos(angle)*width*.48*spread,math.sin(angle)*width*.4*spread
+   upper[k+1]=center+Vector3.new(dx*.83,0,dz*.83)
+   lower[k+1]=Vector3.new(x+dx,bottom,zz+dz)
+  end
+  for k=1,6 do local j=k%6+1
+   triangle(model,center,upper[k],upper[j],.08,Color3.fromRGB(180+k%3*5,190+k%3*5,194+k%3*5),"PaleStoneTop")
+   local color=Color3.fromRGB(101+k%3*9,117+k%3*9,124+k%3*9)
+   triangle(model,upper[k],lower[k],upper[j],.1,color,"FacetedStoneSide")
+   triangle(model,upper[j],lower[k],lower[j],.1,color,"FacetedStoneSide")
+  end
+  accents+=1
+ end
+ report.accentRocks=accents report.oldAccentRocksRemoved=#candidates
+ assert(accents>=12,"Too few well placed reference rocks")
  world:SetAttribute("CartoonWaterTiles",0)world:SetAttribute("ReferenceSteppingStones",report.stones)
  return report
 end

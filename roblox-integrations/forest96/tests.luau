@@ -68,10 +68,14 @@ assert(math.abs(workspace.Terrain.WaterReflectance-.14)<.001)
 for _,d in ipairs(world:GetDescendants())do assert(not d:IsA("ParticleEmitter")and not d:IsA("Beam")and not d:IsA("Trail"),"Suspended water/tea particles remain")end
 local lampCount=0
 for _,m in ipairs(world.Amenities.Lanterns:GetChildren())do
- assert(m:GetAttribute("SourceAssetId")==11324928349,"Incorrect lamp asset")local pole
- for _,p in ipairs(m:GetDescendants())do if p:IsA("MeshPart")and p.MeshId=="rbxassetid://11161434042"then pole=p end end
- assert(pole)local bottom=pole.Position.Y-pole.Size.Y*.5 local g=ground(pole.Position.X,pole.Position.Z)
- assert(bottom<g.Position.Y+.1 and bottom>g.Position.Y-1.5,"Lamp floats")lampCount+=1
+ assert(m:GetAttribute("SourceAssetId")==97893326625257,"Incorrect lamp asset")
+ assert(m:GetAttribute("SourceFBXSHA256")=="02d7d43c417d633c908243ad34ca44599936876ce0a2b32926b7dc14f1012688","The user's FBX was not used")
+ local mesh=assert(m:FindFirstChildWhichIsA("MeshPart",true))
+ assert(mesh.MeshId~="rbxassetid://11161434042","Old post mesh remains")
+ local cf,size=m:GetBoundingBox()local bottom=cf.Y-size.Y*.5 local anchor=m:GetAttribute("GroundPoint")local g=ground(anchor.X,anchor.Z)
+ assert(math.abs(size.Y-10.5)<.05,"Incorrect post scale or orientation")
+ assert(bottom<g.Position.Y+.1 and bottom>g.Position.Y-1.5,"Lamp floats")
+ local light=assert(m:FindFirstChild("WarmLanternLight",true))assert(light:IsA("PointLight")and C:HasTag(light,"ForestNightLight"))lampCount+=1
 end
 assert(lampCount>=18)
 local stoneCount=0 local stoneProbes=0
@@ -91,7 +95,10 @@ local Scene=require(runtime.Scene)
 for _,m in ipairs(world.Amenities.CutTrunks:GetChildren())do local cf,size=m:GetBoundingBox()assert(Scene.pathDistance(cf.X,cf.Z)>=8+math.min(11,math.max(size.X,size.Z)*.5),"Stump blocks trail")end
 report.lakeWaterProbes=lakePoints report.cartoonWaterTiles=tiles report.exactLampPosts=lampCount report.facetedStones=stoneCount report.stoneWalkProbes=stoneProbes report.lowLakeFlowers=flowers report.noAnimals=true report.finiteWorldGeometry=true
 assert(world:GetAttribute("TerrainOrganized")==true)
-local rocks=0 for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()if n:find("rock",1,true)or n:find("boulder",1,true)then rocks+=1 end end assert(rocks<=48,"Excess rock clutter")
+local rocks=0 for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()if n:find("rock",1,true)or n:find("boulder",1,true)then
+ assert(m.Name=="PaleFacetedRock"and m:FindFirstChild("PaleStoneTop")and m:FindFirstChild("FacetedStoneSide"),"An old rock model remains")
+ local cf,size=m:GetBoundingBox()assert(cf.Y-size.Y*.5<ground(cf.X,cf.Z).Position.Y+.1,"Accent rock floats")
+ rocks+=1 end end assert(rocks>=12 and rocks<=24,"Incorrect accent rock density")
 local house=world.Amenities.RiversideGarden.WaterCottage assert(house:GetAttribute("RebuiltEntrance"))
 local O=house:GetAttribute("Origin")local path=game:GetService("HttpService"):JSONDecode(house:GetAttribute("EntryPath"))
 local collision=RaycastParams.new()collision.FilterType=Enum.RaycastFilterType.Include collision.FilterDescendantsInstances={house}collision.RespectCanCollide=true

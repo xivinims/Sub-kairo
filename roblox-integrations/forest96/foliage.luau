@@ -52,7 +52,7 @@ function M.install()
   local lake=world:GetAttribute("CentralLake")if math.sqrt(((x-lake.X)/76)^2+((z-lake.Z)/52)^2)<1.15 then continue end
   local blocked=false for _,p in ipairs(protected)do if(Vector2.new(x-p.x,z-p.z)).Magnitude<p.r then blocked=true break end end
   for _,p in ipairs(placed)do if(p-Vector2.new(x,z)).Magnitude<18 then blocked=true break end end if blocked then continue end
-  local index=count%4==0 and 1 or 2 local tree=M.place(templates[index],world.Decor.Trees,x,z,rng:NextNumber(index==1 and 23 or 28,index==1 and 36 or 45),rng:NextNumber(0,math.pi*2))
+  local index=count%4==0 and 2 or 1 local tree=M.place(templates[index],world.Decor.Trees,x,z,rng:NextNumber(index==1 and 23 or 28,index==1 and 36 or 45),rng:NextNumber(0,math.pi*2))
   if tree then count+=1 placed[#placed+1]=Vector2.new(x,z)end
   if attempt%100==0 then task.wait()end
  end
@@ -66,7 +66,7 @@ function M.makeChunk(runtime,world,cx,cz)
  local rng=Random.new((cx*73856093+cz*19349663)%2147483647)local templates=runtime.NativeTreeTemplates local count=0
  for ix=0,2 do for iz=0,2 do local x,z=cx*128+20+ix*40+rng:NextNumber(-6,6),cz*128+20+iz*40+rng:NextNumber(-6,6)
   if math.abs(x)>1980 or math.abs(z)>1980 then continue end
-  local template=(ix+iz)%4==0 and templates.GreenBroadleaf or templates.GreenPine
+  local template=(ix+iz)%4==0 and templates.GreenPine or templates.GreenBroadleaf
   if M.place(template,m,x,z,rng:NextNumber(24,40),rng:NextNumber(0,6.28))then count+=1 end
  end end
  if count==0 then m:Destroy()return end m:SetAttribute("TreeCount",count)m.Parent=world.Decor.ActiveForestChunks return m

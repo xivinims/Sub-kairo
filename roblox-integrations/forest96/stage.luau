@@ -58,7 +58,7 @@ function M.install()
   local lake=world:GetAttribute("CentralLake")if math.sqrt(((x-lake.X)/76)^2+((z-lake.Z)/52)^2)<1.15 then continue end
   local blocked=false for _,p in ipairs(protected)do if(Vector2.new(x-p.x,z-p.z)).Magnitude<p.r then blocked=true break end end
   for _,p in ipairs(placed)do if(p-Vector2.new(x,z)).Magnitude<18 then blocked=true break end end if blocked then continue end
-  local index=count%4==0 and 1 or 2 local tree=M.place(templates[index],world.Decor.Trees,x,z,rng:NextNumber(index==1 and 23 or 28,index==1 and 36 or 45),rng:NextNumber(0,math.pi*2))
+  local index=count%4==0 and 2 or 1 local tree=M.place(templates[index],world.Decor.Trees,x,z,rng:NextNumber(index==1 and 23 or 28,index==1 and 36 or 45),rng:NextNumber(0,math.pi*2))
   if tree then count+=1 placed[#placed+1]=Vector2.new(x,z)end
   if attempt%100==0 then task.wait()end
  end
@@ -72,7 +72,7 @@ function M.makeChunk(runtime,world,cx,cz)
  local rng=Random.new((cx*73856093+cz*19349663)%2147483647)local templates=runtime.NativeTreeTemplates local count=0
  for ix=0,2 do for iz=0,2 do local x,z=cx*128+20+ix*40+rng:NextNumber(-6,6),cz*128+20+iz*40+rng:NextNumber(-6,6)
   if math.abs(x)>1980 or math.abs(z)>1980 then continue end
-  local template=(ix+iz)%4==0 and templates.GreenBroadleaf or templates.GreenPine
+  local template=(ix+iz)%4==0 and templates.GreenPine or templates.GreenBroadleaf
   if M.place(template,m,x,z,rng:NextNumber(24,40),rng:NextNumber(0,6.28))then count+=1 end
  end end
  if count==0 then m:Destroy()return end m:SetAttribute("TreeCount",count)m.Parent=world.Decor.ActiveForestChunks return m
@@ -306,7 +306,47 @@ function B.install()
   model:SetAttribute("WalkTop",y)model:SetAttribute("Centre",Vector3.new(x,y,zz))nodes[#nodes+1]={x,y,zz}report.stones+=1
  end
  stones:SetAttribute("WalkNodes",game:GetService("HttpService"):JSONEncode(nodes))
- -- A few large riverbank stones use the same polygon style without filling the walking route.
+ -- Replace the old scattered rock models with sparse, broad-faced rocks too.
+ -- Keep gaps along the earth paths and bury the lower ring into the bank.
+ local candidates={}
+ for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do
+  local name=m.Name:lower()
+  if name:find("rock",1,true)or name:find("boulder",1,true)then
+   local cf,size=m:GetBoundingBox()
+   candidates[#candidates+1]={x=cf.X,z=cf.Z,size=size}
+   m:Destroy()
+  end
+ end
+ table.sort(candidates,function(a,b)if a.x==b.x then return a.z<b.z end return a.x<b.x end)
+ local accents=0
+ for i,old in ipairs(candidates)do
+  if accents>=24 then break end
+  local x,zz=old.x,old.z
+  local h=ground(x,zz)
+  if h.Y<7 or Scene.pathDistance(x,zz)<9 or i%3==0 then continue end
+  local width=math.clamp(math.max(old.size.X,old.size.Z),4,9)
+  local height=math.clamp(old.size.Y*.65,1.6,3.6)
+  local model=Instance.new("Model")model.Name="PaleFacetedRock"model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+  model:SetAttribute("ReferenceStyle","Irregular broad pale top with bevelled slate sides")model.Parent=world.Decor.RocksAndLogs
+  local bottom=h.Y-.45 local upper,lower={},{}
+  local center=Vector3.new(x,h.Y+height,zz)
+  local rotation=rng:NextNumber(0,math.pi*2)
+  for k=0,5 do
+   local angle=rotation+k*math.pi/3 local spread=rng:NextNumber(.84,1.08)
+   local dx,dz=math.cos(angle)*width*.48*spread,math.sin(angle)*width*.4*spread
+   upper[k+1]=center+Vector3.new(dx*.83,0,dz*.83)
+   lower[k+1]=Vector3.new(x+dx,bottom,zz+dz)
+  end
+  for k=1,6 do local j=k%6+1
+   triangle(model,center,upper[k],upper[j],.08,Color3.fromRGB(180+k%3*5,190+k%3*5,194+k%3*5),"PaleStoneTop")
+   local color=Color3.fromRGB(101+k%3*9,117+k%3*9,124+k%3*9)
+   triangle(model,upper[k],lower[k],upper[j],.1,color,"FacetedStoneSide")
+   triangle(model,upper[j],lower[k],lower[j],.1,color,"FacetedStoneSide")
+  end
+  accents+=1
+ end
+ report.accentRocks=accents report.oldAccentRocksRemoved=#candidates
+ assert(accents>=12,"Too few well placed reference rocks")
  world:SetAttribute("CartoonWaterTiles",0)world:SetAttribute("ReferenceSteppingStones",report.stones)
  return report
 end
@@ -315,33 +355,45 @@ return B
 reports.lamps=factory([============[local B={}
 function B.install()
  local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local Scene=require(runtime.Scene)local C=game:GetService("CollectionService")
- local raw=game:GetService("AssetService"):LoadAssetAsync(11324928349)
- local template=assert(raw:FindFirstChildOfClass("Model"),"Requested lamp model missing")
+ local assetId=97893326625257
+ local raw=game:GetService("AssetService"):LoadAssetAsync(assetId)
+ local template=raw
  for _,d in ipairs(template:GetDescendants())do if d:IsA("LuaSourceContainer")or d:IsA("Camera")then d:Destroy()end end
- local pole
- for _,d in ipairs(template:GetDescendants())do if d:IsA("MeshPart")and d.MeshId=="rbxassetid://11161434042"then pole=d end end
- assert(pole,"Requested lamp post mesh missing")
- local base=pole.Position-Vector3.yAxis*pole.Size.Y*.5
- template:PivotTo(template:GetPivot()-base)template.PrimaryPart=nil template.WorldPivot=CFrame.identity template:ScaleTo(template:GetScale()*.67)
+ template.PrimaryPart=nil
+ local meshCount=0
+ for _,d in ipairs(template:GetDescendants())do if d:IsA("MeshPart")then meshCount+=1 end end
+ assert(meshCount>0,"The imported user FBX has no meshes")
+ local cf,size=template:GetBoundingBox()
+ assert(size.Y>size.X and size.Y>size.Z,"The FBX post is not upright")
+ template:ScaleTo(template:GetScale()*10.5/size.Y)
+ cf,size=template:GetBoundingBox()
+ local base=Vector3.new(cf.X,cf.Y-size.Y*.5,cf.Z)
+ template:PivotTo(template:GetPivot()-base)
+ template.WorldPivot=CFrame.identity
+ -- Keep the original FBX geometry, UVs and PBR materials. Only add a light.
+ local mesh=assert(template:FindFirstChildWhichIsA("MeshPart",true))
+ local attachment=Instance.new("Attachment")attachment.Name="LanternLightOrigin"
+ attachment.CFrame=mesh.CFrame:ToObjectSpace(CFrame.new(-size.X*.28,size.Y*.62,0))attachment.Parent=mesh
+ local light=Instance.new("PointLight")light.Name="WarmLanternLight"light.Enabled=false light.Shadows=false light.Range=14 light.Brightness=1.1 light.Color=Color3.fromRGB(255,210,151)light.Parent=attachment
  local folder=world.Amenities.Lanterns folder:ClearAllChildren()
  local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain}ray.IgnoreWater=true
  local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.yAxis*-310,ray)end
- local report={lamps=0,sourceAssetId=11324928349}
+ local report={lamps=0,sourceAssetId=assetId,sourceFile="sei-la-sksksks.fbx",meshesPerLamp=meshCount,height=10.5}
  local points={}
  for z=-260,280,45 do points[#points+1]=Vector2.new(Scene.pathX(z)+7,z)points[#points+1]=Vector2.new(145+30*math.sin(z/100)-7,z+9)end
  local lake=world:GetAttribute("CentralLake")for i=0,5 do local a=i*math.pi/3 points[#points+1]=Vector2.new(lake.X+math.cos(a)*88,lake.Z+math.sin(a)*66)end
  for _,bridge in ipairs(world.Amenities.WoodenBridges:GetChildren())do for _,key in ipairs({"DeckStart","DeckEnd"})do local p=bridge:GetAttribute(key)points[#points+1]=Vector2.new(p.X,p.Z+8)end end
  for _,point in ipairs(points)do local hit=ground(point.X,point.Y)
   if hit and hit.Position.Y>7.4 and hit.Normal.Y>.83 then
-   local m=template:Clone()m.Name="CandleLampPost"m:SetAttribute("SourceAssetId",11324928349)m:SetAttribute("GroundPoint",hit.Position)m:PivotTo(CFrame.new(hit.Position-Vector3.yAxis*.2))m.Parent=folder m.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
+   local m=template:Clone()m.Name="GnarledLanternPost"m:SetAttribute("SourceAssetId",assetId)m:SetAttribute("SourceFBXSHA256","02d7d43c417d633c908243ad34ca44599936876ce0a2b32926b7dc14f1012688")m:SetAttribute("GroundPoint",hit.Position)m:PivotTo(CFrame.new(hit.Position-Vector3.yAxis*.25))m.Parent=folder m.ModelStreamingMode=Enum.ModelStreamingMode.Atomic
    for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")then p.Anchored=true p.CanTouch=false p.CanCollide=p:IsA("MeshPart")p.CanQuery=p.CanCollide p.CastShadow=p:IsA("MeshPart")
     elseif p:IsA("Light")then p.Enabled=false p.Shadows=false p.Range=14 p.Brightness=1.1 p.Color=Color3.fromRGB(255,210,151)C:AddTag(p,"ForestNightLight")
-    elseif p:IsA("Fire")then p.Size=.25 p.Heat=0 C:AddTag(p,"RuinVFX")end
+    elseif p:IsA("Fire")or p:IsA("Smoke")or p:IsA("ParticleEmitter")then p:Destroy()end
    end
    report.lamps+=1
   end
  end
- raw:Destroy()assert(report.lamps>=18,"Insufficient grounded lamp posts")world:SetAttribute("CandleLampCount",report.lamps)world:SetAttribute("LampAssetId",11324928349)
+ raw:Destroy()assert(report.lamps>=18,"Insufficient grounded lamp posts")world:SetAttribute("CandleLampCount",report.lamps)world:SetAttribute("LampAssetId",assetId)
  return report
 end
 return B
@@ -448,6 +500,8 @@ reports.theme=factory([============[local B={}
 function B.install()
  local runtime=game.ReplicatedStorage.ForestRuntime local world=workspace.ForestWorld local gui=game.StarterGui.TreeWorldMenu
  for _,d in ipairs(gui:GetDescendants())do
+  if d:IsA("UIGradient")then d.Color=ColorSequence.new(Color3.new(1,1,1))end
+  if d:IsA("UIStroke")then d.Color=Color3.fromRGB(210,210,210)end
   if d:IsA("GuiObject")then d.BackgroundColor3=Color3.fromRGB(8,8,8)d.BorderSizePixel=0
    if d:IsA("TextLabel")or d:IsA("TextButton")or d:IsA("TextBox")then d.TextColor3=Color3.fromRGB(245,245,245)end
    if d:IsA("ImageLabel")or d:IsA("ImageButton")then d.ImageColor3=Color3.fromRGB(230,230,230)d.ImageTransparency=1 end
@@ -457,7 +511,14 @@ function B.install()
  loading.Bar.BackgroundColor3=Color3.fromRGB(50,50,50)loading.Bar.LoadBar.BackgroundColor3=Color3.fromRGB(242,242,242)
  local menu=gui.MainMenu menu.BackgroundTransparency=.58 menu.PlayButton.BackgroundTransparency=.28
  local origin=world.Amenities.ForestRuins:GetAttribute("Origin")local focus=origin+Vector3.new(0,5,0)
- runtime:SetAttribute("MenuCameraFocus",focus)runtime:SetAttribute("MenuCameraCF",CFrame.lookAt(origin+Vector3.new(60,14,-12),focus))runtime:SetAttribute("MenuCameraView","RuinSide")
+ local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={workspace.Terrain,world.Decor.Trees}
+ local cameraPosition
+ for _,height in ipairs({14,20,26})do for _,z in ipairs({-12,-24,12,24})do
+  local candidate=origin+Vector3.new(60,height,z)
+  if not workspace:Raycast(candidate,focus-candidate,ray)then cameraPosition=candidate break end
+ end if cameraPosition then break end end
+ assert(cameraPosition,"No unobstructed side view of the ruin")
+ runtime:SetAttribute("MenuCameraFocus",focus)runtime:SetAttribute("MenuCameraCF",CFrame.lookAt(cameraPosition,focus))runtime:SetAttribute("MenuCameraView","RuinSide")
  runtime:SetAttribute("MenuTheme","Monochrome")runtime:SetAttribute("MusicTheme","MonochromeTransparent")return{menuTheme="Monochrome",camera="RuinSide"}
 end
 return B
@@ -672,10 +733,14 @@ assert(math.abs(workspace.Terrain.WaterReflectance-.14)<.001)
 for _,d in ipairs(world:GetDescendants())do assert(not d:IsA("ParticleEmitter")and not d:IsA("Beam")and not d:IsA("Trail"),"Suspended water/tea particles remain")end
 local lampCount=0
 for _,m in ipairs(world.Amenities.Lanterns:GetChildren())do
- assert(m:GetAttribute("SourceAssetId")==11324928349,"Incorrect lamp asset")local pole
- for _,p in ipairs(m:GetDescendants())do if p:IsA("MeshPart")and p.MeshId=="rbxassetid://11161434042"then pole=p end end
- assert(pole)local bottom=pole.Position.Y-pole.Size.Y*.5 local g=ground(pole.Position.X,pole.Position.Z)
- assert(bottom<g.Position.Y+.1 and bottom>g.Position.Y-1.5,"Lamp floats")lampCount+=1
+ assert(m:GetAttribute("SourceAssetId")==97893326625257,"Incorrect lamp asset")
+ assert(m:GetAttribute("SourceFBXSHA256")=="02d7d43c417d633c908243ad34ca44599936876ce0a2b32926b7dc14f1012688","The user's FBX was not used")
+ local mesh=assert(m:FindFirstChildWhichIsA("MeshPart",true))
+ assert(mesh.MeshId~="rbxassetid://11161434042","Old post mesh remains")
+ local cf,size=m:GetBoundingBox()local bottom=cf.Y-size.Y*.5 local anchor=m:GetAttribute("GroundPoint")local g=ground(anchor.X,anchor.Z)
+ assert(math.abs(size.Y-10.5)<.05,"Incorrect post scale or orientation")
+ assert(bottom<g.Position.Y+.1 and bottom>g.Position.Y-1.5,"Lamp floats")
+ local light=assert(m:FindFirstChild("WarmLanternLight",true))assert(light:IsA("PointLight")and C:HasTag(light,"ForestNightLight"))lampCount+=1
 end
 assert(lampCount>=18)
 local stoneCount=0 local stoneProbes=0
@@ -695,7 +760,10 @@ local Scene=require(runtime.Scene)
 for _,m in ipairs(world.Amenities.CutTrunks:GetChildren())do local cf,size=m:GetBoundingBox()assert(Scene.pathDistance(cf.X,cf.Z)>=8+math.min(11,math.max(size.X,size.Z)*.5),"Stump blocks trail")end
 report.lakeWaterProbes=lakePoints report.cartoonWaterTiles=tiles report.exactLampPosts=lampCount report.facetedStones=stoneCount report.stoneWalkProbes=stoneProbes report.lowLakeFlowers=flowers report.noAnimals=true report.finiteWorldGeometry=true
 assert(world:GetAttribute("TerrainOrganized")==true)
-local rocks=0 for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()if n:find("rock",1,true)or n:find("boulder",1,true)then rocks+=1 end end assert(rocks<=48,"Excess rock clutter")
+local rocks=0 for _,m in ipairs(world.Decor.RocksAndLogs:GetChildren())do local n=m.Name:lower()if n:find("rock",1,true)or n:find("boulder",1,true)then
+ assert(m.Name=="PaleFacetedRock"and m:FindFirstChild("PaleStoneTop")and m:FindFirstChild("FacetedStoneSide"),"An old rock model remains")
+ local cf,size=m:GetBoundingBox()assert(cf.Y-size.Y*.5<ground(cf.X,cf.Z).Position.Y+.1,"Accent rock floats")
+ rocks+=1 end end assert(rocks>=12 and rocks<=24,"Incorrect accent rock density")
 local house=world.Amenities.RiversideGarden.WaterCottage assert(house:GetAttribute("RebuiltEntrance"))
 local O=house:GetAttribute("Origin")local path=game:GetService("HttpService"):JSONDecode(house:GetAttribute("EntryPath"))
 local collision=RaycastParams.new()collision.FilterType=Enum.RaycastFilterType.Include collision.FilterDescendantsInstances={house}collision.RespectCanCollide=true
