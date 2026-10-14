@@ -938,3 +938,5 @@ return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
 return{staged=true,baseVersion=95,reports=reports}
+
+-- FINAL_TREEWORLD96_TRIGGER
