@@ -131,4 +131,5 @@ assert(report.parts<10534 and report.pbr>2500,"Forest loss or mobile geometry in
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
-return{staged=true,baseVersion=92,roots=roots,tests=tests}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=93,roots=roots,tests=tests}
