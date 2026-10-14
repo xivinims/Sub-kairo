@@ -685,7 +685,6 @@ function B.install()
  end
  Terrain:SetMaterialColor(Enum.Material.Ground,Color3.fromRGB(108,84,60))
  Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(104,153,62))
- Terrain.Decoration=true
  world:SetAttribute("PathMaterial","Ground")
  world:SetAttribute("DecorativeRocksRemoved",true)
 
