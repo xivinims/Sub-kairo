@@ -807,4 +807,5 @@ report.accentRocks=rocks report.cottageEntranceProbes=entryProbes report.cottage
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
-return{staged=true,baseVersion=94,reports=reports}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=95,reports=reports}
