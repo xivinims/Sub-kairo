@@ -363,6 +363,8 @@ function B.install()
  local function ground(x,z)return workspace:Raycast(Vector3.new(x,210,z),Vector3.new(0,-310,0),terrainRay)end
  local report={trees=0,plants=0,rootProbes=0,removedPlants=0,removedDecor=0}
  local probeFolder=Instance.new("Folder")probeFolder.Name="ActualRootContacts"probeFolder.Parent=runtime
+ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do for _,p in ipairs(folder:GetDescendants())do if p:IsA("BasePart")then p.CanQuery=true end end end
+ task.wait(.15)
  for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do for _,m in ipairs(folder:GetChildren())do
   local tree=folder==world.Decor.Trees local parts={}local lo,hi=Vector3.one*math.huge,Vector3.one*-math.huge
   for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")and p.Name~="TrunkCollision"and(tree and p.Name:lower():find("trunk",1,true)or not tree)then
@@ -384,6 +386,10 @@ function B.install()
   end
   local contacts={}
   for _,v in ipairs(samples)do if v.Y<minimum+(tree and .75 or .3)then contacts[#contacts+1]=v end end
+  if #contacts==0 and not tree then
+   -- Flat alpha cards can have no underside for an upward ray; use the actual placed mesh bounds for these plants.
+   contacts={Vector3.new((lo.X+hi.X)*.5,lo.Y,(lo.Z+hi.Z)*.5)}m:SetAttribute("GroundingMethod","PlacedMeshBounds")
+  else m:SetAttribute("GroundingMethod","PlacedMeshRaycast")end
   assert(#contacts>0,"No real base geometry: "..m.Name)
   local shift=math.huge local center=Vector3.zero local depth=tree and .9 or .18
   for _,point in ipairs(contacts)do local h=assert(ground(point.X,point.Z),"No ground beneath visible root")shift=math.min(shift,h.Position.Y-point.Y-depth)center+=point end
