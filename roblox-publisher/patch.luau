@@ -664,7 +664,7 @@ function Builder.install()
  local halfY=(math.abs(lower.CFrame.UpVector.Y)*lower.Size.Y+math.abs(lower.CFrame.RightVector.Y)*lower.Size.X+math.abs(lower.CFrame.LookVector.Y)*lower.Size.Z)*.5
  local target=seatTop+Vector3.new(0,halfY+.05,0)local placement=CFrame.new(target)*heading*CFrame.new(-offset)
  npc:PivotTo(placement)npc:SetAttribute("SeatCFrame",placement)npc:SetAttribute("SeatTop",seatTop)npc:SetAttribute("SeatedTorsoOffset",offset)npc:SetAttribute("SeatedTorsoHalfY",halfY)
- track:Stop(0)track:Destroy()
+ track:Stop(0)track:Destroy()animator:Destroy()
  for _,name in ipairs({"HiVoice","YayVoice"})do local sound=old.Head:FindFirstChild(name)if sound then local copy=sound:Clone()copy.Volume=name=="HiVoice"and .26 or .22 copy.RollOffMaxDistance=22 copy.Parent=npc.Head end end
  old:Destroy()Collection:AddTag(npc,"ForestOwnerNPC")
  local remote=runtime:FindFirstChild("OwnerDialogue")if remote then remote:Destroy()end local pose=runtime:FindFirstChild("NPCPose")if pose then pose:Destroy()end
@@ -1143,7 +1143,9 @@ local npc=world.OwnerNPC local root=npc.HumanoidRootPart assert(npc.Humanoid.Rig
 local desc=npc.Humanoid:GetAppliedDescription()assert(desc.Shirt==npc:GetAttribute("ShirtAssetId")and desc.Pants==npc:GetAttribute("PantsAssetId")and desc.Torso==npc:GetAttribute("TorsoAssetId")and desc.Head==npc:GetAttribute("HeadAssetId"))desc:Destroy()
 local controller=require(runtime.NPCController)
 assert(controller.shouldGreet(10,36,2,false)and controller.shouldGreet(8,36,0,true)and not controller.shouldGreet(18,36,2,true)and not controller.shouldGreet(8,2,2,true))
-local animator=npc.Humanoid.Animator local track=animator:GetTrackByAnimationId("rbxassetid://92824429927180")assert(track and track.Length>2 and track.IsPlaying and track.Looped,"Exact emote playback missing: "..tostring(track and track.Length).." / "..tostring(track and track.IsPlaying))
+local animator=npc.Humanoid.Animator local track
+for _,candidate in ipairs(animator:GetPlayingAnimationTracks())do if candidate.Animation and candidate.Animation.AnimationId=="rbxassetid://92824429927180"then track=candidate break end end
+assert(track and track.Length>2 and track.IsPlaying and track.Looped,"Exact emote playback missing: "..tostring(track and track.Length).." / "..tostring(track and track.IsPlaying))
 local original=root.CFrame
 track.TimePosition=.8 animator:StepAnimations(0)
 local done={[root]=true}local motors={}for _,m in ipairs(npc:GetDescendants())do if m:IsA("Motor6D")then motors[#motors+1]=m end end
