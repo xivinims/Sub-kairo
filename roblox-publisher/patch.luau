@@ -629,7 +629,7 @@ local label=Instance.new("TextLabel")label.Name="Notice"label.AnchorPoint=Vector
 local limit=Instance.new("UISizeConstraint")limit.MaxSize=Vector2.new(430,80)limit.Parent=label
 local corner=Instance.new("UICorner")corner.CornerRadius=UDim.new(0,12)corner.Parent=label
 local untilTime=0
-local remote=runtime:WaitForChild("RuinInteraction"):OnClientEvent:Connect(function(text)if type(text)=="string"then label.Text=text label.Visible=true untilTime=os.clock()+4.5 end end)
+local remote=runtime:WaitForChild("RuinInteraction").OnClientEvent:Connect(function(text)if type(text)=="string"then label.Text=text label.Visible=true untilTime=os.clock()+4.5 end end)
 local prompts={}
 local function bind(prompt)
  if prompts[prompt]or not prompt:IsA("ProximityPrompt")then return end
