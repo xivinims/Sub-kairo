@@ -1,4 +1,6 @@
-assert(game.PlaceVersion==91)
-local roots={}for _,name in ipairs({"Workspace","ReplicatedStorage","ServerScriptService","StarterPlayer","StarterGui","StarterPack","ReplicatedFirst","Lighting","SoundService","MaterialService","Teams","TextChatService"})do roots[#roots+1]=game:GetService(name)end
-local b=game:GetService("SerializationService"):SerializeInstancesAsync(roots)
-return{readOnly=true,exportOnly=true,exportSize=buffer.len(b),binaryPlaceBase64=buffer.tostring(game:GetService("EncodingService"):Base64Encode(b))}
+assert(game.PlaceVersion==91)local S=game:GetService("SerializationService")local report={readOnly=true,services={}}
+for _,name in ipairs({"Workspace","ReplicatedStorage","ServerScriptService","StarterPlayer","StarterGui","Lighting"})do
+ local service=game:GetService(name)local old=service.Archivable service.Archivable=true
+ local ok,b=pcall(function()return S:SerializeInstancesAsync({service})end)report.services[#report.services+1]={name=name,archivable=old,ok=ok,size=ok and buffer.len(b)or tostring(b)}service.Archivable=old
+end
+return report
