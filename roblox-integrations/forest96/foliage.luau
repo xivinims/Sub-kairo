@@ -8,7 +8,20 @@ function M.place(template,parent,x,z,height,yaw)
  local rotation=CFrame.Angles(0,yaw,0)local y=g.Position.Y-1.15
  local points=template:GetAttribute("RootProfile")local values=game:GetService("HttpService"):JSONDecode(points)
  for _,p in ipairs(values)do local off=rotation:VectorToWorldSpace(Vector3.new(unpack(p))*scale)local hit=ground(x+off.X,z+off.Z)if not hit or hit.Position.Y<7 then m:Destroy()return end y=math.min(y,hit.Position.Y-off.Y-1.15)end
- m:PivotTo(CFrame.new(x,y,z)*rotation)m:SetAttribute("ActualRootPoint",Vector3.new(x,y,z))m:SetAttribute("FreshReferenceTree",true)m:SetAttribute("RootEmbedDepth",1.15)m.Parent=parent Collection:AddTag(m,"ForestTree")return m
+ m:PivotTo(CFrame.new(x,y,z)*rotation)m:SetAttribute("ActualRootPoint",Vector3.new(x,y,z))m:SetAttribute("FreshReferenceTree",true)m:SetAttribute("RootEmbedDepth",1.15)
+ -- Apply the current season before parenting; new chunks must not flash green
+ -- while waiting for descendant signals to be delivered.
+ local index=game.ReplicatedStorage.ForestRuntime:GetAttribute("SeasonIndex")or 1
+ for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")then
+  local color=p:GetAttribute("SeasonBaseColor")
+  if color then
+   if index==2 then color=color:Lerp(Color3.fromRGB(64,122,53),.12)
+   elseif index==3 then color=color:Lerp(Color3.fromRGB(191,134,63),.72)
+   elseif index==4 then color=color:Lerp(Color3.fromRGB(144,165,153),.5)end
+   p.Color=color local appearance=p:FindFirstChildOfClass("SurfaceAppearance")if appearance then appearance.Color=color end
+  end
+ end end
+ m.Parent=parent Collection:AddTag(m,"ForestTree")return m
 end
 function M.install()
  local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local Scene=require(runtime.Scene)

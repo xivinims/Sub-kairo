@@ -14,7 +14,7 @@ function Controller.start(runtime,world)
  local function record(model,kind)
   for _,p in ipairs(model:GetDescendants())do if p:IsA("BasePart")then
    local n=p.Name:lower()local vegetation=n:find("leaf",1,true)or n:find("leaves",1,true)or n:find("fern",1,true)or n:find("flower",1,true)or n:find("clover",1,true)
-   if vegetation or kind=="plants"then
+   if vegetation or kind=="plants"or p:GetAttribute("SeasonBaseColor")then
     local appearance=p:FindFirstChildOfClass("SurfaceAppearance")
     local entry={part=p,appearance=appearance,base=p:GetAttribute("SeasonBaseColor")or p.Color,transparency=p:GetAttribute("SeasonBaseTransparency")or p.Transparency,kind=kind,flower=model.Name:lower():find("flower",1,true)~=nil,accent=model:GetAttribute("SpringBlossom")==true}
     parts[p]=entry
