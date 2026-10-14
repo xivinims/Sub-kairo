@@ -682,7 +682,10 @@ function Builder.install()
  for _,m in ipairs(folder:GetChildren())do m:Destroy()end
  local report={bridges=0,segments=0}
  for index,item in ipairs(endpoints)do
-  local a,b=item.a,item.b local span=(Vector3.new(b.X-a.X,0,b.Z-a.Z)).Magnitude
+  local a,b=item.a,item.b
+  local bankA,bankB=assert(ground(a.X,a.Z)),assert(ground(b.X,b.Z))
+  a=Vector3.new(a.X,bankA.Position.Y+.10,a.Z)b=Vector3.new(b.X,bankB.Position.Y+.10,b.Z)
+  local span=(Vector3.new(b.X-a.X,0,b.Z-a.Z)).Magnitude
   local model=Instance.new("Model")model.Name="ArchedWoodenBridge"..index model.ModelStreamingMode=Enum.ModelStreamingMode.Atomic model:SetAttribute("SourceAssetId",117077041338395)model.Parent=folder
   local visual=template:Clone()visual.Name="NativeBridge"visual:ScaleTo((b-a).Magnitude/(sourceLength-4.0))visual.Parent=model
   for _,p in ipairs(visual:GetDescendants())do if p:IsA("BasePart")then p.Anchored=true p.CanCollide=false p.CanQuery=true p.CanTouch=false end end
@@ -1100,7 +1103,7 @@ for _,bridge in ipairs(world.Amenities.WoodenBridges:GetChildren())do
    assert(hit.Instance.Name=="WalkwayCollision"and math.abs(hit.Position.Y-p.Y)<.18,"Bridge walking surface discontinuity")report.bridgeWalkProbes+=1
   end
  end
- for _,index in ipairs({1,#nodes})do local p=Vector3.new(unpack(nodes[index]))local hit=assert(ground(p.X,p.Z))assert(hit.Material~=Enum.Material.Water and math.abs(hit.Position.Y-p.Y)<1.4,"Bridge does not meet the bank")end
+ for _,index in ipairs({1,#nodes})do local p=Vector3.new(unpack(nodes[index]))local hit=assert(ground(p.X,p.Z))assert(hit.Material~=Enum.Material.Water and math.abs(hit.Position.Y-p.Y)<1.4,"Bridge does not meet the bank: "..bridge.Name.." end "..index.." deck="..p.Y.." terrain="..hit.Position.Y)end
  for _,p in ipairs(bridge:GetChildren())do if p.Name=="MasonrySupport"then local g=p:GetAttribute("GroundPoint")assert(p.Position.Y-p.Size.Y*.5<=g.Y+.01)end end
  report.bridges+=1
 end
