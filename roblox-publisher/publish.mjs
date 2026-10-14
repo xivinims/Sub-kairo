@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import {editPlace} from './place-settings.mjs';
 
 async function main() {
   const key = process.env.ROBLOX_API_KEY;
@@ -30,6 +31,27 @@ async function main() {
   }
   const script = fs.readFileSync(new URL('./patch.luau', import.meta.url), 'utf8');
   const installation = await execute(script);
+  let publication = null;
+  const result = installation.output?.results?.[0];
+  if (result?.binaryPlaceBase64) {
+    const original = Buffer.from(result.binaryPlaceBase64, 'base64');
+    delete result.binaryPlaceBase64;
+    const edited = editPlace(original);
+    const sha256 = crypto.createHash('sha256').update(edited.buffer).digest('hex');
+    publication = {bytes: edited.buffer.length, sha256, changes: edited.changes, classCount: edited.classes.length};
+    fs.mkdirSync('out', {recursive: true});
+    fs.writeFileSync('out/TreeWorld.rbxl', edited.buffer);
+    if (result.exportOnly !== true) {
+      const response = await fetch('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published', {
+        method: 'POST', headers: {'x-api-key':key, 'content-type':'application/octet-stream'}, body:edited.buffer, signal:AbortSignal.timeout(60000)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error('Place publication rejected: '+JSON.stringify(data));
+      publication.versionNumber = data.versionNumber;
+      if (data.versionNumber !== result.expectedVersion) throw new Error('Unexpected saved place version '+data.versionNumber);
+      result.published = true;
+    }
+  }
   // Saving succeeds before the independent fresh-session check. Log it immediately.
   const sourceSha256 = crypto.createHash('sha256').update(script).digest('hex');
   console.log(JSON.stringify({installationState: installation.state,
@@ -38,7 +60,7 @@ async function main() {
   if (installation.output?.results?.[0]?.published === true) {
     freshVerification = await execute(fs.readFileSync(new URL('./verify.luau', import.meta.url), 'utf8'));
   }
-  const report = {sourceSha256, installation, freshVerification};
+  const report = {sourceSha256, installation, publication, freshVerification};
   fs.mkdirSync('out', {recursive: true});
   fs.writeFileSync('out/result.json', JSON.stringify(report, null, 2));
   fs.writeFileSync('out/index.html', '<!doctype html><title>Overyard publisher</title>Completed');
@@ -52,3 +74,4 @@ main().catch(error => {
   console.error(key ? String(error.message).split(key).join('[REDACTED]') : error.message);
   process.exit(1);
 });
+
