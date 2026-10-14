@@ -1,4 +1,4 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==96,"Published base changed")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==97,"Published base changed")
 game:GetService("ServerStorage")
 local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
 local function run(code)return factory("return function()\n"..code.."\nend")()end
@@ -1022,7 +1022,7 @@ task.spawn(function()while gui.Parent do updateVisible()task.wait(.25)end end)
 applyCamera()setUltra(true)updateVisible()
 ]============])
 
-workspace.ForestWorld:SetAttribute("UpgradeVersion",97)
+workspace.ForestWorld:SetAttribute("UpgradeVersion",98)
 source(game.ServerScriptService,"Script","ForestServer",[============[local Players = game:GetService("Players")
 local Run = game:GetService("RunService")
 local runtime = game.ReplicatedStorage:WaitForChild("ForestRuntime")
@@ -1196,7 +1196,7 @@ local world=workspace.ForestWorld
 local runtime=game.ReplicatedStorage.ForestRuntime
 local Lighting=game:GetService("Lighting")
 local Terrain=workspace.Terrain
-assert(world:GetAttribute("UpgradeVersion")==97)
+assert(world:GetAttribute("UpgradeVersion")==98)
 assert(runtime:GetAttribute("NoDecorativeRocks")==true)
 assert(runtime:GetAttribute("RiversideCottageRemoved")==true)
 assert(runtime:GetAttribute("AnimationMode")=="RobloxDefault")
@@ -1289,4 +1289,4 @@ return{
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)runtime:SetAttribute("ForestTestMode",nil)
 game:GetService("AssetService"):SavePlaceAsync()
-return{published=true,expectedVersion=97,baseVersion=96,reports=reports}
+return{published=true,expectedVersion=98,baseVersion=97,reports=reports}
