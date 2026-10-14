@@ -850,6 +850,44 @@ function B.install()
 
  report.waterReflectance=Terrain.WaterReflectance
  report.graphicsPreset="Ultra"
+ -- Final grounding pass after every other installer has finished.
+ local vegetationRay=RaycastParams.new()
+ vegetationRay.FilterType=Enum.RaycastFilterType.Include
+ vegetationRay.FilterDescendantsInstances={Terrain}
+ vegetationRay.IgnoreWater=true
+ local regrounded=0
+ for _,folder in ipairs({world.Decor.Trees,world.Decor.Plants})do
+  local treeFolder=folder==world.Decor.Trees
+  for _,m in ipairs(folder:GetChildren())do
+   if m:IsA("Model")then
+    local p=m:GetAttribute("ActualRootPoint")
+    local depth=treeFolder and 1.15 or .35
+    if p then
+     local hit=workspace:Raycast(Vector3.new(p.X,210,p.Z),Vector3.yAxis*-310,vegetationRay)
+     if hit then
+      local targetY=hit.Position.Y-depth
+      local delta=targetY-p.Y
+      if math.abs(delta)>.02 then m:PivotTo(m:GetPivot()+Vector3.yAxis*delta)end
+      m:SetAttribute("ActualRootPoint",Vector3.new(p.X,targetY,p.Z))
+      regrounded+=1
+     end
+    else
+     local cf,size=m:GetBoundingBox()
+     local hit=workspace:Raycast(Vector3.new(cf.X,210,cf.Z),Vector3.yAxis*-310,vegetationRay)
+     if hit then
+      local bottom=cf.Y-size.Y*.5
+      local target=hit.Position.Y-(treeFolder and .75 or .18)
+      m:PivotTo(m:GetPivot()+Vector3.yAxis*(target-bottom))
+      m:SetAttribute("ActualRootPoint",Vector3.new(cf.X,target,cf.Z))
+      regrounded+=1
+     end
+    end
+   end
+  end
+ end
+ report.regroundedVegetation=regrounded
+ runtime:SetAttribute("VegetationRegrounded",regrounded)
+
  runtime:SetAttribute("DestroyedHouseCount",report.destroyedHouses)
  runtime:SetAttribute("BrokenBridgeCount",report.brokenBridges)
  runtime:SetAttribute("NoDecorativeRocks",true)
