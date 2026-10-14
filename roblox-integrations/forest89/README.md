@@ -23,3 +23,9 @@ The existing native Forest Pack meshes, root contact profiles, two wooden bridge
 - `assemble.py`: builds the three execution scripts; requires version-88 test sources in sibling forest88.
 
 Native checks verify structure, collision and script compilation. They cannot establish how reference images compare pixel-for-pixel, or confirm graphics/FPS on the owner's 3GB phone. Particle/fire/beam effects are disabled locally beyond 85 studs; the inherited grass patch budgets remain bounded.
+
+## Publication evidence
+
+Saved version 89 and independently verified in a new Luau execution session by Actions run [38499041928](https://github.com/xivinims/Sub-kairo/actions/runs/38499041928), publication commit `13b2586a7f78e4c11aff76cd42d43d01d714a34c`. Installer SHA-256: `88ffbded4c1152fec65c6d5400b7193462168e9e25a542afd3b475a88270c1e5`.
+
+Fresh verification found 476 trees and 1,677 plants with 28,828 tested lower geometry contacts and no positive support gap; 73 continuous river probes, 82 continuous wooden walkway probes, 35,914 valid grass roots, and zero uncovered points among 832 exposed grass coverage probes in three green areas. There are four camps with 16 additional log seats, 27 lily pads, six open arches, eight columns, four tea stools, four cups, six cookies, four fountain jets, 34 approach steps and 32 night-controlled lights. All 29 runtime scripts/modules compiled. `audit.json` and `publication-result.json` contain the native results and verification limits.
