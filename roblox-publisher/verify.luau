@@ -1,10 +1,10 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==96,"Saved version mismatch")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==97,"Saved version mismatch")
 game:GetService("ServerStorage")
 local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local f=require(m)local v=f()m:Destroy()return v end
 local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)runtime:SetAttribute("ForestTestMode",true)
 run(game.ServerScriptService.ForestServer.Source)
 local tests=run([============[local world=workspace.ForestWorld local runtime=game.ReplicatedStorage.ForestRuntime local C=game:GetService("CollectionService")
-assert(world:GetAttribute("UpgradeVersion")==96)
+assert(world:GetAttribute("UpgradeVersion")==97)
 local report={trees=0,plants=0,actualRootProbes=0,walkProbes=0,teaTables=0,teaCups=0,ruins=4,audio=0}
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ForestGrassClient")and not runtime:FindFirstChild("SkinnedGrassTemplates"),"Skeletal spike grass remains")
 assert(runtime:GetAttribute("GrassRenderer")=="NativeTerrain")
