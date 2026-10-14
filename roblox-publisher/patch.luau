@@ -691,4 +691,5 @@ report.lakeWaterProbes=lakePoints report.cartoonWaterTiles=tiles report.exactLam
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
-return{staged=true,baseVersion=93,reports=reports}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=94,reports=reports}
