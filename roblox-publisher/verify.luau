@@ -1,4 +1,4 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==97,"Saved version mismatch")
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==98,"Saved version mismatch")
 
 local world=workspace:WaitForChild("ForestWorld")
 local runtime=game.ReplicatedStorage:WaitForChild("ForestRuntime")
@@ -6,7 +6,7 @@ local Lighting=game:GetService("Lighting")
 local Terrain=workspace.Terrain
 local C=game:GetService("CollectionService")
 
-assert(world:GetAttribute("UpgradeVersion")==97)
+assert(world:GetAttribute("UpgradeVersion")==98)
 assert(runtime:GetAttribute("NoDecorativeRocks")==true)
 assert(runtime:GetAttribute("RiversideCottageRemoved")==true)
 assert(runtime:GetAttribute("AnimationMode")=="RobloxDefault")
