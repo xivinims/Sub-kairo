@@ -62,3 +62,5 @@ export function editPlace(input){
  for(const p of verified.properties){const key=p.class+'.'+p.name;if(Object.hasOwn(desired,key))assert(Math.abs(Number(number(p.chunk.data,p.offset,p.type))-Number(desired[key]))<1e-6,key+' failed');}
  return{buffer:output,changes,classes:[...parsed.classes.values()].map(x=>x.name)};
 }
+
+export function terrainSettings(input){const p=inspectPlace(input);const result={};for(const prop of p.properties)if(prop.class==='Terrain'&&['Decoration','GrassLength'].includes(prop.name))result[prop.name]=number(prop.chunk.data,prop.offset,prop.type);return result;}

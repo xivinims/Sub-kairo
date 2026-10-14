@@ -213,12 +213,12 @@ function B.install()
  local landmarks=world.Amenities.ForestLandmarks
  local function place(m,target)
   local best,score
-  for r=0,48,8 do for i=0,11 do local a=i*math.pi/6 local x,z=target.X+math.cos(a)*r,target.Y+math.sin(a)*r
+  for r=0,96,8 do for i=0,11 do local a=i*math.pi/6 local x,z=target.X+math.cos(a)*r,target.Y+math.sin(a)*r
    local lo,hi=math.huge,-math.huge
    for _,xx in ipairs({-18,0,18})do for _,zz in ipairs({-18,0,18})do local p=ground(x+xx,z+zz)lo=math.min(lo,p.Y)hi=math.max(hi,p.Y)end end
-   local merit=hi-lo+r*.03 if lo>9 and hi-lo<5 and(not score or merit<score)then best=Vector3.new(x,hi+.18,z)score=merit end
+   local merit=hi-lo+r*.03 if lo>7 and hi-lo<8 and(not score or merit<score)then best=Vector3.new(x,hi+.18,z)score=merit end
   end end
-  assert(best,"No walkable separated ruin site")local original=m:GetAttribute("Origin")m:PivotTo(m:GetPivot()+best-original)m:SetAttribute("Origin",best)
+  assert(best,"No walkable separated ruin site: "..m.Name)local original=m:GetAttribute("Origin")m:PivotTo(m:GetPivot()+best-original)m:SetAttribute("Origin",best)
   for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart")then
    if p.Name=="LandmarkStep"then p:Destroy()
    elseif p.Name=="LandmarkFoundation"then local gp=ground(p.Position.X,p.Position.Z)local top=best.Y-.6 local height=math.max(.4,top-gp.Y+.2)p.Size=Vector3.new(p.Size.X,height,p.Size.Z)p.CFrame=CFrame.new(p.Position.X,top-height*.5,p.Position.Z)p:SetAttribute("GroundPoint",gp)

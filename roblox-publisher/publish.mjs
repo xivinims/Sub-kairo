@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import {editPlace,wrapServices} from './place-settings.mjs';
+import {editPlace,wrapServices,terrainSettings} from './place-settings.mjs';
 
 async function main() {
   const key = process.env.ROBLOX_API_KEY;
@@ -59,6 +59,13 @@ async function main() {
   let freshVerification = null;
   if (installation.output?.results?.[0]?.published === true) {
     freshVerification = await execute(fs.readFileSync(new URL('./verify.luau', import.meta.url), 'utf8'));
+  }
+  const fresh = freshVerification?.output?.results?.[0];
+  if (fresh?.terrainSettingsBase64) {
+    const native = terrainSettings(Buffer.from(fresh.terrainSettingsBase64,'base64'));
+    delete fresh.terrainSettingsBase64;
+    if (native.Decoration !== true || Math.abs(native.GrassLength - .4) > 1e-5) throw new Error('Saved native grass settings mismatch '+JSON.stringify(native));
+    fresh.nativeGrassSettings = native;
   }
   const report = {sourceSha256, installation, publication, freshVerification};
   fs.mkdirSync('out', {recursive: true});

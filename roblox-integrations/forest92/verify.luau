@@ -49,4 +49,4 @@ assert(report.parts<10534 and report.pbr>2500,"Forest loss or mobile geometry in
 return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
-return{ok=true,version=game.PlaceVersion,tests=tests}
+return{ok=true,version=game.PlaceVersion,tests=tests,terrainSettingsBase64=buffer.tostring(game:GetService("EncodingService"):Base64Encode(game:GetService("SerializationService"):SerializeInstancesAsync({workspace.Terrain})))}
