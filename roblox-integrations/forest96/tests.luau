@@ -136,10 +136,28 @@ assert(world:GetAttribute("WorldExtent")==4096 and world:GetAttribute("PreviousT
 for _,m in ipairs(world.Decor.Trees:GetChildren())do assert(m:GetAttribute("FreshReferenceTree")and(m:GetAttribute("SourceAssetId")==580221169 or m:GetAttribute("SourceAssetId")==6432306802),"Old tree model remains")end
 for _,click in ipairs(C:GetTagged("TreeWorldCupClick"))do if click:IsDescendantOf(world)then local cup=click.Parent:FindFirstChild("UtahCup")assert(cup and cup.MeshId=="rbxassetid://10080681533")end end
 assert(runtime.TeaCupTool.Handle:IsA("MeshPart")and runtime.TeaCupTool.Handle.MeshId=="rbxassetid://10080681533")
-local extended=0 for _,v in ipairs({Vector2.new(1500,1200),Vector2.new(-1500,-1200),Vector2.new(1800,-1400),Vector2.new(-1700,1500)})do local h=ground(v.X,v.Y)assert(math.abs(h.Position.Y-20)<.15 and h.Normal.Y>.95)extended+=1 end
+local extended=0 for _,v in ipairs({Vector2.new(1500,1200),Vector2.new(-1500,-1200),Vector2.new(1800,-1400),Vector2.new(-1700,1500)})do local h=ground(v.X,v.Y)assert(math.abs(h.Position.Y-22)<.15 and h.Normal.Y>.95,"Extended ground "..tostring(v).." position="..tostring(h.Position).." normal="..tostring(h.Normal))extended+=1 end
+local maximumSeamStep=0
+for _,sign in ipairs({-1,1})do local previous=ground(sign*492,0).Position.Y
+ for x=496,536,4 do local y=ground(sign*x,0).Position.Y maximumSeamStep=math.max(maximumSeamStep,math.abs(y-previous))previous=y end
+end
+assert(maximumSeamStep<3,"A steep ledge remains at the expanded terrain edge")report.maximumSeamStep=maximumSeamStep
 local lakes=game:GetService("HttpService"):JSONDecode(runtime:GetAttribute("LakeLocations"))for i=3,#lakes do local p=lakes[i]local h=assert(workspace:Raycast(Vector3.new(p[1],150,p[3]),Vector3.yAxis*-250,water))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.15)end
 local Foliage=require(runtime.Foliage)local chunk=assert(Foliage.makeChunk(runtime,world,10,6))local streamedTrees=chunk:GetAttribute("TreeCount")assert(streamedTrees>0 and streamedTrees<=9)
 for _,m in ipairs(chunk:GetChildren())do local p=m:GetAttribute("ActualRootPoint")assert(p and p.Y<ground(p.X,p.Z).Position.Y-.5)end chunk:Destroy()
+local seasons=require(runtime.SeasonController).start(runtime,world)
+assert(seasons.apply(4,true),"Could not enter winter")
+assert(ground(1500,1200).Material==Enum.Material.Snow,"Expanded terrain missed the global season")
+local winterChunk=assert(Foliage.makeChunk(runtime,world,10,6))
+task.wait(.05)
+local coloredLeaves=0
+for _,p in ipairs(winterChunk:GetDescendants())do if p:IsA("BasePart")and p:GetAttribute("SeasonBaseColor")then
+ local expected=p:GetAttribute("SeasonBaseColor"):Lerp(Color3.fromRGB(144,165,153),.5)
+ assert((Vector3.new(p.Color.R,p.Color.G,p.Color.B)-Vector3.new(expected.R,expected.G,expected.B)).Magnitude<.005,"New streamed foliage has the wrong season")coloredLeaves+=1
+end end
+assert(coloredLeaves>0)winterChunk:Destroy()
+assert(seasons.apply(1,true))assert(ground(1500,1200).Material==Enum.Material.Grass,"Grass did not return after winter")
+report.globalExtendedSeasons=true
 local Mirror=require(runtime.RiverReflection)local actor=Instance.new("Model")actor.Parent=game.ServerStorage local head=Instance.new("Part")head.Name="Head"head.Size=Vector3.one head.CFrame=CFrame.new(0,9,0)head.Parent=actor
 local parent=Instance.new("Folder")parent.Parent=game.ServerStorage local reflection=Mirror.create(actor,parent,workspace)
 assert(reflection.surface.CanvasSize==Vector2.new(96,144)and reflection.view.ImageTransparency>=.88 and #reflection.pairs<=32)

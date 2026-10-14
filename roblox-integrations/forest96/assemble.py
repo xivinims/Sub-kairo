@@ -11,7 +11,7 @@ local function source(parent,class,name,code)local s=parent:FindFirstChild(name)
 local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)runtime:SetAttribute("ForestTestMode",true)
 '''
 body=header
-for name,file in [('Foliage','foliage.luau'),('RiverReflection','reflection.luau'),('MusicUI','music-ui.luau')]:
+for name,file in [('Foliage','foliage.luau'),('RiverReflection','reflection.luau'),('MusicUI','music-ui.luau'),('SeasonController','season-server.luau')]:
  body+='source(runtime,"ModuleScript","'+name+'",'+q(read(file))+')\n'
 body+='local reports={}\n'
 for name,file in [('terrain','terrain.luau'),('foliage','foliage.luau'),('bridges','bridges.luau'),('water','water.luau'),('lamps','lamps.luau'),('roots','vegetation.luau'),('tea','tea.luau'),('theme','theme.luau')]:
