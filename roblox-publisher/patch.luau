@@ -813,4 +813,5 @@ for _,rig in ipairs({Enum.HumanoidRigType.R6,Enum.HumanoidRigType.R15})do
 end
 return report
 ]============])
-return{staged=true,baseVersion=90,report={riverside=riverside,animals=animals,tools=tools,audio=audio,tea=tea,baseTests=baseTests,forestTests=forestTests,gardenTests=gardenTests,interactionTests=interactionTests}}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=91,baseVersion=90,report={riverside=riverside,animals=animals,tools=tools,audio=audio,tea=tea,baseTests=baseTests,forestTests=forestTests,gardenTests=gardenTests,interactionTests=interactionTests}}
