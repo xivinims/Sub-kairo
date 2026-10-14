@@ -30,5 +30,52 @@
   },
   "actualClientRenderingMeasured": false,
   "actualTwoClientNetworkMeasured": false,
-  "phone3GBPerformanceMeasured": false
+  "phone3GBPerformanceMeasured": false,
+  "publishedVersion": 95,
+  "publishRun": 38565953128,
+  "publishCommit": "a3cd702565d81db447c5739053ff8a65b784f113",
+  "publishRunUrl": "https://github.com/xivinims/Sub-kairo/actions/runs/38565953128",
+  "verifiedAt": "2026-10-14T12:43:33.037Z",
+  "freshVerification": {
+    "version": 95,
+    "tests": {
+      "cottageWalkwayProbes": 189,
+      "parts": 10282,
+      "stoneWalkProbes": 30,
+      "cottageTeaFloor": true,
+      "facetedStones": 10,
+      "teaTables": 4,
+      "noAnimals": true,
+      "fogStable": true,
+      "directCupServe": true,
+      "trees": 453,
+      "plants": 1443,
+      "actualRootProbes": 7781,
+      "pbr": 2978,
+      "exactLampPosts": 31,
+      "cartoonWaterTiles": 188,
+      "musicStatusValidation": true,
+      "audio": 7,
+      "radioMeshes": 8,
+      "noTeaPopups": true,
+      "lowLakeFlowers": 114,
+      "lakeWaterProbes": 45,
+      "teaCups": 16,
+      "nativeGrassRequested": true,
+      "musicPresets": 7,
+      "accentRocks": 46,
+      "cottageEntranceProbes": 18,
+      "compiled": 33,
+      "walkProbes": 855,
+      "personalPlaybackIsolation": true,
+      "ruins": 4,
+      "musicScrollUI": true,
+      "finiteWorldGeometry": true
+    },
+    "ok": true,
+    "nativeGrassSettings": {
+      "Decoration": true,
+      "GrassLength": 0.4000000059604645
+    }
+  }
 }
