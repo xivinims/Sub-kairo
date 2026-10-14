@@ -78,7 +78,7 @@ function Controller.start(runtime,world)
    task.delay(.9,function()if token==generation and tool.Parent==model then local back=Tween:Create(tool,TweenInfo.new(.4,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Grip=original})tweens[#tweens+1]=back back:Play()end end)
   end)
   task.delay(240,function()if tool.Parent then tool:Destroy()end end)
-  hum:EquipTool(tool)return true
+  h:EquipTool(tool)return true
  end
  for _,click in ipairs(Collection:GetTagged("TreeWorldCupClick"))do
   if click:IsDescendantOf(world)then click.MouseClick:Connect(function(player)serve(player,click,false)end)end
