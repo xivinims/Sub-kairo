@@ -1339,4 +1339,5 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,extendedWaterSurface=true,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
-return{staged=true,baseVersion=89,report={mainRuins=mainRuins,world=worldReport,bridges=bridgeReport,extraRuins=extraReport,tests=tests,forestTests=forestTests}}
+game:GetService("AssetService"):SavePlaceAsync()
+return{published=true,expectedVersion=90,baseVersion=89,report={mainRuins=mainRuins,world=worldReport,bridges=bridgeReport,extraRuins=extraReport,tests=tests,forestTests=forestTests}}

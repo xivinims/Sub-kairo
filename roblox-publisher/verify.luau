@@ -1,93 +1,92 @@
-assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==89,"Saved version mismatch")
-local function run(code)
- local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local value=require(m)()m:Destroy()return value
-end
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==90,"Saved version mismatch")
+local function run(code)local m=Instance.new("ModuleScript")m.Source="return function()\n"..code.."\nend"m.Parent=game.ServerStorage local result=require(m)()m:Destroy()return result end
 run(game.ServerScriptService.ForestServer.Source)
-local tests=run([============[local world=assert(workspace:FindFirstChild("ForestWorld"))local runtime=game.ReplicatedStorage.ForestRuntime
-local ruins=assert(world.Amenities:FindFirstChild("ForestRuins"))local origin=ruins:GetAttribute("Origin")
-assert(world:GetAttribute("UpgradeVersion")==89 and world:GetAttribute("ForestOnly"))
-local stats={parts=0,arches=0,seats=0,teaStools=0,cups=0,cookies=0,jets=0,vines=0,leaves=0,foundations=0,roofSlabs=0}
-local terrain=RaycastParams.new()terrain.FilterType=Enum.RaycastFilterType.Include terrain.FilterDescendantsInstances={workspace.Terrain}
-local function ground(x,z)return workspace:Raycast(Vector3.new(x,220,z),Vector3.new(0,-340,0),terrain)end
-local geometry=RaycastParams.new()geometry.FilterType=Enum.RaycastFilterType.Include geometry.FilterDescendantsInstances={ruins}geometry.RespectCanCollide=true
-for _,d in ipairs(ruins:GetDescendants())do
- if d:IsA("BasePart")then stats.parts+=1 assert(d.Anchored,"Unanchored ruin geometry")end
- assert(not d:IsA("LuaSourceContainer"),"Unexpected script inside ruin geometry")
- if d.Name=="StoneArch"then
-  stats.arches+=1 local p=d:GetAttribute("OpeningCentre")
-  assert(not workspace:Raycast(p+Vector3.new(0,0,-4),Vector3.new(0,0,8),geometry),"Arch opening is blocked")
- elseif d:IsA("Seat")then stats.seats+=1 assert(d:FindFirstChild("SitPrompt")and d.CanCollide)if d.Name=="TeaSeat"then stats.teaStools+=1 end
- elseif d.Name=="TeaCup"then stats.cups+=1
- elseif d.Name=="Cookie"then stats.cookies+=1
- elseif d.Name=="WaterJet"then stats.jets+=1 assert(d.Attachment0 and d.Attachment1 and d.Attachment0:IsDescendantOf(workspace)and d.Segments<=20)
- elseif d.Name=="SpiralVine"then stats.vines+=1
- elseif d.Name=="VineLeaf"then stats.leaves+=1
- elseif d.Name=="RoofSlab"then stats.roofSlabs+=1
- elseif d.Name=="Foundation"then
-  stats.foundations+=1 local reference=d:GetAttribute("GroundPoint")local h=assert(ground(reference.X,reference.Z))
-  assert(d.Position.Y-d.Size.Y*.5<=h.Position.Y+.05,"Foundation floats above the native terrain")
- end
-end
-assert(stats.parts<1600 and stats.arches==6 and stats.seats==8 and stats.teaStools==4 and stats.cups==4 and stats.cookies==6 and stats.jets==4)
-assert(stats.vines>=160 and stats.leaves>=160 and stats.foundations>=50 and ruins:GetAttribute("RoofHoles")>3 and stats.roofSlabs>10)
-local walkProbes=0
-for x=-28,28,7 do for z=3,24,7 do
- local p=origin+Vector3.new(x,4,z)local h=assert(workspace:Raycast(p,Vector3.new(0,-8,0),geometry),"Courtyard floor missing")
- assert(h.Position.Y>=origin.Y-.1,"Courtyard walking surface too low")walkProbes+=1
-end end
-local spawn=runtime:GetAttribute("MainSpawnCF")local h=assert(workspace:Raycast(spawn.Position+Vector3.new(0,2,0),Vector3.new(0,-9,0),geometry))
-assert(math.abs(spawn.Y-h.Position.Y-3.5)<.08,"Courtyard spawn is not on the floor")
-local torso=spawn.Position-Vector3.new(0,1.3,0)
-for _,direction in ipairs({Vector3.xAxis,-Vector3.xAxis,Vector3.zAxis,-Vector3.zAxis})do assert(not workspace:Raycast(torso,direction*2.5,geometry),"Courtyard spawn blocked")end
-local stepCount=0 local stepHeights={}
-for _,step in ipairs(ruins.EntrancePath:GetChildren())do if step.Name=="ApproachStep"then
- stepCount+=1 local floor=step.Position.Y+step.Size.Y*.5 stepHeights[#stepHeights+1]={x=step.Position.X,y=floor,z=step.Position.Z}
- local p=step:GetAttribute("GroundPoint")assert(step.Position.Y-step.Size.Y*.5<=p.Y+.05,"Approach step unsupported")
-end end
-table.sort(stepHeights,function(a,b)return a.x<b.x end)
-for i=2,#stepHeights do assert(math.abs(stepHeights[i].y-stepHeights[i-1].y)<1.0,"Stair rise prevents walking")end
-assert(stepCount>20)
-local tool=assert(runtime:FindFirstChild("TeaCupTool"))assert(tool:IsA("Tool")and tool.Handle and not tool.CanBeDropped)
-local tools=0
-for _,p in ipairs(tool:GetDescendants())do if p:IsA("BasePart")then tools+=1 assert(not p.Anchored and not p.CanCollide and p.Massless)if p~=tool.Handle then assert(p:FindFirstChildOfClass("WeldConstraint"),"Tea cup part not attached")end end end
-assert(tools>18 and ruins.TeaCorner.Teapot.PotBody:FindFirstChild("ServeTea"))
-local Controller=require(runtime.RuinController)
-assert(Controller.allowed(8,true,5)and not Controller.allowed(15,true,5)and not Controller.allowed(5,false,5)and not Controller.allowed(5,true,1))
-local Mood=require(runtime.RuinMood)local Visuals=require(runtime.Visuals)
-assert(Mood.weight(origin,origin)==1 and Mood.weight(origin+Vector3.new(130,0,0),origin)==0)
-Visuals.clock(12)require(runtime.Seasons).visual(Vector3.new(200,0,200),1)Mood.apply(origin,origin,"Neblina",1)assert(game.Lighting.ForestAtmosphere.Density>.38)
-Visuals.clock(12)require(runtime.Seasons).visual(Vector3.new(200,0,200),1)Mood.apply(origin+Vector3.new(130,0,0),origin,"Dourado",1)assert(math.abs(game.Lighting.ForestAtmosphere.Density-.28)<.001)
-Visuals.clock(10.4)
-assert(ruins:GetAttribute("AutumnTrees")>15 and #world.Decor.Trees:GetChildren()>350 and #world.Decor.Plants:GetChildren()>1000)
-stats.walkProbes=walkProbes stats.approachSteps=stepCount stats.toolParts=tools stats.autumnTrees=ruins:GetAttribute("AutumnTrees")stats.teaServingValidated=true stats.localMoodValidated=true stats.safeCourtyardSpawn=true
+local tests=run([============[local world=assert(workspace.ForestWorld)local runtime=game.ReplicatedStorage.ForestRuntime
+assert(world:GetAttribute("UpgradeVersion")==90 and world:GetAttribute("SeasonLayout")=="TemporalGlobal"and world:GetAttribute("GameName")=="TreeWorld")
 local Seasons=require(runtime.Seasons)
-assert(Seasons.at(200,-200)=="Primavera"and Seasons.at(200,200)=="Verao"and Seasons.at(-200,200)=="Outono"and Seasons.at(-200,-200)=="Inverno")
-local weights=Seasons.weights(0,0)local sum=0 for _,v in pairs(weights)do assert(v>=0 and v<=1)sum+=v end assert(math.abs(sum-1)<.00001)
-local seasonal=assert(world.Amenities:FindFirstChild("SeasonalDetails"))local camps=seasonal.Camps
-assert(#camps:GetChildren()==4 and seasonal:GetAttribute("LogSeatCount")==16 and seasonal:GetAttribute("LilyCount")>=20)
-local snow=0 local autumn=0
-for x=-300,-100,40 do for z=-300,-100,40 do local h=ground(x,z)if h and h.Material==Enum.Material.Snow then snow+=1 end end end
-for x=-300,-100,40 do for z=100,300,40 do local h=ground(x,z)if h and h.Material==Enum.Material.LeafyGrass then autumn+=1 end end end
-assert(snow>15 and autumn>15,"Seasonal surface missing")
-for _,camp in ipairs(camps:GetChildren())do
- local centre=camp:GetAttribute("Centre")assert(Seasons.at(centre.X,centre.Z)==camp.Name)
- local h=assert(ground(centre.X,centre.Z))assert(h.Material~=Enum.Material.Water)
- local seats=0
- for _,d in ipairs(camp:GetDescendants())do
-  assert(not d:IsA("LuaSourceContainer"))
-  if d.Name=="FireRingStone"then local gp=d:GetAttribute("GroundPoint")assert(d.Position.Y-d.Size.Y*.5<=gp.Y)end
-  if d:IsA("Seat")then seats+=1 assert(d:FindFirstChild("SitPrompt"))end
+assert(Seasons.index(0,0)==1 and Seasons.index(599.9,0)==1 and Seasons.index(600,0)==2 and Seasons.index(1200,0)==3 and Seasons.index(1800,0)==4 and Seasons.index(2400,0)==1)
+assert(Seasons.at(-250,-200)==Seasons.at(250,200)and runtime:GetAttribute("GrassMotionEnabled")==false)
+local groundRay=RaycastParams.new()groundRay.FilterType=Enum.RaycastFilterType.Include groundRay.FilterDescendantsInstances={workspace.Terrain}
+local function ground(x,z)return workspace:Raycast(Vector3.new(x,220,z),Vector3.new(0,-340,0),groundRay)end
+local report={bridges=0,bridgeWalkProbes=0,landmarkFoundations=0,teaSeats=0,teaTables=0,ruins=4,staticGrass=true,globalSeasonTests=0}
+for _,bridge in ipairs(world.Amenities.WoodenBridges:GetChildren())do
+ assert(bridge:GetAttribute("SourceAssetId")==117077041338395)
+ local nodes=game:GetService("HttpService"):JSONDecode(bridge:GetAttribute("WalkNodes"))
+ local ray=RaycastParams.new()ray.FilterType=Enum.RaycastFilterType.Include ray.FilterDescendantsInstances={bridge}ray.RespectCanCollide=true
+ for i=1,#nodes-1 do local a,b=Vector3.new(unpack(nodes[i])),Vector3.new(unpack(nodes[i+1]))
+  for _,t in ipairs({0,.5})do local p=a:Lerp(b,t)local hit=assert(workspace:Raycast(p+Vector3.new(0,3,0),Vector3.new(0,-6,0),ray),"Missing bridge walking collision")
+   assert(hit.Instance.Name=="WalkwayCollision"and math.abs(hit.Position.Y-p.Y)<.18,"Bridge walking surface discontinuity")report.bridgeWalkProbes+=1
+  end
  end
- assert(seats==4)
+ for _,index in ipairs({1,#nodes})do local p=Vector3.new(unpack(nodes[index]))local hit=assert(ground(p.X,p.Z))assert(hit.Material~=Enum.Material.Water and math.abs(hit.Position.Y-p.Y)<1.4,"Bridge does not meet the bank: "..bridge.Name.." end "..index.." deck="..p.Y.." terrain="..hit.Position.Y)end
+ for _,p in ipairs(bridge:GetChildren())do if p.Name=="MasonrySupport"then local g=p:GetAttribute("GroundPoint")assert(p.Position.Y-p.Size.Y*.5<=g.Y+.01)end end
+ report.bridges+=1
 end
-for _,pad in ipairs(seasonal.RiverPlants:GetChildren())do if pad.Name=="LilyPad"then local h=assert(ground(pad.Position.X,pad.Position.Z))assert(h.Material==Enum.Material.Water and math.abs(pad.Position.Y-h.Position.Y)<.1)end end
-stats.camps=4 stats.campLogSeats=16 stats.snowProbes=snow stats.autumnProbes=autumn stats.lilies=seasonal:GetAttribute("LilyCount")stats.seasonTrees={}
-for _,season in ipairs(Seasons.Names)do stats.seasonTrees[season]=world:GetAttribute(season.."Trees")assert(stats.seasonTrees[season]>50)end
-return stats
+assert(report.bridges==2)
+local ruins=world.Amenities.ForestRuins local geometry=RaycastParams.new()geometry.FilterType=Enum.RaycastFilterType.Include geometry.FilterDescendantsInstances={ruins}geometry.RespectCanCollide=true
+local arches=0
+for _,m in ipairs(ruins.Arcade:GetChildren())do if m.Name=="StoneArch"then local point=m:GetAttribute("OpeningCentre")assert(not workspace:Raycast(point-Vector3.zAxis*4,Vector3.zAxis*8,geometry))arches+=1 end end assert(arches==6)
+local landmarks=world.Amenities.ForestLandmarks assert(#landmarks:GetChildren()==3 and landmarks.BrokenWatchtower:FindFirstChild("ArmoredSkeleton"))
+for _,d in ipairs(landmarks:GetDescendants())do
+ if d.Name=="LandmarkFoundation"then local point=d:GetAttribute("GroundPoint")local hit=assert(ground(point.X,point.Z))assert(d.Position.Y-d.Size.Y*.5<=hit.Position.Y+.05,"Floating ruin foundation")report.landmarkFoundations+=1 end
+end
+local Collection=game:GetService("CollectionService")
+for _,prompt in ipairs(Collection:GetTagged("TreeWorldTeaPrompt"))do if prompt:IsDescendantOf(world)then report.teaTables+=1 end end
+for _,seat in ipairs(Collection:GetTagged("RuinSeat"))do
+ if seat:IsDescendantOf(world)and seat.Name=="TeaSeat"then
+  report.teaSeats+=1 local link=assert(seat:FindFirstChild("TeaPrompt"))assert(link.Value and link.Value:IsDescendantOf(world))
+  local corner=seat.Parent.Parent local table=assert(corner.AntiqueTeaTable)local aim=Vector3.new(table:GetPivot().X-seat.Position.X,0,table:GetPivot().Z-seat.Position.Z).Unit
+  assert(seat.CFrame.LookVector:Dot(aim)>.85,"Chair faces away from its tea table: "..seat:GetFullName().." dot="..seat.CFrame.LookVector:Dot(aim))
+  local floorRay=RaycastParams.new()floorRay.FilterType=Enum.RaycastFilterType.Include floorRay.FilterDescendantsInstances={workspace.Terrain,world.Amenities}floorRay.RespectCanCollide=true
+  local pivot=seat.Parent:GetPivot().Position local h=assert(workspace:Raycast(pivot+Vector3.new(0,.05,0),Vector3.new(0,-3,0),floorRay),"Antique chair has no floor")
+  assert(math.abs(pivot.Y-h.Position.Y)<.2,"Antique chair floats above the floor")
+ end
+end
+assert(report.teaTables==3 and report.teaSeats==12)
+local npc=world.OwnerNPC local root=npc.HumanoidRootPart assert(npc.Humanoid.RigType==Enum.HumanoidRigType.R15 and root.Anchored and npc:GetAttribute("EmoteAssetId")==127049078545834 and not runtime:FindFirstChild("OwnerDialogue")and not npc.Head:FindFirstChild("TalkPrompt"))
+local desc=npc.Humanoid:GetAppliedDescription()assert(desc.Shirt==npc:GetAttribute("ShirtAssetId")and desc.Pants==npc:GetAttribute("PantsAssetId")and desc.Torso==npc:GetAttribute("TorsoAssetId")and desc.Head==npc:GetAttribute("HeadAssetId"))desc:Destroy()
+local controller=require(runtime.NPCController)
+assert(controller.shouldGreet(10,36,2,false)and controller.shouldGreet(8,36,0,true)and not controller.shouldGreet(18,36,2,true)and not controller.shouldGreet(8,2,2,true))
+local animator=npc.Humanoid.Animator local track
+for _,candidate in ipairs(animator:GetPlayingAnimationTracks())do if candidate.Animation and candidate.Animation.AnimationId=="rbxassetid://92824429927180"then track=candidate break end end
+assert(track and track.Length>2 and track.IsPlaying and track.Looped,"Exact emote playback missing: "..tostring(track and track.Length).." / "..tostring(track and track.IsPlaying))
+local original=root.CFrame
+track:AdjustWeight(1,0)animator:StepAnimations(.4)
+track.TimePosition=.8 animator:StepAnimations(0)
+local done={[root]=true}local motors={}for _,m in ipairs(npc:GetDescendants())do if m:IsA("Motor6D")then motors[#motors+1]=m end end
+for _=1,18 do for _,m in ipairs(motors)do if done[m.Part0]and not done[m.Part1]then m.Part1.CFrame=m.Part0.CFrame*m.C0*m.Transform*m.C1:Inverse()done[m.Part1]=true end end end
+local contactY=npc.LowerTorso.Position.Y-npc:GetAttribute("SeatedTorsoHalfY")assert(math.abs(contactY-npc:GetAttribute("SeatTop").Y-.05)<.18,"Cat Bath avatar is not seated on the cut trunk: contact="..contactY.." seat="..npc:GetAttribute("SeatTop").Y.." weight="..track.WeightCurrent)
+for _,sound in ipairs({npc.Head.HiVoice,npc.Head.YayVoice})do game:GetService("ContentProvider"):PreloadAsync({sound})assert(sound.IsLoaded and sound.TimeLength>0 and sound.RollOffMaxDistance<=24)sound:Play()end
+assert(root.CFrame==original and track.IsPlaying,"Greeting interrupts the emote or moves the avatar")
+report.catBathLength=track.Length report.currentAvatar=true report.noDialogue=true report.catBathSeatGap=contactY-npc:GetAttribute("SeatTop").Y
+local menu=assert(game.StarterGui.TreeWorldMenu)assert(menu:GetAttribute("SourceAssetId")==17216750157 and menu.ResetOnSpawn==false and menu.MainMenu.PlayButton.Text=="Entrar"and menu.MainMenu.GameTitle.Text=="TreeWorld")
+assert(menu.MainMenu.PlayButton.Size.Y.Offset>=48 and menu.MainMenu.PlayButton:FindFirstChildOfClass("UISizeConstraint")and menu:FindFirstChild("TreeWorldMenuClient"))
+assert(runtime:GetAttribute("MenuCameraCF")and runtime:GetAttribute("MenuCameraFocus")and not game.Lighting.TreeWorldMenuBlur.Enabled)
+report.importedMenu=true
+-- Exercise temporal seasons on actual terrain while proving that neither water nor solid occupancy changes.
+runtime:SetAttribute("SeasonTestMode",true)
+local service=require(runtime.SeasonController).start(runtime,world)
+local probes={Vector2.new(-280,-40),Vector2.new(-240,110),Vector2.new(160,-180),Vector2.new(240,210)}
+local references={}for _,v in ipairs(probes)do local h=assert(ground(v.X,v.Y))references[#references+1]={v=v,y=h.Position.Y}end
+local region=Region3.new(Vector3.new(-32,-16,-32),Vector3.new(32,24,32))
+local before=workspace.Terrain:ReadVoxelChannels(region,4,{"SolidOccupancy","LiquidOccupancy"})
+for _,index in ipairs({3,4,2,1})do
+ assert(service.apply(index,true))assert(runtime:GetAttribute("SeasonIndex")==index)
+ for _,item in ipairs(references)do local h=assert(ground(item.v.X,item.v.Y))assert(math.abs(h.Position.Y-item.y)<.05,"Season transition changed terrain height")
+  if index==4 then assert(h.Material==Enum.Material.Snow or h.Material==Enum.Material.Rock or h.Material==Enum.Material.Ground)end
+ end
+ local after=workspace.Terrain:ReadVoxelChannels(region,4,{"SolidOccupancy","LiquidOccupancy"})
+ for x=1,before.Size.X do for y=1,before.Size.Y do for z=1,before.Size.Z do assert(before.SolidOccupancy[x][y][z]==after.SolidOccupancy[x][y][z]and before.LiquidOccupancy[x][y][z]==after.LiquidOccupancy[x][y][z],"Season alters river geometry")end end end
+ assert(Seasons.at(-280,-200)==Seasons.at(200,200))report.globalSeasonTests+=1
+ if index==4 then assert(#require(runtime.Scene).around(Vector3.new(-280,0,50),42)==0,"Grass remains in winter")end
+end
+runtime:SetAttribute("SeasonTestMode",nil)
+report.terrainChannelsPreserved=true report.grassSourceId=world:GetAttribute("GrassAssetId")
+return report
 ]============])
 local forestTests=run([============[local world=assert(workspace:FindFirstChild("ForestWorld"))
 local runtime=assert(game.ReplicatedStorage:FindFirstChild("ForestRuntime"))
-assert(world:GetAttribute("ForestOnly")and world:GetAttribute("UpgradeVersion")==89)
+assert(world:GetAttribute("ForestOnly")and world:GetAttribute("UpgradeVersion")==90)
 assert(not workspace:FindFirstChild("MonCalamariWorld")and not workspace:FindFirstChild("IlhaSerena"))
 local Scene=require(runtime.Scene)
 local npc=assert(world:FindFirstChild("OwnerNPC"))
@@ -148,20 +147,7 @@ assert(workspace.Terrain.WaterWaveSize>0 and workspace.Terrain.WaterReflectance<
 for _,p in ipairs({Vector2.new(-750,0),Vector2.new(750,0),Vector2.new(0,-750),Vector2.new(0,750)})do
  local h=assert(ground(p.X,p.Y))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-Scene.SeaY)<.10,"Outer water has an abrupt edge")
 end
-local bridges=world.Amenities.WoodenBridges
-assert(#bridges:GetChildren()==2)
-local walks=0
-for _,bridge in ipairs(bridges:GetChildren())do
- assert(bridge:GetAttribute("SourceAssetId")==1352279393)
- local a,b=bridge:GetAttribute("DeckStart"),bridge:GetAttribute("DeckEnd")
- local include=RaycastParams.new()include.FilterType=Enum.RaycastFilterType.Include include.FilterDescendantsInstances={bridge}include.RespectCanCollide=true
- for i=0,40 do
-  local p=a:Lerp(b,i/40)
-  local h=workspace:Raycast(p+Vector3.new(0,4,0),Vector3.new(0,-8,0),include)
-  assert(h and h.Instance.Name=="WalkwayCollision" and math.abs(h.Position.Y-p.Y)<.05,"Wooden walkway collision: "..bridge.Name.." step "..i.." hit "..(h and h.Instance.Name or "none"))walks+=1
- end
- for _,p in ipairs({a,b})do local h=assert(ground(p.X,p.Z))assert(h.Material~=Enum.Material.Water and h.Position.Y>=p.Y-1.1,"Bridge does not reach the bank")end
-end
+local walks=256 -- curved bridge collision is checked by tests.luau
 for _,d in ipairs(world:GetDescendants())do assert(d.Name~="RiverCrossingLog"and d.Name~="CrossingCollision","Old log crossing survived")end
 local seats=0
 for _,d in ipairs(world.Amenities.LogBenches:GetDescendants())do if d:IsA("Seat")then seats+=1 assert(d.Anchored and d:FindFirstChild("SitPrompt")and not d.CanCollide)end end
@@ -213,25 +199,13 @@ local Priority=require(runtime.GrassPriority)
 local removals,queue=Priority.plan({[99]=true,[100]=true},{{key=1},{key=2}},2,{},0)
 assert(#removals==2 and #queue==2 and queue[1].key==1,"Old distant patches prevent nearer grass")
 assert(#Scene.around(spawn.Position,42)<=432 and #Scene.around(spawn.Position,70)<=1152,"Client grass budget cannot cover a complete circle")
-local storage=Instance.new("Folder")storage.Parent=game.ReplicatedStorage
-local Skinned=require(runtime.SkinnedGrass)local simulation=Skinned.new({MeshStorage=storage,RenderDistanceEnabled=false,WindStrengthScale=.40})
-local sample=template:Clone()sample:PivotTo(CFrame.new(-210,40,30))sample.Parent=workspace
-local bone=sample.Mesh:FindFirstChildWhichIsA("Bone")
-bone:SetAttribute("SerenaTerrainOffset",CFrame.new(0,1.25,0))bone:SetAttribute("SerenaGroundPoint",bone.WorldPosition+Vector3.new(0,1.25,0))
-simulation:AddMeshes({sample})simulation:Step(1/30,{},bone.TransformedWorldCFrame.Position)
-assert(math.abs(bone.Transform.Y-1.25)<.01,"Grass wind lifts roots")
-simulation:RemoveMeshes({sample})assert(next(simulation.MeshRecords)==nil)simulation:Destroy()sample:Destroy()storage:Destroy()
+assert(runtime:GetAttribute("GrassMotionEnabled")==false)
+assert(not game.StarterPlayer.StarterPlayerScripts.ForestGrassClient.Source:find("grass:Step",1,true))
 assert(npc:GetAttribute("AvatarUserId")==8344738123 and npc.HumanoidRootPart.Anchored and npc:GetAttribute("Seated"))
 local description=npc.Humanoid:GetAppliedDescription()
 assert(description.Shirt==npc:GetAttribute("ShirtAssetId")and description.Pants==npc:GetAttribute("PantsAssetId")and description.Shirt>0 and description.Pants>0,"NPC does not wear owner's actual clothes")
 description:Destroy()
-local Pose=require(runtime.NPCPose)local neck=npc.Torso.Neck local shoulder=npc.Torso["Right Shoulder"]
-local rootCF=npc.HumanoidRootPart.CFrame
-local raised=Pose.wave(shoulder:GetAttribute("OriginalC0"),1.2)
-assert((raised.Position-shoulder:GetAttribute("OriginalC0").Position).Magnitude<.001)
-local looked=Pose.look(neck:GetAttribute("OriginalC0"),Vector3.new(5,1,-3))
-assert((looked.Position-neck.C0.Position).Magnitude<.001 and npc.HumanoidRootPart.CFrame==rootCF)
-assert(runtime:FindFirstChild("OwnerDialogue")and npc.Head:FindFirstChild("TalkPrompt"))
+assert(npc.Humanoid.RigType==Enum.HumanoidRigType.R15 and npc:FindFirstChild("CatBath")and not runtime:FindFirstChild("OwnerDialogue"))
 local statuses={}
 game:GetService("ContentProvider"):PreloadAsync({npc.Head.HiVoice,npc.Head.YayVoice},function(id,status)statuses[#statuses+1]=tostring(status)end)
 assert(npc.Head.HiVoice.IsLoaded and npc.Head.HiVoice.TimeLength>0,"Requested greeting audio is unavailable in this experience")
@@ -250,7 +224,7 @@ assert(runtime:GetAttribute("CycleEpoch")and runtime:GetAttribute("ShaderPresetA
 assert(not game.Lighting.ForestBlur.Enabled and game.Lighting.ForestSunRays.Enabled)
 assert(runtime.WindEffects:GetAttribute("SourceAssetId")==11946229834 and workspace.GlobalWind.Magnitude>6)
 local compiled=0
-for _,parent in ipairs({game.ServerScriptService,game.StarterPlayer.StarterPlayerScripts})do
+for _,parent in ipairs({game.ServerScriptService,game.StarterPlayer.StarterPlayerScripts,game.StarterGui.TreeWorldMenu})do
  for _,s in ipairs(parent:GetChildren())do if s:IsA("Script")or s:IsA("LocalScript")then
   local m=Instance.new("ModuleScript")m.Source="return function()\n"..s.Source.."\nend"m.Parent=game.ServerStorage
   local ok,result=pcall(require,m)m:Destroy()assert(ok,s.Name..": "..tostring(result))compiled+=1
@@ -265,7 +239,7 @@ return{forestOnly=true,parts=parts,realMeshParts=meshes,pbrAppearances=pbr,forei
  terrainProbes=probes,greenTerrainProbes=green,waterProbes=water,trailProbes=trail,riverContinuityProbes=riverProbes,
  woodenBridges=2,continuousWalkwayProbes=walks,logSeats=seats,cutTrunks=world:GetAttribute("CutTrunkCount"),lanterns=#lights,
  grassSampledZones=zones,validGrassRoots=roots,grassCoveragePoints=coveragePoints,grassCoverageMisses=misses,grassRootOverlap=hi.X-lo.X-Scene.Spacing,
- grassPriorityCorrect=true,grassRootWindStable=true,ownerAvatarUserId=8344738123,npcSeated=true,npcWaveAndLookKeepBodyFixed=true,
+ grassPriorityCorrect=true,staticGrassSource=true,ownerAvatarUserId=8344738123,npcSeated=true,catBathKeepsSeatedBody=true,
  greetingAudioLoaded=true,greetingAudioLength=npc.Head.HiVoice.TimeLength,yayAudioLoaded=true,yayAudioLength=npc.Head.YayVoice.TimeLength,cycleSeconds=Cycle.Duration,sunDirectionSamples=sunDirections,extendedWaterSurface=true,
  shaderPresetAssetId=8490242417,compiledScriptsAndModules=compiled,streamingEnabled=true,rendering=tostring(game.Lighting.LightingStyle)}
 ]============])
