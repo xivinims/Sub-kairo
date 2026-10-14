@@ -1,8 +1,6 @@
-game:GetService("ServerStorage")
-local m=Instance.new("ModuleScript")m.Source=[================[return function()
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155 and game.PlaceVersion==92,"Published base changed")
 game:GetService("ServerStorage")
-local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local ok,v=pcall(require,m)if not ok then error(tostring(v).." CODE: "..code:sub(1,1600))end m:Destroy()return v end
+local function factory(code)local m=Instance.new("ModuleScript")m.Source=code m.Parent=game.ServerStorage local v=require(m)m:Destroy()return v end
 local function run(code)return factory("return function()\n"..code.."\nend")()end
 local runtime=game.ReplicatedStorage.ForestRuntime runtime:SetAttribute("GardenTestMode",true)runtime:SetAttribute("SeasonTestMode",true)
 local roots=factory([============[local B={}
@@ -49,7 +47,7 @@ function B.install()
   local finalCenter=center+Vector3.yAxis*shift m:SetAttribute("ActualRootPoint",finalCenter)m:SetAttribute("RootEmbedDepth",depth)
   local entry=Instance.new("ObjectValue")entry.Name="RootContact"entry.Value=m entry:SetAttribute("CoordinateSpace","World")entry.Parent=probeFolder
   local cf=m:GetPivot()
-  for i,point in ipairs(contacts)do local v=Instance.new("Vector3Value")v.Name=tostring(i)v.Value=point+Vector3.yAxis*shiftv.Parent=entry report.rootProbes+=1 end
+  for i,point in ipairs(contacts)do local v=Instance.new("Vector3Value")v.Name=tostring(i)v.Value=point+Vector3.yAxis*shift v.Parent=entry report.rootProbes+=1 end
   if tree then
    C:AddTag(m,"ForestTree")report.trees+=1
    local trunk=m:FindFirstChild("TrunkCollision")if trunk then local h=assert(ground(finalCenter.X,finalCenter.Z))trunk.CFrame=CFrame.new(finalCenter.X,h.Position.Y+trunk.Size.X*.5-.15,finalCenter.Z)*CFrame.Angles(0,0,math.pi*.5)end
@@ -134,7 +132,3 @@ return report
 ]============])
 runtime:SetAttribute("GardenTestMode",nil)runtime:SetAttribute("SeasonTestMode",nil)
 return{staged=true,baseVersion=92,roots=roots,tests=tests}
-
-end]================]m.Parent=game.ServerStorage
-local ok,v=xpcall(function()return require(m)()end,debug.traceback)
-return{readOnly=true,ok=ok,result=ok and v or nil,error=not ok and v or nil}
