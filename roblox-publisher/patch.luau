@@ -431,18 +431,18 @@ function Builder.install()
   local prompt=Instance.new("ProximityPrompt")prompt.Name="SitPrompt"prompt.ActionText="Sentar"prompt.ObjectText="Acampamento"prompt.MaxActivationDistance=7 prompt.HoldDuration=.2 prompt.RequiresLineOfSight=false prompt.Parent=seat
   Collection:AddTag(seat,"RuinSeat")report.logSeats+=1
  end
- local targets={Primavera=Vector2.new(225,-130),Verao=Vector2.new(160,70),Outono=Vector2.new(-220,180),Inverno=Vector2.new(-180,-260)}
+ local targets={Primavera=Vector2.new(225,-130),Verao=Vector2.new(160,70),Outono=Vector2.new(-290,40),Inverno=Vector2.new(-180,-260)}
  for _,season in ipairs(Seasons.Names)do
   local wanted=targets[season]local site
-  for radius=0,48,8 do
+  for radius=0,144,8 do
    for k=0,15 do local a=k*math.pi/8 local x,z=wanted.X+math.cos(a)*radius,wanted.Y+math.sin(a)*radius
     local h=ground(x,z)
-    if h and h.Position.Y>10 and h.Normal.Y>.93 and Seasons.at(x,z)==season and Scene.pathDistance(x,z)>12 then
+    if h and h.Position.Y>10 and h.Normal.Y>.93 and Seasons.at(x,z)==season and Scene.pathDistance(x,z)>12 and (Vector2.new(x+180,z-30)).Magnitude>62 and (Vector2.new(x-world.OwnerNPC:GetPivot().X,z-world.OwnerNPC:GetPivot().Z)).Magnitude>24 then
      local low,high=h.Position.Y,h.Position.Y local valid=true
      for n=0,7 do local b=n*math.pi/4 local bank=ground(x+math.cos(b)*9,z+math.sin(b)*9)
       if not bank or bank.Material==Enum.Material.Water then valid=false break end low=math.min(low,bank.Position.Y)high=math.max(high,bank.Position.Y)
      end
-     if valid and high-low<1.3 then site=h.Position break end
+     if valid and high-low<1.8 then site=h.Position break end
     end
    end
    if site then break end
