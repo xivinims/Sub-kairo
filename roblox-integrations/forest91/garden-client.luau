@@ -56,7 +56,7 @@ Run.Heartbeat:Connect(function(dt)
  rainRoot.CFrame=CFrame.new((root and root.Position or pos)+Vector3.yAxis*18)
  if spawnClock>.55 and #nearby>0 and runtime:GetAttribute("SeasonName")~="Inverno"then
   spawnClock=0 leafIndex=leafIndex%cap+1 local e=leaves[leafIndex]local p=nearby[rng:NextInteger(1,#nearby)]
-  e.start=p.Position+Vector3.new(rng:NextNumber(-p.Size.X*.25,p.Size.X*.25),-p.Size.Y*.2,rng:NextNumber(-p.Size.Z*.25,p.Size.Z*.25))e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=rng:NextNumber(5,8)
+  e.start=p.Position+Vector3.new(rng:NextNumber(-p.Size.X*.25,p.Size.X*.25),-p.Size.Y*.2,rng:NextNumber(-p.Size.Z*.25,p.Size.Z*.25))e.start=Vector3.new(e.start.X,math.min(e.start.Y,(root and root.Position.Y or pos.Y)+13),e.start.Z)e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=rng:NextNumber(5,8)
   e.part.Color=runtime:GetAttribute("SeasonName")=="Outono"and Color3.fromRGB(181,134,66)or Color3.fromRGB(128,153,93)e.part.Transparency=.12
  end
  for _,e in ipairs(leaves)do local age=now-e.birth if age< (e.life or 0)then local drift=Vector3.new(age*.25+math.sin(age*1.6+e.phase)*.4,-age*1.35,math.cos(age*1.2+e.phase)*.3)

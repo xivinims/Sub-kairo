@@ -14,9 +14,11 @@ local last=Vector3.new(unpack(nodes[#nodes]))local bank=assert(workspace:Raycast
 col.FilterDescendantsInstances={house}
 assert(workspace:Raycast(o+Vector3.new(0,1,-16),Vector3.yAxis*-2,col),"Porch has no floor")
 assert(not workspace:Raycast(o+Vector3.new(0,5,-15),Vector3.zAxis*8,col),"Cottage entrance blocked")
+local animalCollision=RaycastParams.new()animalCollision.FilterType=Enum.RaycastFilterType.Include animalCollision.FilterDescendantsInstances={workspace.Terrain,world.Decor,world.Amenities}animalCollision.RespectCanCollide=true animalCollision.IgnoreWater=true
 for _,route in ipairs(world.Amenities.CuteAnimalRoutes:GetChildren())do
  local template=assert(runtime.CuteAnimalTemplates:FindFirstChild(route:GetAttribute("Species")))assert(template:GetAttribute("SourceAssetId")==77173958514594)
- for _,p in ipairs(game:GetService("HttpService"):JSONDecode(route.Value))do local v=Vector3.new(unpack(p))local h=assert(workspace:Raycast(v+Vector3.yAxis*20,Vector3.yAxis*-40,rp))assert(h.Position.Y>6 and math.abs(h.Position.Y-v.Y)<.1,"Animal floats off its path")end report.animals+=1
+ for _,p in ipairs(game:GetService("HttpService"):JSONDecode(route.Value))do local v=Vector3.new(unpack(p))local h=assert(workspace:Raycast(v+Vector3.yAxis*20,Vector3.yAxis*-40,rp))assert(h.Position.Y>6 and math.abs(h.Position.Y-v.Y)<.1,"Animal floats off its path")end
+ local nodes=game:GetService("HttpService"):JSONDecode(route.Value)for i=1,#nodes do local a,b=Vector3.new(unpack(nodes[i])),Vector3.new(unpack(nodes[i%#nodes+1]))for _,height in ipairs({.6,1.2})do assert(not workspace:Raycast(a+Vector3.yAxis*height,b-a,animalCollision),"Animal walks through solid scenery")end end report.animals+=1
 end assert(report.animals>=4)
 for _,s in ipairs(runtime.GardenSounds:GetChildren())do game:GetService("ContentProvider"):PreloadAsync({s})assert(s.IsLoaded and s.TimeLength>0,"Ambience unavailable: "..s.Name)report.audio+=1 end
 local weather=require(runtime.GardenWeather)

@@ -488,7 +488,7 @@ Run.Heartbeat:Connect(function(dt)
  rainRoot.CFrame=CFrame.new((root and root.Position or pos)+Vector3.yAxis*18)
  if spawnClock>.55 and #nearby>0 and runtime:GetAttribute("SeasonName")~="Inverno"then
   spawnClock=0 leafIndex=leafIndex%cap+1 local e=leaves[leafIndex]local p=nearby[rng:NextInteger(1,#nearby)]
-  e.start=p.Position+Vector3.new(rng:NextNumber(-p.Size.X*.25,p.Size.X*.25),-p.Size.Y*.2,rng:NextNumber(-p.Size.Z*.25,p.Size.Z*.25))e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=rng:NextNumber(5,8)
+  e.start=p.Position+Vector3.new(rng:NextNumber(-p.Size.X*.25,p.Size.X*.25),-p.Size.Y*.2,rng:NextNumber(-p.Size.Z*.25,p.Size.Z*.25))e.start=Vector3.new(e.start.X,math.min(e.start.Y,(root and root.Position.Y or pos.Y)+13),e.start.Z)e.birth=now e.phase=rng:NextNumber(0,6.28)e.life=rng:NextNumber(5,8)
   e.part.Color=runtime:GetAttribute("SeasonName")=="Outono"and Color3.fromRGB(181,134,66)or Color3.fromRGB(128,153,93)e.part.Transparency=.12
  end
  for _,e in ipairs(leaves)do local age=now-e.birth if age< (e.life or 0)then local drift=Vector3.new(age*.25+math.sin(age*1.6+e.phase)*.4,-age*1.35,math.cos(age*1.2+e.phase)*.3)
@@ -757,9 +757,11 @@ local last=Vector3.new(unpack(nodes[#nodes]))local bank=assert(workspace:Raycast
 col.FilterDescendantsInstances={house}
 assert(workspace:Raycast(o+Vector3.new(0,1,-16),Vector3.yAxis*-2,col),"Porch has no floor")
 assert(not workspace:Raycast(o+Vector3.new(0,5,-15),Vector3.zAxis*8,col),"Cottage entrance blocked")
+local animalCollision=RaycastParams.new()animalCollision.FilterType=Enum.RaycastFilterType.Include animalCollision.FilterDescendantsInstances={workspace.Terrain,world.Decor,world.Amenities}animalCollision.RespectCanCollide=true animalCollision.IgnoreWater=true
 for _,route in ipairs(world.Amenities.CuteAnimalRoutes:GetChildren())do
  local template=assert(runtime.CuteAnimalTemplates:FindFirstChild(route:GetAttribute("Species")))assert(template:GetAttribute("SourceAssetId")==77173958514594)
- for _,p in ipairs(game:GetService("HttpService"):JSONDecode(route.Value))do local v=Vector3.new(unpack(p))local h=assert(workspace:Raycast(v+Vector3.yAxis*20,Vector3.yAxis*-40,rp))assert(h.Position.Y>6 and math.abs(h.Position.Y-v.Y)<.1,"Animal floats off its path")end report.animals+=1
+ for _,p in ipairs(game:GetService("HttpService"):JSONDecode(route.Value))do local v=Vector3.new(unpack(p))local h=assert(workspace:Raycast(v+Vector3.yAxis*20,Vector3.yAxis*-40,rp))assert(h.Position.Y>6 and math.abs(h.Position.Y-v.Y)<.1,"Animal floats off its path")end
+ local nodes=game:GetService("HttpService"):JSONDecode(route.Value)for i=1,#nodes do local a,b=Vector3.new(unpack(nodes[i])),Vector3.new(unpack(nodes[i%#nodes+1]))for _,height in ipairs({.6,1.2})do assert(not workspace:Raycast(a+Vector3.yAxis*height,b-a,animalCollision),"Animal walks through solid scenery")end end report.animals+=1
 end assert(report.animals>=4)
 for _,s in ipairs(runtime.GardenSounds:GetChildren())do game:GetService("ContentProvider"):PreloadAsync({s})assert(s.IsLoaded and s.TimeLength>0,"Ambience unavailable: "..s.Name)report.audio+=1 end
 local weather=require(runtime.GardenWeather)
@@ -794,6 +796,8 @@ for _,player in ipairs(mock)do local m=player.Character local t=assert(m:FindFir
  assert((m.HumanoidRootPart.CFrame:PointToWorldSpace(motor.C0.Position)-expected).Magnitude<.4,"Shared umbrella did not converge to the midpoint")
  if m.Humanoid.RigType==Enum.HumanoidRigType.R15 then assert(m.Humanoid:FindFirstChild("UmbrellaHandIK"),"R15 umbrella hand misses shaft")end
  report.umbrellaRigs[#report.umbrellaRigs+1]={rig=m.Humanoid.RigType.Name,shared=true,motor=true}
+end
+for _,player in ipairs(mock)do local m=player.Character
  m.Humanoid:UnequipTools()task.wait(.1)assert(not m.HumanoidRootPart:FindFirstChild("UmbrellaHold")and not m.Humanoid:FindFirstChild("UmbrellaHandIK"),"Unequip leaves character constrained")W.remove(player)m:Destroy()
 end
 storage:Destroy()

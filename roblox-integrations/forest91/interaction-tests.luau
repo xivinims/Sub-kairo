@@ -18,6 +18,8 @@ for _,player in ipairs(mock)do local m=player.Character local t=assert(m:FindFir
  assert((m.HumanoidRootPart.CFrame:PointToWorldSpace(motor.C0.Position)-expected).Magnitude<.4,"Shared umbrella did not converge to the midpoint")
  if m.Humanoid.RigType==Enum.HumanoidRigType.R15 then assert(m.Humanoid:FindFirstChild("UmbrellaHandIK"),"R15 umbrella hand misses shaft")end
  report.umbrellaRigs[#report.umbrellaRigs+1]={rig=m.Humanoid.RigType.Name,shared=true,motor=true}
+end
+for _,player in ipairs(mock)do local m=player.Character
  m.Humanoid:UnequipTools()task.wait(.1)assert(not m.HumanoidRootPart:FindFirstChild("UmbrellaHold")and not m.Humanoid:FindFirstChild("UmbrellaHandIK"),"Unequip leaves character constrained")W.remove(player)m:Destroy()
 end
 storage:Destroy()
