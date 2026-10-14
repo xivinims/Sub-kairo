@@ -134,7 +134,7 @@ end
 function M.build(parent,tracks)
  local gui=create("ScreenGui",parent,"TreeWorldPersonalMusic")gui.ResetOnSpawn=false gui.DisplayOrder=25 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
  local open=button(gui,"Open","♫ Música")open.AnchorPoint=Vector2.new(1,0)open.Position=UDim2.new(1,-12,0,12)open.Size=UDim2.fromOffset(100,38)
- local panel=create("Frame",gui,"Panel")panel.AnchorPoint=Vector2.new(1,0)panel.Position=UDim2.new(1,-12,0,60)panel.Size=UDim2.new(.9,0,.72,0)panel.BackgroundColor3=Color3.fromRGB(12,12,12)panel.BackgroundTransparency=.22panel.BorderSizePixel=0 panel.Visible=false round(panel)
+ local panel=create("Frame",gui,"Panel")panel.AnchorPoint=Vector2.new(1,0)panel.Position=UDim2.new(1,-12,0,60)panel.Size=UDim2.new(.9,0,.72,0)panel.BackgroundColor3=Color3.fromRGB(12,12,12)panel.BackgroundTransparency=.22 panel.BorderSizePixel=0 panel.Visible=false round(panel)
  local limit=create("UISizeConstraint",panel,"SizeLimit")limit.MaxSize=Vector2.new(340,490)limit.MinSize=Vector2.new(210,150)
  local scroll=create("ScrollingFrame",panel,"Scroll")scroll.Size=UDim2.fromScale(1,1)scroll.BackgroundTransparency=1 scroll.BorderSizePixel=0 scroll.ScrollBarThickness=4 scroll.ScrollBarImageColor3=Color3.fromRGB(240,240,240)scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y scroll.CanvasSize=UDim2.new()scroll.ScrollingDirection=Enum.ScrollingDirection.Y
  local pad=create("UIPadding",scroll,"Padding")pad.PaddingTop=UDim.new(0,14)pad.PaddingBottom=UDim.new(0,14)pad.PaddingLeft=UDim.new(0,14)pad.PaddingRight=UDim.new(0,14)
@@ -652,8 +652,8 @@ local water=RaycastParams.new()water.FilterType=Enum.RaycastFilterType.Include w
 local Scene=require(runtime.Scene)for z=-288,288,8 do local h=assert(workspace:Raycast(Vector3.new(Scene.riverX(z),200,z),Vector3.yAxis*-300,water))assert(h.Material==Enum.Material.Water and math.abs(h.Position.Y-6)<.1,"River altered by repairs")end
 local compiled=0
 for _,parent in ipairs({game.ServerScriptService,game.StarterPlayer.StarterPlayerScripts,game.StarterGui.TreeWorldMenu})do for _,s in ipairs(parent:GetChildren())do if s:IsA("LuaSourceContainer")then
- local m=Instance.new("ModuleScript")m.Source="return function()\n"..s.Source.."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)m:Destroy()assert(ok,tostring(v))compiled+=1 end end end
-for _,s in ipairs(runtime:GetDescendants())do if s:IsA("ModuleScript")then local ok,v=pcall(require,s)assert(ok,tostring(v))compiled+=1 end end
+ local m=Instance.new("ModuleScript")m.Source="return function()\n"..s.Source.."\nend"m.Parent=game.ServerStorage local ok,v=pcall(require,m)m:Destroy()assert(ok,s:GetFullName()..": "..tostring(v))compiled+=1 end end end
+for _,s in ipairs(runtime:GetDescendants())do if s:IsA("ModuleScript")then local ok,v=pcall(require,s)assert(ok,s:GetFullName()..": "..tostring(v))compiled+=1 end end
 report.compiled=compiled report.noTeaPopups=true report.fogStable=true report.nativeGrassRequested=true report.parts=0 report.pbr=0
 for _,p in ipairs(world:GetDescendants())do if p:IsA("BasePart")then report.parts+=1 end if p:IsA("SurfaceAppearance")then report.pbr+=1 end assert(not p:IsA("LuaSourceContainer"))end
 assert(report.parts<17000 and report.pbr>1400,"Forest loss or mobile geometry increase")
