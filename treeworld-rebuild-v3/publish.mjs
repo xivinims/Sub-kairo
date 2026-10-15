@@ -6,17 +6,31 @@ const TARGET='universes/9421311218/places/118064584465155/';
 async function request(path,body){
   const key=process.env.ROBLOX_API_KEY;
   if(!key) throw new Error('Missing ROBLOX_API_KEY');
-  const response=await fetch(API+path,{
-    method:body?'POST':'GET',
-    headers:{'x-api-key':key,'content-type':'application/json'},
-    body:body?JSON.stringify(body):undefined,
-    signal:AbortSignal.timeout(30000),
-  });
-  const text=await response.text();
-  let data;
-  try{data=JSON.parse(text)}catch{data={raw:text}}
-  if(!response.ok) throw new Error('Roblox '+response.status+': '+JSON.stringify(data));
-  return data;
+  let lastError=null;
+  for(let attempt=0;attempt<8;attempt++){
+    const response=await fetch(API+path,{
+      method:body?'POST':'GET',
+      headers:{'x-api-key':key,'content-type':'application/json'},
+      body:body?JSON.stringify(body):undefined,
+      signal:AbortSignal.timeout(30000),
+    });
+    const text=await response.text();
+    let data;
+    try{data=JSON.parse(text)}catch{data={raw:text}}
+    if(response.ok) return data;
+    if(response.status===429 || response.status===500 || response.status===502 || response.status===503){
+      const retryHeader=Number(response.headers.get('retry-after'));
+      const waitMs=Number.isFinite(retryHeader) && retryHeader>0
+        ? retryHeader*1000
+        : Math.min(45000,5000*(attempt+1));
+      lastError=new Error('Roblox '+response.status+': '+JSON.stringify(data));
+      console.log(JSON.stringify({retrying:true,status:response.status,attempt:attempt+1,waitMs}));
+      await new Promise(r=>setTimeout(r,waitMs));
+      continue;
+    }
+    throw new Error('Roblox '+response.status+': '+JSON.stringify(data));
+  }
+  throw lastError || new Error('Roblox request exhausted retries');
 }
 
 async function execute(script){
