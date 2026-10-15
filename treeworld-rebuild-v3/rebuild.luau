@@ -222,11 +222,11 @@ Terrain:FillBlock(CFrame.new(0,-31,0), Vector3.new(2680,30,2680), Enum.Material.
 
 -- gentle broad hills only
 for _, h in ipairs({
-	{Vector3.new(-930,-82,-770),310},
-	{Vector3.new(940,-80,-760),330},
-	{Vector3.new(-950,-85,780),300},
-	{Vector3.new(980,-82,810),325},
-	{Vector3.new(-260,-95,-1030),270},
+	{Vector3.new(-930,-225,-770),248},
+	{Vector3.new(940,-235,-760),258},
+	{Vector3.new(-950,-220,780),244},
+	{Vector3.new(980,-232,810),256},
+	{Vector3.new(-260,-218,-1030),242},
 }) do
 	Terrain:FillBall(h[1], h[2], Enum.Material.Grass)
 end
@@ -315,7 +315,7 @@ Terrain:FillBall(Vector3.new(470,15,610),100,Enum.Material.Air)
 Terrain:FillBlock(CFrame.new(470,8,610),Vector3.new(205,12,195),Enum.Material.Water)
 
 -- island for giant tree in main lake
-Terrain:FillBall(Vector3.new(-500,-22,455),74,Enum.Material.Grass)
+Terrain:FillBall(Vector3.new(-500,-47,455),69,Enum.Material.Grass)
 
 -- =====================================================================
 -- CLIFF WATERFALL: vertical rock/earth wall, not a rounded mountain.
