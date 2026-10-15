@@ -1,0 +1,63 @@
+{
+  "version": 80,
+  "publishedAt": "2026-10-13T03:57:27.408Z",
+  "validation": {
+    "published": true,
+    "clients": {
+      "combinedNightRain": true,
+      "orbPulses": 8,
+      "scrollingMenu": true,
+      "scheduledTweens": 764,
+      "stationaryFloor": true,
+      "dayAndDawn": true,
+      "worldWeatherUnchanged": true,
+      "actualClientSources": true,
+      "constructionRaisedAndSettled": true
+    },
+    "geometry": {
+      "parts": 5956,
+      "walkSamples": 198,
+      "compiledScripts": 9,
+      "cyanGoldSuspension": true,
+      "transitionSeconds": 8,
+      "fixedCollision": true,
+      "maxGrade": 0.5385004679361979,
+      "personalNightAndRain": true,
+      "bridgeParts": 1008,
+      "daySeconds": 600
+    },
+    "sourceVersion": 79
+  },
+  "freshVerification": {
+    "parts": 5956,
+    "scrollingMenu": true,
+    "applePreserved": true,
+    "version": 80,
+    "transitionSeconds": 8,
+    "singleScene": [
+      "Camera",
+      "Terrain",
+      "IlhaSerena"
+    ],
+    "daySeconds": 600,
+    "bridges": [
+      {
+        "fixedColliders": 126,
+        "name": "Ponte70",
+        "towers": 4,
+        "orbs": 4
+      },
+      {
+        "fixedColliders": 126,
+        "name": "Ponte124",
+        "towers": 4,
+        "orbs": 4
+      }
+    ],
+    "personalNightRain": true,
+    "hdSkyPreserved": true,
+    "compiledScripts": 9,
+    "ok": true
+  },
+  "visualClientPlaytest": false
+}

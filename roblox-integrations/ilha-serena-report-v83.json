@@ -1,0 +1,139 @@
+{
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "baseVersion": 82,
+  "publishedVersion": 83,
+  "repository": "xivinims/Sub-kairo",
+  "branch": "roblox-publisher",
+  "sourceCommit": "7d2a8ca18783ba211b616a1b7184f2d892389102",
+  "sourceSHA256": {
+    "install83.luau": "d1aea323aa46f7052c66e489ca67af0d647ff36dfb0895dff34de07e4a001800",
+    "verify83.luau": "1fb182569761a55cd754f8cf9b009f669129886725e91d06756a409687d786df",
+    "notes83.md": "f846b4598cbcf76c45c566c77f736018aaa393dae479ddbd0d1a5c092b250fd5"
+  },
+  "publicationDeployment": "dpl_2Wrcqom65EGMY2dL5cVbcNDxa7oL",
+  "verificationDeployment": "dpl_9W2cEeTD9QQZJnue7Wpk9aY1ZX2G",
+  "publication": {
+    "sourceVersion": 82,
+    "published": true,
+    "grassTests": {
+      "worstSample": [
+        79,
+        135
+      ],
+      "actualTouchSource": true,
+      "noBoneOrAnimationLeaks": true,
+      "codecExact": true,
+      "maxRootDistance": 0.984139881597942,
+      "uncoveredSamples": 0,
+      "proximityUnloadAndReload": true,
+      "greenSamples": 54908,
+      "nativeContiguousRoots": 300,
+      "repeatTravelCycles": 30,
+      "walkBending": true,
+      "maxTouchResidentPatches": 577
+    },
+    "compiledScripts": 15,
+    "climateTests": {
+      "legacyChoicesRemoved": true,
+      "personalSelectionPreserved": true,
+      "scrollingMenu": true,
+      "rainStopsOnDay": true,
+      "allModesHaveWind": true,
+      "actualMenuAndClientSources": true,
+      "fourOptionsOnly": true,
+      "modes": [
+        {
+          "hour": 12,
+          "mode": "Dia",
+          "rain": 0,
+          "wind": 4.295234680175781
+        },
+        {
+          "hour": 22.999999977327306,
+          "mode": "Noite",
+          "rain": 0,
+          "wind": 4.294641971588135
+        },
+        {
+          "hour": 18.30000000968742,
+          "mode": "Anoitecer",
+          "rain": 0,
+          "wind": 4.29404354095459
+        },
+        {
+          "hour": 15.200000006389576,
+          "mode": "Chuva",
+          "rain": 0.9999999979388463,
+          "wind": 13.189873695373535
+        }
+      ]
+    },
+    "mapParts": 4960,
+    "grass": {
+      "transparentPBRPreserved": true,
+      "spacing": 4,
+      "variant": "GrassCard",
+      "meshId": "rbxassetid://117152506140384",
+      "color": [
+        90,
+        142,
+        64
+      ],
+      "rootLayoutPreserved": true,
+      "patches": 15124,
+      "assetId": 87377915371959,
+      "greenRoots": 1372773
+    }
+  },
+  "freshVerification": {
+    "grassVariant": "GrassCard",
+    "meshId": "rbxassetid://117152506140384",
+    "allModesHaveWind": true,
+    "climates": [
+      {
+        "hour": 12,
+        "mode": "Dia",
+        "rain": 0,
+        "wind": 5.385164737701416
+      },
+      {
+        "hour": 23,
+        "mode": "Noite",
+        "rain": 0,
+        "wind": 5.385164737701416
+      },
+      {
+        "hour": 18.3,
+        "mode": "Anoitecer",
+        "rain": 0,
+        "wind": 5.385164737701416
+      },
+      {
+        "hour": 15.2,
+        "mode": "Chuva",
+        "rain": 1,
+        "wind": 16.552946090698242
+      }
+    ],
+    "spacing": 4,
+    "greenRoots": 1372773,
+    "scrollingMenu": true,
+    "personalSelection": true,
+    "publishedVersion": 83,
+    "legacyCycleRemoved": true,
+    "grassVolumes": 15124,
+    "transparentPBR": true,
+    "mapParts": 4960,
+    "terrainMatchedColor": [
+      90,
+      142,
+      64
+    ],
+    "compiledScripts": 15,
+    "ok": true
+  },
+  "limitations": [
+    "No rendered Roblox-client comparison or FPS measurement in this environment; model, tint, coverage, menu and environment source logic and persistence were verified natively."
+  ]
+}

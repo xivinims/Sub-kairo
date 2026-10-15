@@ -1,0 +1,348 @@
+{
+  "sourceSha256": "36dee34516d3441e7d769bfd53b5ec719913bdaeeefabc96ecbc8aebb4ec7da1",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/91/luau-execution-sessions/9754f3f2-fe29-4e4d-a5ab-5017a006d1f5/tasks/9754f3f2-fe29-4e4d-a5ab-5017a006d1f5",
+    "createTime": "2026-10-14T11:05:38.345Z",
+    "updateTime": "2026-10-14T11:05:44.409Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "staged": true,
+          "serviceRoots": [
+            {
+              "name": "Terrain",
+              "service": "Workspace",
+              "class": "Terrain"
+            },
+            {
+              "name": "ForestWorld",
+              "service": "Workspace",
+              "class": "Model"
+            },
+            {
+              "name": "ForestRuntime",
+              "service": "ReplicatedStorage",
+              "class": "Folder"
+            },
+            {
+              "name": "ForestServer",
+              "service": "ServerScriptService",
+              "class": "Script"
+            },
+            {
+              "name": "StarterPlayerScripts",
+              "service": "StarterPlayer",
+              "class": "StarterPlayerScripts"
+            },
+            {
+              "name": "StarterCharacterScripts",
+              "service": "StarterPlayer",
+              "class": "StarterCharacterScripts"
+            },
+            {
+              "name": "TreeWorldMenu",
+              "service": "StarterGui",
+              "class": "ScreenGui"
+            },
+            {
+              "name": "ForestSky",
+              "service": "Lighting",
+              "class": "Sky"
+            },
+            {
+              "name": "ForestAtmosphere",
+              "service": "Lighting",
+              "class": "Atmosphere"
+            },
+            {
+              "name": "ForestSunRays",
+              "service": "Lighting",
+              "class": "SunRaysEffect"
+            },
+            {
+              "name": "ForestColor",
+              "service": "Lighting",
+              "class": "ColorCorrectionEffect"
+            },
+            {
+              "name": "ForestBloom",
+              "service": "Lighting",
+              "class": "BloomEffect"
+            },
+            {
+              "name": "ForestBlur",
+              "service": "Lighting",
+              "class": "BlurEffect"
+            },
+            {
+              "name": "TreeWorldMenuBlur",
+              "service": "Lighting",
+              "class": "BlurEffect"
+            },
+            {
+              "name": "BubbleChatConfiguration",
+              "service": "TextChatService",
+              "class": "BubbleChatConfiguration"
+            },
+            {
+              "name": "ChannelTabsConfiguration",
+              "service": "TextChatService",
+              "class": "ChannelTabsConfiguration"
+            },
+            {
+              "name": "ChatInputBarConfiguration",
+              "service": "TextChatService",
+              "class": "ChatInputBarConfiguration"
+            },
+            {
+              "name": "ChatWindowConfiguration",
+              "service": "TextChatService",
+              "class": "ChatWindowConfiguration"
+            }
+          ],
+          "exportSize": 2029539,
+          "expectedVersion": 92,
+          "baseVersion": 91,
+          "serviceProperties": [
+            {
+              "kind": "enum",
+              "service": "Lighting",
+              "name": "LightingStyle",
+              "value": 0
+            },
+            {
+              "kind": "boolean",
+              "service": "Lighting",
+              "name": "PrioritizeLightingQuality",
+              "value": true
+            },
+            {
+              "kind": "boolean",
+              "service": "Lighting",
+              "name": "GlobalShadows",
+              "value": true
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "ShadowSoftness",
+              "value": 0.4000000059604645
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "Brightness",
+              "value": 2.700000047683716
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "ClockTime",
+              "value": 10.416388511657715
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "GeographicLatitude",
+              "value": 28
+            },
+            {
+              "kind": "color",
+              "service": "Lighting",
+              "name": "Ambient",
+              "value": [
+                0.1921568661928177,
+                0.2235294133424759,
+                0.22745098173618317
+              ]
+            },
+            {
+              "kind": "color",
+              "service": "Lighting",
+              "name": "OutdoorAmbient",
+              "value": [
+                0.3921568691730499,
+                0.47058823704719543,
+                0.48235294222831726
+              ]
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "EnvironmentDiffuseScale",
+              "value": 1
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "EnvironmentSpecularScale",
+              "value": 1
+            },
+            {
+              "kind": "number",
+              "service": "Lighting",
+              "name": "ExposureCompensation",
+              "value": -0.07999999821186066
+            },
+            {
+              "kind": "number",
+              "service": "StarterPlayer",
+              "name": "CameraMinZoomDistance",
+              "value": 0.5
+            },
+            {
+              "kind": "number",
+              "service": "StarterPlayer",
+              "name": "CameraMaxZoomDistance",
+              "value": 22
+            },
+            {
+              "kind": "enum",
+              "service": "StarterPlayer",
+              "name": "CameraMode",
+              "value": 0
+            },
+            {
+              "kind": "number",
+              "service": "StarterPlayer",
+              "name": "CharacterWalkSpeed",
+              "value": 16
+            },
+            {
+              "kind": "number",
+              "service": "StarterPlayer",
+              "name": "CharacterJumpPower",
+              "value": 50
+            },
+            {
+              "kind": "boolean",
+              "service": "StarterPlayer",
+              "name": "CharacterUseJumpPower",
+              "value": true
+            },
+            {
+              "kind": "boolean",
+              "service": "StarterPlayer",
+              "name": "AutoJumpEnabled",
+              "value": true
+            },
+            {
+              "kind": "boolean",
+              "service": "StarterPlayer",
+              "name": "EnableMouseLockOption",
+              "value": true
+            },
+            {
+              "kind": "number",
+              "service": "Workspace",
+              "name": "Gravity",
+              "value": 196.1999969482422
+            },
+            {
+              "kind": "vector",
+              "service": "Workspace",
+              "name": "GlobalWind",
+              "value": [
+                2.826525926589966,
+                0,
+                0.7546824216842651
+              ]
+            },
+            {
+              "kind": "number",
+              "service": "Workspace",
+              "name": "FallenPartsDestroyHeight",
+              "value": -150
+            }
+          ],
+          "report": {
+            "vegetation": {
+              "plants": 1623,
+              "removedDecor": 0,
+              "rootProbes": 6717,
+              "trees": 459,
+              "removedPlants": 279
+            },
+            "tea": {
+              "tables": 4,
+              "cups": 16,
+              "seats": 16
+            },
+            "ruins": {
+              "removedDeco": 50,
+              "moved": 3,
+              "steps": 20
+            },
+            "tests": {
+              "pbr": 3009,
+              "audio": 7,
+              "nativeGrassRequested": true,
+              "compiled": 27,
+              "fogStable": true,
+              "actualRootProbes": 5586,
+              "parts": 10485,
+              "directCupServe": true,
+              "trees": 459,
+              "plants": 1344,
+              "noTeaPopups": true,
+              "ruins": 4,
+              "teaTables": 4,
+              "teaCups": 16,
+              "walkProbes": 1170
+            },
+            "camps": {
+              "stones": 48,
+              "camps": 4
+            },
+            "animals": {
+              "animals": 6,
+              "sourceAssetId": 77173958514594
+            },
+            "bridges": {
+              "planks": 130,
+              "bridges": 2
+            }
+          },
+          "exportOnly": true
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "publication": {
+    "bytes": 2212825,
+    "sha256": "ba57e3c1494b5ec1266907513c10c565c179708862d0982aadde923441863e62",
+    "changes": [
+      {
+        "key": "Terrain.Decoration",
+        "before": false,
+        "after": true
+      },
+      {
+        "key": "Terrain.GrassLength",
+        "before": 0.699999988079071,
+        "after": 0.4
+      },
+      {
+        "key": "Workspace.StreamingEnabled",
+        "before": true,
+        "after": true
+      },
+      {
+        "key": "Workspace.StreamingMinRadius",
+        "before": 64,
+        "after": 64
+      },
+      {
+        "key": "Workspace.StreamingTargetRadius",
+        "before": 128,
+        "after": 128
+      }
+    ],
+    "classCount": 65
+  },
+  "freshVerification": null
+}

@@ -1,0 +1,315 @@
+{
+  "sourceSha256": "d5216eec6686a1c6839dd2f1a914d5afadb8bab7f5b9afe266661e871ad8685f",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/90/luau-execution-sessions/f97147d1-88a2-43e2-9f3a-d2d141677ad2/tasks/f97147d1-88a2-43e2-9f3a-d2d141677ad2",
+    "createTime": "2026-10-14T03:46:08.221Z",
+    "updateTime": "2026-10-14T03:46:17.819Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "baseVersion": 90,
+          "staged": true,
+          "report": {
+            "tools": {
+              "umbrellaParts": 35
+            },
+            "animals": {
+              "animals": 6,
+              "sourceAssetId": 77173958514594
+            },
+            "interactionTests": {
+              "umbrellaRigs": [
+                {
+                  "rig": "R6",
+                  "shared": true,
+                  "motor": true
+                },
+                {
+                  "rig": "R15",
+                  "shared": true,
+                  "motor": true
+                }
+              ],
+              "seatRigs": [
+                {
+                  "rig": "R6",
+                  "seatWeldFacesTable": 1.0000081062316895
+                },
+                {
+                  "rig": "R15",
+                  "seatWeldFacesTable": 1.0000081062316895
+                }
+              ]
+            },
+            "gardenTests": {
+              "pilings": 27,
+              "animals": 6,
+              "styledWater": true,
+              "nativeFootsteps": true,
+              "walkProbes": 38,
+              "ownerNPCRemoved": true,
+              "teaSeatsFaceTable": 16,
+              "audio": 7,
+              "sharedUmbrellaMidpoint": true
+            },
+            "riverside": {
+              "cottage": true,
+              "boardwalkSegments": 19,
+              "steppingStones": 13,
+              "removedOwnerNPC": true,
+              "foamEdges": 182
+            },
+            "baseTests": {
+              "bridges": 2,
+              "globalSeasonTests": 4,
+              "grassSourceId": 87377915371959,
+              "importedMenu": true,
+              "terrainChannelsPreserved": true,
+              "landmarkFoundations": 139,
+              "ruins": 4,
+              "ownerNPCRemoved": true,
+              "teaSeats": 16,
+              "staticGrass": true,
+              "bridgeWalkProbes": 256,
+              "teaTables": 4
+            },
+            "forestTests": {
+              "grassCoverageMisses": 0,
+              "sunDirectionSamples": [
+                [
+                  0.9969170093536377,
+                  1.6241840228303772e-7,
+                  0.07846290618181229
+                ],
+                [
+                  -3.2483652034898114e-7,
+                  0.9969161152839661,
+                  0.0784742534160614
+                ],
+                [
+                  -0.9969146251678467,
+                  -1.1888087847466977e-8,
+                  0.0784931629896164
+                ],
+                [
+                  0,
+                  -0.9969173073768616,
+                  0.07845912873744965
+                ]
+              ],
+              "pbrAppearances": 3358,
+              "streamingEnabled": true,
+              "rendering": "Enum.LightingStyle.Realistic",
+              "cycleSeconds": 960,
+              "lanterns": 33,
+              "grassRootOverlap": 1.6151506900787354,
+              "plants": 1659,
+              "maximumSupportGap": 0,
+              "woodenBridges": 2,
+              "grassSampledZones": 3,
+              "trees": 470,
+              "staticGrassSource": true,
+              "treeHeightRange": [
+                31.165424346923828,
+                103.47746276855469
+              ],
+              "grassPriorityCorrect": true,
+              "forestOnly": true,
+              "grassCoveragePoints": 832,
+              "compiledScriptsAndModules": 30,
+              "buriedExamples": [
+                {
+                  "scale": 1.8509657296431816,
+                  "position": [
+                    -199.29180908203125,
+                    16.033123016357422,
+                    -297.2133483886719
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.7806434631347656,
+                  "name": "DogwoodTree_Var01"
+                },
+                {
+                  "scale": 0.8621093255212016,
+                  "position": [
+                    -324.21368408203125,
+                    26.654817581176758,
+                    -205.06651306152344
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.770811080932617,
+                  "name": "MapleLeafTreeVar01"
+                },
+                {
+                  "scale": 2.6635484268029535,
+                  "position": [
+                    -148.86453247070312,
+                    38.37788391113281,
+                    -149.19667053222656
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.7572479248046875,
+                  "name": "DogwoodTree_Var01"
+                },
+                {
+                  "scale": 2.545989524610224,
+                  "position": [
+                    87.24019622802734,
+                    12.842058181762695,
+                    -327.6651611328125
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.6481151580810547,
+                  "name": "BeechwoodTree_Var02"
+                },
+                {
+                  "scale": 1.4947178851689586,
+                  "position": [
+                    -80.85900115966797,
+                    9.314948081970215,
+                    -339.82659912109375
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.640679359436035,
+                  "name": "MapleLeafTreeVar01"
+                },
+                {
+                  "scale": 0.42577054601590975,
+                  "position": [
+                    205.7063446044922,
+                    79.48905944824219,
+                    189.0757293701172
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.6285781860351562,
+                  "name": "RedwoodTree-Var01"
+                },
+                {
+                  "scale": 2.0880232460754935,
+                  "position": [
+                    -141.89337158203125,
+                    33.90419387817383,
+                    -120.14277648925781
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.6260147094726562,
+                  "name": "BeechwoodTree_Var02"
+                },
+                {
+                  "scale": 1.3403664306220546,
+                  "position": [
+                    220.4319305419922,
+                    11.67148494720459,
+                    -288.45196533203125
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.6240434646606445,
+                  "name": "MapleLeafTreeVar01"
+                },
+                {
+                  "scale": 0.5349972203330511,
+                  "position": [
+                    -19.677213668823242,
+                    13.4771728515625,
+                    192.26268005371094
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.6109771728515625,
+                  "name": "BeechwoodTree_Var01"
+                },
+                {
+                  "scale": 2.3060483256525393,
+                  "position": [
+                    32.05891036987305,
+                    18.114055633544922,
+                    -39.037818908691406
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.601215362548828,
+                  "name": "BeechwoodTree_Var02"
+                },
+                {
+                  "scale": 1.729386339630016,
+                  "position": [
+                    -305.01806640625,
+                    42.95341491699219,
+                    136.2243194580078
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.597728729248047,
+                  "name": "MapleLeafTreeVar01"
+                },
+                {
+                  "scale": 0.5325324684246766,
+                  "position": [
+                    -292.0213317871094,
+                    22.282482147216797,
+                    222.32647705078125
+                  ],
+                  "kind": "Trees",
+                  "burial": 2.582134246826172,
+                  "name": "BeechwoodTree_Var01"
+                }
+              ],
+              "maximumSupportBurial": 2.7806434631347656,
+              "shaderPresetAssetId": 8490242417,
+              "continuousWalkwayProbes": 256,
+              "parts": 10534,
+              "cutTrunks": 25,
+              "greenTerrainProbes": 684,
+              "terrainProbes": 899,
+              "validGrassRoots": 35857,
+              "foreignScripts": 0,
+              "ownerNPCRemoved": true,
+              "riverContinuityProbes": 73,
+              "realMeshParts": 3466,
+              "supportPoints": 28569,
+              "logSeats": 16,
+              "trailProbes": 21,
+              "waterProbes": 168,
+              "extendedWaterSurface": true
+            },
+            "tea": {
+              "detailedTeaTables": 4
+            },
+            "audio": {
+              "River": {
+                "length": 27.018666666666668,
+                "id": 9120552550
+              },
+              "WoodStep": {
+                "length": 5.978412698412699,
+                "id": 9083826864
+              },
+              "Rain": {
+                "length": 36.010020833333336,
+                "id": 9112854613
+              },
+              "StoneStep": {
+                "length": 6.821587301587302,
+                "id": 178190837
+              },
+              "Forest": {
+                "length": 41.728,
+                "id": 9116971475
+              },
+              "Wind": {
+                "length": 11.648,
+                "id": 9114518779
+              },
+              "GrassStep": {
+                "length": 0.3798185941043084,
+                "id": 135037154891351
+              }
+            }
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "freshVerification": null
+}
