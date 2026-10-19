@@ -1,0 +1,45 @@
+name: TreeWorld Torii Forest V5
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-v5/**"
+      - "house-japao.glb"
+      - "skskskzjxjsjs.fbx"
+      - ".github/workflows/treeworld-torii-v5.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155-torii-v5
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Roblox publisher
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Optimize Japanese house GLB below Roblox upload limit
+        run: |
+          python -m pip install --quiet pillow
+          python treeworld-v5/import-assets/optimize_glb.py house-japao.glb treeworld-v5/import-assets/house-japao-opt.glb 2048
+          ls -lh treeworld-v5/import-assets/house-japao-opt.glb skskskzjxjsjs.fbx
+      - name: Upload models, rebuild place, and verify
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v5/publish.mjs
+      - name: Upload result report
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: treeworld-v5-result
+          path: out/
+          if-no-files-found: ignore
