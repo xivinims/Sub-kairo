@@ -6,6 +6,7 @@ on:
       - roblox-publisher
     paths:
       - "treeworld-v5-direct/**"
+      - "treeworld-v5/**"
       - ".github/workflows/treeworld-v5-direct.yml"
   workflow_dispatch:
 
