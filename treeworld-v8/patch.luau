@@ -90,8 +90,16 @@ bridge:SetAttribute("DeckY",mainY)
 -- Dark bridge uses a ravine cut down into the terrain, never tall banks.
 world.DarkZone:ClearAllChildren()
 local dark=Instance.new("Model");dark.Name="AbyssBridgeZone";dark.Parent=world.DarkZone
-local darkY=mustGround(-118,-850).Y+.12
-assert(math.abs(darkY-.12-mustGround(118,-850).Y)<.4,"Dark bridge banks differ")
+local darkY=mustGround(-400,-850).Y+.12
+-- The grade comes from untouched surrounding terrain. The restored bank
+-- voxels are solid, but the cloud terrain raycaster can retain the old hole.
+-- Buried foundations provide explicit continuous footing, level with the
+-- visible soil, all the way from the access path to each bridge end.
+for _,side in ipairs({-1,1}) do
+ local soilTop=darkY-.12
+ local footing=part(dark,"BuriedBankFoundation",Vector3.new(94,soilTop+50,220),CFrame.new(side*143,(soilTop-50)/2,-850),Enum.Material.Rock,Color3.fromRGB(61,59,55),true,1)
+ footing.CastShadow=false
+end
 local darkWood=Color3.fromRGB(43,32,27)
 local metal=Color3.fromRGB(49,46,42)
 for i=-13,13 do

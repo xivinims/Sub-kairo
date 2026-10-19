@@ -85,13 +85,28 @@ for _,spec in ipairs({{world.MainBridge.PhotoWoodBridge,"DeckPlank",155,56,104},
  local m,deckName,z,endX,length=table.unpack(spec)
  local deck=m:FindFirstChild(deckName);assert(deck,"Deck missing")
  local top=deck.Position.Y+deck.Size.Y/2
- local left=terrainAt(-endX,z);local right=terrainAt(endX,z)
+ local function bankAt(x,zz)
+  local h=Workspace:Raycast(Vector3.new(x,40,zz),Vector3.new(0,-100,0),ray)
+  assert(h,"Bridge bank has no physical ground")
+  return h.Position.Y
+ end
+ local left=bankAt(-endX,z);local right=bankAt(endX,z)
  assert(math.abs(top-left)<.4 and math.abs(top-right)<.4,"Bridge not level with both banks")
- assert(math.abs(top-terrainAt(-endX-40,z))<.4,"Bridge bank is still a mountain")
+ assert(math.abs(top-terrainAt(-400,z))<.4,"Bridge not connected to normal map grade")
+ assert(top>18 and top<25,"Bridge deck is above or below the normal ground")
  for x=-length/2,length/2,4 do
   for _,offset in ipairs({-3.5,0,3.5}) do
    supported(Vector3.new(x,top,z+offset),top)
    clearAt(Vector3.new(x,top+2.8,z+offset),3.1,5.3)
+  end
+ end
+ if z==-850 then
+  local grade=terrainAt(-400,z)
+  for _,x in ipairs({-126,126}) do
+   for zz=-970,-750,4 do
+    assert(math.abs(bankAt(x,zz)-grade)<.4,"Dark bridge approach drops below normal ground")
+    clearAt(Vector3.new(x,grade+2.8,zz),3.1,5.3)
+   end
   end
  end
  local origin=Vector3.new(-length/2,top+2.8,z)
