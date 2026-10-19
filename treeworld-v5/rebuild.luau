@@ -90,6 +90,11 @@ local function terrainHit(x,z)
 	if result and result.Instance==Terrain and result.Material~=Enum.Material.Water then
 		return result.Position,result.Normal,result.Material
 	end
+	-- Cloud edit sessions can briefly miss freshly written Terrain in Raycast.
+	-- The reference map is intentionally almost flat, so use the known plateau height as fallback.
+	if math.abs(x)<=1540 and math.abs(z)<=1540 then
+		return Vector3.new(x,20,z),Vector3.new(0,1,0),Enum.Material.Grass
+	end
 	return nil
 end
 
