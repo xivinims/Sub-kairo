@@ -1,0 +1,19 @@
+name: TreeWorld V9 Reference Asset Inspection
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ["treeworld-v9/probe.*", ".github/workflows/treeworld-v9-probe.yml"]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Inspect reusable mesh assets without saving
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v9/probe.mjs
