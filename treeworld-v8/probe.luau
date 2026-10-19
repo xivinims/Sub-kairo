@@ -1,23 +1,22 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
-local w=workspace:FindFirstChild("ReferenceWorld")
-assert(w,"Current world missing")
-local h=w.House:FindFirstChild("JapaneseHouse")
-assert(h,"Current house missing")
-local cf,size=h:GetBoundingBox()
-local parts={}
-for _,p in ipairs(h:GetDescendants()) do
- if p:IsA("BasePart") then
-  local entry={name=p.Name,class=p.ClassName,size={p.Size.X,p.Size.Y,p.Size.Z},cf={p.CFrame:GetComponents()},collide=p.CanCollide,query=p.CanQuery,transparency=p.Transparency}
-  if p:IsA("MeshPart") then entry.mesh=p.MeshId;entry.fidelity=tostring(p.CollisionFidelity);entry.meshSize={p.MeshSize.X,p.MeshSize.Y,p.MeshSize.Z} end
-  table.insert(parts,entry)
+local t=workspace.Terrain
+local p=RaycastParams.new();p.FilterType=Enum.RaycastFilterType.Include;p.FilterDescendantsInstances={t}
+local function sample()
+ local rows={}
+ for _,z in ipairs({-1030,-970,-945,-910,-850,-790,-755,-730,-650}) do
+  local row={z=z,points={}}
+  for _,x in ipairs({-400,-220,-180,-154,-118,-94,-80,0,80,94,118,154,180,220,400}) do
+   local h=workspace:Raycast(Vector3.new(x,220,z),Vector3.new(0,-500,0),p)
+   table.insert(row.points,{x=x,y=h and h.Position.Y,material=h and tostring(h.Material)})
+  end
+  table.insert(rows,row)
  end
+ return rows
 end
-local params=RaycastParams.new()
-params.FilterType=Enum.RaycastFilterType.Include
-params.FilterDescendantsInstances={workspace.Terrain}
-local ground={}
-for _,pos in ipairs({Vector3.new(0,0,-70),Vector3.new(-58,0,155),Vector3.new(58,0,155),Vector3.new(-116,0,-850),Vector3.new(116,0,-850)}) do
- local hit=workspace:Raycast(pos+Vector3.new(0,300,0),Vector3.new(0,-700,0),params)
- table.insert(ground,{x=pos.X,z=pos.Z,y=hit and hit.Position.Y,material=hit and tostring(hit.Material)})
-end
-return {placeVersion=game.PlaceVersion,version=workspace:GetAttribute("WorldRebuildVersion"),house={size={size.X,size.Y,size.Z},cf={cf:GetComponents()},pivot={h:GetPivot():GetComponents()},scale=h:GetScale(),parts=parts},terrain=ground}
+local samples=sample()
+task.wait(3)
+local region=Region3.new(Vector3.new(116,-52,-852),Vector3.new(120,32,-848)):ExpandToGrid(4)
+local materials,occupancies=t:ReadVoxels(region,4)
+local voxels={}
+for y=1,#materials[1] do table.insert(voxels,{y=region.CFrame.Position.Y-region.Size.Y/2+(y-.5)*4,m=tostring(materials[1][y][1]),o=occupancies[1][y][1]}) end
+return {placeVersion=game.PlaceVersion,initial=samples,afterWait=sample(),voxels=voxels}
