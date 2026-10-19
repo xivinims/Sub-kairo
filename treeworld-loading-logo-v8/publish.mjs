@@ -1,9 +1,9 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 
 const API='https://apis.roblox.com/';
 const CLOUD='https://apis.roblox.com/cloud/v2/';
 const TARGET='universes/9421311218/places/118064584465155/';
-const LOGO_URL='https://overyard-logo-temp.vercel.app/logo.jpg';
 const CREATOR_ID='8344738123';
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 
@@ -55,12 +55,15 @@ function first(task){
   try{return JSON.parse(v)}catch{return v}
 }
 
-async function downloadLogo(){
-  const res=await fetch(LOGO_URL,{signal:AbortSignal.timeout(60000)});
-  if(!res.ok)throw new Error('Logo download failed '+res.status);
-  const bytes=new Uint8Array(await res.arrayBuffer());
-  if(bytes.length<1000)throw new Error('Downloaded logo is unexpectedly small');
-  console.log(JSON.stringify({logoDownloaded:true,bytes:bytes.length,contentType:res.headers.get('content-type')}));
+function loadLogo(){
+  const chunks=['00.b64','01.b64','02.b64'].map(name=>
+    fs.readFileSync('treeworld-loading-logo-v8/logo-b64/'+name,'utf8').trim()
+  );
+  const bytes=Buffer.from(chunks.join(''),'base64');
+  const sha1=crypto.createHash('sha1').update(bytes).digest('hex');
+  if(bytes.length!==11973) throw new Error('Unexpected logo byte length: '+bytes.length);
+  if(sha1!=='03f7e23594699bb366804e12350fc7f3d35b828a') throw new Error('Logo SHA1 mismatch: '+sha1);
+  console.log(JSON.stringify({logoLoadedFromRepo:true,bytes:bytes.length,sha1}));
   return bytes;
 }
 
@@ -112,7 +115,7 @@ async function uploadImage(bytes){
   throw new Error('Timed out waiting for image asset');
 }
 
-const bytes=await downloadLogo();
+const bytes=loadLogo();
 const assetId=await uploadImage(bytes);
 
 const patchSource=fs.readFileSync('treeworld-loading-logo-v8/patch.luau','utf8')
