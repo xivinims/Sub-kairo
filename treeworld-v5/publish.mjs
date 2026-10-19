@@ -119,7 +119,7 @@ async function createAsset(filePath,mime,displayName,creator){
 }
 
 async function waitLoadable(assetId,label){
-  const probe='local InsertService=game:GetService("InsertService")\\nlocal ok,obj=pcall(function() return InsertService:LoadAsset('+assetId+') end)\\nif ok and obj then obj:Destroy() end\\nreturn {ok=ok,error=ok and nil or tostring(obj)}';
+  const probe=['local InsertService=game:GetService("InsertService")','local ok,obj=pcall(function() return InsertService:LoadAsset('+assetId+') end)','if ok and obj then obj:Destroy() end','return {ok=ok,error=ok and nil or tostring(obj)}'].join('\\n');
   let last=null;
   for(let i=0;i<20;i++){
     try{
