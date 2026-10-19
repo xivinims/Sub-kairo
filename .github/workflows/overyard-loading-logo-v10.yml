@@ -1,0 +1,39 @@
+name: Overyard Transparent Greeting Loading V10
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-loading-logo-v10/**"
+      - ".github/workflows/overyard-loading-logo-v10.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155-loading-logo-v10
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Rebuild source logo and make transparent PNG
+        run: |
+          python -m pip install --quiet pillow numpy
+          cat treeworld-loading-logo-v8/logo-b64/00.b64 treeworld-loading-logo-v8/logo-b64/01.b64 treeworld-loading-logo-v8/logo-b64/02.b64 | tr -d '\n' | base64 -d > /tmp/overyard-logo-source.jpg
+          python treeworld-loading-logo-v10/make_transparent.py /tmp/overyard-logo-source.jpg /tmp/overyard-logo-transparent.png
+          file /tmp/overyard-logo-transparent.png
+          ls -lh /tmp/overyard-logo-transparent.png
+
+      - name: Upload transparent logo, patch loading, verify and migrate
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-loading-logo-v10/publish.mjs
