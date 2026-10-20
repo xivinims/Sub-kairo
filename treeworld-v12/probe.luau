@@ -16,7 +16,8 @@ for _,id in ipairs({9731248486,6557969904,74899630735614,119986768245480,7385273
  else row.error=tostring(m)end
  table.insert(out.assets,row)
 end
-out.streaming={enabled=workspace.StreamingEnabled,min=workspace.StreamingMinRadius,target=workspace.StreamingTargetRadius}
+out.streaming={enabled=workspace.StreamingEnabled}
+pcall(function()out.streaming.min=workspace.StreamingMinRadius;out.streaming.target=workspace.StreamingTargetRadius end)
 out.tts={}
 local ok,err=pcall(function()local t=Instance.new('AudioTextToSpeech');t.Text='Olá! Eu sou o Caio. Que bom te encontrar por aqui.';t.VoiceId='1001';t.AutoLocalize=false;t.Parent=workspace;out.tts.class=true;out.tts.status=tostring(t:LoadAsync());out.tts.loaded=t.IsLoaded;out.tts.duration=t.TimeLength;t:Destroy()end)
 out.tts.ok=ok;out.tts.error=not ok and tostring(err)or nil
