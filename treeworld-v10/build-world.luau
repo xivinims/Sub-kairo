@@ -151,7 +151,7 @@ for _,zone in ipairs(Config.Zones)do
 end
 -- Valley photo: rows of chamfered tan stone blocks form irregular layered cliffs.
 for side=-1,1,2 do
- for i=0,12 do
+ for i=0,10 do
   local z=-174+i*28;local x=-400+side*(70+math.sin(i*.7)*13)
   local h=Config.surface(x,z);local p=mesh(zones.Valley,'LayeredSandstone',x,z,rng:NextNumber(34,49),h,side*math.pi/2,.9)
   p.CanCollide=true;p.CanQuery=true;pcall(function()p.CollisionFidelity=Enum.CollisionFidelity.Hull end)
@@ -212,7 +212,7 @@ end
 -- Dark photo: immense tilted frames, layered metal ribs, fractures and red saplings.
 local mon=zones.Monolith
 for i=1,4 do
- local x,z=-400+(i%2==0 and 14 or -11),-500+i*55
+ local x,z=-400,-500+i*55
  local base=24;local size=96-i*13;local angle=math.rad(i%2==0 and -14 or 20)
  local frame=CF(x,base,z)*CFrame.Angles(0,math.rad(-10+i*5),angle)
  local col=rgb(57+i*3,65+i*3,72+i*3)
