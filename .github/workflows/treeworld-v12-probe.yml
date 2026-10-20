@@ -8,7 +8,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -17,3 +17,11 @@ jobs:
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node treeworld-v12/probe.mjs
+      - name: Build original tree and wildlife geometry
+        run: |
+          python -m pip install --quiet numpy
+          python treeworld-v12/build_assets.py
+      - name: Upload validated tree and wildlife model library
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v12/upload-assets.mjs
