@@ -37,15 +37,8 @@ async function main() {
   }
 
   // Intentionally no edits: save/publish the data model already present in this Place.
-  const result = await execute(`
-    local AssetService = game:GetService("AssetService")
-    AssetService:SavePlaceAsync()
-    return {
-      ok = true,
-      universeId = game.GameId,
-      placeId = game.PlaceId
-    }
-  `);
+  const script = await (await fetch('https://raw.githubusercontent.com/xivinims/Sub-kairo/roblox-publisher/roblox-publisher/sakura-island.luau')).text();
+  const result = await execute(script);
 
   console.log(JSON.stringify({
     state: result.state,
