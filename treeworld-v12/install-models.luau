@@ -23,96 +23,43 @@ local desc=Instance.new('HumanoidDescription');desc.RightLeg=139607718
 local skin=Color3.fromRGB(210,169,129)
 desc.HeadColor=skin;desc.LeftArmColor=skin;desc.RightArmColor=skin;desc.TorsoColor=Color3.fromRGB(27,71,39);desc.LeftLegColor=Color3.fromRGB(108,88,64);desc.RightLegColor=desc.LeftLegColor
 local npc=game.Players:CreateHumanoidModelFromDescriptionAsync(desc,Enum.HumanoidRigType.R15)
-desc:Destroy();npc.Name='Caio'
+desc:Destroy();npc.Name='Caio';npc.Parent=world;npc.Humanoid:BuildRigFromAttachments()
+-- Cloud avatar assembly may omit joints. Join the documented R15 attachment
+-- pairs explicitly, preserving the actual package's limb shape and offsets.
+local links={{'Root','HumanoidRootPart','LowerTorso','RootRigAttachment'},
+ {'Waist','LowerTorso','UpperTorso','WaistRigAttachment'},{'Neck','UpperTorso','Head','NeckRigAttachment'}}
+for _,side in ipairs({'Left','Right'})do
+ table.insert(links,{side..'Shoulder','UpperTorso',side..'UpperArm',side..'ShoulderRigAttachment'})
+ table.insert(links,{side..'Elbow',side..'UpperArm',side..'LowerArm',side..'ElbowRigAttachment'})
+ table.insert(links,{side..'Wrist',side..'LowerArm',side..'Hand',side..'WristRigAttachment'})
+ table.insert(links,{side..'Hip','LowerTorso',side..'UpperLeg',side..'HipRigAttachment'})
+ table.insert(links,{side..'Knee',side..'UpperLeg',side..'LowerLeg',side..'KneeRigAttachment'})
+ table.insert(links,{side..'Ankle',side..'LowerLeg',side..'Foot',side..'AnkleRigAttachment'})
+end
+for _,link in ipairs(links)do
+ local p0=assert(npc:FindFirstChild(link[2]));local p1=assert(npc:FindFirstChild(link[3]));local joint=nil
+ for _,j in ipairs(npc:GetDescendants())do if j:IsA('Motor6D')and j.Part0==p0 and j.Part1==p1 then joint=j;break end end
+ if not joint then
+  local a0=assert(p0:FindFirstChild(link[4]),link[2]..' '..link[4]);local a1=assert(p1:FindFirstChild(link[4]),link[3]..' '..link[4])
+  p1.CFrame=p0.CFrame*a0.CFrame*a1.CFrame:Inverse()
+  joint=Instance.new('Motor6D');joint.Name=link[1];joint.Part0=p0;joint.Part1=p1;joint.C0=a0.CFrame;joint.C1=a1.CFrame;joint.Parent=p1
+ end
+end
 for _,p in ipairs(npc:GetDescendants())do
- if p:IsA('LuaSourceContainer')or p:IsA('Shirt')or p:IsA('Pants')or p:IsA('ShirtGraphic')or p:IsA('Decal')or p:IsA('Motor6D')then p:Destroy()
+ if p:IsA('LuaSourceContainer')or p:IsA('Shirt')or p:IsA('Pants')or p:IsA('ShirtGraphic')or p:IsA('Decal')then p:Destroy()
  elseif p:IsA('BasePart')then p.Anchored=p.Name=='HumanoidRootPart';p.CanCollide=false;p.CanTouch=false;p.Massless=true end
 end
--- Cloud-created R15 characters currently arrive with all R15 attachments but no
--- Motor6D joints. Build the canonical 15-joint chain directly from the paired
--- RigAttachments so animation and gaze offsets work exactly like a normal R15.
-local function motor(name,p0Name,p1Name,attachmentName)
- local p0=assert(npc:FindFirstChild(p0Name),p0Name)
- local p1=assert(npc:FindFirstChild(p1Name),p1Name)
- local a0=assert(p0:FindFirstChild(attachmentName),p0Name..'.'..attachmentName)
- local a1=assert(p1:FindFirstChild(attachmentName),p1Name..'.'..attachmentName)
- -- Re-align Part1 from the attachment pair before joining it. This is important
- -- for the asymmetrical Korblox right leg, whose artist-intent attachment
- -- positions differ from the default R15 leg.
- p1.CFrame=p0.CFrame*a0.CFrame*a1.CFrame:Inverse()
- local m=Instance.new('Motor6D')
- m.Name=name;m.Part0=p0;m.Part1=p1;m.C0=a0.CFrame;m.C1=a1.CFrame;m.Parent=p0
- return m
-end
-motor('Root','HumanoidRootPart','LowerTorso','RootRigAttachment')
-motor('Waist','LowerTorso','UpperTorso','WaistRigAttachment')
-motor('Neck','UpperTorso','Head','NeckRigAttachment')
-motor('LeftShoulder','UpperTorso','LeftUpperArm','LeftShoulderRigAttachment')
-motor('LeftElbow','LeftUpperArm','LeftLowerArm','LeftElbowRigAttachment')
-motor('LeftWrist','LeftLowerArm','LeftHand','LeftWristRigAttachment')
-motor('RightShoulder','UpperTorso','RightUpperArm','RightShoulderRigAttachment')
-motor('RightElbow','RightUpperArm','RightLowerArm','RightElbowRigAttachment')
-motor('RightWrist','RightLowerArm','RightHand','RightWristRigAttachment')
-motor('LeftHip','LowerTorso','LeftUpperLeg','LeftHipRigAttachment')
-motor('LeftKnee','LeftUpperLeg','LeftLowerLeg','LeftKneeRigAttachment')
-motor('LeftAnkle','LeftLowerLeg','LeftFoot','LeftAnkleRigAttachment')
-motor('RightHip','LowerTorso','RightUpperLeg','RightHipRigAttachment')
-motor('RightKnee','RightUpperLeg','RightLowerLeg','RightKneeRigAttachment')
-motor('RightAnkle','RightLowerLeg','RightFoot','RightAnkleRigAttachment')
 local shirt=Instance.new('Shirt');shirt.Name='ExactAdventurerShirt';shirt.ShirtTemplate='rbxassetid://134896954466438';shirt.Parent=npc
 local pants=Instance.new('Pants');pants.Name='ExactAdventurerPants';pants.PantsTemplate='rbxassetid://139899689316791';pants.Parent=npc
 local head=npc.Head;local root=npc.HumanoidRootPart;local hum=npc.Humanoid
 local face=Instance.new('Decal');face.Name='Expression';face.Face=Enum.NormalId.Front;face.Texture=require(runtime.DialogueData).Faces.smile;face.Parent=head
 npc.PrimaryPart=root;hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None;hum.WalkSpeed=0;hum.AutoRotate=false
--- Ground against the actual terrain and the actual lowest body point. Korblox
--- changes the right-leg proportions, so Humanoid.HipHeight alone can visibly
--- float the rig even when the root math looks valid.
-local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={workspace.Terrain}
-local hit=workspace:Raycast(V(C.NPC.X,512,C.NPC.Z),V(0,-1024,0),params)
-assert(hit,'Missing terrain below Caio')
-local boxCF,boxSize=npc:GetBoundingBox()
-local pivot=npc:GetPivot()
-local bottom=boxCF.Position.Y-boxSize.Y/2
-local pivotToBottom=pivot.Position.Y-bottom
-npc:PivotTo(CF(C.NPC.X,hit.Position.Y+pivotToBottom+.08,C.NPC.Z)*CFrame.Angles(0,math.rad(135),0))
+npc:PivotTo(CF(C.NPC.X,C.surface(C.NPC.X,C.NPC.Z)+hum.HipHeight+root.Size.Y/2,C.NPC.Z)*CFrame.Angles(0,math.rad(135),0))
 npc.ModelStreamingMode=Enum.ModelStreamingMode.Persistent
-local oldNPC=world:FindFirstChild('Caio');if oldNPC then oldNPC:Destroy()end;npc.Parent=world
+for _,oldNPC in ipairs(world:GetChildren())do if oldNPC.Name=='Caio'and oldNPC~=npc then oldNPC:Destroy()end end
 if not hum:FindFirstChildOfClass('Animator')then Instance.new('Animator',hum)end
 local idle=Instance.new('Animation');idle.Name='IdleAnimation';idle.AnimationId='rbxassetid://105149630069175';idle.Parent=npc
 local idle2=Instance.new('Animation');idle2.Name='IdleVariation';idle2.AnimationId='rbxassetid://129461181849095';idle2.Parent=npc
--- Play the requested Roblox idle on the server so every client sees the same
--- natural base pose. Dialogue/head tracking only offsets Motor6D.C0 locally,
--- while Animator writes Transform, so both layers can coexist.
-local idleServer=Instance.new('Script');idleServer.Name='CaioIdleServer'
-idleServer.Source=[=[
-local npc=script.Parent
-local hum=npc:WaitForChild('Humanoid')
-local animator=hum:FindFirstChildOfClass('Animator')or Instance.new('Animator',hum)
-local main=npc:WaitForChild('IdleAnimation')
-local variation=npc:WaitForChild('IdleVariation')
-local current
-local function play(anim,weight,fade)
- local ok,track=pcall(function()return animator:LoadAnimation(anim)end)
- if not ok or not track then return nil end
- track.Priority=Enum.AnimationPriority.Idle
- track.Looped=true
- pcall(function()track:Play(fade or .25,weight or 1,1)end)
- return track
-end
-current=play(main,1,.2)
-task.spawn(function()
- while npc.Parent do
-  task.wait(math.random(14,24))
-  if not npc.Parent then break end
-  local alt=play(variation,.55,.35)
-  if alt then
-   task.wait(math.random(3,5))
-   pcall(function()alt:Stop(.45)end)
-  end
- end
-end)
-]=]
-idleServer.Parent=npc
 npc:SetAttribute('IdleReferenceResolved',true);npc:SetAttribute('IdleCatalogAsset',82585639490423)
 npc:SetAttribute('IdleReferenceURL','https://www.roblox.com/share?code=89e12c0c38433a4e9aa68451fda0c346&type=AvatarItemDetails')
 npc:SetAttribute('ExactShirtImage',134896954466438);npc:SetAttribute('ExactPantsImage',139899689316791);npc:SetAttribute('RightLegAsset',139607718)

@@ -118,7 +118,7 @@ Run.Heartbeat:Connect(function(dt)
    local velocity=root.AssemblyLinearVelocity;local speed=Vector2.new(velocity.X,velocity.Z).Magnitude;local before=previous[player]or speed;previous[player]=speed
    nearby(root.Position,function(tree)
     local trunk=tree.PrimaryPart;local r=tree:GetAttribute('RootPosition')
-    if trunk and math.abs(root.Position.Y-r.Y)<8 and Vector2.new(root.Position.X-r.X,root.Position.Z-r.Z).Magnitude<trunk.Size.X/2+1.65 and hum.MoveDirection.Magnitude>.2 and now-(lastHit[player]or -100)>8 then
+    if trunk and math.abs(root.Position.Y-r.Y)<8 and Vector2.new(root.Position.X-r.X,root.Position.Z-r.Z).Magnitude<trunk.Size.X/2+1.65 and math.max(speed,before)>1 and now-(lastHit[player]or -100)>8 then
      lastHit[player]=now;Movement.authorize(player,3);event:FireAllClients('tree',tree,player,math.max(speed,before)>6);drop(tree)
     end
    end)
@@ -127,7 +127,7 @@ Run.Heartbeat:Connect(function(dt)
     if #candidates>0 then drop(candidates[rng:NextInteger(1,#candidates)])end
    end
    if streamClock>2 and speed>1 then
-    local target=root.Position+hum.MoveDirection*86
+    local target=root.Position+Vector3.new(velocity.X,0,velocity.Z).Unit*86
     task.spawn(function()pcall(function()player:RequestStreamAroundAsync(target,1.8)end)end)
    end
   end

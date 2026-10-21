@@ -31,6 +31,12 @@ ${install('octree','OctreeRegionUtils','ModuleScript','vendor/OctreeRegionUtils'
 ${install('wind','WindLines','ModuleScript','vendor/WindLines')}
 `;
 const clients=`
+game.StarterPlayer.CameraMode=Enum.CameraMode.Classic
+game.StarterPlayer.CameraMinZoomDistance=.5
+game.StarterPlayer.CameraMaxZoomDistance=24
+game.StarterPlayer.DevComputerCameraMovementMode=Enum.DevComputerCameraMovementMode.UserChoice
+game.StarterPlayer.DevTouchCameraMovementMode=Enum.DevTouchCameraMovementMode.UserChoice
+${install('sps','OveryardCameraClient','LocalScript','camera-client')}
 ${install('sps','PhotoEnvironmentClient','LocalScript','environment-client')}
 ${install('sps','LivingNatureClient','LocalScript','nature-client')}
 ${install('sps','ForestInventoryClient','LocalScript','inventory-client')}
