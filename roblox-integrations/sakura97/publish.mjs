@@ -61,9 +61,12 @@ assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong tar
 local sourceVersion=game.PlaceVersion
 print("[Sakura97] Starting repaired install from version "..tostring(sourceVersion))
 
-do
+local installOk,installErr=xpcall(function()
 ${installBody}
-end
+end,function(err)
+  return debug.traceback(tostring(err),2)
+end)
+assert(installOk,"INSTALL_TRACE: "..tostring(installErr))
 
 local function runVerify()
 ${verifySource}
