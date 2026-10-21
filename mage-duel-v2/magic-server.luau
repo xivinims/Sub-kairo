@@ -560,13 +560,19 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   if react<.34 then
    bossBarrier(origin)
    task.wait(.07)
+   beam(origin,endpoint,.32)
+   damageBoss(58,endpoint,origin)
   elseif react<.48 then
+   -- Real dodge: preserve the original target point so the beam misses after the boss moves.
+   local missedPoint=endpoint
    bossDodge(plr,false)
-   endpoint=root.Position+Vector3.new(0,2.7,0)
+   beam(origin,missedPoint,.32)
+   dust(missedPoint,C.ice,12,3,.45)
+   if math.random()<.55 then task.spawn(bossBeam,plr,true)end
+  else
+   beam(origin,endpoint,.32)
+   damageBoss(58,endpoint,origin)
   end
-
-  beam(origin,endpoint,.32)
-  damageBoss(58,endpoint,origin)
 
   if react>.82 then task.spawn(bossBeam,plr,true)end
   feedback:FireClient(plr,"accepted","Attack","Zoltraak")
@@ -589,13 +595,18 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   end
   feedback:FireClient(plr,"accepted","Storm","Judradjim")
  elseif ability=="Singularity" then
-  -- Spatial collapse materializes on the boss rather than on an imprecise screen tap.
+  -- Spatial collapse appears on the boss, but a real dodge can escape before collapse.
   active=true;target=plr
   local pos=root.Position+Vector3.new(0,2.5,0)
   singularity(pos)
   task.wait(1.62)
   if boss.Parent and hum.Health>0 then
-   damageBoss(46,root.Position+Vector3.new(0,2.5,0),r.Position)
+   local current=root.Position+Vector3.new(0,2.5,0)
+   if (current-pos).Magnitude<=13 then
+    damageBoss(46,current,r.Position)
+   else
+    dust(pos,C.violet,18,4,.55)
+   end
   end
   feedback:FireClient(plr,"accepted","Singularity","Singularidade")
  elseif ability=="Heal" then
