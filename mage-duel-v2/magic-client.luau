@@ -141,11 +141,27 @@ local function buildUI()
  close.TextSize=18
  close.TextColor3=Color3.fromRGB(230,238,248)
  close.Parent=holder
+ local reopen=Instance.new("TextButton")
+ reopen.Name="ReopenSpells"
+ reopen.Size=UDim2.fromOffset(72,32)
+ reopen.Position=UDim2.new(0,18,.5,-16)
+ reopen.BackgroundColor3=Color3.fromRGB(6,8,12)
+ reopen.BackgroundTransparency=.18
+ reopen.BorderSizePixel=0
+ reopen.Font=Enum.Font.GothamMedium
+ reopen.Text="MAGIAS"
+ reopen.TextColor3=Color3.fromRGB(230,238,248)
+ reopen.TextSize=12
+ reopen.Visible=false
+ reopen.Parent=gui
+
  close.Activated:Connect(function()
   holder.Visible=false
-  task.delay(1.5,function()
-   if holder and holder.Parent then holder.Visible=true end
-  end)
+  reopen.Visible=true
+ end)
+ reopen.Activated:Connect(function()
+  reopen.Visible=false
+  holder.Visible=true
  end)
 
  for i,item in ipairs(buttons)do
