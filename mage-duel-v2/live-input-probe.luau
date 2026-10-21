@@ -4,27 +4,29 @@ local ServerScriptService=game:GetService("ServerScriptService")
 local world=workspace:FindFirstChild("MageDuelWorld")
 local boss=world and world:FindFirstChild("AstraVeyra")
 local tool=StarterPack:FindFirstChild("AstralStaff")
-local remoteFolder=ReplicatedStorage:FindFirstChild("MageDuelRemotes")
-local cast=remoteFolder and remoteFolder:FindFirstChild("Cast")
-local server=ServerScriptService:FindFirstChild("MageDuelServer")
 local client=tool and tool:FindFirstChild("MageDuelClient")
+local server=ServerScriptService:FindFirstChild("MageDuelServer")
+local cs=client and client.Source or ""
+local ss=server and server.Source or ""
 return {
  placeVersion=game.PlaceVersion,
  build=workspace:GetAttribute("BuildVersion"),
- boss= boss~=nil,
- bossHRP= boss and boss:FindFirstChild("HumanoidRootPart")~=nil or false,
+ standardJump=workspace:GetAttribute("StandardRobloxJump"),
+ boss=boss~=nil,
+ bossActive=boss and boss:GetAttribute("Active") or nil,
  tool=tool~=nil,
- requiresHandle=tool and tool.RequiresHandle or nil,
- handle=tool and tool:FindFirstChild("Handle")~=nil or false,
+ toolEnabled=tool and tool.Enabled or nil,
+ manualActivationOnly=tool and tool.ManualActivationOnly or nil,
  client=client~=nil,
- clientDisabled=client and client.Disabled or nil,
- castRemote=cast~=nil,
  server=server~=nil,
- serverDisabled=server and server.Disabled or nil,
- serverSourceLen=server and #server.Source or 0,
- clientSourceLen=client and #client.Source or 0,
- serverHasStorm=server and string.find(server.Source,'ability=="Storm"',1,true)~=nil or false,
- serverHasSingularity=server and string.find(server.Source,'ability=="Singularity"',1,true)~=nil or false,
- clientHasActivated=client and string.find(client.Source,'b.Activated:Connect',1,true)~=nil or false,
- clientHasFire=client and string.find(client.Source,'cast:FireServer',1,true)~=nil or false,
+ clientGuardRemoved=not string.find(cs,"if not equipped or not ready(name) then return end",1,true),
+ keyboardGuardRemoved=not string.find(cs,"if gp or not equipped then return end",1,true),
+ autoEquip=string.find(cs,"ensureStaffEquipped()",1,true)~=nil,
+ singleActivated=string.find(cs,"b.Activated:Connect",1,true)~=nil and string.find(cs,"MouseButton1Click",1,true)==nil,
+ noCustomJump=string.find(cs,'"Pulo"',1,true)==nil and string.find(cs,'fire("Jump")',1,true)==nil,
+ realBossDodge=string.find(ss,"local missedPoint=endpoint",1,true)~=nil,
+ singularityEscape=string.find(ss,"(current-pos).Magnitude<=13",1,true)~=nil,
+ individualRunes=string.find(ss,'d:FindFirstChildWhichIsA("Decal")',1,true)~=nil,
+ heavyImpactThrottle=string.find(ss,"lastHeavyImpact",1,true)~=nil,
+ activeSync=string.find(ss,'boss:SetAttribute("Active",true)',1,true)~=nil,
 }
