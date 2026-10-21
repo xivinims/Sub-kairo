@@ -243,7 +243,7 @@ do
  assert(tool,"Player staff asset missing Tool")
  tool.Parent=StarterPack
  asset:Destroy()
- tool.Name="AstralStaff";tool.CanBeDropped=false;tool.RequiresHandle=true;tool.ToolTip="Zoltraak • Barreira • Judradjim • Singularidade • Vida • Esquiva • Pulo • Voo"
+ tool.Name="AstralStaff";tool.CanBeDropped=false;tool.RequiresHandle=true;tool.ToolTip="Zoltraak • Barreira • Judradjim • Singularidade • Vida • Esquiva • Voo"
  sanitize(tool)
  tool:SetAttribute("SourceAssetId",IDS.PlayerStaff)
  local handle=assert(tool:FindFirstChild("Handle"),"Requested staff missing Handle")
@@ -266,7 +266,8 @@ Workspace:SetAttribute("BossReactiveOnly",true)
 Workspace:SetAttribute("MagicBarrierLayers",3)
 Workspace:SetAttribute("LoadingScreenRemoved",true)
 Workspace:SetAttribute("RequestedAssetsExact",true)
-Workspace:SetAttribute("MagicSystem","zoltraak+hex-barrier+judradjim+singularity+gravity+heal+dodge+jump+flight")
+Workspace:SetAttribute("MagicSystem","zoltraak+hex-barrier+judradjim+singularity+gravity+heal+dodge+flight")
+Workspace:SetAttribute("StandardRobloxJump",true)
 
 AssetService:SavePlaceAsync()
 
