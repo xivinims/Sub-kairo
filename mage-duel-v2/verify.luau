@@ -41,6 +41,11 @@ for _,ability in ipairs({"Attack","Barrier","Storm","Singularity","Heal","Dodge"
 end
 assert(not string.find(csrc,'"Pulo"',1,true),"Custom Pulo button must be removed")
 assert(not string.find(csrc,'Enum.KeyCode.F then fire("Jump")',1,true),"Custom F jump binding must be removed")
+assert(not string.find(csrc,'if not equipped or not ready(name) then return end',1,true),"Spell fire still blocked by equipped state")
+assert(not string.find(csrc,'if gp or not equipped then return end',1,true),"Keyboard spells still blocked by equipped state")
+assert(string.find(csrc,'ensureStaffEquipped()',1,true),"Auto-equip before casting missing")
+assert(string.find(csrc,'player:GetMouse()',1,true),"Robust live aim missing")
+
 
 local templates=assert(ReplicatedStorage:FindFirstChild("MageAssetTemplates"),"MageAssetTemplates missing")
 local circles=assert(templates:FindFirstChild("MagicCircles"),"Magic circle bank missing")
