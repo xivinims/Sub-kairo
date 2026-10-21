@@ -549,74 +549,75 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
  if not cd or not ready(playerCD,key,cd)then return end
 
  if ability=="Attack" then
-  local aim=type(data)=="table" and typeof(data.aim)=="Vector3" and data.aim or (r.Position+r.CFrame.LookVector*140)
+  -- Boss arena lock-on: button/touch input must never depend on mouse.Hit.
   local origin=(ch:FindFirstChild("RightHand") and ch.RightHand.Position or r.Position)+Vector3.new(0,.8,0)
-  smartMagicCircle(CFrame.lookAt(origin,aim),4.2,C.ice,.65)
+  local endpoint=root.Position+Vector3.new(0,2.7,0)
+  active=true;target=plr
+  smartMagicCircle(CFrame.lookAt(origin,endpoint),4.2,C.ice,.65)
   task.wait(.12)
-  local dir=(aim-origin)
-  if dir.Magnitude<1 then return end
-  local params=RaycastParams.new()
-  params.FilterType=Enum.RaycastFilterType.Exclude
-  params.FilterDescendantsInstances={ch}
-  local result=workspace:Raycast(origin,dir.Unit*180,params)
-  local endpoint=result and result.Position or origin+dir.Unit*180
-  beam(origin,endpoint,.32)
-  if result and result.Instance and result.Instance:IsDescendantOf(boss) then
-   active=true;target=plr
-   local react=math.random()
-   if react<.42 then
-    bossBarrier(origin)
-    task.wait(.08)
-   elseif react<.61 then
-    bossDodge(plr,false)
-    return
-   end
-   damageBoss(58,endpoint,origin)
-   if react>.78 then task.spawn(bossBeam,plr,true)end
-  elseif (root.Position-endpoint).Magnitude<5 then
-   active=true;target=plr;damageBoss(48,root.Position+Vector3.new(0,3,0),origin)
+
+  local react=math.random()
+  if react<.34 then
+   bossBarrier(origin)
+   task.wait(.07)
+  elseif react<.48 then
+   bossDodge(plr,false)
+   endpoint=root.Position+Vector3.new(0,2.7,0)
   end
+
+  beam(origin,endpoint,.32)
+  damageBoss(58,endpoint,origin)
+
+  if react>.82 then task.spawn(bossBeam,plr,true)end
+  feedback:FireClient(plr,"accepted","Attack","Zoltraak")
  elseif ability=="Barrier" then
   local face=root.Position
   playerShield[ch]={untilTime=now()+1.8,layers=3}
   barrierVisual(r.Position+Vector3.new(0,3,0),face,C.ice,1.8,3)
+  feedback:FireClient(plr,"accepted","Barrier","Barreira")
  elseif ability=="Storm" then
-  local aim=type(data)=="table" and typeof(data.aim)=="Vector3" and data.aim or (root.Position+Vector3.new(0,2,0))
+  -- Judradjim locks around the boss and walks its lightning pattern across the target.
+  active=true;target=plr
   local high=r.Position+Vector3.new(0,14,0)
   smartMagicCircle(CFrame.new(high)*CFrame.Angles(math.rad(90),0,0),7.5,C.storm,1.1)
   task.wait(.25)
-  for i=1,4 do
-   local targetPos=aim+Vector3.new(math.random(-4,4),0,math.random(-4,4))
-   lightning(high+Vector3.new(math.random(-5,5),0,math.random(-5,5)),targetPos)
-   if (root.Position-targetPos).Magnitude<6 then
-    active=true;target=plr;damageBoss(18,targetPos,r.Position)
-   end
+  for i=1,5 do
+   local bossPoint=root.Position+Vector3.new(math.random(-3,3),math.random(1,5),math.random(-3,3))
+   lightning(high+Vector3.new(math.random(-5,5),0,math.random(-5,5)),bossPoint)
+   damageBoss(13,bossPoint,r.Position)
    task.wait(.1)
   end
+  feedback:FireClient(plr,"accepted","Storm","Judradjim")
  elseif ability=="Singularity" then
-  local aim=type(data)=="table" and typeof(data.aim)=="Vector3" and data.aim or root.Position
-  local pos=Vector3.new(aim.X,math.max(2,aim.Y),aim.Z)
+  -- Spatial collapse materializes on the boss rather than on an imprecise screen tap.
+  active=true;target=plr
+  local pos=root.Position+Vector3.new(0,2.5,0)
   singularity(pos)
   task.wait(1.62)
-  if (root.Position-pos).Magnitude<15 then
-   active=true;target=plr;damageBoss(42,root.Position+Vector3.new(0,2.5,0),r.Position)
+  if boss.Parent and hum.Health>0 then
+   damageBoss(46,root.Position+Vector3.new(0,2.5,0),r.Position)
   end
+  feedback:FireClient(plr,"accepted","Singularity","Singularidade")
  elseif ability=="Heal" then
   smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.12,0))*CFrame.Angles(math.rad(90),0,0),5.2,C.gold,1.1)
   dust(r.Position+Vector3.new(0,2,0),C.gold,28,3,1)
   h.Health=math.min(h.MaxHealth,h.Health+28)
+  feedback:FireClient(plr,"accepted","Heal","Vida")
  elseif ability=="Dodge" then
   dust(r.Position+Vector3.new(0,2,0),C.ice,16,4,.55)
   r.AssemblyLinearVelocity=r.CFrame.LookVector*52+Vector3.new(0,6,0)
+  feedback:FireClient(plr,"accepted","Dodge","Esquiva")
  elseif ability=="Jump" then
   smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.1,0))*CFrame.Angles(math.rad(90),0,0),3.6,C.violet,.6)
   r.AssemblyLinearVelocity=Vector3.new(r.AssemblyLinearVelocity.X,64,r.AssemblyLinearVelocity.Z)
+  feedback:FireClient(plr,"accepted","Jump","Pulo")
  elseif ability=="Fly" then
   smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.1,0))*CFrame.Angles(math.rad(90),0,0),4.4,C.ice,.7)
   local att=Instance.new("Attachment");att.Name="FlightAttachment";att.Parent=r
   local lv=Instance.new("LinearVelocity");lv.Name="FlightVelocity";lv.Attachment0=att;lv.MaxForce=42000;lv.VectorVelocity=r.CFrame.LookVector*28+Vector3.new(0,16,0);lv.Parent=r
   task.delay(1.2,function()if lv.Parent then lv.VectorVelocity=r.CFrame.LookVector*34+Vector3.new(0,2,0)end end)
   Debris:AddItem(lv,2.3);Debris:AddItem(att,2.35)
+  feedback:FireClient(plr,"accepted","Fly","Voo")
  end
 end)
 
