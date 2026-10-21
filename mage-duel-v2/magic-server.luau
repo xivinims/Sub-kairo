@@ -32,6 +32,11 @@ local playerCD={}
 local bossShield={untilTime=0,layers=0}
 local playerShield={}
 local poseBusy=false
+local function activateBoss(plr)
+ active=true
+ target=plr
+ boss:SetAttribute("Active",true)
+end
 local motors={}
 for _,d in ipairs(boss:GetDescendants())do
  if d:IsA("Motor6D")then
@@ -542,7 +547,7 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   -- Boss arena lock-on: button/touch input must never depend on mouse.Hit.
   local origin=(ch:FindFirstChild("RightHand") and ch.RightHand.Position or r.Position)+Vector3.new(0,.8,0)
   local endpoint=root.Position+Vector3.new(0,2.7,0)
-  active=true;target=plr
+  activateBoss(plr)
   smartMagicCircle(CFrame.lookAt(origin,endpoint),4.2,C.ice,.65)
   task.wait(.12)
 
@@ -573,7 +578,7 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   feedback:FireClient(plr,"accepted","Barrier","Barreira")
  elseif ability=="Storm" then
   -- Judradjim locks around the boss and walks its lightning pattern across the target.
-  active=true;target=plr
+  activateBoss(plr)
   local high=r.Position+Vector3.new(0,14,0)
   smartMagicCircle(CFrame.new(high)*CFrame.Angles(math.rad(90),0,0),7.5,C.storm,1.1)
   task.wait(.25)
@@ -586,7 +591,7 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   feedback:FireClient(plr,"accepted","Storm","Judradjim")
  elseif ability=="Singularity" then
   -- Spatial collapse appears on the boss, but a real dodge can escape before collapse.
-  active=true;target=plr
+  activateBoss(plr)
   local pos=root.Position+Vector3.new(0,2.5,0)
   singularity(pos)
   task.wait(1.62)
@@ -620,6 +625,7 @@ end)
 
 hum.Died:Connect(function()
  active=false
+ boss:SetAttribute("Active",false)
  smartMagicCircle(CFrame.new(root.Position+Vector3.new(0,.1,0))*CFrame.Angles(math.rad(90),0,0),12,C.gold,3)
  dust(root.Position+Vector3.new(0,4,0),C.ice,80,10,1.8)
 end)
