@@ -45,7 +45,12 @@ assert(npc:GetAttribute('RightLegAsset')==139607718,'Korblox right leg missing')
 assert(npc.ExactAdventurerShirt.ShirtTemplate=='rbxassetid://134896954466438','Wrong original shirt')
 assert(npc.ExactAdventurerPants.PantsTemplate=='rbxassetid://139899689316791','Wrong original pants')
 assert(npc:GetAttribute('IdleReferenceResolved')and npc.IdleAnimation.AnimationId=='rbxassetid://105149630069175','Wrong Naoya idle')
-local motors=0;for _,p in ipairs(npc:GetDescendants())do if p:IsA('Motor6D')then motors+=1 end end;assert(motors>=15,'R15 rig is disconnected')
+local motors=0;local requiredMotors={Root={'HumanoidRootPart','LowerTorso'},Waist={'LowerTorso','UpperTorso'},Neck={'UpperTorso','Head'},LeftShoulder={'UpperTorso','LeftUpperArm'},LeftElbow={'LeftUpperArm','LeftLowerArm'},LeftWrist={'LeftLowerArm','LeftHand'},RightShoulder={'UpperTorso','RightUpperArm'},RightElbow={'RightUpperArm','RightLowerArm'},RightWrist={'RightLowerArm','RightHand'},LeftHip={'LowerTorso','LeftUpperLeg'},LeftKnee={'LeftUpperLeg','LeftLowerLeg'},LeftAnkle={'LeftLowerLeg','LeftFoot'},RightHip={'LowerTorso','RightUpperLeg'},RightKnee={'RightUpperLeg','RightLowerLeg'},RightAnkle={'RightLowerLeg','RightFoot'}}
+local found={}
+for _,p in ipairs(npc:GetDescendants())do if p:IsA('Motor6D')then motors+=1;found[p.Name]=p end end
+assert(motors==15,'R15 rig must have exactly 15 Motor6D joints, got '..motors)
+for name,ends in pairs(requiredMotors)do local m=assert(found[name],'Missing R15 joint '..name);assert(m.Part0 and m.Part0.Name==ends[1] and m.Part1 and m.Part1.Name==ends[2],'Wrong R15 joint '..name)end
+assert(npc:FindFirstChild('CaioIdleServer')and npc.CaioIdleServer:IsA('Script'),'Requested idle runtime missing')
 assert(math.abs(npc.HumanoidRootPart.Position.Y-hum.HipHeight-npc.HumanoidRootPart.Size.Y/2-terrainHeight(C.NPC.X,C.NPC.Z))<2,'NPC floats')
 assert(runtime.SafetyEvent:IsA('RemoteEvent')and runtime.ReportEvent:IsA('RemoteEvent'))
 local data=require(runtime.DialogueData);for _,t in pairs(data.Locales)do assert(t.report and t.choices.report and t.choices.feedback)end
