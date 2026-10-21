@@ -65,6 +65,8 @@ local function buildIsland()
 				if dist > radius * 0.78 then
 					h = h - (dist - radius*0.78) * 0.35
 				end
+				-- FillBlock não aceita extents negativos/vazios.
+				h = math.max(1.5, h)
 				Terrain:FillBlock(CFrame.new(x, h/2, z), Vector3.new(10, h, 10), Enum.Material.Grass)
 			end
 		end
