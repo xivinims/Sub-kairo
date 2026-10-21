@@ -31,6 +31,8 @@ assert(boss:FindFirstChild("BossRobeFront",true) and boss:FindFirstChild("BossCa
 
 local tool=assert(StarterPack:FindFirstChild("AstralStaff"),"Exact player staff missing")
 assert(tool:GetAttribute("SourceAssetId")==3832698706,"Wrong player staff asset")
+assert(tool.Enabled==true,"Player staff must stay enabled")
+assert(tool.ManualActivationOnly==false,"Player staff must allow normal activation")
 local client=assert(tool:FindFirstChild("MageDuelClient"),"V2 staff client missing")
 local csrc=client.Source
 for _,token in ipairs({"Zoltraak","Barreira","Judradjim","Singularidade","Vida","Esquiva","Voo","SpellRail"})do
@@ -79,7 +81,8 @@ for _,token in ipairs({
  assert(string.find(src,token,1,true),"V2 magic runtime missing "..token)
 end
 assert(string.find(src,"local active=false",1,true),"Boss must start inactive")
-assert(string.find(src,"active=true;target=plr",1,true),"Attack activation missing")
+assert(string.find(src,"activateBoss(plr)",1,true),"Attack activation missing")
+assert(string.find(src,'boss:SetAttribute("Active",true)',1,true),"Boss Active attribute sync missing")
 
 return {
  ok=true,placeVersion=game.PlaceVersion,build="mage-duel-v2",
