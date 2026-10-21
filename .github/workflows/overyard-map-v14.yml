@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: roblox-universe-9421311218-place-118064584465155-map-v14
-  cancel-in-progress: true
+  group: overyard-place-publisher
+  cancel-in-progress: false
 
 jobs:
   publish:
