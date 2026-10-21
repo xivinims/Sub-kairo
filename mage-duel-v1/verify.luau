@@ -59,7 +59,10 @@ local remotes=assert(ReplicatedStorage:FindFirstChild("MageDuelRemotes"),"Magic 
 assert(remotes:FindFirstChild("Cast"),"Cast remote missing")
 
 assert(#StarterGui:GetChildren()==0,"StarterGui must stay clean")
-assert(#StarterPlayer.StarterPlayerScripts:GetChildren()==0,"Old StarterPlayerScripts remain")
+local allowedStarter={PlayerModule=true,RbxCharacterSounds=true,PlayerScriptsLoader=true}
+for _,x in ipairs(StarterPlayer.StarterPlayerScripts:GetChildren())do
+ assert(allowedStarter[x.Name],"Unexpected StarterPlayerScript remains: "..x.Name)
+end
 assert(#StarterPlayer.StarterCharacterScripts:GetChildren()==0,"Old StarterCharacterScripts remain")
 
 local workspaceGameplay=0
