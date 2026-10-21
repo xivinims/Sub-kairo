@@ -243,7 +243,7 @@ do
  assert(tool,"Player staff asset missing Tool")
  tool.Parent=StarterPack
  asset:Destroy()
- tool.Name="AstralStaff";tool.CanBeDropped=false;tool.RequiresHandle=true;tool.ToolTip="Zoltraak • Barreira • Judradjim • Singularidade • Vida • Esquiva • Voo"
+ tool.Name="AstralStaff";tool.CanBeDropped=false;tool.RequiresHandle=true;tool.Enabled=true;tool.ManualActivationOnly=false;tool.ToolTip="Zoltraak • Barreira • Judradjim • Singularidade • Vida • Esquiva • Voo"
  sanitize(tool)
  tool:SetAttribute("SourceAssetId",IDS.PlayerStaff)
  local handle=assert(tool:FindFirstChild("Handle"),"Requested staff missing Handle")
