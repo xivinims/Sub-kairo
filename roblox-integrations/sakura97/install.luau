@@ -193,26 +193,39 @@ local function visualPartCount(inst)
 	return n
 end
 
+local function validBounds(model)
+	local ok,cf,size=pcall(function()
+		return model:GetBoundingBox()
+	end)
+	if not ok or not size or size.X<=0 or size.Y<=0 or size.Z<=0 then
+		return nil
+	end
+	return cf,size
+end
+
 local function findVisualModel(asset, preferredWords)
 	local best=nil
 	local bestScore=-1
 	for _,d in ipairs(asset:GetDescendants()) do
 		if d:IsA("Model") and d:FindFirstChildWhichIsA("BasePart", true) then
-			local score=visualPartCount(d)
-			local name=d.Name:lower()
-			for _,word in ipairs(preferredWords or {}) do
-				if name:find(word,1,true) then score+=10000 end
-			end
-			if score>bestScore then
-				best=d
-				bestScore=score
+			local _,size=validBounds(d)
+			if size then
+				local score=visualPartCount(d)
+				local name=d.Name:lower()
+				for _,word in ipairs(preferredWords or {}) do
+					if name:find(word,1,true) then score+=10000 end
+				end
+				if score>bestScore then
+					best=d
+					bestScore=score
+				end
 			end
 		end
 	end
 	if best then return best:Clone() end
 
 	local part=asset:FindFirstChildWhichIsA("BasePart", true)
-	if part then
+	if part and part.Size.X>0 and part.Size.Y>0 and part.Size.Z>0 then
 		local m=Instance.new("Model")
 		part:Clone().Parent=m
 		return m
@@ -220,18 +233,30 @@ local function findVisualModel(asset, preferredWords)
 	return nil
 end
 
+local function safeScale(model,scale)
+	return pcall(function()
+		model:ScaleTo(scale)
+	end)
+end
+
 local function normalizeHeight(model,targetHeight)
-	local _,size=model:GetBoundingBox()
-	if size.Y>0 then
-		model:ScaleTo(model:GetScale()*(targetHeight/size.Y))
-	end
+	local _,size=validBounds(model)
+	if not size then return false end
+	local current=model:GetScale()
+	return safeScale(model,current*(targetHeight/size.Y))
 end
 
 local function placeModelOnGround(model,groundPosition,yaw)
-	model:PivotTo(CFrame.new(groundPosition)*CFrame.Angles(0,yaw,0))
-	local cf,size=model:GetBoundingBox()
+	local ok=pcall(function()
+		model:PivotTo(CFrame.new(groundPosition)*CFrame.Angles(0,yaw,0))
+	end)
+	if not ok then return false end
+	local cf,size=validBounds(model)
+	if not size then return false end
 	local bottom=cf.Position.Y-size.Y/2
-	model:PivotTo(model:GetPivot()+Vector3.new(0,groundPosition.Y-bottom,0))
+	return pcall(function()
+		model:PivotTo(model:GetPivot()+Vector3.new(0,groundPosition.Y-bottom,0))
+	end)
 end
 
 -- ============ 6. ÁRVORES CEREJEIRA (27 unidades, maiores) ============
@@ -287,9 +312,13 @@ local function placeSakuraTrees()
 
 		local tree = template:Clone()
 		-- tamanho controlado: um pouco maior, mas nunca gigante
-		normalizeHeight(tree,rng:NextNumber(24,29))
+		local sizeOk=normalizeHeight(tree,rng:NextNumber(24,29))
 		local yaw = rng:NextNumber(0, math.pi * 2)
-		placeModelOnGround(tree,ray.Position,yaw)
+		local placeOk=sizeOk and placeModelOnGround(tree,ray.Position,yaw)
+		if not placeOk then
+			tree:Destroy()
+			continue
+		end
 		tree.Parent = folder
 		CollectionService:AddTag(tree, "SakuraTree")
 		placed += 1
@@ -423,11 +452,15 @@ local function placeGrassAndFlowers()
 			local ray = workspace:Raycast(Vector3.new(x, 60, z), Vector3.new(0, -100, 0))
 			if ray and ray.Material == Enum.Material.Grass then
 				local g = grassTemplate:Clone()
-				g:ScaleTo(g:GetScale()*rng:NextNumber(0.9,1.15))
-				placeModelOnGround(g,ray.Position,rng:NextNumber(0,6.28))
-				g:SetAttribute("RestPivot",g:GetPivot())
-				g.Parent = grassFolder
-				CollectionService:AddTag(g, "SkinnedGrassPatch")
+				local scaleOk=safeScale(g,g:GetScale()*rng:NextNumber(0.9,1.15))
+				local placeOk=scaleOk and placeModelOnGround(g,ray.Position,rng:NextNumber(0,6.28))
+				if placeOk then
+					g:SetAttribute("RestPivot",g:GetPivot())
+					g.Parent = grassFolder
+					CollectionService:AddTag(g, "SkinnedGrassPatch")
+				else
+					g:Destroy()
+				end
 			end
 		end
 		grassTemplate:Destroy()
