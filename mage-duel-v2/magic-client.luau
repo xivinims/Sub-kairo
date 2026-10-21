@@ -24,7 +24,7 @@ local gui=nil
 
 local CD={
  Attack=.66,Barrier=2.8,Storm=5.5,Singularity=7.5,
- Heal=6,Dodge=1.8,Jump=2.2,Fly=5,
+ Heal=6,Dodge=1.8,Fly=5,
 }
 
 local function ready(key)
@@ -95,7 +95,6 @@ local buttons={
  {"V","Singularidade","Singularity"},
  {"E","Vida","Heal"},
  {"R","Esquiva","Dodge"},
- {"F","Pulo","Jump"},
  {"X","Voo","Fly"},
 }
 
@@ -112,7 +111,7 @@ local function buildUI()
  holder.Name="SpellRail"
  holder.AnchorPoint=Vector2.new(0,.5)
  holder.Position=UDim2.new(0,18,.5,0)
- holder.Size=UDim2.fromOffset(178,430)
+ holder.Size=UDim2.fromOffset(178,384)
  holder.BackgroundTransparency=1
  holder.Parent=gui
 
@@ -195,6 +194,5 @@ UserInputService.InputBegan:Connect(function(input,gp)
  elseif k==Enum.KeyCode.V then fire("Singularity")
  elseif k==Enum.KeyCode.E then fire("Heal")
  elseif k==Enum.KeyCode.R then fire("Dodge")
- elseif k==Enum.KeyCode.F then fire("Jump")
  elseif k==Enum.KeyCode.X then fire("Fly")end
 end)
