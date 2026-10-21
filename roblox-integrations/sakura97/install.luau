@@ -1,7 +1,7 @@
 -- Sakura Island v97 — mapa limpo igual a foto pedida
 -- Deleta tudo, cria ilha, 27 cerejeiras, grama skinned, caminho de pedra, ceu de tarde, vento
 
-assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Place errado")
+assert(game.GameId == 9419478735 and game.PlaceId == 79738710219521, "Place errado")
 
 local AssetService = game:GetService("AssetService")
 local Lighting = game:GetService("Lighting")
