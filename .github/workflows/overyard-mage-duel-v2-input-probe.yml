@@ -1,0 +1,21 @@
+name: Probe Mage Duel V2 Input
+on:
+  push:
+    branches: [roblox-publisher]
+    paths:
+      - "mage-duel-v2/live-input-probe.*"
+      - ".github/workflows/overyard-mage-duel-v2-input-probe.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node mage-duel-v2/live-input-probe.mjs
