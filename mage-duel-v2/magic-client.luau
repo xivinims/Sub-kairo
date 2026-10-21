@@ -10,6 +10,16 @@ local tool=script.Parent
 local mouse=nil
 local equipped=false
 local localCD={}
+local function ensureStaffEquipped()
+ local ch=player.Character
+ local hum=ch and ch:FindFirstChildOfClass("Humanoid")
+ local bp=player:FindFirstChildOfClass("Backpack")
+ local toolNow=(ch and ch:FindFirstChild("AstralStaff")) or (bp and bp:FindFirstChild("AstralStaff"))
+ if hum and toolNow and toolNow:IsA("Tool") and toolNow.Parent~=ch then
+  pcall(function() hum:EquipTool(toolNow) end)
+ end
+ return toolNow
+end
 local gui=nil
 
 local CD={
@@ -149,18 +159,32 @@ local function buildUI()
   local pad=Instance.new("UIPadding");pad.PaddingLeft=UDim.new(0,12);pad.Parent=b
   local line=Instance.new("Frame")
   line.Size=UDim2.fromOffset(2,40);line.BackgroundColor3=Color3.fromRGB(170,215,255);line.BorderSizePixel=0;line.Parent=b
-  b.Activated:Connect(function()fire(item[3])end)
+  local function castFromButton() fire(item[3]) end
+  b.Activated:Connect(castFromButton)
+  b.MouseButton1Click:Connect(castFromButton)
  end
 end
 
 tool.Equipped:Connect(function(m)
- equipped=true;mouse=m;buildUI()
+ equipped=true;mouse=m
+ if not gui then buildUI() end
 end)
 tool.Unequipped:Connect(function()
  equipped=false;mouse=nil
- if gui then gui:Destroy();gui=nil end
 end)
 tool.Activated:Connect(function()fire("Attack")end)
+
+task.defer(function()
+ buildUI()
+ task.wait(.4)
+ ensureStaffEquipped()
+end)
+
+player.CharacterAdded:Connect(function()
+ task.wait(.8)
+ ensureStaffEquipped()
+ if not gui then buildUI() end
+end)
 
 UserInputService.InputBegan:Connect(function(input,gp)
  if gp or not equipped then return end
