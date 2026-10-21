@@ -173,8 +173,13 @@ local function smartMagicCircle(cf,r,color,life)
  local bank=templates:FindFirstChild("MagicCircles")
  if bank then
   local candidates={}
-  for _,d in ipairs(bank:GetChildren())do
-   if d:IsA("Model") or d:IsA("BasePart")then table.insert(candidates,d)end
+  for _,d in ipairs(bank:GetDescendants())do
+   if d:IsA("BasePart") then
+    local hasRuneDecal=d:FindFirstChildWhichIsA("Decal")~=nil
+    if hasRuneDecal or d.Name=="PrimaryMagicCircle" then
+     table.insert(candidates,d)
+    end
+   end
   end
   if #candidates>0 then
    local chosen=candidates[math.random(1,#candidates)]
@@ -182,40 +187,21 @@ local function smartMagicCircle(cf,r,color,life)
    clone.Name="RequestedMagicCircle"
    clone.Parent=world
    sanitizeClone(clone)
-   if clone:IsA("BasePart")then
-    clone.Anchored=true;clone.Material=Enum.Material.Neon;clone.Color=color;clone.CFrame=cf
-    local max=math.max(clone.Size.X,clone.Size.Y,clone.Size.Z)
-    if max>0 then clone.Size=clone.Size*(r*2/max) end
-    Debris:AddItem(clone,life)
-    task.spawn(function()
-     local t0=now()
-     while clone.Parent and now()-t0<life do
-      local dt=RunService.Heartbeat:Wait()
-      clone.CFrame=clone.CFrame*CFrame.Angles(0,0,dt*.85)
-     end
-    end)
-    return clone
-   elseif clone:IsA("Model")then
-    local parts={}
-    for _,p in ipairs(clone:GetDescendants())do
-     if p:IsA("BasePart")then p.Anchored=true;table.insert(parts,p)end
-    end
-    if #parts>0 then
-     local bcf,bs=clone:GetBoundingBox()
-     local max=math.max(bs.X,bs.Y,bs.Z)
-     pcall(function()clone:ScaleTo(max>0 and (r*2/max) or 1)end)
-     clone:PivotTo(cf)
-     Debris:AddItem(clone,life)
-     task.spawn(function()
-      local t0=now()
-      while clone.Parent and now()-t0<life do
-       local dt=RunService.Heartbeat:Wait()
-       clone:PivotTo(clone:GetPivot()*CFrame.Angles(0,0,dt*.85))
-      end
-     end)
-     return clone
-    end
+   clone.Anchored=true;clone.Material=Enum.Material.Neon;clone.Color=color;clone.CFrame=cf
+   for _,d in ipairs(clone:GetDescendants())do
+    if d:IsA("Decal")then d.Color3=color end
    end
+   local max=math.max(clone.Size.X,clone.Size.Y,clone.Size.Z)
+   if max>0 then clone.Size=clone.Size*(r*2/max) end
+   Debris:AddItem(clone,life)
+   task.spawn(function()
+    local t0=now()
+    while clone.Parent and now()-t0<life do
+     local dt=RunService.Heartbeat:Wait()
+     clone.CFrame=clone.CFrame*CFrame.Angles(0,0,dt*.85)
+    end
+   end)
+   return clone
   end
  end
  return proceduralMagicCircle(cf,r,color,life)
@@ -300,8 +286,12 @@ local function beam(origin,target,life)
  end
  return f
 end
+local lastHeavyImpact=0
 local function impact(pos,color)
- emitTemplate("BlackFlash",pos,7,.8)
+ if now()-lastHeavyImpact>.35 then
+  lastHeavyImpact=now()
+  emitTemplate("BlackFlash",pos,7,.8)
+ end
  dust(pos,color,34,7,.8)
  local f=folder("ImpactNeedles",.55)
  for i=1,12 do
@@ -332,7 +322,7 @@ local function lightning(origin,target)
    seg(f,branchStart,b1,.11,C.storm,.55,.08);seg(f,b1,b2,.08,C.storm,.55,.15)
   end
  end
- impact(target,C.storm)
+ dust(target,C.storm,16,4,.48)
 end
 
 local function singularity(pos)
