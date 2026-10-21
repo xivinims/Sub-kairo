@@ -1,5 +1,12 @@
 local Players=game:GetService('Players')
-local Insert=game:GetService('InsertService')
+local Physics=game:GetService('PhysicsService')
+local collisionGroup='CaioNonBlocking'
+if not Physics:IsCollisionGroupRegistered(collisionGroup) then Physics:RegisterCollisionGroup(collisionGroup) end
+if not Physics:IsCollisionGroupRegistered('OveryardPlayers') then Physics:RegisterCollisionGroup('OveryardPlayers') end
+Physics:CollisionGroupSetCollidable(collisionGroup,'OveryardPlayers',false)
+Physics:CollisionGroupSetCollidable(collisionGroup,collisionGroup,false)
+-- Default is also used by cursor raycasts; keep Caio visible to clicks.
+Physics:CollisionGroupSetCollidable(collisionGroup,'Default',true)
 local world=workspace.OveryardPhotoWorld
 local C=require(game.ReplicatedStorage.PhotoWorldConfig)
 local base=Players:GetHumanoidDescriptionFromUserIdAsync(8344738123)
@@ -69,7 +76,7 @@ end
 for _,p in ipairs(npc:GetDescendants()) do
  if p:IsA('LuaSourceContainer') then p:Destroy()
  elseif p:IsA('BasePart') then
-  p.Anchored=p.Name=='HumanoidRootPart';p.CanCollide=false;p.CanTouch=false;p.CanQuery=p.Name~='HumanoidRootPart';p.Massless=true
+  p.Anchored=p.Name=='HumanoidRootPart';p.CanCollide=false;p.CanTouch=false;p.CanQuery=p.Name~='HumanoidRootPart';p.Massless=true;p.CollisionGroup=collisionGroup
  end
 end
 local shirt=assert(npc:FindFirstChildOfClass('Shirt'));shirt.Name='AdventurerShirt'

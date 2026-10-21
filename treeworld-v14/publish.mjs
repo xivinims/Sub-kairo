@@ -10,6 +10,9 @@ local function installNPC()
 ${read('install-npc')}
 end
 local build=installNPC()
+local collision=game.ServerScriptService:FindFirstChild('CaioPlayerCollisions')
+if collision then collision:Destroy() end
+collision=Instance.new('Script');collision.Name='CaioPlayerCollisions';collision.Source=${quote(read('player-collisions'))};collision.Parent=game.ServerScriptService
 local client=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild('CaioDialogueClient'))
 client.Source=${quote(read('dialogue-client'))}
 client:SetAttribute('Revision','slim-caio-v14')

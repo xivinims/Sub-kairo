@@ -22,7 +22,11 @@ for _,p in ipairs(npc:GetDescendants()) do
  if p:IsA('Accessory') then count+=1;assert(expected[p.Name]==p:GetAttribute('RequestedAssetId')) end
  if p:IsA('Motor6D') then assert(p.Part0 and p.Part1);motors+=1 end
  assert(not p:IsA('ProximityPrompt'),'Conversation still starts through proximity UI')
- if p:IsA('BasePart') then assert(not p.CanCollide,'NPC blocks the walking path') end
+ if p:IsA('BasePart') then
+  assert(p.CollisionGroup=='CaioNonBlocking','NPC collision group missing')
+  assert(not game:GetService('PhysicsService'):CollisionGroupsAreCollidable(p.CollisionGroup,'OveryardPlayers'),'NPC blocks players')
+  assert(game:GetService('PhysicsService'):CollisionGroupsAreCollidable(p.CollisionGroup,'Default'),'NPC is invisible to cursor raycasts')
+ end
 end
 assert(count==4 and motors>=15)
 for name in pairs(expected) do
@@ -32,6 +36,7 @@ for name in pairs(expected) do
 end
 local click=assert(npc:FindFirstChild('TalkToCaio'));assert(click:IsA('ClickDetector') and click.MaxActivationDistance==14)
 assert(npc:GetAttribute('ConversationStart')=='ClickOnly')
+assert(game.ServerScriptService:FindFirstChild('CaioPlayerCollisions'),'Player collision assignment missing')
 local source=game.StarterPlayer.StarterPlayerScripts.CaioDialogueClient.Source
 assert(source:find('click.MouseClick:Connect',1,true),'Click handler missing')
 assert(not source:find('greeted',1,true) and not source:find('prompt.Triggered',1,true),'Old auto greeting survived')
