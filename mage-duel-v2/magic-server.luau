@@ -33,7 +33,17 @@ local bossShield={untilTime=0,layers=0}
 local playerShield={}
 local poseBusy=false
 local motors={}
-for _,d in ipairs(boss:GetDescendants())do if d:IsA("Motor6D")then motors[d.Name]=d end end
+for _,d in ipairs(boss:GetDescendants())do
+ if d:IsA("Motor6D")then
+  motors[d.Name]=d
+  local aliases={
+   ["Right Shoulder"]="RightShoulder",["Left Shoulder"]="LeftShoulder",
+   ["Right Hip"]="RightHip",["Left Hip"]="LeftHip",["RootJoint"]="Root",
+   ["Neck"]="Neck",
+  }
+  if aliases[d.Name]then motors[aliases[d.Name]]=d end
+ end
+end
 
 local function now() return os.clock() end
 local function ready(tbl,key,cd)
@@ -163,7 +173,7 @@ local function smartMagicCircle(cf,r,color,life)
  local bank=templates:FindFirstChild("MagicCircles")
  if bank then
   local candidates={}
-  for _,d in ipairs(bank:GetDescendants())do
+  for _,d in ipairs(bank:GetChildren())do
    if d:IsA("Model") or d:IsA("BasePart")then table.insert(candidates,d)end
   end
   if #candidates>0 then
