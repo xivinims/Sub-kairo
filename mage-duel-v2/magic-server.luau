@@ -535,7 +535,7 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
  if not ok then return end
  if type(ability)~="string" then return end
  local key=plr.UserId..":"..ability
- local cd={Attack=.66,Barrier=2.8,Heal=6,Dodge=1.8,Jump=2.2,Fly=5}[ability]
+ local cd={Attack=.66,Barrier=2.8,Storm=5.5,Singularity=7.5,Heal=6,Dodge=1.8,Jump=2.2,Fly=5}[ability]
  if not cd or not ready(playerCD,key,cd)then return end
 
  if ability=="Attack" then
@@ -570,6 +570,27 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   local face=root.Position
   playerShield[ch]={untilTime=now()+1.8,layers=3}
   barrierVisual(r.Position+Vector3.new(0,3,0),face,C.ice,1.8,3)
+ elseif ability=="Storm" then
+  local aim=type(data)=="table" and typeof(data.aim)=="Vector3" and data.aim or (root.Position+Vector3.new(0,2,0))
+  local high=r.Position+Vector3.new(0,14,0)
+  smartMagicCircle(CFrame.new(high)*CFrame.Angles(math.rad(90),0,0),7.5,C.storm,1.1)
+  task.wait(.25)
+  for i=1,4 do
+   local targetPos=aim+Vector3.new(math.random(-4,4),0,math.random(-4,4))
+   lightning(high+Vector3.new(math.random(-5,5),0,math.random(-5,5)),targetPos)
+   if (root.Position-targetPos).Magnitude<6 then
+    active=true;target=plr;damageBoss(18,targetPos,r.Position)
+   end
+   task.wait(.1)
+  end
+ elseif ability=="Singularity" then
+  local aim=type(data)=="table" and typeof(data.aim)=="Vector3" and data.aim or root.Position
+  local pos=Vector3.new(aim.X,math.max(2,aim.Y),aim.Z)
+  singularity(pos)
+  task.wait(1.62)
+  if (root.Position-pos).Magnitude<15 then
+   active=true;target=plr;damageBoss(42,root.Position+Vector3.new(0,2.5,0),r.Position)
+  end
  elseif ability=="Heal" then
   smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.12,0))*CFrame.Angles(math.rad(90),0,0),5.2,C.gold,1.1)
   dust(r.Position+Vector3.new(0,2,0),C.gold,28,3,1)
