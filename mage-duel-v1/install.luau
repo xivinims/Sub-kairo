@@ -37,8 +37,6 @@ for _,obj in ipairs(SoundService:GetChildren())do obj:Destroy()end
 for _,obj in ipairs(Lighting:GetChildren())do obj:Destroy()end
 
 Workspace.StreamingEnabled=true
-Workspace.StreamingMinRadius=256
-Workspace.StreamingTargetRadius=512
 Workspace.GlobalWind=Vector3.new(0,0,0)
 
 -- Clean neutral arena.
