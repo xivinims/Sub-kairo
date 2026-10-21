@@ -51,7 +51,12 @@ for _,p in ipairs(npc:GetDescendants())do if p:IsA('Motor6D')then motors+=1;foun
 assert(motors==15,'R15 rig must have exactly 15 Motor6D joints, got '..motors)
 for name,ends in pairs(requiredMotors)do local m=assert(found[name],'Missing R15 joint '..name);assert(m.Part0 and m.Part0.Name==ends[1] and m.Part1 and m.Part1.Name==ends[2],'Wrong R15 joint '..name)end
 assert(npc:FindFirstChild('CaioIdleServer')and npc.CaioIdleServer:IsA('Script'),'Requested idle runtime missing')
-assert(math.abs(npc.HumanoidRootPart.Position.Y-hum.HipHeight-npc.HumanoidRootPart.Size.Y/2-terrainHeight(C.NPC.X,C.NPC.Z))<2,'NPC floats')
+do
+ local boxCF,boxSize=npc:GetBoundingBox()
+ local bottom=boxCF.Position.Y-boxSize.Y/2
+ local ground=terrainHeight(C.NPC.X,C.NPC.Z)
+ assert(math.abs(bottom-ground)<1.5,'NPC floats/buried: body bottom '..bottom..' ground '..ground)
+end
 assert(runtime.SafetyEvent:IsA('RemoteEvent')and runtime.ReportEvent:IsA('RemoteEvent'))
 local data=require(runtime.DialogueData);for _,t in pairs(data.Locales)do assert(t.report and t.choices.report and t.choices.feedback)end
 assert(require(runtime.FruitRules).Lifetime==420)
