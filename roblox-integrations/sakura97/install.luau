@@ -184,6 +184,56 @@ end
 
 setupWind()
 
+local function visualPartCount(inst)
+	local n=0
+	if inst:IsA("BasePart") then n+=1 end
+	for _,d in ipairs(inst:GetDescendants()) do
+		if d:IsA("BasePart") then n+=1 end
+	end
+	return n
+end
+
+local function findVisualModel(asset, preferredWords)
+	local best=nil
+	local bestScore=-1
+	for _,d in ipairs(asset:GetDescendants()) do
+		if d:IsA("Model") and d:FindFirstChildWhichIsA("BasePart", true) then
+			local score=visualPartCount(d)
+			local name=d.Name:lower()
+			for _,word in ipairs(preferredWords or {}) do
+				if name:find(word,1,true) then score+=10000 end
+			end
+			if score>bestScore then
+				best=d
+				bestScore=score
+			end
+		end
+	end
+	if best then return best:Clone() end
+
+	local part=asset:FindFirstChildWhichIsA("BasePart", true)
+	if part then
+		local m=Instance.new("Model")
+		part:Clone().Parent=m
+		return m
+	end
+	return nil
+end
+
+local function normalizeHeight(model,targetHeight)
+	local _,size=model:GetBoundingBox()
+	if size.Y>0 then
+		model:ScaleTo(model:GetScale()*(targetHeight/size.Y))
+	end
+end
+
+local function placeModelOnGround(model,groundPosition,yaw)
+	model:PivotTo(CFrame.new(groundPosition)*CFrame.Angles(0,yaw,0))
+	local cf,size=model:GetBoundingBox()
+	local bottom=cf.Position.Y-size.Y/2
+	model:PivotTo(model:GetPivot()+Vector3.new(0,groundPosition.Y-bottom,0))
+end
+
 -- ============ 6. ÁRVORES CEREJEIRA (27 unidades, maiores) ============
 local function placeSakuraTrees()
 	local folder = Instance.new("Folder")
@@ -198,20 +248,13 @@ local function placeSakuraTrees()
 		return
 	end
 
-	local template = treeAsset:FindFirstChildOfClass("Model") or treeAsset:FindFirstChildWhichIsA("Model", true)
+	local template=findVisualModel(treeAsset,{"sakura","cherry","tree"})
 	if not template then
-		-- tenta pegar o primeiro model
-		for _, c in ipairs(treeAsset:GetChildren()) do
-			if c:IsA("Model") then template = c break end
-		end
-	end
-	if not template then
-		warn("Template de cerejeira não encontrado")
+		warn("Template visual de cerejeira não encontrado")
 		treeAsset:Destroy()
 		return
 	end
 
-	template = template:Clone()
 	-- limpa scripts internos
 	for _, d in ipairs(template:GetDescendants()) do
 		if d:IsA("LuaSourceContainer") or d:IsA("Camera") then d:Destroy() end
@@ -243,11 +286,10 @@ local function placeSakuraTrees()
 		if not ray or ray.Material == Enum.Material.Water then continue end
 
 		local tree = template:Clone()
-		-- um pouco maior (1.25x ~ 1.55x)
-		local scale = rng:NextNumber(1.25, 1.55)
-		tree:ScaleTo(scale)
+		-- tamanho controlado: um pouco maior, mas nunca gigante
+		normalizeHeight(tree,rng:NextNumber(24,29))
 		local yaw = rng:NextNumber(0, math.pi * 2)
-		tree:PivotTo(CFrame.new(ray.Position) * CFrame.Angles(0, yaw, 0))
+		placeModelOnGround(tree,ray.Position,yaw)
 		tree.Parent = folder
 		CollectionService:AddTag(tree, "SakuraTree")
 		placed += 1
@@ -274,8 +316,7 @@ local function placeStonePath()
 
 	local template = nil
 	if ok and pathAsset then
-		template = pathAsset:FindFirstChildOfClass("Model") or pathAsset:FindFirstChildWhichIsA("BasePart", true)
-		if template then template = template:Clone() end
+		template = findVisualModel(pathAsset,{"stone","path","road","walkway","trail"})
 		pathAsset:Destroy()
 	end
 
@@ -366,17 +407,7 @@ local function placeGrassAndFlowers()
 
 	local grassTemplate = nil
 	if ok and grassAsset then
-		grassTemplate = grassAsset:FindFirstChildOfClass("Model") or grassAsset:FindFirstChildWhichIsA("Model", true)
-		if grassTemplate then
-			grassTemplate = grassTemplate:Clone()
-			-- prefere a versão mais escura se tiver várias
-			for _, c in ipairs(grassAsset:GetChildren()) do
-				if c:IsA("Model") and (c.Name:lower():find("dark") or c.Name:lower():find("escuro")) then
-					grassTemplate = c:Clone()
-					break
-				end
-			end
-		end
+		grassTemplate = findVisualModel(grassAsset,{"dark","escuro","grass"})
 		grassAsset:Destroy()
 	end
 
@@ -392,8 +423,9 @@ local function placeGrassAndFlowers()
 			local ray = workspace:Raycast(Vector3.new(x, 60, z), Vector3.new(0, -100, 0))
 			if ray and ray.Material == Enum.Material.Grass then
 				local g = grassTemplate:Clone()
-				g:ScaleTo(rng:NextNumber(0.9, 1.35))
-				g:PivotTo(CFrame.new(ray.Position) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0))
+				g:ScaleTo(g:GetScale()*rng:NextNumber(0.9,1.15))
+				placeModelOnGround(g,ray.Position,rng:NextNumber(0,6.28))
+				g:SetAttribute("RestPivot",g:GetPivot())
 				g.Parent = grassFolder
 				CollectionService:AddTag(g, "SkinnedGrassPatch")
 			end
@@ -447,60 +479,39 @@ placeGrassAndFlowers()
 local clientScript = Instance.new("LocalScript")
 clientScript.Name = "SakuraGrassClient"
 clientScript.Source = [==========[
--- Grama que amassa quando o player passa e volta ao normal + leve movimento de vento
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local CollectionService = game:GetService("CollectionService")
-local player = Players.LocalPlayer
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+local CollectionService=game:GetService("CollectionService")
+local player=Players.LocalPlayer
+local recentlyPressed={}
 
-local flattened = {}
-
-local function getRoot()
-	local char = player.Character
-	if not char then return nil end
-	return char:FindFirstChild("HumanoidRootPart")
+local function rootPart()
+	local char=player.Character
+	return char and char:FindFirstChild("HumanoidRootPart")
 end
 
-RunService.Heartbeat:Connect(function(dt)
-	local root = getRoot()
-	if not root then return end
+RunService.Heartbeat:Connect(function()
+	local root=rootPart()
+	local now=time()
 
-	-- vento suave nas gramas skinned (se tiverem bones)
-	for _, patch in ipairs(CollectionService:GetTagged("SkinnedGrassPatch")) do
-		if patch:IsA("Model") then
-			local t = tick()
-			for _, bone in ipairs(patch:GetDescendants()) do
+	for _,patch in ipairs(CollectionService:GetTagged("SkinnedGrassPatch")) do
+		if patch:IsA("Model") and patch.Parent then
+			for _,bone in ipairs(patch:GetDescendants()) do
 				if bone:IsA("Bone") then
-					local sway = math.sin(t * 1.8 + bone.WorldPosition.X * 0.05) * 0.08
-					bone.Transform = CFrame.Angles(0, 0, sway)
+					local sway=math.sin(now*1.8+bone.WorldPosition.X*.05)*.08
+					bone.Transform=CFrame.Angles(0,0,sway)
 				end
 			end
-		end
-	end
 
-	-- amassar grama próxima ao pé do player
-	for _, patch in ipairs(CollectionService:GetTagged("SkinnedGrassPatch")) do
-		local pivot = patch:GetPivot().Position
-		local dist = (Vector2.new(pivot.X, pivot.Z) - Vector2.new(root.Position.X, root.Position.Z)).Magnitude
-		if dist < 6 then
-			flattened[patch] = tick()
-			-- escala Y pra baixo (amassa)
-			local current = patch:GetScale()
-			patch:ScaleTo(Vector3.new(current.X, math.max(0.35, current.Y * 0.92), current.Z))
-		end
-	end
-
-	-- volta ao normal depois de um tempo
-	for patch, t in pairs(flattened) do
-		if tick() - t > 1.8 then
-			if patch.Parent then
-				local current = patch:GetScale()
-				patch:ScaleTo(Vector3.new(current.X, math.min(1.3, current.Y * 1.08), current.Z))
-				if current.Y > 1.15 then
-					flattened[patch] = nil
-				end
-			else
-				flattened[patch] = nil
+			local rest=patch:GetAttribute("RestPivot")
+			if typeof(rest)=="CFrame" and root then
+				local p=rest.Position
+				local d=(Vector2.new(p.X,p.Z)-Vector2.new(root.Position.X,root.Position.Z)).Magnitude
+				if d<6 then recentlyPressed[patch]=now end
+				local pressed=recentlyPressed[patch] and (now-recentlyPressed[patch] < .5)
+				local target=pressed and (rest*CFrame.Angles(math.rad(13),0,math.rad(-5))) or rest
+				patch:PivotTo(patch:GetPivot():Lerp(target,pressed and .38 or .16))
+				if not pressed then recentlyPressed[patch]=nil end
 			end
 		end
 	end
