@@ -10,21 +10,21 @@ const quote = (text) => {
 const installSource = read('install');
 const verifySource = read('verify');
 
+// Embed the full install body directly (no loadstring — Open Cloud blocks it)
 const patch = `
 assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Wrong target place")
 local sourceVersion = game.PlaceVersion
 print("[Sakura97] Starting clean install from version " .. tostring(sourceVersion))
 
--- run the full install
-local installFn = loadstring(${quote(installSource)})
-if not installFn then error("Failed to load install.luau") end
-local result = installFn()
-print("[Sakura97] Install finished:", result and result.message or "ok")
+-- ========== BEGIN INSTALL ==========
+${installSource}
+-- ========== END INSTALL ==========
 
 -- verify
-local verifyFn = loadstring(${quote(verifySource)})
-if not verifyFn then error("Failed to load verify.luau") end
-local checks = verifyFn()
+local function runVerify()
+${verifySource}
+end
+local checks = runVerify()
 assert(checks and checks.ok, "Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
