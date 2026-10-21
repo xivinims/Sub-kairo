@@ -54,8 +54,11 @@ assert(npc:FindFirstChild('CaioIdleServer')and npc.CaioIdleServer:IsA('Script'),
 do
  local boxCF,boxSize=npc:GetBoundingBox()
  local bottom=boxCF.Position.Y-boxSize.Y/2
- local ground=terrainHeight(C.NPC.X,C.NPC.Z)
- assert(math.abs(bottom-ground)<1.5,'NPC floats/buried: body bottom '..bottom..' ground '..ground)
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={workspace.Terrain}
+ local hit=workspace:Raycast(Vector3.new(C.NPC.X,512,C.NPC.Z),Vector3.new(0,-1024,0),params)
+ assert(hit,'Missing terrain below NPC during verify')
+ local ground=hit.Position.Y
+ assert(math.abs(bottom-ground)<.6,'NPC floats/buried: body bottom '..bottom..' ground '..ground)
 end
 assert(runtime.SafetyEvent:IsA('RemoteEvent')and runtime.ReportEvent:IsA('RemoteEvent'))
 local data=require(runtime.DialogueData);for _,t in pairs(data.Locales)do assert(t.report and t.choices.report and t.choices.feedback)end
