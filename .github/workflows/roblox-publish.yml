@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: roblox-universe-9421311218-place-118064584465155
+  group: roblox-universe-9419478735-place-79738710219521
   cancel-in-progress: false
 
 jobs:
@@ -21,11 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout approved publisher source
+      - name: Checkout publisher source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Publish complete forest-only world and verify saved version
+      - name: Republish existing Roblox place without modifying its data model
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-publisher/publish.mjs
