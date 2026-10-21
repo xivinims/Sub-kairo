@@ -44,7 +44,7 @@ event.OnServerEvent:Connect(function(sender,targetId,reasons,details)
  local npc=workspace.OveryardPhotoWorld:FindFirstChild('Caio')
  local root=sender.Character and sender.Character:FindFirstChild('HumanoidRootPart')
  if not npc or not root or(root.Position-npc.HumanoidRootPart.Position).Magnitude>28 then event:FireClient(sender,'far');return end
- if type(targetId)~='number'or targetId%1~=0 or type(reasons)~='table'or type(details)~='string'or #details>700 or not utf8.len(details)then event:FireClient(sender,'invalid');return end
+ if type(targetId)~='number'or targetId%1~=0 or type(reasons)~='table'or type(details)~='string'or #details>700 or not utf8.len(details)or(utf8.len(details)or 201)>200 then event:FireClient(sender,'invalid');return end
  local target=Players:GetPlayerByUserId(targetId)
  if not target or target==sender then event:FireClient(sender,'missing');return end
  local selected={};local count=0

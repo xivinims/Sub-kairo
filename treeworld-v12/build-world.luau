@@ -19,11 +19,13 @@ for _,p in ipairs(assets:GetDescendants())do
 end
 assets:Destroy()
 for name in pairs(Meta)do assert(meshes:FindFirstChild(name),'Missing geometry '..name)end
+for _,m in ipairs(world.Crossings:GetChildren())do if m:GetAttribute('NaturalCrossing')then m:Destroy()end end
 local oldTrees={}
 for _,p in ipairs(world:GetDescendants())do
  if p:IsA('Model')and p:GetAttribute('Tree')then table.insert(oldTrees,{root=p:GetAttribute('RootPosition'),height=p:GetExtentsSize().Y,name=p.Name,parent=p.Parent});p:Destroy()
  elseif p.Name=='WeatheredBench' or p.Name=='WeatheredRock' or p.Name=='LayeredSandstone' then p:Destroy()end
 end
+for _,name in ipairs({'LivingWoodland','DeepForest','TrailLogs'})do local previous=world:FindFirstChild(name);if previous then previous:Destroy()end end
 if world:FindFirstChild('Monolith')then world.Monolith:Destroy()end
 local forest=Instance.new('Folder');forest.Name='LivingWoodland';forest.Parent=world
 local deep=Instance.new('Folder');deep.Name='DeepForest';deep.Parent=world
@@ -79,7 +81,7 @@ end
 local names={'PearlBlossom','RoseBlossom','EmeraldWillow','AncientOak','AmberMaple'}
 for i,old in ipairs(oldTrees)do
  local p=old.root
- if p and Vector2.new(p.X-12,p.Z).Magnitude>52 and C.zone(p.X,p.Z).id~='DeepForest' then
+ if p and math.max(math.abs(p.X),math.abs(p.Z))<610 and Vector2.new(p.X-12,p.Z).Magnitude>52 and C.zone(p.X,p.Z).id~='DeepForest' then
   local okay=C.open(p.X,p.Z,4)
   if okay then
    local zone=C.zone(p.X,p.Z).id;local name=zone=='BlueAutumn' and 'HighPine' or zone=='Sakura' and 'RoseBlossom' or zone=='Willow' and 'EmeraldWillow' or zone=='Golden' and(i%3==0 and 'HighPine' or 'AmberMaple')or(i%5==0 and 'PearlBlossom' or(i%3==0 and 'HighPine' or 'AncientOak'))
@@ -134,7 +136,11 @@ for _,p in ipairs(pond:GetDescendants())do
 end
 local _,size=pond:GetBoundingBox();pond:ScaleTo(pond:GetScale()*46/math.max(size.X,size.Z))
 local box,bsize=pond:GetBoundingBox();pond:PivotTo(pond:GetPivot()+V(C.HiddenPond.x-box.X,30-(box.Y-bsize.Y/2)-.8,C.HiddenPond.z-box.Z))
-detail(pond);pond.Parent=forest;C.HiddenPond.surface=30+bsize.Y*.4
+local waterModel=assert(pond:FindFirstChild('Low-Poly Water',true),'Hidden pond water missing')
+local waterTop=-math.huge
+for _,p in ipairs(waterModel:GetDescendants())do if p:IsA('BasePart')then waterTop=math.max(waterTop,p.Position.Y+p.Size.Y/2);p.CanCollide=false;p.CanQuery=false end end
+pond:PivotTo(pond:GetPivot()+V(0,29.5-waterTop,0))
+detail(pond);pond.Parent=forest;C.HiddenPond.surface=29.5
 local hp=runtime:FindFirstChild('HiddenPondSurface')or Instance.new('NumberValue');hp.Name='HiddenPondSurface';hp.Value=C.HiddenPond.surface;hp.Parent=runtime
 -- Preserve bridge decks, with their buried approach landings at the same grade.
 for _,m in ipairs(world.Crossings:GetChildren())do
@@ -147,8 +153,8 @@ for _,s in ipairs(C.Paths)do if math.max(math.abs(s[1]),math.abs(s[2]),math.abs(
  for t=0,1,1/math.ceil(length/4)do local x,z=s[1]+(s[3]-s[1])*t,s[2]+(s[4]-s[2])*t;local _,_,w=C.surface(x,z);if w then first=first or V(x,w,z);last=V(x,w,z)end end
  if first and last and(last-first).Magnitude>3 then
   local dir=(last-first).Unit;local mid=(first+last)/2;local grade=mid.Y+1.3;local len=(last-first).Magnitude+18
-  local m=Instance.new('Model');m.Name='LevelForestCrossing';detail(m);m.Parent=world.Crossings;m:SetAttribute('NaturalCrossing',true)
-  local p=Instance.new('Part');p.Name='Deck';p.Anchored=true;p.Material=Enum.Material.WoodPlanks;p.Color=Color3.fromRGB(103,82,57);p.Size=V(7,.6,len);p.CFrame=CF(V(mid.X,grade-.3,mid.Z),V(mid.X,grade-.3,mid.Z)+dir);p.Parent=m
+  local m=Instance.new('Model');m.Name='LevelForestCrossing';detail(m);m.Parent=world.Crossings;m:SetAttribute('NaturalCrossing',true);m:SetAttribute('Center',V(mid.X,grade,mid.Z));m:SetAttribute('Length',len);m:SetAttribute('Axis',math.atan2(-dir.Z,dir.X))
+  local p=Instance.new('Part');p.Name='Deck';p.Anchored=true;p.Material=Enum.Material.WoodPlanks;p.Color=Color3.fromRGB(103,82,57);p.Size=V(len,.6,7);p.CFrame=CF(mid.X,grade-.3,mid.Z)*CFrame.Angles(0,math.atan2(-dir.Z,dir.X),0);p.Parent=m
   for sign=-1,1,2 do local point=mid+dir*sign*(len/2+3);T:FillBlock(CF(point.X,grade-7,point.Z),V(12,14,12),Enum.Material.Ground)end
  end
 end end

@@ -37,8 +37,9 @@ npc:PivotTo(CF(C.NPC.X,C.surface(C.NPC.X,C.NPC.Z)+hum.HipHeight+root.Size.Y/2,C.
 npc.ModelStreamingMode=Enum.ModelStreamingMode.Persistent
 local oldNPC=world:FindFirstChild('Caio');if oldNPC then oldNPC:Destroy()end;npc.Parent=world
 if not hum:FindFirstChildOfClass('Animator')then Instance.new('Animator',hum)end
-local idle=Instance.new('Animation');idle.Name='IdleAnimation';idle.AnimationId='rbxassetid://507766666';idle.Parent=npc
-npc:SetAttribute('IdleReferenceResolved',false)
+local idle=Instance.new('Animation');idle.Name='IdleAnimation';idle.AnimationId='rbxassetid://105149630069175';idle.Parent=npc
+local idle2=Instance.new('Animation');idle2.Name='IdleVariation';idle2.AnimationId='rbxassetid://129461181849095';idle2.Parent=npc
+npc:SetAttribute('IdleReferenceResolved',true);npc:SetAttribute('IdleCatalogAsset',82585639490423)
 npc:SetAttribute('IdleReferenceURL','https://www.roblox.com/share?code=89e12c0c38433a4e9aa68451fda0c346&type=AvatarItemDetails')
 npc:SetAttribute('ExactShirtImage',134896954466438);npc:SetAttribute('ExactPantsImage',139899689316791);npc:SetAttribute('RightLegAsset',139607718)
 npc:SetAttribute('DialogueSourceAssetId',74899630735614);npc:SetAttribute('FacePackAssetId',6557969904);npc:SetAttribute('FeedbackAssetId',125374377423034)

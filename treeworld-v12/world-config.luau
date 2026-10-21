@@ -160,7 +160,7 @@ function C.surface(x,z)
   if d<24 and h<riverGrade then water=riverGrade end
  end
  local hp=C.HiddenPond;local d=Vector2.new(x-hp.x,z-hp.z).Magnitude
- if d<50 then local base=30;h=h+(base-h)*(1-smooth(35,50,d))end
+ if d<50 then local base=30;h=h+(base-h)*(1-smooth(35,50,d));if d<22 then h=26+4*smooth(7,22,d);if h<29.4 then water=29.4 end end end
  if C.pathDistance(x,z)<0 and not water then mat=Enum.Material.Ground end
  if water then mat=Enum.Material.Mud end
  return h,mat,water,zone

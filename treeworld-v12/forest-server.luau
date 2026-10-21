@@ -9,9 +9,19 @@ local Rules=require(runtime.FruitRules)
 local C=require(RS.PhotoWorldConfig)
 local Movement=require(script.Parent.MovementService);Movement.start()
 local event=runtime.NatureEvent
+task.spawn(function()
+ local npc=workspace:WaitForChild('OveryardPhotoWorld'):WaitForChild('Caio',30)
+ if npc then pcall(function()
+  local tracks={npc.Humanoid.Animator:LoadAnimation(npc.IdleAnimation),npc.Humanoid.Animator:LoadAnimation(npc.IdleVariation)}
+  local function play()if npc.Parent then tracks[math.random()<.1 and 2 or 1]:Play(.3)end end
+  for _,track in ipairs(tracks)do track.Priority=Enum.AnimationPriority.Idle;track.Looped=false;track.Ended:Connect(play)end
+  play()
+ end)end
+end)
 local ground=Instance.new('Folder');ground.Name='CollectibleFruit';ground.Parent=workspace
 local rng=Random.new()
 local states={};local inventories={};local pending={};local saving={};local lastHit={};local treeCooldown={}
+local batches={}
 local buckets={}
 local function key(x,z)return math.floor(x/100)..':'..math.floor(z/100)end
 for _,tree in ipairs(Tags:GetTagged('LivingTree'))do local r=tree:GetAttribute('RootPosition');if r then local k=key(r.X,r.Z);buckets[k]=buckets[k]or{};table.insert(buckets[k],tree)end end
@@ -25,8 +35,12 @@ local function sync(player)
 end
 local function save(player)
  if saving[player]or not pending[player]or not player:GetAttribute('InventoryLoaded')then return end
- local delta=pending[player];if (delta.Apple or 0)+(delta.Orange or 0)==0 then return end
- saving[player]=true;pending[player]={Apple=0,Orange=0};local token=Http:GenerateGUID(false)
+ local batch=batches[player]
+ if not batch then
+  local delta=pending[player];if (delta.Apple or 0)+(delta.Orange or 0)==0 then return end
+  batch={delta=delta,token=Http:GenerateGUID(false)};batches[player]=batch;pending[player]={Apple=0,Orange=0}
+ end
+ saving[player]=true;local delta=batch.delta;local token=batch.token
  local success=false
  for attempt=1,3 do
   local ok=pcall(function()Data:UpdateAsync(tostring(player.UserId),function(old)
@@ -37,7 +51,7 @@ local function save(player)
   end)end)
   if ok then success=true;break end;task.wait(attempt*2)
  end
- if not success and pending[player]then for _,kind in ipairs({'Apple','Orange'})do pending[player][kind]=(pending[player][kind]or 0)+(delta[kind]or 0)end end
+ if success then batches[player]=nil end
  saving[player]=nil
 end
 local function join(player)
@@ -54,9 +68,9 @@ Players.PlayerAdded:Connect(join);for _,p in ipairs(Players:GetPlayers())do task
 local function flush(p)
  local deadline=os.clock()+24
  while saving[p]and os.clock()<deadline do task.wait(.1)end
- while pending[p]and((pending[p].Apple or 0)+(pending[p].Orange or 0)>0)and os.clock()<deadline do save(p);task.wait(.1)end
+ while pending[p]and(batches[p]or(pending[p].Apple or 0)+(pending[p].Orange or 0)>0)and os.clock()<deadline do save(p);task.wait(.1)end
 end
-Players.PlayerRemoving:Connect(function(p)flush(p);inventories[p]=nil;pending[p]=nil;lastHit[p]=nil end)
+Players.PlayerRemoving:Connect(function(p)flush(p);inventories[p]=nil;pending[p]=nil;batches[p]=nil;lastHit[p]=nil end)
 game:BindToClose(function()
  local left=0
  for p in pairs(pending)do left+=1;task.spawn(function()flush(p);left-=1 end)end

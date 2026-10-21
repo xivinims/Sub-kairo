@@ -25,5 +25,21 @@ zh={hello='嘿，来得正好！我叫卡约。我刚才在问风会不会下雨
 ar={hello='أهلاً! وصلت في الوقت المناسب. أنا كايو. كنت أسأل الريح إن كانت ستجلب المطر، لكنها تتهرب من الإجابة. هل لديك دقيقة؟',about='أعتني بالممرات وأرسم الخرائط. أحاول على الأقل. بالأمس رسمت شجرة بدت كشَوكة طعام. لم يضل أحد بسببها حتى الآن.',cliff='اتبع الممر نحو الغرب. الشجرة الحمراء فوق الجرف المطل على البحر. تمهل وابتعد قليلاً عن الحافة، اتفقنا؟',pond='توجد بركة صغيرة مخفية في غابة الشمال الشرقي. تابع شمالاً بعد البحيرة الكبيرة وابحث عن فتحة بين الأشجار. أحب الاستماع إلى الماء هناك.',fruit='تسقط بعض الأشجار التفاح والبرتقال. التقط الثمار من الأرض، وستتجمع الثمار المتشابهة في حقيبتك. تختفي بعد سبع دقائق، فلا تتأخر.',bye='خذ وقتك. إن وجدت مكاناً جميلاً، ابق قليلاً. الغابة لن تهرب. سأكون هنا أيضاً إن أردت الحديث مجدداً.',choices={about='ماذا تفعل هنا؟',cliff='أين الجرف؟',pond='هل تعرف مكاناً مخفياً؟',fruit='هل يمكنني جمع الثمار؟',bye='سأذهب للاستكشاف. إلى اللقاء!'},retry='استمع مجدداً',title='كايو · مغامر'},
 hi={hello='अरे, सही समय पर आए! मैं कायो हूँ। हवा से पूछ रहा था कि बारिश होगी या नहीं, पर वह सीधा जवाब ही नहीं देती। थोड़ी बात करें?',about='मैं पगडंडियों की देखभाल करता हूँ और नक्शे बनाता हूँ। कोशिश तो करता हूँ। कल मेरा बनाया पेड़ काँटे जैसा लग रहा था। अभी तक उससे कोई रास्ता नहीं भटका।',cliff='पश्चिम की पगडंडी पर चलो। लाल पेड़ समुद्र के ऊपर चट्टान पर है। आराम से देखना और किनारे से थोड़ा दूर रहना, ठीक है?',pond='उत्तर-पूर्व के जंगल में एक छोटा तालाब छिपा है। बड़ी झील से आगे उत्तर की ओर जाओ और पेड़ों के बीच खुली जगह ढूँढो। वहाँ पानी की आवाज़ बहुत अच्छी लगती है।',fruit='कुछ पेड़ों से सेब और संतरे गिरते हैं। जमीन से उठाओ तो एक जैसे फल बैग में साथ जमा होते हैं। सात मिनट बाद वे गायब हो जाते हैं, इसलिए देर मत करना।',bye='आराम से जाना। सुंदर जगह मिले तो कुछ देर रुकना। जंगल कहीं भाग नहीं रहा। फिर बात करनी हो तो मैं यहीं मिलूँगा।',choices={about='तुम यहाँ क्या करते हो?',cliff='चट्टान कहाँ है?',pond='कोई छिपी जगह जानते हो?',fruit='क्या मैं फल उठा सकता हूँ?',bye='मैं घूमने जा रहा हूँ। फिर मिलेंगे!'},retry='फिर सुनें',title='कायो · साहसी यात्री'},
 }
+local reporting={
+ pt={'Pode falar, eu estou aqui para ajudar. Quem você quer reportar? Escolha a pessoa e me conte o que aconteceu. Seu nome não será mostrado para ela.','Reportar','Dar feedback'},
+ en={'I am here to help. Who would you like to report? Choose the player and tell me what happened. Your name will not be shown to them.','Report a player','Give feedback'},
+ es={'Estoy aquí para ayudarte. ¿A quién quieres reportar? Elige a la persona y cuéntame qué pasó. Tu nombre no se le mostrará.','Reportar','Dar opinión'},
+ fr={'Je suis là pour t’aider. Qui souhaites-tu signaler ? Choisis la personne et raconte-moi ce qui s’est passé. Ton nom ne lui sera pas communiqué.','Signaler','Donner un avis'},
+ de={'Ich bin für dich da. Wen möchtest du melden? Wähle die Person und erzähle mir, was passiert ist. Dein Name wird ihr nicht angezeigt.','Person melden','Feedback geben'},
+ it={'Sono qui per aiutarti. Chi vuoi segnalare? Scegli la persona e raccontami cosa è successo. Il tuo nome non verrà mostrato.','Segnala','Lascia un commento'},
+ ja={'力になるよ。誰を報告したい？ 相手を選んで、何があったか教えて。君の名前は相手に表示されないよ。','プレイヤーを報告','感想を送る'},
+ ko={'도와줄게. 누구를 신고하고 싶어? 사람을 고르고 무슨 일이 있었는지 알려줘. 네 이름은 상대에게 보이지 않아.','플레이어 신고','의견 보내기'},
+ zh={'我会帮你的。你想举报谁？请选择玩家，告诉我发生了什么。你的名字不会显示给对方。','举报玩家','提供反馈'},
+ ar={'أنا هنا لمساعدتك. من تريد الإبلاغ عنه؟ اختر الشخص وأخبرني بما حدث. لن يظهر اسمك له.','الإبلاغ عن لاعب','إرسال ملاحظات'},
+ hi={'मैं मदद के लिए यहाँ हूँ। किसकी रिपोर्ट करना चाहते हो? खिलाड़ी चुनकर बताओ कि क्या हुआ। तुम्हारा नाम उसे नहीं दिखेगा।','खिलाड़ी की रिपोर्ट','सुझाव दें'},
+}
+for locale,t in pairs(D.Locales)do local r=reporting[locale];t.report=r[1];t.choices.report=r[2];t.choices.feedback=r[3]end
+D.Options.hello={'about','cliff','pond','fruit','report','feedback','bye'}
+D.Options.report={};D.Expressions.report='thoughtful'
 function D.locale(id)local code=string.lower(string.sub(id or'en',1,2));return D.Locales[code]and code or'en'end
 return D
