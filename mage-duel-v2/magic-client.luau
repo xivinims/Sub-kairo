@@ -78,9 +78,12 @@ local function castPose(kind)
 end
 
 local function fire(name)
- if not equipped or not ready(name) then return end
+ if not ready(name) then return end
+ ensureStaffEquipped()
  local data={}
- if mouse then data.aim=mouse.Hit.Position end
+ local liveMouse=player:GetMouse()
+ if liveMouse then data.aim=liveMouse.Hit.Position
+ elseif mouse then data.aim=mouse.Hit.Position end
  if name=="Barrier" then castPose("shield")
  elseif name=="Storm" then castPose("storm")
  elseif name=="Singularity" then castPose("storm")
@@ -138,7 +141,12 @@ local function buildUI()
  close.TextSize=18
  close.TextColor3=Color3.fromRGB(230,238,248)
  close.Parent=holder
- close.Activated:Connect(function() holder.Visible=false end)
+ close.Activated:Connect(function()
+  holder.Visible=false
+  task.delay(1.5,function()
+   if holder and holder.Parent then holder.Visible=true end
+  end)
+ end)
 
  for i,item in ipairs(buttons)do
   local b=Instance.new("TextButton")
@@ -186,7 +194,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input,gp)
- if gp or not equipped then return end
+ if gp then return end
  local k=input.KeyCode
  if k==Enum.KeyCode.Z then fire("Attack")
  elseif k==Enum.KeyCode.Q then fire("Barrier")
