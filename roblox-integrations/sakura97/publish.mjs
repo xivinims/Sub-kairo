@@ -2,10 +2,6 @@ import fs from 'node:fs';
 import { execute, first } from '../../treeworld-v12/cloud.mjs';
 
 const read = (name) => fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`, 'utf8');
-const quote = (text) => {
-  if (text.includes(']====]')) throw new Error('Source delimiter collision');
-  return '[====[' + text + ']====]';
-};
 
 // Strip the final return from install so we can continue with verify + save
 let installBody = read('install');
@@ -27,7 +23,7 @@ local function runVerify()
 ${verifySource}
 end
 local checks = runVerify()
-assert(checks and checks.ok, "Verify failed: " .. tostring(checks))
+assert(checks and checks.ok, "Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
 return {
@@ -63,7 +59,7 @@ for (let i = 0; i < 12; i++) {
       }
     `));
     if (!check?.ok || check.placeVersion <= applied.sourceVersion) {
-      throw new Error("Saved version not visible yet (got " .. tostring(check and check.placeVersion) .. ")");
+      throw new Error("Saved version not visible yet, got " + (check && check.placeVersion));
     }
     persisted = check;
     last = null;
