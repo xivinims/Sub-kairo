@@ -1,5 +1,5 @@
 -- Verifica se o mapa sakura97 ficou como pedido
-assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Place errado")
+assert(game.GameId == 9419478735 and game.PlaceId == 79738710219521, "Place errado")
 
 local runtime = game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
 assert(runtime, "SakuraRuntime não existe")
