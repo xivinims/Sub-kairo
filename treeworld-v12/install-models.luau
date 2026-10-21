@@ -64,7 +64,17 @@ local pants=Instance.new('Pants');pants.Name='ExactAdventurerPants';pants.PantsT
 local head=npc.Head;local root=npc.HumanoidRootPart;local hum=npc.Humanoid
 local face=Instance.new('Decal');face.Name='Expression';face.Face=Enum.NormalId.Front;face.Texture=require(runtime.DialogueData).Faces.smile;face.Parent=head
 npc.PrimaryPart=root;hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None;hum.WalkSpeed=0;hum.AutoRotate=false
-npc:PivotTo(CF(C.NPC.X,C.surface(C.NPC.X,C.NPC.Z)+hum.HipHeight+root.Size.Y/2,C.NPC.Z)*CFrame.Angles(0,math.rad(135),0))
+-- Ground against the actual terrain and the actual lowest body point. Korblox
+-- changes the right-leg proportions, so Humanoid.HipHeight alone can visibly
+-- float the rig even when the root math looks valid.
+local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={workspace.Terrain}
+local hit=workspace:Raycast(V(C.NPC.X,512,C.NPC.Z),V(0,-1024,0),params)
+assert(hit,'Missing terrain below Caio')
+local boxCF,boxSize=npc:GetBoundingBox()
+local pivot=npc:GetPivot()
+local bottom=boxCF.Position.Y-boxSize.Y/2
+local pivotToBottom=pivot.Position.Y-bottom
+npc:PivotTo(CF(C.NPC.X,hit.Position.Y+pivotToBottom+.08,C.NPC.Z)*CFrame.Angles(0,math.rad(135),0))
 npc.ModelStreamingMode=Enum.ModelStreamingMode.Persistent
 local oldNPC=world:FindFirstChild('Caio');if oldNPC then oldNPC:Destroy()end;npc.Parent=world
 if not hum:FindFirstChildOfClass('Animator')then Instance.new('Animator',hum)end
