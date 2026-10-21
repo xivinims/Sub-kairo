@@ -173,6 +173,8 @@ local function buildUI()
   b.BackgroundTransparency=.12
   b.BorderSizePixel=0
   b.AutoButtonColor=true
+  b.Active=true
+  b.Selectable=true
   b.Font=Enum.Font.GothamMedium
   b.Text=item[1].."   "..item[2]
   b.TextXAlignment=Enum.TextXAlignment.Left
@@ -182,9 +184,9 @@ local function buildUI()
   local pad=Instance.new("UIPadding");pad.PaddingLeft=UDim.new(0,12);pad.Parent=b
   local line=Instance.new("Frame")
   line.Size=UDim2.fromOffset(2,40);line.BackgroundColor3=Color3.fromRGB(170,215,255);line.BorderSizePixel=0;line.Parent=b
-  local function castFromButton() fire(item[3]) end
-  b.Activated:Connect(castFromButton)
-  b.MouseButton1Click:Connect(castFromButton)
+  b.Activated:Connect(function()
+   fire(item[3])
+  end)
  end
 end
 
