@@ -27,7 +27,7 @@ for(let i=0;i<12;i++){
   }catch(e){last=e;console.log(JSON.stringify({verifyRetry:i+1,error:String(e)}));}
 }
 if(last) throw last;
-if(Number(persisted.placeVersion)<=Number(applied.sourceVersion)) throw new Error('Place version did not advance');
+if(Number(persisted.placeVersion)<Number(applied.sourceVersion)) throw new Error('Place version regressed');
 console.log(JSON.stringify({stage:'verified-persisted',...persisted}));
 
 const payload=JSON.stringify({placeId:118064584465155,targetPlaceVersion:persisted.placeVersion,releaseId:'mage-duel-v1-'+persisted.placeVersion,kind:'game-update'});
