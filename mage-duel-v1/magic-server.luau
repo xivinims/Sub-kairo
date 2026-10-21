@@ -341,7 +341,10 @@ local function bossBeam(plr,counter)
  task.wait(counter and .18 or .34)
  beam(origin,predicted,.38)
  local dir=(predicted-origin).Unit
- local ray=workspace:Raycast(origin,dir*math.min(180,(predicted-origin).Magnitude+12))
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Exclude
+ params.FilterDescendantsInstances={boss}
+ local ray=workspace:Raycast(origin,dir*math.min(180,(predicted-origin).Magnitude+12),params)
  if ray and ray.Instance and ray.Instance:IsDescendantOf(ch) then damageChar(ch,counter and 20 or 27)end
  finishPose(.2)
 end
@@ -434,7 +437,10 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   task.wait(.12)
   local dir=(aim-origin)
   if dir.Magnitude<1 then return end
-  local result=workspace:Raycast(origin,dir.Unit*180)
+  local params=RaycastParams.new()
+  params.FilterType=Enum.RaycastFilterType.Exclude
+  params.FilterDescendantsInstances={ch}
+  local result=workspace:Raycast(origin,dir.Unit*180,params)
   local endpoint=result and result.Position or origin+dir.Unit*180
   beam(origin,endpoint,.32)
   if result and result.Instance and result.Instance:IsDescendantOf(boss) then
