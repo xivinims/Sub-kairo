@@ -4,7 +4,11 @@ on:
   push:
     branches: [roblox-publisher]
     paths:
-      - "mage-duel-v1/**"
+      - "mage-duel-v1/install.luau"
+      - "mage-duel-v1/magic-server.luau"
+      - "mage-duel-v1/magic-client.luau"
+      - "mage-duel-v1/verify.luau"
+      - "mage-duel-v1/publish.mjs"
       - ".github/workflows/overyard-mage-duel-v1.yml"
   workflow_dispatch:
 
@@ -13,7 +17,7 @@ permissions:
 
 concurrency:
   group: overyard-place-publisher
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish:
