@@ -10,6 +10,7 @@ assert(Workspace:GetAttribute("BuildVersion")=="mage-duel-v2","V2 build missing"
 assert(Workspace:GetAttribute("RequestedAssetsExact")==true,"Exact asset flag missing")
 assert(Workspace:GetAttribute("LoadingScreenRemoved")==true,"Loading screen removal flag missing")
 assert(Workspace:GetAttribute("BossReactiveOnly")==true,"Boss must be reactive only")
+assert(Workspace:GetAttribute("StandardRobloxJump")==true,"Jump must use Roblox default controls")
 assert(#ReplicatedFirst:GetChildren()==0,"ReplicatedFirst must be empty: loading screen still exists")
 assert(#StarterGui:GetChildren()==0,"StarterGui should not contain old UI")
 
@@ -32,12 +33,14 @@ local tool=assert(StarterPack:FindFirstChild("AstralStaff"),"Exact player staff 
 assert(tool:GetAttribute("SourceAssetId")==3832698706,"Wrong player staff asset")
 local client=assert(tool:FindFirstChild("MageDuelClient"),"V2 staff client missing")
 local csrc=client.Source
-for _,token in ipairs({"Zoltraak","Barreira","Judradjim","Singularidade","Vida","Esquiva","Pulo","Voo","SpellRail"})do
+for _,token in ipairs({"Zoltraak","Barreira","Judradjim","Singularidade","Vida","Esquiva","Voo","SpellRail"})do
  assert(string.find(csrc,token,1,true),"Side spell UI missing "..token)
 end
-for _,ability in ipairs({"Attack","Barrier","Storm","Singularity","Heal","Dodge","Jump","Fly"})do
+for _,ability in ipairs({"Attack","Barrier","Storm","Singularity","Heal","Dodge","Fly"})do
  assert(string.find(csrc,ability,1,true),"Client ability missing "..ability)
 end
+assert(not string.find(csrc,'"Pulo"',1,true),"Custom Pulo button must be removed")
+assert(not string.find(csrc,'Enum.KeyCode.F then fire("Jump")',1,true),"Custom F jump binding must be removed")
 
 local templates=assert(ReplicatedStorage:FindFirstChild("MageAssetTemplates"),"MageAssetTemplates missing")
 local circles=assert(templates:FindFirstChild("MagicCircles"),"Magic circle bank missing")
