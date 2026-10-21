@@ -545,7 +545,7 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
  if not ok then return end
  if type(ability)~="string" then return end
  local key=plr.UserId..":"..ability
- local cd={Attack=.66,Barrier=2.8,Storm=5.5,Singularity=7.5,Heal=6,Dodge=1.8,Jump=2.2,Fly=5}[ability]
+ local cd={Attack=.66,Barrier=2.8,Storm=5.5,Singularity=7.5,Heal=6,Dodge=1.8,Fly=5}[ability]
  if not cd or not ready(playerCD,key,cd)then return end
 
  if ability=="Attack" then
@@ -607,10 +607,6 @@ cast.OnServerEvent:Connect(function(plr,ability,data)
   dust(r.Position+Vector3.new(0,2,0),C.ice,16,4,.55)
   r.AssemblyLinearVelocity=r.CFrame.LookVector*52+Vector3.new(0,6,0)
   feedback:FireClient(plr,"accepted","Dodge","Esquiva")
- elseif ability=="Jump" then
-  smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.1,0))*CFrame.Angles(math.rad(90),0,0),3.6,C.violet,.6)
-  r.AssemblyLinearVelocity=Vector3.new(r.AssemblyLinearVelocity.X,64,r.AssemblyLinearVelocity.Z)
-  feedback:FireClient(plr,"accepted","Jump","Pulo")
  elseif ability=="Fly" then
   smartMagicCircle(CFrame.new(r.Position+Vector3.new(0,.1,0))*CFrame.Angles(math.rad(90),0,0),4.4,C.ice,.7)
   local att=Instance.new("Attachment");att.Name="FlightAttachment";att.Parent=r
