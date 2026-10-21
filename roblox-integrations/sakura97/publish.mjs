@@ -7,25 +7,27 @@ const quote = (text) => {
   return '[====[' + text + ']====]';
 };
 
-const installSource = read('install');
+// Strip the final return from install so we can continue with verify + save
+let installBody = read('install');
+installBody = installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/, '\n-- install finished');
+
 const verifySource = read('verify');
 
-// Embed the full install body directly (no loadstring — Open Cloud blocks it)
 const patch = `
 assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Wrong target place")
 local sourceVersion = game.PlaceVersion
 print("[Sakura97] Starting clean install from version " .. tostring(sourceVersion))
 
--- ========== BEGIN INSTALL ==========
-${installSource}
--- ========== END INSTALL ==========
+do
+${installBody}
+end
 
 -- verify
 local function runVerify()
 ${verifySource}
 end
 local checks = runVerify()
-assert(checks and checks.ok, "Verify failed")
+assert(checks and checks.ok, "Verify failed: " .. tostring(checks))
 
 game:GetService("AssetService"):SavePlaceAsync()
 return {
@@ -46,8 +48,8 @@ console.log(JSON.stringify({ stage: "installed-and-saved", ...applied }));
 
 // wait for place version to advance
 let persisted, last;
-for (let i = 0; i < 10; i++) {
-  if (i) await new Promise((r) => setTimeout(r, 4000));
+for (let i = 0; i < 12; i++) {
+  if (i) await new Promise((r) => setTimeout(r, 4500));
   try {
     const check = first(await execute(`
       assert(game.GameId==9421311218 and game.PlaceId==118064584465155)
@@ -61,7 +63,7 @@ for (let i = 0; i < 10; i++) {
       }
     `));
     if (!check?.ok || check.placeVersion <= applied.sourceVersion) {
-      throw new Error("Saved version not visible yet");
+      throw new Error("Saved version not visible yet (got " .. tostring(check and check.placeVersion) .. ")");
     }
     persisted = check;
     last = null;
