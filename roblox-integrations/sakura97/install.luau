@@ -216,6 +216,52 @@ for _,d in ipairs(park:GetDescendants()) do
 end
 runtime:SetAttribute("GrayStoneCount",brownStoneCount)
 
+-- Superfícies verdes onde a grama EXTRA pode existir.
+-- Só peças horizontais, finas e verdes do PRÓPRIO Pristine Park entram aqui.
+local greenGroundParts={}
+for _,d in ipairs(park:GetDescendants()) do
+	if d:IsA("BasePart") then
+		local lower=d.Name:lower()
+		local horizontal=d.CFrame.UpVector.Y>.82
+		local thin=d.Size.Y<=1.35
+		local wide=d.Size.X>=4 and d.Size.Z>=4
+		local isFloorGrass=d.Material==Enum.Material.Grass
+			and lower~="bush"
+			and not lower:find("tree",1,true)
+			and not lower:find("leaf",1,true)
+		if horizontal and thin and wide and isFloorGrass then
+			table.insert(greenGroundParts,d)
+			CollectionService:AddTag(d,"ParkGreenGround")
+		end
+	end
+end
+assert(#greenGroundParts>=12,"Poucas superfícies verdes detectadas no Pristine Park: "..tostring(#greenGroundParts))
+runtime:SetAttribute("GreenGroundSurfaceCount",#greenGroundParts)
+
+local greenParams=RaycastParams.new()
+greenParams.FilterType=Enum.RaycastFilterType.Include
+greenParams.FilterDescendantsInstances=greenGroundParts
+greenParams.IgnoreWater=true
+
+local function pointOnGreenGround(surface,margin)
+	margin=margin or .72
+	local localX=rng:NextNumber(-surface.Size.X*.5*margin,surface.Size.X*.5*margin)
+	local localZ=rng:NextNumber(-surface.Size.Z*.5*margin,surface.Size.Z*.5*margin)
+	local world=surface.CFrame:PointToWorldSpace(Vector3.new(localX,4,localZ))
+	local hit=workspace:Raycast(world,Vector3.new(0,-12,0),greenParams)
+	if hit and hit.Instance==surface then return hit.Position end
+	return nil
+end
+
+local function randomParkGreenPoint()
+	for _=1,120 do
+		local surface=greenGroundParts[rng:NextInteger(1,#greenGroundParts)]
+		local p=pointOnGreenGround(surface,.76)
+		if p then return p,surface end
+	end
+	return nil,nil
+end
+
 -- ============ REMOVE AS ÁRVORES ORIGINAIS ============
 local function greenish(c)
 	return c.G>c.R*.9 and c.G>c.B*.75 and c.G>.22
@@ -427,48 +473,66 @@ end
 treeTemplate:Destroy()
 runtime:SetAttribute("SakuraCount",#sakuraFolder:GetChildren())
 
--- ============ GRAMA ESTÁTICA (NÃO SEGUE JOGADOR) ============
+-- ============ GRAMA SOMENTE NO CHÃO VERDE DO PRISTINE PARK ============
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="ParkGrass"
 grassFolder.Parent=workspace
+grassFolder:SetAttribute("PlacementRule","ParkGreenGroundOnly")
+
 local grassAsset=loadAsset(GRASS_ID)
 sanitizeVisual(grassAsset,true)
 local grassCandidates={}
 for _,c in ipairs(grassAsset:GetChildren()) do
-	if (c:IsA("Model") or c:IsA("BasePart")) and visualPartCount(c)>0 then table.insert(grassCandidates,c) end
+	if (c:IsA("Model") or c:IsA("BasePart")) and visualPartCount(c)>0 then
+		table.insert(grassCandidates,c)
+	end
 end
 if #grassCandidates==0 then
 	local g=findVisualModel(grassAsset,{"grass","dark"})
 	if g then table.insert(grassCandidates,g) end
 end
+
 local function lum(inst)
 	local sum,n=0,0
-	if inst:IsA("BasePart") then sum+=(inst.Color.R+inst.Color.G+inst.Color.B)/3 n+=1 end
+	if inst:IsA("BasePart") then
+		sum+=(inst.Color.R+inst.Color.G+inst.Color.B)/3
+		n+=1
+	end
 	for _,d in ipairs(inst:GetDescendants()) do
-		if d:IsA("BasePart") then sum+=(d.Color.R+d.Color.G+d.Color.B)/3 n+=1 end
+		if d:IsA("BasePart") then
+			sum+=(d.Color.R+d.Color.G+d.Color.B)/3
+			n+=1
+		end
 	end
 	return n>0 and sum/n or 2
 end
 table.sort(grassCandidates,function(a,b) return lum(a)<lum(b) end)
+
 local grassTemplate=grassCandidates[1] and grassCandidates[1]:Clone() or nil
 grassAsset:Destroy()
 
 local grassPlaced=0
 if grassTemplate then
-	for _=1,1600 do
-		if grassPlaced>=110 then break end
-		local x=rng:NextNumber(-188,188)
-		local z=rng:NextNumber(-128,128)
-		local hit=rayDown(x,z,{grassFolder,sakuraFolder,safety})
-		if hit and hit.Material~=Enum.Material.Water then
-			local inst=hit.Instance
-			local okay=hit.Material==Enum.Material.Grass or (inst and inst:IsDescendantOf(park) and inst.Material==Enum.Material.Grass)
-			if okay then
+	local attempts=0
+	while grassPlaced<85 and attempts<1800 do
+		attempts+=1
+		local pos,surface=randomParkGreenPoint()
+		if pos and surface then
+			local tooClose=false
+			for _,tree in ipairs(sakuraFolder:GetChildren()) do
+				local tp=tree:GetPivot().Position
+				if (Vector2.new(tp.X,tp.Z)-Vector2.new(pos.X,pos.Z)).Magnitude<7 then
+					tooClose=true
+					break
+				end
+			end
+			if not tooClose then
 				local clone=asModel(grassTemplate:Clone())
 				clone.Name=string.format("Grass_%03d",grassPlaced+1)
+				clone:SetAttribute("GroundSurface",surface:GetFullName())
 				clone.Parent=grassFolder
-				scaleModelToFootprint(clone,rng:NextNumber(5.5,8))
-				placeModelBottom(clone,hit.Position,rng:NextNumber(0,math.pi*2),.04)
+				scaleModelToFootprint(clone,rng:NextNumber(4.4,6.4))
+				placeModelBottom(clone,pos,rng:NextNumber(0,math.pi*2),.035)
 				grassPlaced+=1
 			end
 		end
@@ -477,11 +541,12 @@ if grassTemplate then
 end
 runtime:SetAttribute("StaticGrassCount",grassPlaced)
 
--- ============ HALLOWEEN: EERIE TOMB + ABÓBORAS ============
+-- ============ HALLOWEEN ORGANIZADO EM NÚCLEOS ============
 local halloween=Instance.new("Folder")
 halloween.Name="HalloweenDecor"
 halloween.Parent=workspace
 halloween:SetAttribute("AssetId",HALLOWEEN_ID)
+halloween:SetAttribute("Layout","FourOrganizedLawnClusters")
 
 local eerieAsset=loadAsset(HALLOWEEN_ID)
 local eerieOuter=eerieAsset:FindFirstChild("Eerie Tomb",true)
@@ -492,120 +557,187 @@ sanitizeVisual(tombTemplate,true)
 for _,d in ipairs(tombTemplate:GetDescendants()) do
 	if d:IsA("BasePart") then
 		local n=d.Name:lower()
-		if n=="tree" or n=="hitbox" or d.Material==Enum.Material.Grass then d:Destroy() end
+		if n=="tree" or n=="hitbox" or d.Material==Enum.Material.Grass then
+			d:Destroy()
+		end
 	end
 end
 
 local pumpkinTemplates={}
 for _,d in ipairs(eerieAsset:GetDescendants()) do
-	if d:IsA("BasePart") and d.Name=="Pumpkin" then table.insert(pumpkinTemplates,d:Clone()) end
+	if d:IsA("BasePart") and d.Name=="Pumpkin" then
+		table.insert(pumpkinTemplates,d:Clone())
+	end
 end
 assert(#pumpkinTemplates>=1,"Pumpkins missing from Eerie Tomb")
 
-local function randomOpenGrass(minRadius)
-	for _=1,500 do
-		local x=rng:NextNumber(-180,180)
-		local z=rng:NextNumber(-120,120)
-		if Vector2.new(x,z).Magnitude>minRadius then
-			local hit=rayDown(x,z,{halloween,sakuraFolder,grassFolder,safety})
-			if hit and hit.Material~=Enum.Material.Water then
-				local inst=hit.Instance
-				if hit.Material==Enum.Material.Grass or (inst and inst:IsDescendantOf(park) and inst.Material==Enum.Material.Grass) then
-					return hit.Position
-				end
+-- Escolhe quatro gramados grandes, separados entre si, como pontos focais.
+local lawns={}
+for _,part in ipairs(greenGroundParts) do
+	table.insert(lawns,{
+		part=part,
+		area=part.Size.X*part.Size.Z,
+		pos=part.Position
+	})
+end
+table.sort(lawns,function(a,b) return a.area>b.area end)
+
+local clusterSurfaces={}
+for _,item in ipairs(lawns) do
+	if item.area>=42 then
+		local separated=true
+		for _,chosen in ipairs(clusterSurfaces) do
+			if (Vector2.new(item.pos.X,item.pos.Z)-Vector2.new(chosen.Position.X,chosen.Position.Z)).Magnitude<62 then
+				separated=false
+				break
 			end
+		end
+		if separated then
+			table.insert(clusterSurfaces,item.part)
+			if #clusterSurfaces==4 then break end
 		end
 	end
 end
 
-local tombCount=0
-for i=1,4 do
-	local pos=randomOpenGrass(70)
-	if pos then
-		local tomb=tombTemplate:Clone()
-		tomb.Name=string.format("EerieTomb_%02d",i)
-		tomb.Parent=halloween
-		pcall(function() tomb:ScaleTo(tomb:GetScale()*rng:NextNumber(.34,.43)) end)
-		if placeModelBottom(tomb,pos,rng:NextNumber(0,math.pi*2),.15) then tombCount+=1 else tomb:Destroy() end
+-- Fallback ainda usa gramados reais, nunca Terrain aleatório.
+if #clusterSurfaces<4 then
+	for _,item in ipairs(lawns) do
+		local exists=false
+		for _,p in ipairs(clusterSurfaces) do if p==item.part then exists=true break end end
+		if not exists then
+			table.insert(clusterSurfaces,item.part)
+			if #clusterSurfaces==4 then break end
+		end
 	end
 end
-tombTemplate:Destroy()
+assert(#clusterSurfaces==4,"Não foi possível escolher 4 gramados para Halloween")
 
-local pumpkinCount=0
-for i=1,14 do
-	local pos=randomOpenGrass(20)
-	if pos then
-		local p=pumpkinTemplates[((i-1)%#pumpkinTemplates)+1]:Clone()
-		p.Name=string.format("Pumpkin_%02d",i)
-		p.Anchored=true
-		p.CanCollide=false
-		p.CanTouch=false
-		local sc=rng:NextNumber(.42,.68)
-		p.Size=p.Size*sc
-		p.CFrame=CFrame.new(pos+Vector3.new(0,p.Size.Y*.45,0))*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0)
-		p.Parent=halloween
-		pumpkinCount+=1
-	end
+local function surfacePoint(surface,localX,localZ)
+	local origin=surface.CFrame:PointToWorldSpace(Vector3.new(localX,5,localZ))
+	local hit=workspace:Raycast(origin,Vector3.new(0,-14,0),greenParams)
+	if hit and hit.Instance==surface then return hit.Position end
+	return surface.Position+Vector3.new(0,surface.Size.Y*.5,0)
 end
-for _,p in ipairs(pumpkinTemplates) do p:Destroy() end
-eerieAsset:Destroy()
 
--- ============ CABEÇAS DE ESQUELETO ESTILIZADAS ============
-local skullCount=0
-local function createSkull(pos,yaw,index)
+local function createSkull(pos,yaw,index,parent)
 	local m=Instance.new("Model")
 	m.Name=string.format("SkullHead_%02d",index)
-	m.Parent=halloween
+	m.Parent=parent
 
 	local head=Instance.new("Part")
 	head.Name="Skull"
 	head.Shape=Enum.PartType.Ball
-	head.Size=Vector3.new(1.35,1.15,1.15)
+	head.Size=Vector3.new(1.25,1.05,1.05)
 	head.Color=Color3.fromRGB(220,216,198)
 	head.Material=Enum.Material.SmoothPlastic
 	head.Anchored=true
 	head.CanCollide=false
 	head.CanTouch=false
-	head.CFrame=CFrame.new(pos+Vector3.new(0,.48,0))*CFrame.Angles(0,yaw,0)
+	head.CFrame=CFrame.new(pos+Vector3.new(0,.40,0))*CFrame.Angles(0,yaw,0)
 	head.Parent=m
 
-	for _,sx in ipairs({-.27,.27}) do
+	for _,sx in ipairs({-.25,.25}) do
 		local eye=Instance.new("Part")
 		eye.Name="EyeSocket"
 		eye.Shape=Enum.PartType.Ball
-		eye.Size=Vector3.new(.25,.25,.18)
+		eye.Size=Vector3.new(.22,.22,.16)
 		eye.Color=Color3.fromRGB(45,43,42)
 		eye.Material=Enum.Material.SmoothPlastic
 		eye.Anchored=true
 		eye.CanCollide=false
 		eye.CanTouch=false
-		eye.CFrame=head.CFrame*CFrame.new(sx,.1,-.52)
+		eye.CFrame=head.CFrame*CFrame.new(sx,.08,-.47)
 		eye.Parent=m
 	end
 
 	local jaw=Instance.new("Part")
 	jaw.Name="Jaw"
-	jaw.Size=Vector3.new(.72,.28,.52)
+	jaw.Size=Vector3.new(.66,.24,.46)
 	jaw.Color=head.Color
 	jaw.Material=head.Material
 	jaw.Anchored=true
 	jaw.CanCollide=false
 	jaw.CanTouch=false
-	jaw.CFrame=head.CFrame*CFrame.new(0,-.48,-.05)
+	jaw.CFrame=head.CFrame*CFrame.new(0,-.43,-.03)
 	jaw.Parent=m
+	return m
 end
 
-for i=1,10 do
-	local pos=randomOpenGrass(35)
-	if pos then
-		createSkull(pos,rng:NextNumber(0,math.pi*2),i)
+local tombCount=0
+local pumpkinCount=0
+local skullCount=0
+local skullIndex=0
+local pumpkinIndex=0
+
+for clusterIndex,surface in ipairs(clusterSurfaces) do
+	local cluster=Instance.new("Folder")
+	cluster.Name=string.format("HalloweenCluster_%02d",clusterIndex)
+	cluster.Parent=halloween
+	cluster:SetAttribute("GroundSurface",surface:GetFullName())
+
+	-- O túmulo é o foco central.
+	local center=surfacePoint(surface,0,0)
+	local tomb=tombTemplate:Clone()
+	tomb.Name=string.format("EerieTomb_%02d",clusterIndex)
+	tomb.Parent=cluster
+	pcall(function() tomb:ScaleTo(tomb:GetScale()*.34) end)
+	if placeModelBottom(tomb,center,math.rad((clusterIndex-1)*90+12),.12) then
+		tombCount+=1
+	end
+
+	-- Abóboras em grupos pequenos, não espalhadas aleatoriamente.
+	local pumpkinOffsets={
+		Vector2.new(-4.8,-2.8),
+		Vector2.new(-3.2,-4.1),
+		Vector2.new(4.4,-3.0),
+		Vector2.new(3.1,-4.4),
+	}
+	local pumpkinTarget=(clusterIndex<=2) and 4 or 3
+	for j=1,pumpkinTarget do
+		pumpkinIndex+=1
+		local off=pumpkinOffsets[j]
+		local pos=surfacePoint(surface,off.X,off.Y)
+		local p=pumpkinTemplates[((pumpkinIndex-1)%#pumpkinTemplates)+1]:Clone()
+		p.Name=string.format("Pumpkin_%02d",pumpkinIndex)
+		p.Anchored=true
+		p.CanCollide=false
+		p.CanTouch=false
+		local sc=.43+((pumpkinIndex%3)*.07)
+		p.Size=p.Size*sc
+		p.CFrame=CFrame.new(pos+Vector3.new(0,p.Size.Y*.46,0))
+			*CFrame.Angles(0,math.rad((pumpkinIndex*47)%360),0)
+		p.Parent=cluster
+		pumpkinCount+=1
+	end
+
+	-- Cabeças de esqueleto discretas, perto do túmulo.
+	local skullOffsets={
+		Vector2.new(-5.2,3.4),
+		Vector2.new(5.0,3.1),
+		Vector2.new(0,5.0),
+	}
+	local skullTarget=(clusterIndex<=2) and 3 or 2
+	for j=1,skullTarget do
+		skullIndex+=1
+		local off=skullOffsets[j]
+		local pos=surfacePoint(surface,off.X,off.Y)
+		createSkull(pos,math.rad((skullIndex*63)%360),skullIndex,cluster)
 		skullCount+=1
 	end
 end
 
+for _,p in ipairs(pumpkinTemplates) do p:Destroy() end
+tombTemplate:Destroy()
+eerieAsset:Destroy()
+
 halloween:SetAttribute("TombCount",tombCount)
 halloween:SetAttribute("PumpkinCount",pumpkinCount)
 halloween:SetAttribute("SkullCount",skullCount)
+halloween:SetAttribute("ClusterCount",#clusterSurfaces)
+
+runtime:SetAttribute("TombCount",tombCount)
+runtime:SetAttribute("PumpkinCount",pumpkinCount)
+runtime:SetAttribute("SkullCount",skullCount)
 
 -- ============ SPAWN ============
 local spawnPos=grassPoint()
