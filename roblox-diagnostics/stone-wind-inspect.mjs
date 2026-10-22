@@ -790,6 +790,47 @@ local function inspectForestAnimationSources()
 end
 out.forestAnimationSources=inspectForestAnimationSources()
 
+
+local function inspectAssetDeep(id,label)
+  local result={id=id,label=label,loaded=false,top={},models={},parts={},scripts={},classes={},totalParts=0,totalModels=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,child in ipairs(asset:GetChildren()) do
+    table.insert(result.top,{name=child.Name,class=child.ClassName})
+  end
+  for _,x in ipairs(asset:GetDescendants()) do
+    result.classes[x.ClassName]=(result.classes[x.ClassName] or 0)+1
+    if x:IsA("Model") then
+      result.totalModels+=1
+      if #result.models<80 then
+        local okb,cf,size=pcall(function() return x:GetBoundingBox() end)
+        local pc=0
+        for _,y in ipairs(x:GetDescendants()) do if y:IsA("BasePart") then pc+=1 end end
+        table.insert(result.models,{name=x.Name,parent=x.Parent and x.Parent.Name or "",parts=pc,size=okb and {size.X,size.Y,size.Z} or nil})
+      end
+    elseif x:IsA("BasePart") then
+      result.totalParts+=1
+      if #result.parts<120 then
+        table.insert(result.parts,{
+          name=x.Name,class=x.ClassName,parent=x.Parent and x.Parent.Name or "",
+          material=tostring(x.Material),
+          color={x.Color.R,x.Color.G,x.Color.B},
+          size={x.Size.X,x.Size.Y,x.Size.Z},
+          transparency=x.Transparency
+        })
+      end
+    elseif x:IsA("LuaSourceContainer") and #result.scripts<20 then
+      table.insert(result.scripts,{name=x.Name,class=x.ClassName,parent=x.Parent and x.Parent.Name or ""})
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.floatingIsland=inspectAssetDeep(10485490600,"Floating Island Obby")
+out.skinnedGrass=inspectAssetDeep(87377915371959,"SkinnedGrass")
+out.bigTree=inspectAssetDeep(86013526879602,"Stud Big Tree")
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
