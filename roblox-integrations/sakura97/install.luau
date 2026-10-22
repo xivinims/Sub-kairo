@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",103)
+runtime:SetAttribute("Version",104)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -214,6 +214,26 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
+-- A MeshPart mede 100x100, mas a geometria skinned real fica concentrada
+-- nos Bones (~14x14). Usa a extensão REAL dos Bones para dimensionar a
+-- cobertura visual, em vez do bounding box enganoso da MeshPart.
+local minBX,maxBX=math.huge,-math.huge
+local minBZ,maxBZ=math.huge,-math.huge
+for _,b in ipairs(sourceMesh:GetDescendants()) do
+	if b:IsA("Bone") then
+		minBX=math.min(minBX,b.Position.X)
+		maxBX=math.max(maxBX,b.Position.X)
+		minBZ=math.min(minBZ,b.Position.Z)
+		maxBZ=math.max(maxBZ,b.Position.Z)
+	end
+end
+local boneSpanX=maxBX-minBX
+local boneSpanZ=maxBZ-minBZ
+assert(boneSpanX>10 and boneSpanZ>10,"Unexpected SkinnedGrass bone span")
+local visualScaleX=sourceMesh.Size.X/boneSpanX
+local visualScaleZ=sourceMesh.Size.Z/boneSpanZ
+
+
 local sourceModule=nil
 for _,d in ipairs(grassAsset:GetDescendants()) do
 	if d:IsA("ModuleScript") and d.Name=="SkinnedGrass" then
@@ -270,9 +290,9 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			mesh.CanTouch=false
 			mesh.CanQuery=false
 			mesh.Size=Vector3.new(
-				cellX*OVERLAP,
-				4,
-				cellZ*OVERLAP
+				cellX*OVERLAP*visualScaleX,
+				sourceMesh.Size.Y,
+				cellZ*OVERLAP*visualScaleZ
 			)
 
 			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
@@ -286,6 +306,8 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			model:SetAttribute("SingleMesh",true)
 			model:SetAttribute("CellX",cellX)
 			model:SetAttribute("CellZ",cellZ)
+			model:SetAttribute("ExpectedVisualX",cellX*OVERLAP)
+			model:SetAttribute("ExpectedVisualZ",cellZ*OVERLAP)
 			model.Parent=grassFolder
 			CollectionService:AddTag(model,"SkinnedGrassPatch")
 
@@ -589,7 +611,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=103,
+	version=104,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
