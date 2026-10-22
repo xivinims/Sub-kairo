@@ -732,6 +732,44 @@ out.hdNature=inspectNatureAsset(18242663106,"HD Nature Pack By DaveInchy")
 out.rockNature=inspectNatureAsset(8248445118,"Nature Pack rocks")
 out.bigTree=inspectNatureAsset(86013526879602,"Stud Big Tree")
 
+
+local function inspectForestWildlife()
+ local r={id=6432306802,loaded=false,butterflies={},leaves={},treeCandidates={},scripts={}}
+ local ok,asset=pcall(function() return A:LoadAssetAsync(6432306802) end)
+ if not ok or not asset then r.error=tostring(asset) return r end
+ r.loaded=true
+ for _,d in ipairs(asset:GetDescendants()) do
+  local n=d.Name:lower()
+  if (n:find("butter",1,true) or n:find("butterfly",1,true)) and #r.butterflies<80 then
+   table.insert(r.butterflies,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or "",children=#d:GetChildren()})
+  end
+  if (n:find("leaf",1,true) or n:find("leaves",1,true)) and #r.leaves<120 then
+   local row={name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or "",children=#d:GetChildren()}
+   if d:IsA("ParticleEmitter") then row.rate=d.Rate; row.texture=tostring(d.Texture); row.lifetime={d.Lifetime.Min,d.Lifetime.Max}; row.speed={d.Speed.Min,d.Speed.Max} end
+   table.insert(r.leaves,row)
+  end
+  if d:IsA("LuaSourceContainer") and #r.scripts<80 then table.insert(r.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""}) end
+ end
+ asset:Destroy(); return r
+end
+out.forestWildlife=inspectForestWildlife()
+
+local function inspectButterflyRig()
+ local r={id=5287371738,loaded=false,items={}}
+ local ok,asset=pcall(function() return A:LoadAssetAsync(5287371738) end)
+ if not ok or not asset then r.error=tostring(asset) return r end
+ r.loaded=true
+ for _,d in ipairs(asset:GetDescendants()) do
+  if #r.items<160 and (d:IsA("BasePart") or d:IsA("Motor6D") or d:IsA("Bone") or d:IsA("AnimationController") or d:IsA("Animator") or d:IsA("Animation") or d:IsA("LuaSourceContainer")) then
+   local row={name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""}
+   if d:IsA("Animation") then row.animationId=tostring(d.AnimationId) end
+   table.insert(r.items,row)
+  end
+ end
+ asset:Destroy(); return r
+end
+out.butterflyRig=inspectButterflyRig()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
