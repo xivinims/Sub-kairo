@@ -453,6 +453,53 @@ local function auditParkGrassSurfaces()
 end
 out.parkGrassAudit=auditParkGrassSurfaces()
 
+
+local function inspectMirkwood()
+  local result={id=12489980589,loaded=false,top={},models={},materials={},colors={},scripts={},totalParts=0,totalModels=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(12489980589) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,child in ipairs(asset:GetChildren()) do
+    table.insert(result.top,{name=child.Name,class=child.ClassName})
+  end
+  local colorBuckets={}
+  for _,d in ipairs(asset:GetDescendants()) do
+    if d:IsA("Model") then
+      result.totalModels+=1
+      if #result.models<100 then
+        local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+        local parts=0
+        for _,x in ipairs(d:GetDescendants()) do if x:IsA("BasePart") then parts+=1 end end
+        table.insert(result.models,{
+          name=d.Name,
+          parent=d.Parent and d.Parent.Name or "",
+          parts=parts,
+          size=okb and {size.X,size.Y,size.Z} or nil
+        })
+      end
+    elseif d:IsA("BasePart") then
+      result.totalParts+=1
+      local mat=tostring(d.Material)
+      result.materials[mat]=(result.materials[mat] or 0)+1
+      local r=math.floor(d.Color.R*5+.5)/5
+      local g=math.floor(d.Color.G*5+.5)/5
+      local b=math.floor(d.Color.B*5+.5)/5
+      local key=string.format("%.1f,%.1f,%.1f",r,g,b)
+      colorBuckets[key]=(colorBuckets[key] or 0)+1
+    elseif d:IsA("LuaSourceContainer") and #result.scripts<20 then
+      table.insert(result.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""})
+    end
+  end
+  for key,n in pairs(colorBuckets) do
+    table.insert(result.colors,{color=key,count=n})
+  end
+  table.sort(result.colors,function(a,b) return a.count>b.count end)
+  while #result.colors>15 do table.remove(result.colors) end
+  asset:Destroy()
+  return result
+end
+out.mirkwood=inspectMirkwood()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
