@@ -145,6 +145,13 @@ island:SetAttribute("AssetId",ISLAND_ID)
 island.Parent=workspace
 sanitize(island)
 
+-- A ilha original é muito pequena perto de um avatar R15 normal.
+-- Aumenta só um pouco, sem mudar formato/proporções.
+pcall(function()
+	island:ScaleTo(island:GetScale()*1.45)
+end)
+island:SetAttribute("ScaleMultiplier",1.45)
+
 local islandCF,islandSize=bounds(island)
 assert(islandSize,"Floating Island has invalid bounds")
 -- Centraliza sem deformar.
@@ -187,62 +194,99 @@ local function rayGreen(x,z)
 	)
 end
 
--- SKINNED GRASS POR CIMA DE TODA A ÁREA VERDE.
+-- SKINNED GRASS: UMA ÚNICA GRAMA, LADO A LADO, SÓ NO VERDE.
 local grassAsset=loadAsset(GRASS_ID)
-local grassSource=largestVisual(grassAsset,{"dark","grass","skinned"})
-assert(grassSource,"SkinnedGrass visual not found")
-local grassTemplate=asModel(grassSource:Clone())
+
+-- O asset possui duas MeshParts visuais. Usa SOMENTE a que realmente é skinned
+-- (a que contém Bones), evitando a "segunda grama" sobreposta.
+local grassMesh=nil
+local bestBoneCount=-1
+for _,d in ipairs(grassAsset:GetDescendants()) do
+	if d:IsA("MeshPart") then
+		local bones=0
+		for _,x in ipairs(d:GetDescendants()) do
+			if x:IsA("Bone") then bones+=1 end
+		end
+		if bones>bestBoneCount then
+			grassMesh=d
+			bestBoneCount=bones
+		end
+	end
+end
+assert(grassMesh and bestBoneCount>0,"Skinned MeshPart with Bones not found")
+
+local grassTemplate=Instance.new("Model")
+grassTemplate.Name="SingleSkinnedGrass"
+local mesh=grassMesh:Clone()
+mesh.Name="GrassMesh"
+mesh.Anchored=true
+mesh.CanCollide=false
+mesh.CanTouch=false
+mesh.CanQuery=false
+mesh.Parent=grassTemplate
 sanitize(grassTemplate)
 grassAsset:Destroy()
 
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="SkinnedGrassCoverage"
 grassFolder:SetAttribute("AssetId",GRASS_ID)
-grassFolder:SetAttribute("Rule","IslandGreenGroundOnly")
+grassFolder:SetAttribute("Rule","OneSkinnedMeshTiledOnGreenOnly")
+grassFolder:SetAttribute("SingleMeshOnly",true)
+grassFolder:SetAttribute("SourceBones",bestBoneCount)
 grassFolder.Parent=workspace
 
-local rng=Random.new(102873)
-
 local placed=0
-local samples=0
 local coveredSurfaces=0
 
-for surfaceIndex,surface in ipairs(greenSurfaces) do
-	local surfacePlaced=0
-	local target=math.clamp(math.min(surface.Size.X,surface.Size.Z)*.82,.45,2.8)
-	local step=math.max(.55,target*.8)
-	local nx=math.max(1,math.ceil(surface.Size.X/step))
-	local nz=math.max(1,math.ceil(surface.Size.Z/step))
+-- Tamanho visual de cada quadrado de grama. Sem rotação aleatória:
+-- ficam encostados uns nos outros para formar um tapete contínuo.
+local TILE=1.35
 
-	for ix=0,nx-1 do
-		for iz=0,nz-1 do
-			local lx=-surface.Size.X*.42+(ix+.5)*(surface.Size.X*.84/nx)
-			local lz=-surface.Size.Z*.42+(iz+.5)*(surface.Size.Z*.84/nz)
-			local top=surface.CFrame:PointToWorldSpace(Vector3.new(lx,surface.Size.Y*.5,lz))
-			samples+=1
+for surfaceIndex,surface in ipairs(greenSurfaces) do
+	local nx=math.max(1,math.ceil(surface.Size.X/TILE))
+	local nz=math.max(1,math.ceil(surface.Size.Z/TILE))
+	local cellX=surface.Size.X/nx
+	local cellZ=surface.Size.Z/nz
+	local cell=math.max(.4,math.min(cellX,cellZ)*1.08)
+	local surfacePlaced=0
+
+	for ix=1,nx do
+		for iz=1,nz do
+			local lx=-surface.Size.X/2+(ix-.5)*cellX
+			local lz=-surface.Size.Z/2+(iz-.5)*cellZ
+			local top=surface.CFrame:PointToWorldSpace(Vector3.new(lx,surface.Size.Y*.5+.015,lz))
 
 			local patch=grassTemplate:Clone()
 			patch.Name=string.format("SkinnedGrass_%03d",placed+1)
-			scaleFootprint(patch,target)
+			scaleFootprint(patch,cell)
 			patch.Parent=grassFolder
 			CollectionService:AddTag(patch,"SkinnedGrassPatch")
-			bottomPlace(patch,top,rng:NextNumber(0,math.pi*2),.01)
+
+			-- Mantém a orientação do próprio piso verde, sem sorteio de ângulo.
+			local up=surface.CFrame.UpVector
+			local look=surface.CFrame.LookVector
+			patch:PivotTo(CFrame.lookAt(top,top+look,up))
+			local pcf,psz=bounds(patch)
+			if psz then
+				local bottom=pcf.Position.Y-psz.Y/2
+				patch:PivotTo(patch:GetPivot()+Vector3.new(0,top.Y-bottom-.015,0))
+			end
+
 			patch:SetAttribute("GroundSurfaceIndex",surfaceIndex)
 			patch:SetAttribute("GroundPartName",surface.Name)
 			surfacePlaced+=1
 			placed+=1
 		end
 	end
-
 	if surfacePlaced>0 then coveredSurfaces+=1 end
 end
 
 grassTemplate:Destroy()
-assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass: "..tostring(coveredSurfaces).."/"..tostring(#greenSurfaces))
-assert(placed>=#greenSurfaces,"Too little skinned grass coverage: "..tostring(placed))
+assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass")
+assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
 runtime:SetAttribute("GrassPatchCount",placed)
-runtime:SetAttribute("GrassCoverageSamples",samples)
 runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
+runtime:SetAttribute("GrassSingleMeshBones",bestBoneCount)
 
 -- ÁRVORE GRANDE EXATA NO MEIO, ENCOSTADA NO CHÃO.
 local treeAsset=loadAsset(TREE_ID)
@@ -269,9 +313,9 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.88,12,18)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.36,7.5,10)
 scaleHeight(tree,targetTreeHeight)
-assert(bottomPlace(tree,treeGround.Position,rng:NextNumber(0,math.pi*2),.55),"Tree grounding failed")
+assert(bottomPlace(tree,treeGround.Position,0,.22),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
