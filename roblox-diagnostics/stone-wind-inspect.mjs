@@ -702,6 +702,36 @@ out.natureHD=inspectNatureAsset(18242663106,"HD Nature Pack By DaveInchy")
 out.natureRocks=inspectNatureAsset(8248445118,"Nature Pack rocks")
 out.bigTree=inspectNatureAsset(86013526879602,"Stud Big Tree")
 
+
+local function inspectNatureAsset(id,label)
+ local r={id=id,label=label,loaded=false,top={},models={},parts={},scripts={},totalParts=0,totalModels=0}
+ local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+ if not ok or not asset then r.error=tostring(asset) return r end
+ r.loaded=true
+ for _,x in ipairs(asset:GetChildren()) do table.insert(r.top,{name=x.Name,class=x.ClassName}) end
+ for _,d in ipairs(asset:GetDescendants()) do
+  if d:IsA("Model") then
+   r.totalModels+=1
+   if #r.models<120 then
+    local pc=0
+    for _,q in ipairs(d:GetDescendants()) do if q:IsA("BasePart") then pc+=1 end end
+    local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+    table.insert(r.models,{name=d.Name,parent=d.Parent and d.Parent.Name or "",parts=pc,size=okb and {size.X,size.Y,size.Z} or nil})
+   end
+  elseif d:IsA("BasePart") then
+   r.totalParts+=1
+   if #r.parts<160 then table.insert(r.parts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or "",size={d.Size.X,d.Size.Y,d.Size.Z},material=tostring(d.Material),color={d.Color.R,d.Color.G,d.Color.B}}) end
+  elseif d:IsA("LuaSourceContainer") and #r.scripts<50 then
+   table.insert(r.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""})
+  end
+ end
+ asset:Destroy(); return r
+end
+out.pbrNature=inspectNatureAsset(13536410655,"PBR foliage and nature pack")
+out.hdNature=inspectNatureAsset(18242663106,"HD Nature Pack By DaveInchy")
+out.rockNature=inspectNatureAsset(8248445118,"Nature Pack rocks")
+out.bigTree=inspectNatureAsset(86013526879602,"Stud Big Tree")
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
