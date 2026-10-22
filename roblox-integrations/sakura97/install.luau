@@ -207,10 +207,10 @@ local placed=0
 local samples=0
 local coveredSurfaces=0
 
-for _,surface in ipairs(greenSurfaces) do
+for surfaceIndex,surface in ipairs(greenSurfaces) do
 	local surfacePlaced=0
-	local target=math.clamp(math.min(surface.Size.X,surface.Size.Z)*.88,.55,3.6)
-	local step=math.max(.65,target*.82)
+	local target=math.clamp(math.min(surface.Size.X,surface.Size.Z)*.82,.45,2.8)
+	local step=math.max(.55,target*.8)
 	local nx=math.max(1,math.ceil(surface.Size.X/step))
 	local nz=math.max(1,math.ceil(surface.Size.Z/step))
 
@@ -218,34 +218,18 @@ for _,surface in ipairs(greenSurfaces) do
 		for iz=0,nz-1 do
 			local lx=-surface.Size.X*.42+(ix+.5)*(surface.Size.X*.84/nx)
 			local lz=-surface.Size.Z*.42+(iz+.5)*(surface.Size.Z*.84/nz)
-			local guess=surface.CFrame:PointToWorldSpace(Vector3.new(lx,0,lz))
-			local hit=rayGreen(guess.X,guess.Z)
+			local top=surface.CFrame:PointToWorldSpace(Vector3.new(lx,surface.Size.Y*.5,lz))
 			samples+=1
-			if hit and hit.Instance==surface and hit.Normal.Y>.5 then
-				local patch=grassTemplate:Clone()
-				patch.Name=string.format("SkinnedGrass_%03d",placed+1)
-				scaleFootprint(patch,target)
-				patch.Parent=grassFolder
-				CollectionService:AddTag(patch,"SkinnedGrassPatch")
-				bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.015)
-				patch:SetAttribute("GroundPart",surface.Name)
-				surfacePlaced+=1
-				placed+=1
-			end
-		end
-	end
 
-	if surfacePlaced==0 then
-		local hit=rayGreen(surface.Position.X,surface.Position.Z)
-		if hit and hit.Instance==surface then
 			local patch=grassTemplate:Clone()
 			patch.Name=string.format("SkinnedGrass_%03d",placed+1)
 			scaleFootprint(patch,target)
 			patch.Parent=grassFolder
 			CollectionService:AddTag(patch,"SkinnedGrassPatch")
-			bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.015)
-			patch:SetAttribute("GroundPart",surface.Name)
-			surfacePlaced=1
+			bottomPlace(patch,top,rng:NextNumber(0,math.pi*2),.01)
+			patch:SetAttribute("GroundSurfaceIndex",surfaceIndex)
+			patch:SetAttribute("GroundPartName",surface.Name)
+			surfacePlaced+=1
 			placed+=1
 		end
 	end
