@@ -3,7 +3,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==105,"SweanRuntime v102 ausente")
+assert(runtime and runtime:GetAttribute("Version")==106,"SweanRuntime v106 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -31,10 +31,24 @@ assert(#green==(runtime:GetAttribute("GreenSurfaceCount") or -1),"Contagem de ch
 local grass=workspace:FindFirstChild("SkinnedGrassCoverage")
 assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
-assert(grass:GetAttribute("Rule")=="SeamlessTiledGreenSkinnedGrass","Regra da grama incorreta")
-assert((grass:GetAttribute("TileOverlap") or 0)>=1.03,"Tiles de grama sem sobreposicao anti-fresta")
-assert((grass:GetAttribute("VisualScaleX") or 0)>=7 and (grass:GetAttribute("VisualScaleZ") or 0)>=7,"Correcao de footprint visual nao aplicada")
-assert((grass:GetAttribute("GroundOffset") or 99)<=0.7,"Offset de contato com o chao alto demais")
+assert(grass:GetAttribute("Rule")=="DefaultSizeFillGreen","Regra da grama incorreta")
+assert(math.abs((grass:GetAttribute("VisualScaleX") or 99)-1)<.001,"Grama foi esticada no X")
+assert(math.abs((grass:GetAttribute("VisualScaleZ") or 99)-1)<.001,"Grama foi esticada no Z")
+assert(math.abs((grass:GetAttribute("GroundOffset") or 99)-(-0.08))<.01,"Offset de contato com o chao errado")
+local defaultX=grass:GetAttribute("DefaultSizeX")
+local defaultY=grass:GetAttribute("DefaultSizeY")
+local defaultZ=grass:GetAttribute("DefaultSizeZ")
+local footX=grass:GetAttribute("FootprintX")
+local footZ=grass:GetAttribute("FootprintZ")
+local stepX=grass:GetAttribute("StepX")
+local stepZ=grass:GetAttribute("StepZ")
+local boneMidX=grass:GetAttribute("BoneMidX") or 0
+local boneMidZ=grass:GetAttribute("BoneMidZ") or 0
+local boneMinY=grass:GetAttribute("BoneMinY") or 0
+assert(type(defaultX)=="number" and type(defaultY)=="number" and type(defaultZ)=="number","Tamanho padrao da grama ausente")
+assert(type(footX)=="number" and type(footZ)=="number" and footX>1 and footZ>1,"Pegada da grama ausente")
+assert(type(stepX)=="number" and type(stepZ)=="number" and stepX>0 and stepZ>0,"Passo da grama ausente")
+assert(stepX<=footX and stepZ<=footZ,"Passo maior que a grama, vai abrir fresta")
 assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma variante de grama foi usada")
 assert((grass:GetAttribute("SourceBones") or 0)==100,"A grama escolhida deve ter 100 Bones")
 assert(type(grass:GetAttribute("SourceMeshId"))=="string","SourceMeshId da grama ausente")
@@ -42,12 +56,17 @@ local patches=#grass:GetChildren()
 assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
-assert((runtime:GetAttribute("GrassVisualOverlap") or 0)>=1.24,"Grama sem sobreposicao suficiente")
-assert((runtime:GetAttribute("GrassTileSpacing") or 999)<=84,"Espacamento da grama grande demais")
+assert(math.abs((runtime:GetAttribute("GrassVisualScaleX") or 99)-1)<.001,"Escala visual da grama nao e a padrao")
 assert(math.abs((runtime:GetAttribute("GrassCenterOffset") or 99)-(-0.08))<.01,"Grama ainda nao esta no nivel do chao")
+
+local function tilesNeeded(length,step,foot)
+	if length<=foot then return 1 end
+	return math.ceil((length-foot)/step)+1
+end
 
 local checked=0
 local covered={}
+local byGround={}
 for _,patch in ipairs(grass:GetChildren()) do
 	assert(patch:IsA("Model"),"GrassTile deve ser Model")
 	assert(patch:GetAttribute("SingleMesh")==true,"GrassTile contem configuracao invalida")
@@ -55,9 +74,6 @@ for _,patch in ipairs(grass:GetChildren()) do
 	assert(type(idx)=="number" and idx>=1 and idx<=#green,"GrassTile sem superficie verde valida")
 	covered[idx]=true
 
-	local cellX=patch:GetAttribute("CellX")
-	local cellZ=patch:GetAttribute("CellZ")
-	assert(type(cellX)=="number" and type(cellZ)=="number","GrassTile sem tamanho de celula")
 	local groundRef=patch:FindFirstChild("GroundSurface")
 	assert(groundRef and groundRef:IsA("ObjectValue") and groundRef.Value and groundRef.Value:IsA("BasePart"),"GrassTile sem referencia do chao")
 	local ground=groundRef.Value
@@ -68,13 +84,23 @@ for _,patch in ipairs(grass:GetChildren()) do
 		if d:IsA("MeshPart") then
 			meshCount+=1
 			assert(d.Material==Enum.Material.Neon,"Foi usada a variante cinza da grama")
-			local sx=grass:GetAttribute("VisualScaleX")
-			local sz=grass:GetAttribute("VisualScaleZ")
-			local visualX=d.Size.X/sx
-			local visualZ=d.Size.Z/sz
-			assert(visualX>=cellX*1.24 and visualZ>=cellZ*1.24,"Cobertura VISUAL da grama ainda deixa fresta")
-			local expectedRootY=(ground.CFrame*Vector3.new(0,ground.Size.Y*.5-0.08,0)).Y
+			assert(math.abs(d.Size.X-defaultX)<.05,"Grama nao esta no tamanho padrao X: "..tostring(d.Size.X))
+			assert(math.abs(d.Size.Y-defaultY)<.05,"Grama nao esta no tamanho padrao Y: "..tostring(d.Size.Y))
+			assert(math.abs(d.Size.Z-defaultZ)<.05,"Grama nao esta no tamanho padrao Z: "..tostring(d.Size.Z))
+			local expectedRootY=(ground.CFrame*Vector3.new(0,ground.Size.Y*.5-boneMinY-0.08,0)).Y
 			assert(math.abs(d.Position.Y-expectedRootY)<.35,"Grama ainda flutuando acima do chao")
+			local lp=ground.CFrame:PointToObjectSpace(d.Position)
+			local vx,vz=lp.X+boneMidX,lp.Z+boneMidZ
+			local bucket=byGround[ground]
+			if not bucket then
+				bucket={count=0,minX=vx,maxX=vx,minZ=vz,maxZ=vz}
+				byGround[ground]=bucket
+			end
+			bucket.count+=1
+			bucket.minX=math.min(bucket.minX,vx)
+			bucket.maxX=math.max(bucket.maxX,vx)
+			bucket.minZ=math.min(bucket.minZ,vz)
+			bucket.maxZ=math.max(bucket.maxZ,vz)
 		end
 		if d:IsA("Bone") then boneCount+=1 end
 	end
@@ -86,6 +112,16 @@ assert(checked==patches,"Nem todos os tiles foram validados")
 local coveredCount=0
 for i=1,#green do if covered[i] then coveredCount+=1 end end
 assert(coveredCount==#green,"Nem toda superficie verde recebeu tiles de grama")
+for _,ground in ipairs(green) do
+	local bucket=byGround[ground]
+	assert(bucket,"Parte verde sem grama: "..ground.Name)
+	local need=tilesNeeded(ground.Size.X,stepX,footX)*tilesNeeded(ground.Size.Z,stepZ,footZ)
+	assert(bucket.count>=need,"Parte verde sem grama suficiente pros lados: "..ground.Name)
+	assert(bucket.minX-footX*.5<=-ground.Size.X*.5+1.25,"Grama nao chega na borda esquerda de "..ground.Name)
+	assert(bucket.maxX+footX*.5>=ground.Size.X*.5-1.25,"Grama nao chega na borda direita de "..ground.Name)
+	assert(bucket.minZ-footZ*.5<=-ground.Size.Z*.5+1.25,"Grama nao chega no fundo de "..ground.Name)
+	assert(bucket.maxZ+footZ*.5>=ground.Size.Z*.5-1.25,"Grama nao chega na frente de "..ground.Name)
+end
 
 local grassRunner=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner")
 assert(grassRunner and grassRunner:IsA("LocalScript"),"Runner original/adaptado da SkinnedGrass ausente")
@@ -125,7 +161,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=105,
+	version=106,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=patches,

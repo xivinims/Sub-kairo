@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",105)
+runtime:SetAttribute("Version",106)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -214,11 +214,50 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
--- O MeshPart mede 100x100, mas a geometria visual real ocupa só
--- uma fração dessa caixa. O audit do asset mostrou ~14 studs úteis por eixo.
--- Usa uma escala calibrada fixa para não depender de Bone.Position no runtime.
-local visualScaleX=7.15
-local visualScaleZ=7.15
+-- Tamanho PADRÃO do asset. O Size da mesh não é esticado nem multiplicado.
+-- Se a grama visível for menor que a caixa da MeshPart, o PASSO entre os tiles
+-- usa essa pegada — a grama em si continua do tamanho original e é repetida
+-- pros lados até cobrir a parte verde inteira, sem fresta.
+local defaultSize=sourceMesh.Size
+local function measureFootprint(mesh)
+	local minX,maxX=math.huge,-math.huge
+	local minZ,maxZ=math.huge,-math.huge
+	local minY=math.huge
+	local n=0
+	for _,b in ipairs(mesh:GetDescendants()) do
+		if b:IsA("Bone") then
+			n+=1
+			local p=b.Position
+			minX=math.min(minX,p.X)
+			maxX=math.max(maxX,p.X)
+			minZ=math.min(minZ,p.Z)
+			maxZ=math.max(maxZ,p.Z)
+			minY=math.min(minY,p.Y)
+		end
+	end
+	local sx,sz=maxX-minX,maxZ-minZ
+	local midX,midZ=(minX+maxX)*.5,(minZ+maxZ)*.5
+	local ok=n>=10 and sx>=8 and sz>=8 and sx<=mesh.Size.X and sz<=mesh.Size.Z
+	if not ok then
+		return mesh.Size.X/7.15,mesh.Size.Z/7.15,0,0,0
+	end
+	if math.abs(midX)>mesh.Size.X or math.abs(midZ)>mesh.Size.Z then
+		midX,midZ=0,0
+	end
+	if minY<-mesh.Size.Y or minY>mesh.Size.Y then
+		minY=0
+	end
+	return sx,sz,midX,midZ,minY
+end
+local footprintX,footprintZ,boneMidX,boneMidZ,boneMinY=measureFootprint(sourceMesh)
+local OVERLAP=1.08
+local stepX=footprintX/OVERLAP
+local stepZ=footprintZ/OVERLAP
+local GROUND_OFFSET=-0.08
+local function gridCount(length,step,foot)
+	if length<=foot then return 1 end
+	return math.ceil((length-foot)/step)+1
+end
 
 
 local sourceModule=nil
@@ -237,41 +276,43 @@ grassModule.Parent=ReplicatedStorage
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="SkinnedGrassCoverage"
 grassFolder:SetAttribute("AssetId",GRASS_ID)
-grassFolder:SetAttribute("Rule","SeamlessTiledGreenSkinnedGrass")
+grassFolder:SetAttribute("Rule","DefaultSizeFillGreen")
 grassFolder:SetAttribute("SingleMeshOnly",true)
 grassFolder:SetAttribute("SourceBones",sourceBones)
 grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
-grassFolder:SetAttribute("TileOverlap",1.25)
-grassFolder:SetAttribute("VisualScaleX",visualScaleX)
-grassFolder:SetAttribute("VisualScaleZ",visualScaleZ)
-grassFolder:SetAttribute("GroundOffset",-0.08)
-grassFolder:SetAttribute("VisualScaleX",visualScaleX)
-grassFolder:SetAttribute("VisualScaleZ",visualScaleZ)
-grassFolder:SetAttribute("GroundOffset",0.65)
+grassFolder:SetAttribute("TileOverlap",OVERLAP)
+grassFolder:SetAttribute("VisualScaleX",1)
+grassFolder:SetAttribute("VisualScaleZ",1)
+grassFolder:SetAttribute("GroundOffset",GROUND_OFFSET)
+grassFolder:SetAttribute("DefaultSizeX",defaultSize.X)
+grassFolder:SetAttribute("DefaultSizeY",defaultSize.Y)
+grassFolder:SetAttribute("DefaultSizeZ",defaultSize.Z)
+grassFolder:SetAttribute("FootprintX",footprintX)
+grassFolder:SetAttribute("FootprintZ",footprintZ)
+grassFolder:SetAttribute("StepX",stepX)
+grassFolder:SetAttribute("StepZ",stepZ)
+grassFolder:SetAttribute("BoneMidX",boneMidX)
+grassFolder:SetAttribute("BoneMidZ",boneMidZ)
+grassFolder:SetAttribute("BoneMinY",boneMinY)
 grassFolder.Parent=workspace
 
--- Mantém os tiles perto do tamanho natural do asset (100x100) para a densidade
--- da grama não virar pontinhos, mas faz as bordas sobreporem 1.2% para NUNCA
--- existir fresta entre uma grama e outra.
-local NATURAL_TILE=84
-local OVERLAP=1.25
+-- Cada tile fica no Size original. O grid anda só a largura visível da grama,
+-- com uma sobreposição leve, até a borda esquerda, direita, frente e fundo
+-- de cada superfície verde.
 local placed=0
 local coveredSurfaces=0
 
 for surfaceIndex,surface in ipairs(greenSurfaces) do
-	local nx=math.max(1,math.ceil(surface.Size.X/NATURAL_TILE))
-	local nz=math.max(1,math.ceil(surface.Size.Z/NATURAL_TILE))
-	local cellX=surface.Size.X/nx
-	local cellZ=surface.Size.Z/nz
+	local nx=gridCount(surface.Size.X,stepX,footprintX)
+	local nz=gridCount(surface.Size.Z,stepZ,footprintZ)
+	local spanX=(nx-1)*stepX
+	local spanZ=(nz-1)*stepZ
 	local surfacePlaced=0
 
 	for ix=1,nx do
 		for iz=1,nz do
-			local lx=-surface.Size.X*.5+(ix-.5)*cellX
-			local lz=-surface.Size.Z*.5+(iz-.5)*cellZ
-			local top=surface.CFrame:PointToWorldSpace(
-				Vector3.new(lx,surface.Size.Y*.5,lz)
-			)
+			local lx=-spanX*.5+(ix-1)*stepX
+			local lz=-spanZ*.5+(iz-1)*stepZ
 
 			local model=Instance.new("Model")
 			model.Name=string.format("GrassTile_%04d",placed+1)
@@ -282,25 +323,19 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			mesh.CanCollide=false
 			mesh.CanTouch=false
 			mesh.CanQuery=false
-			mesh.Size=Vector3.new(
-				cellX*OVERLAP*visualScaleX,
-				sourceMesh.Size.Y,
-				cellZ*OVERLAP*visualScaleZ
-			)
+			mesh.Size=defaultSize
 
-			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
-			-- divisão da superfície, então eles se encostam perfeitamente.
 			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx,surface.Size.Y*.5-0.08,lz)
+				*CFrame.new(lx-boneMidX,surface.Size.Y*.5-boneMinY+GROUND_OFFSET,lz-boneMidZ)
 			mesh.Parent=model
 
 			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
 			model:SetAttribute("GroundPartName",surface.Name)
 			model:SetAttribute("SingleMesh",true)
-			model:SetAttribute("CellX",cellX)
-			model:SetAttribute("CellZ",cellZ)
-			model:SetAttribute("ExpectedVisualX",cellX*OVERLAP)
-			model:SetAttribute("ExpectedVisualZ",cellZ*OVERLAP)
+			model:SetAttribute("CellX",stepX)
+			model:SetAttribute("CellZ",stepZ)
+			model:SetAttribute("ExpectedVisualX",footprintX)
+			model:SetAttribute("ExpectedVisualZ",footprintZ)
 			local groundRef=Instance.new("ObjectValue")
 			groundRef.Name="GroundSurface"
 			groundRef.Value=surface
@@ -323,11 +358,16 @@ assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
 runtime:SetAttribute("GrassPatchCount",placed)
 runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
-runtime:SetAttribute("GrassTileSpacing",NATURAL_TILE)
+runtime:SetAttribute("GrassTileSpacing",stepX)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
-runtime:SetAttribute("GrassCenterOffset",-0.08)
-runtime:SetAttribute("GrassVisualScaleX",visualScaleX)
-runtime:SetAttribute("GrassVisualScaleZ",visualScaleZ)
+runtime:SetAttribute("GrassCenterOffset",GROUND_OFFSET)
+runtime:SetAttribute("GrassVisualScaleX",1)
+runtime:SetAttribute("GrassVisualScaleZ",1)
+runtime:SetAttribute("GrassDefaultSizeX",defaultSize.X)
+runtime:SetAttribute("GrassDefaultSizeY",defaultSize.Y)
+runtime:SetAttribute("GrassDefaultSizeZ",defaultSize.Z)
+runtime:SetAttribute("GrassFootprintX",footprintX)
+runtime:SetAttribute("GrassFootprintZ",footprintZ)
 
 -- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
 local grassRunner=Instance.new("LocalScript")
@@ -612,7 +652,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=105,
+	version=106,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
