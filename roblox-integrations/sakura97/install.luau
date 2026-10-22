@@ -299,8 +299,12 @@ do
 			for _,d in ipairs(root:GetDescendants()) do
 				if d:IsA("BasePart") then
 					local n=d.Name:lower()
+					local pn=(d.Parent and d.Parent.Name or ""):lower()
+					local gpn=(d.Parent and d.Parent.Parent and d.Parent.Parent.Name or ""):lower()
 					local c=d.Color
 					local foliage=n:find("leaf",1,true) or n:find("leaves",1,true) or n:find("foliage",1,true)
+						or pn:find("leaf",1,true) or pn:find("leaves",1,true) or pn:find("foliage",1,true)
+						or gpn:find("leaf",1,true) or gpn:find("leaves",1,true) or gpn:find("foliage",1,true)
 						or (c.G>c.R*1.12 and c.G>c.B*1.06)
 					local score=d.Size.X*d.Size.Y*d.Size.Z
 					if foliage and score<bestScore then best=d; bestScore=score end
@@ -710,8 +714,12 @@ local function tagTree(root)
 	for _,p in ipairs(root:GetDescendants()) do
 		if p:IsA("BasePart") then
 			local n=p.Name:lower()
+			local pn=(p.Parent and p.Parent.Name or ""):lower()
+			local gpn=(p.Parent and p.Parent.Parent and p.Parent.Parent.Name or ""):lower()
 			local c=p.Color
 			local leaf=n:find("leaf",1,true) or n:find("leaves",1,true) or n:find("foliage",1,true)
+				or pn:find("leaf",1,true) or pn:find("leaves",1,true) or pn:find("foliage",1,true)
+				or gpn:find("leaf",1,true) or gpn:find("leaves",1,true) or gpn:find("foliage",1,true)
 				or ((c.G>c.R*1.12 and c.G>c.B*1.06) and not n:find("trunk",1,true))
 			if leaf then
 				CS:AddTag(p,"WindShake")
@@ -788,7 +796,9 @@ local function generateChunk(ix,iz)
 	folder.Parent=propsRoot
 
 	local edge=math.max(math.abs(cx),math.abs(cz))
-	if edge>=LAND_HALF then
+	local coastNoise=math.noise(cx/7200,cz/7200,33)*950 + math.noise(cx/2600,cz/2600,91)*260
+	local localLandEdge=LAND_HALF+coastNoise
+	if edge>=localLandEdge then
 		Terrain:FillBlock(CFrame.new(cx,-10,cz),Vector3.new(CHUNK,8,CHUNK),Enum.Material.Sand)
 		Terrain:FillBlock(CFrame.new(cx,-3,cz),Vector3.new(CHUNK,6,CHUNK),Enum.Material.Water)
 		local island=islandInfluence(cx,cz)
@@ -800,6 +810,9 @@ local function generateChunk(ix,iz)
 	end
 
 	Terrain:FillBlock(CFrame.new(cx,-6,cz),Vector3.new(CHUNK,12,CHUNK),Enum.Material.Grass)
+	if edge>localLandEdge-650 then
+		Terrain:FillBlock(CFrame.new(cx,-.7,cz),Vector3.new(CHUNK,1.4,CHUNK),Enum.Material.Sand)
+	end
 	local r=rnd(ix,iz,91)
 	for i=1,r:NextInteger(1,3) do
 		local x=cx+r:NextNumber(-CHUNK*.38,CHUNK*.38)
