@@ -501,6 +501,42 @@ local function inspectMirkwood()
 end
 out.mirkwood=inspectMirkwood()
 
+
+local function inspectBigMap()
+  local result={id=9435523981,loaded=false,top={},models={},materials={},scripts={},totalParts=0,totalModels=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(9435523981) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,child in ipairs(asset:GetChildren()) do
+    table.insert(result.top,{name=child.Name,class=child.ClassName})
+  end
+  for _,d in ipairs(asset:GetDescendants()) do
+    if d:IsA("Model") then
+      result.totalModels+=1
+      if #result.models<80 then
+        local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+        local pc=0
+        for _,x in ipairs(d:GetDescendants()) do if x:IsA("BasePart") then pc+=1 end end
+        table.insert(result.models,{
+          name=d.Name,
+          parent=d.Parent and d.Parent.Name or "",
+          parts=pc,
+          size=okb and {size.X,size.Y,size.Z} or nil
+        })
+      end
+    elseif d:IsA("BasePart") then
+      result.totalParts+=1
+      local mat=tostring(d.Material)
+      result.materials[mat]=(result.materials[mat] or 0)+1
+    elseif d:IsA("LuaSourceContainer") and #result.scripts<30 then
+      table.insert(result.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""})
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.bigMap=inspectBigMap()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
