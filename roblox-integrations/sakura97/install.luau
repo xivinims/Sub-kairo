@@ -163,14 +163,11 @@ setupSkyAndLighting()
 
 -- ============ 5. VENTO ============
 local function setupWind()
-	local oldFolder=workspace:FindFirstChild("WindEffects")
-	if oldFolder then oldFolder:Destroy() end
-
 	local scripts=game.StarterPlayer.StarterPlayerScripts
-	local oldController=scripts:FindFirstChild("WindController")
-	if oldController then oldController:Destroy() end
+	local old=scripts:FindFirstChild("WindController")
+	if old then old:Destroy() end
 
-	workspace.GlobalWind=Vector3.new(16,0,5)
+	workspace.GlobalWind=Vector3.new(14,0,5)
 
 	local ok,asset=pcall(function()
 		return AssetService:LoadAssetAsync(11946229834)
@@ -179,19 +176,50 @@ local function setupWind()
 		error("Wind Effects 11946229834 failed to load")
 	end
 
-	local controller=asset:FindFirstChild("WindController",true)
-	assert(controller and controller:IsA("LocalScript"),"WindController missing from exact asset")
-	assert(controller:FindFirstChild("WindLines"),"WindLines module missing")
-	assert(controller:FindFirstChild("WindShake"),"WindShake module missing")
+	local source=asset:FindFirstChild("WindController",true)
+	assert(source and source:IsA("LocalScript"),"Exact WindController missing")
+	local sourceLines=source:FindFirstChild("WindLines")
+	local sourceShake=source:FindFirstChild("WindShake")
+	assert(sourceLines and sourceLines:IsA("ModuleScript"),"WindLines module missing")
+	assert(sourceShake and sourceShake:IsA("ModuleScript"),"WindShake module missing")
 
-	local clone=controller:Clone()
-	clone.Name="WindController"
-	clone:SetAttribute("AssetId",11946229834)
-	clone:SetAttribute("ExactAsset",true)
-	clone.Parent=scripts
+	local controller=Instance.new("LocalScript")
+	controller.Name="WindController"
+	controller:SetAttribute("AssetId",11946229834)
+	controller:SetAttribute("UsesExactModules",true)
+	controller.Source=[==========[
+local WindLines=require(script:WaitForChild("WindLines"))
+local WindShake=require(script:WaitForChild("WindShake"))
 
+local wind=workspace.GlobalWind
+local direction=wind.Magnitude>0 and wind.Unit or Vector3.new(1,0,0)
+local speed=math.max(1,wind.Magnitude)
+
+WindLines:Init({
+	Direction=direction;
+	Speed=speed;
+	Lifetime=1.8;
+	SpawnRate=12;
+})
+
+WindShake:Init({
+	MatchWorkspaceWind=true,
+})
+]==========]
+
+	local lines=Instance.new("ModuleScript")
+	lines.Name="WindLines"
+	lines.Source=sourceLines.Source
+	lines.Parent=controller
+
+	local shake=Instance.new("ModuleScript")
+	shake.Name="WindShake"
+	shake.Source=sourceShake.Source
+	shake.Parent=controller
+
+	controller.Parent=scripts
 	asset:Destroy()
-	print("[Sakura97] Exact WindController installed with WindLines + WindShake")
+	print("[Sakura97] Exact WindLines/WindShake installed")
 end
 setupWind()
 
@@ -332,6 +360,14 @@ local function placeSakuraTrees()
 		end
 		tree.Parent = folder
 		CollectionService:AddTag(tree, "SakuraTree")
+		for _,leaf in ipairs(tree:GetDescendants()) do
+			if leaf:IsA("BasePart") and leaf.Name=="Leaves" then
+				CollectionService:AddTag(leaf,"WindShake")
+				leaf:SetAttribute("WindPower",0.32)
+				leaf:SetAttribute("WindSpeed",14)
+				leaf:SetAttribute("WindDirection",workspace.GlobalWind.Unit)
+			end
+		end
 		placed += 1
 		positions[#positions + 1] = Vector2.new(x, z)
 	end
@@ -344,15 +380,12 @@ end
 
 placeSakuraTrees()
 
--- ============ 7. CAMINHO DE PEDRAS EXATO ============
-local PATH_ORIGIN=Vector3.new(-18,0,-112)
-local PATH_YAW=math.rad(7)
-local PATH_FRAME=CFrame.new(PATH_ORIGIN)*CFrame.Angles(0,PATH_YAW,0)
+-- ============ 7. CAMINHO EXATO STONE PATH (LONG) ============
+local PATH_FRAME=CFrame.new(-9,0,-72)*CFrame.Angles(0,math.rad(8),0)
 
 local function nearStonePath(x,z,radius)
-	local localPos=PATH_FRAME:PointToObjectSpace(Vector3.new(x,0,z))
-	return localPos.X>=-11-radius and localPos.X<=2+radius
-		and localPos.Z>=-9-radius and localPos.Z<=36+radius
+	local p=PATH_FRAME:PointToObjectSpace(Vector3.new(x,0,z))
+	return p.X>=-8-radius and p.X<=8+radius and p.Z>=-25-radius and p.Z<=25+radius
 end
 
 local function placeStonePath()
@@ -363,27 +396,24 @@ local function placeStonePath()
 	folder.Name="StonePath"
 	folder.Parent=workspace
 	folder:SetAttribute("AssetId",136068114177879)
-	folder:SetAttribute("Style","WholeExactStonePathModel")
+	folder:SetAttribute("Style","WholeExactStonePathLong")
 
-	local ok,pathAsset=pcall(function()
+	local ok,asset=pcall(function()
 		return AssetService:LoadAssetAsync(136068114177879)
 	end)
-	if not ok or not pathAsset then
-		error("Stone Path asset 136068114177879 failed to load")
+	if not ok or not asset then
+		error("Stone Path 136068114177879 failed to load")
 	end
 
-	local source=pathAsset:FindFirstChild("Stone Path (Long)",true)
-	if not source or not source:IsA("Model") then
-		source=pathAsset:FindFirstChildWhichIsA("Model",true)
-	end
-	assert(source and source:IsA("Model"),"Stone Path (Long) model missing")
+	local source=asset:FindFirstChild("Stone Path (Long)",true)
+	assert(source and source:IsA("Model"),"Stone Path (Long) missing")
 
 	local model=source:Clone()
 	model.Name="Stone Path (Long)"
 	model.Parent=folder
 
 	for _,d in ipairs(model:GetDescendants()) do
-		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+		if d:IsA("LuaSourceContainer") then
 			d:Destroy()
 		elseif d:IsA("BasePart") then
 			d.Anchored=true
@@ -392,28 +422,29 @@ local function placeStonePath()
 		end
 	end
 
-	-- Keep the original arrangement. Only make the whole path slightly smaller.
-	pcall(function() model:ScaleTo(model:GetScale()*.82) end)
-
 	local originalPivot=model:GetPivot()
-	local base=CFrame.new(PATH_ORIGIN)*CFrame.Angles(0,PATH_YAW,0)
-	local count=0
+	local _,originalSize=model:GetBoundingBox()
 
-	-- Conform every original stone to the grassy terrain while preserving its
-	-- relative X/Z placement and rotation from the Creator Store model.
+	-- Keep the Creator Store layout intact. Only fit it to the island.
+	local scale=0.9
+	model:ScaleTo(model:GetScale()*scale)
+	local scaledPivot=model:GetPivot()
+
+	local visible=0
 	for _,part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
-			local rel=originalPivot:ToObjectSpace(part.CFrame)
-			local desired=base*rel
-			local pos=desired.Position
-			local hit=workspace:Raycast(
-				Vector3.new(pos.X,70,pos.Z),
-				Vector3.new(0,-135,0)
-			)
+			local rel=scaledPivot:ToObjectSpace(part.CFrame)
+			local target=PATH_FRAME*rel
+			local p=target.Position
+			local params=RaycastParams.new()
+			params.FilterType=Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances={folder}
+			local hit=workspace:Raycast(Vector3.new(p.X,70,p.Z),Vector3.new(0,-135,0),params)
 			if hit and hit.Material~=Enum.Material.Water then
-				local rotation=desired-desired.Position
-				part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.5+.035,0))*rotation
-				count+=1
+				local rot=target-target.Position
+				part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.5+.04,0))*rot
+				part.Transparency=math.min(part.Transparency,.02)
+				visible+=1
 			else
 				part.Transparency=1
 				part.CanCollide=false
@@ -421,9 +452,12 @@ local function placeStonePath()
 		end
 	end
 
-	folder:SetAttribute("ExactModelParts",count)
-	pathAsset:Destroy()
-	print("[Sakura97] Exact Stone Path (Long) placed, visible parts:",count)
+	folder:SetAttribute("ExactModelName","Stone Path (Long)")
+	folder:SetAttribute("OriginalParts",38)
+	folder:SetAttribute("VisibleParts",visible)
+	folder:SetAttribute("OriginalLength",originalSize.Z)
+	asset:Destroy()
+	print("[Sakura97] Exact Stone Path (Long), visible parts:",visible)
 end
 
 placeStonePath()
