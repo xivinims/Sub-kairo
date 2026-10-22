@@ -202,43 +202,63 @@ grassFolder:SetAttribute("Rule","IslandGreenGroundOnly")
 grassFolder.Parent=workspace
 
 local rng=Random.new(102873)
-local targetFootprint=5.2
-scaleFootprint(grassTemplate,targetFootprint)
 
 local placed=0
 local samples=0
-local maxGrass=480
+local coveredSurfaces=0
 
 for _,surface in ipairs(greenSurfaces) do
-	if placed>=maxGrass then break end
-	local step=targetFootprint*.78
-	local nx=math.max(1,math.floor(surface.Size.X/step))
-	local nz=math.max(1,math.floor(surface.Size.Z/step))
+	local surfacePlaced=0
+	local target=math.clamp(math.min(surface.Size.X,surface.Size.Z)*.88,.55,3.6)
+	local step=math.max(.65,target*.82)
+	local nx=math.max(1,math.ceil(surface.Size.X/step))
+	local nz=math.max(1,math.ceil(surface.Size.Z/step))
+
 	for ix=0,nx-1 do
-		if placed>=maxGrass then break end
 		for iz=0,nz-1 do
-			if placed>=maxGrass then break end
-			local lx=-surface.Size.X*.46+(ix+.5)*(surface.Size.X*.92/nx)
-			local lz=-surface.Size.Z*.46+(iz+.5)*(surface.Size.Z*.92/nz)
+			local lx=-surface.Size.X*.42+(ix+.5)*(surface.Size.X*.84/nx)
+			local lz=-surface.Size.Z*.42+(iz+.5)*(surface.Size.Z*.84/nz)
 			local guess=surface.CFrame:PointToWorldSpace(Vector3.new(lx,0,lz))
 			local hit=rayGreen(guess.X,guess.Z)
 			samples+=1
 			if hit and hit.Instance==surface and hit.Normal.Y>.5 then
 				local patch=grassTemplate:Clone()
 				patch.Name=string.format("SkinnedGrass_%03d",placed+1)
+				scaleFootprint(patch,target)
 				patch.Parent=grassFolder
 				CollectionService:AddTag(patch,"SkinnedGrassPatch")
-				bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.03)
+				bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.015)
 				patch:SetAttribute("GroundPart",surface.Name)
+				surfacePlaced+=1
 				placed+=1
 			end
 		end
 	end
+
+	if surfacePlaced==0 then
+		local hit=rayGreen(surface.Position.X,surface.Position.Z)
+		if hit and hit.Instance==surface then
+			local patch=grassTemplate:Clone()
+			patch.Name=string.format("SkinnedGrass_%03d",placed+1)
+			scaleFootprint(patch,target)
+			patch.Parent=grassFolder
+			CollectionService:AddTag(patch,"SkinnedGrassPatch")
+			bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.015)
+			patch:SetAttribute("GroundPart",surface.Name)
+			surfacePlaced=1
+			placed+=1
+		end
+	end
+
+	if surfacePlaced>0 then coveredSurfaces+=1 end
 end
+
 grassTemplate:Destroy()
-assert(placed>=12,"Too little skinned grass coverage: "..tostring(placed))
+assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass: "..tostring(coveredSurfaces).."/"..tostring(#greenSurfaces))
+assert(placed>=#greenSurfaces,"Too little skinned grass coverage: "..tostring(placed))
 runtime:SetAttribute("GrassPatchCount",placed)
 runtime:SetAttribute("GrassCoverageSamples",samples)
+runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 
 -- ÁRVORE GRANDE EXATA NO MEIO, ENCOSTADA NO CHÃO.
 local treeAsset=loadAsset(TREE_ID)
@@ -265,7 +285,7 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.24,24,52)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.88,12,18)
 scaleHeight(tree,targetTreeHeight)
 assert(bottomPlace(tree,treeGround.Position,rng:NextNumber(0,math.pi*2),.55),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
@@ -463,7 +483,7 @@ grassWind.Parent=StarterPlayer.StarterPlayerScripts
 
 -- Spawn seguro perto do centro, afastado da árvore.
 local spawnHit=nil
-for radius=14,math.max(24,math.min(islandSize.X,islandSize.Z)*.3),4 do
+for radius=3,math.max(5,math.min(islandSize.X,islandSize.Z)*.32),1 do
 	for i=1,24 do
 		local a=i/24*math.pi*2
 		local hit=rayGreen(treeGround.Position.X+math.cos(a)*radius,treeGround.Position.Z+math.sin(a)*radius)
