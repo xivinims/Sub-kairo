@@ -54,30 +54,81 @@ end
 assert(windLeaves>=treeCount,"WindShake faltando em folhas")
 assert(petals>=treeCount,"Petalas faltando nas cerejeiras")
 
--- Grama estática do asset exato, sem seguir jogador.
+-- Grama extra SOMENTE nas superfícies verdes horizontais do Pristine Park.
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("TerrainGrassBend"),"Grama falsa seguindo jogador voltou")
 local grass=workspace:FindFirstChild("ParkGrass")
 assert(grass,"ParkGrass ausente")
+assert(grass:GetAttribute("PlacementRule")=="ParkGreenGroundOnly","Regra de colocacao da grama errada")
+
+local greenGround=CollectionService:GetTagged("ParkGreenGround")
+assert(#greenGround>=12,"Poucas superficies verdes marcadas: "..tostring(#greenGround))
+assert((runtime:GetAttribute("GreenGroundSurfaceCount") or 0)==#greenGround,"Contagem de superficies verdes inconsistente")
+
+local greenParams=RaycastParams.new()
+greenParams.FilterType=Enum.RaycastFilterType.Include
+greenParams.FilterDescendantsInstances=greenGround
+greenParams.IgnoreWater=true
+
 local grassCount=#grass:GetChildren()
-assert(grassCount>=55,"Pouca grama estatica: "..tostring(grassCount))
+assert(grassCount>=55 and grassCount<=90,"Quantidade de grama extra estranha: "..tostring(grassCount))
 assert((runtime:GetAttribute("StaticGrassCount") or 0)==grassCount,"Contagem ParkGrass inconsistente")
 
--- Halloween.
+local grassOnGreen=0
+for _,patch in ipairs(grass:GetChildren()) do
+	if patch:IsA("Model") then
+		local pos=patch:GetPivot().Position
+		local hit=workspace:Raycast(pos+Vector3.new(0,4,0),Vector3.new(0,-10,0),greenParams)
+		assert(hit,"Grama extra fora de superficie verde: "..patch.Name)
+		assert(hit.Instance and CollectionService:HasTag(hit.Instance,"ParkGreenGround"),"Grama extra caiu fora do chao verde: "..patch.Name)
+		grassOnGreen+=1
+	end
+end
+assert(grassOnGreen==grassCount,"Nem toda grama foi validada no chao verde")
+
+-- Halloween organizado em 4 núcleos, todos sobre gramados reais do parque.
 local halloween=workspace:FindFirstChild("HalloweenDecor")
 assert(halloween,"HalloweenDecor ausente")
 assert(halloween:GetAttribute("AssetId")==12489961338,"Eerie Tomb asset errado")
+assert(halloween:GetAttribute("Layout")=="FourOrganizedLawnClusters","Halloween nao esta usando layout organizado")
+assert(halloween:GetAttribute("ClusterCount")==4,"Esperava 4 clusters de Halloween")
+
 local tombCount=halloween:GetAttribute("TombCount") or 0
 local pumpkinCount=halloween:GetAttribute("PumpkinCount") or 0
 local skullCount=halloween:GetAttribute("SkullCount") or 0
 assert(tombCount==4,"Esperava 4 tumulos/criptas: "..tostring(tombCount))
 assert(pumpkinCount==14,"Esperava 14 aboboras: "..tostring(pumpkinCount))
 assert(skullCount==10,"Esperava 10 cabecas de esqueleto: "..tostring(skullCount))
+
+local clusterCount=0
 local tombModels,pumpkins,skulls=0,0,0
-for _,d in ipairs(halloween:GetChildren()) do
-	if d:IsA("Model") and d.Name:find("EerieTomb",1,true) then tombModels+=1 end
-	if d:IsA("BasePart") and d.Name:find("Pumpkin_",1,true) then pumpkins+=1 end
-	if d:IsA("Model") and d.Name:find("SkullHead_",1,true) then skulls+=1 end
+for _,cluster in ipairs(halloween:GetChildren()) do
+	if cluster:IsA("Folder") and cluster.Name:find("HalloweenCluster_",1,true) then
+		clusterCount+=1
+		assert(type(cluster:GetAttribute("GroundSurface"))=="string","Cluster sem GroundSurface")
+		local clusterTombs,clusterPumpkins,clusterSkulls=0,0,0
+		local tombForRay=nil
+		for _,d in ipairs(cluster:GetChildren()) do
+			if d:IsA("Model") and d.Name:find("EerieTomb",1,true) then
+				clusterTombs+=1
+				tombModels+=1
+				tombForRay=d
+			elseif d:IsA("BasePart") and d.Name:find("Pumpkin_",1,true) then
+				clusterPumpkins+=1
+				pumpkins+=1
+			elseif d:IsA("Model") and d.Name:find("SkullHead_",1,true) then
+				clusterSkulls+=1
+				skulls+=1
+			end
+		end
+		assert(clusterTombs==1,"Cluster precisa de exatamente 1 tumulo: "..cluster.Name)
+		assert(clusterPumpkins>=3 and clusterPumpkins<=4,"Aboboras desorganizadas no cluster: "..cluster.Name)
+		assert(clusterSkulls>=2 and clusterSkulls<=3,"Caveiras desorganizadas no cluster: "..cluster.Name)
+		local pos=tombForRay:GetPivot().Position
+		local hit=workspace:Raycast(pos+Vector3.new(0,8,0),Vector3.new(0,-18,0),greenParams)
+		assert(hit,"Tumulo fora de gramado verde: "..cluster.Name)
+	end
 end
+assert(clusterCount==4,"Numero de clusters incorreto: "..tostring(clusterCount))
 assert(tombModels==4 and pumpkins==14 and skulls==10,"Halloween visual count mismatch")
 
 -- Oceano e ilha.
@@ -133,6 +184,9 @@ return{
 	removedOriginalTrees=removed,
 	grayStones=grayStones,
 	grass=grassCount,
+	grassOnGreen=grassOnGreen,
+	greenGroundSurfaces=#greenGround,
+	halloweenClusters=clusterCount,
 	tombs=tombCount,
 	pumpkins=pumpkinCount,
 	skulls=skullCount,
