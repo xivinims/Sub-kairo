@@ -18,7 +18,7 @@ assert(rt:GetAttribute("PBRAssetId")==13536410655,"PBR pack wrong")
 assert(rt:GetAttribute("HDAssetId")==18242663106,"HD pack wrong")
 assert(rt:GetAttribute("RockAssetId")==8248445118,"rock pack wrong")
 assert(rt:GetAttribute("BigTreeAssetId")==86013526879602,"big tree wrong")
-assert(rt:GetAttribute("ButterflyAssetId")==4639818571,"butterfly asset wrong")
+assert(rt:GetAttribute("ButterflySource")=="Procedural3D","butterfly source wrong")
 
 -- Old city/build artifacts must be fully gone.
 for _,name in ipairs({
@@ -45,7 +45,7 @@ local clientAssets=RS:FindFirstChild("XNNatureClientAssets")
 assert(clientAssets and clientAssets:FindFirstChild("LeafTemplate"),"real leaf geometry missing")
 assert(clientAssets.LeafTemplate:GetAttribute("FromNaturePack")==true,"leaf not from nature pack")
 local butterfly=clientAssets and clientAssets:FindFirstChild("ButterflyTemplate")
-assert(butterfly and butterfly:GetAttribute("AssetId")==4639818571,"butterfly template wrong")
+assert(butterfly and butterfly:GetAttribute("Source")=="Procedural3D" and butterfly:GetAttribute("AnimatedWings")==true,"butterfly template wrong")
 
 local client=SP.StarterPlayerScripts:FindFirstChild("XNNatureClient")
 assert(client and client:IsA("LocalScript"),"nature client missing")
