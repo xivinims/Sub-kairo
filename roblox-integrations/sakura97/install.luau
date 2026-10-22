@@ -216,6 +216,8 @@ for _,d in ipairs(park:GetDescendants()) do
 end
 runtime:SetAttribute("GrayStoneCount",brownStoneCount)
 
+local rng=Random.new(99001)
+
 -- Superfícies verdes onde a grama EXTRA pode existir.
 -- Só peças horizontais, finas e verdes do PRÓPRIO Pristine Park entram aqui.
 local greenGroundParts={}
@@ -382,7 +384,6 @@ local sakuraFolder=Instance.new("Folder")
 sakuraFolder.Name="SakuraTrees"
 sakuraFolder.Parent=workspace
 
-local rng=Random.new(99001)
 local filtered={}
 for _,pos in ipairs(treePositions) do
 	local good=true
