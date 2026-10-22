@@ -148,9 +148,9 @@ sanitize(island)
 -- A ilha original é muito pequena perto de um avatar R15 normal.
 -- Aumenta só um pouco, sem mudar formato/proporções.
 pcall(function()
-	island:ScaleTo(island:GetScale()*1.45)
+	island:ScaleTo(island:GetScale()*1.85)
 end)
-island:SetAttribute("ScaleMultiplier",1.45)
+island:SetAttribute("ScaleMultiplier",1.85)
 
 local islandCF,islandSize=bounds(island)
 assert(islandSize,"Floating Island has invalid bounds")
@@ -194,99 +194,133 @@ local function rayGreen(x,z)
 	)
 end
 
--- SKINNED GRASS: UMA ÚNICA GRAMA, LADO A LADO, SÓ NO VERDE.
+-- SKINNED GRASS: UMA MESH VERDE REAL POR SUPERFÍCIE VERDE.
 local grassAsset=loadAsset(GRASS_ID)
 
--- O asset possui duas MeshParts visuais. Usa SOMENTE a que realmente é skinned
--- (a que contém Bones), evitando a "segunda grama" sobreposta.
-local grassMesh=nil
-local bestBoneCount=-1
+local sourceMesh=nil
+local sourceBones=0
 for _,d in ipairs(grassAsset:GetDescendants()) do
 	if d:IsA("MeshPart") then
 		local bones=0
-		for _,x in ipairs(d:GetDescendants()) do
-			if x:IsA("Bone") then bones+=1 end
+		for _,b in ipairs(d:GetDescendants()) do
+			if b:IsA("Bone") then bones+=1 end
 		end
-		if bones>bestBoneCount then
-			grassMesh=d
-			bestBoneCount=bones
+		-- O asset tem duas variantes de 100 Bones. A variante correta de grama
+		-- é a verde/Neon, não a Mesh cinza Plastic.
+		if bones>0 and d.Material==Enum.Material.Neon and d.Color.G>d.Color.R then
+			sourceMesh=d
+			sourceBones=bones
+			break
 		end
 	end
 end
-assert(grassMesh and bestBoneCount>0,"Skinned MeshPart with Bones not found")
+assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
-local grassTemplate=Instance.new("Model")
-grassTemplate.Name="SingleSkinnedGrass"
-local mesh=grassMesh:Clone()
-mesh.Name="GrassMesh"
-mesh.Anchored=true
-mesh.CanCollide=false
-mesh.CanTouch=false
-mesh.CanQuery=false
-mesh.Parent=grassTemplate
-sanitize(grassTemplate)
-grassAsset:Destroy()
+local sourceModule=nil
+for _,d in ipairs(grassAsset:GetDescendants()) do
+	if d:IsA("ModuleScript") and d.Name=="SkinnedGrass" then
+		sourceModule=d
+		break
+	end
+end
+assert(sourceModule,"SkinnedGrass module missing")
+
+local grassModule=sourceModule:Clone()
+grassModule.Name="SkinnedGrassRuntimeModule"
+grassModule.Parent=ReplicatedStorage
 
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="SkinnedGrassCoverage"
 grassFolder:SetAttribute("AssetId",GRASS_ID)
-grassFolder:SetAttribute("Rule","OneSkinnedMeshTiledOnGreenOnly")
+grassFolder:SetAttribute("Rule","OneOriginalGreenSkinnedMeshPerGreenSurface")
 grassFolder:SetAttribute("SingleMeshOnly",true)
-grassFolder:SetAttribute("SourceBones",bestBoneCount)
+grassFolder:SetAttribute("SourceBones",sourceBones)
+grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
 grassFolder.Parent=workspace
 
 local placed=0
-local coveredSurfaces=0
-
--- Tamanho visual de cada quadrado de grama. Sem rotação aleatória:
--- ficam encostados uns nos outros para formar um tapete contínuo.
-local TILE=1.35
-
 for surfaceIndex,surface in ipairs(greenSurfaces) do
-	local nx=math.max(1,math.ceil(surface.Size.X/TILE))
-	local nz=math.max(1,math.ceil(surface.Size.Z/TILE))
-	local cellX=surface.Size.X/nx
-	local cellZ=surface.Size.Z/nz
-	local cell=math.max(.4,math.min(cellX,cellZ)*1.08)
-	local surfacePlaced=0
+	local model=Instance.new("Model")
+	model.Name=string.format("GrassTile_%02d",surfaceIndex)
 
-	for ix=1,nx do
-		for iz=1,nz do
-			local lx=-surface.Size.X/2+(ix-.5)*cellX
-			local lz=-surface.Size.Z/2+(iz-.5)*cellZ
-			local top=surface.CFrame:PointToWorldSpace(Vector3.new(lx,surface.Size.Y*.5+.015,lz))
+	local mesh=sourceMesh:Clone()
+	mesh.Name="SkinnedGrass"
+	mesh.Anchored=true
+	mesh.CanCollide=false
+	mesh.CanTouch=false
+	mesh.CanQuery=false
 
-			local patch=grassTemplate:Clone()
-			patch.Name=string.format("SkinnedGrass_%03d",placed+1)
-			scaleFootprint(patch,cell)
-			patch.Parent=grassFolder
-			CollectionService:AddTag(patch,"SkinnedGrassPatch")
+	-- NÃO escala uniforme. Mantém altura natural da grama e só adapta X/Z
+	-- ao pedaço verde embaixo dela.
+	mesh.Size=Vector3.new(
+		math.max(.8,surface.Size.X*.96),
+		1.35,
+		math.max(.8,surface.Size.Z*.96)
+	)
+	mesh.CFrame=surface.CFrame
+		*CFrame.new(0,surface.Size.Y*.5+.64,0)
+	mesh.Parent=model
 
-			-- Mantém a orientação do próprio piso verde, sem sorteio de ângulo.
-			local up=surface.CFrame.UpVector
-			local look=surface.CFrame.LookVector
-			patch:PivotTo(CFrame.lookAt(top,top+look,up))
-			local pcf,psz=bounds(patch)
-			if psz then
-				local bottom=pcf.Position.Y-psz.Y/2
-				patch:PivotTo(patch:GetPivot()+Vector3.new(0,top.Y-bottom-.015,0))
-			end
-
-			patch:SetAttribute("GroundSurfaceIndex",surfaceIndex)
-			patch:SetAttribute("GroundPartName",surface.Name)
-			surfacePlaced+=1
-			placed+=1
-		end
-	end
-	if surfacePlaced>0 then coveredSurfaces+=1 end
+	model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
+	model:SetAttribute("GroundPartName",surface.Name)
+	model:SetAttribute("SingleMesh",true)
+	model.Parent=grassFolder
+	CollectionService:AddTag(model,"SkinnedGrassPatch")
+	placed+=1
 end
+grassAsset:Destroy()
 
-grassTemplate:Destroy()
-assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass")
-assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
+assert(placed==#greenSurfaces,"Grass tile count must match green surfaces")
 runtime:SetAttribute("GrassPatchCount",placed)
-runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
-runtime:SetAttribute("GrassSingleMeshBones",bestBoneCount)
+runtime:SetAttribute("GrassCoveredSurfaces",placed)
+runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
+
+-- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
+local grassRunner=Instance.new("LocalScript")
+grassRunner.Name="SkinnedGrassRunner"
+grassRunner.Source=[==========[
+local RunService=game:GetService("RunService")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local Players=game:GetService("Players")
+
+local player=Players.LocalPlayer
+local folder=workspace:WaitForChild("SkinnedGrassCoverage")
+local SkinnedGrass=require(ReplicatedStorage:WaitForChild("SkinnedGrassRuntimeModule"))
+
+local grass=SkinnedGrass.new({
+	RenderDistanceEnabled=true,
+	RenderDistance=120,
+	RenderInAnimation=nil,
+	RenderOutAnimation=nil,
+	CollisionsEnabled=true,
+	CollisionDistance=90,
+	CollisionRadiusInner=2.2,
+	CollisionRadiusOuter=4.4,
+	CollisionAngle=55,
+	WindEnabled=true,
+	WindDistanceInner=25,
+	WindDistanceOuter=120,
+	WindFramerateInner=1,
+	WindFramerateOuter=.5,
+	WindNoiseSize=12,
+	WindNoiseIntensity=1.6,
+	UseGlobalWind=true,
+})
+
+local models={}
+for _,m in ipairs(folder:GetChildren()) do
+	if m:IsA("Model") then table.insert(models,m) end
+end
+grass:AddMeshes(models)
+
+RunService.RenderStepped:Connect(function(dt)
+	local char=player.Character
+	local root=char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	grass:Step(dt,{root.Position},root.Position)
+end)
+]==========]
+grassRunner.Parent=StarterPlayer.StarterPlayerScripts
 
 -- ÁRVORE GRANDE EXATA NO MEIO, ENCOSTADA NO CHÃO.
 local treeAsset=loadAsset(TREE_ID)
@@ -313,7 +347,7 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.36,7.5,10)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.24,7,8.2)
 scaleHeight(tree,targetTreeHeight)
 assert(bottomPlace(tree,treeGround.Position,0,.22),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
@@ -449,65 +483,6 @@ ws.Source=windShake.Source
 ws.Parent=controller
 controller.Parent=StarterPlayer.StarterPlayerScripts
 windAsset:Destroy()
-
--- SkinnedGrass: anima Bones próximos do jogador para responder ao vento sem mexer o patch inteiro.
-local grassWind=Instance.new("LocalScript")
-grassWind.Name="SkinnedGrassWind"
-grassWind.Source=[==========[
-local Players=game:GetService("Players")
-local RunService=game:GetService("RunService")
-
-local player=Players.LocalPlayer
-local folder=workspace:WaitForChild("SkinnedGrassCoverage")
-local bones={}
-local base={}
-
-local function scan()
-	table.clear(bones)
-	table.clear(base)
-	for _,d in ipairs(folder:GetDescendants()) do
-		if d:IsA("Bone") then
-			table.insert(bones,d)
-			base[d]=d.Transform
-		end
-	end
-end
-scan()
-folder.DescendantAdded:Connect(function(d)
-	if d:IsA("Bone") then
-		table.insert(bones,d)
-		base[d]=d.Transform
-	end
-end)
-
-local accum=0
-RunService.RenderStepped:Connect(function(dt)
-	accum+=dt
-	if accum<1/24 then return end
-	accum=0
-	local char=player.Character
-	local root=char and char:FindFirstChild("HumanoidRootPart")
-	local t=time()
-	for i,b in ipairs(bones) do
-		if b.Parent and base[b] then
-			local near=true
-			if root then
-				local ok,wp=pcall(function() return b.WorldPosition end)
-				if ok then near=(wp-root.Position).Magnitude<190 end
-			end
-			if near then
-				local phase=i*.31
-				local sway=math.sin(t*2.1+phase)*.095
-				local side=math.cos(t*1.65+phase)*.045
-				b.Transform=base[b]*CFrame.Angles(sway,0,side)
-			else
-				b.Transform=base[b]
-			end
-		end
-	end
-end)
-]==========]
-grassWind.Parent=StarterPlayer.StarterPlayerScripts
 
 -- Spawn seguro perto do centro, afastado da árvore.
 local spawnHit=nil
