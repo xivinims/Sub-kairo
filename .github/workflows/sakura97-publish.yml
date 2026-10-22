@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: sakura97-place-publisher
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -29,3 +29,5 @@ jobs:
         run: node roblox-integrations/sakura97/publish.mjs
 
 # trigger floating-island-v102
+
+# serialize publisher for v104
