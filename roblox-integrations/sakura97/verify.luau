@@ -3,7 +3,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==103,"SweanRuntime v102 ausente")
+assert(runtime and runtime:GetAttribute("Version")==104,"SweanRuntime v102 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -32,7 +32,10 @@ local grass=workspace:FindFirstChild("SkinnedGrassCoverage")
 assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
 assert(grass:GetAttribute("Rule")=="SeamlessTiledGreenSkinnedGrass","Regra da grama incorreta")
-assert((grass:GetAttribute("TileOverlap") or 0)>=1.01,"Tiles de grama sem sobreposicao anti-fresta")
+assert((grass:GetAttribute("TileOverlap") or 0)>=1.03,"Tiles de grama sem sobreposicao anti-fresta")
+assert((grass:GetAttribute("BoneSpanX") or 0)>10 and (grass:GetAttribute("BoneSpanZ") or 0)>10,"Bone span da grama ausente")
+assert((grass:GetAttribute("VisualScaleX") or 0)>6 and (grass:GetAttribute("VisualScaleZ") or 0)>6,"Correcao de footprint visual nao aplicada")
+assert(math.abs((grass:GetAttribute("GroundOffset") or 99)-0.04)<.01,"Offset de contato com o chao incorreto")
 assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma variante de grama foi usada")
 assert((grass:GetAttribute("SourceBones") or 0)==100,"A grama escolhida deve ter 100 Bones")
 assert(type(grass:GetAttribute("SourceMeshId"))=="string","SourceMeshId da grama ausente")
@@ -62,7 +65,11 @@ for _,patch in ipairs(grass:GetChildren()) do
 		if d:IsA("MeshPart") then
 			meshCount+=1
 			assert(d.Material==Enum.Material.Neon,"Foi usada a variante cinza da grama")
-			assert(d.Size.X>=cellX*1.01 and d.Size.Z>=cellZ*1.01,"Existe risco de fresta entre tiles")
+			local sx=grass:GetAttribute("VisualScaleX")
+			local sz=grass:GetAttribute("VisualScaleZ")
+			local visualX=d.Size.X/sx
+			local visualZ=d.Size.Z/sz
+			assert(visualX>=cellX*1.03 and visualZ>=cellZ*1.03,"Cobertura VISUAL da grama ainda deixa fresta")
 		end
 		if d:IsA("Bone") then boneCount+=1 end
 	end
@@ -84,7 +91,7 @@ local tree=workspace:FindFirstChild("BigCenterTree")
 assert(tree and tree:IsA("Model"),"BigCenterTree ausente")
 assert(tree:GetAttribute("AssetId")==86013526879602,"Arvore nao veio do asset pedido")
 local treeCF,treeSize=tree:GetBoundingBox()
-assert(treeSize.Y>=54 and treeSize.Y<=76,"Altura da arvore fora da faixa nova: "..tostring(treeSize.Y))
+assert(treeSize.Y>=107 and treeSize.Y<=126,"Arvore ainda pequena/grande demais: "..tostring(treeSize.Y))
 local centerDist=(Vector2.new(treeCF.Position.X,treeCF.Position.Z)-Vector2.new(select(1,island:GetBoundingBox()).Position.X,select(1,island:GetBoundingBox()).Position.Z)).Magnitude
 assert(centerDist<math.max(12,math.min(runtime:GetAttribute("IslandSizeX") or 100,runtime:GetAttribute("IslandSizeZ") or 100)*.35),"Arvore longe demais do centro")
 
@@ -113,7 +120,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=103,
+	version=104,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=patches,
