@@ -32,6 +32,21 @@ async function req(path,body){
   throw last||new Error('Retries exhausted');
 }
 
+async function patchCloud(path,body){
+  const key=process.env.ROBLOX_API_KEY;
+  if(!key) throw new Error('Missing ROBLOX_API_KEY');
+  const res=await fetch(CLOUD+path,{
+    method:'PATCH',
+    headers:{'x-api-key':key,'content-type':'application/json'},
+    body:JSON.stringify(body),
+    signal:AbortSignal.timeout(60000)
+  });
+  const raw=await res.text();
+  let data; try{data=JSON.parse(raw)}catch{data={raw}}
+  if(!res.ok) throw new Error('PATCH '+path+' HTTP '+res.status+': '+JSON.stringify(data));
+  return data;
+}
+
 async function execute(script){
   let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'180s',script});
   const deadline=Date.now()+360000;
@@ -79,9 +94,11 @@ return {
   ok=true,
   sourceVersion=sourceVersion,
   mapParts=checks.mapParts,
+  lots=checks.lots,
+  grass=checks.grass,
   pumpkins=checks.pumpkins,
   pumpkinClusters=checks.pumpkinClusters,
-  message="Mirkwood rebuild saved"
+  message="XN Brookhaven rebuild saved"
 }
 `;
 
@@ -114,4 +131,21 @@ ${verifySource}
 }
 if(last) throw last;
 console.log(JSON.stringify({stage:"verified-persisted",...persisted}));
+
+let rename={universe:false,place:false};
+try{
+  await patchCloud('universes/'+UNIVERSE_ID+'?updateMask=displayName',{displayName:'XN [VOICE]'});
+  const u=await req('universes/'+UNIVERSE_ID);
+  rename.universe=u?.displayName==='XN [VOICE]';
+}catch(e){
+  console.log(JSON.stringify({renameUniverseWarning:String(e)}));
+}
+try{
+  await patchCloud('universes/'+UNIVERSE_ID+'/places/'+PLACE_ID+'?updateMask=displayName',{displayName:'XN [VOICE]'});
+  const p=await req('universes/'+UNIVERSE_ID+'/places/'+PLACE_ID);
+  rename.place=p?.displayName==='XN [VOICE]';
+}catch(e){
+  console.log(JSON.stringify({renamePlaceWarning:String(e)}));
+}
+console.log(JSON.stringify({stage:"name-update",...rename}));
 console.log("[Sakura97] Done.");
