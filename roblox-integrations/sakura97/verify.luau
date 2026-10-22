@@ -15,7 +15,7 @@ local _,parkSize=park:GetBoundingBox()
 assert(parkSize.X>340 and parkSize.Z>240,"Pristine Park foi cortado ou escalado errado")
 local parkParts=0
 for _,d in ipairs(park:GetDescendants()) do if d:IsA("BasePart") then parkParts+=1 end end
-assert(parkParts>850,"Pristine Park perdeu muitas pecas: "..tostring(parkParts))
+assert(parkParts>=700,"Pristine Park perdeu mais pecas do que apenas as arvores: "..tostring(parkParts))
 
 -- Pedras Brown Stone devem estar cinza.
 local brownStones=0
