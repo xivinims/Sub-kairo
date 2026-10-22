@@ -68,6 +68,8 @@ function first(task){
 const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
 let installBody=read('install');
+const runtimeSource=read('nature-runtime');
+installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
 const verifySource=read('verify');
 
