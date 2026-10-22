@@ -222,37 +222,8 @@ local function greenish(c)
 end
 
 local function treeLikeModel(m)
-	local name=m.Name:lower()
-	if name:find("streetlight",1,true) or name:find("light",1,true)
-		or name:find("shop",1,true) or name:find("fountain",1,true)
-		or name:find("bench",1,true) or name:find("car",1,true)
-		or name:find("basket",1,true) or name:find("blender",1,true) then
-		return false
-	end
-
-	local partCount=0
-	local wood,foliage=false,false
-	for _,d in ipairs(m:GetDescendants()) do
-		if d:IsA("BasePart") then
-			partCount+=1
-			local n=d.Name:lower()
-			if d.Material==Enum.Material.Wood or d.Material==Enum.Material.WoodPlanks or n:find("trunk",1,true) then wood=true end
-			if n:find("leaf",1,true) or n:find("foliage",1,true)
-				or (greenish(d.Color) and (d.Material==Enum.Material.Grass or d.Material==Enum.Material.Fabric or d:IsA("MeshPart"))) then
-				foliage=true
-			end
-		end
-	end
-
-	local _,size=validBounds(m)
-	if not size then return false end
-
-	-- Modelos reais de árvore do Park são pequenos grupos. Isso evita
-	-- apagar estruturas/lojas que por acaso têm madeira + decoração verde.
-	if name:find("tree",1,true) then
-		return partCount<=40 and size.Y>8 and size.X<60 and size.Z<60
-	end
-	return wood and foliage and partCount<=24 and size.Y>10 and size.X<45 and size.Z<45
+	local name=m.Name
+	return name=="TreeA" or name=="TreeB"
 end
 
 local candidates={}
