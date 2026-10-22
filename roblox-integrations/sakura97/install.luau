@@ -177,49 +177,19 @@ local function setupWind()
 	end
 
 	local source=asset:FindFirstChild("WindController",true)
-	assert(source and source:IsA("LocalScript"),"Exact WindController missing")
-	local sourceLines=source:FindFirstChild("WindLines")
-	local sourceShake=source:FindFirstChild("WindShake")
-	assert(sourceLines and sourceLines:IsA("ModuleScript"),"WindLines module missing")
-	assert(sourceShake and sourceShake:IsA("ModuleScript"),"WindShake module missing")
+	assert(source and source:IsA("LocalScript"),"WindController missing from exact asset")
+	assert(source:FindFirstChild("WindLines"),"WindLines missing from exact asset")
+	assert(source:FindFirstChild("WindShake"),"WindShake missing from exact asset")
 
-	local controller=Instance.new("LocalScript")
+	-- Use the exact controller and its exact child modules, unchanged.
+	local controller=source:Clone()
 	controller.Name="WindController"
 	controller:SetAttribute("AssetId",11946229834)
-	controller:SetAttribute("UsesExactModules",true)
-	controller.Source=[==========[
-local WindLines=require(script:WaitForChild("WindLines"))
-local WindShake=require(script:WaitForChild("WindShake"))
-
-local wind=workspace.GlobalWind
-local direction=wind.Magnitude>0 and wind.Unit or Vector3.new(1,0,0)
-local speed=math.max(1,wind.Magnitude)
-
-WindLines:Init({
-	Direction=direction;
-	Speed=speed;
-	Lifetime=1.8;
-	SpawnRate=12;
-})
-
-WindShake:Init({
-	MatchWorkspaceWind=true,
-})
-]==========]
-
-	local lines=Instance.new("ModuleScript")
-	lines.Name="WindLines"
-	lines.Source=sourceLines.Source
-	lines.Parent=controller
-
-	local shake=Instance.new("ModuleScript")
-	shake.Name="WindShake"
-	shake.Source=sourceShake.Source
-	shake.Parent=controller
-
+	controller:SetAttribute("ExactCreatorStoreController",true)
 	controller.Parent=scripts
+
 	asset:Destroy()
-	print("[Sakura97] Exact WindLines/WindShake installed")
+	print("[Sakura97] Exact WindController installed unchanged")
 end
 setupWind()
 
@@ -427,12 +397,33 @@ end
 
 placeSakuraTrees()
 
--- ============ 7. CAMINHO EXATO STONE PATH (LONG) ============
-local PATH_FRAME=CFrame.new(-9,0,-72)*CFrame.Angles(0,math.rad(8),0)
+-- ============ 7. ESTRADINHA EXATA STONE PATH (LONG) ============
+local PATH_SEGMENTS=9
+local PATH_SCALE=.62
+local PATH_START_Z=-132
+local PATH_STEP=29
+
+local function pathCenterFor(i)
+	local z=PATH_START_Z+(i-1)*PATH_STEP
+	local x=-10+math.sin(i*.63)*12+math.sin(i*.21)*5
+	return Vector3.new(x,0,z)
+end
+
+local function pathYawFor(i)
+	local a=pathCenterFor(math.max(1,i-1))
+	local b=pathCenterFor(math.min(PATH_SEGMENTS,i+1))
+	return math.atan2(b.X-a.X,b.Z-a.Z)
+end
 
 local function nearStonePath(x,z,radius)
-	local p=PATH_FRAME:PointToObjectSpace(Vector3.new(x,0,z))
-	return p.X>=-8-radius and p.X<=8+radius and p.Z>=-25-radius and p.Z<=25+radius
+	local p=Vector2.new(x,z)
+	for i=1,PATH_SEGMENTS do
+		local c=pathCenterFor(i)
+		if (p-Vector2.new(c.X,c.Z)).Magnitude <= (18+radius) then
+			return true
+		end
+	end
+	return false
 end
 
 local function placeStonePath()
@@ -443,68 +434,81 @@ local function placeStonePath()
 	folder.Name="StonePath"
 	folder.Parent=workspace
 	folder:SetAttribute("AssetId",136068114177879)
-	folder:SetAttribute("Style","WholeExactStonePathLong")
+	folder:SetAttribute("ExactModelName","Stone Path (Long)")
+	folder:SetAttribute("SegmentCount",PATH_SEGMENTS)
 
 	local ok,asset=pcall(function()
 		return AssetService:LoadAssetAsync(136068114177879)
 	end)
 	if not ok or not asset then
-		error("Stone Path 136068114177879 failed to load")
+		error("Stone Path asset 136068114177879 failed to load")
 	end
 
 	local source=asset:FindFirstChild("Stone Path (Long)",true)
-	assert(source and source:IsA("Model"),"Stone Path (Long) missing")
-
-	local model=source:Clone()
-	model.Name="Stone Path (Long)"
-	model.Parent=folder
-
-	for _,d in ipairs(model:GetDescendants()) do
-		if d:IsA("LuaSourceContainer") then
-			d:Destroy()
-		elseif d:IsA("BasePart") then
-			d.Anchored=true
-			d.CanCollide=true
-			d.CanTouch=false
-		end
+	assert(source and source:IsA("Model"),"Stone Path (Long) model missing")
+	local sourcePartCount=0
+	for _,d in ipairs(source:GetDescendants()) do
+		if d:IsA("BasePart") then sourcePartCount+=1 end
 	end
+	assert(sourcePartCount==38,"Expected 38 parts in Stone Path (Long), got "..tostring(sourcePartCount))
 
-	local originalPivot=model:GetPivot()
-	local _,originalSize=model:GetBoundingBox()
+	local totalVisible=0
+	for i=1,PATH_SEGMENTS do
+		local segment=source:Clone()
+		segment.Name=string.format("Stone Path (Long) %02d",i)
+		segment.Parent=folder
 
-	-- Keep the Creator Store layout intact. Only fit it to the island.
-	local scale=0.9
-	model:ScaleTo(model:GetScale()*scale)
-	local scaledPivot=model:GetPivot()
-
-	local visible=0
-	for _,part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			local rel=scaledPivot:ToObjectSpace(part.CFrame)
-			local target=PATH_FRAME*rel
-			local p=target.Position
-			local params=RaycastParams.new()
-			params.FilterType=Enum.RaycastFilterType.Exclude
-			params.FilterDescendantsInstances={folder}
-			local hit=workspace:Raycast(Vector3.new(p.X,70,p.Z),Vector3.new(0,-135,0),params)
-			if hit and hit.Material~=Enum.Material.Water then
-				local rot=target-target.Position
-				part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.5+.04,0))*rot
-				part.Transparency=math.min(part.Transparency,.02)
-				visible+=1
-			else
-				part.Transparency=1
-				part.CanCollide=false
+		for _,d in ipairs(segment:GetDescendants()) do
+			if d:IsA("LuaSourceContainer") then
+				d:Destroy()
+			elseif d:IsA("BasePart") then
+				d.Anchored=true
+				d.CanCollide=true
+				d.CanTouch=false
+				d.CanQuery=true
 			end
 		end
+
+		segment:ScaleTo(segment:GetScale()*PATH_SCALE)
+
+		local center=pathCenterFor(i)
+		local yaw=pathYawFor(i)
+		local base=CFrame.new(center)*CFrame.Angles(0,yaw,0)
+		local pivot=segment:GetPivot()
+
+		local params=RaycastParams.new()
+		params.FilterType=Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances={folder}
+
+		local visible=0
+		for _,part in ipairs(segment:GetDescendants()) do
+			if part:IsA("BasePart") then
+				local rel=pivot:ToObjectSpace(part.CFrame)
+				local target=base*rel
+				local pos=target.Position
+				local hit=workspace:Raycast(Vector3.new(pos.X,75,pos.Z),Vector3.new(0,-145,0),params)
+				if hit and hit.Material~=Enum.Material.Water then
+					local rot=target-target.Position
+					-- Slightly sink the stones into the grass, never replace the grass with Ground.
+					part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.42,0))*rot
+					part.Transparency=math.min(part.Transparency,.03)
+					visible+=1
+				else
+					part.Transparency=1
+					part.CanCollide=false
+				end
+			end
+		end
+
+		segment:SetAttribute("VisibleParts",visible)
+		totalVisible+=visible
 	end
 
-	folder:SetAttribute("ExactModelName","Stone Path (Long)")
-	folder:SetAttribute("OriginalParts",38)
-	folder:SetAttribute("VisibleParts",visible)
-	folder:SetAttribute("OriginalLength",originalSize.Z)
+	folder:SetAttribute("SourcePartsPerSegment",sourcePartCount)
+	folder:SetAttribute("VisibleParts",totalVisible)
+	folder:SetAttribute("UsesGroundPatches",false)
 	asset:Destroy()
-	print("[Sakura97] Exact Stone Path (Long), visible parts:",visible)
+	print("[Sakura97] Exact Stone Path (Long) segments:",PATH_SEGMENTS,"visible stones:",totalVisible)
 end
 
 placeStonePath()
