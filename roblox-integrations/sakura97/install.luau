@@ -221,21 +221,24 @@ runtime:SetAttribute("GrayStoneCount",brownStoneCount)
 local greenGroundParts={}
 for _,d in ipairs(park:GetDescendants()) do
 	if d:IsA("BasePart") then
-		local lower=d.Name:lower()
-		local horizontal=d.CFrame.UpVector.Y>.82
-		local thin=d.Size.Y<=1.35
-		local wide=d.Size.X>=4 and d.Size.Z>=4
-		local isFloorGrass=d.Material==Enum.Material.Grass
-			and lower~="bush"
-			and not lower:find("tree",1,true)
-			and not lower:find("leaf",1,true)
-		if horizontal and thin and wide and isFloorGrass then
+		local isExactParkFloor=
+			d.Name=="Grass"
+			and d.Parent and d.Parent.Name=="Structure"
+			and d.Material==Enum.Material.Grass
+			and d.CFrame.UpVector.Y>.98
+			and d.Size.Y<=1.2
+			and d.Size.X>=70
+			and d.Size.Z>=6
+		if isExactParkFloor then
 			table.insert(greenGroundParts,d)
 			CollectionService:AddTag(d,"ParkGreenGround")
 		end
 	end
 end
-assert(#greenGroundParts>=12,"Poucas superfícies verdes detectadas no Pristine Park: "..tostring(#greenGroundParts))
+table.sort(greenGroundParts,function(a,b)
+	return (a.Size.X*a.Size.Z)>(b.Size.X*b.Size.Z)
+end)
+assert(#greenGroundParts==5,"Esperava exatamente 5 superfícies verdes principais do Pristine Park, recebeu "..tostring(#greenGroundParts))
 runtime:SetAttribute("GreenGroundSurfaceCount",#greenGroundParts)
 
 local greenParams=RaycastParams.new()
@@ -245,11 +248,15 @@ greenParams.IgnoreWater=true
 
 local function pointOnGreenGround(surface,margin)
 	margin=margin or .72
-	local localX=rng:NextNumber(-surface.Size.X*.5*margin,surface.Size.X*.5*margin)
-	local localZ=rng:NextNumber(-surface.Size.Z*.5*margin,surface.Size.Z*.5*margin)
-	local world=surface.CFrame:PointToWorldSpace(Vector3.new(localX,4,localZ))
-	local hit=workspace:Raycast(world,Vector3.new(0,-12,0),greenParams)
-	if hit and hit.Instance==surface then return hit.Position end
+	for _=1,12 do
+		local localX=rng:NextNumber(-surface.Size.X*.5*margin,surface.Size.X*.5*margin)
+		local localZ=rng:NextNumber(-surface.Size.Z*.5*margin,surface.Size.Z*.5*margin)
+		local world=surface.CFrame:PointToWorldSpace(Vector3.new(localX,4,localZ))
+		local hit=workspace:Raycast(world,Vector3.new(0,-12,0),greenParams)
+		if hit and hit.Instance==surface then
+			return hit.Position
+		end
+	end
 	return nil
 end
 
@@ -571,44 +578,11 @@ for _,d in ipairs(eerieAsset:GetDescendants()) do
 end
 assert(#pumpkinTemplates>=1,"Pumpkins missing from Eerie Tomb")
 
--- Escolhe quatro gramados grandes, separados entre si, como pontos focais.
-local lawns={}
-for _,part in ipairs(greenGroundParts) do
-	table.insert(lawns,{
-		part=part,
-		area=part.Size.X*part.Size.Z,
-		pos=part.Position
-	})
-end
-table.sort(lawns,function(a,b) return a.area>b.area end)
-
+-- Usa os 4 maiores gramados reais do Park. Como eles já são Parts diferentes
+-- da Structure, o Halloween fica distribuído em núcleos previsíveis e organizados.
 local clusterSurfaces={}
-for _,item in ipairs(lawns) do
-	if item.area>=42 then
-		local separated=true
-		for _,chosen in ipairs(clusterSurfaces) do
-			if (Vector2.new(item.pos.X,item.pos.Z)-Vector2.new(chosen.Position.X,chosen.Position.Z)).Magnitude<62 then
-				separated=false
-				break
-			end
-		end
-		if separated then
-			table.insert(clusterSurfaces,item.part)
-			if #clusterSurfaces==4 then break end
-		end
-	end
-end
-
--- Fallback ainda usa gramados reais, nunca Terrain aleatório.
-if #clusterSurfaces<4 then
-	for _,item in ipairs(lawns) do
-		local exists=false
-		for _,p in ipairs(clusterSurfaces) do if p==item.part then exists=true break end end
-		if not exists then
-			table.insert(clusterSurfaces,item.part)
-			if #clusterSurfaces==4 then break end
-		end
-	end
+for i=1,math.min(4,#greenGroundParts) do
+	table.insert(clusterSurfaces,greenGroundParts[i])
 end
 assert(#clusterSurfaces==4,"Não foi possível escolher 4 gramados para Halloween")
 
