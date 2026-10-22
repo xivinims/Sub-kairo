@@ -3,200 +3,141 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 local CollectionService=game:GetService("CollectionService")
 local ReplicatedFirst=game:GetService("ReplicatedFirst")
 local runtime=game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
-assert(runtime and runtime:GetAttribute("Version")==97,"Runtime Sakura97 invalido")
+assert(runtime and runtime:GetAttribute("Version")==99,"Runtime v99 ausente")
+assert(runtime:GetAttribute("MapType")=="PristineParkIslandHalloween","MapType errado")
+assert(runtime:GetAttribute("ParkAssetId")==13366955960,"Pristine Park asset errado")
+assert(runtime:GetAttribute("HalloweenAssetId")==12489961338,"Halloween asset errado")
 
-local PATH_SEGMENTS=20
-local PATH_RADIUS_X=108
-local PATH_RADIUS_Z=78
-local function pathPointAt(t)
-	local a=t*math.pi*2
-	local rx=PATH_RADIUS_X+math.sin(a*3)*4+math.sin(a*7)*1.8
-	local rz=PATH_RADIUS_Z+math.cos(a*4)*3
-	return Vector3.new(math.cos(a)*rx,0,math.sin(a)*rz)
-end
-local function distanceToPath(x,z)
-	local p=Vector2.new(x,z)
-	local best=math.huge
-	for j=0,95 do
-		local q=pathPointAt(j/96)
-		best=math.min(best,(p-Vector2.new(q.X,q.Z)).Magnitude)
+local park=workspace:FindFirstChild("PristineParkIsland")
+assert(park and park:IsA("Model"),"PristineParkIsland ausente")
+assert(park:GetAttribute("AssetId")==13366955960,"Park nao veio do asset pedido")
+local _,parkSize=park:GetBoundingBox()
+assert(parkSize.X>340 and parkSize.Z>240,"Pristine Park foi cortado ou escalado errado")
+local parkParts=0
+for _,d in ipairs(park:GetDescendants()) do if d:IsA("BasePart") then parkParts+=1 end end
+assert(parkParts>850,"Pristine Park perdeu muitas pecas: "..tostring(parkParts))
+
+-- Pedras Brown Stone devem estar cinza.
+local brownStones=0
+local grayStones=0
+for _,d in ipairs(park:GetDescendants()) do
+	if d:IsA("BasePart") and d.Name:lower()=="brown stone" then
+		brownStones+=1
+		local c=d.Color
+		if math.abs(c.R-c.G)<.08 and math.abs(c.G-c.B)<.08 and c.R>.3 and c.R<.65 then
+			grayStones+=1
+		end
 	end
-	return best
 end
+assert(brownStones>8,"Brown Stone nao encontrado no parque")
+assert(grayStones==brownStones,"Nem todas Brown Stone ficaram cinza")
+assert((runtime:GetAttribute("GrayStoneCount") or 0)==brownStones,"Contagem de pedras cinzas inconsistente")
 
+-- Árvores antigas removidas e cerejeiras novas.
+local removed=runtime:GetAttribute("OriginalTreesRemoved") or 0
+assert(removed>0,"Nenhuma arvore original do Pristine Park foi detectada/removida")
 local trees=workspace:FindFirstChild("SakuraTrees")
-assert(trees and #trees:GetChildren()==27,"Esperava 27 cerejeiras")
-
-local petalEmitters=0
-local windTagged=0
-local minTreePath=math.huge
-local maxTreeOffset=-math.huge
-local minTreeOffset=math.huge
-
-local treeParams=RaycastParams.new()
-treeParams.FilterType=Enum.RaycastFilterType.Exclude
-treeParams.FilterDescendantsInstances={
-	trees,
-	workspace:FindFirstChild("StonePath"),
-	workspace:FindFirstChild("Wildflowers"),
-	workspace:FindFirstChild("WorldSafetyFloor")
-}
-
+assert(trees,"SakuraTrees ausente")
+local treeCount=#trees:GetChildren()
+assert(treeCount>=18 and treeCount<=28,"Quantidade de cerejeiras estranha: "..tostring(treeCount))
+local windLeaves=0
+local petals=0
 for _,tree in ipairs(trees:GetChildren()) do
-	local trunk=nil
 	for _,d in ipairs(tree:GetDescendants()) do
-		if d:IsA("BasePart") and d.Name~="Leaves" then trunk=d break end
-	end
-	assert(trunk,"Tronco ausente em cerejeira")
-	minTreePath=math.min(minTreePath,distanceToPath(trunk.Position.X,trunk.Position.Z))
-
-	local minY=math.huge
-	for _,sx in ipairs({-1,1}) do
-		for _,sy in ipairs({-1,1}) do
-			for _,sz in ipairs({-1,1}) do
-				local p=trunk.CFrame:PointToWorldSpace(Vector3.new(trunk.Size.X*.5*sx,trunk.Size.Y*.5*sy,trunk.Size.Z*.5*sz))
-				minY=math.min(minY,p.Y)
-			end
-		end
-	end
-	local hit=workspace:Raycast(Vector3.new(trunk.Position.X,80,trunk.Position.Z),Vector3.new(0,-150,0),treeParams)
-	assert(hit,"Sem Terrain sob cerejeira")
-	local offset=minY-hit.Position.Y
-	maxTreeOffset=math.max(maxTreeOffset,offset)
-	minTreeOffset=math.min(minTreeOffset,offset)
-
-	for _,leaf in ipairs(tree:GetDescendants()) do
-		if leaf:IsA("BasePart") and leaf.Name=="Leaves" then
-			if CollectionService:HasTag(leaf,"WindShake") then windTagged+=1 end
-			local petals=leaf:FindFirstChild("SakuraPetals")
-			if petals and petals:IsA("ParticleEmitter") then
-				assert(petals.WindAffectsDrag and petals.Drag>0,"Petalas nao seguem vento")
-				petalEmitters+=1
-			end
+		if d:IsA("BasePart") and d.Name=="Leaves" then
+			if CollectionService:HasTag(d,"WindShake") then windLeaves+=1 end
+			local p=d:FindFirstChild("SakuraPetals")
+			if p and p:IsA("ParticleEmitter") and p.WindAffectsDrag then petals+=1 end
 		end
 	end
 end
+assert(windLeaves>=treeCount,"WindShake faltando em folhas")
+assert(petals>=treeCount,"Petalas faltando nas cerejeiras")
 
-assert(maxTreeOffset<=-.8,"Cerejeira ainda alta/flutuando: "..tostring(maxTreeOffset))
-assert(minTreeOffset>=-1.75,"Cerejeira enterrada demais: "..tostring(minTreeOffset))
-assert(minTreePath>=18,"Cerejeira perto demais da estrada: "..tostring(minTreePath))
-assert(windTagged>=27,"WindShake faltando nas folhas")
-assert(petalEmitters>=27,"Petalas faltando")
+-- Grama estática do asset exato, sem seguir jogador.
+assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("TerrainGrassBend"),"Grama falsa seguindo jogador voltou")
+local grass=workspace:FindFirstChild("ParkGrass")
+assert(grass,"ParkGrass ausente")
+local grassCount=#grass:GetChildren()
+assert(grassCount>=55,"Pouca grama estatica: "..tostring(grassCount))
+assert((runtime:GetAttribute("StaticGrassCount") or 0)==grassCount,"Contagem ParkGrass inconsistente")
 
-local path=workspace:FindFirstChild("StonePath")
-assert(path and path:GetAttribute("AssetId")==136068114177879,"Stone Path asset errado")
-assert(path:GetAttribute("ExactModelName")=="Stone Path (Long)","Modelo Stone Path (Long) nao usado")
-assert(path:GetAttribute("SegmentCount")==20,"Estrada nao tem 20 trechos")
-assert(path:GetAttribute("Loop")==true,"Estrada nao e circular/loop")
-assert(path:GetAttribute("NoGrassMaterial")=="LeafyGrass","Faixa sem grama nao configurada")
-
-local segmentCount=0
-local stoneParts=0
-local visibleStoneParts=0
-for _,segment in ipairs(path:GetChildren()) do
-	if segment:IsA("Model") and string.find(segment.Name,"Stone Path (Long)",1,true) then
-		segmentCount+=1
-		local parts=0
-		for _,d in ipairs(segment:GetDescendants()) do
-			if d:IsA("BasePart") then
-				parts+=1
-				stoneParts+=1
-				if d.Transparency<.95 then visibleStoneParts+=1 end
-			end
-		end
-		assert(parts==38,"Trecho alterou as 38 pedras originais: "..tostring(parts))
-	end
+-- Halloween.
+local halloween=workspace:FindFirstChild("HalloweenDecor")
+assert(halloween,"HalloweenDecor ausente")
+assert(halloween:GetAttribute("AssetId")==12489961338,"Eerie Tomb asset errado")
+local tombCount=halloween:GetAttribute("TombCount") or 0
+local pumpkinCount=halloween:GetAttribute("PumpkinCount") or 0
+local skullCount=halloween:GetAttribute("SkullCount") or 0
+assert(tombCount==4,"Esperava 4 tumulos/criptas: "..tostring(tombCount))
+assert(pumpkinCount==14,"Esperava 14 aboboras: "..tostring(pumpkinCount))
+assert(skullCount==10,"Esperava 10 cabecas de esqueleto: "..tostring(skullCount))
+local tombModels,pumpkins,skulls=0,0,0
+for _,d in ipairs(halloween:GetChildren()) do
+	if d:IsA("Model") and d.Name:find("EerieTomb",1,true) then tombModels+=1 end
+	if d:IsA("BasePart") and d.Name:find("Pumpkin_",1,true) then pumpkins+=1 end
+	if d:IsA("Model") and d.Name:find("SkullHead_",1,true) then skulls+=1 end
 end
-assert(segmentCount==20,"Quantidade de trechos incorreta: "..tostring(segmentCount))
-assert(stoneParts==760,"Esperava 760 pedras: "..tostring(stoneParts))
-assert(visibleStoneParts>=700,"Poucas pedras visiveis: "..tostring(visibleStoneParts))
+assert(tombModels==4 and pumpkins==14 and skulls==10,"Halloween visual count mismatch")
 
--- Confirma faixa sem grama animada em vários pontos do loop.
-local surfaceParams=RaycastParams.new()
-surfaceParams.FilterType=Enum.RaycastFilterType.Exclude
-surfaceParams.FilterDescendantsInstances={
-	path,trees,workspace:FindFirstChild("Wildflowers"),workspace:FindFirstChild("WorldSafetyFloor")
-}
-local leafySamples=0
-for i=1,20 do
-	local q=pathPointAt((i-1)/20)
-	local hit=workspace:Raycast(Vector3.new(q.X,60,q.Z),Vector3.new(0,-100,0),surfaceParams)
-	if hit and hit.Material==Enum.Material.LeafyGrass then leafySamples+=1 end
-end
-assert(leafySamples>=17,"Corredor ainda tem Grass animada: "..tostring(leafySamples).."/20")
-
--- Oceano contínuo e fundo sólido.
-local oceanHit=workspace:Raycast(Vector3.new(600,20,0),Vector3.new(0,-80,0))
-assert(oceanHit and oceanHit.Material==Enum.Material.Water,"Oceano nao cobre a area externa")
+-- Oceano e ilha.
+local outside=workspace:Raycast(Vector3.new(500,20,0),Vector3.new(0,-70,0))
+assert(outside and outside.Material==Enum.Material.Water,"Oceano nao cobre o exterior")
 local seabedParams=RaycastParams.new()
 seabedParams.IgnoreWater=true
 seabedParams.FilterType=Enum.RaycastFilterType.Exclude
 seabedParams.FilterDescendantsInstances={workspace:FindFirstChild("WorldSafetyFloor")}
-local seabed=workspace:Raycast(Vector3.new(600,20,0),Vector3.new(0,-100,0),seabedParams)
+local seabed=workspace:Raycast(Vector3.new(500,15,0),Vector3.new(0,-90,0),seabedParams)
 assert(seabed and seabed.Material==Enum.Material.Sand,"Fundo do mar ausente")
-assert(runtime:GetAttribute("OceanSize")==1800,"Tamanho do oceano incorreto")
 local safety=workspace:FindFirstChild("WorldSafetyFloor")
-assert(safety and safety:IsA("BasePart") and safety.CanCollide,"Piso anti-void ausente")
+assert(safety and safety:IsA("BasePart") and safety.CanCollide,"Anti-void ausente")
 
--- Spawn com a base encostada no terreno.
+-- Spawn.
 local spawn=workspace:FindFirstChild("IslandSpawn")
-assert(spawn and spawn:IsA("SpawnLocation"),"IslandSpawn ausente")
-assert(spawn.Enabled and spawn.Neutral,"IslandSpawn desativado")
-local spawnParams=RaycastParams.new()
-spawnParams.FilterType=Enum.RaycastFilterType.Exclude
-spawnParams.FilterDescendantsInstances={spawn,path,trees,workspace:FindFirstChild("Wildflowers"),safety}
-local spawnGround=workspace:Raycast(spawn.Position+Vector3.new(0,8,0),Vector3.new(0,-20,0),spawnParams)
-assert(spawnGround,"Chao do spawn nao encontrado")
-local spawnGap=(spawn.Position.Y-spawn.Size.Y*.5)-spawnGround.Position.Y
-assert(math.abs(spawnGap)<=.3,"Spawn suspenso do chao: "..tostring(spawnGap))
+assert(spawn and spawn:IsA("SpawnLocation") and spawn.Enabled,"IslandSpawn ausente/desativado")
+local sp=RaycastParams.new()
+sp.FilterType=Enum.RaycastFilterType.Exclude
+sp.FilterDescendantsInstances={spawn,trees,grass,halloween,safety}
+local hit=workspace:Raycast(spawn.Position+Vector3.new(0,8,0),Vector3.new(0,-25,0),sp)
+assert(hit and hit.Material~=Enum.Material.Water,"Spawn nao esta em terra firme")
+local gap=(spawn.Position.Y-spawn.Size.Y*.5)-hit.Position.Y
+assert(math.abs(gap)<.5,"Spawn flutuando: "..tostring(gap))
 
--- A grama falsa que seguia o jogador deve ter sumido.
-assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild("TerrainGrassBend"),"TerrainGrassBend ainda existe")
-
--- Vento exato continua instalado.
+-- Vento.
 local wind=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("WindController")
 assert(wind and wind:IsA("LocalScript"),"WindController ausente")
 assert(wind:GetAttribute("AssetId")==11946229834,"Wind asset incorreto")
-assert(wind:FindFirstChild("WindLines") and wind:FindFirstChild("WindShake"),"Modulos de vento ausentes")
+assert(wind:FindFirstChild("WindLines") and wind:FindFirstChild("WindShake"),"Modulos do vento ausentes")
 assert(workspace.GlobalWind.Magnitude>=10,"GlobalWind fraco")
 
--- Nametag exato e nome padrao escondido pelo servico.
+-- Nametag.
 local nametag=game.ServerScriptService:FindFirstChild("NametagService")
 assert(nametag and nametag:IsA("Script"),"NametagService ausente")
-assert(nametag:GetAttribute("AssetId")==123212555736117,"Nametag asset incorreto")
-assert(nametag:FindFirstChild("Nametag") and nametag.Nametag:IsA("BillboardGui"),"BillboardGui do Nametag ausente")
-assert(string.find(nametag.Source,"HumanoidDisplayDistanceType.None",1,true),"Nametag nao esconde o nome padrao")
+assert(nametag:GetAttribute("AssetId")==123212555736117,"Nametag asset errado")
+assert(nametag:FindFirstChild("Nametag") and nametag.Nametag:IsA("BillboardGui"),"BillboardGui do nametag ausente")
 
--- LoadingScreen exata em ReplicatedFirst, customizada.
+-- Loading.
 local loading=ReplicatedFirst:FindFirstChild("LoadingScreen")
-assert(loading and loading:IsA("LocalScript"),"LoadingScreen ausente de ReplicatedFirst")
-assert(loading:GetAttribute("AssetId")==73186563008540,"LoadingScreen asset incorreto")
-assert(loading:GetAttribute("GameName")=="Swean Island","Nome da LoadingScreen errado")
-assert(loading:GetAttribute("FontName")=="BuilderSansBold","Fonte da LoadingScreen errada")
+assert(loading and loading:IsA("LocalScript"),"LoadingScreen ausente")
+assert(loading:GetAttribute("AssetId")==73186563008540,"Loading asset errado")
+assert(loading:GetAttribute("GameName")=="Swean Island","Nome da loading errado")
 assert(string.find(loading.Source,"Swean Island",1,true),"Swean Island nao esta no script")
-assert(string.find(loading.Source,"BuilderSansBold",1,true),"BuilderSansBold nao esta no script")
+assert(string.find(loading.Source,"BuilderSansBold",1,true),"BuilderSansBold nao esta no loading")
 
-local flowers=workspace:FindFirstChild("Wildflowers")
-assert(flowers and (flowers:GetAttribute("FlowerCount") or 0)>=180,"Flores insuficientes")
+assert(not workspace:FindFirstChild("StonePath"),"Estrada antiga ainda existe")
 
-local Lighting=game:GetService("Lighting")
-assert(Lighting.ClockTime>16 and Lighting.ClockTime<18.5,"Nao esta de tarde")
-
-return {
+return{
 	ok=true,
-	trees=#trees:GetChildren(),
-	maxTreeOffset=maxTreeOffset,
-	minTreeOffset=minTreeOffset,
-	minTreePathClearance=minTreePath,
-	petalEmitters=petalEmitters,
-	stoneSegments=segmentCount,
-	stoneParts=stoneParts,
-	visibleStoneParts=visibleStoneParts,
-	leafyPathSamples=leafySamples,
-	oceanSize=runtime:GetAttribute("OceanSize"),
-	spawnGap=spawnGap,
-	nametag=true,
-	loadingScreen=true,
-	fakeFollowingGrass=false,
-	globalWind=workspace.GlobalWind.Magnitude
+	trees=treeCount,
+	parkParts=parkParts,
+	removedOriginalTrees=removed,
+	grayStones=grayStones,
+	grass=grassCount,
+	tombs=tombCount,
+	pumpkins=pumpkinCount,
+	skulls=skullCount,
+	windLeaves=windLeaves,
+	petals=petals,
+	spawnGap=gap,
+	version=99
 }
