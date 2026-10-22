@@ -1,3 +1,4 @@
+// trigger mirkwood inspection
 const CLOUD='https://apis.roblox.com/cloud/v2/';
 const TARGET='universes/9419478735/places/79738710219521/';
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
