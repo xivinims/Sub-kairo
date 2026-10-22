@@ -892,6 +892,41 @@ local function inspectIslandGreen()
 end
 out.islandGreenAudit=inspectIslandGreen()
 
+
+local function exactGrassGeometry()
+  local result={loaded=false,meshes={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(87377915371959) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,m in ipairs(asset:GetDescendants()) do
+    if m:IsA("MeshPart") then
+      local bones=0
+      local minX,maxX,minY,maxY,minZ,maxZ=math.huge,-math.huge,math.huge,-math.huge,math.huge,-math.huge
+      for _,b in ipairs(m:GetDescendants()) do
+        if b:IsA("Bone") then
+          bones+=1
+          local p=b.Position
+          minX=math.min(minX,p.X) maxX=math.max(maxX,p.X)
+          minY=math.min(minY,p.Y) maxY=math.max(maxY,p.Y)
+          minZ=math.min(minZ,p.Z) maxZ=math.max(maxZ,p.Z)
+        end
+      end
+      table.insert(result.meshes,{
+        name=m.Name,
+        size={m.Size.X,m.Size.Y,m.Size.Z},
+        bones=bones,
+        boneBounds=bones>0 and {minX,maxX,minY,maxY,minZ,maxZ} or nil,
+        color={m.Color.R,m.Color.G,m.Color.B},
+        material=tostring(m.Material),
+        meshId=m.MeshId
+      })
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.exactGrassGeometry=exactGrassGeometry()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
