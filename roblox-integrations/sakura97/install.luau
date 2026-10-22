@@ -18,7 +18,6 @@ local HD_ID=18242663106
 local ROCK_ID=8248445118
 local BIG_TREE_ID=86013526879602
 local WIND_ID=11946229834
-local BUTTERFLY_ID=4639818571
 local WORLD_SIZE=248000
 local WORLD_HALF=WORLD_SIZE/2
 local LAND_HALF=112000
@@ -107,7 +106,7 @@ runtime:SetAttribute("PBRAssetId",PBR_ID)
 runtime:SetAttribute("HDAssetId",HD_ID)
 runtime:SetAttribute("RockAssetId",ROCK_ID)
 runtime:SetAttribute("BigTreeAssetId",BIG_TREE_ID)
-runtime:SetAttribute("ButterflyAssetId",BUTTERFLY_ID)
+runtime:SetAttribute("ButterflySource","Procedural3D")
 
 local templates=Instance.new("Folder")
 templates.Name="XNNatureTemplates"
@@ -327,20 +326,57 @@ do
 	leaf.Parent=clientAssets
 end
 
--- Lightweight actual butterfly model from Creator Store, animated client-side.
+-- Self-contained 3D butterfly: real geometry, no external permission dependency.
 do
-	local asset=load(BUTTERFLY_ID)
-	local root=nil
-	for _,d in ipairs(asset:GetChildren()) do if d:IsA("Model") or d:IsA("BasePart") then root=d break end end
-	if not root then for _,d in ipairs(asset:GetDescendants()) do if d:IsA("Model") or d:IsA("BasePart") then root=d break end end end
-	assert(root,"Butterfly asset has no geometry")
-	local model
-	if root:IsA("Model") then model=cloneRoot(root) else model=Instance.new("Model"); local p=cloneRoot(root); p.Parent=model end
+	local model=Instance.new("Model")
 	model.Name="ButterflyTemplate"
-	model:SetAttribute("AssetId",BUTTERFLY_ID)
-	for _,p in ipairs(model:GetDescendants()) do if p:IsA("BasePart") then p.Anchored=true; p.CanCollide=false; p.CanTouch=false; p.CanQuery=false end end
+	model:SetAttribute("Source","Procedural3D")
+	model:SetAttribute("AnimatedWings",true)
+
+	local body=Instance.new("Part")
+	body.Name="Body"
+	body.Shape=Enum.PartType.Cylinder
+	body.Size=Vector3.new(.16,.72,.16)
+	body.CFrame=CFrame.new(0,0,0)*CFrame.Angles(0,0,math.rad(90))
+	body.Color=Color3.fromRGB(45,35,30)
+	body.Material=Enum.Material.SmoothPlastic
+	body.Anchored=true
+	body.CanCollide=false
+	body.CanTouch=false
+	body.CanQuery=false
+	body.Parent=model
+
+	local function wing(name,x,rot,color)
+		local p=Instance.new("WedgePart")
+		p.Name=name
+		p.Size=Vector3.new(.06,.58,.72)
+		p.CFrame=CFrame.new(x,.08,0)*CFrame.Angles(0,rot,math.rad(90))
+		p.Color=color
+		p.Material=Enum.Material.SmoothPlastic
+		p.Transparency=.05
+		p.Anchored=true
+		p.CanCollide=false
+		p.CanTouch=false
+		p.CanQuery=false
+		p.Parent=model
+		return p
+	end
+	wing("WingLeft",-.31,math.rad(-8),Color3.fromRGB(239,170,65))
+	wing("WingRight",.31,math.rad(188),Color3.fromRGB(239,170,65))
+
+	local head=Instance.new("Part")
+	head.Name="Head"
+	head.Shape=Enum.PartType.Ball
+	head.Size=Vector3.new(.2,.2,.2)
+	head.CFrame=CFrame.new(0,0,-.42)
+	head.Color=Color3.fromRGB(35,30,28)
+	head.Anchored=true
+	head.CanCollide=false
+	head.CanTouch=false
+	head.CanQuery=false
+	head.Parent=model
+
 	model.Parent=clientAssets
-	asset:Destroy()
 end
 
 assert(#treeFolder:GetChildren()>0,"No tree templates")
@@ -497,7 +533,7 @@ RunService.RenderStepped:Connect(function()
 end)
 ]=]
 	client:SetAttribute("WindAssetId",WIND_ID)
-	client:SetAttribute("ButterflyAssetId",BUTTERFLY_ID)
+	client:SetAttribute("ButterflySource","Procedural3D")
 	client.Parent=SP.StarterPlayerScripts
 	asset:Destroy()
 end
@@ -899,5 +935,5 @@ return {
 	flowers=#flowerFolder:GetChildren(),
 	rocks=#rockFolder:GetChildren(),
 	bigTrees=#bigFolder:GetChildren(),
-	butterflyAsset=BUTTERFLY_ID
+	butterflySource="Procedural3D"
 }
