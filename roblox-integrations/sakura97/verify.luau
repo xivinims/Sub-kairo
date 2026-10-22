@@ -3,7 +3,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==102,"SweanRuntime v102 ausente")
+assert(runtime and runtime:GetAttribute("Version")==103,"SweanRuntime v102 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -16,7 +16,7 @@ end
 local island=workspace:FindFirstChild("FloatingIsland")
 assert(island and island:IsA("Model"),"FloatingIsland ausente")
 assert(island:GetAttribute("AssetId")==10485490600,"Ilha nao veio do asset pedido")
-assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-1.85)<.01,"Escala nova da ilha incorreta")
+assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-92.5)<.01,"Ilha nao esta 50x maior que a versao anterior")
 local islandParts=0
 for _,d in ipairs(island:GetDescendants()) do
 	if d:IsA("BasePart") then islandParts+=1 end
@@ -31,7 +31,8 @@ assert(#green==(runtime:GetAttribute("GreenSurfaceCount") or -1),"Contagem de ch
 local grass=workspace:FindFirstChild("SkinnedGrassCoverage")
 assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
-assert(grass:GetAttribute("Rule")=="OneOriginalGreenSkinnedMeshPerGreenSurface","Regra da grama incorreta")
+assert(grass:GetAttribute("Rule")=="SeamlessTiledGreenSkinnedGrass","Regra da grama incorreta")
+assert((grass:GetAttribute("TileOverlap") or 0)>=1.01,"Tiles de grama sem sobreposicao anti-fresta")
 assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma variante de grama foi usada")
 assert((grass:GetAttribute("SourceBones") or 0)==100,"A grama escolhida deve ter 100 Bones")
 assert(type(grass:GetAttribute("SourceMeshId"))=="string","SourceMeshId da grama ausente")
@@ -98,7 +99,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=102,
+	version=103,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=patches,
