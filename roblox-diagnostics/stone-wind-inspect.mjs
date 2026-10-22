@@ -251,6 +251,28 @@ for _,d in ipairs(workspace:GetDescendants()) do
   end
 end
 
+
+local function scriptSources(id)
+  local result={id=id,loaded=false,scripts={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,d in ipairs(asset:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then
+      table.insert(result.scripts,{
+        name=d.Name,
+        class=d.ClassName,
+        parent=d.Parent and d.Parent.Name or "",
+        source=d.Source
+      })
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.nametagSources=scriptSources(123212555736117)
+out.loadingSources=scriptSources(73186563008540)
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
