@@ -357,6 +357,72 @@ end
 out.pristineNamed=summarizeNamed(13366955960)
 out.eerieNamed=summarizeNamed(12489961338)
 
+
+local function auditParkTreeCandidates()
+  local result={loaded=false,candidates={},totalParts=0,candidateParts=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(13366955960) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  local park=asset:FindFirstChild("Park",true)
+  if not park then asset:Destroy() return result end
+  for _,d in ipairs(park:GetDescendants()) do if d:IsA("BasePart") then result.totalParts+=1 end end
+
+  local function greenish(c)
+    return c.G>c.R*.9 and c.G>c.B*.75 and c.G>.22
+  end
+  local function validBounds(model)
+    local okb,cf,size=pcall(function() return model:GetBoundingBox() end)
+    if not okb or not size or size.X<=0 or size.Y<=0 or size.Z<=0 then return nil end
+    return cf,size
+  end
+  local function treeLikeModel(m)
+    local name=m.Name:lower()
+    if name:find("streetlight",1,true) or name:find("light",1,true)
+      or name:find("shop",1,true) or name:find("fountain",1,true)
+      or name:find("bench",1,true) or name:find("car",1,true)
+      or name:find("basket",1,true) or name:find("blender",1,true) then
+      return false
+    end
+    local partCount=0
+    local wood,foliage=false,false
+    for _,x in ipairs(m:GetDescendants()) do
+      if x:IsA("BasePart") then
+        partCount+=1
+        local n=x.Name:lower()
+        if x.Material==Enum.Material.Wood or x.Material==Enum.Material.WoodPlanks or n:find("trunk",1,true) then wood=true end
+        if n:find("leaf",1,true) or n:find("foliage",1,true)
+          or (greenish(x.Color) and (x.Material==Enum.Material.Grass or x.Material==Enum.Material.Fabric or x:IsA("MeshPart"))) then
+          foliage=true
+        end
+      end
+    end
+    local _,size=validBounds(m)
+    if not size then return false,partCount end
+    if name:find("tree",1,true) then
+      return partCount<=40 and size.Y>8 and size.X<60 and size.Z<60,partCount,size
+    end
+    return wood and foliage and partCount<=24 and size.Y>10 and size.X<45 and size.Z<45,partCount,size
+  end
+
+  for _,m in ipairs(park:GetDescendants()) do
+    if m:IsA("Model") then
+      local yes,pc,size=treeLikeModel(m)
+      if yes then
+        table.insert(result.candidates,{
+          name=m.Name,
+          parent=m.Parent and m.Parent.Name or "",
+          parts=pc,
+          size=size and {size.X,size.Y,size.Z} or nil
+        })
+        result.candidateParts+=pc or 0
+      end
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.parkTreeAudit=auditParkTreeCandidates()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
