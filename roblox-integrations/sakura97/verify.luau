@@ -63,6 +63,7 @@ assert(bend and bend:IsA("LocalScript"),"Efeito local de amassar grama ausente")
 local wind=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("WindController")
 assert(wind and wind:IsA("LocalScript"),"WindController ausente")
 assert(wind:GetAttribute("AssetId")==11946229834,"WindController nao veio do asset pedido")
+assert(wind:GetAttribute("ExactCreatorStoreController")==true,"WindController foi reescrito em vez de clonado do asset")
 assert(wind:FindFirstChild("WindLines") and wind.WindLines:IsA("ModuleScript"),"WindLines ausente")
 assert(wind:FindFirstChild("WindShake") and wind.WindShake:IsA("ModuleScript"),"WindShake ausente")
 assert(workspace.GlobalWind.Magnitude>=10,"GlobalWind fraco")
@@ -70,29 +71,42 @@ assert(workspace.GlobalWind.Magnitude>=10,"GlobalWind fraco")
 local path=workspace:FindFirstChild("StonePath")
 assert(path and path:GetAttribute("AssetId")==136068114177879,"Stone Path asset errado")
 assert(path:GetAttribute("ExactModelName")=="Stone Path (Long)","Modelo exato Stone Path (Long) nao usado")
-local model=path:FindFirstChild("Stone Path (Long)")
-assert(model and model:IsA("Model"),"Stone Path (Long) nao esta no Workspace")
+assert(path:GetAttribute("SegmentCount")==9,"Esperava 9 trechos do Stone Path (Long)")
+assert(path:GetAttribute("UsesGroundPatches")==false,"O caminho ainda esta pintando Ground/terra")
 
+local segmentCount=0
 local stoneParts=0
 local visibleStoneParts=0
-for _,d in ipairs(model:GetDescendants()) do
-	if d:IsA("BasePart") then
-		stoneParts+=1
-		if d.Transparency<.95 then visibleStoneParts+=1 end
+local samplePart=nil
+for _,segment in ipairs(path:GetChildren()) do
+	if segment:IsA("Model") and string.find(segment.Name,"Stone Path (Long)",1,true) then
+		segmentCount+=1
+		local partsInSegment=0
+		for _,d in ipairs(segment:GetDescendants()) do
+			if d:IsA("BasePart") then
+				partsInSegment+=1
+				stoneParts+=1
+				if d.Transparency<.95 then
+					visibleStoneParts+=1
+					samplePart=samplePart or d
+				end
+			end
+		end
+		assert(partsInSegment==38,"Trecho nao preservou as 38 pedras: "..tostring(partsInSegment))
 	end
 end
-assert(stoneParts==38,"Asset de pedra deveria manter 38 Parts; recebeu "..tostring(stoneParts))
-assert(visibleStoneParts>=30,"Poucas pedras visiveis: "..tostring(visibleStoneParts))
-assert((path:GetAttribute("VisibleParts") or 0)>=30,"Diagnostico de pedras visiveis falhou")
 
--- Confirma que a antiga faixa marrom de Ground nao ficou no centro do caminho.
-local samplePart=model:FindFirstChildWhichIsA("BasePart",true)
+assert(segmentCount==9,"Numero de trechos errado: "..tostring(segmentCount))
+assert(stoneParts==342,"Esperava 342 pedras totais, recebeu "..tostring(stoneParts))
+assert(visibleStoneParts>=250,"Poucas pedras visiveis: "..tostring(visibleStoneParts))
+assert((path:GetAttribute("VisibleParts") or 0)>=250,"Diagnostico de pedras visiveis falhou")
+
 if samplePart then
-	local params=RaycastParams.new()
-	params.FilterType=Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances={path}
-	local hit=workspace:Raycast(samplePart.Position+Vector3.new(0,3,0),Vector3.new(0,-8,0),params)
-	assert(not hit or hit.Material~=Enum.Material.Ground,"Ainda existe faixa de Ground embaixo das pedras")
+	local p=RaycastParams.new()
+	p.FilterType=Enum.RaycastFilterType.Exclude
+	p.FilterDescendantsInstances={path}
+	local hit=workspace:Raycast(samplePart.Position+Vector3.new(0,3,0),Vector3.new(0,-8,0),p)
+	assert(not hit or hit.Material~=Enum.Material.Ground,"Ainda existe faixa de Ground/terra embaixo das pedras")
 end
 
 local flowers=workspace:FindFirstChild("Wildflowers")
@@ -105,6 +119,7 @@ return {
 	ok=true,
 	trees=#trees:GetChildren(),
 	windTaggedLeaves=windTagged,
+	stoneSegments=segmentCount,
 	stoneParts=stoneParts,
 	visibleStoneParts=visibleStoneParts,
 	flowers=flowers:GetAttribute("FlowerCount"),
