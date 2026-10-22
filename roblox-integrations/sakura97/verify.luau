@@ -3,7 +3,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==106,"SweanRuntime v106 ausente")
+assert(runtime and runtime:GetAttribute("Version")==107,"SweanRuntime v107 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -47,7 +47,9 @@ local boneMidZ=grass:GetAttribute("BoneMidZ") or 0
 local boneMinY=grass:GetAttribute("BoneMinY") or 0
 assert(type(defaultX)=="number" and type(defaultY)=="number" and type(defaultZ)=="number","Tamanho padrao da grama ausente")
 assert(type(footX)=="number" and type(footZ)=="number" and footX>1 and footZ>1,"Pegada da grama ausente")
+assert(math.abs(footX-defaultX)<.05 and math.abs(footZ-defaultZ)<.05,"A cobertura nao esta usando o tamanho padrao da grama")
 assert(type(stepX)=="number" and type(stepZ)=="number" and stepX>0 and stepZ>0,"Passo da grama ausente")
+assert(math.abs(stepX-defaultX/1.08)<.25 and math.abs(stepZ-defaultZ/1.08)<.25,"A grama nao foi repetida no tamanho padrao")
 assert(stepX<=footX and stepZ<=footZ,"Passo maior que a grama, vai abrir fresta")
 assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma variante de grama foi usada")
 assert((grass:GetAttribute("SourceBones") or 0)==100,"A grama escolhida deve ter 100 Bones")
@@ -161,7 +163,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=106,
+	version=107,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=patches,

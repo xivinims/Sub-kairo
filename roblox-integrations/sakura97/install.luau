@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",106)
+runtime:SetAttribute("Version",107)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -214,42 +214,14 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
--- Tamanho PADRÃO do asset. O Size da mesh não é esticado nem multiplicado.
--- Se a grama visível for menor que a caixa da MeshPart, o PASSO entre os tiles
--- usa essa pegada — a grama em si continua do tamanho original e é repetida
--- pros lados até cobrir a parte verde inteira, sem fresta.
+-- Tamanho PADRÃO do asset. O Size da mesh NÃO é esticado.
+-- A versão anterior multiplicava cada tufo por ~7.15 para tapar o chão com
+-- menos peças, e a grama ficava gigante. Aqui cada tufo fica no Size original
+-- e o grid repete esse tamanho, com uma sobreposição leve, até a borda
+-- esquerda, direita, frente e fundo de cada parte verde.
 local defaultSize=sourceMesh.Size
-local function measureFootprint(mesh)
-	local minX,maxX=math.huge,-math.huge
-	local minZ,maxZ=math.huge,-math.huge
-	local minY=math.huge
-	local n=0
-	for _,b in ipairs(mesh:GetDescendants()) do
-		if b:IsA("Bone") then
-			n+=1
-			local p=b.Position
-			minX=math.min(minX,p.X)
-			maxX=math.max(maxX,p.X)
-			minZ=math.min(minZ,p.Z)
-			maxZ=math.max(maxZ,p.Z)
-			minY=math.min(minY,p.Y)
-		end
-	end
-	local sx,sz=maxX-minX,maxZ-minZ
-	local midX,midZ=(minX+maxX)*.5,(minZ+maxZ)*.5
-	local ok=n>=10 and sx>=8 and sz>=8 and sx<=mesh.Size.X and sz<=mesh.Size.Z
-	if not ok then
-		return mesh.Size.X/7.15,mesh.Size.Z/7.15,0,0,0
-	end
-	if math.abs(midX)>mesh.Size.X or math.abs(midZ)>mesh.Size.Z then
-		midX,midZ=0,0
-	end
-	if minY<-mesh.Size.Y or minY>mesh.Size.Y then
-		minY=0
-	end
-	return sx,sz,midX,midZ,minY
-end
-local footprintX,footprintZ,boneMidX,boneMidZ,boneMinY=measureFootprint(sourceMesh)
+local footprintX,footprintZ=defaultSize.X,defaultSize.Z
+local boneMidX,boneMidZ,boneMinY=0,0,0
 local OVERLAP=1.08
 local stepX=footprintX/OVERLAP
 local stepZ=footprintZ/OVERLAP
@@ -296,8 +268,8 @@ grassFolder:SetAttribute("BoneMidZ",boneMidZ)
 grassFolder:SetAttribute("BoneMinY",boneMinY)
 grassFolder.Parent=workspace
 
--- Cada tile fica no Size original. O grid anda só a largura visível da grama,
--- com uma sobreposição leve, até a borda esquerda, direita, frente e fundo
+-- Cada tile fica no Size original. O grid anda esse tamanho, com uma
+-- sobreposição leve, até a borda esquerda, direita, frente e fundo
 -- de cada superfície verde.
 local placed=0
 local coveredSurfaces=0
@@ -326,7 +298,7 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			mesh.Size=defaultSize
 
 			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx-boneMidX,surface.Size.Y*.5-boneMinY+GROUND_OFFSET,lz-boneMidZ)
+				*CFrame.new(lx,surface.Size.Y*.5+GROUND_OFFSET,lz)
 			mesh.Parent=model
 
 			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
@@ -652,7 +624,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=106,
+	version=107,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
