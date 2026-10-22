@@ -242,6 +242,9 @@ grassFolder:SetAttribute("SingleMeshOnly",true)
 grassFolder:SetAttribute("SourceBones",sourceBones)
 grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
 grassFolder:SetAttribute("TileOverlap",1.72)
+grassFolder:SetAttribute("VisualScaleX",visualScaleX)
+grassFolder:SetAttribute("VisualScaleZ",visualScaleZ)
+grassFolder:SetAttribute("GroundOffset",0.65)
 grassFolder.Parent=workspace
 
 -- Mantém os tiles perto do tamanho natural do asset (100x100) para a densidade
@@ -391,12 +394,13 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.062,72,92)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.085,108,122)
 scaleHeight(tree,targetTreeHeight)
 assert(bottomPlace(tree,treeGround.Position,0,.38),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
+runtime:SetAttribute("TargetTreeHeight",targetTreeHeight)
 
 -- Folhagem da árvore recebe WindShake.
 local foliageParts={}
