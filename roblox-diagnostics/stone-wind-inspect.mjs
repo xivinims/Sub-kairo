@@ -48,7 +48,13 @@ out.windLoaded=wok and wasset~=nil
 if wok and wasset then
   out.windModels=0; out.windParts=0; out.windParticles=0; out.windBeams=0; out.windTrails=0; out.windAttachments=0
   out.windTopChildren={}
-  for _,c in ipairs(wasset:GetChildren()) do table.insert(out.windTopChildren,{name=c.Name,class=c.ClassName}) end
+  out.windControllerSource=nil
+  for _,c in ipairs(wasset:GetChildren()) do
+    table.insert(out.windTopChildren,{name=c.Name,class=c.ClassName})
+    if c:IsA("LocalScript") and c.Name=="WindController" then
+      out.windControllerSource=c.Source
+    end
+  end
   for _,d in ipairs(wasset:GetDescendants()) do
     if d:IsA("Model") then out.windModels+=1 end
     if d:IsA("BasePart") then out.windParts+=1 end
