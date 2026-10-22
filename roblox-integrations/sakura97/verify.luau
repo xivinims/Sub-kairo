@@ -45,6 +45,7 @@ assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem Skinne
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
 assert((runtime:GetAttribute("GrassVisualOverlap") or 0)>=1.7,"Grama sem sobreposicao suficiente")
 assert((runtime:GetAttribute("GrassTileSpacing") or 999)<=52,"Espacamento da grama grande demais")
+assert((runtime:GetAttribute("GrassCenterOffset") or 99)<=.7,"Grama ainda alta demais do chao")
 
 local checked=0
 local covered={}
