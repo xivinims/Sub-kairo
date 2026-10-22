@@ -640,3 +640,9 @@ out.brookhavenLayout=auditBrookhavenLayout()
 return out
 `);
 console.log(JSON.stringify(result,null,2));
+try{
+  const universeMeta=await req('universes/9419478735');
+  console.log(JSON.stringify({universeMeta},null,2));
+}catch(e){
+  console.log(JSON.stringify({universeMetaError:String(e)}));
+}
