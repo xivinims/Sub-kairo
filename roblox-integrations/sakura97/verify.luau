@@ -1,9 +1,9 @@
--- trigger v109 packed default grass
+-- trigger v110 safe packed grass
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==109,"SweanRuntime v109 ausente")
+assert(runtime and runtime:GetAttribute("Version")==110,"SweanRuntime v110 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -33,7 +33,8 @@ assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(#grass:GetChildren()==0,"A grama densa nao pode ficar salva no servidor")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
 assert(grass:GetAttribute("Rule")=="DefaultSizeFillGreen","Regra da grama incorreta")
-assert(grass:GetAttribute("SpawnMode")=="ClientPackedDefaultSize","A grama nao esta sendo repetida no cliente")
+assert(grass:GetAttribute("SpawnMode")=="ClientSafeRadius","A grama ainda tenta encher o mapa inteiro de uma vez")
+assert((grass:GetAttribute("MaxTouch") or 9999)<=400,"Limite de grama no celular alto demais")
 assert(math.abs((grass:GetAttribute("VisualScaleX") or 99)-1)<.001,"Grama foi esticada no X")
 assert(math.abs((grass:GetAttribute("VisualScaleZ") or 99)-1)<.001,"Grama foi esticada no Z")
 assert(math.abs((grass:GetAttribute("GroundOffset") or 99)-(-0.08))<.01,"Offset de contato com o chao errado")
@@ -70,34 +71,26 @@ assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda are
 assert(math.abs((runtime:GetAttribute("GrassVisualScaleX") or 99)-1)<.001,"Escala visual da grama nao e a padrao")
 assert(math.abs((runtime:GetAttribute("GrassCenterOffset") or 99)-(-0.08))<.01,"Grama ainda nao esta no nivel do chao")
 
-local staticTemplate=game.ReplicatedStorage:FindFirstChild("GrassStaticTemplate")
-assert(staticTemplate and staticTemplate:IsA("MeshPart"),"Template estatico da grama ausente")
-assert(math.abs(staticTemplate.Size.X-defaultX)<.05,"Template estatico foi esticado no X")
-assert(math.abs(staticTemplate.Size.Y-defaultY)<.05,"Template estatico foi esticado no Y")
-assert(math.abs(staticTemplate.Size.Z-defaultZ)<.05,"Template estatico foi esticado no Z")
-assert(staticTemplate.MeshId==grass:GetAttribute("SourceMeshId"),"Template estatico nao usa a mesh original")
-local staticBones=0
-for _,d in ipairs(staticTemplate:GetDescendants()) do
-	if d:IsA("Bone") then staticBones+=1 end
-end
-assert(staticBones==0,"Template estatico ainda carrega Bones")
-
 local windTemplate=game.ReplicatedStorage:FindFirstChild("GrassWindTemplate")
-assert(windTemplate and windTemplate:IsA("Model"),"Template de vento da grama ausente")
+assert(windTemplate and windTemplate:IsA("Model"),"Template da grama ausente")
 local windMesh=windTemplate:FindFirstChild("SkinnedGrass")
-assert(windMesh and windMesh:IsA("MeshPart"),"Mesh de vento ausente")
-assert(math.abs(windMesh.Size.X-defaultX)<.05 and math.abs(windMesh.Size.Z-defaultZ)<.05,"Template de vento foi esticado")
+assert(windMesh and windMesh:IsA("MeshPart"),"Mesh da grama ausente")
+assert(math.abs(windMesh.Size.X-defaultX)<.05 and math.abs(windMesh.Size.Y-defaultY)<.05 and math.abs(windMesh.Size.Z-defaultZ)<.05,"Template da grama foi esticado")
+assert(windMesh.MeshId==grass:GetAttribute("SourceMeshId"),"Template nao usa a mesh original")
 local windBones=0
 for _,d in ipairs(windMesh:GetDescendants()) do
 	if d:IsA("Bone") then windBones+=1 end
 end
-assert(windBones==100,"Template de vento perdeu os Bones")
+assert(windBones==100,"Template perdeu os Bones")
+assert(not game.ReplicatedStorage:FindFirstChild("GrassStaticTemplate"),"Ainda existe o template que quebrava a grama")
 
 local grassRunner=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner")
 assert(grassRunner and grassRunner:IsA("LocalScript"),"Runner original/adaptado da SkinnedGrass ausente")
+assert(string.find(grassRunner.Source,"SAFE_GRASS_CAP",1,true),"Runner nao limita a grama")
 assert(string.find(grassRunner.Source,"PACKED_DEFAULT_GRASS",1,true),"Runner nao repete a grama no tamanho padrao")
 assert(string.find(grassRunner.Source,"mesh.Size=defaultSize",1,true),"Runner nao fixa o tamanho padrao")
 assert(not string.find(grassRunner.Source,"ScaleTo",1,true),"Runner estica a grama")
+assert(not string.find(grassRunner.Source,"RequestStreamAroundAsync",1,true),"Runner ainda puxa o mapa inteiro")
 local grassModule=game.ReplicatedStorage:FindFirstChild("SkinnedGrassRuntimeModule")
 assert(grassModule and grassModule:IsA("ModuleScript"),"Modulo original SkinnedGrass ausente")
 
@@ -134,7 +127,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=109,
+	version=110,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=planned,
