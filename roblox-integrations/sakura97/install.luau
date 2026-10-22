@@ -1,220 +1,542 @@
--- XN [VOICE] v111 giant nature world — exact nature packs + official wildlife
+-- Swean Island v102 — Floating Island + SkinnedGrass + Big Tree + Wind
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
-local A=game:GetService("AssetService")
+
+local AssetService=game:GetService("AssetService")
+local CollectionService=game:GetService("CollectionService")
 local Lighting=game:GetService("Lighting")
-local RS=game:GetService("ReplicatedStorage")
-local RF=game:GetService("ReplicatedFirst")
-local SS=game:GetService("ServerStorage")
-local SSS=game:GetService("ServerScriptService")
-local SP=game:GetService("StarterPlayer")
-local SG=game:GetService("StarterGui")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local ServerScriptService=game:GetService("ServerScriptService")
+local StarterPlayer=game:GetService("StarterPlayer")
 local Terrain=workspace.Terrain
 
-local IDS={
- PBR=13536410655,
- HD=18242663106,
- ROCKS=8248445118,
- BIGTREE=86013526879602,
- WIND=11946229834,
- FOREST=6432306802
-}
+local ISLAND_ID=10485490600
+local GRASS_ID=87377915371959
+local TREE_ID=86013526879602
+local WIND_ID=11946229834
 
-local function load(id)
- local ok,x=pcall(A.LoadAssetAsync,A,id)
- assert(ok and x,"asset "..id.." failed: "..tostring(x))
- return x
-end
-local function clear(c) for _,x in ipairs(c:GetChildren()) do x:Destroy() end end
-local function stripStatic(x)
- for _,d in ipairs(x:GetDescendants()) do
-  if d:IsA("LuaSourceContainer") then
-   d:Destroy()
-  elseif d:IsA("BasePart") then
-   d.Anchored=true
-   d.CanCollide=false
-   d.CanTouch=false
-   d.CanQuery=false
-  end
- end
- if x:IsA("BasePart") then
-  x.Anchored=true; x.CanCollide=false; x.CanTouch=false; x.CanQuery=false
- end
+local function loadAsset(id)
+	local ok,res=pcall(AssetService.LoadAssetAsync,AssetService,id)
+	if not ok or not res then error("Asset "..id.." failed: "..tostring(res)) end
+	return res
 end
 
-for _,x in ipairs(workspace:GetChildren()) do
- if x~=Terrain and not x:IsA("Camera") then x:Destroy() end
+local function countParts(root)
+	local n=0
+	if root:IsA("BasePart") then n+=1 end
+	for _,d in ipairs(root:GetDescendants()) do if d:IsA("BasePart") then n+=1 end end
+	return n
+end
+
+local function sanitize(root)
+	for _,d in ipairs(root:GetDescendants()) do
+		if d:IsA("LuaSourceContainer") then
+			d:Destroy()
+		elseif d:IsA("BasePart") then
+			d.Anchored=true
+			d.CanTouch=false
+		end
+	end
+end
+
+local function largestVisual(asset,preferredWords)
+	local best,bestScore=nil,-1
+	local function score(inst)
+		local pc=countParts(inst)
+		if pc<=0 then return -1 end
+		local s=pc
+		local name=inst.Name:lower()
+		for _,word in ipairs(preferredWords or {}) do
+			if name:find(word,1,true) then s+=100000 end
+		end
+		local ok,_,size=pcall(function()
+			local cf,sz=inst:GetBoundingBox()
+			return cf,sz
+		end)
+		if ok and size then s+=math.min(50000,(size.X*size.Z)/10) end
+		return s
+	end
+	for _,d in ipairs(asset:GetDescendants()) do
+		if d:IsA("Model") then
+			local s=score(d)
+			if s>bestScore then best,bestScore=d,s end
+		end
+	end
+	if best then return best end
+	local p=asset:FindFirstChildWhichIsA("BasePart",true)
+	return p
+end
+
+local function asModel(inst)
+	if inst:IsA("Model") then return inst end
+	local m=Instance.new("Model")
+	inst.Parent=m
+	return m
+end
+
+local function bounds(model)
+	local ok,cf,size=pcall(function() return model:GetBoundingBox() end)
+	if not ok or not size or size.X<=0 or size.Y<=0 or size.Z<=0 then return nil end
+	return cf,size
+end
+
+local function scaleFootprint(model,target)
+	local _,size=bounds(model)
+	if not size then return false end
+	local current=math.max(size.X,size.Z)
+	if current<=0 then return false end
+	return pcall(function() model:ScaleTo(model:GetScale()*(target/current)) end)
+end
+
+local function scaleHeight(model,target)
+	local _,size=bounds(model)
+	if not size or size.Y<=0 then return false end
+	return pcall(function() model:ScaleTo(model:GetScale()*(target/size.Y)) end)
+end
+
+local function bottomPlace(model,pos,yaw,sink)
+	model:PivotTo(CFrame.new(pos.X,0,pos.Z)*CFrame.Angles(0,yaw or 0,0))
+	local cf,size=bounds(model)
+	if not size then return false end
+	local bottom=cf.Position.Y-size.Y/2
+	model:PivotTo(model:GetPivot()+Vector3.new(0,pos.Y-bottom-(sink or 0),0))
+	return true
+end
+
+-- LIMPA TUDO DA BUILD ANTERIOR.
+for _,child in ipairs(workspace:GetChildren()) do
+	if child~=Terrain and not child:IsA("Camera") then child:Destroy() end
 end
 Terrain:Clear()
-clear(SSS); clear(RF); clear(SS); clear(SP.StarterPlayerScripts); clear(SG); clear(Lighting)
-for _,x in ipairs(RS:GetChildren()) do
- if x.Name=="XNRuntime" or x.Name=="SweanRuntime" or x.Name=="SakuraRuntime" or x.Name=="ForestRuntime" then x:Destroy() end
+for _,container in ipairs({
+	ServerScriptService,
+	StarterPlayer.StarterPlayerScripts,
+	game:GetService("ReplicatedFirst"),
+	game:GetService("StarterGui")
+}) do
+	for _,child in ipairs(container:GetChildren()) do child:Destroy() end
+end
+for _,child in ipairs(ReplicatedStorage:GetChildren()) do
+	if child.Name=="SweanRuntime" or child.Name=="SakuraRuntime" or child.Name=="ForestRuntime" then child:Destroy() end
 end
 
-local rt=Instance.new("Folder")
-rt.Name="XNRuntime"
-rt.Parent=RS
-rt:SetAttribute("Version",111)
-rt:SetAttribute("GameName","XN [VOICE]")
-rt:SetAttribute("WorldWidth",270000)
-rt:SetAttribute("WorldDepth",270000)
-rt:SetAttribute("ChunkSize",512)
-rt:SetAttribute("StreamingTargetStuds",1920)
-rt:SetAttribute("StreamingMinStuds",384)
-for k,v in pairs(IDS) do rt:SetAttribute(k.."AssetId",v) end
+local runtime=Instance.new("Folder")
+runtime.Name="SweanRuntime"
+runtime.Parent=ReplicatedStorage
+runtime:SetAttribute("Version",102)
+runtime:SetAttribute("IslandAssetId",ISLAND_ID)
+runtime:SetAttribute("GrassAssetId",GRASS_ID)
+runtime:SetAttribute("TreeAssetId",TREE_ID)
+runtime:SetAttribute("WindAssetId",WIND_ID)
 
-workspace.FallenPartsDestroyHeight=-500
 pcall(function()
- workspace.StreamingEnabled=true
- workspace.StreamingMinRadius=384
- workspace.StreamingTargetRadius=1920
+	workspace.StreamingEnabled=true
+	workspace.StreamingMinRadius=96
+	workspace.StreamingTargetRadius=260
+end)
+workspace.FallenPartsDestroyHeight=-300
+
+-- ILHA EXATA
+local islandAsset=loadAsset(ISLAND_ID)
+local islandSource=largestVisual(islandAsset,{"floating","island","obby"})
+assert(islandSource,"Floating Island visual not found")
+local island=asModel(islandSource:Clone())
+island.Name="FloatingIsland"
+island:SetAttribute("AssetId",ISLAND_ID)
+island.Parent=workspace
+sanitize(island)
+
+local islandCF,islandSize=bounds(island)
+assert(islandSize,"Floating Island has invalid bounds")
+-- Centraliza sem deformar.
+island:PivotTo(island:GetPivot()+Vector3.new(-islandCF.Position.X,12-islandCF.Position.Y,-islandCF.Position.Z))
+islandCF,islandSize=bounds(island)
+runtime:SetAttribute("IslandParts",countParts(island))
+runtime:SetAttribute("IslandSizeX",islandSize.X)
+runtime:SetAttribute("IslandSizeY",islandSize.Y)
+runtime:SetAttribute("IslandSizeZ",islandSize.Z)
+islandAsset:Destroy()
+
+-- DETECTA SOMENTE O CHÃO VERDE/GRAMADO DA ILHA.
+local greenSurfaces={}
+local function greenish(c)
+	return c.G>c.R*1.05 and c.G>c.B*1.05 and c.G>.22
+end
+for _,p in ipairs(island:GetDescendants()) do
+	if p:IsA("BasePart")
+		and p.Transparency<.8
+		and p.CFrame.UpVector.Y>.55
+		and p.Size.X>=2 and p.Size.Z>=2
+		and (p.Material==Enum.Material.Grass or greenish(p.Color)) then
+		table.insert(greenSurfaces,p)
+		CollectionService:AddTag(p,"IslandGreenGround")
+	end
+end
+assert(#greenSurfaces>0,"No green island surfaces detected")
+runtime:SetAttribute("GreenSurfaceCount",#greenSurfaces)
+
+local greenParams=RaycastParams.new()
+greenParams.FilterType=Enum.RaycastFilterType.Include
+greenParams.FilterDescendantsInstances=greenSurfaces
+greenParams.IgnoreWater=true
+
+local function rayGreen(x,z)
+	return workspace:Raycast(
+		Vector3.new(x,islandCF.Position.Y+islandSize.Y+80,z),
+		Vector3.new(0,-(islandSize.Y+180),0),
+		greenParams
+	)
+end
+
+-- SKINNED GRASS POR CIMA DE TODA A ÁREA VERDE.
+local grassAsset=loadAsset(GRASS_ID)
+local grassSource=largestVisual(grassAsset,{"dark","grass","skinned"})
+assert(grassSource,"SkinnedGrass visual not found")
+local grassTemplate=asModel(grassSource:Clone())
+sanitize(grassTemplate)
+grassAsset:Destroy()
+
+local grassFolder=Instance.new("Folder")
+grassFolder.Name="SkinnedGrassCoverage"
+grassFolder:SetAttribute("AssetId",GRASS_ID)
+grassFolder:SetAttribute("Rule","IslandGreenGroundOnly")
+grassFolder.Parent=workspace
+
+local rng=Random.new(102873)
+local targetFootprint=5.2
+scaleFootprint(grassTemplate,targetFootprint)
+
+local placed=0
+local samples=0
+local maxGrass=480
+
+for _,surface in ipairs(greenSurfaces) do
+	if placed>=maxGrass then break end
+	local step=targetFootprint*.78
+	local nx=math.max(1,math.floor(surface.Size.X/step))
+	local nz=math.max(1,math.floor(surface.Size.Z/step))
+	for ix=0,nx-1 do
+		if placed>=maxGrass then break end
+		for iz=0,nz-1 do
+			if placed>=maxGrass then break end
+			local lx=-surface.Size.X*.46+(ix+.5)*(surface.Size.X*.92/nx)
+			local lz=-surface.Size.Z*.46+(iz+.5)*(surface.Size.Z*.92/nz)
+			local guess=surface.CFrame:PointToWorldSpace(Vector3.new(lx,0,lz))
+			local hit=rayGreen(guess.X,guess.Z)
+			samples+=1
+			if hit and hit.Instance==surface and hit.Normal.Y>.5 then
+				local patch=grassTemplate:Clone()
+				patch.Name=string.format("SkinnedGrass_%03d",placed+1)
+				patch.Parent=grassFolder
+				CollectionService:AddTag(patch,"SkinnedGrassPatch")
+				bottomPlace(patch,hit.Position,rng:NextNumber(0,math.pi*2),.03)
+				patch:SetAttribute("GroundPart",surface.Name)
+				placed+=1
+			end
+		end
+	end
+end
+grassTemplate:Destroy()
+assert(placed>=12,"Too little skinned grass coverage: "..tostring(placed))
+runtime:SetAttribute("GrassPatchCount",placed)
+runtime:SetAttribute("GrassCoverageSamples",samples)
+
+-- ÁRVORE GRANDE EXATA NO MEIO, ENCOSTADA NO CHÃO.
+local treeAsset=loadAsset(TREE_ID)
+local treeSource=largestVisual(treeAsset,{"tree","big","stud"})
+assert(treeSource,"Big Tree visual not found")
+local tree=asModel(treeSource:Clone())
+tree.Name="BigCenterTree"
+tree:SetAttribute("AssetId",TREE_ID)
+tree.Parent=workspace
+sanitize(tree)
+treeAsset:Destroy()
+
+local center=Vector3.new(islandCF.Position.X,0,islandCF.Position.Z)
+local treeGround=rayGreen(center.X,center.Z)
+if not treeGround then
+	for radius=4,math.max(islandSize.X,islandSize.Z)*.35,4 do
+		for i=1,24 do
+			local a=i/24*math.pi*2
+			local hit=rayGreen(center.X+math.cos(a)*radius,center.Z+math.sin(a)*radius)
+			if hit then treeGround=hit break end
+		end
+		if treeGround then break end
+	end
+end
+assert(treeGround,"No green center ground found for tree")
+
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.24,24,52)
+scaleHeight(tree,targetTreeHeight)
+assert(bottomPlace(tree,treeGround.Position,rng:NextNumber(0,math.pi*2),.55),"Tree grounding failed")
+runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
+runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
+runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
+
+-- Folhagem da árvore recebe WindShake.
+local foliageParts={}
+for _,p in ipairs(tree:GetDescendants()) do
+	if p:IsA("BasePart") then
+		local n=p.Name:lower()
+		if n:find("leaf",1,true) or n:find("foliage",1,true) or greenish(p.Color) then
+			table.insert(foliageParts,p)
+			CollectionService:AddTag(p,"WindShake")
+			p:SetAttribute("WindPower",.34)
+			p:SetAttribute("WindSpeed",15)
+		end
+	end
+end
+if #foliageParts==0 then
+	local largest=nil
+	for _,p in ipairs(tree:GetDescendants()) do
+		if p:IsA("BasePart") and (not largest or p.Size.Magnitude>largest.Size.Magnitude) then largest=p end
+	end
+	if largest then
+		table.insert(foliageParts,largest)
+		CollectionService:AddTag(largest,"WindShake")
+	end
+end
+assert(#foliageParts>0,"Tree foliage not found")
+runtime:SetAttribute("TreeFoliageParts",#foliageParts)
+
+-- FOLHAS CAINDO: volume invisível na copa.
+local treeCF,treeSize=bounds(tree)
+local emitterHost=Instance.new("Part")
+emitterHost.Name="FallingLeavesEmitter"
+emitterHost.Size=Vector3.new(
+	math.max(5,treeSize.X*.65),
+	math.max(2,treeSize.Y*.18),
+	math.max(5,treeSize.Z*.65)
+)
+emitterHost.CFrame=CFrame.new(
+	treeCF.Position.X,
+	treeCF.Position.Y+treeSize.Y*.27,
+	treeCF.Position.Z
+)
+emitterHost.Anchored=true
+emitterHost.CanCollide=false
+emitterHost.CanTouch=false
+emitterHost.CanQuery=false
+emitterHost.Transparency=1
+emitterHost.Parent=tree
+
+local leaves=Instance.new("ParticleEmitter")
+leaves.Name="FallingLeaves"
+leaves.Texture="rbxasset://textures/particles/leaf_main.dds"
+leaves.Shape=Enum.ParticleEmitterShape.Box
+leaves.ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume
+leaves.EmissionDirection=Enum.NormalId.Bottom
+leaves.Rate=math.clamp(treeSize.X*.25,7,16)
+leaves.Lifetime=NumberRange.new(4.5,7.5)
+leaves.Speed=NumberRange.new(.25,1.1)
+leaves.Acceleration=Vector3.new(0,-1.8,0)
+leaves.Drag=1.4
+leaves.WindAffectsDrag=true
+leaves.Rotation=NumberRange.new(0,360)
+leaves.RotSpeed=NumberRange.new(-70,70)
+leaves.SpreadAngle=Vector2.new(70,70)
+leaves.Size=NumberSequence.new({
+	NumberSequenceKeypoint.new(0,.32,.10),
+	NumberSequenceKeypoint.new(.75,.22,.08),
+	NumberSequenceKeypoint.new(1,.12,.04)
+})
+leaves.Transparency=NumberSequence.new({
+	NumberSequenceKeypoint.new(0,1),
+	NumberSequenceKeypoint.new(.08,.05),
+	NumberSequenceKeypoint.new(.82,.12),
+	NumberSequenceKeypoint.new(1,1)
+})
+leaves.Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,Color3.fromRGB(108,151,68)),
+	ColorSequenceKeypoint.new(.55,Color3.fromRGB(88,133,56)),
+	ColorSequenceKeypoint.new(1,Color3.fromRGB(142,169,82))
+})
+leaves.LightInfluence=.8
+leaves.Parent=emitterHost
+
+-- VENTO REAL: GlobalWind + módulos WindLines/WindShake.
+workspace.GlobalWind=Vector3.new(14,0,5)
+local windAsset=loadAsset(WIND_ID)
+local windSource=windAsset:FindFirstChild("WindController",true)
+assert(windSource and windSource:IsA("LocalScript"),"WindController missing")
+local windLines=windSource:FindFirstChild("WindLines")
+local windShake=windSource:FindFirstChild("WindShake")
+assert(windLines and windShake,"Wind modules missing")
+
+local controller=Instance.new("LocalScript")
+controller.Name="WindController"
+controller:SetAttribute("AssetId",WIND_ID)
+controller.Source=[==========[
+local CollectionService=game:GetService("CollectionService")
+local WindLines=require(script:WaitForChild("WindLines"))
+local WindShake=require(script:WaitForChild("WindShake"))
+
+local wind=workspace.GlobalWind
+local dir=wind.Magnitude>0 and wind.Unit or Vector3.new(1,0,0)
+local speed=math.max(1,wind.Magnitude)
+
+WindLines:Init({
+	Direction=dir;
+	Speed=speed;
+	Lifetime=1.8;
+	SpawnRate=13;
+})
+
+pcall(function()
+	WindShake:SetDefaultSettings({
+		WindSpeed=speed;
+		WindDirection=dir;
+		WindPower=.34;
+	})
+end)
+WindShake:Init()
+]==========]
+
+local wl=Instance.new("ModuleScript")
+wl.Name="WindLines"
+wl.Source=windLines.Source
+wl.Parent=controller
+local ws=Instance.new("ModuleScript")
+ws.Name="WindShake"
+ws.Source=windShake.Source
+ws.Parent=controller
+controller.Parent=StarterPlayer.StarterPlayerScripts
+windAsset:Destroy()
+
+-- SkinnedGrass: anima Bones próximos do jogador para responder ao vento sem mexer o patch inteiro.
+local grassWind=Instance.new("LocalScript")
+grassWind.Name="SkinnedGrassWind"
+grassWind.Source=[==========[
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+
+local player=Players.LocalPlayer
+local folder=workspace:WaitForChild("SkinnedGrassCoverage")
+local bones={}
+local base={}
+
+local function scan()
+	table.clear(bones)
+	table.clear(base)
+	for _,d in ipairs(folder:GetDescendants()) do
+		if d:IsA("Bone") then
+			table.insert(bones,d)
+			base[d]=d.Transform
+		end
+	end
+end
+scan()
+folder.DescendantAdded:Connect(function(d)
+	if d:IsA("Bone") then
+		table.insert(bones,d)
+		base[d]=d.Transform
+	end
 end)
 
-Terrain.WaterColor=Color3.fromRGB(54,113,105)
-Terrain.WaterTransparency=.34
-Terrain.WaterReflectance=.12
-Terrain.WaterWaveSize=.08
-Terrain.WaterWaveSpeed=7
+local accum=0
+RunService.RenderStepped:Connect(function(dt)
+	accum+=dt
+	if accum<1/24 then return end
+	accum=0
+	local char=player.Character
+	local root=char and char:FindFirstChild("HumanoidRootPart")
+	local t=time()
+	for i,b in ipairs(bones) do
+		if b.Parent and base[b] then
+			local near=true
+			if root then
+				local ok,wp=pcall(function() return b.WorldPosition end)
+				if ok then near=(wp-root.Position).Magnitude<190 end
+			end
+			if near then
+				local phase=i*.31
+				local sway=math.sin(t*2.1+phase)*.095
+				local side=math.cos(t*1.65+phase)*.045
+				b.Transform=base[b]*CFrame.Angles(sway,0,side)
+			else
+				b.Transform=base[b]
+			end
+		end
+	end
+end)
+]==========]
+grassWind.Parent=StarterPlayer.StarterPlayerScripts
 
-Lighting.ClockTime=13.7
-Lighting.Brightness=2.45
-Lighting.ExposureCompensation=.03
-Lighting.Ambient=Color3.fromRGB(125,129,120)
-Lighting.OutdoorAmbient=Color3.fromRGB(154,158,148)
-Lighting.GlobalShadows=true
-local at=Instance.new("Atmosphere")
-at.Name="NatureAtmosphere"
-at.Density=.12
-at.Offset=.08
-at.Color=Color3.fromRGB(205,218,207)
-at.Decay=Color3.fromRGB(132,153,142)
-at.Haze=.5
-at.Glare=.04
-at.Parent=Lighting
-local cc=Instance.new("ColorCorrectionEffect")
-cc.Name="NatureColor"
-cc.Contrast=.035
-cc.Saturation=.055
-cc.Brightness=.01
-cc.Parent=Lighting
-
-local templates=Instance.new("Folder")
-templates.Name="NatureTemplates"
-templates.Parent=SS
-
-local function packStatic(id,name)
- local a=load(id)
- local f=Instance.new("Folder")
- f.Name=name
- f:SetAttribute("AssetId",id)
- f.Parent=templates
- for _,x in ipairs(a:GetChildren()) do
-  local q=x:Clone()
-  stripStatic(q)
-  q.Parent=f
- end
- a:Destroy()
- assert(#f:GetChildren()>0,name.." pack empty")
+-- Spawn seguro perto do centro, afastado da árvore.
+local spawnHit=nil
+for radius=14,math.max(24,math.min(islandSize.X,islandSize.Z)*.3),4 do
+	for i=1,24 do
+		local a=i/24*math.pi*2
+		local hit=rayGreen(treeGround.Position.X+math.cos(a)*radius,treeGround.Position.Z+math.sin(a)*radius)
+		if hit then spawnHit=hit break end
+	end
+	if spawnHit then break end
 end
-
-packStatic(IDS.PBR,"PBR")
-packStatic(IDS.HD,"HD")
-packStatic(IDS.ROCKS,"Rocks")
-packStatic(IDS.BIGTREE,"BigTree")
-
--- Roblox official Forest Pack is used ONLY for animated butterflies and falling-leaf particle behavior.
-local forest=load(IDS.FOREST)
-local forestRoot=forest:FindFirstChild("Forest Pack",true) or forest
-
-local wildlife=Instance.new("Folder")
-wildlife.Name="Wildlife"
-wildlife:SetAttribute("AssetId",IDS.FOREST)
-wildlife.Parent=templates
-for _,name in ipairs({"Butterfly_FlightPath01","Butterfly_FlightPath02"}) do
- local src=forestRoot:FindFirstChild(name,true)
- assert(src and src:IsA("Model"),"official butterfly missing: "..name)
- local q=src:Clone()
- for _,d in ipairs(q:GetDescendants()) do
-  if d:IsA("BasePart") then
-   d.Anchored=true
-   d.CanCollide=false
-   d.CanTouch=false
-   d.CanQuery=false
-  end
- end
- q.Parent=wildlife
-end
-
-local leafFX=Instance.new("Folder")
-leafFX.Name="LeafFX"
-leafFX:SetAttribute("AssetId",IDS.FOREST)
-leafFX.Parent=templates
-local leafSource=forestRoot:FindFirstChild("ParticleEffect-LeavesFalling01",true)
-assert(leafSource,"official falling-leaf effect missing")
-local leafClone=leafSource:Clone()
-for _,d in ipairs(leafClone:GetDescendants()) do
- if d:IsA("LuaSourceContainer") then d:Destroy()
- elseif d:IsA("BasePart") then
-  d.Anchored=true; d.CanCollide=false; d.CanTouch=false; d.CanQuery=false
- end
-end
-leafClone.Parent=leafFX
-forest:Destroy()
-
-workspace.GlobalWind=Vector3.new(13,0,4)
-local wa=load(IDS.WIND)
-local wc=wa:FindFirstChild("WindController",true)
-assert(wc and wc:IsA("LocalScript") and wc:FindFirstChild("WindLines") and wc:FindFirstChild("WindShake"),"wind invalid")
-local w=wc:Clone()
-w.Name="WindController"
-w:SetAttribute("AssetId",IDS.WIND)
-w.Parent=SP.StarterPlayerScripts
-wa:Destroy()
-
-local chunks=Instance.new("Folder")
-chunks.Name="NatureChunks"
-chunks.Parent=workspace
+spawnHit=spawnHit or treeGround
 
 local spawn=Instance.new("SpawnLocation")
-spawn.Name="NatureSpawn"
-spawn.Size=Vector3.new(8,.5,8)
-spawn.Transparency=1
+spawn.Name="IslandSpawn"
+spawn.Size=Vector3.new(7,.4,7)
 spawn.Anchored=true
 spawn.CanCollide=false
 spawn.CanTouch=false
+spawn.Transparency=1
 spawn.Neutral=true
 spawn.Enabled=true
-spawn.CFrame=CFrame.new(0,15,0)
+spawn.Duration=0
+spawn.CFrame=CFrame.new(spawnHit.Position+Vector3.new(0,.2,0))
 spawn.Parent=workspace
 
-local gen=Instance.new("Script")
-gen.Name="NatureWorldGenerator"
-gen.Source=__RUNTIME_SOURCE__
-gen.Parent=SSS
+local safety=Instance.new("Part")
+safety.Name="VoidSafety"
+safety.Size=Vector3.new(
+	math.max(400,islandSize.X*2.2),
+	2,
+	math.max(400,islandSize.Z*2.2)
+)
+safety.CFrame=CFrame.new(islandCF.Position.X,islandCF.Position.Y-islandSize.Y*.75-60,islandCF.Position.Z)
+safety.Anchored=true
+safety.CanCollide=true
+safety.CanTouch=false
+safety.Transparency=1
+safety.Parent=workspace
 
-local loader=Instance.new("LocalScript")
-loader.Name="XNLoading"
-loader.Source=[[
-local RF=game:GetService("ReplicatedFirst")
-local P=game:GetService("Players")
-local T=game:GetService("TweenService")
-RF:RemoveDefaultLoadingScreen()
-local p=P.LocalPlayer
-p.CameraMode=Enum.CameraMode.Classic
-local g=Instance.new("ScreenGui")
-g.IgnoreGuiInset=true; g.DisplayOrder=10000; g.ResetOnSpawn=false
-local b=Instance.new("Frame")
-b.Size=UDim2.fromScale(1,1); b.BackgroundColor3=Color3.fromRGB(8,9,8); b.BorderSizePixel=0; b.Parent=g
-local t=Instance.new("TextLabel")
-t.AnchorPoint=Vector2.new(.5,.5); t.Position=UDim2.fromScale(.5,.5); t.Size=UDim2.new(.7,0,0,50)
-t.BackgroundTransparency=1; t.Text="acessando…"; t.TextColor3=Color3.fromRGB(240,242,239)
-t.TextSize=25; t.Font=Enum.Font.BuilderSans; t.Parent=b
-g.Parent=p:WaitForChild("PlayerGui")
-if not game:IsLoaded() then game.Loaded:Wait() end
-task.wait(.35)
-T:Create(t,TweenInfo.new(.2),{TextTransparency=1}):Play()
-local f=T:Create(b,TweenInfo.new(.35),{BackgroundTransparency=1}); f:Play(); f.Completed:Wait()
-g:Destroy()
+local server=Instance.new("Script")
+server.Name="IslandServer"
+server.Source=[[
+local Players=game:GetService("Players")
+local spawn=workspace:WaitForChild("IslandSpawn")
+local safetyY=workspace:WaitForChild("VoidSafety").Position.Y
+local function protect(char)
+	task.spawn(function()
+		while char.Parent do
+			local root=char:FindFirstChild("HumanoidRootPart")
+			if root and root.Position.Y<safetyY+3 then
+				char:PivotTo(spawn.CFrame*CFrame.new(0,4,0))
+			end
+			task.wait(.4)
+		end
+	end)
+end
+local function hook(p)
+	p.RespawnLocation=spawn
+	p.CharacterAdded:Connect(protect)
+	if p.Character then protect(p.Character) end
+end
+Players.PlayerAdded:Connect(hook)
+for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 ]]
-loader.Parent=RF
+server.Parent=ServerScriptService
 
-return {ok=true,version=111,worldWidth=270000,streamingTarget=1920}
+Lighting.ClockTime=16.2
+Lighting.Brightness=2.4
+Lighting.GlobalShadows=true
+Lighting.Ambient=Color3.fromRGB(142,143,137)
+Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
+
+return{
+	version=102,
+	islandParts=countParts(island),
+	greenSurfaces=#greenSurfaces,
+	grassPatches=placed,
+	treeFoliage=#foliageParts
+}
