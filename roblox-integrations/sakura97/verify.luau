@@ -1,64 +1,92 @@
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
-local CS=game:GetService("CollectionService")
-local rt=game.ReplicatedStorage:FindFirstChild("XNRuntime")
-assert(rt and rt:GetAttribute("Version")==103,"XNRuntime v103 missing")
-assert(rt:GetAttribute("GameName")=="XN [VOICE]","game identity wrong")
-assert(rt:GetAttribute("MapAssetId")==106476929993683,"map asset wrong")
-assert(rt:GetAttribute("Design")=="FaithfulBrookhavenCleanup","wrong design build")
+local RS=game:GetService("ReplicatedStorage")
+local SS=game:GetService("ServerStorage")
+local SSS=game:GetService("ServerScriptService")
+local SP=game:GetService("StarterPlayer")
+local Terrain=workspace.Terrain
 
-local map=workspace:FindFirstChild("BrookhavenMap")
-assert(map and map:IsA("Model") and map:GetAttribute("AssetId")==106476929993683,"BrookhavenMap missing")
+local rt=RS:FindFirstChild("XNWorldRuntime")
+assert(rt and rt:GetAttribute("Version")==110,"XNWorldRuntime v110 missing")
+assert(rt:GetAttribute("GameName")=="XN [VOICE]","game name identity wrong")
+assert(rt:GetAttribute("WorldSize")==248000,"world size wrong")
+assert(rt:GetAttribute("WorldHalf")==124000,"world half wrong")
+assert(rt:GetAttribute("LandHalf")==112000,"land edge wrong")
+assert(rt:GetAttribute("ChunkSize")==512,"chunk size wrong")
+assert(rt:GetAttribute("WaterDepth")==6,"water is not shallow")
+assert(rt:GetAttribute("Border")=="WaterBelt","edge is not water belt")
+assert(rt:GetAttribute("PBRAssetId")==13536410655,"PBR pack wrong")
+assert(rt:GetAttribute("HDAssetId")==18242663106,"HD pack wrong")
+assert(rt:GetAttribute("RockAssetId")==8248445118,"rock pack wrong")
+assert(rt:GetAttribute("BigTreeAssetId")==86013526879602,"big tree wrong")
+assert(rt:GetAttribute("ButterflyAssetId")==4639818571,"butterfly asset wrong")
 
-local parts,scripts=0,0
-for _,d in ipairs(map:GetDescendants()) do
- if d:IsA("BasePart") then parts+=1 elseif d:IsA("LuaSourceContainer") then scripts+=1 end
+-- Old city/build artifacts must be fully gone.
+for _,name in ipairs({
+	"BrookhavenMap","XN_City","BigMapTest","Mirkwood","ReworkedHouseLots","GreenGrassDecor",
+	"XN_Grass","XN_Halloween","PumpkinDecor","SakuraTrees","PristineParkIsland"
+}) do
+	assert(not workspace:FindFirstChild(name),name.." survived reset")
 end
-assert(parts>13000,"map lost too much geometry "..parts)
-assert(scripts==0,"free-model scripts remain "..scripts)
+assert(not RS:FindFirstChild("XNRuntime"),"old XNRuntime survived")
+assert(not RS:FindFirstChild("SweanRuntime"),"old SweanRuntime survived")
+assert(#game:GetService("ReplicatedFirst"):GetChildren()==0,"old loading UI survived")
+assert(#game:GetService("StarterGui"):GetChildren()==0,"old custom UI survived")
 
-assert(not workspace:FindFirstChild("ReworkedHouseLots"),"old fake parks remain")
-assert(not workspace:FindFirstChild("GreenGrassDecor"),"old grass clones remain")
-assert(not workspace:FindFirstChild("XN_Grass"),"procedural blade grass remains")
+local templates=SS:FindFirstChild("XNNatureTemplates")
+assert(templates,"nature templates missing")
+assert(templates:FindFirstChild("Trees") and #templates.Trees:GetChildren()>0,"trees missing")
+assert(templates:FindFirstChild("Plants") and #templates.Plants:GetChildren()>0,"plants missing")
+assert(templates:FindFirstChild("Flowers") and #templates.Flowers:GetChildren()>0,"flowers missing")
+assert(templates:FindFirstChild("Rocks") and #templates.Rocks:GetChildren()>0,"exact rocks missing")
+assert(templates:FindFirstChild("BigTrees") and #templates.BigTrees:GetChildren()==1,"big tree missing")
+assert(templates.BigTrees:GetChildren()[1]:GetAttribute("AssetId")==86013526879602,"big tree source wrong")
 
-local green=CS:GetTagged("XNGreenGround")
-assert(#green>=8,"green ground missing")
-for _,p in ipairs(green) do assert(p:IsDescendantOf(map) and p.Material==Enum.Material.Grass,"grass escaped green map surfaces") end
+local clientAssets=RS:FindFirstChild("XNNatureClientAssets")
+assert(clientAssets and clientAssets:FindFirstChild("LeafTemplate"),"real leaf geometry missing")
+assert(clientAssets.LeafTemplate:GetAttribute("FromNaturePack")==true,"leaf not from nature pack")
+local butterfly=clientAssets and clientAssets:FindFirstChild("ButterflyTemplate")
+assert(butterfly and butterfly:GetAttribute("AssetId")==4639818571,"butterfly template wrong")
 
-local wind=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("WindController")
-assert(wind and wind:GetAttribute("AssetId")==11946229834,"wind missing")
-assert(workspace.GlobalWind.Magnitude>8 and workspace.GlobalWind.Magnitude<15,"wind too strong/weak")
+local client=SP.StarterPlayerScripts:FindFirstChild("XNNatureClient")
+assert(client and client:IsA("LocalScript"),"nature client missing")
+assert(client:GetAttribute("WindAssetId")==11946229834,"wind asset wrong")
+assert(client:FindFirstChild("WindLines") and client:FindFirstChild("WindShake"),"wind modules missing")
+assert(client.Source:find("XNLeafSource",1,true),"falling leaves not tied to real tree leaves")
+assert(client.Source:find("XNFlowerSource",1,true),"butterflies not tied to flowers")
 
-local h=workspace:FindFirstChild("XN_Halloween")
-assert(h and h:GetAttribute("OnlyPumpkins")==true,"Halloween folder wrong")
-local pumpkins=0
-for _,d in ipairs(h:GetDescendants()) do
- if d:IsA("BasePart") then assert(d.Name=="Pumpkin","non-pumpkin Halloween geometry"); pumpkins+=1 end
-end
-assert(pumpkins>=12 and pumpkins<=24,"pumpkin count unreasonable "..pumpkins)
+local gen=SSS:FindFirstChild("XNWorldGenerator")
+assert(gen and gen:IsA("Script"),"world generator missing")
+assert(gen.Source:find("WORLD_HALF=124000",1,true),"world boundary wrong")
+assert(gen.Source:find("LAND_HALF=112000",1,true),"water belt start wrong")
+assert(gen.Source:find("WATER_DEPTH=6",1,true),"deep water generator detected")
+assert(gen.Source:find("generateRivers",1,true) and gen.Source:find("generateLake",1,true),"rivers/lakes missing")
+assert(gen.Source:find("generateIsland",1,true),"far islands missing")
+assert(gen.Source:find("generateTrails",1,true),"trails missing")
 
-local spawn=workspace:FindFirstChild("XNSpawn")
-assert(spawn and spawn:IsA("SpawnLocation") and spawn.Enabled,"spawn missing")
-local st=spawn:GetAttribute("SourceType")
-assert(st=="OriginalSpawnLocation" or st=="NamedSpawn" or st=="SidewalkFallback" or st=="StreetFallback" or st=="FlatFallback","spawn source unknown")
-assert(st~="OriginalSpawnLocation" or not tostring(spawn:GetAttribute("SourceName")):lower():find("skydive",1,true),"skydive spawn selected")
-assert(spawn:GetAttribute("SourcePosition")~=nil,"spawn lacks source position")
+assert(workspace:FindFirstChild("XNSpawn"),"spawn missing")
+assert(workspace.GlobalWind.Magnitude>10,"global wind missing")
 
-local loading=game.ReplicatedFirst:FindFirstChild("XNLoading")
-assert(loading and loading:IsA("LocalScript"),"loading missing")
-assert(loading.Source:find('txt.Text="acessando…"',1,true),"loading text wrong")
-assert(loading.Source:find("CameraMode.Classic",1,true),"camera rotation blocked")
+-- Saved center must be actual Terrain grass, not a fake baseplate.
+local rp=RaycastParams.new()
+rp.FilterType=Enum.RaycastFilterType.Include
+rp.FilterDescendantsInstances={Terrain}
+local hit=workspace:Raycast(Vector3.new(0,40,0),Vector3.new(0,-100,0),rp)
+assert(hit and hit.Material==Enum.Material.Grass,"central real grass terrain missing")
 
-local _,size=map:GetBoundingBox()
-assert(size.X>2900 and size.Z>2900,"map was scaled/cropped")
 return {
- ok=true,
- version=103,
- mapParts=parts,
- scriptsRemoved=rt:GetAttribute("ScriptsRemoved"),
- greenGround=#green,
- windTagged=rt:GetAttribute("WindTagged"),
- pumpkins=pumpkins,
- spawnSourceType=st,
- spawnSourceName=spawn:GetAttribute("SourceName"),
- mapSize={size.X,size.Y,size.Z}
+	ok=true,
+	version=110,
+	worldSize=rt:GetAttribute("WorldSize"),
+	landHalf=rt:GetAttribute("LandHalf"),
+	chunk=rt:GetAttribute("ChunkSize"),
+	waterDepth=rt:GetAttribute("WaterDepth"),
+	treeTemplates=#templates.Trees:GetChildren(),
+	plantTemplates=#templates.Plants:GetChildren(),
+	flowerTemplates=#templates.Flowers:GetChildren(),
+	rockTemplates=#templates.Rocks:GetChildren(),
+	bigTrees=#templates.BigTrees:GetChildren(),
+	wind=true,
+	fallingLeaves=true,
+	butterflies=true,
+	border="WaterBelt"
 }
