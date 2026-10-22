@@ -25,7 +25,8 @@ assert(flowerCount>=180,"Flores pequenas insuficientes: "..tostring(flowerCount)
 
 local wind=workspace:FindFirstChild("WindEffects")
 assert(wind and #wind:GetChildren()>=4,"WindEffects visivel ausente")
-assert(workspace.Terrain.Decoration==false,"Terrain decoration grass ainda ligada")
+local centerHit=workspace:Raycast(Vector3.new(0,80,0),Vector3.new(0,-120,0))
+assert(centerHit and centerHit.Material==Enum.Material.Ground,"Terreno ainda nao foi trocado para Ground")
 
 local Lighting=game:GetService("Lighting")
 assert(Lighting.ClockTime>16 and Lighting.ClockTime<18.5,"Nao esta de tarde")
