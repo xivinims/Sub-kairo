@@ -78,8 +78,10 @@ game:GetService("AssetService"):SavePlaceAsync()
 return {
   ok=true,
   sourceVersion=sourceVersion,
-  trees=checks.trees,
-  message="Sakura island v97 repaired and published"
+  mapParts=checks.mapParts,
+  pumpkins=checks.pumpkins,
+  pumpkinClusters=checks.pumpkinClusters,
+  message="Mirkwood rebuild saved"
 }
 `;
 
@@ -94,17 +96,15 @@ for(let i=0;i<12;i++){
   try{
     const check=first(await execute(`
       assert(game.GameId==${UNIVERSE_ID} and game.PlaceId==${PLACE_ID})
-      local runtime=game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
-      local trees=workspace:FindFirstChild("SakuraTrees")
-      return {
-        ok=runtime~=nil and trees~=nil,
-        placeVersion=game.PlaceVersion,
-        trees=trees and #trees:GetChildren() or 0,
-        version=runtime and runtime:GetAttribute("Version")
-      }
+      local function runVerify()
+${verifySource}
+      end
+      local checks=runVerify()
+      checks.placeVersion=game.PlaceVersion
+      return checks
     `));
     if(!check?.ok || check.placeVersion<=applied.sourceVersion){
-      throw new Error("Saved version not visible yet, got "+(check&&check.placeVersion));
+      throw new Error("Saved version not visible/valid yet, got "+(check&&check.placeVersion));
     }
     persisted=check; last=null; break;
   }catch(e){
