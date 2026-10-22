@@ -573,6 +573,70 @@ local function inspectBrookhavenMap()
 end
 out.brookhavenMap=inspectBrookhavenMap()
 
+
+local function auditBrookhavenLayout()
+  local result={id=106476929993683,loaded=false,greenCandidates={},named={},scriptCount=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(106476929993683) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  local map=asset:FindFirstChild("Brookhaven Map",true)
+  if not map then asset:Destroy() return result end
+
+  local keys={"house","home","plot","lot","estate","hill","mountain","grass","lawn","park","road","street","sidewalk","tree","bush","plant","spawn"}
+  for _,d in ipairs(map:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then
+      result.scriptCount+=1
+    elseif d:IsA("BasePart") then
+      local c=d.Color
+      local green=(c.G>c.R*1.12 and c.G>c.B*1.05 and c.G>.18)
+      local horizontal=d.CFrame.UpVector.Y>.82
+      local area=d.Size.X*d.Size.Z
+      if green and horizontal and area>80 and #result.greenCandidates<120 then
+        table.insert(result.greenCandidates,{
+          name=d.Name,
+          parent=d.Parent and d.Parent.Name or "",
+          size={d.Size.X,d.Size.Y,d.Size.Z},
+          area=area,
+          color={c.R,c.G,c.B},
+          material=tostring(d.Material),
+          pos={d.Position.X,d.Position.Y,d.Position.Z}
+        })
+      end
+    end
+
+    local lname=d.Name:lower()
+    for _,k in ipairs(keys) do
+      if string.find(lname,k,1,true) then
+        result.named[k]=result.named[k] or {}
+        if #result.named[k]<80 then
+          local e={name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""}
+          if d:IsA("BasePart") then
+            e.size={d.Size.X,d.Size.Y,d.Size.Z}
+            e.pos={d.Position.X,d.Position.Y,d.Position.Z}
+            e.color={d.Color.R,d.Color.G,d.Color.B}
+            e.material=tostring(d.Material)
+          elseif d:IsA("Model") then
+            local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+            local pc=0
+            for _,x in ipairs(d:GetDescendants()) do if x:IsA("BasePart") then pc+=1 end end
+            e.parts=pc
+            if okb then
+              e.size={size.X,size.Y,size.Z}
+              e.pos={cf.Position.X,cf.Position.Y,cf.Position.Z}
+            end
+          end
+          table.insert(result.named[k],e)
+        end
+        break
+      end
+    end
+  end
+  table.sort(result.greenCandidates,function(a,b) return a.area>b.area end)
+  asset:Destroy()
+  return result
+end
+out.brookhavenLayout=auditBrookhavenLayout()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
