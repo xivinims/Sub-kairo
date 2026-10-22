@@ -31,8 +31,9 @@ assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
 assert(grass:GetAttribute("Rule")=="IslandGreenGroundOnly","Regra da grama incorreta")
 local patches=#grass:GetChildren()
-assert(patches>=12,"Pouca SkinnedGrass: "..tostring(patches))
+assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
+assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
 
 local greenParams=RaycastParams.new()
 greenParams.FilterType=Enum.RaycastFilterType.Include
