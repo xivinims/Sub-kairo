@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",102)
+runtime:SetAttribute("Version",103)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -130,8 +130,8 @@ runtime:SetAttribute("WindAssetId",WIND_ID)
 
 pcall(function()
 	workspace.StreamingEnabled=true
-	workspace.StreamingMinRadius=96
-	workspace.StreamingTargetRadius=260
+	workspace.StreamingMinRadius=128
+	workspace.StreamingTargetRadius=420
 end)
 workspace.FallenPartsDestroyHeight=-300
 
@@ -148,9 +148,9 @@ sanitize(island)
 -- A ilha original é muito pequena perto de um avatar R15 normal.
 -- Aumenta só um pouco, sem mudar formato/proporções.
 pcall(function()
-	island:ScaleTo(island:GetScale()*1.85)
+	island:ScaleTo(island:GetScale()*92.5)
 end)
-island:SetAttribute("ScaleMultiplier",1.85)
+island:SetAttribute("ScaleMultiplier",92.5)
 
 local islandCF,islandSize=bounds(island)
 assert(islandSize,"Floating Island has invalid bounds")
@@ -194,7 +194,7 @@ local function rayGreen(x,z)
 	)
 end
 
--- SKINNED GRASS: UMA MESH VERDE REAL POR SUPERFÍCIE VERDE.
+-- SKINNED GRASS: UMA ÚNICA VARIANTE VERDE, EM TILES CONTÍNUOS SEM FRESTA.
 local grassAsset=loadAsset(GRASS_ID)
 
 local sourceMesh=nil
@@ -205,8 +205,6 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 		for _,b in ipairs(d:GetDescendants()) do
 			if b:IsA("Bone") then bones+=1 end
 		end
-		-- O asset tem duas variantes de 100 Bones. A variante correta de grama
-		-- é a verde/Neon, não a Mesh cinza Plastic.
 		if bones>0 and d.Material==Enum.Material.Neon and d.Color.G>d.Color.R then
 			sourceMesh=d
 			sourceBones=bones
@@ -232,47 +230,79 @@ grassModule.Parent=ReplicatedStorage
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="SkinnedGrassCoverage"
 grassFolder:SetAttribute("AssetId",GRASS_ID)
-grassFolder:SetAttribute("Rule","OneOriginalGreenSkinnedMeshPerGreenSurface")
+grassFolder:SetAttribute("Rule","SeamlessTiledGreenSkinnedGrass")
 grassFolder:SetAttribute("SingleMeshOnly",true)
 grassFolder:SetAttribute("SourceBones",sourceBones)
 grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
+grassFolder:SetAttribute("TileOverlap",1.012)
 grassFolder.Parent=workspace
 
+-- Mantém os tiles perto do tamanho natural do asset (100x100) para a densidade
+-- da grama não virar pontinhos, mas faz as bordas sobreporem 1.2% para NUNCA
+-- existir fresta entre uma grama e outra.
+local NATURAL_TILE=96
+local OVERLAP=1.012
 local placed=0
+local coveredSurfaces=0
+
 for surfaceIndex,surface in ipairs(greenSurfaces) do
-	local model=Instance.new("Model")
-	model.Name=string.format("GrassTile_%02d",surfaceIndex)
+	local nx=math.max(1,math.ceil(surface.Size.X/NATURAL_TILE))
+	local nz=math.max(1,math.ceil(surface.Size.Z/NATURAL_TILE))
+	local cellX=surface.Size.X/nx
+	local cellZ=surface.Size.Z/nz
+	local surfacePlaced=0
 
-	local mesh=sourceMesh:Clone()
-	mesh.Name="SkinnedGrass"
-	mesh.Anchored=true
-	mesh.CanCollide=false
-	mesh.CanTouch=false
-	mesh.CanQuery=false
+	for ix=1,nx do
+		for iz=1,nz do
+			local lx=-surface.Size.X*.5+(ix-.5)*cellX
+			local lz=-surface.Size.Z*.5+(iz-.5)*cellZ
+			local top=surface.CFrame:PointToWorldSpace(
+				Vector3.new(lx,surface.Size.Y*.5,lz)
+			)
 
-	-- NÃO escala uniforme. Mantém altura natural da grama e só adapta X/Z
-	-- ao pedaço verde embaixo dela.
-	mesh.Size=Vector3.new(
-		math.max(.8,surface.Size.X*.96),
-		1.35,
-		math.max(.8,surface.Size.Z*.96)
-	)
-	mesh.CFrame=surface.CFrame
-		*CFrame.new(0,surface.Size.Y*.5+.64,0)
-	mesh.Parent=model
+			local model=Instance.new("Model")
+			model.Name=string.format("GrassTile_%04d",placed+1)
 
-	model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
-	model:SetAttribute("GroundPartName",surface.Name)
-	model:SetAttribute("SingleMesh",true)
-	model.Parent=grassFolder
-	CollectionService:AddTag(model,"SkinnedGrassPatch")
-	placed+=1
+			local mesh=sourceMesh:Clone()
+			mesh.Name="SkinnedGrass"
+			mesh.Anchored=true
+			mesh.CanCollide=false
+			mesh.CanTouch=false
+			mesh.CanQuery=false
+			mesh.Size=Vector3.new(
+				cellX*OVERLAP,
+				4,
+				cellZ*OVERLAP
+			)
+
+			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
+			-- divisão da superfície, então eles se encostam perfeitamente.
+			mesh.CFrame=surface.CFrame
+				*CFrame.new(lx,surface.Size.Y*.5+1.92,lz)
+			mesh.Parent=model
+
+			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
+			model:SetAttribute("GroundPartName",surface.Name)
+			model:SetAttribute("SingleMesh",true)
+			model:SetAttribute("CellX",cellX)
+			model:SetAttribute("CellZ",cellZ)
+			model.Parent=grassFolder
+			CollectionService:AddTag(model,"SkinnedGrassPatch")
+
+			placed+=1
+			surfacePlaced+=1
+		end
+	end
+
+	if surfacePlaced>0 then coveredSurfaces+=1 end
 end
+
 grassAsset:Destroy()
 
-assert(placed==#greenSurfaces,"Grass tile count must match green surfaces")
+assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass")
+assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
 runtime:SetAttribute("GrassPatchCount",placed)
-runtime:SetAttribute("GrassCoveredSurfaces",placed)
+runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
 
 -- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
@@ -289,17 +319,17 @@ local SkinnedGrass=require(ReplicatedStorage:WaitForChild("SkinnedGrassRuntimeMo
 
 local grass=SkinnedGrass.new({
 	RenderDistanceEnabled=true,
-	RenderDistance=120,
+	RenderDistance=180,
 	RenderInAnimation=nil,
 	RenderOutAnimation=nil,
 	CollisionsEnabled=true,
-	CollisionDistance=90,
+	CollisionDistance=70,
 	CollisionRadiusInner=2.2,
 	CollisionRadiusOuter=4.4,
 	CollisionAngle=55,
 	WindEnabled=true,
 	WindDistanceInner=25,
-	WindDistanceOuter=120,
+	WindDistanceOuter=180,
 	WindFramerateInner=1,
 	WindFramerateOuter=.5,
 	WindNoiseSize=12,
@@ -347,7 +377,7 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.24,7,8.2)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.045,55,75)
 scaleHeight(tree,targetTreeHeight)
 assert(bottomPlace(tree,treeGround.Position,0,.22),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
@@ -486,7 +516,7 @@ windAsset:Destroy()
 
 -- Spawn seguro perto do centro, afastado da árvore.
 local spawnHit=nil
-for radius=3,math.max(5,math.min(islandSize.X,islandSize.Z)*.32),1 do
+for radius=35,math.max(80,math.min(islandSize.X,islandSize.Z)*.28),15 do
 	for i=1,24 do
 		local a=i/24*math.pi*2
 		local hit=rayGreen(treeGround.Position.X+math.cos(a)*radius,treeGround.Position.Z+math.sin(a)*radius)
@@ -557,7 +587,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=102,
+	version=103,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
