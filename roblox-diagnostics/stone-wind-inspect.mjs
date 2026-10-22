@@ -157,6 +157,32 @@ if pok and passet then
   passet:Destroy()
 end
 
+
+local pok2,passet2=pcall(function() return A:LoadAssetAsync(125247029116844) end)
+out.petals2Loaded=pok2 and passet2~=nil
+out.petal2Emitters={}
+if pok2 and passet2 then
+  for _,d in ipairs(passet2:GetDescendants()) do
+    if d:IsA("ParticleEmitter") then
+      table.insert(out.petal2Emitters,{
+        name=d.Name,
+        texture=d.Texture,
+        rate=d.Rate,
+        lifetime={d.Lifetime.Min,d.Lifetime.Max},
+        speed={d.Speed.Min,d.Speed.Max},
+        drag=d.Drag,
+        windAffectsDrag=d.WindAffectsDrag,
+        acceleration={d.Acceleration.X,d.Acceleration.Y,d.Acceleration.Z}
+      })
+    end
+  end
+  out.petal2ScriptCount=0
+  for _,d in ipairs(passet2:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then out.petal2ScriptCount+=1 end
+  end
+  passet2:Destroy()
+end
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
