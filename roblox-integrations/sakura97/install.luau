@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",104)
+runtime:SetAttribute("Version",105)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -241,7 +241,10 @@ grassFolder:SetAttribute("Rule","SeamlessTiledGreenSkinnedGrass")
 grassFolder:SetAttribute("SingleMeshOnly",true)
 grassFolder:SetAttribute("SourceBones",sourceBones)
 grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
-grassFolder:SetAttribute("TileOverlap",1.72)
+grassFolder:SetAttribute("TileOverlap",1.25)
+grassFolder:SetAttribute("VisualScaleX",visualScaleX)
+grassFolder:SetAttribute("VisualScaleZ",visualScaleZ)
+grassFolder:SetAttribute("GroundOffset",-0.08)
 grassFolder:SetAttribute("VisualScaleX",visualScaleX)
 grassFolder:SetAttribute("VisualScaleZ",visualScaleZ)
 grassFolder:SetAttribute("GroundOffset",0.65)
@@ -250,8 +253,8 @@ grassFolder.Parent=workspace
 -- Mantém os tiles perto do tamanho natural do asset (100x100) para a densidade
 -- da grama não virar pontinhos, mas faz as bordas sobreporem 1.2% para NUNCA
 -- existir fresta entre uma grama e outra.
-local NATURAL_TILE=52
-local OVERLAP=1.72
+local NATURAL_TILE=84
+local OVERLAP=1.25
 local placed=0
 local coveredSurfaces=0
 
@@ -288,7 +291,7 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
 			-- divisão da superfície, então eles se encostam perfeitamente.
 			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx,surface.Size.Y*.5+.65,lz)
+				*CFrame.new(lx,surface.Size.Y*.5-0.08,lz)
 			mesh.Parent=model
 
 			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
@@ -298,6 +301,10 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			model:SetAttribute("CellZ",cellZ)
 			model:SetAttribute("ExpectedVisualX",cellX*OVERLAP)
 			model:SetAttribute("ExpectedVisualZ",cellZ*OVERLAP)
+			local groundRef=Instance.new("ObjectValue")
+			groundRef.Name="GroundSurface"
+			groundRef.Value=surface
+			groundRef.Parent=model
 			model.Parent=grassFolder
 			CollectionService:AddTag(model,"SkinnedGrassPatch")
 
@@ -318,7 +325,7 @@ runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
 runtime:SetAttribute("GrassTileSpacing",NATURAL_TILE)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
-runtime:SetAttribute("GrassCenterOffset",0.65)
+runtime:SetAttribute("GrassCenterOffset",-0.08)
 runtime:SetAttribute("GrassVisualScaleX",visualScaleX)
 runtime:SetAttribute("GrassVisualScaleZ",visualScaleZ)
 
@@ -396,7 +403,7 @@ assert(treeGround,"No green center ground found for tree")
 
 local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.085,108,122)
 scaleHeight(tree,targetTreeHeight)
-assert(bottomPlace(tree,treeGround.Position,0,.38),"Tree grounding failed")
+assert(bottomPlace(tree,treeGround.Position,0,.55),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
@@ -605,7 +612,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=104,
+	version=105,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
