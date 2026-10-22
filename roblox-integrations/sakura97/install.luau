@@ -298,7 +298,7 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
 			-- divisão da superfície, então eles se encostam perfeitamente.
 			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx,surface.Size.Y*.5+1.38,lz)
+				*CFrame.new(lx,surface.Size.Y*.5+.65,lz)
 			mesh.Parent=model
 
 			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
@@ -328,6 +328,7 @@ runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
 runtime:SetAttribute("GrassTileSpacing",NATURAL_TILE)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
+runtime:SetAttribute("GrassCenterOffset",0.65)
 
 -- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
 local grassRunner=Instance.new("LocalScript")
