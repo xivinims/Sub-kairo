@@ -831,6 +831,67 @@ out.floatingIsland=inspectAssetDeep(10485490600,"Floating Island Obby")
 out.skinnedGrass=inspectAssetDeep(87377915371959,"SkinnedGrass")
 out.bigTree=inspectAssetDeep(86013526879602,"Stud Big Tree")
 
+
+local function inspectGrassSource()
+  local result={loaded=false,sources={},meshes={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(87377915371959) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,x in ipairs(asset:GetDescendants()) do
+    if x:IsA("LuaSourceContainer") then
+      local src=x.Source or ""
+      table.insert(result.sources,{
+        name=x.Name,
+        class=x.ClassName,
+        parent=x.Parent and x.Parent.Name or "",
+        source=string.sub(src,1,12000)
+      })
+    elseif x:IsA("MeshPart") then
+      local bones=0
+      for _,b in ipairs(x:GetDescendants()) do if b:IsA("Bone") then bones+=1 end end
+      table.insert(result.meshes,{
+        name=x.Name,
+        size={x.Size.X,x.Size.Y,x.Size.Z},
+        bones=bones,
+        meshId=x.MeshId,
+        textureId=x.TextureID,
+        color={x.Color.R,x.Color.G,x.Color.B},
+        material=tostring(x.Material)
+      })
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.grassSourceAudit=inspectGrassSource()
+
+local function inspectIslandGreen()
+  local result={loaded=false,top={},green={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(10485490600) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,x in ipairs(asset:GetChildren()) do table.insert(result.top,{name=x.Name,class=x.ClassName}) end
+  for _,x in ipairs(asset:GetDescendants()) do
+    if x:IsA("BasePart") then
+      local c=x.Color
+      local green=(c.G>c.R*1.05 and c.G>c.B*1.05 and c.G>.22) or x.Material==Enum.Material.Grass
+      if green then
+        table.insert(result.green,{
+          name=x.Name,
+          parent=x.Parent and x.Parent.Name or "",
+          size={x.Size.X,x.Size.Y,x.Size.Z},
+          color={c.R,c.G,c.B},
+          material=tostring(x.Material),
+          upY=x.CFrame.UpVector.Y
+        })
+      end
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.islandGreenAudit=inspectIslandGreen()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
