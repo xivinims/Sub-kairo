@@ -51,7 +51,6 @@ runtime:SetAttribute("MapType", "SakuraIsland")
 -- ============ 3. ILHA + TERRENO ============
 local function buildIsland()
 	Terrain:Clear()
-	Terrain.Decoration = false
 	pcall(function() Terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(78, 102, 56)) end)
 	-- ilha principal com curvas suaves
 	local center = Vector3.new(0, 0, 0)
