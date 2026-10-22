@@ -8,10 +8,51 @@ local trees=workspace:FindFirstChild("SakuraTrees")
 assert(trees and #trees:GetChildren()==27,"Esperava 27 cerejeiras")
 
 local windTagged=0
+local petalEmitters=0
 for _,obj in ipairs(CollectionService:GetTagged("WindShake")) do
-	if obj:IsA("BasePart") and obj.Name=="Leaves" then windTagged+=1 end
+	if obj:IsA("BasePart") and obj.Name=="Leaves" then
+		windTagged+=1
+		local petals=obj:FindFirstChild("SakuraPetals")
+		if petals and petals:IsA("ParticleEmitter") then
+			assert(petals.WindAffectsDrag==true,"Petalas sem WindAffectsDrag")
+			assert(petals.Drag>0,"Petalas sem Drag para reagir ao vento")
+			assert(petals.Rate>0 and petals.Rate<=1.5,"Taxa de petalas fora do limite leve")
+			petalEmitters+=1
+		end
+	end
 end
 assert(windTagged>=27,"Folhas sem WindShake suficiente: "..tostring(windTagged))
+assert(petalEmitters>=27,"Faltam emissores de petalas: "..tostring(petalEmitters))
+
+-- Confirma que os troncos foram levemente enterrados para não parecerem flutuar.
+local params=RaycastParams.new()
+params.FilterType=Enum.RaycastFilterType.Exclude
+params.FilterDescendantsInstances={trees,workspace:FindFirstChild("StonePath"),workspace:FindFirstChild("Wildflowers")}
+local maxTreeOffset=-math.huge
+local minTreeOffset=math.huge
+for _,tree in ipairs(trees:GetChildren()) do
+	local trunk=nil
+	for _,d in ipairs(tree:GetDescendants()) do
+		if d:IsA("BasePart") and d.Name~="Leaves" then trunk=d break end
+	end
+	assert(trunk,"Tronco ausente em cerejeira")
+	local minY=math.huge
+	for _,sx in ipairs({-1,1}) do
+		for _,sy in ipairs({-1,1}) do
+			for _,sz in ipairs({-1,1}) do
+				local p=trunk.CFrame:PointToWorldSpace(Vector3.new(trunk.Size.X*.5*sx,trunk.Size.Y*.5*sy,trunk.Size.Z*.5*sz))
+				minY=math.min(minY,p.Y)
+			end
+		end
+	end
+	local hit=workspace:Raycast(Vector3.new(trunk.Position.X,80,trunk.Position.Z),Vector3.new(0,-150,0),params)
+	assert(hit,"Sem Terrain sob cerejeira")
+	local offset=minY-hit.Position.Y
+	maxTreeOffset=math.max(maxTreeOffset,offset)
+	minTreeOffset=math.min(minTreeOffset,offset)
+end
+assert(maxTreeOffset<=-.35,"Alguma cerejeira ainda parece flutuar: "..tostring(maxTreeOffset))
+assert(minTreeOffset>=-1.15,"Alguma cerejeira ficou enterrada demais: "..tostring(minTreeOffset))
 
 local center=workspace:Raycast(Vector3.new(0,80,0),Vector3.new(0,-120,0))
 assert(center and center.Material==Enum.Material.Grass,"Terrain principal nao esta em Grass")
@@ -70,5 +111,8 @@ return {
 	globalWind=workspace.GlobalWind.Magnitude,
 	terrainGrass=true,
 	reactiveGrass=true,
-	exactWindModules=true
+	exactWindModules=true,
+	petalEmitters=petalEmitters,
+	maxTreeOffset=maxTreeOffset,
+	minTreeOffset=minTreeOffset
 }
