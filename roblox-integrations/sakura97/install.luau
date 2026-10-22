@@ -1,5 +1,6 @@
--- XN [VOICE] v102 — Brookhaven clean Halloween build
+-- XN [VOICE] v103 — Brookhaven faithful cleanup
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
+
 local A=game:GetService("AssetService")
 local CS=game:GetService("CollectionService")
 local Lighting=game:GetService("Lighting")
@@ -7,23 +8,39 @@ local RS=game:GetService("ReplicatedStorage")
 local RF=game:GetService("ReplicatedFirst")
 local SP=game:GetService("StarterPlayer")
 local SSS=game:GetService("ServerScriptService")
+local SG=game:GetService("StarterGui")
 local Terrain=workspace.Terrain
-local MAP=106476929993683
-local WIND=11946229834
-local HALLOWEEN=12489961338
+
+local MAP_ID=106476929993683
+local WIND_ID=11946229834
+local HALLOWEEN_ID=12489961338
+local VERSION=103
+
 local function load(id)
- local ok,x=pcall(A.LoadAssetAsync,A,id); assert(ok and x,"asset "..id.." failed "..tostring(x)); return x
+ local ok,x=pcall(A.LoadAssetAsync,A,id)
+ assert(ok and x,"asset "..id.." failed: "..tostring(x))
+ return x
 end
 
--- clean previous build
-for _,x in ipairs(workspace:GetChildren()) do if x~=Terrain and not x:IsA("Camera") then x:Destroy() end end
-Terrain:Clear()
-for _,c in ipairs({SSS,RF,SP.StarterPlayerScripts,game:GetService("StarterGui")}) do for _,x in ipairs(c:GetChildren()) do x:Destroy() end end
-for _,x in ipairs(RS:GetChildren()) do if x.Name=="SweanRuntime" or x.Name=="SakuraRuntime" then x:Destroy() end end
-for _,x in ipairs(Lighting:GetChildren()) do x:Destroy() end
+local function clear(c) for _,x in ipairs(c:GetChildren()) do x:Destroy() end end
 
-local rt=Instance.new("Folder"); rt.Name="SweanRuntime"; rt.Parent=RS
-rt:SetAttribute("Version",102); rt:SetAttribute("ExperienceName","XN [VOICE]"); rt:SetAttribute("MapAssetId",MAP)
+-- clean only our place build
+for _,x in ipairs(workspace:GetChildren()) do
+ if x~=Terrain and not x:IsA("Camera") then x:Destroy() end
+end
+Terrain:Clear()
+clear(SSS); clear(RF); clear(SP.StarterPlayerScripts); clear(SG)
+for _,x in ipairs(RS:GetChildren()) do
+ if x.Name=="XNRuntime" or x.Name=="SweanRuntime" or x.Name=="SakuraRuntime" or x.Name=="ForestRuntime" then x:Destroy() end
+end
+clear(Lighting)
+
+local rt=Instance.new("Folder")
+rt.Name="XNRuntime"; rt.Parent=RS
+rt:SetAttribute("Version",VERSION)
+rt:SetAttribute("GameName","XN [VOICE]")
+rt:SetAttribute("MapAssetId",MAP_ID)
+rt:SetAttribute("Design","FaithfulBrookhavenCleanup")
 
 pcall(function()
  workspace.StreamingEnabled=true
@@ -32,152 +49,316 @@ pcall(function()
 end)
 workspace.FallenPartsDestroyHeight=-700
 
--- exact Brookhaven visual map, but strip all embedded code
-local asset=load(MAP)
-local source=asset:FindFirstChild("Brookhaven Map",true); assert(source and source:IsA("Model"),"Brookhaven Map missing")
-local map=source:Clone(); map.Name="XN_City"; map:SetAttribute("AssetId",MAP); map.Parent=workspace
-local scripts,parts,models,vehicles=0,0,0,0
-for _,d in ipairs(map:GetDescendants()) do
- if d:IsA("LuaSourceContainer") then scripts+=1; d:Destroy()
- elseif d:IsA("BasePart") then parts+=1; d.Anchored=true; d.CanTouch=false
- elseif d:IsA("Model") then models+=1 end
-end
--- remove vehicle collection: large static clutter + scripts already stripped
-local veh=map:FindFirstChild("Vehicles",true)
-if veh then vehicles=#veh:GetChildren(); veh:Destroy() end
-local cf,size=map:GetBoundingBox()
-map:PivotTo(map:GetPivot()+Vector3.new(-cf.Position.X,size.Y/2-cf.Position.Y,-cf.Position.Z))
-rt:SetAttribute("OriginalScriptsRemoved",scripts); rt:SetAttribute("VehiclesRemoved",vehicles)
+-- Load exact map, preserve its original transform and visuals.
+local asset=load(MAP_ID)
+local source=asset:FindFirstChild("Brookhaven Map",true)
+assert(source and source:IsA("Model"),"Brookhaven Map missing")
+local map=source:Clone()
+map.Name="BrookhavenMap"
+map:SetAttribute("AssetId",MAP_ID)
+map.Parent=workspace
 asset:Destroy()
 
--- lighting / Halloween atmosphere
-Lighting.ClockTime=17.55; Lighting.Brightness=2.1; Lighting.ExposureCompensation=-.12
-Lighting.Ambient=Color3.fromRGB(76,72,78); Lighting.OutdoorAmbient=Color3.fromRGB(112,102,106)
-Lighting.GlobalShadows=true
-local at=Instance.new("Atmosphere"); at.Name="XNAtmosphere"; at.Density=.22; at.Offset=.05
-at.Color=Color3.fromRGB(184,174,177); at.Decay=Color3.fromRGB(84,72,79); at.Haze=1.15; at.Glare=.03; at.Parent=Lighting
-local cc=Instance.new("ColorCorrectionEffect"); cc.Name="XNColor"; cc.Contrast=.1; cc.Saturation=-.08
-cc.TintColor=Color3.fromRGB(235,218,207); cc.Parent=Lighting
+local originalSpawns={}
+local namedSpawns={}
+local roads={}
+local flatFallback={}
+local scriptsRemoved=0
+local parts=0
 
--- wind
-workspace.GlobalWind=Vector3.new(15,0,5)
-local wa=load(WIND); local wc=wa:FindFirstChild("WindController",true)
-assert(wc and wc:IsA("LocalScript") and wc:FindFirstChild("WindLines") and wc:FindFirstChild("WindShake"),"wind asset incomplete")
-local w=wc:Clone(); w.Name="WindController"; w:SetAttribute("AssetId",WIND); w.Parent=SP.StarterPlayerScripts; wa:Destroy()
+for _,d in ipairs(map:GetDescendants()) do
+ if d:IsA("SpawnLocation") then
+  table.insert(originalSpawns,d)
+ end
+ if d:IsA("LuaSourceContainer") then
+  scriptsRemoved+=1
+ elseif d:IsA("BasePart") then
+  parts+=1
+  local n=d.Name:lower()
+  if not d:IsA("SpawnLocation") and (n:find("spawn",1,true) or n:find("lobby",1,true) or n:find("start",1,true)) then
+   table.insert(namedSpawns,d)
+  end
+  if d.CFrame.UpVector.Y>.93 then
+   if n:find("road",1,true) or n:find("street",1,true) or n:find("sidewalk",1,true) then table.insert(roads,d) end
+   if d.Size.X*d.Size.Z>1500 then table.insert(flatFallback,d) end
+  end
+ end
+end
+assert(parts>13000,"Brookhaven incomplete: "..parts)
 
--- identify actual green horizontal map surfaces, tag them, and add sparse grass only there
+-- Remove all embedded free-model code; keep geometry exactly where it came from.
+for _,d in ipairs(map:GetDescendants()) do
+ if d:IsA("LuaSourceContainer") then
+  d:Destroy()
+ elseif d:IsA("BasePart") then
+  d.Anchored=true
+  d.CanTouch=false
+  pcall(function() if d:IsA("MeshPart") then d.RenderFidelity=Enum.RenderFidelity.Automatic end end)
+ end
+end
+
+-- Remove only invisible/interaction house-system markers, never reshape the hills/lots.
+local removedHouseSystems=0
+for _,d in ipairs(map:GetDescendants()) do
+ local n=d.Name:lower()
+ if n=="001_maphouseteleports" or n=="buyhouse" or n:find("housebutton",1,true) or n:find("plotofland",1,true) then
+  removedHouseSystems+=1
+  d:Destroy()
+ end
+end
+
+-- Green ground: no extra geometry. Only give actual large green flat surfaces Grass material.
 local green={}
-for _,p in ipairs(map:GetDescendants()) do
- if p:IsA("BasePart") and p.CFrame.UpVector.Y>.92 and p.Size.X>=5 and p.Size.Z>=5 then
-  local c=p.Color
-  local greenish=(c.G>c.R*1.08 and c.G>c.B*1.04) or p.Material==Enum.Material.Grass
-  local n=p.Name:lower()
-  if greenish and not n:find("tree",1,true) and not n:find("leaf",1,true) then
-   table.insert(green,p); CS:AddTag(p,"XNGreenGround")
+for _,d in ipairs(map:GetDescendants()) do
+ if d:IsA("BasePart") and d.CFrame.UpVector.Y>.90 and d.Size.X*d.Size.Z>260 then
+  local c=d.Color
+  local n=d.Name:lower()
+  local parent=(d.Parent and d.Parent.Name or ""):lower()
+  local greenish=(c.G>c.R*1.10 and c.G>c.B*1.05 and c.G>.18) or d.Material==Enum.Material.Grass
+  local foliage=n:find("leaf",1,true) or n:find("bush",1,true) or parent:find("tree",1,true)
+  if greenish and not foliage then
+   d.Material=Enum.Material.Grass
+   CS:AddTag(d,"XNGreenGround")
+   table.insert(green,d)
   end
  end
 end
-assert(#green>20,"too few green ground surfaces "..#green)
+assert(#green>=8,"green ground detection failed")
 
-local grass=Instance.new("Folder"); grass.Name="XN_Grass"; grass.Parent=workspace
-local gp=RaycastParams.new(); gp.FilterType=Enum.RaycastFilterType.Include; gp.FilterDescendantsInstances=green; gp.IgnoreWater=true
-local rng=Random.new(10222); local grassCount=0
-for i=1,math.min(420,#green*4) do
- local s=green[rng:NextInteger(1,#green)]
- local x=rng:NextNumber(-s.Size.X*.45,s.Size.X*.45); local z=rng:NextNumber(-s.Size.Z*.45,s.Size.Z*.45)
- local origin=s.CFrame:PointToWorldSpace(Vector3.new(x,8,z))
- local hit=workspace:Raycast(origin,Vector3.new(0,-18,0),gp)
- if hit and hit.Instance==s then
-  local blade=Instance.new("Part"); blade.Name="GrassPatch"; blade.Anchored=true; blade.CanCollide=false; blade.CanTouch=false; blade.CanQuery=false
-  blade.Material=Enum.Material.Grass; blade.Color=s.Color; blade.Size=Vector3.new(rng:NextNumber(.12,.22),rng:NextNumber(.9,1.5),rng:NextNumber(.12,.22))
-  blade.CFrame=CFrame.new(hit.Position+Vector3.new(0,blade.Size.Y*.5,0))*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),rng:NextNumber(-.08,.08))
-  blade.Parent=grass; grassCount+=1
- end
-end
-rt:SetAttribute("GreenSurfaces",#green); rt:SetAttribute("GrassBlades",grassCount)
-
--- tag foliage for WindShake, never trunks
+-- Subtle wind, foliage only.
+workspace.GlobalWind=Vector3.new(11,0,3.5)
 local windTagged=0
-for _,p in ipairs(map:GetDescendants()) do
- if p:IsA("BasePart") then
-  local n=p.Name:lower(); local c=p.Color
-  if (n:find("leaf",1,true) or n:find("leaves",1,true) or (c.G>c.R*1.18 and p.Size.Y>2 and p.Size.X<80)) and p.Material~=Enum.Material.Wood and p.Material~=Enum.Material.WoodPlanks then
-   CS:AddTag(p,"WindShake"); p:SetAttribute("WindPower",.28); p:SetAttribute("WindSpeed",15); windTagged+=1
+for _,d in ipairs(map:GetDescendants()) do
+ if d:IsA("BasePart") then
+  local n=d.Name:lower()
+  local p=(d.Parent and d.Parent.Name or ""):lower()
+  local gp=(d.Parent and d.Parent.Parent and d.Parent.Parent.Name or ""):lower()
+  local foliage=n:find("leaf",1,true) or n:find("leaves",1,true) or n:find("bush",1,true)
+   or p:find("tree",1,true) or gp:find("tree",1,true)
+  if foliage and d.Material~=Enum.Material.Wood and d.Material~=Enum.Material.WoodPlanks and d.Size.X*d.Size.Z<1800 then
+   CS:AddTag(d,"WindShake")
+   d:SetAttribute("WindPower",.22)
+   d:SetAttribute("WindSpeed",13)
+   windTagged+=1
   end
  end
 end
-rt:SetAttribute("WindTagged",windTagged)
+local wa=load(WIND_ID)
+local wc=wa:FindFirstChild("WindController",true)
+assert(wc and wc:IsA("LocalScript") and wc:FindFirstChild("WindLines") and wc:FindFirstChild("WindShake"),"wind asset invalid")
+local wind=wc:Clone(); wind.Name="WindController"; wind:SetAttribute("AssetId",WIND_ID); wind.Parent=SP.StarterPlayerScripts
+wa:Destroy()
 
--- Halloween: pumpkins only, arranged in small groups on green ground
-local ha=load(HALLOWEEN); local templates={}
-for _,d in ipairs(ha:GetDescendants()) do if d:IsA("BasePart") and d.Name=="Pumpkin" then table.insert(templates,d:Clone()) end end
-ha:Destroy(); assert(#templates>0,"pumpkins missing")
-local deco=Instance.new("Folder"); deco.Name="XN_Halloween"; deco:SetAttribute("OnlyPumpkins",true); deco.Parent=workspace
+-- Lighting remains bright and close to the original city look; Halloween is only a slight autumn tint.
+Lighting.ClockTime=16.1
+Lighting.Brightness=2.35
+Lighting.ExposureCompensation=0
+Lighting.Ambient=Color3.fromRGB(118,116,120)
+Lighting.OutdoorAmbient=Color3.fromRGB(150,148,151)
+Lighting.GlobalShadows=true
+local at=Instance.new("Atmosphere"); at.Name="XNAtmosphere"; at.Density=.08; at.Offset=.05
+at.Color=Color3.fromRGB(210,205,202); at.Decay=Color3.fromRGB(145,133,130); at.Haze=.35; at.Glare=.02; at.Parent=Lighting
+local cc=Instance.new("ColorCorrectionEffect"); cc.Name="XNColor"; cc.Contrast=.035; cc.Saturation=-.025
+cc.TintColor=Color3.fromRGB(255,244,237); cc.Parent=Lighting
+
+-- Halloween, intentionally sparse. Pumpkins only, on actual green surfaces.
+local ha=load(HALLOWEEN_ID)
+local pumpkinTemplates={}
+for _,d in ipairs(ha:GetDescendants()) do
+ if d:IsA("BasePart") and d.Name=="Pumpkin" then
+  local p=d:Clone(); p.Anchored=true; p.CanCollide=false; p.CanTouch=false; table.insert(pumpkinTemplates,p)
+ end
+end
+ha:Destroy()
+assert(#pumpkinTemplates>0,"pumpkin template missing")
+local halloween=Instance.new("Folder"); halloween.Name="XN_Halloween"; halloween:SetAttribute("OnlyPumpkins",true); halloween.Parent=workspace
+table.sort(green,function(a,b) return a.Size.X*a.Size.Z>b.Size.X*b.Size.Z end)
+local rng=Random.new(10322)
 local pumpkinCount=0
-for cluster=1,10 do
- local s=green[((cluster-1)%#green)+1]
- local folder=Instance.new("Folder"); folder.Name=string.format("PumpkinCluster_%02d",cluster); folder.Parent=deco
+for cluster=1,math.min(6,#green) do
+ local s=green[cluster]
+ local folder=Instance.new("Folder"); folder.Name=string.format("PumpkinCluster_%02d",cluster); folder.Parent=halloween
  for j=1,3 do
-  local lx=(j-2)*3.2; local lz=(j%2==0) and 1.8 or -1.2
-  local o=s.CFrame:PointToWorldSpace(Vector3.new(lx,10,lz))
-  local hit=workspace:Raycast(o,Vector3.new(0,-22,0),gp)
-  if hit and hit.Instance==s then
-   local p=templates[((pumpkinCount)%#templates)+1]:Clone(); p.Name="Pumpkin"; p.Anchored=true; p.CanCollide=false; p.CanTouch=false
-   p.CFrame=CFrame.new(hit.Position+Vector3.new(0,p.Size.Y*.45,0))*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0); p.Parent=folder; pumpkinCount+=1
-  end
+  local p=pumpkinTemplates[((pumpkinCount)%#pumpkinTemplates)+1]:Clone()
+  local lx=(j-2)*2.4
+  local lz=(cluster%2==0 and 1.5 or -1.5)
+  local localTop=Vector3.new(math.clamp(lx,-s.Size.X*.35,s.Size.X*.35),s.Size.Y*.5,math.clamp(lz,-s.Size.Z*.35,s.Size.Z*.35))
+  local pos=s.CFrame:PointToWorldSpace(localTop)
+  p.CFrame=CFrame.new(pos+Vector3.new(0,p.Size.Y*.45,0))*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0)
+  p.Parent=folder
+  pumpkinCount+=1
  end
 end
-for _,p in ipairs(templates) do p:Destroy() end
+for _,p in ipairs(pumpkinTemplates) do p:Destroy() end
+
+-- Correct spawn selection: use original map intent first, never highest surface raycast.
+local mapCF,mapSize=map:GetBoundingBox()
+local chosen=nil
+local sourceType=""
+local sourceName=""
+
+local function validPart(p)
+ return p and p.Parent and p:IsA("BasePart")
+end
+
+if #originalSpawns>0 then
+ table.sort(originalSpawns,function(a,b)
+  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
+  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
+  return da<db
+ end)
+ chosen=originalSpawns[1]; sourceType="OriginalSpawnLocation"; sourceName=chosen.Name
+elseif #namedSpawns>0 then
+ table.sort(namedSpawns,function(a,b)
+  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
+  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
+  return da<db
+ end)
+ chosen=namedSpawns[1]; sourceType="NamedSpawn"; sourceName=chosen.Name
+elseif #roads>0 then
+ table.sort(roads,function(a,b)
+  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
+  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
+  return da<db
+ end)
+ chosen=roads[1]; sourceType="RoadFallback"; sourceName=chosen.Name
+else
+ table.sort(flatFallback,function(a,b)
+  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
+  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
+  if math.abs(da-db)<1 then return a.Position.Y<b.Position.Y end
+  return da<db
+ end)
+ chosen=flatFallback[1]; sourceType="FlatFallback"; sourceName=chosen and chosen.Name or ""
+end
+assert(validPart(chosen),"no reliable spawn source")
+
+local spawn=Instance.new("SpawnLocation")
+spawn.Name="XNSpawn"
+spawn.Size=Vector3.new(8,.5,8)
+spawn.Transparency=1
+spawn.CanCollide=false
+spawn.CanTouch=false
+spawn.Anchored=true
+spawn.Neutral=true
+spawn.Enabled=true
+spawn.Duration=0
+spawn.CFrame=CFrame.new(chosen.Position+chosen.CFrame.UpVector*(chosen.Size.Y*.5+3.2))
+spawn:SetAttribute("SourceType",sourceType)
+spawn:SetAttribute("SourceName",sourceName)
+spawn:SetAttribute("SourcePosition",chosen.Position)
+spawn.Parent=workspace
+
+rt:SetAttribute("ScriptsRemoved",scriptsRemoved)
+rt:SetAttribute("MapParts",parts)
+rt:SetAttribute("GreenGround",#green)
+rt:SetAttribute("WindTagged",windTagged)
 rt:SetAttribute("Pumpkins",pumpkinCount)
+rt:SetAttribute("SpawnSourceType",sourceType)
+rt:SetAttribute("SpawnSourceName",sourceName)
+rt:SetAttribute("HouseSystemsRemoved",removedHouseSystems)
 
--- safe spawn near center
-local mp=RaycastParams.new(); mp.FilterType=Enum.RaycastFilterType.Include; mp.FilterDescendantsInstances={map}; mp.IgnoreWater=true
-local spawnPos
-for r=0,1000,50 do for k=1,30 do local a=k/30*math.pi*2; local hit=workspace:Raycast(Vector3.new(math.cos(a)*r,size.Y+300,math.sin(a)*r),Vector3.new(0,-(size.Y+800),0),mp); if hit and hit.Normal.Y>.75 then spawnPos=hit.Position break end end if spawnPos then break end end
-assert(spawnPos,"spawn not found")
-local sp=Instance.new("SpawnLocation"); sp.Name="XNSpawn"; sp.Size=Vector3.new(8,.5,8); sp.Transparency=1; sp.CanCollide=false; sp.Anchored=true; sp.Neutral=true; sp.Enabled=true; sp.CFrame=CFrame.new(spawnPos+Vector3.new(0,.25,0)); sp.Parent=workspace
-
--- fullscreen loading + glitch + first-person-to-third-person zoom, camera rotation remains player controlled
-local loader=Instance.new("LocalScript"); loader.Name="XNLoading"; loader.Source=[[
+-- Clean fullscreen loading. Player camera remains Classic and freely rotatable.
+local loader=Instance.new("LocalScript")
+loader.Name="XNLoading"
+loader.Source=[[
 local RF=game:GetService("ReplicatedFirst")
 local Players=game:GetService("Players")
 local TweenService=game:GetService("TweenService")
 local RunService=game:GetService("RunService")
 RF:RemoveDefaultLoadingScreen()
-local p=Players.LocalPlayer
-local gui=Instance.new("ScreenGui"); gui.Name="XNLoading"; gui.IgnoreGuiInset=true; gui.DisplayOrder=10000; gui.ResetOnSpawn=false
-local bg=Instance.new("Frame"); bg.Size=UDim2.fromScale(1,1); bg.BackgroundColor3=Color3.fromRGB(7,7,9); bg.BorderSizePixel=0; bg.Parent=gui
-local txt=Instance.new("TextLabel"); txt.AnchorPoint=Vector2.new(.5,.5); txt.Position=UDim2.fromScale(.5,.5); txt.Size=UDim2.fromScale(.72,.12); txt.BackgroundTransparency=1
-txt.Text="acessando…"; txt.TextColor3=Color3.fromRGB(238,238,242); txt.TextScaled=true; txt.Font=Enum.Font.BuilderSans; txt.Parent=bg
-local constraint=Instance.new("UITextSizeConstraint"); constraint.MaxTextSize=42; constraint.MinTextSize=20; constraint.Parent=txt
-gui.Parent=p:WaitForChild("PlayerGui")
-for i=1,16 do
- txt.Position=UDim2.fromScale(.5+((i%3)-1)*.003,.5+((i%2)*2-1)*.002)
- txt.TextTransparency=(i%5==0) and .28 or 0
- if i%4==0 then bg.BackgroundColor3=Color3.fromRGB(13,10,15) else bg.BackgroundColor3=Color3.fromRGB(7,7,9) end
+local player=Players.LocalPlayer
+player.CameraMode=Enum.CameraMode.Classic
+
+local gui=Instance.new("ScreenGui")
+gui.Name="XNLoading"
+gui.IgnoreGuiInset=true
+gui.ResetOnSpawn=false
+gui.DisplayOrder=10000
+
+local bg=Instance.new("Frame")
+bg.Size=UDim2.fromScale(1,1)
+bg.BorderSizePixel=0
+bg.BackgroundColor3=Color3.fromRGB(8,8,10)
+bg.Parent=gui
+
+local txt=Instance.new("TextLabel")
+txt.AnchorPoint=Vector2.new(.5,.5)
+txt.Position=UDim2.fromScale(.5,.5)
+txt.Size=UDim2.new(.7,0,0,54)
+txt.BackgroundTransparency=1
+txt.Text="acessando…"
+txt.TextColor3=Color3.fromRGB(240,240,244)
+txt.TextSize=26
+txt.Font=Enum.Font.BuilderSans
+txt.Parent=bg
+
+gui.Parent=player:WaitForChild("PlayerGui")
+
+-- Short restrained glitch, not a flashing effect.
+for i=1,10 do
+ local dx=((i%3)-1)*2
+ txt.Position=UDim2.new(.5,dx,.5,(i%2==0) and 1 or -1)
+ txt.TextTransparency=(i==4 or i==8) and .18 or 0
  task.wait(.055)
 end
-txt.Position=UDim2.fromScale(.5,.5); txt.TextTransparency=0
+txt.Position=UDim2.fromScale(.5,.5)
+txt.TextTransparency=0
+
 if not game:IsLoaded() then game.Loaded:Wait() end
-local char=p.Character or p.CharacterAdded:Wait(); char:WaitForChild("HumanoidRootPart")
-p.CameraMode=Enum.CameraMode.Classic
-local oldMin,oldMax=p.CameraMinZoomDistance,p.CameraMaxZoomDistance
-p.CameraMinZoomDistance=.5; p.CameraMaxZoomDistance=.55
+local char=player.Character or player.CharacterAdded:Wait()
+char:WaitForChild("HumanoidRootPart")
+
+local oldMin,oldMax=player.CameraMinZoomDistance,player.CameraMaxZoomDistance
+player.CameraMinZoomDistance=.5
+player.CameraMaxZoomDistance=.55
 task.wait(.12)
-TweenService:Create(bg,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{BackgroundTransparency=1}):Play()
-TweenService:Create(txt,TweenInfo.new(.28),{TextTransparency=1}):Play()
-for z=.55,10,.45 do p.CameraMinZoomDistance=z; p.CameraMaxZoomDistance=z+.08; RunService.RenderStepped:Wait() end
-p.CameraMinZoomDistance=oldMin; p.CameraMaxZoomDistance=oldMax
-task.wait(.1); gui:Destroy()
-]]; loader.Parent=RF
-
-local guard=Instance.new("Script"); guard.Name="XNServer"; guard.Source=[[
-local Players=game:GetService("Players"); local sp=workspace:WaitForChild("XNSpawn")
-local function hook(p)
- p.RespawnLocation=sp
- p.CharacterAdded:Connect(function(c) task.spawn(function() while c.Parent do local r=c:FindFirstChild("HumanoidRootPart"); if r and r.Position.Y<-650 then c:PivotTo(sp.CFrame*CFrame.new(0,4,0)) end task.wait(.5) end end) end)
+for z=.55,10,.52 do
+ player.CameraMinZoomDistance=z
+ player.CameraMaxZoomDistance=z+.08
+ RunService.RenderStepped:Wait()
 end
-Players.PlayerAdded:Connect(hook); for _,p in ipairs(Players:GetPlayers()) do hook(p) end
-]]; guard.Parent=SSS
+player.CameraMinZoomDistance=oldMin
+player.CameraMaxZoomDistance=oldMax
 
-return {version=102,map="Brookhaven Map",scriptsRemoved=scripts,greenSurfaces=#green,grass=grassCount,windTagged=windTagged,pumpkins=pumpkinCount}
+TweenService:Create(txt,TweenInfo.new(.22),{TextTransparency=1}):Play()
+local fade=TweenService:Create(bg,TweenInfo.new(.34),{BackgroundTransparency=1})
+fade:Play(); fade.Completed:Wait()
+gui:Destroy()
+]]
+loader.Parent=RF
+
+local server=Instance.new("Script")
+server.Name="XNServer"
+server.Source=[[
+local Players=game:GetService("Players")
+local spawn=workspace:WaitForChild("XNSpawn")
+local function protect(c)
+ task.spawn(function()
+  while c.Parent do
+   local root=c:FindFirstChild("HumanoidRootPart")
+   if root and root.Position.Y<workspace.FallenPartsDestroyHeight+40 then c:PivotTo(spawn.CFrame*CFrame.new(0,4,0)) end
+   task.wait(.6)
+  end
+ end)
+end
+local function hook(p)
+ p.RespawnLocation=spawn
+ p.CharacterAdded:Connect(protect)
+ if p.Character then protect(p.Character) end
+end
+Players.PlayerAdded:Connect(hook)
+for _,p in ipairs(Players:GetPlayers()) do hook(p) end
+]]
+server.Parent=SSS
+
+return {
+ version=VERSION,
+ mapParts=parts,
+ scriptsRemoved=scriptsRemoved,
+ greenGround=#green,
+ windTagged=windTagged,
+ pumpkins=pumpkinCount,
+ spawnSourceType=sourceType,
+ spawnSourceName=sourceName
+}
