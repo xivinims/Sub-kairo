@@ -148,9 +148,9 @@ sanitize(island)
 -- A ilha original é muito pequena perto de um avatar R15 normal.
 -- Aumenta só um pouco, sem mudar formato/proporções.
 pcall(function()
-	island:ScaleTo(island:GetScale()*92.5)
+	island:ScaleTo(island:GetScale()*82)
 end)
-island:SetAttribute("ScaleMultiplier",92.5)
+island:SetAttribute("ScaleMultiplier",82)
 
 local islandCF,islandSize=bounds(island)
 assert(islandSize,"Floating Island has invalid bounds")
@@ -234,14 +234,14 @@ grassFolder:SetAttribute("Rule","SeamlessTiledGreenSkinnedGrass")
 grassFolder:SetAttribute("SingleMeshOnly",true)
 grassFolder:SetAttribute("SourceBones",sourceBones)
 grassFolder:SetAttribute("SourceMeshId",sourceMesh.MeshId)
-grassFolder:SetAttribute("TileOverlap",1.012)
+grassFolder:SetAttribute("TileOverlap",1.72)
 grassFolder.Parent=workspace
 
 -- Mantém os tiles perto do tamanho natural do asset (100x100) para a densidade
 -- da grama não virar pontinhos, mas faz as bordas sobreporem 1.2% para NUNCA
 -- existir fresta entre uma grama e outra.
-local NATURAL_TILE=96
-local OVERLAP=1.012
+local NATURAL_TILE=52
+local OVERLAP=1.72
 local placed=0
 local coveredSurfaces=0
 
@@ -278,7 +278,7 @@ for surfaceIndex,surface in ipairs(greenSurfaces) do
 			-- Orientação idêntica ao piso. Centro de cada tile calculado pela própria
 			-- divisão da superfície, então eles se encostam perfeitamente.
 			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx,surface.Size.Y*.5+1.92,lz)
+				*CFrame.new(lx,surface.Size.Y*.5+1.38,lz)
 			mesh.Parent=model
 
 			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
@@ -303,6 +303,8 @@ assert(coveredSurfaces==#greenSurfaces,"Not every green surface received Skinned
 assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
 runtime:SetAttribute("GrassPatchCount",placed)
 runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
+runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
+runtime:SetAttribute("GrassTileSpacing",NATURAL_TILE)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
 
 -- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
@@ -377,9 +379,9 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.045,55,75)
+local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.062,72,92)
 scaleHeight(tree,targetTreeHeight)
-assert(bottomPlace(tree,treeGround.Position,0,.22),"Tree grounding failed")
+assert(bottomPlace(tree,treeGround.Position,0,.38),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
