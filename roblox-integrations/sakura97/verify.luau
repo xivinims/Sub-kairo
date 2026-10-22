@@ -61,8 +61,15 @@ assert(grass,"ParkGrass ausente")
 assert(grass:GetAttribute("PlacementRule")=="ParkGreenGroundOnly","Regra de colocacao da grama errada")
 
 local greenGround=CollectionService:GetTagged("ParkGreenGround")
-assert(#greenGround>=12,"Poucas superficies verdes marcadas: "..tostring(#greenGround))
-assert((runtime:GetAttribute("GreenGroundSurfaceCount") or 0)==#greenGround,"Contagem de superficies verdes inconsistente")
+assert(#greenGround==5,"Esperava exatamente 5 pisos verdes principais: "..tostring(#greenGround))
+assert((runtime:GetAttribute("GreenGroundSurfaceCount") or 0)==5,"Contagem de superficies verdes inconsistente")
+for _,floor in ipairs(greenGround) do
+	assert(floor:IsA("BasePart"),"ParkGreenGround nao e BasePart")
+	assert(floor.Name=="Grass","Superficie verde inesperada: "..floor.Name)
+	assert(floor.Parent and floor.Parent.Name=="Structure","Grama marcada fora de Structure")
+	assert(floor.Material==Enum.Material.Grass,"Piso verde sem material Grass")
+	assert(floor.Size.Y<=1.2 and floor.Size.X>=70 and floor.Size.Z>=6,"Dimensao inesperada do piso verde")
+end
 
 local greenParams=RaycastParams.new()
 greenParams.FilterType=Enum.RaycastFilterType.Include
@@ -70,7 +77,7 @@ greenParams.FilterDescendantsInstances=greenGround
 greenParams.IgnoreWater=true
 
 local grassCount=#grass:GetChildren()
-assert(grassCount>=55 and grassCount<=90,"Quantidade de grama extra estranha: "..tostring(grassCount))
+assert(grassCount>=60 and grassCount<=90,"Quantidade de grama extra estranha: "..tostring(grassCount))
 assert((runtime:GetAttribute("StaticGrassCount") or 0)==grassCount,"Contagem ParkGrass inconsistente")
 
 local grassOnGreen=0
