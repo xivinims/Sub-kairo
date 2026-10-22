@@ -273,6 +273,55 @@ end
 out.nametagSources=scriptSources(123212555736117)
 out.loadingSources=scriptSources(73186563008540)
 
+
+local function inspectDeep(id)
+  local result={id=id,loaded=false,top={},models={},parts={},scripts={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  for _,child in ipairs(asset:GetChildren()) do
+    table.insert(result.top,{name=child.Name,class=child.ClassName})
+  end
+  for _,d in ipairs(asset:GetDescendants()) do
+    if d:IsA("Model") and #result.models<60 then
+      local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+      table.insert(result.models,{
+        name=d.Name,
+        parent=d.Parent and d.Parent.Name or "",
+        parts=(function()
+          local n=0
+          for _,x in ipairs(d:GetDescendants()) do if x:IsA("BasePart") then n+=1 end end
+          return n
+        end)(),
+        size=okb and {size.X,size.Y,size.Z} or nil
+      })
+    elseif d:IsA("BasePart") and #result.parts<120 then
+      table.insert(result.parts,{
+        name=d.Name,
+        class=d.ClassName,
+        parent=d.Parent and d.Parent.Name or "",
+        material=tostring(d.Material),
+        color={d.Color.R,d.Color.G,d.Color.B},
+        size={d.Size.X,d.Size.Y,d.Size.Z},
+        transparency=d.Transparency
+      })
+    elseif d:IsA("LuaSourceContainer") and #result.scripts<20 then
+      table.insert(result.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""})
+    end
+  end
+  result.totalModels=0
+  result.totalParts=0
+  for _,d in ipairs(asset:GetDescendants()) do
+    if d:IsA("Model") then result.totalModels+=1 end
+    if d:IsA("BasePart") then result.totalParts+=1 end
+  end
+  asset:Destroy()
+  return result
+end
+
+out.pristinePark=inspectDeep(13366955960)
+out.eerieTomb=inspectDeep(12489961338)
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
