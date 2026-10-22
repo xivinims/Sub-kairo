@@ -16,7 +16,7 @@ end
 local island=workspace:FindFirstChild("FloatingIsland")
 assert(island and island:IsA("Model"),"FloatingIsland ausente")
 assert(island:GetAttribute("AssetId")==10485490600,"Ilha nao veio do asset pedido")
-assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-92.5)<.01,"Ilha nao esta 50x maior que a versao anterior")
+assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-82)<.01,"Ilha nao esta 50x maior que a versao anterior")
 local islandParts=0
 for _,d in ipairs(island:GetDescendants()) do
 	if d:IsA("BasePart") then islandParts+=1 end
@@ -40,6 +40,8 @@ local patches=#grass:GetChildren()
 assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
+assert((runtime:GetAttribute("GrassVisualOverlap") or 0)>=1.7,"Grama sem sobreposicao suficiente")
+assert((runtime:GetAttribute("GrassTileSpacing") or 999)<=52,"Espacamento da grama grande demais")
 
 local checked=0
 local covered={}
