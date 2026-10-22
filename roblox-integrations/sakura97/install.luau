@@ -51,7 +51,7 @@ runtime:SetAttribute("MapType", "SakuraIsland")
 -- ============ 3. ILHA + TERRENO ============
 local function buildIsland()
 	Terrain:Clear()
-	pcall(function() Terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(78, 102, 56)) end)
+	pcall(function() Terrain:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(86, 112, 58)) end)
 	-- ilha principal com curvas suaves
 	local center = Vector3.new(0, 0, 0)
 	local radius = 220
@@ -68,7 +68,7 @@ local function buildIsland()
 				end
 				-- FillBlock não aceita extents negativos/vazios.
 				h = math.max(1.5, h)
-				Terrain:FillBlock(CFrame.new(x, h/2, z), Vector3.new(10, h, 10), Enum.Material.Ground)
+				Terrain:FillBlock(CFrame.new(x, h/2, z), Vector3.new(10, h, 10), Enum.Material.Grass)
 			end
 		end
 	end
@@ -163,67 +163,69 @@ setupSkyAndLighting()
 
 -- ============ 5. VENTO ============
 local function setupWind()
-	if workspace:FindFirstChild("WindEffects") then
-		workspace.WindEffects:Destroy()
-	end
+	local old=workspace:FindFirstChild("WindEffects")
+	if old then old:Destroy() end
 
 	local folder=Instance.new("Folder")
 	folder.Name="WindEffects"
 	folder.Parent=workspace
+	folder:SetAttribute("AssetId",11946229834)
 
-	workspace.GlobalWind=Vector3.new(12,0,4)
+	-- Strong enough to visibly move Roblox grass and any wind-enabled vegetation.
+	workspace.GlobalWind=Vector3.new(18,0,6)
 
-	local ok,windAsset=pcall(function()
+	local ok,asset=pcall(function()
 		return AssetService:LoadAssetAsync(11946229834)
 	end)
-	if not ok or not windAsset then
-		warn("[Sakura97] Wind asset 11946229834 failed")
-		return
+	if not ok or not asset then
+		error("Wind Effects 11946229834 failed to load")
 	end
 
-	local emitters={}
-	for _,d in ipairs(windAsset:GetDescendants()) do
-		if d:IsA("ParticleEmitter") then
-			table.insert(emitters,d)
+	local function prep(inst)
+		for _,d in ipairs(inst:GetDescendants()) do
+			if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+				d:Destroy()
+			elseif d:IsA("BasePart") then
+				d.Anchored=true
+				d.CanCollide=false
+				d.CanTouch=false
+				d.CanQuery=false
+			elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") then
+				d.Enabled=true
+			end
 		end
 	end
 
-	local anchors={
-		Vector3.new(0,14,-150),
-		Vector3.new(90,15,-90),
-		Vector3.new(145,14,0),
-		Vector3.new(90,15,90),
-		Vector3.new(0,14,150),
-		Vector3.new(-90,15,90),
-		Vector3.new(-145,14,0),
-		Vector3.new(-90,15,-90),
+	prep(asset)
+	local spots={
+		Vector3.new(0,10,-135),
+		Vector3.new(105,11,-35),
+		Vector3.new(75,12,105),
+		Vector3.new(-80,11,105),
+		Vector3.new(-115,10,-35),
 	}
 
-	for i,pos in ipairs(anchors) do
-		local host=Instance.new("Part")
-		host.Name="WindAnchor_"..i
-		host.Size=Vector3.new(1,1,1)
-		host.Anchored=true
-		host.CanCollide=false
-		host.CanTouch=false
-		host.CanQuery=false
-		host.Transparency=1
-		host.Position=pos
-		host.Parent=folder
-
-		local att=Instance.new("Attachment")
-		att.Parent=host
-		for _,src in ipairs(emitters) do
-			local em=src:Clone()
-			em.Enabled=true
-			em.Parent=att
+	local placed=0
+	for i,pos in ipairs(spots) do
+		local clone=asset:Clone()
+		clone.Name="WindEffect_"..i
+		prep(clone)
+		clone.Parent=folder
+		local model=clone:IsA("Model") and clone or nil
+		if model and model:FindFirstChildWhichIsA("BasePart",true) then
+			pcall(function() model:PivotTo(CFrame.new(pos)) end)
+		else
+			for _,p in ipairs(clone:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.CFrame=p.CFrame+pos
+				end
+			end
 		end
+		placed+=1
 	end
-
-	folder:SetAttribute("EmitterSourceCount",#emitters)
-	folder:SetAttribute("AssetId",11946229834)
-	windAsset:Destroy()
-	print("[Sakura97] Vento visivel ativo, emitters:",#emitters)
+	asset:Destroy()
+	folder:SetAttribute("Copies",placed)
+	print("[Sakura97] Wind Effects exact asset active, copies:",placed)
 end
 setupWind()
 
@@ -394,6 +396,21 @@ local function nearStonePath(x,z,radius)
 	return false
 end
 
+local PATH_POINTS={}
+for i=1,31 do
+	local z=-160+(i-1)*9.5
+	local x=-20+math.sin(i*.61)*8+math.sin(i*.23)*4.5
+	table.insert(PATH_POINTS,Vector3.new(x,0,z))
+end
+
+local function nearStonePath(x,z,radius)
+	local p=Vector2.new(x,z)
+	for _,q in ipairs(PATH_POINTS) do
+		if (p-Vector2.new(q.X,q.Z)).Magnitude<=radius then return true end
+	end
+	return false
+end
+
 local function placeStonePath()
 	local old=workspace:FindFirstChild("StonePath")
 	if old then old:Destroy() end
@@ -402,62 +419,70 @@ local function placeStonePath()
 	folder.Name="StonePath"
 	folder.Parent=workspace
 	folder:SetAttribute("AssetId",136068114177879)
-	folder:SetAttribute("Style","ThinSpacedSteppingStones")
+	folder:SetAttribute("Style","ExactAssetSteppingStones")
 
 	local ok,pathAsset=pcall(function()
 		return AssetService:LoadAssetAsync(136068114177879)
 	end)
-
-	local template=nil
-	if ok and pathAsset then
-		-- Use one real stone piece from the asset, not the whole road model.
-		template=pathAsset:FindFirstChildWhichIsA("MeshPart",true)
-			or pathAsset:FindFirstChildWhichIsA("UnionOperation",true)
-			or pathAsset:FindFirstChildWhichIsA("Part",true)
-		if template then template=template:Clone() end
-		pathAsset:Destroy()
+	if not ok or not pathAsset then
+		error("Stone Path asset 136068114177879 failed to load")
 	end
 
-	if not template then
-		template=Instance.new("Part")
-		template.Name="StoneTile"
-		template.Size=Vector3.new(3.2,.28,1.55)
-		template.Material=Enum.Material.Slate
-		template.Color=Color3.fromRGB(100,95,90)
-		template.Anchored=true
+	local pool={}
+	for _,d in ipairs(pathAsset:GetDescendants()) do
+		if d:IsA("BasePart") and d.Transparency<.95 and d.Size.Magnitude>.2 then
+			local name=d.Name:lower()
+			local preferred=d:IsA("MeshPart") or d:IsA("UnionOperation")
+				or name:find("stone",1,true) or name:find("rock",1,true)
+				or name:find("path",1,true) or name:find("paver",1,true)
+			if preferred then table.insert(pool,d) end
+		end
 	end
+	if #pool==0 then
+		for _,d in ipairs(pathAsset:GetDescendants()) do
+			if d:IsA("BasePart") and d.Transparency<.95 and d.Size.Magnitude>.2 then
+				table.insert(pool,d)
+			end
+		end
+	end
+	assert(#pool>0,"Stone Path asset has no usable stone parts")
 
-	template.Anchored=true
-	template.CanCollide=true
-
+	local rng=Random.new(136068)
 	for i,node in ipairs(PATH_POINTS) do
-		local ray=workspace:Raycast(
-			Vector3.new(node.X,60,node.Z),
-			Vector3.new(0,-110,0)
-		)
+		local ray=workspace:Raycast(Vector3.new(node.X,70,node.Z),Vector3.new(0,-130,0))
 		if ray and ray.Material~=Enum.Material.Water then
-			local tile=template:Clone()
-			tile.Name=string.format("Stone_%02d",i)
-
-			local base=tile.Size
-			local maxXZ=math.max(base.X,base.Z)
-			local targetLong=3.5+((i%3)-1)*.35
-			local factor=maxXZ>0 and targetLong/maxXZ or 1
-			tile.Size=Vector3.new(
-				math.max(.8,base.X*factor),
-				math.min(.32,math.max(.16,base.Y*factor)),
-				math.max(.7,base.Z*factor)
+			-- Clear only a small patch of grass directly under each stone.
+			Terrain:FillBlock(
+				CFrame.new(ray.Position-Vector3.new(0,.18,0)),
+				Vector3.new(4.3,.5,2.8),
+				Enum.Material.Ground
 			)
 
-			local yaw=math.rad(math.sin(i*.83)*22 + ((i%2==0) and 7 or -7))
+			local src=pool[((i-1)%#pool)+1]
+			local tile=src:Clone()
+			tile.Name=string.format("ExactStone_%02d",i)
+			tile.Anchored=true
+			tile.CanCollide=true
+			tile.CanTouch=false
+
+			local sx,sz=tile.Size.X,tile.Size.Z
+			local long=math.max(sx,sz)
+			local factor=long>0 and rng:NextNumber(2.7,3.6)/long or 1
+			tile.Size=Vector3.new(
+				math.max(.9,sx*factor),
+				math.clamp(tile.Size.Y*factor,.16,.42),
+				math.max(.75,sz*factor)
+			)
+
+			local yaw=math.rad(math.sin(i*.91)*20+rng:NextNumber(-7,7))
 			tile.CFrame=CFrame.new(ray.Position+Vector3.new(0,.10,0))*CFrame.Angles(0,yaw,0)
 			tile.Parent=folder
 			CollectionService:AddTag(tile,"StonePathTile")
 		end
 	end
-
-	template:Destroy()
-	print("[Sakura97] Estradinha fina com",#folder:GetChildren(),"pedras")
+	folder:SetAttribute("SourceParts",#pool)
+	pathAsset:Destroy()
+	print("[Sakura97] Exact asset stepping stones:",#folder:GetChildren(),"source parts:",#pool)
 end
 placeStonePath()
 
@@ -479,45 +504,99 @@ local function placeGrassAndFlowers()
 		local dist=rng:NextNumber(10,198)
 		local x=math.cos(angle)*dist
 		local z=math.sin(angle)*dist
-
-		if not nearStonePath(x,z,4.6) then
+		if not nearStonePath(x,z,4.5) then
 			local ray=workspace:Raycast(Vector3.new(x,55,z),Vector3.new(0,-100,0))
-			if ray and ray.Material~=Enum.Material.Water then
+			if ray and ray.Material==Enum.Material.Grass then
 				local flower=Instance.new("Part")
 				flower.Name="Wildflower"
-				flower.Size=Vector3.new(.18,.11,.18)
+				flower.Size=Vector3.new(.16,.09,.16)
+				flower.Shape=Enum.PartType.Ball
 				flower.Anchored=true
 				flower.CanCollide=false
 				flower.CanTouch=false
 				flower.Material=Enum.Material.SmoothPlastic
-				flower.Shape=Enum.PartType.Ball
-				if rng:NextNumber()>.58 then
-					flower.Color=Color3.fromRGB(244,242,235)
-				else
-					flower.Color=Color3.fromRGB(211,188,226)
-				end
-				flower.CFrame=CFrame.new(ray.Position+Vector3.new(0,.18,0))
+				flower.Color=(rng:NextNumber()>.58)
+					and Color3.fromRGB(244,242,235)
+					or Color3.fromRGB(211,188,226)
+				flower.CFrame=CFrame.new(ray.Position+Vector3.new(0,.15,0))
 				flower.Parent=flowerFolder
-
-				local stem=Instance.new("Part")
-				stem.Name="Stem"
-				stem.Size=Vector3.new(.035,.22,.035)
-				stem.Anchored=true
-				stem.CanCollide=false
-				stem.CanTouch=false
-				stem.Material=Enum.Material.SmoothPlastic
-				stem.Color=Color3.fromRGB(62,103,51)
-				stem.CFrame=CFrame.new(ray.Position+Vector3.new(0,.08,0))
-				stem.Parent=flowerFolder
 				made+=1
 			end
 		end
 	end
-
 	flowerFolder:SetAttribute("FlowerCount",made)
-	print("[Sakura97] Sem grama alta; flores pequenas:",made)
+	print("[Sakura97] Small flowers:",made)
 end
 placeGrassAndFlowers()
+
+-- ============ 9. GRAMA NORMAL + REACAO LOCAL AO JOGADOR ============
+local oldClient=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("TerrainGrassBend")
+if oldClient then oldClient:Destroy() end
+
+local clientScript=Instance.new("LocalScript")
+clientScript.Name="TerrainGrassBend"
+clientScript.Source=[==========[
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+local player=Players.LocalPlayer
+
+local folder=Instance.new("Folder")
+folder.Name="LocalGrassBend"
+folder.Parent=workspace.CurrentCamera
+
+local blades={}
+local COUNT=120
+local RADIUS=13
+local rng=Random.new(873779)
+
+for i=1,COUNT do
+	local p=Instance.new("Part")
+	p.Name="GrassBlade"
+	p.Size=Vector3.new(.055,rng:NextNumber(.8,1.45),.11)
+	p.Material=Enum.Material.Grass
+	p.Color=Color3.fromRGB(rng:NextInteger(75,98),rng:NextInteger(104,128),rng:NextInteger(48,68))
+	p.Anchored=true
+	p.CanCollide=false
+	p.CanTouch=false
+	p.CanQuery=false
+	p.CastShadow=false
+	p.Parent=folder
+	blades[i]={part=p,angle=rng:NextNumber(0,math.pi*2),rad=rng:NextNumber(1,RADIUS),phase=rng:NextNumber(0,6.28)}
+end
+
+local params=RaycastParams.new()
+params.FilterType=Enum.RaycastFilterType.Exclude
+
+RunService.RenderStepped:Connect(function()
+	local char=player.Character
+	local root=char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	params.FilterDescendantsInstances={char,folder}
+	local t=time()
+	for i,data in ipairs(blades) do
+		local a=data.angle+i*.17
+		local r=data.rad
+		local x=root.Position.X+math.cos(a)*r
+		local z=root.Position.Z+math.sin(a)*r
+		local hit=workspace:Raycast(Vector3.new(x,root.Position.Y+12,z),Vector3.new(0,-30,0),params)
+		local p=data.part
+		if hit and hit.Material==Enum.Material.Grass then
+			local dx=x-root.Position.X
+			local dz=z-root.Position.Z
+			local dist=math.sqrt(dx*dx+dz*dz)
+			local press=math.clamp((5-dist)/5,0,1)
+			local wind=math.sin(t*2.1+data.phase+x*.04+z*.04)*.055
+			local away=math.atan2(dx,dz)
+			p.Transparency=0
+			p.CFrame=CFrame.new(hit.Position+Vector3.new(0,p.Size.Y/2,0))
+				*CFrame.Angles(0,away,wind+press*.55)
+		else
+			p.Transparency=1
+		end
+	end
+end)
+]==========]
+clientScript.Parent=game.StarterPlayer.StarterPlayerScripts
 
 -- ============ 10. SERVER SCRIPT BÁSICO ============
 local serverScript = Instance.new("Script")
