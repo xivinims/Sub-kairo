@@ -116,7 +116,11 @@ for _,container in ipairs({
 	for _,child in ipairs(container:GetChildren()) do child:Destroy() end
 end
 for _,child in ipairs(ReplicatedStorage:GetChildren()) do
-	if child.Name=="SweanRuntime" or child.Name=="SakuraRuntime" or child.Name=="ForestRuntime" then child:Destroy() end
+	if child.Name=="SweanRuntime" or child.Name=="SakuraRuntime" or child.Name=="ForestRuntime"
+		or child.Name=="GrassStaticTemplate" or child.Name=="GrassWindTemplate"
+		or child.Name=="GrassTemplate" or child.Name=="SkinnedGrassRuntimeModule" then
+		child:Destroy()
+	end
 end
 
 local runtime=Instance.new("Folder")
