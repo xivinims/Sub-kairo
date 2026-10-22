@@ -183,6 +183,37 @@ if pok2 and passet2 then
   passet2:Destroy()
 end
 
+
+local savedPath=workspace:FindFirstChild("StonePath")
+out.savedPathSegments=0
+out.savedPathParts=0
+out.savedVisiblePathParts=0
+out.savedPathAssetId=savedPath and savedPath:GetAttribute("AssetId") or nil
+out.savedUsesGroundPatches=savedPath and savedPath:GetAttribute("UsesGroundPatches") or nil
+if savedPath then
+  for _,seg in ipairs(savedPath:GetChildren()) do
+    if seg:IsA("Model") and string.find(seg.Name,"Stone Path (Long)",1,true) then
+      out.savedPathSegments+=1
+      for _,d in ipairs(seg:GetDescendants()) do
+        if d:IsA("BasePart") then
+          out.savedPathParts+=1
+          if d.Transparency<.95 then out.savedVisiblePathParts+=1 end
+        end
+      end
+    end
+  end
+end
+
+local scripts=game.StarterPlayer.StarterPlayerScripts
+local savedWind=scripts:FindFirstChild("WindController")
+out.savedWindController=savedWind~=nil
+out.savedWindAssetId=savedWind and savedWind:GetAttribute("AssetId") or nil
+out.savedWindExact=savedWind and savedWind:GetAttribute("ExactCreatorStoreController") or nil
+out.savedWindLines=savedWind and savedWind:FindFirstChild("WindLines")~=nil or false
+out.savedWindShake=savedWind and savedWind:FindFirstChild("WindShake")~=nil or false
+out.savedWindDisabled=savedWind and savedWind.Disabled or nil
+out.savedGlobalWind={workspace.GlobalWind.X,workspace.GlobalWind.Y,workspace.GlobalWind.Z}
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
