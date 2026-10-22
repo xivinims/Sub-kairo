@@ -322,6 +322,41 @@ end
 out.pristinePark=inspectDeep(13366955960)
 out.eerieTomb=inspectDeep(12489961338)
 
+
+local function summarizeNamed(id)
+  local result={id=id,loaded=false,matches={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  local keys={"tree","rock","stone","pumpkin","tomb","grave","skull","head","grass","path","bench","fountain","car","shop","bush","plant","flower"}
+  for _,d in ipairs(asset:GetDescendants()) do
+    local name=d.Name:lower()
+    for _,k in ipairs(keys) do
+      if string.find(name,k,1,true) then
+        result.matches[k]=result.matches[k] or {}
+        if #result.matches[k] < 80 then
+          local entry={name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""}
+          if d:IsA("Model") then
+            local okb,cf,size=pcall(function() return d:GetBoundingBox() end)
+            entry.parts=0
+            for _,x in ipairs(d:GetDescendants()) do if x:IsA("BasePart") then entry.parts+=1 end end
+            if okb then entry.size={size.X,size.Y,size.Z} end
+          elseif d:IsA("BasePart") then
+            entry.size={d.Size.X,d.Size.Y,d.Size.Z}
+            entry.material=tostring(d.Material)
+          end
+          table.insert(result.matches[k],entry)
+        end
+        break
+      end
+    end
+  end
+  asset:Destroy()
+  return result
+end
+out.pristineNamed=summarizeNamed(13366955960)
+out.eerieNamed=summarizeNamed(12489961338)
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
