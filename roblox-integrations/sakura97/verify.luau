@@ -16,7 +16,7 @@ end
 local island=workspace:FindFirstChild("FloatingIsland")
 assert(island and island:IsA("Model"),"FloatingIsland ausente")
 assert(island:GetAttribute("AssetId")==10485490600,"Ilha nao veio do asset pedido")
-assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-1.45)<.01,"Escala nova da ilha incorreta")
+assert(math.abs((island:GetAttribute("ScaleMultiplier") or 0)-1.85)<.01,"Escala nova da ilha incorreta")
 local islandParts=0
 for _,d in ipairs(island:GetDescendants()) do
 	if d:IsA("BasePart") then islandParts+=1 end
@@ -31,36 +31,45 @@ assert(#green==(runtime:GetAttribute("GreenSurfaceCount") or -1),"Contagem de ch
 local grass=workspace:FindFirstChild("SkinnedGrassCoverage")
 assert(grass and grass:IsA("Folder"),"SkinnedGrassCoverage ausente")
 assert(grass:GetAttribute("AssetId")==87377915371959,"SkinnedGrass nao veio do asset pedido")
-assert(grass:GetAttribute("Rule")=="OneSkinnedMeshTiledOnGreenOnly","Regra da grama incorreta")
-assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma grama visual foi usada")
-assert((grass:GetAttribute("SourceBones") or 0)>0,"A grama escolhida nao e skinned")
+assert(grass:GetAttribute("Rule")=="OneOriginalGreenSkinnedMeshPerGreenSurface","Regra da grama incorreta")
+assert(grass:GetAttribute("SingleMeshOnly")==true,"Mais de uma variante de grama foi usada")
+assert((grass:GetAttribute("SourceBones") or 0)==100,"A grama escolhida deve ter 100 Bones")
+assert(type(grass:GetAttribute("SourceMeshId"))=="string","SourceMeshId da grama ausente")
 local patches=#grass:GetChildren()
 assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
 
-local covered={}
+assert(patches==#green,"Deve existir exatamente 1 tapete de grama por superficie verde")
 local checked=0
 for _,patch in ipairs(grass:GetChildren()) do
-	if patch:IsA("Model") then
-		local idx=patch:GetAttribute("GroundSurfaceIndex")
-		assert(type(idx)=="number" and idx>=1 and idx<=#green,"SkinnedGrass sem superficie verde valida: "..patch.Name)
-		covered[idx]=true
-		checked+=1
+	assert(patch:IsA("Model"),"GrassTile deve ser Model")
+	assert(patch:GetAttribute("SingleMesh")==true,"GrassTile contem configuracao invalida")
+	local meshCount=0
+	local boneCount=0
+	for _,d in ipairs(patch:GetDescendants()) do
+		if d:IsA("MeshPart") then
+			meshCount+=1
+			assert(d.Material==Enum.Material.Neon,"Foi usada a variante cinza da grama")
+		end
+		if d:IsA("Bone") then boneCount+=1 end
 	end
+	assert(meshCount==1,"Cada area verde deve usar UMA unica MeshPart de grama")
+	assert(boneCount==100,"Cada tapete deve preservar os 100 Bones: "..tostring(boneCount))
+	checked+=1
 end
-assert(checked==patches,"Nem toda SkinnedGrass foi validada")
-local coveredCount=0
-for i=1,#green do
-	if covered[i] then coveredCount+=1 end
-end
-assert(coveredCount==#green,"SkinnedGrass nao cobre todas as areas verdes: "..tostring(coveredCount).."/"..tostring(#green))
+assert(checked==#green,"Nem toda superficie verde recebeu seu tapete de grama")
+
+local grassRunner=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner")
+assert(grassRunner and grassRunner:IsA("LocalScript"),"Runner original/adaptado da SkinnedGrass ausente")
+local grassModule=game.ReplicatedStorage:FindFirstChild("SkinnedGrassRuntimeModule")
+assert(grassModule and grassModule:IsA("ModuleScript"),"Modulo original SkinnedGrass ausente")
 
 local tree=workspace:FindFirstChild("BigCenterTree")
 assert(tree and tree:IsA("Model"),"BigCenterTree ausente")
 assert(tree:GetAttribute("AssetId")==86013526879602,"Arvore nao veio do asset pedido")
 local treeCF,treeSize=tree:GetBoundingBox()
-assert(treeSize.Y<=10.5,"Arvore ainda grande demais: "..tostring(treeSize.Y))
+assert(treeSize.Y<=8.5,"Arvore ainda grande demais: "..tostring(treeSize.Y))
 local centerDist=(Vector2.new(treeCF.Position.X,treeCF.Position.Z)-Vector2.new(select(1,island:GetBoundingBox()).Position.X,select(1,island:GetBoundingBox()).Position.Z)).Magnitude
 assert(centerDist<math.max(12,math.min(runtime:GetAttribute("IslandSizeX") or 100,runtime:GetAttribute("IslandSizeZ") or 100)*.35),"Arvore longe demais do centro")
 
@@ -81,9 +90,6 @@ assert(wind and wind:IsA("LocalScript"),"WindController ausente")
 assert(wind:GetAttribute("AssetId")==11946229834,"WindController asset errado")
 assert(wind:FindFirstChild("WindLines") and wind:FindFirstChild("WindShake"),"Modulos do vento ausentes")
 assert(workspace.GlobalWind.Magnitude>=10,"GlobalWind fraco")
-
-local grassWind=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassWind")
-assert(grassWind and grassWind:IsA("LocalScript"),"SkinnedGrassWind ausente")
 
 local spawn=workspace:FindFirstChild("IslandSpawn")
 assert(spawn and spawn:IsA("SpawnLocation") and spawn.Enabled,"IslandSpawn ausente")
