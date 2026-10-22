@@ -1,3 +1,4 @@
+-- RNG scope fix validated
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
