@@ -214,24 +214,11 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
--- A MeshPart mede 100x100, mas a geometria skinned real fica concentrada
--- nos Bones (~14x14). Usa a extensão REAL dos Bones para dimensionar a
--- cobertura visual, em vez do bounding box enganoso da MeshPart.
-local minBX,maxBX=math.huge,-math.huge
-local minBZ,maxBZ=math.huge,-math.huge
-for _,b in ipairs(sourceMesh:GetDescendants()) do
-	if b:IsA("Bone") then
-		minBX=math.min(minBX,b.Position.X)
-		maxBX=math.max(maxBX,b.Position.X)
-		minBZ=math.min(minBZ,b.Position.Z)
-		maxBZ=math.max(maxBZ,b.Position.Z)
-	end
-end
-local boneSpanX=maxBX-minBX
-local boneSpanZ=maxBZ-minBZ
-assert(boneSpanX>10 and boneSpanZ>10,"Unexpected SkinnedGrass bone span")
-local visualScaleX=sourceMesh.Size.X/boneSpanX
-local visualScaleZ=sourceMesh.Size.Z/boneSpanZ
+-- O MeshPart mede 100x100, mas a geometria visual real ocupa só
+-- uma fração dessa caixa. O audit do asset mostrou ~14 studs úteis por eixo.
+-- Usa uma escala calibrada fixa para não depender de Bone.Position no runtime.
+local visualScaleX=7.15
+local visualScaleZ=7.15
 
 
 local sourceModule=nil
@@ -329,6 +316,8 @@ runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
 runtime:SetAttribute("GrassTileSpacing",NATURAL_TILE)
 runtime:SetAttribute("GrassSingleMeshBones",sourceBones)
 runtime:SetAttribute("GrassCenterOffset",0.65)
+runtime:SetAttribute("GrassVisualScaleX",visualScaleX)
+runtime:SetAttribute("GrassVisualScaleZ",visualScaleZ)
 
 -- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
 local grassRunner=Instance.new("LocalScript")
