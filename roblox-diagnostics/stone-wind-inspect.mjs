@@ -770,6 +770,26 @@ local function inspectButterflyRig()
 end
 out.butterflyRig=inspectButterflyRig()
 
+
+local function inspectForestAnimationSources()
+ local r={butterflyScripts={},leafEmitters={}}
+ local ok,asset=pcall(function() return A:LoadAssetAsync(6432306802) end)
+ if not ok or not asset then r.error=tostring(asset) return r end
+ for _,d in ipairs(asset:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") and d.Parent and d.Parent.Name:lower():find("butterfly",1,true) and #r.butterflyScripts<10 then
+   table.insert(r.butterflyScripts,{parent=d.Parent.Name,name=d.Name,source=d.Source})
+  elseif d:IsA("ParticleEmitter") and #r.leafEmitters<20 then
+   local a=d.Parent
+   local names=(a and a.Name or "").." "..(a and a.Parent and a.Parent.Name or "")
+   if names:lower():find("leaf",1,true) or names:lower():find("leaves",1,true) then
+    table.insert(r.leafEmitters,{name=d.Name,parent=a and a.Name or "",grand=a and a.Parent and a.Parent.Name or "",rate=d.Rate,texture=tostring(d.Texture),lifetime={d.Lifetime.Min,d.Lifetime.Max},speed={d.Speed.Min,d.Speed.Max},accel={d.Acceleration.X,d.Acceleration.Y,d.Acceleration.Z},spread={d.SpreadAngle.X,d.SpreadAngle.Y}})
+   end
+  end
+ end
+ asset:Destroy(); return r
+end
+out.forestAnimationSources=inspectForestAnimationSources()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
