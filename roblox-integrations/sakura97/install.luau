@@ -296,6 +296,205 @@ spawn.Duration=0
 spawn.CFrame=CFrame.new(spawnPos+Vector3.new(0,.25,0))
 spawn.Parent=workspace
 
+-- LOADING SCREEN FULLSCREEN + GLITCH + ZOOM 1P -> 3P
+local loading=Instance.new("LocalScript")
+loading.Name="AccessLoading"
+loading:SetAttribute("Style","FullscreenGlitch")
+loading:SetAttribute("Text","acessando...")
+loading:SetAttribute("CameraTransition","FirstToThirdZoomOnly")
+loading.Source=[==========[
+local ReplicatedFirst=game:GetService("ReplicatedFirst")
+local Players=game:GetService("Players")
+local TweenService=game:GetService("TweenService")
+local RunService=game:GetService("RunService")
+
+local player=Players.LocalPlayer
+local playerGui=player:WaitForChild("PlayerGui")
+
+ReplicatedFirst:RemoveDefaultLoadingScreen()
+
+local screen=Instance.new("ScreenGui")
+screen.Name="AccessLoadingUI"
+screen.IgnoreGuiInset=true
+screen.ResetOnSpawn=false
+screen.DisplayOrder=1000000
+screen.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+pcall(function()
+	screen.ScreenInsets=Enum.ScreenInsets.None
+end)
+screen.Parent=playerGui
+
+local bg=Instance.new("Frame")
+bg.Name="Background"
+bg.Size=UDim2.fromScale(1,1)
+bg.Position=UDim2.fromScale(0,0)
+bg.BorderSizePixel=0
+bg.BackgroundColor3=Color3.fromRGB(7,8,7)
+bg.BackgroundTransparency=0
+bg.ZIndex=1
+bg.Parent=screen
+
+local vignette=Instance.new("UIGradient")
+vignette.Rotation=90
+vignette.Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,Color3.fromRGB(3,4,3)),
+	ColorSequenceKeypoint.new(.5,Color3.fromRGB(13,15,12)),
+	ColorSequenceKeypoint.new(1,Color3.fromRGB(3,4,3))
+})
+vignette.Parent=bg
+
+local holder=Instance.new("Frame")
+holder.Name="TextHolder"
+holder.AnchorPoint=Vector2.new(.5,.5)
+holder.Position=UDim2.fromScale(.5,.52)
+holder.Size=UDim2.fromOffset(520,100)
+holder.BackgroundTransparency=1
+holder.ZIndex=10
+holder.Parent=screen
+
+local function makeText(name,color,transparency,z)
+	local label=Instance.new("TextLabel")
+	label.Name=name
+	label.Size=UDim2.fromScale(1,1)
+	label.BackgroundTransparency=1
+	label.Font=Enum.Font.BuilderSansBold
+	label.Text="acessando..."
+	label.TextColor3=color
+	label.TextTransparency=transparency
+	label.TextSize=34
+	label.TextXAlignment=Enum.TextXAlignment.Center
+	label.TextYAlignment=Enum.TextYAlignment.Center
+	label.ZIndex=z
+	label.Parent=holder
+	return label
+end
+
+local main=makeText("Main",Color3.fromRGB(238,241,236),0,13)
+local cyan=makeText("GhostCyan",Color3.fromRGB(108,225,223),1,12)
+local red=makeText("GhostRed",Color3.fromRGB(236,86,94),1,11)
+
+local scanlines={}
+for i=1,7 do
+	local line=Instance.new("Frame")
+	line.Name="Scanline"
+	line.BorderSizePixel=0
+	line.BackgroundColor3=Color3.fromRGB(225,232,225)
+	line.BackgroundTransparency=.94
+	line.Size=UDim2.new(1,0,0,1)
+	line.Position=UDim2.fromScale(0,(i/8))
+	line.ZIndex=4
+	line.Parent=screen
+	table.insert(scanlines,line)
+end
+
+local rng=Random.new()
+local alive=true
+
+task.spawn(function()
+	while alive and screen.Parent do
+		task.wait(rng:NextNumber(.07,.22))
+		if rng:NextNumber()<.62 then
+			local dx=rng:NextInteger(-8,8)
+			local dy=rng:NextInteger(-3,3)
+			cyan.Position=UDim2.fromOffset(dx-2,dy)
+			red.Position=UDim2.fromOffset(-dx+2,-dy)
+			cyan.TextTransparency=rng:NextNumber(.35,.68)
+			red.TextTransparency=rng:NextNumber(.40,.72)
+			main.Position=UDim2.fromOffset(rng:NextInteger(-2,2),rng:NextInteger(-1,1))
+			main.TextTransparency=rng:NextNumber(0,.12)
+			task.wait(rng:NextNumber(.025,.065))
+			cyan.TextTransparency=1
+			red.TextTransparency=1
+			main.Position=UDim2.fromOffset(0,0)
+			main.TextTransparency=0
+		end
+	end
+end)
+
+task.spawn(function()
+	while alive and screen.Parent do
+		task.wait(rng:NextNumber(.11,.3))
+		local line=scanlines[rng:NextInteger(1,#scanlines)]
+		line.Position=UDim2.new(0,0,rng:NextNumber(),0)
+		line.Size=UDim2.new(rng:NextNumber(.35,1),0,0,rng:NextInteger(1,3))
+		line.BackgroundTransparency=rng:NextNumber(.82,.96)
+	end
+end)
+
+local started=os.clock()
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+workspace:WaitForChild("Mirkwood",20)
+
+local elapsed=os.clock()-started
+if elapsed<2.2 then task.wait(2.2-elapsed) end
+
+local character=player.Character or player.CharacterAdded:Wait()
+local humanoid=character:WaitForChild("Humanoid",10)
+local camera=workspace.CurrentCamera
+
+if humanoid and camera then
+	camera.CameraSubject=humanoid
+	camera.CameraType=Enum.CameraType.Custom
+end
+
+-- A rotação nunca é bloqueada. Só a distância do zoom é animada.
+player.CameraMode=Enum.CameraMode.Classic
+local originalMax=player.CameraMaxZoomDistance
+
+player.CameraMinZoomDistance=.5
+player.CameraMaxZoomDistance=.5
+RunService.RenderStepped:Wait()
+RunService.RenderStepped:Wait()
+
+local duration=1.55
+local targetDistance=9.5
+local t0=os.clock()
+
+while true do
+	local alpha=math.clamp((os.clock()-t0)/duration,0,1)
+	local eased=1-(1-alpha)^3
+	local distance=.5+(targetDistance-.5)*eased
+
+	player.CameraMaxZoomDistance=distance
+	player.CameraMinZoomDistance=distance
+
+	bg.BackgroundTransparency=math.clamp((alpha-.12)/.88,0,1)
+	holder.Position=UDim2.new(.5,rng:NextInteger(-1,1),.52,rng:NextInteger(-1,1))
+	main.TextTransparency=math.clamp((alpha-.55)/.45,0,1)
+
+	for _,line in ipairs(scanlines) do
+		line.BackgroundTransparency=math.clamp(.92+alpha*.08,0,1)
+	end
+
+	if alpha>=1 then break end
+	RunService.RenderStepped:Wait()
+end
+
+alive=false
+
+-- Libera a câmera normalmente depois da animação.
+player.CameraMode=Enum.CameraMode.Classic
+player.CameraMinZoomDistance=.5
+player.CameraMaxZoomDistance=math.max(originalMax,24)
+
+local fade=TweenService:Create(
+	bg,
+	TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),
+	{BackgroundTransparency=1}
+)
+fade:Play()
+fade.Completed:Wait()
+
+screen:Destroy()
+]==========]
+loading.Parent=ReplicatedFirst
+
+runtime:SetAttribute("LoadingScreen","AccessLoading")
+runtime:SetAttribute("LoadingText","acessando...")
+runtime:SetAttribute("LoadingCameraTransition","FirstToThirdZoomOnly")
+
 -- Proteção simples contra void, sem trazer sistemas antigos.
 local server=Instance.new("Script")
 server.Name="MirkwoodServer"
