@@ -97,6 +97,66 @@ if tok and tasset then
   end
   tasset:Destroy()
 end
+
+out.treeGroundOffsets={}
+local treeFolder=workspace:FindFirstChild("SakuraTrees")
+if treeFolder then
+  local params=RaycastParams.new()
+  params.FilterType=Enum.RaycastFilterType.Exclude
+  params.FilterDescendantsInstances={treeFolder,workspace:FindFirstChild("StonePath"),workspace:FindFirstChild("Wildflowers")}
+  for i,tree in ipairs(treeFolder:GetChildren()) do
+    if i>27 then break end
+    local trunk=nil
+    for _,d in ipairs(tree:GetDescendants()) do
+      if d:IsA("BasePart") and d.Name~="Leaves" then trunk=d break end
+    end
+    if trunk then
+      local minY=math.huge
+      for _,sx in ipairs({-1,1}) do
+        for _,sy in ipairs({-1,1}) do
+          for _,sz in ipairs({-1,1}) do
+            local world=trunk.CFrame:PointToWorldSpace(Vector3.new(trunk.Size.X*.5*sx,trunk.Size.Y*.5*sy,trunk.Size.Z*.5*sz))
+            minY=math.min(minY,world.Y)
+          end
+        end
+      end
+      local ray=workspace:Raycast(Vector3.new(trunk.Position.X,80,trunk.Position.Z),Vector3.new(0,-150,0),params)
+      table.insert(out.treeGroundOffsets,{
+        name=tree.Name,
+        trunk=trunk.Name,
+        trunkBottom=minY,
+        groundY=ray and ray.Position.Y or nil,
+        offset=ray and (minY-ray.Position.Y) or nil
+      })
+    end
+  end
+end
+
+local pok,passet=pcall(function() return A:LoadAssetAsync(3671107938) end)
+out.petalsLoaded=pok and passet~=nil
+out.petalEmitters={}
+if pok and passet then
+  for _,d in ipairs(passet:GetDescendants()) do
+    if d:IsA("ParticleEmitter") then
+      table.insert(out.petalEmitters,{
+        name=d.Name,
+        texture=d.Texture,
+        rate=d.Rate,
+        lifetime={d.Lifetime.Min,d.Lifetime.Max},
+        speed={d.Speed.Min,d.Speed.Max},
+        drag=d.Drag,
+        windAffectsDrag=d.WindAffectsDrag,
+        acceleration={d.Acceleration.X,d.Acceleration.Y,d.Acceleration.Z}
+      })
+    end
+  end
+  out.petalScriptCount=0
+  for _,d in ipairs(passet:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then out.petalScriptCount+=1 end
+  end
+  passet:Destroy()
+end
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
