@@ -423,6 +423,36 @@ local function auditParkTreeCandidates()
 end
 out.parkTreeAudit=auditParkTreeCandidates()
 
+
+local function auditParkGrassSurfaces()
+  local result={loaded=false,grassParts={},total=0}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(13366955960) end)
+  if not ok or not asset then result.error=tostring(asset) return result end
+  result.loaded=true
+  local park=asset:FindFirstChild("Park",true)
+  if not park then asset:Destroy() return result end
+  for _,d in ipairs(park:GetDescendants()) do
+    if d:IsA("BasePart") and d.Material==Enum.Material.Grass then
+      result.total+=1
+      if #result.grassParts<160 then
+        table.insert(result.grassParts,{
+          name=d.Name,
+          class=d.ClassName,
+          parent=d.Parent and d.Parent.Name or "",
+          size={d.Size.X,d.Size.Y,d.Size.Z},
+          upY=d.CFrame.UpVector.Y,
+          area=d.Size.X*d.Size.Z,
+          color={d.Color.R,d.Color.G,d.Color.B}
+        })
+      end
+    end
+  end
+  asset:Destroy()
+  table.sort(result.grassParts,function(a,b) return a.area>b.area end)
+  return result
+end
+out.parkGrassAudit=auditParkGrassSurfaces()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
