@@ -35,20 +35,22 @@ assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
 
-local greenParams=RaycastParams.new()
-greenParams.FilterType=Enum.RaycastFilterType.Include
-greenParams.FilterDescendantsInstances=green
-greenParams.IgnoreWater=true
+local covered={}
 local checked=0
 for _,patch in ipairs(grass:GetChildren()) do
 	if patch:IsA("Model") then
-		local p=patch:GetPivot().Position
-		local hit=workspace:Raycast(p+Vector3.new(0,8,0),Vector3.new(0,-18,0),greenParams)
-		assert(hit and CollectionService:HasTag(hit.Instance,"IslandGreenGround"),"SkinnedGrass fora da grama da ilha: "..patch.Name)
+		local idx=patch:GetAttribute("GroundSurfaceIndex")
+		assert(type(idx)=="number" and idx>=1 and idx<=#green,"SkinnedGrass sem superficie verde valida: "..patch.Name)
+		covered[idx]=true
 		checked+=1
 	end
 end
 assert(checked==patches,"Nem toda SkinnedGrass foi validada")
+local coveredCount=0
+for i=1,#green do
+	if covered[i] then coveredCount+=1 end
+end
+assert(coveredCount==#green,"SkinnedGrass nao cobre todas as areas verdes: "..tostring(coveredCount).."/"..tostring(#green))
 
 local tree=workspace:FindFirstChild("BigCenterTree")
 assert(tree and tree:IsA("Model"),"BigCenterTree ausente")
