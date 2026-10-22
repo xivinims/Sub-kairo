@@ -51,6 +51,8 @@ runtime:SetAttribute("MapType", "SakuraIsland")
 -- ============ 3. ILHA + TERRENO ============
 local function buildIsland()
 	Terrain:Clear()
+	Terrain.Decoration = false
+	pcall(function() Terrain:SetMaterialColor(Enum.Material.Ground, Color3.fromRGB(78, 102, 56)) end)
 	-- ilha principal com curvas suaves
 	local center = Vector3.new(0, 0, 0)
 	local radius = 220
@@ -67,7 +69,7 @@ local function buildIsland()
 				end
 				-- FillBlock não aceita extents negativos/vazios.
 				h = math.max(1.5, h)
-				Terrain:FillBlock(CFrame.new(x, h/2, z), Vector3.new(10, h, 10), Enum.Material.Grass)
+				Terrain:FillBlock(CFrame.new(x, h/2, z), Vector3.new(10, h, 10), Enum.Material.Ground)
 			end
 		end
 	end
@@ -162,28 +164,68 @@ setupSkyAndLighting()
 
 -- ============ 5. VENTO ============
 local function setupWind()
-	local ok, windAsset = pcall(function()
-		return AssetService:LoadAssetAsync(11946229834)
-	end)
-	if ok and windAsset then
-		for _, d in ipairs(windAsset:GetDescendants()) do
-			if d:IsA("ParticleEmitter") or d:IsA("Attachment") or d:IsA("Part") then
-				local clone = d:Clone()
-				if clone:IsA("BasePart") then
-					clone.Anchored = true
-					clone.CanCollide = false
-					clone.Transparency = 1
-				end
-				clone.Parent = workspace
-			end
-		end
-		windAsset:Destroy()
+	if workspace:FindFirstChild("WindEffects") then
+		workspace.WindEffects:Destroy()
 	end
 
-	-- vento global simples também
-	workspace.GlobalWind = Vector3.new(8, 0, 3)
-end
+	local folder=Instance.new("Folder")
+	folder.Name="WindEffects"
+	folder.Parent=workspace
 
+	workspace.GlobalWind=Vector3.new(12,0,4)
+
+	local ok,windAsset=pcall(function()
+		return AssetService:LoadAssetAsync(11946229834)
+	end)
+	if not ok or not windAsset then
+		warn("[Sakura97] Wind asset 11946229834 failed")
+		return
+	end
+
+	local emitters={}
+	for _,d in ipairs(windAsset:GetDescendants()) do
+		if d:IsA("ParticleEmitter") then
+			table.insert(emitters,d)
+		end
+	end
+
+	local anchors={
+		Vector3.new(0,14,-150),
+		Vector3.new(90,15,-90),
+		Vector3.new(145,14,0),
+		Vector3.new(90,15,90),
+		Vector3.new(0,14,150),
+		Vector3.new(-90,15,90),
+		Vector3.new(-145,14,0),
+		Vector3.new(-90,15,-90),
+	}
+
+	for i,pos in ipairs(anchors) do
+		local host=Instance.new("Part")
+		host.Name="WindAnchor_"..i
+		host.Size=Vector3.new(1,1,1)
+		host.Anchored=true
+		host.CanCollide=false
+		host.CanTouch=false
+		host.CanQuery=false
+		host.Transparency=1
+		host.Position=pos
+		host.Parent=folder
+
+		local att=Instance.new("Attachment")
+		att.Parent=host
+		for _,src in ipairs(emitters) do
+			local em=src:Clone()
+			em.Enabled=true
+			em.Parent=att
+		end
+	end
+
+	folder:SetAttribute("EmitterSourceCount",#emitters)
+	folder:SetAttribute("AssetId",11946229834)
+	windAsset:Destroy()
+	print("[Sakura97] Vento visivel ativo, emitters:",#emitters)
+end
 setupWind()
 
 local function visualPartCount(inst)
@@ -336,223 +378,147 @@ end
 placeSakuraTrees()
 
 -- ============ 7. CAMINHO DE PEDRAS (fino, torto, retângulos) ============
-local function placeStonePath()
-	local folder = Instance.new("Folder")
-	folder.Name = "StonePath"
-	folder.Parent = workspace
+local PATH_POINTS={}
+for i=1,34 do
+	local z=-165+(i-1)*9.2
+	local x=-22+math.sin(i*.57)*9+math.sin(i*.19)*5
+	table.insert(PATH_POINTS,Vector3.new(x,0,z))
+end
 
-	local ok, pathAsset = pcall(function()
+local function nearStonePath(x,z,radius)
+	local p=Vector2.new(x,z)
+	for _,q in ipairs(PATH_POINTS) do
+		if (p-Vector2.new(q.X,q.Z)).Magnitude<=radius then
+			return true
+		end
+	end
+	return false
+end
+
+local function placeStonePath()
+	local old=workspace:FindFirstChild("StonePath")
+	if old then old:Destroy() end
+
+	local folder=Instance.new("Folder")
+	folder.Name="StonePath"
+	folder.Parent=workspace
+	folder:SetAttribute("AssetId",136068114177879)
+	folder:SetAttribute("Style","ThinSpacedSteppingStones")
+
+	local ok,pathAsset=pcall(function()
 		return AssetService:LoadAssetAsync(136068114177879)
 	end)
 
-	local template = nil
+	local template=nil
 	if ok and pathAsset then
-		template = findVisualModel(pathAsset,{"stone","path","road","walkway","trail"})
+		-- Use one real stone piece from the asset, not the whole road model.
+		template=pathAsset:FindFirstChildWhichIsA("MeshPart",true)
+			or pathAsset:FindFirstChildWhichIsA("UnionOperation",true)
+			or pathAsset:FindFirstChildWhichIsA("Part",true)
+		if template then template=template:Clone() end
 		pathAsset:Destroy()
 	end
 
-	-- se não carregou, cria peças simples de pedra
 	if not template then
-		template = Instance.new("Part")
-		template.Name = "StoneTile"
-		template.Size = Vector3.new(3.2, 0.35, 1.6)
-		template.Material = Enum.Material.Slate
-		template.Color = Color3.fromRGB(90, 85, 80)
-		template.Anchored = true
-		template.CanCollide = true
+		template=Instance.new("Part")
+		template.Name="StoneTile"
+		template.Size=Vector3.new(3.2,.28,1.55)
+		template.Material=Enum.Material.Slate
+		template.Color=Color3.fromRGB(100,95,90)
+		template.Anchored=true
 	end
 
-	-- caminho torto tipo a foto (começa perto do centro e serpenteia)
-	local points = {
-		Vector3.new(0, 0, 40),
-		Vector3.new(8, 0, 55),
-		Vector3.new(18, 0, 70),
-		Vector3.new(22, 0, 90),
-		Vector3.new(12, 0, 110),
-		Vector3.new(-5, 0, 125),
-		Vector3.new(-25, 0, 135),
-		Vector3.new(-40, 0, 150),
-		Vector3.new(-35, 0, 170),
-		Vector3.new(-15, 0, 185),
-		Vector3.new(10, 0, 195),
-		Vector3.new(30, 0, 180),
-		Vector3.new(45, 0, 160),
-		Vector3.new(55, 0, 140),
-		Vector3.new(50, 0, 115),
-		Vector3.new(35, 0, 95),
-		Vector3.new(20, 0, 75),
-	}
+	template.Anchored=true
+	template.CanCollide=true
 
-	for i = 1, #points - 1 do
-		local a = points[i]
-		local b = points[i + 1]
-		local dir = (b - a)
-		local dist = dir.Magnitude
-		local steps = math.max(2, math.floor(dist / 2.8))
-		for s = 0, steps do
-			local t = s / steps
-			local pos = a:Lerp(b, t)
-			-- offset lateral aleatório pra ficar torto
-			local side = Vector3.new(-dir.Z, 0, dir.X).Unit * (math.sin(i * 1.7 + s) * 1.4)
-			pos = pos + side
+	for i,node in ipairs(PATH_POINTS) do
+		local ray=workspace:Raycast(
+			Vector3.new(node.X,60,node.Z),
+			Vector3.new(0,-110,0)
+		)
+		if ray and ray.Material~=Enum.Material.Water then
+			local tile=template:Clone()
+			tile.Name=string.format("Stone_%02d",i)
 
-			local ray = workspace:Raycast(pos + Vector3.new(0, 40, 0), Vector3.new(0, -80, 0))
-			if ray and ray.Material ~= Enum.Material.Water then
-				local tile = template:Clone()
-				if tile:IsA("Model") then
-					tile:PivotTo(CFrame.new(ray.Position + Vector3.new(0, 0.18, 0)) * CFrame.Angles(0, math.atan2(dir.X, dir.Z) + math.rad(rngOffset(i,s)), 0))
-				else
-					tile.CFrame = CFrame.new(ray.Position + Vector3.new(0, 0.18, 0)) * CFrame.Angles(0, math.atan2(dir.X, dir.Z) + math.rad((i*13+s*7)%30 - 15), 0)
-					tile.Size = Vector3.new(2.8 + (i%3)*0.3, 0.3, 1.4 + (s%2)*0.4)
-				end
-				tile.Parent = folder
-				CollectionService:AddTag(tile, "StonePathTile")
-			end
+			local base=tile.Size
+			local maxXZ=math.max(base.X,base.Z)
+			local targetLong=3.5+((i%3)-1)*.35
+			local factor=maxXZ>0 and targetLong/maxXZ or 1
+			tile.Size=Vector3.new(
+				math.max(.8,base.X*factor),
+				math.min(.32,math.max(.16,base.Y*factor)),
+				math.max(.7,base.Z*factor)
+			)
+
+			local yaw=math.rad(math.sin(i*.83)*22 + ((i%2==0) and 7 or -7))
+			tile.CFrame=CFrame.new(ray.Position+Vector3.new(0,.10,0))*CFrame.Angles(0,yaw,0)
+			tile.Parent=folder
+			CollectionService:AddTag(tile,"StonePathTile")
 		end
 	end
 
-	if template.Parent == nil then template:Destroy() end
-	print("[Sakura97] Caminho de pedras colocado")
+	template:Destroy()
+	print("[Sakura97] Estradinha fina com",#folder:GetChildren(),"pedras")
 end
-
-function rngOffset(i, s)
-	return ((i * 17 + s * 11) % 40) - 20
-end
-
 placeStonePath()
 
 -- ============ 8. GRAMA SKINNED + FLORES ============
 local function placeGrassAndFlowers()
-	local grassFolder = Instance.new("Folder")
-	grassFolder.Name = "SkinnedGrass"
-	grassFolder.Parent = workspace
+	local oldGrass=workspace:FindFirstChild("SkinnedGrass")
+	if oldGrass then oldGrass:Destroy() end
+	local oldFlowers=workspace:FindFirstChild("Wildflowers")
+	if oldFlowers then oldFlowers:Destroy() end
 
-	local flowerFolder = Instance.new("Folder")
-	flowerFolder.Name = "Wildflowers"
-	flowerFolder.Parent = workspace
+	local flowerFolder=Instance.new("Folder")
+	flowerFolder.Name="Wildflowers"
+	flowerFolder.Parent=workspace
 
-	-- tenta carregar SkinnedGrass
-	local ok, grassAsset = pcall(function()
-		return AssetService:LoadAssetAsync(87377915371959)
-	end)
+	local rng=Random.new(97002)
+	local made=0
+	for i=1,520 do
+		local angle=rng:NextNumber(0,math.pi*2)
+		local dist=rng:NextNumber(10,198)
+		local x=math.cos(angle)*dist
+		local z=math.sin(angle)*dist
 
-	local grassTemplate = nil
-	if ok and grassAsset then
-		grassTemplate = findVisualModel(grassAsset,{"dark","escuro","grass"})
-		grassAsset:Destroy()
-	end
-
-	local rng = Random.new(97002)
-
-	-- coloca patches de grama skinned
-	if grassTemplate then
-		for i = 1, 55 do
-			local angle = rng:NextNumber(0, math.pi * 2)
-			local dist = rng:NextNumber(15, 190)
-			local x = math.cos(angle) * dist
-			local z = math.sin(angle) * dist
-			local ray = workspace:Raycast(Vector3.new(x, 60, z), Vector3.new(0, -100, 0))
-			if ray and ray.Material == Enum.Material.Grass then
-				local g = grassTemplate:Clone()
-				local scaleOk=safeScale(g,g:GetScale()*rng:NextNumber(0.9,1.15))
-				local placeOk=scaleOk and placeModelOnGround(g,ray.Position,rng:NextNumber(0,6.28))
-				if placeOk then
-					g:SetAttribute("RestPivot",g:GetPivot())
-					g.Parent = grassFolder
-					CollectionService:AddTag(g, "SkinnedGrassPatch")
+		if not nearStonePath(x,z,4.6) then
+			local ray=workspace:Raycast(Vector3.new(x,55,z),Vector3.new(0,-100,0))
+			if ray and ray.Material~=Enum.Material.Water then
+				local flower=Instance.new("Part")
+				flower.Name="Wildflower"
+				flower.Size=Vector3.new(.18,.11,.18)
+				flower.Anchored=true
+				flower.CanCollide=false
+				flower.CanTouch=false
+				flower.Material=Enum.Material.SmoothPlastic
+				flower.Shape=Enum.PartType.Ball
+				if rng:NextNumber()>.58 then
+					flower.Color=Color3.fromRGB(244,242,235)
 				else
-					g:Destroy()
+					flower.Color=Color3.fromRGB(211,188,226)
 				end
-			end
-		end
-		grassTemplate:Destroy()
-	end
+				flower.CFrame=CFrame.new(ray.Position+Vector3.new(0,.18,0))
+				flower.Parent=flowerFolder
 
-	-- flores brancas e lilás (simples, tipo a foto)
-	for i = 1, 420 do
-		local angle = rng:NextNumber(0, math.pi * 2)
-		local dist = rng:NextNumber(10, 200)
-		local x = math.cos(angle) * dist
-		local z = math.sin(angle) * dist
-		local ray = workspace:Raycast(Vector3.new(x, 50, z), Vector3.new(0, -90, 0))
-		if ray and ray.Material == Enum.Material.Grass then
-			local flower = Instance.new("Part")
-			flower.Name = "Wildflower"
-			flower.Size = Vector3.new(0.35, 0.55, 0.35)
-			flower.Anchored = true
-			flower.CanCollide = false
-			flower.Material = Enum.Material.SmoothPlastic
-			flower.Shape = Enum.PartType.Ball
-			-- branco ou lilás
-			if rng:NextNumber() > 0.55 then
-				flower.Color = Color3.fromRGB(245, 245, 250)
-			else
-				flower.Color = Color3.fromRGB(200, 170, 230)
+				local stem=Instance.new("Part")
+				stem.Name="Stem"
+				stem.Size=Vector3.new(.035,.22,.035)
+				stem.Anchored=true
+				stem.CanCollide=false
+				stem.CanTouch=false
+				stem.Material=Enum.Material.SmoothPlastic
+				stem.Color=Color3.fromRGB(62,103,51)
+				stem.CFrame=CFrame.new(ray.Position+Vector3.new(0,.08,0))
+				stem.Parent=flowerFolder
+				made+=1
 			end
-			flower.CFrame = CFrame.new(ray.Position + Vector3.new(0, 0.25, 0))
-			flower.Parent = flowerFolder
-
-			-- haste
-			local stem = Instance.new("Part")
-			stem.Name = "Stem"
-			stem.Size = Vector3.new(0.08, 0.6, 0.08)
-			stem.Anchored = true
-			stem.CanCollide = false
-			stem.Material = Enum.Material.SmoothPlastic
-			stem.Color = Color3.fromRGB(60, 110, 50)
-			stem.CFrame = CFrame.new(ray.Position + Vector3.new(0, 0.05, 0))
-			stem.Parent = flower
 		end
 	end
 
-	print("[Sakura97] Grama e flores colocadas")
+	flowerFolder:SetAttribute("FlowerCount",made)
+	print("[Sakura97] Sem grama alta; flores pequenas:",made)
 end
-
 placeGrassAndFlowers()
-
--- ============ 9. CLIENT: GRAMA QUE AMASSA + VENTO ============
-local clientScript = Instance.new("LocalScript")
-clientScript.Name = "SakuraGrassClient"
-clientScript.Source = [==========[
-local Players=game:GetService("Players")
-local RunService=game:GetService("RunService")
-local CollectionService=game:GetService("CollectionService")
-local player=Players.LocalPlayer
-local recentlyPressed={}
-
-local function rootPart()
-	local char=player.Character
-	return char and char:FindFirstChild("HumanoidRootPart")
-end
-
-RunService.Heartbeat:Connect(function()
-	local root=rootPart()
-	local now=time()
-
-	for _,patch in ipairs(CollectionService:GetTagged("SkinnedGrassPatch")) do
-		if patch:IsA("Model") and patch.Parent then
-			for _,bone in ipairs(patch:GetDescendants()) do
-				if bone:IsA("Bone") then
-					local sway=math.sin(now*1.8+bone.WorldPosition.X*.05)*.08
-					bone.Transform=CFrame.Angles(0,0,sway)
-				end
-			end
-
-			local rest=patch:GetAttribute("RestPivot")
-			if typeof(rest)=="CFrame" and root then
-				local p=rest.Position
-				local d=(Vector2.new(p.X,p.Z)-Vector2.new(root.Position.X,root.Position.Z)).Magnitude
-				if d<6 then recentlyPressed[patch]=now end
-				local pressed=recentlyPressed[patch] and (now-recentlyPressed[patch] < .5)
-				local target=pressed and (rest*CFrame.Angles(math.rad(13),0,math.rad(-5))) or rest
-				patch:PivotTo(patch:GetPivot():Lerp(target,pressed and .38 or .16))
-				if not pressed then recentlyPressed[patch]=nil end
-			end
-		end
-	end
-end)
-]==========]
-clientScript.Parent = game.StarterPlayer.StarterPlayerScripts
 
 -- ============ 10. SERVER SCRIPT BÁSICO ============
 local serverScript = Instance.new("Script")
