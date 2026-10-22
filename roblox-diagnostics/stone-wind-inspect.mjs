@@ -71,6 +71,34 @@ out.currentStonePathChildren=path and #path:GetChildren() or 0
 local wind=workspace:FindFirstChild("WindEffects")
 out.currentWindChildren=wind and #wind:GetChildren() or 0
 out.currentGlobalWind={workspace.GlobalWind.X,workspace.GlobalWind.Y,workspace.GlobalWind.Z}
+out.terrainDecoration=workspace.Terrain.Decoration
+out.terrainGrassLength=workspace.Terrain.GrassLength
+
+local tok,tasset=pcall(function() return A:LoadAssetAsync(9626366517) end)
+out.treeLoaded=tok and tasset~=nil
+out.treeParts={}
+if tok and tasset then
+  local tree=tasset:FindFirstChildWhichIsA("Model",true)
+  out.treeModelName=tree and tree.Name or nil
+  if tree then
+    local n=0
+    for _,d in ipairs(tree:GetDescendants()) do
+      if d:IsA("BasePart") then
+        n+=1
+        if #out.treeParts<40 then
+          table.insert(out.treeParts,{
+            name=d.Name,class=d.ClassName,
+            material=tostring(d.Material),
+            color={d.Color.R,d.Color.G,d.Color.B},
+            size={d.Size.X,d.Size.Y,d.Size.Z}
+          })
+        end
+      end
+    end
+    out.treePartCount=n
+  end
+  tasset:Destroy()
+end
 return out
 `);
 console.log(JSON.stringify(result,null,2));
