@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: sakura97-place-publisher
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish:
