@@ -69,6 +69,19 @@ assert(pumpkinCount==(pumpkins:GetAttribute("PumpkinCount") or -1),"Contagem de 
 local spawn=workspace:FindFirstChild("MirkwoodSpawn")
 assert(spawn and spawn:IsA("SpawnLocation") and spawn.Enabled,"Spawn do Mirkwood ausente")
 
+-- Loading fullscreen: texto único, glitch e transição de zoom sem Scriptable camera.
+local loading=game:GetService("ReplicatedFirst"):FindFirstChild("AccessLoading")
+assert(loading and loading:IsA("LocalScript"),"AccessLoading ausente")
+assert(loading:GetAttribute("Style")=="FullscreenGlitch","Loading nao esta fullscreen/glitch")
+assert(loading:GetAttribute("Text")=="acessando...","Texto da loading incorreto")
+assert(loading:GetAttribute("CameraTransition")=="FirstToThirdZoomOnly","Transicao de camera incorreta")
+assert(string.find(loading.Source,'Text="acessando..."',1,true),"Texto acessando ausente no script")
+assert(string.find(loading.Source,"Enum.CameraMode.Classic",1,true),"Camera Classic ausente")
+assert(not string.find(loading.Source,"Enum.CameraType.Scriptable",1,true),"Loading bloqueia a camera com Scriptable")
+assert(string.find(loading.Source,"CameraMinZoomDistance",1,true),"Animacao de zoom ausente")
+assert(string.find(loading.Source,"CameraMaxZoomDistance",1,true),"Animacao de zoom ausente")
+assert(string.find(loading.Source,"RemoveDefaultLoadingScreen",1,true),"Tela padrao do Roblox nao foi removida")
+
 return{
 	ok=true,
 	version=100,
@@ -77,5 +90,6 @@ return{
 	forests=forests,
 	windTagged=tagged,
 	pumpkinClusters=clusters,
-	pumpkins=pumpkinCount
+	pumpkins=pumpkinCount,
+	loadingScreen=true
 }
