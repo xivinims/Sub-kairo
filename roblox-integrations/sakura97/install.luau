@@ -358,6 +358,12 @@ local function placeSakuraTrees()
 			tree:Destroy()
 			continue
 		end
+
+		-- O bounding box do MeshPart encosta no Terrain, mas a geometria visual
+		-- do tronco fica um pouco acima da borda da caixa. Enterrar levemente
+		-- elimina a impressão de árvore flutuando sem esconder o tronco.
+		tree:PivotTo(tree:GetPivot()+Vector3.new(0,-0.65,0))
+
 		tree.Parent = folder
 		CollectionService:AddTag(tree, "SakuraTree")
 		for _,leaf in ipairs(tree:GetDescendants()) do
@@ -366,6 +372,47 @@ local function placeSakuraTrees()
 				leaf:SetAttribute("WindPower",0.32)
 				leaf:SetAttribute("WindSpeed",14)
 				leaf:SetAttribute("WindDirection",workspace.GlobalWind.Unit)
+
+				local petals=Instance.new("ParticleEmitter")
+				petals.Name="SakuraPetals"
+				petals.Texture="rbxassetid://14302399641"
+				petals.Color=ColorSequence.new({
+					ColorSequenceKeypoint.new(0,Color3.fromRGB(255,210,226)),
+					ColorSequenceKeypoint.new(.55,Color3.fromRGB(247,184,211)),
+					ColorSequenceKeypoint.new(1,Color3.fromRGB(255,232,240))
+				})
+				petals.Transparency=NumberSequence.new({
+					NumberSequenceKeypoint.new(0,1),
+					NumberSequenceKeypoint.new(.08,.12),
+					NumberSequenceKeypoint.new(.78,.18),
+					NumberSequenceKeypoint.new(1,1)
+				})
+				petals.Size=NumberSequence.new({
+					NumberSequenceKeypoint.new(0,.18,.05),
+					NumberSequenceKeypoint.new(.35,.32,.08),
+					NumberSequenceKeypoint.new(1,.20,.06)
+				})
+				petals.Squash=NumberSequence.new({
+					NumberSequenceKeypoint.new(0,.42),
+					NumberSequenceKeypoint.new(.5,-.18),
+					NumberSequenceKeypoint.new(1,.34)
+				})
+				petals.Rate=rng:NextNumber(.9,1.35)
+				petals.Lifetime=NumberRange.new(4.5,7)
+				petals.Speed=NumberRange.new(.2,.8)
+				petals.Acceleration=Vector3.new(0,-1.25,0)
+				petals.Drag=1.35
+				petals.WindAffectsDrag=true
+				petals.EmissionDirection=Enum.NormalId.Bottom
+				petals.SpreadAngle=Vector2.new(55,55)
+				petals.Rotation=NumberRange.new(0,360)
+				petals.RotSpeed=NumberRange.new(-55,55)
+				petals.Orientation=Enum.ParticleOrientation.FacingCamera
+				petals.LightInfluence=.72
+				petals.LightEmission=.03
+				petals.ZOffset=.05
+				petals.Enabled=true
+				petals.Parent=leaf
 			end
 		end
 		placed += 1
