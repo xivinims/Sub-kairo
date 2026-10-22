@@ -638,6 +638,34 @@ local function auditBrookhavenLayout()
 end
 out.brookhavenLayout=auditBrookhavenLayout()
 
+
+local function inspectBrookhavenEntrances()
+ local r={id=106476929993683,loaded=false,spawns={},named={},largeGround={},houseMarkers={}}
+ local ok,asset=pcall(function() return A:LoadAssetAsync(106476929993683) end)
+ if not ok or not asset then r.error=tostring(asset) return r end
+ r.loaded=true
+ local root=asset:FindFirstChild("Brookhaven Map",true)
+ if not root then asset:Destroy(); r.error="Brookhaven Map missing"; return r end
+ for _,d in ipairs(root:GetDescendants()) do
+  if d:IsA("SpawnLocation") then
+   table.insert(r.spawns,{name=d.Name,parent=d.Parent and d.Parent.Name or "",pos={d.Position.X,d.Position.Y,d.Position.Z},size={d.Size.X,d.Size.Y,d.Size.Z}})
+  end
+  if d:IsA("BasePart") then
+   local n=d.Name:lower()
+   if n:find("spawn",1,true) or n:find("start",1,true) or n:find("lobby",1,true) or n:find("road",1,true) or n:find("street",1,true) or n:find("sidewalk",1,true) then
+    if #r.named<160 then table.insert(r.named,{name=d.Name,parent=d.Parent and d.Parent.Name or "",class=d.ClassName,pos={d.Position.X,d.Position.Y,d.Position.Z},size={d.Size.X,d.Size.Y,d.Size.Z},color={d.Color.R,d.Color.G,d.Color.B},material=tostring(d.Material)}) end
+   end
+   if d.CFrame.UpVector.Y>.96 and d.Size.X*d.Size.Z>12000 and #r.largeGround<100 then
+    table.insert(r.largeGround,{name=d.Name,parent=d.Parent and d.Parent.Name or "",pos={d.Position.X,d.Position.Y,d.Position.Z},size={d.Size.X,d.Size.Y,d.Size.Z},color={d.Color.R,d.Color.G,d.Color.B},material=tostring(d.Material)})
+   end
+   if d.Name:match("^House%d+$") and #r.houseMarkers<40 then table.insert(r.houseMarkers,{name=d.Name,pos={d.Position.X,d.Position.Y,d.Position.Z}}) end
+  end
+ end
+ asset:Destroy()
+ return r
+end
+out.brookhavenEntrances=inspectBrookhavenEntrances()
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
