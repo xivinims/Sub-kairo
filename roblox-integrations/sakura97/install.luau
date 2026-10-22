@@ -1,756 +1,715 @@
--- Sakura Island v97 — mapa limpo igual a foto pedida
--- Deleta tudo, cria ilha, 27 cerejeiras, grama skinned, caminho de pedra, ceu de tarde, vento
-
+-- Swean Island v99 — Pristine Park island + Sakura + Halloween
 assert(game.GameId == 9419478735 and game.PlaceId == 79738710219521, "Place errado")
 
-local AssetService = game:GetService("AssetService")
-local Lighting = game:GetService("Lighting")
-local Terrain = workspace.Terrain
-local CollectionService = game:GetService("CollectionService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local AssetService=game:GetService("AssetService")
+local Lighting=game:GetService("Lighting")
+local Terrain=workspace.Terrain
+local CollectionService=game:GetService("CollectionService")
+local Players=game:GetService("Players")
+local ReplicatedFirst=game:GetService("ReplicatedFirst")
 
--- ============ 1. LIMPA TUDO ============
-local function clearWorld()
-	for _, child in ipairs(workspace:GetChildren()) do
-		if child.Name ~= "Terrain" and child.Name ~= "Camera" and not child:IsA("Terrain") then
-			if child.Name == "ForestWorld" or child.Name == "Baseplate"
-				or child.Name == "StonePath" or child.Name == "Wildflowers"
-				or child.Name == "WorldSafetyFloor" or child.Name == "IslandSpawn"
-				or child.Name:find("Forest") or child.Name:find("Tree") or child.Name:find("Sakura") then
-				child:Destroy()
-			end
-		end
+local PARK_ID=13366955960
+local TREE_ID=9626366517
+local GRASS_ID=87377915371959
+local WIND_ID=11946229834
+local HALLOWEEN_ID=12489961338
+local NAMETAG_ID=123212555736117
+local LOADING_ID=73186563008540
+local SKY_ID=137401994501544
+
+local function loadAsset(id)
+	local ok,res=pcall(AssetService.LoadAssetAsync,AssetService,id)
+	if not ok or not res then error("Asset "..id.." failed: "..tostring(res)) end
+	return res
+end
+
+local function clearOld()
+	for _,child in ipairs(workspace:GetChildren()) do
+		if child~=Terrain and not child:IsA("Camera") then child:Destroy() end
 	end
-	-- limpa scripts antigos
-	for _, s in ipairs(game.ServerScriptService:GetChildren()) do
-		if s.Name:find("Forest") or s.Name:find("Sakura") or s.Name:find("TreeWorld") or s.Name=="NametagService" then
-			s:Destroy()
-		end
+	Terrain:Clear()
+
+	for _,name in ipairs({"SakuraServer","NametagService"}) do
+		local x=game.ServerScriptService:FindFirstChild(name)
+		if x then x:Destroy() end
 	end
-	for _, s in ipairs(game.StarterPlayer.StarterPlayerScripts:GetChildren()) do
-		if s.Name:find("Forest") or s.Name:find("Sakura") or s.Name:find("Grass") or s.Name=="WindController" then
-			s:Destroy()
-		end
-	end
-	if game.ReplicatedStorage:FindFirstChild("ForestRuntime") then
-		game.ReplicatedStorage.ForestRuntime:Destroy()
-	end
-	if game.ReplicatedStorage:FindFirstChild("SakuraRuntime") then
-		game.ReplicatedStorage.SakuraRuntime:Destroy()
+	for _,name in ipairs({"WindController","TerrainGrassBend"}) do
+		local x=game.StarterPlayer.StarterPlayerScripts:FindFirstChild(name)
+		if x then x:Destroy() end
 	end
 	local oldLoading=ReplicatedFirst:FindFirstChild("LoadingScreen")
 	if oldLoading then oldLoading:Destroy() end
+	local oldRuntime=game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
+	if oldRuntime then oldRuntime:Destroy() end
 end
 
-clearWorld()
+clearOld()
 
--- ============ 2. RUNTIME ============
-local runtime = Instance.new("Folder")
-runtime.Name = "SakuraRuntime"
-runtime.Parent = game.ReplicatedStorage
-runtime:SetAttribute("Version", 97)
-runtime:SetAttribute("MapType", "SakuraIsland")
+local runtime=Instance.new("Folder")
+runtime.Name="SakuraRuntime"
+runtime.Parent=game.ReplicatedStorage
+runtime:SetAttribute("Version",99)
+runtime:SetAttribute("MapType","PristineParkIslandHalloween")
+runtime:SetAttribute("ParkAssetId",PARK_ID)
+runtime:SetAttribute("HalloweenAssetId",HALLOWEEN_ID)
 
--- ============ 2.5. GEOMETRIA DA ESTRADINHA CIRCULAR ============
-local PATH_SEGMENTS=20
-local PATH_SCALE=.68
-local PATH_RADIUS_X=108
-local PATH_RADIUS_Z=78
-local PATH_CLEAR_RADIUS=6
+pcall(function()
+	workspace.StreamingEnabled=true
+	workspace.StreamingMinRadius=96
+	workspace.StreamingTargetRadius=280
+end)
 
-local function pathPointAt(t)
-	local a=t*math.pi*2
-	local rx=PATH_RADIUS_X+math.sin(a*3)*4+math.sin(a*7)*1.8
-	local rz=PATH_RADIUS_Z+math.cos(a*4)*3
-	return Vector3.new(math.cos(a)*rx,0,math.sin(a)*rz)
-end
-
-local function pathCenterFor(i)
-	return pathPointAt((i-1)/PATH_SEGMENTS)
-end
-
-local function pathYawFor(i)
-	local t=(i-1)/PATH_SEGMENTS
-	local a=pathPointAt(t-.003)
-	local b=pathPointAt(t+.003)
-	return math.atan2(b.X-a.X,b.Z-a.Z)
-end
-
-local function distanceToStonePath(x,z)
-	local p=Vector2.new(x,z)
-	local best=math.huge
-	for j=0,95 do
-		local q=pathPointAt(j/96)
-		local d=(p-Vector2.new(q.X,q.Z)).Magnitude
-		if d<best then best=d end
-	end
-	return best
-end
-
-local function nearStonePath(x,z,padding)
-	return distanceToStonePath(x,z) <= PATH_CLEAR_RADIUS+(padding or 0)
-end
-
--- ============ 3. ILHA + TERRENO ============
-local function buildIsland()
-	Terrain:Clear()
-	pcall(function()
-		Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(86,112,58))
-		Terrain:SetMaterialColor(Enum.Material.LeafyGrass,Color3.fromRGB(78,104,57))
-		Terrain:SetMaterialColor(Enum.Material.Sand,Color3.fromRGB(157,145,112))
-	end)
-
-	Terrain.WaterColor=Color3.fromRGB(72,118,128)
-	Terrain.WaterTransparency=.22
-	Terrain.WaterReflectance=.28
-	Terrain.WaterWaveSize=.12
-	Terrain.WaterWaveSpeed=7
-
-	-- Oceano contínuo. A documentação oficial usa um volume enorme para levar
-	-- água até o horizonte; aqui usamos 1800x1800 ao redor da ilha.
-	Terrain:FillBlock(CFrame.new(0,-17,0),Vector3.new(1900,10,1900),Enum.Material.Sand)
-	Terrain:FillBlock(CFrame.new(0,-6,0),Vector3.new(1800,12,1800),Enum.Material.Water)
-
-	local radius=220
-	for x=-radius,radius,8 do
-		for z=-radius,radius,8 do
-			local dist=math.sqrt(x*x+z*z)
-			if dist<radius then
-				local h=10+math.sin(x*.018)*2.2+math.cos(z*.015)*1.8+math.sin((x+z)*.01)*1.5
-				if dist>radius*.78 then
-					h=h-(dist-radius*.78)*.35
-				end
-				h=math.max(1.8,h)
-				-- Quatro studs abaixo do nível da água deixam a massa da ilha
-				-- contínua, evitando frestas na costa.
-				Terrain:FillBlock(
-					CFrame.new(x,(h-4)/2,z),
-					Vector3.new(10,h+4,10),
-					Enum.Material.Grass
-				)
-			end
+local function sanitizeVisual(root,removeScripts)
+	for _,d in ipairs(root:GetDescendants()) do
+		if removeScripts and d:IsA("LuaSourceContainer") then
+			d:Destroy()
+		elseif d:IsA("Camera") or d:IsA("SpawnLocation") then
+			d:Destroy()
+		elseif d:IsA("BasePart") then
+			d.Anchored=true
+			d.CanTouch=false
 		end
 	end
-
-	-- Corredor verde sem grama animada no caminho. Animated grass só aparece
-	-- em Enum.Material.Grass, então trocamos apenas o material da faixa.
-	for j=0,119 do
-		local p=pathPointAt(j/120)
-		local region=Region3.new(
-			Vector3.new(p.X-6,-8,p.Z-6),
-			Vector3.new(p.X+6,40,p.Z+6)
-		):ExpandToGrid(4)
-		Terrain:ReplaceMaterial(region,4,Enum.Material.Grass,Enum.Material.LeafyGrass)
-	end
-
-	-- Última camada física de segurança, muito abaixo da água/fundo do mar.
-	local safety=Instance.new("Part")
-	safety.Name="WorldSafetyFloor"
-	safety.Size=Vector3.new(1900,2,1900)
-	safety.CFrame=CFrame.new(0,-45,0)
-	safety.Anchored=true
-	safety.CanCollide=true
-	safety.CanTouch=false
-	safety.Transparency=1
-	safety.Parent=workspace
-
-	workspace.FallenPartsDestroyHeight=-200
-	workspace:SetAttribute("SakuraIslandReady",true)
-	runtime:SetAttribute("OceanSize",1800)
-	runtime:SetAttribute("PathNoGrassMaterial","LeafyGrass")
 end
-
-buildIsland()
-
--- ============ 4. CÉU + ILUMINAÇÃO DE TARDE ============
-local function setupSkyAndLighting()
-	-- limpa lighting antigo
-	for _, c in ipairs(Lighting:GetChildren()) do
-		c:Destroy()
-	end
-
-	-- Sky do asset pedido
-	local ok, skyAsset = pcall(function()
-		return AssetService:LoadAssetAsync(137401994501544)
-	end)
-	if ok and skyAsset then
-		local sky = skyAsset:FindFirstChildOfClass("Sky") or skyAsset:FindFirstChildWhichIsA("Sky", true)
-		if sky then
-			sky = sky:Clone()
-			sky.Parent = Lighting
-		end
-		skyAsset:Destroy()
-	end
-
-	-- se não carregou o sky, cria um de tarde manual
-	if not Lighting:FindFirstChildOfClass("Sky") then
-		local sky = Instance.new("Sky")
-		sky.SkyboxBk = "rbxassetid://600830446"
-		sky.SkyboxDn = "rbxassetid://600831635"
-		sky.SkyboxFt = "rbxassetid://600832720"
-		sky.SkyboxLf = "rbxassetid://600833862"
-		sky.SkyboxRt = "rbxassetid://600835177"
-		sky.SkyboxUp = "rbxassetid://600835780"
-		sky.Parent = Lighting
-	end
-
-	-- luz de fim de tarde (não noite)
-	Lighting.ClockTime = 17.2	-- fim de tarde
-	Lighting.Brightness = 2.4
-	Lighting.Ambient = Color3.fromRGB(140, 120, 110)
-	Lighting.OutdoorAmbient = Color3.fromRGB(160, 130, 110)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 180, 140)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(80, 60, 50)
-	Lighting.FogColor = Color3.fromRGB(200, 160, 140)
-	Lighting.FogEnd = 1200
-	Lighting.FogStart = 80
-	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 0.6
-	Lighting.EnvironmentSpecularScale = 0.4
-
-	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.28
-	atmosphere.Offset = 0.15
-	atmosphere.Color = Color3.fromRGB(210, 170, 140)
-	atmosphere.Decay = Color3.fromRGB(180, 120, 90)
-	atmosphere.Glare = 0.2
-	atmosphere.Haze = 1.1
-	atmosphere.Parent = Lighting
-
-	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.45
-	bloom.Size = 24
-	bloom.Threshold = 0.9
-	bloom.Parent = Lighting
-
-	local colorCorrection = Instance.new("ColorCorrectionEffect")
-	colorCorrection.Brightness = 0.04
-	colorCorrection.Contrast = 0.08
-	colorCorrection.Saturation = 0.15
-	colorCorrection.TintColor = Color3.fromRGB(255, 235, 220)
-	colorCorrection.Parent = Lighting
-end
-
-setupSkyAndLighting()
-
--- ============ 5. VENTO ============
-local function setupWind()
-	local scripts=game.StarterPlayer.StarterPlayerScripts
-	local old=scripts:FindFirstChild("WindController")
-	if old then old:Destroy() end
-
-	workspace.GlobalWind=Vector3.new(14,0,5)
-
-	local ok,asset=pcall(function()
-		return AssetService:LoadAssetAsync(11946229834)
-	end)
-	if not ok or not asset then
-		error("Wind Effects 11946229834 failed to load")
-	end
-
-	local source=asset:FindFirstChild("WindController",true)
-	assert(source and source:IsA("LocalScript"),"WindController missing from exact asset")
-	assert(source:FindFirstChild("WindLines"),"WindLines missing from exact asset")
-	assert(source:FindFirstChild("WindShake"),"WindShake missing from exact asset")
-
-	-- Use the exact controller and its exact child modules, unchanged.
-	local controller=source:Clone()
-	controller.Name="WindController"
-	controller:SetAttribute("AssetId",11946229834)
-	controller:SetAttribute("ExactCreatorStoreController",true)
-	controller.Parent=scripts
-
-	asset:Destroy()
-	print("[Sakura97] Exact WindController installed unchanged")
-end
-setupWind()
 
 local function visualPartCount(inst)
 	local n=0
 	if inst:IsA("BasePart") then n+=1 end
-	for _,d in ipairs(inst:GetDescendants()) do
-		if d:IsA("BasePart") then n+=1 end
-	end
+	for _,d in ipairs(inst:GetDescendants()) do if d:IsA("BasePart") then n+=1 end end
 	return n
 end
 
 local function validBounds(model)
-	local ok,cf,size=pcall(function()
-		return model:GetBoundingBox()
-	end)
-	if not ok or not size or size.X<=0 or size.Y<=0 or size.Z<=0 then
-		return nil
-	end
+	local ok,cf,size=pcall(function() return model:GetBoundingBox() end)
+	if not ok or not size or size.X<=0 or size.Y<=0 or size.Z<=0 then return nil end
 	return cf,size
 end
 
-local function findVisualModel(asset, preferredWords)
-	local best=nil
-	local bestScore=-1
+local function asModel(inst)
+	if inst:IsA("Model") then return inst end
+	local m=Instance.new("Model")
+	inst.Parent=m
+	return m
+end
+
+local function findVisualModel(asset,words)
+	local best,bestScore=nil,-1
 	for _,d in ipairs(asset:GetDescendants()) do
-		if d:IsA("Model") and d:FindFirstChildWhichIsA("BasePart", true) then
+		if d:IsA("Model") and d:FindFirstChildWhichIsA("BasePart",true) then
 			local _,size=validBounds(d)
 			if size then
 				local score=visualPartCount(d)
 				local name=d.Name:lower()
-				for _,word in ipairs(preferredWords or {}) do
+				for _,word in ipairs(words or {}) do
 					if name:find(word,1,true) then score+=10000 end
 				end
-				if score>bestScore then
-					best=d
-					bestScore=score
-				end
+				if score>bestScore then best,bestScore=d,score end
 			end
 		end
 	end
-	if best then return best:Clone() end
-
-	local part=asset:FindFirstChildWhichIsA("BasePart", true)
-	if part and part.Size.X>0 and part.Size.Y>0 and part.Size.Z>0 then
-		local m=Instance.new("Model")
-		part:Clone().Parent=m
-		return m
-	end
-	return nil
+	return best
 end
 
-local function safeScale(model,scale)
-	return pcall(function()
-		model:ScaleTo(scale)
-	end)
-end
-
-local function normalizeHeight(model,targetHeight)
+local function scaleModelToHeight(model,targetHeight)
 	local _,size=validBounds(model)
 	if not size then return false end
-	local current=model:GetScale()
-	return safeScale(model,current*(targetHeight/size.Y))
+	return pcall(function()
+		model:ScaleTo(model:GetScale()*(targetHeight/size.Y))
+	end)
 end
 
-local function placeModelOnGround(model,groundPosition,yaw)
-	local ok=pcall(function()
-		model:PivotTo(CFrame.new(groundPosition)*CFrame.Angles(0,yaw,0))
+local function scaleModelToFootprint(model,target)
+	local _,size=validBounds(model)
+	if not size then return false end
+	local current=math.max(size.X,size.Z)
+	if current<=0 then return false end
+	return pcall(function()
+		model:ScaleTo(model:GetScale()*(target/current))
 	end)
-	if not ok then return false end
+end
+
+local function placeModelBottom(model,pos,yaw,sink)
+	model:PivotTo(CFrame.new(pos.X,0,pos.Z)*CFrame.Angles(0,yaw or 0,0))
 	local cf,size=validBounds(model)
 	if not size then return false end
 	local bottom=cf.Position.Y-size.Y/2
-	return pcall(function()
-		model:PivotTo(model:GetPivot()+Vector3.new(0,groundPosition.Y-bottom,0))
-	end)
+	model:PivotTo(model:GetPivot()+Vector3.new(0,pos.Y-bottom-(sink or 0),0))
+	return true
 end
 
--- ============ 6. ÁRVORES CEREJEIRA (27 unidades, maiores) ============
-local function placeSakuraTrees()
-	local folder = Instance.new("Folder")
-	folder.Name = "SakuraTrees"
-	folder.Parent = workspace
+local function rayDown(x,z,exclude)
+	local params=RaycastParams.new()
+	params.FilterType=Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances=exclude or {}
+	return workspace:Raycast(Vector3.new(x,130,z),Vector3.new(0,-220,0),params)
+end
 
-	local ok, treeAsset = pcall(function()
-		return AssetService:LoadAssetAsync(9626366517)
-	end)
-	if not ok or not treeAsset then
-		warn("Não consegui carregar a Sakura Tree 9626366517")
-		return
+-- ============ OCEANO + BASE DA ILHA ============
+Terrain.WaterColor=Color3.fromRGB(69,112,124)
+Terrain.WaterTransparency=.2
+Terrain.WaterReflectance=.3
+Terrain.WaterWaveSize=.11
+Terrain.WaterWaveSpeed=7
+pcall(function()
+	Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(80,108,60))
+	Terrain:SetMaterialColor(Enum.Material.Sand,Color3.fromRGB(173,158,118))
+end)
+
+Terrain:FillBlock(CFrame.new(0,-18,0),Vector3.new(1900,10,1900),Enum.Material.Sand)
+Terrain:FillBlock(CFrame.new(0,-7,0),Vector3.new(1800,12,1800),Enum.Material.Water)
+
+for x=-245,245,14 do
+	for z=-180,180,14 do
+		local e=(x/245)^2+(z/180)^2
+		if e<1 then
+			local edge=math.clamp((e-.72)/.28,0,1)
+			local top=7-edge*4
+			local mat=e>.83 and Enum.Material.Sand or Enum.Material.Grass
+			Terrain:FillBall(Vector3.new(x,top-12,z),16,mat)
+		end
 	end
+end
 
-	local template=findVisualModel(treeAsset,{"sakura","cherry","tree"})
-	if not template then
-		warn("Template visual de cerejeira não encontrado")
-		treeAsset:Destroy()
-		return
+local safety=Instance.new("Part")
+safety.Name="WorldSafetyFloor"
+safety.Size=Vector3.new(1900,2,1900)
+safety.CFrame=CFrame.new(0,-48,0)
+safety.Anchored=true
+safety.CanCollide=true
+safety.CanTouch=false
+safety.Transparency=1
+safety.Parent=workspace
+workspace.FallenPartsDestroyHeight=-220
+
+-- ============ PRISTINE PARK REAL ============
+local parkAsset=loadAsset(PARK_ID)
+local parkSource=parkAsset:FindFirstChild("Park",true) or findVisualModel(parkAsset,{"park"})
+assert(parkSource and parkSource:IsA("Model"),"Pristine Park model not found")
+local park=parkSource:Clone()
+park.Name="PristineParkIsland"
+park:SetAttribute("AssetId",PARK_ID)
+park.Parent=workspace
+sanitizeVisual(park,true)
+park:PivotTo(CFrame.new(0,0,0))
+local pcf,psize=park:GetBoundingBox()
+local pbottom=pcf.Position.Y-psize.Y/2
+park:PivotTo(park:GetPivot()+Vector3.new(0,7.1-pbottom,0))
+parkAsset:Destroy()
+
+-- Grama/cores do próprio parque e pedras Brown Stone em cinza.
+local grayStone=Color3.fromRGB(118,121,128)
+local brownStoneCount=0
+local parkGrassParts=0
+for _,d in ipairs(park:GetDescendants()) do
+	if d:IsA("BasePart") then
+		local lower=d.Name:lower()
+		if lower=="brown stone" then
+			d.Color=grayStone
+			brownStoneCount+=1
+		end
+		if d.Material==Enum.Material.Grass or lower:find("grass",1,true) then
+			d.Material=Enum.Material.Grass
+			d.Color=Color3.fromRGB(78,105,58)
+			parkGrassParts+=1
+		end
 	end
+end
+runtime:SetAttribute("GrayStoneCount",brownStoneCount)
 
-	-- limpa scripts internos
-	for _, d in ipairs(template:GetDescendants()) do
-		if d:IsA("LuaSourceContainer") or d:IsA("Camera") then d:Destroy() end
+-- ============ REMOVE AS ÁRVORES ORIGINAIS ============
+local function greenish(c)
+	return c.G>c.R*.9 and c.G>c.B*.75 and c.G>.22
+end
+
+local function treeLikeModel(m)
+	local name=m.Name:lower()
+	if name:find("streetlight",1,true) or name:find("light",1,true) then return false end
+	if name:find("tree",1,true) then return true end
+	local wood,foliage=false,false
+	for _,d in ipairs(m:GetDescendants()) do
+		if d:IsA("BasePart") then
+			local n=d.Name:lower()
+			if d.Material==Enum.Material.Wood or d.Material==Enum.Material.WoodPlanks or n:find("trunk",1,true) then wood=true end
+			if n:find("leaf",1,true) or n:find("foliage",1,true) or (greenish(d.Color) and (d.Material==Enum.Material.Grass or d.Material==Enum.Material.Fabric or d:IsA("MeshPart"))) then foliage=true end
+		end
 	end
+	if wood and foliage then
+		local _,size=validBounds(m)
+		return size and size.Y>10 and size.X<80 and size.Z<80
+	end
+	return false
+end
 
-	local rng = Random.new(97001)
-	local placed = 0
-	local positions = {}
-	local attempts=0
+local candidates={}
+for _,d in ipairs(park:GetDescendants()) do
+	if d:IsA("Model") and treeLikeModel(d) then table.insert(candidates,d) end
+end
+local set={}
+for _,m in ipairs(candidates) do set[m]=true end
+local treePositions={}
+for _,m in ipairs(candidates) do
+	local ancestor=m.Parent
+	local nested=false
+	while ancestor and ancestor~=park do
+		if set[ancestor] then nested=true break end
+		ancestor=ancestor.Parent
+	end
+	if not nested and m.Parent then
+		local cf=select(1,m:GetBoundingBox())
+		table.insert(treePositions,cf.Position)
+		m:Destroy()
+	end
+end
+for _,d in ipairs(park:GetDescendants()) do
+	if d:IsA("BasePart") then
+		local n=d.Name:lower()
+		if (n=="tree" or n:find("tree trunk",1,true)) and d.Parent then
+			table.insert(treePositions,d.Position)
+			d:Destroy()
+		end
+	end
+end
+runtime:SetAttribute("OriginalTreesRemoved",#treePositions)
 
-	-- 27 árvores espalhadas com espaçamento bom e fora da estradinha
-	while placed < 27 and attempts < 6000 do
-		attempts+=1
-		local angle = rng:NextNumber(0, math.pi * 2)
-		local dist = rng:NextNumber(25, 175)
-		local x = math.cos(angle) * dist
-		local z = math.sin(angle) * dist
+-- ============ SKY + TARDE ============
+for _,d in ipairs(Lighting:GetChildren()) do d:Destroy() end
+local skyAsset=loadAsset(SKY_ID)
+local sky=skyAsset:FindFirstChildWhichIsA("Sky",true)
+if sky then sky:Clone().Parent=Lighting end
+skyAsset:Destroy()
+Lighting.ClockTime=16.35
+Lighting.Brightness=2.45
+Lighting.ExposureCompensation=.06
+Lighting.Ambient=Color3.fromRGB(137,135,130)
+Lighting.OutdoorAmbient=Color3.fromRGB(172,166,153)
+Lighting.GlobalShadows=true
+Lighting.EnvironmentDiffuseScale=.6
+Lighting.EnvironmentSpecularScale=.55
+local atmosphere=Instance.new("Atmosphere")
+atmosphere.Density=.19
+atmosphere.Offset=.06
+atmosphere.Color=Color3.fromRGB(222,211,196)
+atmosphere.Decay=Color3.fromRGB(147,137,132)
+atmosphere.Haze=.7
+atmosphere.Glare=.05
+atmosphere.Parent=Lighting
+local cc=Instance.new("ColorCorrectionEffect")
+cc.Brightness=.02
+cc.Contrast=.025
+cc.Saturation=.04
+cc.TintColor=Color3.fromRGB(255,239,222)
+cc.Parent=Lighting
 
-		-- Mantém tronco e copa longe da estradinha circular.
-		if nearStonePath(x,z,17) then continue end
+-- ============ VENTO REAL ============
+workspace.GlobalWind=Vector3.new(14,0,5)
+local windAsset=loadAsset(WIND_ID)
+local windSource=windAsset:FindFirstChild("WindController",true)
+assert(windSource and windSource:IsA("LocalScript"),"WindController missing")
+local sourceLines=windSource:FindFirstChild("WindLines")
+local sourceShake=windSource:FindFirstChild("WindShake")
+assert(sourceLines and sourceShake,"Wind modules missing")
+local windController=Instance.new("LocalScript")
+windController.Name="WindController"
+windController:SetAttribute("AssetId",WIND_ID)
+windController.Source=[==========[
+local WindLines=require(script:WaitForChild("WindLines"))
+local WindShake=require(script:WaitForChild("WindShake"))
+local direction=Vector3.new(1,0,.32).Unit
+local speed=16
+WindLines:Init({Direction=direction;Speed=speed;Lifetime=1.9;SpawnRate=17;})
+WindShake:SetDefaultSettings({WindSpeed=speed;WindDirection=direction;WindPower=.42;})
+WindShake:Init()
+]==========]
+local wl=Instance.new("ModuleScript")
+wl.Name="WindLines"
+wl.Source=sourceLines.Source
+wl.Parent=windController
+local ws=Instance.new("ModuleScript")
+ws.Name="WindShake"
+ws.Source=sourceShake.Source
+ws.Parent=windController
+windController.Parent=game.StarterPlayer.StarterPlayerScripts
+windAsset:Destroy()
 
-		-- evita água e muito perto de outras
-		local tooClose = false
-		for _, p in ipairs(positions) do
-			if (Vector2.new(x, z) - p).Magnitude < 28 then
-				tooClose = true
-				break
+-- ============ CEREJEIRAS NO LUGAR DAS ÁRVORES ============
+local treeAsset=loadAsset(TREE_ID)
+local treeTemplate=findVisualModel(treeAsset,{"sakura","cherry","tree"})
+assert(treeTemplate,"Sakura template missing")
+treeTemplate=treeTemplate:Clone()
+sanitizeVisual(treeTemplate,true)
+treeAsset:Destroy()
+
+local sakuraFolder=Instance.new("Folder")
+sakuraFolder.Name="SakuraTrees"
+sakuraFolder.Parent=workspace
+
+local rng=Random.new(99001)
+local filtered={}
+for _,pos in ipairs(treePositions) do
+	local good=true
+	for _,q in ipairs(filtered) do
+		if (Vector2.new(pos.X,pos.Z)-Vector2.new(q.X,q.Z)).Magnitude<18 then good=false break end
+	end
+	if good then table.insert(filtered,pos) end
+	if #filtered>=28 then break end
+end
+
+local function grassPoint()
+	for _=1,350 do
+		local x=rng:NextNumber(-185,185)
+		local z=rng:NextNumber(-125,125)
+		local hit=rayDown(x,z,{sakuraFolder,safety})
+		if hit and hit.Material~=Enum.Material.Water then
+			local inst=hit.Instance
+			if hit.Material==Enum.Material.Grass or (inst and inst:IsDescendantOf(park) and inst.Material==Enum.Material.Grass) then
+				return hit.Position
 			end
 		end
-		if tooClose then continue end
+	end
+end
 
-		-- raycast no terreno
-		local ray = workspace:Raycast(Vector3.new(x, 80, z), Vector3.new(0, -120, 0))
-		if not ray or ray.Material == Enum.Material.Water then continue end
+while #filtered<20 do
+	local p=grassPoint()
+	if not p then break end
+	local good=true
+	for _,q in ipairs(filtered) do
+		if (Vector2.new(p.X,p.Z)-Vector2.new(q.X,q.Z)).Magnitude<22 then good=false break end
+	end
+	if good then table.insert(filtered,p) end
+end
 
-		local tree = template:Clone()
-		-- tamanho controlado: um pouco maior, mas nunca gigante
-		local sizeOk=normalizeHeight(tree,rng:NextNumber(24,29))
-		local yaw = rng:NextNumber(0, math.pi * 2)
-		local placeOk=sizeOk and placeModelOnGround(tree,ray.Position,yaw)
-		if not placeOk then
-			tree:Destroy()
-			continue
+local function trunkBottom(tree)
+	local trunk=nil
+	for _,d in ipairs(tree:GetDescendants()) do
+		if d:IsA("BasePart") and d.Name~="Leaves" then trunk=d break end
+	end
+	if not trunk then return nil end
+	local minY=math.huge
+	for _,sx in ipairs({-1,1}) do
+		for _,sy in ipairs({-1,1}) do
+			for _,sz in ipairs({-1,1}) do
+				local p=trunk.CFrame:PointToWorldSpace(Vector3.new(trunk.Size.X*.5*sx,trunk.Size.Y*.5*sy,trunk.Size.Z*.5*sz))
+				minY=math.min(minY,p.Y)
+			end
 		end
+	end
+	return minY
+end
 
-		-- O bounding box do MeshPart encosta no Terrain, mas a geometria visual
-		-- do tronco fica um pouco acima da borda da caixa. Enterrar levemente
-		-- elimina a impressão de árvore flutuando sem esconder o tronco.
-		tree:PivotTo(tree:GetPivot()+Vector3.new(0,-1.15,0))
-
-		tree.Parent = folder
-		CollectionService:AddTag(tree, "SakuraTree")
+for i,pos in ipairs(filtered) do
+	local hit=rayDown(pos.X,pos.Z,{sakuraFolder,safety})
+	if hit and hit.Material~=Enum.Material.Water then
+		local tree=treeTemplate:Clone()
+		tree.Name=string.format("Sakura_%02d",i)
+		tree.Parent=sakuraFolder
+		scaleModelToHeight(tree,rng:NextNumber(19,23))
+		tree:PivotTo(CFrame.new(hit.Position.X,0,hit.Position.Z)*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0))
+		local bottom=trunkBottom(tree)
+		if bottom then tree:PivotTo(tree:GetPivot()+Vector3.new(0,hit.Position.Y-bottom-.7,0)) end
+		CollectionService:AddTag(tree,"SakuraTree")
 		for _,leaf in ipairs(tree:GetDescendants()) do
 			if leaf:IsA("BasePart") and leaf.Name=="Leaves" then
 				CollectionService:AddTag(leaf,"WindShake")
-				leaf:SetAttribute("WindPower",0.32)
-				leaf:SetAttribute("WindSpeed",14)
-				leaf:SetAttribute("WindDirection",workspace.GlobalWind.Unit)
-
+				leaf:SetAttribute("WindPower",.32)
+				leaf:SetAttribute("WindSpeed",16)
 				local petals=Instance.new("ParticleEmitter")
 				petals.Name="SakuraPetals"
 				petals.Texture="rbxassetid://14302399641"
-				petals.Color=ColorSequence.new({
-					ColorSequenceKeypoint.new(0,Color3.fromRGB(255,210,226)),
-					ColorSequenceKeypoint.new(.55,Color3.fromRGB(247,184,211)),
-					ColorSequenceKeypoint.new(1,Color3.fromRGB(255,232,240))
-				})
+				petals.Color=ColorSequence.new(Color3.fromRGB(249,193,218),Color3.fromRGB(255,231,240))
 				petals.Transparency=NumberSequence.new({
 					NumberSequenceKeypoint.new(0,1),
-					NumberSequenceKeypoint.new(.08,.12),
-					NumberSequenceKeypoint.new(.78,.18),
+					NumberSequenceKeypoint.new(.08,.15),
+					NumberSequenceKeypoint.new(.8,.2),
 					NumberSequenceKeypoint.new(1,1)
 				})
-				petals.Size=NumberSequence.new({
-					NumberSequenceKeypoint.new(0,.18,.05),
-					NumberSequenceKeypoint.new(.35,.32,.08),
-					NumberSequenceKeypoint.new(1,.20,.06)
-				})
-				petals.Squash=NumberSequence.new({
-					NumberSequenceKeypoint.new(0,.42),
-					NumberSequenceKeypoint.new(.5,-.18),
-					NumberSequenceKeypoint.new(1,.34)
-				})
-				petals.Rate=rng:NextNumber(.9,1.35)
-				petals.Lifetime=NumberRange.new(4.5,7)
-				petals.Speed=NumberRange.new(.2,.8)
-				petals.Acceleration=Vector3.new(0,-1.25,0)
-				petals.Drag=1.35
+				petals.Size=NumberSequence.new(.24)
+				petals.Rate=.7
+				petals.Lifetime=NumberRange.new(4,6.5)
+				petals.Speed=NumberRange.new(.15,.65)
+				petals.Acceleration=Vector3.new(0,-1.2,0)
+				petals.Drag=1.25
 				petals.WindAffectsDrag=true
+				petals.Rotation=NumberRange.new(0,360)
+				petals.RotSpeed=NumberRange.new(-45,45)
 				petals.EmissionDirection=Enum.NormalId.Bottom
 				petals.SpreadAngle=Vector2.new(55,55)
-				petals.Rotation=NumberRange.new(0,360)
-				petals.RotSpeed=NumberRange.new(-55,55)
-				petals.Orientation=Enum.ParticleOrientation.FacingCamera
-				petals.LightInfluence=.72
-				petals.LightEmission=.03
-				petals.ZOffset=.05
-				petals.Enabled=true
 				petals.Parent=leaf
 			end
 		end
-		placed += 1
-		positions[#positions + 1] = Vector2.new(x, z)
 	end
-
-	assert(placed==27,"Não foi possível posicionar 27 cerejeiras sem invadir o caminho")
-	template:Destroy()
-	treeAsset:Destroy()
-	runtime:SetAttribute("SakuraCount", placed)
-	print("[Sakura97] Colocadas", placed, "cerejeiras")
 end
+treeTemplate:Destroy()
+runtime:SetAttribute("SakuraCount",#sakuraFolder:GetChildren())
 
-placeSakuraTrees()
-
--- ============ 7. ESTRADINHA CIRCULAR EXATA STONE PATH (LONG) ============
-local function placeStonePath()
-	local old=workspace:FindFirstChild("StonePath")
-	if old then old:Destroy() end
-
-	local folder=Instance.new("Folder")
-	folder.Name="StonePath"
-	folder.Parent=workspace
-	folder:SetAttribute("AssetId",136068114177879)
-	folder:SetAttribute("ExactModelName","Stone Path (Long)")
-	folder:SetAttribute("SegmentCount",PATH_SEGMENTS)
-	folder:SetAttribute("Loop",true)
-	folder:SetAttribute("UsesGroundPatches",false)
-	folder:SetAttribute("NoGrassMaterial","LeafyGrass")
-
-	local ok,asset=pcall(function()
-		return AssetService:LoadAssetAsync(136068114177879)
-	end)
-	if not ok or not asset then
-		error("Stone Path asset 136068114177879 failed to load")
+-- ============ GRAMA ESTÁTICA (NÃO SEGUE JOGADOR) ============
+local grassFolder=Instance.new("Folder")
+grassFolder.Name="ParkGrass"
+grassFolder.Parent=workspace
+local grassAsset=loadAsset(GRASS_ID)
+sanitizeVisual(grassAsset,true)
+local grassCandidates={}
+for _,c in ipairs(grassAsset:GetChildren()) do
+	if (c:IsA("Model") or c:IsA("BasePart")) and visualPartCount(c)>0 then table.insert(grassCandidates,c) end
+end
+if #grassCandidates==0 then
+	local g=findVisualModel(grassAsset,{"grass","dark"})
+	if g then table.insert(grassCandidates,g) end
+end
+local function lum(inst)
+	local sum,n=0,0
+	if inst:IsA("BasePart") then sum+=(inst.Color.R+inst.Color.G+inst.Color.B)/3 n+=1 end
+	for _,d in ipairs(inst:GetDescendants()) do
+		if d:IsA("BasePart") then sum+=(d.Color.R+d.Color.G+d.Color.B)/3 n+=1 end
 	end
+	return n>0 and sum/n or 2
+end
+table.sort(grassCandidates,function(a,b) return lum(a)<lum(b) end)
+local grassTemplate=grassCandidates[1] and grassCandidates[1]:Clone() or nil
+grassAsset:Destroy()
 
-	local source=asset:FindFirstChild("Stone Path (Long)",true)
-	assert(source and source:IsA("Model"),"Stone Path (Long) model missing")
-
-	local sourcePartCount=0
-	for _,d in ipairs(source:GetDescendants()) do
-		if d:IsA("BasePart") then sourcePartCount+=1 end
-	end
-	assert(sourcePartCount==38,"Expected 38 parts in Stone Path (Long), got "..tostring(sourcePartCount))
-
-	local totalVisible=0
-	for i=1,PATH_SEGMENTS do
-		local segment=source:Clone()
-		segment.Name=string.format("Stone Path (Long) %02d",i)
-		segment.Parent=folder
-
-		for _,d in ipairs(segment:GetDescendants()) do
-			if d:IsA("LuaSourceContainer") then
-				d:Destroy()
-			elseif d:IsA("BasePart") then
-				d.Anchored=true
-				d.CanCollide=true
-				d.CanTouch=false
-				d.CanQuery=true
+local grassPlaced=0
+if grassTemplate then
+	for _=1,1600 do
+		if grassPlaced>=110 then break end
+		local x=rng:NextNumber(-188,188)
+		local z=rng:NextNumber(-128,128)
+		local hit=rayDown(x,z,{grassFolder,sakuraFolder,safety})
+		if hit and hit.Material~=Enum.Material.Water then
+			local inst=hit.Instance
+			local okay=hit.Material==Enum.Material.Grass or (inst and inst:IsDescendantOf(park) and inst.Material==Enum.Material.Grass)
+			if okay then
+				local clone=asModel(grassTemplate:Clone())
+				clone.Name=string.format("Grass_%03d",grassPlaced+1)
+				clone.Parent=grassFolder
+				scaleModelToFootprint(clone,rng:NextNumber(5.5,8))
+				placeModelBottom(clone,hit.Position,rng:NextNumber(0,math.pi*2),.04)
+				grassPlaced+=1
 			end
 		end
+	end
+	grassTemplate:Destroy()
+end
+runtime:SetAttribute("StaticGrassCount",grassPlaced)
 
-		local scale=PATH_SCALE*(1+math.sin(i*1.71)*.035)
-		segment:ScaleTo(segment:GetScale()*scale)
+-- ============ HALLOWEEN: EERIE TOMB + ABÓBORAS ============
+local halloween=Instance.new("Folder")
+halloween.Name="HalloweenDecor"
+halloween.Parent=workspace
+halloween:SetAttribute("AssetId",HALLOWEEN_ID)
 
-		local center=pathCenterFor(i)
-		local yaw=pathYawFor(i)+math.rad(math.sin(i*1.37)*2.2)
-		local base=CFrame.new(center)*CFrame.Angles(0,yaw,0)
-		local pivot=segment:GetPivot()
+local eerieAsset=loadAsset(HALLOWEEN_ID)
+local eerieOuter=eerieAsset:FindFirstChild("Eerie Tomb",true)
+assert(eerieOuter and eerieOuter:IsA("Model"),"Eerie Tomb model missing")
+local inner=eerieOuter:FindFirstChildWhichIsA("Model") or eerieOuter
+local tombTemplate=inner:Clone()
+sanitizeVisual(tombTemplate,true)
+for _,d in ipairs(tombTemplate:GetDescendants()) do
+	if d:IsA("BasePart") then
+		local n=d.Name:lower()
+		if n=="tree" or n=="hitbox" or d.Material==Enum.Material.Grass then d:Destroy() end
+	end
+end
 
-		local params=RaycastParams.new()
-		params.FilterType=Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances={
-			folder,
-			workspace:FindFirstChild("SakuraTrees"),
-			workspace:FindFirstChild("Wildflowers"),
-			workspace:FindFirstChild("WorldSafetyFloor")
-		}
+local pumpkinTemplates={}
+for _,d in ipairs(eerieAsset:GetDescendants()) do
+	if d:IsA("BasePart") and d.Name=="Pumpkin" then table.insert(pumpkinTemplates,d:Clone()) end
+end
+assert(#pumpkinTemplates>=1,"Pumpkins missing from Eerie Tomb")
 
-		local visible=0
-		for _,part in ipairs(segment:GetDescendants()) do
-			if part:IsA("BasePart") then
-				local rel=pivot:ToObjectSpace(part.CFrame)
-				local target=base*rel
-				local pos=target.Position
-				local hit=workspace:Raycast(Vector3.new(pos.X,75,pos.Z),Vector3.new(0,-145,0),params)
-				if hit and hit.Material~=Enum.Material.Water then
-					local rot=target-target.Position
-					-- Levemente enterrada no terreno para parecer assentada de verdade.
-					part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.32,0))*rot
-					part.Transparency=math.min(part.Transparency,.03)
-					visible+=1
-				else
-					part.Transparency=1
-					part.CanCollide=false
+local function randomOpenGrass(minRadius)
+	for _=1,500 do
+		local x=rng:NextNumber(-180,180)
+		local z=rng:NextNumber(-120,120)
+		if Vector2.new(x,z).Magnitude>minRadius then
+			local hit=rayDown(x,z,{halloween,sakuraFolder,grassFolder,safety})
+			if hit and hit.Material~=Enum.Material.Water then
+				local inst=hit.Instance
+				if hit.Material==Enum.Material.Grass or (inst and inst:IsDescendantOf(park) and inst.Material==Enum.Material.Grass) then
+					return hit.Position
 				end
 			end
 		end
+	end
+end
 
-		segment:SetAttribute("VisibleParts",visible)
-		totalVisible+=visible
+local tombCount=0
+for i=1,4 do
+	local pos=randomOpenGrass(70)
+	if pos then
+		local tomb=tombTemplate:Clone()
+		tomb.Name=string.format("EerieTomb_%02d",i)
+		tomb.Parent=halloween
+		pcall(function() tomb:ScaleTo(tomb:GetScale()*rng:NextNumber(.34,.43)) end)
+		if placeModelBottom(tomb,pos,rng:NextNumber(0,math.pi*2),.15) then tombCount+=1 else tomb:Destroy() end
+	end
+end
+tombTemplate:Destroy()
+
+local pumpkinCount=0
+for i=1,14 do
+	local pos=randomOpenGrass(20)
+	if pos then
+		local p=pumpkinTemplates[((i-1)%#pumpkinTemplates)+1]:Clone()
+		p.Name=string.format("Pumpkin_%02d",i)
+		p.Anchored=true
+		p.CanCollide=false
+		p.CanTouch=false
+		local sc=rng:NextNumber(.42,.68)
+		p.Size=p.Size*sc
+		p.CFrame=CFrame.new(pos+Vector3.new(0,p.Size.Y*.45,0))*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0)
+		p.Parent=halloween
+		pumpkinCount+=1
+	end
+end
+for _,p in ipairs(pumpkinTemplates) do p:Destroy() end
+eerieAsset:Destroy()
+
+-- ============ CABEÇAS DE ESQUELETO ESTILIZADAS ============
+local skullCount=0
+local function createSkull(pos,yaw,index)
+	local m=Instance.new("Model")
+	m.Name=string.format("SkullHead_%02d",index)
+	m.Parent=halloween
+
+	local head=Instance.new("Part")
+	head.Name="Skull"
+	head.Shape=Enum.PartType.Ball
+	head.Size=Vector3.new(1.35,1.15,1.15)
+	head.Color=Color3.fromRGB(220,216,198)
+	head.Material=Enum.Material.SmoothPlastic
+	head.Anchored=true
+	head.CanCollide=false
+	head.CanTouch=false
+	head.CFrame=CFrame.new(pos+Vector3.new(0,.48,0))*CFrame.Angles(0,yaw,0)
+	head.Parent=m
+
+	for _,sx in ipairs({-.27,.27}) do
+		local eye=Instance.new("Part")
+		eye.Name="EyeSocket"
+		eye.Shape=Enum.PartType.Ball
+		eye.Size=Vector3.new(.25,.25,.18)
+		eye.Color=Color3.fromRGB(45,43,42)
+		eye.Material=Enum.Material.SmoothPlastic
+		eye.Anchored=true
+		eye.CanCollide=false
+		eye.CanTouch=false
+		eye.CFrame=head.CFrame*CFrame.new(sx,.1,-.52)
+		eye.Parent=m
 	end
 
-	folder:SetAttribute("SourcePartsPerSegment",sourcePartCount)
-	folder:SetAttribute("VisibleParts",totalVisible)
-	asset:Destroy()
-	print("[Sakura97] Circular Stone Path segments:",PATH_SEGMENTS,"visible stones:",totalVisible)
+	local jaw=Instance.new("Part")
+	jaw.Name="Jaw"
+	jaw.Size=Vector3.new(.72,.28,.52)
+	jaw.Color=head.Color
+	jaw.Material=head.Material
+	jaw.Anchored=true
+	jaw.CanCollide=false
+	jaw.CanTouch=false
+	jaw.CFrame=head.CFrame*CFrame.new(0,-.48,-.05)
+	jaw.Parent=m
 end
 
-placeStonePath()
-
--- ============ 8. GRAMA SKINNED + FLORES ============
-local function placeGrassAndFlowers()
-	local oldGrass=workspace:FindFirstChild("SkinnedGrass")
-	if oldGrass then oldGrass:Destroy() end
-	local oldFlowers=workspace:FindFirstChild("Wildflowers")
-	if oldFlowers then oldFlowers:Destroy() end
-
-	local flowerFolder=Instance.new("Folder")
-	flowerFolder.Name="Wildflowers"
-	flowerFolder.Parent=workspace
-
-	local rng=Random.new(97002)
-	local made=0
-	for i=1,520 do
-		local angle=rng:NextNumber(0,math.pi*2)
-		local dist=rng:NextNumber(10,198)
-		local x=math.cos(angle)*dist
-		local z=math.sin(angle)*dist
-		if not nearStonePath(x,z,4.5) then
-			local ray=workspace:Raycast(Vector3.new(x,55,z),Vector3.new(0,-100,0))
-			if ray and ray.Material==Enum.Material.Grass then
-				local flower=Instance.new("Part")
-				flower.Name="Wildflower"
-				flower.Size=Vector3.new(.16,.09,.16)
-				flower.Shape=Enum.PartType.Ball
-				flower.Anchored=true
-				flower.CanCollide=false
-				flower.CanTouch=false
-				flower.Material=Enum.Material.SmoothPlastic
-				flower.Color=(rng:NextNumber()>.58)
-					and Color3.fromRGB(244,242,235)
-					or Color3.fromRGB(211,188,226)
-				flower.CFrame=CFrame.new(ray.Position+Vector3.new(0,.15,0))
-				flower.Parent=flowerFolder
-				made+=1
-			end
-		end
+for i=1,10 do
+	local pos=randomOpenGrass(35)
+	if pos then
+		createSkull(pos,rng:NextNumber(0,math.pi*2),i)
+		skullCount+=1
 	end
-	flowerFolder:SetAttribute("FlowerCount",made)
-	print("[Sakura97] Small flowers:",made)
-end
-placeGrassAndFlowers()
-
--- ============ 9. SPAWN NO CHÃO ============
-local function setupSpawn()
-	local old=workspace:FindFirstChild("IslandSpawn")
-	if old then old:Destroy() end
-
-	local params=RaycastParams.new()
-	params.FilterType=Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances={
-		workspace:FindFirstChild("StonePath"),
-		workspace:FindFirstChild("SakuraTrees"),
-		workspace:FindFirstChild("Wildflowers"),
-		workspace:FindFirstChild("WorldSafetyFloor")
-	}
-	local hit=workspace:Raycast(Vector3.new(0,80,0),Vector3.new(0,-140,0),params)
-	assert(hit and hit.Material~=Enum.Material.Water,"Não encontrou chão seguro para spawn")
-
-	local spawn=Instance.new("SpawnLocation")
-	spawn.Name="IslandSpawn"
-	spawn.Size=Vector3.new(7,.4,7)
-	spawn.Anchored=true
-	spawn.CanCollide=false
-	spawn.CanTouch=false
-	spawn.Transparency=1
-	spawn.Neutral=true
-	spawn.Enabled=true
-	spawn.Duration=0
-	spawn.AllowTeamChangeOnTouch=false
-	spawn.CFrame=CFrame.new(hit.Position+Vector3.new(0,.2,0))*CFrame.Angles(0,math.rad(20),0)
-	spawn.Parent=workspace
-	runtime:SetAttribute("SpawnGroundY",hit.Position.Y)
 end
 
-setupSpawn()
+halloween:SetAttribute("TombCount",tombCount)
+halloween:SetAttribute("PumpkinCount",pumpkinCount)
+halloween:SetAttribute("SkullCount",skullCount)
 
--- ============ 10. NAMETAG EXATO ============
-local function setupNametag()
-	local old=game.ServerScriptService:FindFirstChild("NametagService")
-	if old then old:Destroy() end
+-- ============ SPAWN ============
+local spawnPos=grassPoint()
+if not spawnPos then spawnPos=Vector3.new(0,10,0) end
+local spawn=Instance.new("SpawnLocation")
+spawn.Name="IslandSpawn"
+spawn.Size=Vector3.new(7,.4,7)
+spawn.Anchored=true
+spawn.CanCollide=false
+spawn.CanTouch=false
+spawn.Transparency=1
+spawn.Neutral=true
+spawn.Enabled=true
+spawn.Duration=0
+spawn.CFrame=CFrame.new(spawnPos+Vector3.new(0,.2,0))
+spawn.Parent=workspace
 
-	local ok,asset=pcall(function()
-		return AssetService:LoadAssetAsync(123212555736117)
-	end)
-	if not ok or not asset then
-		error("Player Nametags 123212555736117 failed to load")
-	end
+-- ============ NAMETAG ============
+local nametagAsset=loadAsset(NAMETAG_ID)
+local nametagSource=nametagAsset:FindFirstChild("NametagService",true)
+assert(nametagSource and nametagSource:IsA("Script"),"NametagService missing")
+local nametag=nametagSource:Clone()
+nametag.Name="NametagService"
+nametag:SetAttribute("AssetId",NAMETAG_ID)
+local nsrc=nametag.Source
+nsrc=nsrc:gsub(
+	'local head = character:WaitForChild%("Head"%)',
+	'local head = character:WaitForChild("Head")\n\tlocal humanoid=character:FindFirstChildWhichIsA("Humanoid")\n\tif humanoid then humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None humanoid.HealthDisplayDistance=0 end\n\tlocal old=head:FindFirstChild("Nametag") if old then old:Destroy() end',
+	1
+)
+nametag.Source=nsrc
+nametag.Parent=game.ServerScriptService
+nametagAsset:Destroy()
 
-	local source=asset:FindFirstChild("NametagService",true)
-	assert(source and source:IsA("Script"),"NametagService missing from exact asset")
-	local service=source:Clone()
-	service.Name="NametagService"
-	service:SetAttribute("AssetId",123212555736117)
+-- ============ LOADING SCREEN ============
+local loadingAsset=loadAsset(LOADING_ID)
+local loadingSource=loadingAsset:FindFirstChild("LoadingScreen",true)
+assert(loadingSource and loadingSource:IsA("LocalScript"),"LoadingScreen missing")
+local loading=loadingSource:Clone()
+loading.Name="LoadingScreen"
+loading:SetAttribute("AssetId",LOADING_ID)
+loading:SetAttribute("GameName","Swean Island")
+loading:SetAttribute("FontName","BuilderSansBold")
+local lsrc=loading.Source
+lsrc=lsrc:gsub('GAME_NAME = ""','GAME_NAME = "Swean Island"',1)
+lsrc=lsrc:gsub('Enum.Font.FredokaOne','Enum.Font.BuilderSansBold')
+loading.Source=lsrc
+loading.Parent=ReplicatedFirst
+loadingAsset:Destroy()
 
-	local src=service.Source
-	src=src:gsub(
-		'local head = character:WaitForChild%("Head"%)',
-		'local head = character:WaitForChild("Head")\n\tlocal humanoid = character:FindFirstChildWhichIsA("Humanoid")\n\tif humanoid then\n\t\thumanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None\n\t\thumanoid.HealthDisplayDistance = 0\n\tend\n\tlocal existing = head:FindFirstChild("Nametag")\n\tif existing then existing:Destroy() end',
-		1
-	)
-	service.Source=src
-	service.Parent=game.ServerScriptService
-	asset:Destroy()
-end
-
-setupNametag()
-
--- ============ 11. LOADING SCREEN EXATA ============
-local function setupLoadingScreen()
-	local old=ReplicatedFirst:FindFirstChild("LoadingScreen")
-	if old then old:Destroy() end
-
-	local ok,asset=pcall(function()
-		return AssetService:LoadAssetAsync(73186563008540)
-	end)
-	if not ok or not asset then
-		error("LoadingScreen 73186563008540 failed to load")
-	end
-
-	local source=asset:FindFirstChild("LoadingScreen",true)
-	assert(source and source:IsA("LocalScript"),"LoadingScreen LocalScript missing from exact asset")
-	local loading=source:Clone()
-	loading.Name="LoadingScreen"
-	loading:SetAttribute("AssetId",73186563008540)
-	loading:SetAttribute("GameName","Swean Island")
-	loading:SetAttribute("FontName","BuilderSansBold")
-
-	local src=loading.Source
-	src=src:gsub('GAME_NAME = ""','GAME_NAME = "Swean Island"',1)
-	src=src:gsub('Enum.Font.FredokaOne','Enum.Font.BuilderSansBold')
-	loading.Source=src
-	loading.Parent=ReplicatedFirst
-	asset:Destroy()
-end
-
-setupLoadingScreen()
-
--- ============ 12. SERVER + PROTEÇÃO CONTRA VOID ============
-local serverScript=Instance.new("Script")
-serverScript.Name="SakuraServer"
-serverScript.Source=[[
+-- ============ SERVER + ANTI VOID ============
+local server=Instance.new("Script")
+server.Name="SakuraServer"
+server.Source=[[
 local Players=game:GetService("Players")
 local spawn=workspace:WaitForChild("IslandSpawn")
-
 local function protect(character)
 	task.spawn(function()
 		while character.Parent do
 			local root=character:FindFirstChild("HumanoidRootPart")
-			if root and root.Position.Y < -38 then
+			if root and root.Position.Y<-42 then
 				character:PivotTo(spawn.CFrame*CFrame.new(0,4,0))
 			end
-			task.wait(.35)
+			task.wait(.4)
 		end
 	end)
 end
-
-Players.PlayerAdded:Connect(function(player)
-	player.RespawnLocation=spawn
-	player.CharacterAdded:Connect(protect)
-	if player.Character then protect(player.Character) end
-end)
-
-for _,player in ipairs(Players:GetPlayers()) do
+local function hook(player)
 	player.RespawnLocation=spawn
 	player.CharacterAdded:Connect(protect)
 	if player.Character then protect(player.Character) end
 end
-
-print("[Sakura97] Swean Island carregada")
+Players.PlayerAdded:Connect(hook)
+for _,p in ipairs(Players:GetPlayers()) do hook(p) end
+print("[Swean Island] Pristine Park island loaded")
 ]]
-serverScript.Parent=game.ServerScriptService
+server.Parent=game.ServerScriptService
 
-print("[Sakura97] Install completo: Swean Island")
-return {
-	version=97,
-	sakuraTrees=runtime:GetAttribute("SakuraCount") or 27,
-	message="Swean Island pesquisada, reconstruída e validada"
+runtime:SetAttribute("TombCount",tombCount)
+runtime:SetAttribute("PumpkinCount",pumpkinCount)
+runtime:SetAttribute("SkullCount",skullCount)
+runtime:SetAttribute("GrassPatchCount",grassPlaced)
+
+print("[Swean Island] Pristine Park island complete")
+return{
+	version=99,
+	trees=#sakuraFolder:GetChildren(),
+	grayStones=brownStoneCount,
+	grass=grassPlaced,
+	tombs=tombCount,
+	pumpkins=pumpkinCount,
+	skulls=skullCount
 }
