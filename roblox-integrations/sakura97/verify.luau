@@ -1,31 +1,43 @@
--- Verifica se o mapa sakura97 ficou como pedido
+-- Verifica a ilha Sakura no place atual
 assert(game.GameId == 9419478735 and game.PlaceId == 79738710219521, "Place errado")
 
-local runtime = game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
-assert(runtime, "SakuraRuntime não existe")
-assert(runtime:GetAttribute("Version") == 97, "Versão errada")
+local runtime=game.ReplicatedStorage:FindFirstChild("SakuraRuntime")
+assert(runtime,"SakuraRuntime nao existe")
+assert(runtime:GetAttribute("Version")==97,"Versao errada")
 
-local trees = workspace:FindFirstChild("SakuraTrees")
-assert(trees, "Pasta SakuraTrees não encontrada")
-local count = #trees:GetChildren()
-assert(count >= 20 and count <= 35, "Quantidade de cerejeiras fora do esperado: " .. tostring(count))
+local trees=workspace:FindFirstChild("SakuraTrees")
+assert(trees,"SakuraTrees ausente")
+local treeCount=#trees:GetChildren()
+assert(treeCount==27,"Esperava 27 cerejeiras, recebeu "..tostring(treeCount))
 
-local path = workspace:FindFirstChild("StonePath")
-assert(path and #path:GetChildren() > 10, "Caminho de pedras não encontrado ou vazio")
+local path=workspace:FindFirstChild("StonePath")
+assert(path,"StonePath ausente")
+local stoneCount=#path:GetChildren()
+assert(stoneCount>=26 and stoneCount<=40,"Estradinha deve ser fina e espacada: "..tostring(stoneCount))
 
-local grass = workspace:FindFirstChild("SkinnedGrass")
-assert(grass, "Grama skinned não encontrada")
+local grass=workspace:FindFirstChild("SkinnedGrass")
+assert(not grass,"SkinnedGrass ainda existe")
 
-local flowers = workspace:FindFirstChild("Wildflowers")
-assert(flowers and #flowers:GetChildren() > 100, "Flores insuficientes")
+local flowers=workspace:FindFirstChild("Wildflowers")
+assert(flowers,"Wildflowers ausente")
+local flowerCount=flowers:GetAttribute("FlowerCount") or 0
+assert(flowerCount>=180,"Flores pequenas insuficientes: "..tostring(flowerCount))
 
--- não deve ter restos do forest antigo
-assert(not workspace:FindFirstChild("ForestWorld"), "Ainda tem ForestWorld antigo")
-assert(not game.ReplicatedStorage:FindFirstChild("ForestRuntime"), "Ainda tem ForestRuntime")
+local wind=workspace:FindFirstChild("WindEffects")
+assert(wind and #wind:GetChildren()>=4,"WindEffects visivel ausente")
+assert(workspace.Terrain.Decoration==false,"Terrain decoration grass ainda ligada")
 
--- lighting de tarde
-local Lighting = game:GetService("Lighting")
-assert(Lighting.ClockTime > 16 and Lighting.ClockTime < 18.5, "Não está de tarde")
+local Lighting=game:GetService("Lighting")
+assert(Lighting.ClockTime>16 and Lighting.ClockTime<18.5,"Nao esta de tarde")
 
-print("[Sakura97 Verify] OK — mapa parece correto")
-return {ok = true, trees = count}
+assert(not workspace:FindFirstChild("ForestWorld"),"ForestWorld antigo ainda existe")
+assert(not game.ReplicatedStorage:FindFirstChild("ForestRuntime"),"ForestRuntime antigo ainda existe")
+
+print("[Sakura97 Verify] OK - caminho fino, sem grama alta, flores pequenas e vento")
+return {
+ ok=true,
+ trees=treeCount,
+ stones=stoneCount,
+ flowers=flowerCount,
+ windAnchors=#wind:GetChildren()
+}
