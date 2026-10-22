@@ -22,3 +22,5 @@ jobs:
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-diagnostics/stone-wind-inspect.mjs
+
+# floating-island-inspection-trigger
