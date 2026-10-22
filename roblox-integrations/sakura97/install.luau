@@ -122,7 +122,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",107)
+runtime:SetAttribute("Version",109)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -194,7 +194,12 @@ local function rayGreen(x,z)
 	)
 end
 
--- SKINNED GRASS: UMA ÚNICA VARIANTE VERDE, EM TILES CONTÍNUOS SEM FRESTA.
+-- SKINNED GRASS: tamanho PADRÃO do asset, repetida até tapar o verde.
+-- A MeshPart mede ~7.15x a grama que aparece. A versão no ar andava
+-- esse tamanho inteiro, então sobrava chão verde entre os tufos.
+-- Aqui o Size NÃO muda. O passo usa só a grama visível, com sobreposição,
+-- e o cliente espalha os tufos. Sem isso o place não salva dezenas de
+-- milhares de cópias com 100 Bones cada.
 local grassAsset=loadAsset(GRASS_ID)
 
 local sourceMesh=nil
@@ -214,23 +219,16 @@ for _,d in ipairs(grassAsset:GetDescendants()) do
 end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
--- Tamanho PADRÃO do asset. O Size da mesh NÃO é esticado.
--- A versão anterior multiplicava cada tufo por ~7.15 para tapar o chão com
--- menos peças, e a grama ficava gigante. Aqui cada tufo fica no Size original
--- e o grid repete esse tamanho, com uma sobreposição leve, até a borda
--- esquerda, direita, frente e fundo de cada parte verde.
 local defaultSize=sourceMesh.Size
-local footprintX,footprintZ=defaultSize.X,defaultSize.Z
-local boneMidX,boneMidZ,boneMinY=0,0,0
-local OVERLAP=1.08
-local stepX=footprintX/OVERLAP
-local stepZ=footprintZ/OVERLAP
+local VISUAL_DIV=7.15
+local OVERLAP=1.28
+local footprintX,footprintZ=defaultSize.X/VISUAL_DIV,defaultSize.Z/VISUAL_DIV
+local stepX,stepZ=footprintX/OVERLAP,footprintZ/OVERLAP
 local GROUND_OFFSET=-0.08
 local function gridCount(length,step,foot)
 	if length<=foot then return 1 end
 	return math.ceil((length-foot)/step)+1
 end
-
 
 local sourceModule=nil
 for _,d in ipairs(grassAsset:GetDescendants()) do
@@ -244,6 +242,32 @@ assert(sourceModule,"SkinnedGrass module missing")
 local grassModule=sourceModule:Clone()
 grassModule.Name="SkinnedGrassRuntimeModule"
 grassModule.Parent=ReplicatedStorage
+
+local function prepareMesh(mesh)
+	mesh.Name="SkinnedGrass"
+	mesh.Anchored=true
+	mesh.CanCollide=false
+	mesh.CanTouch=false
+	mesh.CanQuery=false
+	mesh.CastShadow=false
+	mesh.Size=defaultSize
+	return mesh
+end
+
+-- Tufo estático, no tamanho original, sem Bones. A forma importada
+-- continua visível e dá para repetir pelo mapa inteiro no celular.
+local staticTemplate=prepareMesh(sourceMesh:Clone())
+for _,d in ipairs(staticTemplate:GetDescendants()) do
+	if d:IsA("Bone") then d:Destroy() end
+end
+staticTemplate.Name="GrassStaticTemplate"
+staticTemplate.Parent=ReplicatedStorage
+
+-- Cópia com Bones só para o vento perto do jogador.
+local windTemplate=Instance.new("Model")
+windTemplate.Name="GrassWindTemplate"
+prepareMesh(sourceMesh:Clone()).Parent=windTemplate
+windTemplate.Parent=ReplicatedStorage
 
 local grassFolder=Instance.new("Folder")
 grassFolder.Name="SkinnedGrassCoverage"
@@ -263,70 +287,22 @@ grassFolder:SetAttribute("FootprintX",footprintX)
 grassFolder:SetAttribute("FootprintZ",footprintZ)
 grassFolder:SetAttribute("StepX",stepX)
 grassFolder:SetAttribute("StepZ",stepZ)
-grassFolder:SetAttribute("BoneMidX",boneMidX)
-grassFolder:SetAttribute("BoneMidZ",boneMidZ)
-grassFolder:SetAttribute("BoneMinY",boneMinY)
+grassFolder:SetAttribute("VisualDiv",VISUAL_DIV)
+grassFolder:SetAttribute("SpawnMode","ClientPackedDefaultSize")
 grassFolder.Parent=workspace
 
--- Cada tile fica no Size original. O grid anda esse tamanho, com uma
--- sobreposição leve, até a borda esquerda, direita, frente e fundo
--- de cada superfície verde.
 local placed=0
 local coveredSurfaces=0
-
-for surfaceIndex,surface in ipairs(greenSurfaces) do
+for _,surface in ipairs(greenSurfaces) do
 	local nx=gridCount(surface.Size.X,stepX,footprintX)
 	local nz=gridCount(surface.Size.Z,stepZ,footprintZ)
-	local spanX=(nx-1)*stepX
-	local spanZ=(nz-1)*stepZ
-	local surfacePlaced=0
-
-	for ix=1,nx do
-		for iz=1,nz do
-			local lx=-spanX*.5+(ix-1)*stepX
-			local lz=-spanZ*.5+(iz-1)*stepZ
-
-			local model=Instance.new("Model")
-			model.Name=string.format("GrassTile_%04d",placed+1)
-
-			local mesh=sourceMesh:Clone()
-			mesh.Name="SkinnedGrass"
-			mesh.Anchored=true
-			mesh.CanCollide=false
-			mesh.CanTouch=false
-			mesh.CanQuery=false
-			mesh.Size=defaultSize
-
-			mesh.CFrame=surface.CFrame
-				*CFrame.new(lx,surface.Size.Y*.5+GROUND_OFFSET,lz)
-			mesh.Parent=model
-
-			model:SetAttribute("GroundSurfaceIndex",surfaceIndex)
-			model:SetAttribute("GroundPartName",surface.Name)
-			model:SetAttribute("SingleMesh",true)
-			model:SetAttribute("CellX",stepX)
-			model:SetAttribute("CellZ",stepZ)
-			model:SetAttribute("ExpectedVisualX",footprintX)
-			model:SetAttribute("ExpectedVisualZ",footprintZ)
-			local groundRef=Instance.new("ObjectValue")
-			groundRef.Name="GroundSurface"
-			groundRef.Value=surface
-			groundRef.Parent=model
-			model.Parent=grassFolder
-			CollectionService:AddTag(model,"SkinnedGrassPatch")
-
-			placed+=1
-			surfacePlaced+=1
-		end
-	end
-
-	if surfacePlaced>0 then coveredSurfaces+=1 end
+	placed+=nx*nz
+	coveredSurfaces+=1
 end
-
 grassAsset:Destroy()
 
 assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass")
-assert(placed>=#greenSurfaces,"Too little skinned grass coverage")
+assert(placed>=#greenSurfaces*20,"Grass is still using the sparse bounding-box step")
 runtime:SetAttribute("GrassPatchCount",placed)
 runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
@@ -340,50 +316,152 @@ runtime:SetAttribute("GrassDefaultSizeY",defaultSize.Y)
 runtime:SetAttribute("GrassDefaultSizeZ",defaultSize.Z)
 runtime:SetAttribute("GrassFootprintX",footprintX)
 runtime:SetAttribute("GrassFootprintZ",footprintZ)
+runtime:SetAttribute("GrassVisualDiv",VISUAL_DIV)
+runtime:SetAttribute("GrassSpawnMode","ClientPackedDefaultSize")
 
--- Usa o sistema ORIGINAL do asset: render distance, colisão e vento por Bones.
+-- PACKED_DEFAULT_GRASS: repete o tufo original até a borda de cada verde.
 local grassRunner=Instance.new("LocalScript")
 grassRunner.Name="SkinnedGrassRunner"
 grassRunner.Source=[==========[
-local RunService=game:GetService("RunService")
+-- PACKED_DEFAULT_GRASS
+local CollectionService=game:GetService("CollectionService")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
+local RunService=game:GetService("RunService")
 local Players=game:GetService("Players")
 
-local player=Players.LocalPlayer
-local folder=workspace:WaitForChild("SkinnedGrassCoverage")
-local SkinnedGrass=require(ReplicatedStorage:WaitForChild("SkinnedGrassRuntimeModule"))
+local WIND_RADIUS=70
 
-local grass=SkinnedGrass.new({
-	RenderDistanceEnabled=true,
-	RenderDistance=180,
-	RenderInAnimation=nil,
-	RenderOutAnimation=nil,
-	CollisionsEnabled=true,
-	CollisionDistance=70,
-	CollisionRadiusInner=2.2,
-	CollisionRadiusOuter=4.4,
-	CollisionAngle=55,
-	WindEnabled=true,
-	WindDistanceInner=25,
-	WindDistanceOuter=180,
-	WindFramerateInner=1,
-	WindFramerateOuter=.5,
-	WindNoiseSize=12,
-	WindNoiseIntensity=1.6,
-	UseGlobalWind=true,
-})
-
-local models={}
-for _,m in ipairs(folder:GetChildren()) do
-	if m:IsA("Model") then table.insert(models,m) end
+local function gridCount(length,step,foot)
+	if length<=foot then return 1 end
+	return math.ceil((length-foot)/step)+1
 end
-grass:AddMeshes(models)
 
-RunService.RenderStepped:Connect(function(dt)
+local folder=workspace:WaitForChild("SkinnedGrassCoverage")
+local staticTemplate=ReplicatedStorage:WaitForChild("GrassStaticTemplate")
+local windTemplate=ReplicatedStorage:WaitForChild("GrassWindTemplate")
+local windMeshTemplate=windTemplate:WaitForChild("SkinnedGrass")
+local defaultSize=staticTemplate.Size
+local footX=folder:GetAttribute("FootprintX")
+local footZ=folder:GetAttribute("FootprintZ")
+local stepX=folder:GetAttribute("StepX")
+local stepZ=folder:GetAttribute("StepZ")
+local GROUND_OFFSET=folder:GetAttribute("GroundOffset") or -0.08
+
+local player=Players.LocalPlayer
+local function playerPos()
 	local char=player.Character
 	local root=char and char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	grass:Step(dt,{root.Position},root.Position)
+	return root and root.Position or nil
+end
+
+local windModels={}
+local placed=0
+local filled={}
+local function placeSurface(surface)
+	if not surface:IsA("BasePart") or filled[surface] then return end
+	filled[surface]=true
+	local nx=gridCount(surface.Size.X,stepX,footX)
+	local nz=gridCount(surface.Size.Z,stepZ,footZ)
+	local spanX=(nx-1)*stepX
+	local spanZ=(nz-1)*stepZ
+	local origin=playerPos()
+	for ix=1,nx do
+		for iz=1,nz do
+			local lx=-spanX*.5+(ix-1)*stepX
+			local lz=-spanZ*.5+(iz-1)*stepZ
+			local world=surface.CFrame:PointToWorldSpace(Vector3.new(lx,0,lz))
+			local near=origin~=nil and (Vector3.new(world.X,0,world.Z)-Vector3.new(origin.X,0,origin.Z)).Magnitude<=WIND_RADIUS
+			local y=surface.Size.Y*.5+GROUND_OFFSET
+			if near then
+				local model=Instance.new("Model")
+				model.Name="GrassTile"
+				local mesh=windMeshTemplate:Clone()
+				mesh.Anchored=true
+				mesh.CanCollide=false
+				mesh.CanTouch=false
+				mesh.CanQuery=false
+				mesh.CastShadow=false
+				mesh.Size=defaultSize
+				mesh.CFrame=surface.CFrame*CFrame.new(lx,y,lz)
+				mesh.Parent=model
+				model.Parent=folder
+				table.insert(windModels,model)
+			else
+				local mesh=staticTemplate:Clone()
+				mesh.Name="GrassTile"
+				mesh.Anchored=true
+				mesh.CanCollide=false
+				mesh.CanTouch=false
+				mesh.CanQuery=false
+				mesh.CastShadow=false
+				mesh.Size=defaultSize
+				mesh.CFrame=surface.CFrame*CFrame.new(lx,y,lz)
+				mesh.Parent=folder
+			end
+			placed+=1
+			if placed%80==0 then task.wait() end
+		end
+	end
+end
+
+local function boot()
+	for _,surface in ipairs(CollectionService:GetTagged("IslandGreenGround")) do
+		placeSurface(surface)
+	end
+end
+
+CollectionService:GetInstanceAddedSignal("IslandGreenGround"):Connect(placeSurface)
+task.spawn(function()
+	local island=workspace:WaitForChild("FloatingIsland",30)
+	if island then
+		local cf,size=island:GetBoundingBox()
+		local hx,hz=size.X*.5,size.Z*.5
+		for x=-hx,hx,280 do
+			for z=-hz,hz,280 do
+				pcall(function()
+					player:RequestStreamAroundAsync(cf.Position+Vector3.new(x,0,z))
+				end)
+				boot()
+			end
+		end
+	end
+	boot()
+	folder:SetAttribute("ClientGrassPlaced",placed)
+end)
+boot()
+
+local SkinnedGrass=require(ReplicatedStorage:WaitForChild("SkinnedGrassRuntimeModule"))
+local grass=SkinnedGrass.new({
+	RenderDistanceEnabled=false,
+	RenderDistance=4000,
+	RenderInAnimation=nil,
+	RenderOutAnimation=nil,
+	CollisionsEnabled=false,
+	CollisionDistance=40,
+	CollisionRadiusInner=2,
+	CollisionRadiusOuter=4,
+	CollisionAngle=55,
+	WindEnabled=true,
+	WindDistanceInner=18,
+	WindDistanceOuter=WIND_RADIUS,
+	WindFramerateInner=1,
+	WindFramerateOuter=.45,
+	WindNoiseSize=12,
+	WindNoiseIntensity=1.4,
+	UseGlobalWind=true,
+})
+local windReady=false
+local started=os.clock()
+task.spawn(function()
+	while #windModels==0 and os.clock()<started+8 do task.wait(0.4) end
+	if #windModels>0 then grass:AddMeshes(windModels) end
+	windReady=true
+end)
+RunService.RenderStepped:Connect(function(dt)
+	if not windReady then return end
+	local pos=playerPos()
+	if not pos or #windModels==0 then return end
+	grass:Step(dt,{pos},pos)
 end)
 ]==========]
 grassRunner.Parent=StarterPlayer.StarterPlayerScripts
@@ -624,7 +702,7 @@ Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
 return{
-	version=107,
+	version=109,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
