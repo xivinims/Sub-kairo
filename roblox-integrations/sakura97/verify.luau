@@ -41,25 +41,37 @@ assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
 
-assert(patches==#green,"Deve existir exatamente 1 tapete de grama por superficie verde")
 local checked=0
+local covered={}
 for _,patch in ipairs(grass:GetChildren()) do
 	assert(patch:IsA("Model"),"GrassTile deve ser Model")
 	assert(patch:GetAttribute("SingleMesh")==true,"GrassTile contem configuracao invalida")
+	local idx=patch:GetAttribute("GroundSurfaceIndex")
+	assert(type(idx)=="number" and idx>=1 and idx<=#green,"GrassTile sem superficie verde valida")
+	covered[idx]=true
+
+	local cellX=patch:GetAttribute("CellX")
+	local cellZ=patch:GetAttribute("CellZ")
+	assert(type(cellX)=="number" and type(cellZ)=="number","GrassTile sem tamanho de celula")
+
 	local meshCount=0
 	local boneCount=0
 	for _,d in ipairs(patch:GetDescendants()) do
 		if d:IsA("MeshPart") then
 			meshCount+=1
 			assert(d.Material==Enum.Material.Neon,"Foi usada a variante cinza da grama")
+			assert(d.Size.X>=cellX*1.01 and d.Size.Z>=cellZ*1.01,"Existe risco de fresta entre tiles")
 		end
 		if d:IsA("Bone") then boneCount+=1 end
 	end
-	assert(meshCount==1,"Cada area verde deve usar UMA unica MeshPart de grama")
-	assert(boneCount==100,"Cada tapete deve preservar os 100 Bones: "..tostring(boneCount))
+	assert(meshCount==1,"Cada tile deve usar UMA unica MeshPart de grama")
+	assert(boneCount==100,"Cada tile deve preservar os 100 Bones: "..tostring(boneCount))
 	checked+=1
 end
-assert(checked==#green,"Nem toda superficie verde recebeu seu tapete de grama")
+assert(checked==patches,"Nem todos os tiles foram validados")
+local coveredCount=0
+for i=1,#green do if covered[i] then coveredCount+=1 end end
+assert(coveredCount==#green,"Nem toda superficie verde recebeu tiles de grama")
 
 local grassRunner=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner")
 assert(grassRunner and grassRunner:IsA("LocalScript"),"Runner original/adaptado da SkinnedGrass ausente")
@@ -70,7 +82,7 @@ local tree=workspace:FindFirstChild("BigCenterTree")
 assert(tree and tree:IsA("Model"),"BigCenterTree ausente")
 assert(tree:GetAttribute("AssetId")==86013526879602,"Arvore nao veio do asset pedido")
 local treeCF,treeSize=tree:GetBoundingBox()
-assert(treeSize.Y<=8.5,"Arvore ainda grande demais: "..tostring(treeSize.Y))
+assert(treeSize.Y>=54 and treeSize.Y<=76,"Altura da arvore fora da faixa nova: "..tostring(treeSize.Y))
 local centerDist=(Vector2.new(treeCF.Position.X,treeCF.Position.Z)-Vector2.new(select(1,island:GetBoundingBox()).Position.X,select(1,island:GetBoundingBox()).Position.Z)).Magnitude
 assert(centerDist<math.max(12,math.min(runtime:GetAttribute("IslandSizeX") or 100,runtime:GetAttribute("IslandSizeZ") or 100)*.35),"Arvore longe demais do centro")
 
