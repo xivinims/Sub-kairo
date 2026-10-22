@@ -214,6 +214,43 @@ out.savedWindShake=savedWind and savedWind:FindFirstChild("WindShake")~=nil or f
 out.savedWindDisabled=savedWind and savedWind.Disabled or nil
 out.savedGlobalWind={workspace.GlobalWind.X,workspace.GlobalWind.Y,workspace.GlobalWind.Z}
 
+
+local function inspectAsset(id)
+  local result={id=id,loaded=false,top={},classes={},scripts={}}
+  local ok,asset=pcall(function() return A:LoadAssetAsync(id) end)
+  if not ok or not asset then
+    result.error=tostring(asset)
+    return result
+  end
+  result.loaded=true
+  for _,child in ipairs(asset:GetChildren()) do
+    table.insert(result.top,{name=child.Name,class=child.ClassName})
+  end
+  for _,d in ipairs(asset:GetDescendants()) do
+    result.classes[d.ClassName]=(result.classes[d.ClassName] or 0)+1
+    if d:IsA("LuaSourceContainer") and #result.scripts<12 then
+      table.insert(result.scripts,{name=d.Name,class=d.ClassName,parent=d.Parent and d.Parent.Name or ""})
+    end
+  end
+  asset:Destroy()
+  return result
+end
+
+out.nametagAsset=inspectAsset(123212555736117)
+out.loadingAsset=inspectAsset(73186563008540)
+
+out.spawnObjects={}
+for _,d in ipairs(workspace:GetDescendants()) do
+  if d:IsA("SpawnLocation") then
+    table.insert(out.spawnObjects,{
+      name=d.Name,
+      position={d.Position.X,d.Position.Y,d.Position.Z},
+      transparency=d.Transparency,
+      enabled=d.Enabled
+    })
+  end
+end
+
 return out
 `);
 console.log(JSON.stringify(result,null,2));
