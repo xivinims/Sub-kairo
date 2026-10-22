@@ -71,8 +71,6 @@ out.currentStonePathChildren=path and #path:GetChildren() or 0
 local wind=workspace:FindFirstChild("WindEffects")
 out.currentWindChildren=wind and #wind:GetChildren() or 0
 out.currentGlobalWind={workspace.GlobalWind.X,workspace.GlobalWind.Y,workspace.GlobalWind.Z}
-out.terrainDecoration=workspace.Terrain.Decoration
-out.terrainGrassLength=workspace.Terrain.GrassLength
 
 local tok,tasset=pcall(function() return A:LoadAssetAsync(9626366517) end)
 out.treeLoaded=tok and tasset~=nil
