@@ -163,16 +163,14 @@ setupSkyAndLighting()
 
 -- ============ 5. VENTO ============
 local function setupWind()
-	local old=workspace:FindFirstChild("WindEffects")
-	if old then old:Destroy() end
+	local oldFolder=workspace:FindFirstChild("WindEffects")
+	if oldFolder then oldFolder:Destroy() end
 
-	local folder=Instance.new("Folder")
-	folder.Name="WindEffects"
-	folder.Parent=workspace
-	folder:SetAttribute("AssetId",11946229834)
+	local scripts=game.StarterPlayer.StarterPlayerScripts
+	local oldController=scripts:FindFirstChild("WindController")
+	if oldController then oldController:Destroy() end
 
-	-- Strong enough to visibly move Roblox grass and any wind-enabled vegetation.
-	workspace.GlobalWind=Vector3.new(18,0,6)
+	workspace.GlobalWind=Vector3.new(16,0,5)
 
 	local ok,asset=pcall(function()
 		return AssetService:LoadAssetAsync(11946229834)
@@ -181,51 +179,19 @@ local function setupWind()
 		error("Wind Effects 11946229834 failed to load")
 	end
 
-	local function prep(inst)
-		for _,d in ipairs(inst:GetDescendants()) do
-			if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
-				d:Destroy()
-			elseif d:IsA("BasePart") then
-				d.Anchored=true
-				d.CanCollide=false
-				d.CanTouch=false
-				d.CanQuery=false
-			elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") then
-				d.Enabled=true
-			end
-		end
-	end
+	local controller=asset:FindFirstChild("WindController",true)
+	assert(controller and controller:IsA("LocalScript"),"WindController missing from exact asset")
+	assert(controller:FindFirstChild("WindLines"),"WindLines module missing")
+	assert(controller:FindFirstChild("WindShake"),"WindShake module missing")
 
-	prep(asset)
-	local spots={
-		Vector3.new(0,10,-135),
-		Vector3.new(105,11,-35),
-		Vector3.new(75,12,105),
-		Vector3.new(-80,11,105),
-		Vector3.new(-115,10,-35),
-	}
+	local clone=controller:Clone()
+	clone.Name="WindController"
+	clone:SetAttribute("AssetId",11946229834)
+	clone:SetAttribute("ExactAsset",true)
+	clone.Parent=scripts
 
-	local placed=0
-	for i,pos in ipairs(spots) do
-		local clone=asset:Clone()
-		clone.Name="WindEffect_"..i
-		prep(clone)
-		clone.Parent=folder
-		local model=clone:IsA("Model") and clone or nil
-		if model and model:FindFirstChildWhichIsA("BasePart",true) then
-			pcall(function() model:PivotTo(CFrame.new(pos)) end)
-		else
-			for _,p in ipairs(clone:GetDescendants()) do
-				if p:IsA("BasePart") then
-					p.CFrame=p.CFrame+pos
-				end
-			end
-		end
-		placed+=1
-	end
 	asset:Destroy()
-	folder:SetAttribute("Copies",placed)
-	print("[Sakura97] Wind Effects exact asset active, copies:",placed)
+	print("[Sakura97] Exact WindController installed with WindLines + WindShake")
 end
 setupWind()
 
@@ -378,37 +344,15 @@ end
 
 placeSakuraTrees()
 
--- ============ 7. CAMINHO DE PEDRAS (fino, torto, retângulos) ============
-local PATH_POINTS={}
-for i=1,34 do
-	local z=-165+(i-1)*9.2
-	local x=-22+math.sin(i*.57)*9+math.sin(i*.19)*5
-	table.insert(PATH_POINTS,Vector3.new(x,0,z))
-end
+-- ============ 7. CAMINHO DE PEDRAS EXATO ============
+local PATH_ORIGIN=Vector3.new(-18,0,-112)
+local PATH_YAW=math.rad(7)
+local PATH_FRAME=CFrame.new(PATH_ORIGIN)*CFrame.Angles(0,PATH_YAW,0)
 
 local function nearStonePath(x,z,radius)
-	local p=Vector2.new(x,z)
-	for _,q in ipairs(PATH_POINTS) do
-		if (p-Vector2.new(q.X,q.Z)).Magnitude<=radius then
-			return true
-		end
-	end
-	return false
-end
-
-local PATH_POINTS={}
-for i=1,31 do
-	local z=-160+(i-1)*9.5
-	local x=-20+math.sin(i*.61)*8+math.sin(i*.23)*4.5
-	table.insert(PATH_POINTS,Vector3.new(x,0,z))
-end
-
-local function nearStonePath(x,z,radius)
-	local p=Vector2.new(x,z)
-	for _,q in ipairs(PATH_POINTS) do
-		if (p-Vector2.new(q.X,q.Z)).Magnitude<=radius then return true end
-	end
-	return false
+	local localPos=PATH_FRAME:PointToObjectSpace(Vector3.new(x,0,z))
+	return localPos.X>=-11-radius and localPos.X<=2+radius
+		and localPos.Z>=-9-radius and localPos.Z<=36+radius
 end
 
 local function placeStonePath()
@@ -419,7 +363,7 @@ local function placeStonePath()
 	folder.Name="StonePath"
 	folder.Parent=workspace
 	folder:SetAttribute("AssetId",136068114177879)
-	folder:SetAttribute("Style","ExactAssetSteppingStones")
+	folder:SetAttribute("Style","WholeExactStonePathModel")
 
 	local ok,pathAsset=pcall(function()
 		return AssetService:LoadAssetAsync(136068114177879)
@@ -428,62 +372,60 @@ local function placeStonePath()
 		error("Stone Path asset 136068114177879 failed to load")
 	end
 
-	local pool={}
-	for _,d in ipairs(pathAsset:GetDescendants()) do
-		if d:IsA("BasePart") and d.Transparency<.95 and d.Size.Magnitude>.2 then
-			local name=d.Name:lower()
-			local preferred=d:IsA("MeshPart") or d:IsA("UnionOperation")
-				or name:find("stone",1,true) or name:find("rock",1,true)
-				or name:find("path",1,true) or name:find("paver",1,true)
-			if preferred then table.insert(pool,d) end
+	local source=pathAsset:FindFirstChild("Stone Path (Long)",true)
+	if not source or not source:IsA("Model") then
+		source=pathAsset:FindFirstChildWhichIsA("Model",true)
+	end
+	assert(source and source:IsA("Model"),"Stone Path (Long) model missing")
+
+	local model=source:Clone()
+	model.Name="Stone Path (Long)"
+	model.Parent=folder
+
+	for _,d in ipairs(model:GetDescendants()) do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("ModuleScript") then
+			d:Destroy()
+		elseif d:IsA("BasePart") then
+			d.Anchored=true
+			d.CanCollide=true
+			d.CanTouch=false
 		end
 	end
-	if #pool==0 then
-		for _,d in ipairs(pathAsset:GetDescendants()) do
-			if d:IsA("BasePart") and d.Transparency<.95 and d.Size.Magnitude>.2 then
-				table.insert(pool,d)
+
+	-- Keep the original arrangement. Only make the whole path slightly smaller.
+	pcall(function() model:ScaleTo(model:GetScale()*.82) end)
+
+	local originalPivot=model:GetPivot()
+	local base=CFrame.new(PATH_ORIGIN)*CFrame.Angles(0,PATH_YAW,0)
+	local count=0
+
+	-- Conform every original stone to the grassy terrain while preserving its
+	-- relative X/Z placement and rotation from the Creator Store model.
+	for _,part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local rel=originalPivot:ToObjectSpace(part.CFrame)
+			local desired=base*rel
+			local pos=desired.Position
+			local hit=workspace:Raycast(
+				Vector3.new(pos.X,70,pos.Z),
+				Vector3.new(0,-135,0)
+			)
+			if hit and hit.Material~=Enum.Material.Water then
+				local rotation=desired-desired.Position
+				part.CFrame=CFrame.new(hit.Position+Vector3.new(0,part.Size.Y*.5+.035,0))*rotation
+				count+=1
+			else
+				part.Transparency=1
+				part.CanCollide=false
 			end
 		end
 	end
-	assert(#pool>0,"Stone Path asset has no usable stone parts")
 
-	local rng=Random.new(136068)
-	for i,node in ipairs(PATH_POINTS) do
-		local ray=workspace:Raycast(Vector3.new(node.X,70,node.Z),Vector3.new(0,-130,0))
-		if ray and ray.Material~=Enum.Material.Water then
-			-- Clear only a small patch of grass directly under each stone.
-			Terrain:FillBlock(
-				CFrame.new(ray.Position-Vector3.new(0,.18,0)),
-				Vector3.new(4.3,.5,2.8),
-				Enum.Material.Ground
-			)
-
-			local src=pool[((i-1)%#pool)+1]
-			local tile=src:Clone()
-			tile.Name=string.format("ExactStone_%02d",i)
-			tile.Anchored=true
-			tile.CanCollide=true
-			tile.CanTouch=false
-
-			local sx,sz=tile.Size.X,tile.Size.Z
-			local long=math.max(sx,sz)
-			local factor=long>0 and rng:NextNumber(2.7,3.6)/long or 1
-			tile.Size=Vector3.new(
-				math.max(.9,sx*factor),
-				math.clamp(tile.Size.Y*factor,.16,.42),
-				math.max(.75,sz*factor)
-			)
-
-			local yaw=math.rad(math.sin(i*.91)*20+rng:NextNumber(-7,7))
-			tile.CFrame=CFrame.new(ray.Position+Vector3.new(0,.10,0))*CFrame.Angles(0,yaw,0)
-			tile.Parent=folder
-			CollectionService:AddTag(tile,"StonePathTile")
-		end
-	end
-	folder:SetAttribute("SourceParts",#pool)
+	folder:SetAttribute("ExactModelParts",count)
 	pathAsset:Destroy()
-	print("[Sakura97] Exact asset stepping stones:",#folder:GetChildren(),"source parts:",#pool)
+	print("[Sakura97] Exact Stone Path (Long) placed, visible parts:",count)
 end
+
 placeStonePath()
 
 -- ============ 8. GRAMA SKINNED + FLORES ============
