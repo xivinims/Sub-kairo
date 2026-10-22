@@ -61,13 +61,24 @@ asset:Destroy()
 
 local originalSpawns={}
 local namedSpawns={}
-local roads={}
+local sidewalks={}
+local streets={}
 local flatFallback={}
 local scriptsRemoved=0
 local parts=0
 
+local function ancestorNameContains(inst,needle)
+ needle=needle:lower()
+ local p=inst.Parent
+ while p and p~=map do
+  if p.Name:lower():find(needle,1,true) then return true end
+  p=p.Parent
+ end
+ return false
+end
+
 for _,d in ipairs(map:GetDescendants()) do
- if d:IsA("SpawnLocation") then
+ if d:IsA("SpawnLocation") and not ancestorNameContains(d,"skydive") then
   table.insert(originalSpawns,d)
  end
  if d:IsA("LuaSourceContainer") then
@@ -75,12 +86,15 @@ for _,d in ipairs(map:GetDescendants()) do
  elseif d:IsA("BasePart") then
   parts+=1
   local n=d.Name:lower()
-  if not d:IsA("SpawnLocation") and (n:find("spawn",1,true) or n:find("lobby",1,true) or n:find("start",1,true)) then
+  if not d:IsA("SpawnLocation") and not ancestorNameContains(d,"skydive") and (n:find("spawn",1,true) or n:find("lobby",1,true) or n:find("start",1,true)) then
    table.insert(namedSpawns,d)
   end
   if d.CFrame.UpVector.Y>.93 then
-   if n:find("road",1,true) or n:find("street",1,true) or n:find("sidewalk",1,true) then table.insert(roads,d) end
-   if d.Size.X*d.Size.Z>1500 then table.insert(flatFallback,d) end
+   local area=d.Size.X*d.Size.Z
+   local parent=(d.Parent and d.Parent.Name or ""):lower()
+   if n=="sidewalk" and area>500 and not parent:find("door",1,true) and not parent:find("airport",1,true) then table.insert(sidewalks,d) end
+   if n=="street" and area>1000 and not parent:find("airport",1,true) then table.insert(streets,d) end
+   if area>1500 then table.insert(flatFallback,d) end
   end
  end
 end
@@ -201,27 +215,26 @@ local function validPart(p)
  return p and p.Parent and p:IsA("BasePart")
 end
 
-if #originalSpawns>0 then
- table.sort(originalSpawns,function(a,b)
+local function sortCentral(list)
+ table.sort(list,function(a,b)
   local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
   local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
   return da<db
  end)
+end
+
+if #originalSpawns>0 then
+ sortCentral(originalSpawns)
  chosen=originalSpawns[1]; sourceType="OriginalSpawnLocation"; sourceName=chosen.Name
 elseif #namedSpawns>0 then
- table.sort(namedSpawns,function(a,b)
-  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
-  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
-  return da<db
- end)
+ sortCentral(namedSpawns)
  chosen=namedSpawns[1]; sourceType="NamedSpawn"; sourceName=chosen.Name
-elseif #roads>0 then
- table.sort(roads,function(a,b)
-  local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
-  local db=(Vector2.new(b.Position.X-mapCF.Position.X,b.Position.Z-mapCF.Position.Z)).Magnitude
-  return da<db
- end)
- chosen=roads[1]; sourceType="RoadFallback"; sourceName=chosen.Name
+elseif #sidewalks>0 then
+ sortCentral(sidewalks)
+ chosen=sidewalks[1]; sourceType="SidewalkFallback"; sourceName=chosen.Name
+elseif #streets>0 then
+ sortCentral(streets)
+ chosen=streets[1]; sourceType="StreetFallback"; sourceName=chosen.Name
 else
  table.sort(flatFallback,function(a,b)
   local da=(Vector2.new(a.Position.X-mapCF.Position.X,a.Position.Z-mapCF.Position.Z)).Magnitude
