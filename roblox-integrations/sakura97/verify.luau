@@ -3,7 +3,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Place errado")
 
 local CollectionService=game:GetService("CollectionService")
 local runtime=game.ReplicatedStorage:FindFirstChild("SweanRuntime")
-assert(runtime and runtime:GetAttribute("Version")==104,"SweanRuntime v102 ausente")
+assert(runtime and runtime:GetAttribute("Version")==105,"SweanRuntime v102 ausente")
 assert(runtime:GetAttribute("IslandAssetId")==10485490600,"Floating Island asset errado")
 assert(runtime:GetAttribute("GrassAssetId")==87377915371959,"SkinnedGrass asset errado")
 assert(runtime:GetAttribute("TreeAssetId")==86013526879602,"Big Tree asset errado")
@@ -42,9 +42,9 @@ local patches=#grass:GetChildren()
 assert(patches>=#green,"Pouca SkinnedGrass: "..tostring(patches))
 assert(patches==(runtime:GetAttribute("GrassPatchCount") or -1),"Contagem SkinnedGrass inconsistente")
 assert((runtime:GetAttribute("GrassCoveredSurfaces") or 0)==#green,"Nem toda area verde recebeu SkinnedGrass")
-assert((runtime:GetAttribute("GrassVisualOverlap") or 0)>=1.7,"Grama sem sobreposicao suficiente")
-assert((runtime:GetAttribute("GrassTileSpacing") or 999)<=52,"Espacamento da grama grande demais")
-assert((runtime:GetAttribute("GrassCenterOffset") or 99)<=.7,"Grama ainda alta demais do chao")
+assert((runtime:GetAttribute("GrassVisualOverlap") or 0)>=1.24,"Grama sem sobreposicao suficiente")
+assert((runtime:GetAttribute("GrassTileSpacing") or 999)<=84,"Espacamento da grama grande demais")
+assert(math.abs((runtime:GetAttribute("GrassCenterOffset") or 99)-(-0.08))<.01,"Grama ainda nao esta no nivel do chao")
 
 local checked=0
 local covered={}
@@ -58,6 +58,9 @@ for _,patch in ipairs(grass:GetChildren()) do
 	local cellX=patch:GetAttribute("CellX")
 	local cellZ=patch:GetAttribute("CellZ")
 	assert(type(cellX)=="number" and type(cellZ)=="number","GrassTile sem tamanho de celula")
+	local groundRef=patch:FindFirstChild("GroundSurface")
+	assert(groundRef and groundRef:IsA("ObjectValue") and groundRef.Value and groundRef.Value:IsA("BasePart"),"GrassTile sem referencia do chao")
+	local ground=groundRef.Value
 
 	local meshCount=0
 	local boneCount=0
@@ -69,7 +72,9 @@ for _,patch in ipairs(grass:GetChildren()) do
 			local sz=grass:GetAttribute("VisualScaleZ")
 			local visualX=d.Size.X/sx
 			local visualZ=d.Size.Z/sz
-			assert(visualX>=cellX*1.03 and visualZ>=cellZ*1.03,"Cobertura VISUAL da grama ainda deixa fresta")
+			assert(visualX>=cellX*1.24 and visualZ>=cellZ*1.24,"Cobertura VISUAL da grama ainda deixa fresta")
+			local expectedRootY=(ground.CFrame*Vector3.new(0,ground.Size.Y*.5-0.08,0)).Y
+			assert(math.abs(d.Position.Y-expectedRootY)<.35,"Grama ainda flutuando acima do chao")
 		end
 		if d:IsA("Bone") then boneCount+=1 end
 	end
@@ -120,7 +125,7 @@ assert(safety and safety:IsA("BasePart") and safety.CanCollide,"VoidSafety ausen
 
 return{
 	ok=true,
-	version=104,
+	version=105,
 	mapParts=islandParts,
 	greenSurfaces=#green,
 	grass=patches,
