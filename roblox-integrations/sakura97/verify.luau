@@ -67,11 +67,23 @@ assert(workspace:FindFirstChild("XNSpawn"),"spawn missing")
 assert(workspace.GlobalWind.Magnitude>10,"global wind missing")
 
 -- Saved center must be actual Terrain grass, not a fake baseplate.
-local rp=RaycastParams.new()
-rp.FilterType=Enum.RaycastFilterType.Include
-rp.FilterDescendantsInstances={Terrain}
-local hit=workspace:Raycast(Vector3.new(0,40,0),Vector3.new(0,-100,0),rp)
-assert(hit and hit.Material==Enum.Material.Grass,"central real grass terrain missing")
+-- Read voxels directly because a same-task raycast can lag behind Terrain writes.
+local region=Region3.new(Vector3.new(-16,-20,-16),Vector3.new(16,8,16)):ExpandToGrid(4)
+local materials,occupancy=Terrain:ReadVoxels(region,4)
+local foundGrass=false
+for x=1,#materials do
+	for y=1,#materials[x] do
+		for z=1,#materials[x][y] do
+			if materials[x][y][z]==Enum.Material.Grass and occupancy[x][y][z]>.1 then
+				foundGrass=true
+				break
+			end
+		end
+		if foundGrass then break end
+	end
+	if foundGrass then break end
+end
+assert(foundGrass,"central real grass terrain missing")
 
 return {
 	ok=true,
