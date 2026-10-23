@@ -18,22 +18,24 @@ assert(Rules.down(s,3,110)) assert(not Rules.revive(s,4,3,136),"Revived after de
 s.entries[3].status="eliminated" assert(not Rules.join(s,3),"Eliminated player rejoined")
 assert(Rules.join(s,9),"Mid-round admission failed")
 Rules.begin(s) assert(Rules.join(s,3),"New round should reset elimination")
-local assets=SS.SurvivalAssets assert(#assets.Maps:GetChildren()==4) assert(#assets.Killers:GetChildren()==5)
+local assets=SS.SurvivalAssets
+assert(#assets.Maps:GetChildren()==4,"Expected 4 maps, got "..#assets.Maps:GetChildren())
+assert(#assets.Killers:GetChildren()==5,"Expected 5 killers, got "..#assets.Killers:GetChildren())
 local maps={}
 for _,m in ipairs(assets.Maps:GetChildren()) do
- local points=m.SafePoints:GetChildren() assert(#points>=9)
- local parts=0 for _,d in ipairs(m:GetDescendants()) do assert(not d:IsA("LuaSourceContainer"),"Imported map script") if d:IsA("BasePart") then parts+=1 assert(d.Anchored) end end
+ local points=m.SafePoints:GetChildren() assert(#points>=9,"Too few safe points in "..m.Name)
+ local parts=0 for _,d in ipairs(m:GetDescendants()) do assert(not d:IsA("LuaSourceContainer"),"Imported map script") if d:IsA("BasePart") then parts+=1 assert(d.Anchored,"Unanchored map part in "..m.Name..": "..d.Name) end end
  maps[#maps+1]={name=m.Name,parts=parts,spawns=#points}
 end
 local rigs={}
 for _,m in ipairs(assets.Killers:GetChildren()) do
- assert(m.PrimaryPart and m:FindFirstChildOfClass("Humanoid"))
+ assert(m.PrimaryPart,"Missing PrimaryPart in "..m.Name) assert(m:FindFirstChildOfClass("Humanoid"),"Missing Humanoid in "..m.Name)
  local joints=0 local names={}
  for _,d in ipairs(m:GetDescendants()) do
   assert(not d:IsA("LuaSourceContainer"),"Imported rig script")
   if d:IsA("Motor6D") then joints+=1 table.insert(names,{name=d.Name,part=d.Part1 and d.Part1.Name}) end
  end
- assert(joints>0) table.insert(rigs,{name=m.Name,joints=names,clips=#m.MotionClips:GetChildren()})
+ assert(joints>0,"No Motor6D joints in "..m.Name) table.insert(rigs,{name=m.Name,joints=names,clips=#m.MotionClips:GetChildren()})
 end
 local pathChecks={}
 for _,template in ipairs(assets.Maps:GetChildren()) do
