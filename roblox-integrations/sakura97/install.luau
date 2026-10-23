@@ -96,6 +96,20 @@ local lobby=asModel(source:Clone())
 lobby.Name="JediLibrary"
 lobby:SetAttribute("SourceAssetId",LOBBY_ID)
 sanitize(lobby)
+
+-- The library contains one legacy cosmetic reference that Roblox no longer serves.
+-- Remove it where the property is writable so it cannot poison menu/lobby preload.
+local unavailableId="720367485"
+local contentProps={"Texture","TextureID","TextureId","Image","SoundId","AnimationId","ShirtTemplate","PantsTemplate","Graphic","ColorMap","MetalnessMap","NormalMap","RoughnessMap","Video"}
+for _,d in ipairs(lobby:GetDescendants()) do
+ for _,prop in ipairs(contentProps) do
+  pcall(function()
+   local value=d[prop]
+   if typeof(value)=="string" and value:find(unavailableId,1,true) then d[prop]="" end
+  end)
+ end
+end
+
 lobby.Parent=workspace
 
 local cf,size=lobby:GetBoundingBox()
