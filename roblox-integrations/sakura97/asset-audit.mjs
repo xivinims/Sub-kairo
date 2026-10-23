@@ -91,6 +91,15 @@ local deadline=os.clock()+65
 while not done and os.clock()<deadline do task.wait(.1) end
 if not done then pcall(task.cancel,pending) end
 local ui=game.StarterGui.TomiaszMenu
-return {assets=report,mapPreloadCompleted=done,mapContentCount=completed,mapContentFailures=failures,logo=ui.MenuPrincipal.Logo.Image,logoAnchor=tostring(ui.MenuPrincipal.Logo.AnchorPoint),credits=ui.Escenarios.MenuCreditos.CreditosFrame.TextCreditos.Text,placeVersion=game.PlaceVersion}
+local mediaStatus={}
+local mediaDone=false
+local mediaThread=task.spawn(function()
+ pcall(function() CP:PreloadAsync({game.ReplicatedStorage.XNMedia,ui.MenuPrincipal.Logo},function(id,status) mediaStatus[id]=tostring(status) end) end)
+ mediaDone=true
+end)
+local mediaDeadline=os.clock()+30
+while not mediaDone and os.clock()<mediaDeadline do task.wait(.1) end
+if not mediaDone then pcall(task.cancel,mediaThread) end
+return {mediaStatus=mediaStatus,mediaCompleted=mediaDone,assets=report,mapPreloadCompleted=done,mapContentCount=completed,mapContentFailures=failures,logo=ui.MenuPrincipal.Logo.Image,logoAnchor=tostring(ui.MenuPrincipal.Logo.AnchorPoint),credits=ui.Escenarios.MenuCreditos.CreditosFrame.TextCreditos.Text,placeVersion=game.PlaceVersion}
 `));
 console.log(JSON.stringify({stage:'asset-audit',...audit}));

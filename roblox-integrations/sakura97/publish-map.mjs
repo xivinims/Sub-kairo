@@ -78,6 +78,7 @@ const menuBody=read('install-menu').replace('__MENU_SOURCE__',JSON.stringify(rea
 const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
+const contentTests=read('content-tests');
 
 const patch=`
 assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
@@ -107,6 +108,10 @@ local function runSimulationTests()
 ${simulationTests}
 end
 checks.simulation=runSimulationTests()
+local function verifyContent()
+${contentTests}
+end
+checks.content=verifyContent()
 assert(checks and checks.ok,"Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
@@ -116,6 +121,7 @@ return {
   mapParts=checks.mapParts,
   simulation=checks.simulation,
   menu=checks.menu,
+  content=checks.content,
   lots=checks.lots,
   grass=checks.grass,
   pumpkins=checks.pumpkins,

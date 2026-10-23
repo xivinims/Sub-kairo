@@ -416,40 +416,7 @@ emitterHost.CanQuery=false
 emitterHost.Transparency=1
 emitterHost.Parent=tree
 
-local leaves=Instance.new("ParticleEmitter")
-leaves.Name="FallingLeaves"
-leaves.Texture="rbxasset://textures/particles/leaf_main.dds"
-leaves.Shape=Enum.ParticleEmitterShape.Box
-leaves.ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume
-leaves.EmissionDirection=Enum.NormalId.Bottom
-leaves.Rate=4
-leaves.Lifetime=NumberRange.new(4.5,7.5)
-leaves.Speed=NumberRange.new(.25,1.1)
-leaves.Acceleration=Vector3.new(0,-1.8,0)
-leaves.Drag=1.4
-leaves.WindAffectsDrag=true
-leaves.Rotation=NumberRange.new(0,360)
-leaves.RotSpeed=NumberRange.new(-70,70)
-leaves.SpreadAngle=Vector2.new(70,70)
-leaves.Size=NumberSequence.new({
-	NumberSequenceKeypoint.new(0,.32,.10),
-	NumberSequenceKeypoint.new(.75,.22,.08),
-	NumberSequenceKeypoint.new(1,.12,.04)
-})
-leaves.Transparency=NumberSequence.new({
-	NumberSequenceKeypoint.new(0,1),
-	NumberSequenceKeypoint.new(.08,.05),
-	NumberSequenceKeypoint.new(.82,.12),
-	NumberSequenceKeypoint.new(1,1)
-})
-leaves.Color=ColorSequence.new({
-	ColorSequenceKeypoint.new(0,Color3.fromRGB(108,151,68)),
-	ColorSequenceKeypoint.new(.55,Color3.fromRGB(88,133,56)),
-	ColorSequenceKeypoint.new(1,Color3.fromRGB(142,169,82))
-})
-leaves.LightInfluence=.8
-leaves.Enabled=false -- visible leaf geometry is simulated by FallingLeavesController
-leaves.Parent=emitterHost
+-- FallingLeavesController renders local leaf geometry from this invisible volume.
 
 -- VENTO REAL: GlobalWind + módulos WindLines/WindShake.
 workspace.GlobalWind=Vector3.new(14,0,5)

@@ -76,5 +76,6 @@ assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence:IsA("LocalScript"))
 assert(runtime:GetAttribute("VoidThreshold")>workspace.FallenPartsDestroyHeight+100)
 local wind=game.StarterPlayer.StarterPlayerScripts.WindController
 assert(wind.WindShake:FindFirstChild("Settings") and wind.WindShake:FindFirstChild("Octree"),"Wind dependencies missing")
+assert(not tree.FallingLeavesEmitter:FindFirstChildWhichIsA("ParticleEmitter"),"Obsolete leaf texture remains")
 assert(tree.FallingLeavesEmitter.Transparency==1 and not tree.FallingLeavesEmitter.CanCollide)
 return {ok=true,fullMap=true,nametags=true,mysticalSpawn=true,voidSequence=true,version=113,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}
