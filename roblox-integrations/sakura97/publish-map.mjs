@@ -68,7 +68,7 @@ function first(task){
 const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
 async function uploadSurviversLogo(){
-  const fallback=89648072626653;
+  const fallback=0;
   try{
     const key=process.env.ROBLOX_API_KEY;
     const creatorId=process.env.ROBLOX_CREATOR_USER_ID||'8344738123';

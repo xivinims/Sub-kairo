@@ -122,7 +122,7 @@ runtime:SetAttribute("Version",115)
 runtime:SetAttribute("LobbyAssetId",LOBBY_ID)
 runtime:SetAttribute("IslandAssetId",0)
 runtime:SetAttribute("FullMapLoaded",true)
-runtime:SetAttribute("LogoAssetId",89648072626653)
+runtime:SetAttribute("LogoAssetId",0)
 runtime.Parent=ReplicatedStorage
 
 -- Exact replacement lobby.

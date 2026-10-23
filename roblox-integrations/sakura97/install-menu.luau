@@ -25,8 +25,13 @@ end
 local main=ui.MenuPrincipal
 main.Frame:Destroy()
 main.Play.Text="Jogar" main.Ajustes.Text="Ajustes" main.Creditos.Text="Créditos"
-main.Logo.Image="rbxassetid://"..tostring(__SURVIVERS_LOGO_ID__)
-main.Logo.ImageColor3=Color3.new(1,1,1) main.Logo.ImageTransparency=0 main.Logo.BackgroundTransparency=1
+local logoId=__SURVIVERS_LOGO_ID__
+if logoId and logoId>0 then
+ main.Logo.Image="rbxassetid://"..tostring(logoId)
+ main.Logo.ImageColor3=Color3.new(1,1,1) main.Logo.ImageTransparency=0 main.Logo.BackgroundTransparency=1
+else
+ main.Logo.Image="" main.Logo.Visible=false
+end
 main.Creditos.Name="CreditsButton"
 main.CreditsButton.Parent=ui
 ui.CreditsButton.Text="Créditos" ui.CreditsButton:SetAttribute("AccessibleLabel","Créditos")

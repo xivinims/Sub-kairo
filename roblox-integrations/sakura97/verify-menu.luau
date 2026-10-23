@@ -17,7 +17,12 @@ assert(config:GetAttribute("MenuSceneAssetId")==13327565335)
 assert(game.ReplicatedStorage:FindFirstChild("MenuSceneTemplate"),"Menu scene template missing")
 assert(not ui.MenuPrincipal:FindFirstChild("Creditos"))
 assert(not ui.MenuPrincipal:FindFirstChild("IslandTitle"))
-assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://"..tostring(config:GetAttribute("LogoAssetId")))
+local logoId=config:GetAttribute("LogoAssetId")
+if logoId and logoId>0 then
+ assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://"..tostring(logoId))
+else
+ assert(ui.MenuPrincipal.Logo.Image=="" or not ui.MenuPrincipal.Logo.Visible)
+end
 assert(ui.MenuPrincipal:FindFirstChild("GameName") and ui.MenuPrincipal.GameName.Text=="SURVIVERS")
 assert(ui.MenuPrincipal:FindFirstChild("LeftPanel"))
 assert(ui.Sonidos.Click.SoundId=="rbxassetid://12221967")
