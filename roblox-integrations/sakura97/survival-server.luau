@@ -141,7 +141,7 @@ local function hook(p)
  local stats=Instance.new("Folder",p) stats.Name="leaderstats" local v=Instance.new("IntValue",stats) v.Name="Pontos"
  sync(p)
  p.CharacterAdded:Connect(function(char)
-  if morphing[p] then return end
+  if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
   local e=entry(p) if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then e.status="eliminated" end
   sync(p)
   local h=char:WaitForChild("Humanoid",10)
@@ -164,7 +164,7 @@ RunService.Heartbeat:Connect(function(dt)
    local pos=gate.CFrame:PointToObjectSpace(r.Position)
    local inside=math.abs(pos.X)<=gate.Size.X/2 and math.abs(pos.Y)<=gate.Size.Y/2 and math.abs(pos.Z)<=gate.Size.Z/2
    if inside and not portalInside[p] and not e then
-    if state.phase=="Partida" then join(p) else queued[p]=true sync(p) net.Update:FireClient(p,"notice","Você está na próxima partida.") end
+    if state.phase=="Partida" then join(p) else queued[p]=true lobby(p) sync(p) net.Update:FireClient(p,"notice","Você está na próxima partida.") end
    end
    portalInside[p]=inside
   end
@@ -263,6 +263,7 @@ task.spawn(function()
     npc:PivotTo(CFrame.new(arena:GetAttribute("KillerSpawn")))
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)
+    npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
     local eligible={}
     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
     table.sort(eligible,function(a,b) return a.UserId<b.UserId end)

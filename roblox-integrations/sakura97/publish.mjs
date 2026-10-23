@@ -145,6 +145,8 @@ const syntax=Object.values(sources).concat(['menu-client','loading-client']).map
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
+const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
 local sourceVersion=game.PlaceVersion
 local function install()
@@ -173,6 +175,14 @@ local function testClient()
 ${clientTest}
 end
 result.client=testClient()
+local function testRole()
+${roleTest}
+end
+result.playerJason=testRole()
+local function testAI()
+${aiTest}
+end
+result.ai=testAI()
 result.sourceVersion=sourceVersion result.ok=true result.saved=false
 return result
 `;
