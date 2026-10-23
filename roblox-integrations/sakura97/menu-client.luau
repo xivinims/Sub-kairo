@@ -19,11 +19,12 @@ local busy=false
 local low=game:GetService("UserInputService").TouchEnabled
 local returnButton=ui:WaitForChild("ReturnToMenu")
 local mode=settings.AjustesFrame:WaitForChild("Controls"):WaitForChild("QualityToggle")
-local title=main:WaitForChild("IslandTitle")
+local creditsButton=ui:WaitForChild("CreditsButton")
 local switches={
  {"WindToggle","WindEnabled","Vento"},{"GrassToggle","GrassInteraction","Grama ao pisar"},
  {"LeavesToggle","LeavesEnabled","Folhas caindo"},{"NametagsToggle","ShowNametags","Nomes dos jogadores"},
- {"SoundToggle","MenuSounds","Sons do menu"}
+ {"SoundToggle","MenuSounds","Sons do menu"},
+ {"MusicToggle","MusicEnabled","Música do vazio"},{"FriendsToggle","FriendAlerts","Aviso de amigos"}
 }
 for _,setting in ipairs(switches) do
  if player:GetAttribute(setting[2])==nil then player:SetAttribute(setting[2],true) end
@@ -54,6 +55,10 @@ player:GetAttributeChangedSignal("ShowNametags"):Connect(function()
 end)
 for _,button in ipairs(ui:GetDescendants()) do
  if button:IsA("TextButton") then
+  button.Activated:Connect(function()
+   local click=ui.Sonidos.Click
+   if player:GetAttribute("MenuSounds")~=false then click:Stop() click:Play() end
+  end)
   local scale=Instance.new("UIScale") scale.Parent=button
   local tween
   local function feedback(value)
@@ -78,7 +83,7 @@ local function show(name)
  visibility(main,name=="main")
  visibility(credits,name=="credits")
  visibility(settings,name=="settings")
- -- Original logo remains part of the imported design.
+ creditsButton.Visible=inMenu and name=="main"
  returnButton.Visible=not inMenu
 end
 local function layout()
@@ -92,10 +97,11 @@ local function layout()
  main.Logo.Position=UDim2.fromOffset(x+16,12)
  main.Logo.Size=UDim2.fromOffset(panelWidth-32,logoHeight)
  main.Logo.ScaleType=Enum.ScaleType.Fit main.Logo.ZIndex=2
- title.Position=UDim2.fromOffset(x+16,logoHeight+16)
- title.Size=UDim2.fromOffset(panelWidth-32,30)
- local top=logoHeight+56
- for i,name in ipairs({"Play","Ajustes","Creditos"}) do
+ creditsButton.AnchorPoint=Vector2.new(1,0)
+ creditsButton.Position=UDim2.new(1,-16,0,12)
+ creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.ZIndex=8
+ local top=logoHeight+28
+ for i,name in ipairs({"Play","Ajustes"}) do
   local b=main[name]
   b.AnchorPoint=Vector2.zero
   b.Position=UDim2.fromOffset(x+16,top+(i-1)*(buttonHeight+8))
@@ -119,11 +125,6 @@ local function layout()
   scene.Close.Position=UDim2.new(.5,pw/2,.55,-ph/2-8)
   scene.Close.Size=UDim2.fromOffset(44,38) scene.Close.ZIndex=5
  end
-end
-local function sound(name)
- local sounds=ui:FindFirstChild("Sonidos")
- local s=sounds and sounds:FindFirstChild(name)
- if player:GetAttribute("MenuSounds")~=false and s and s:IsA("Sound") then s:Play() end
 end
 local function setQuality()
  for _,e in ipairs(Lighting:GetChildren()) do
@@ -165,7 +166,6 @@ local function close()
 end
 local function navigate(action)
  if busy or player:GetAttribute("VoidActive") then return end busy=true
- sound("Click")
  transition.Visible=true
  local fade=TweenService:Create(transition,TweenInfo.new(.18),{BackgroundTransparency=0})
  fade:Play() fade.Completed:Wait()
@@ -176,7 +176,7 @@ local function navigate(action)
 end
 main.Play.Activated:Connect(function() navigate(close) end)
 main.Ajustes.Activated:Connect(function() navigate(function() show("settings") end) end)
-main.Creditos.Activated:Connect(function() navigate(function() show("credits") end) end)
+creditsButton.Activated:Connect(function() navigate(function() show("credits") end) end)
 settings.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 credits.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 returnButton.Activated:Connect(function() navigate(open) end)
@@ -205,6 +205,5 @@ task.spawn(function()
   if ok then controls=m:GetControls() if inMenu then controls:Disable() end end
  end
 end)
-local start=os.clock()
-while not player:GetAttribute("SweanLoadingDone") and os.clock()-start<12 do task.wait(.1) end
+while not player:GetAttribute("SweanLoadingDone") do task.wait(.1) end
 open()

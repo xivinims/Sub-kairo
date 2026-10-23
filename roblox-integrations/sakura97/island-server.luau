@@ -18,6 +18,10 @@ local function recover(player,record)
  player:SetAttribute("VoidActive",false)
  if player.Parent then event:FireClient(player,"finish") end
 end
+event.OnServerEvent:Connect(function(player,action)
+ local record=active[player]
+ if action=="return" and record and os.clock()-record.started>=2 then recover(player,record) end
+end)
 local function hook(player)
  player.RespawnLocation=spawn
  player:SetAttribute("VoidActive",false)
@@ -35,13 +39,13 @@ RunService.Heartbeat:Connect(function(dt)
  for _,player in ipairs(Players:GetPlayers()) do
   local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
   if root and hum and hum.Health>0 and root.Position.Y<threshold and not active[player] then
-   local record={char=char,anchored=root.Anchored,autoRotate=hum.AutoRotate}
+   local record={started=os.clock(),char=char,anchored=root.Anchored,autoRotate=hum.AutoRotate}
    active[player]=record
    root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero hum.AutoRotate=false
    player:SetAttribute("VoidActive",true)
    event:FireClient(player,"start")
    -- Server-owned timer: a missing client or a forged response cannot trap the player.
-   task.delay(8.5,function() recover(player,record) end)
+   task.delay(45,function() recover(player,record) end)
   end
  end
 end)

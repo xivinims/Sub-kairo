@@ -2,7 +2,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Wrong place")
 local CS=game:GetService("CollectionService")
 local RS=game:GetService("ReplicatedStorage")
 local runtime=assert(RS:FindFirstChild("SweanRuntime"),"Missing runtime")
-assert(runtime:GetAttribute("Version")==112,"Wrong version")
+assert(runtime:GetAttribute("Version")==113,"Wrong version")
 local island=assert(workspace:FindFirstChild("FloatingIsland"),"Missing island")
 local cf,size=island:GetBoundingBox()
 assert(math.abs(math.max(size.X,size.Z)-260)<.1,"Island exceeds 260-stud budget")
@@ -35,6 +35,12 @@ for _,d in ipairs(mesh:GetDescendants()) do
  assert(not d:IsA("LuaSourceContainer"),"Imported grass script")
 end
 assert(boneCount==100)
+assert(runtime:GetAttribute("TreeSink")==6)
+assert(grass:GetAttribute("TileOverlap")==1.65)
+assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"))
+for name,id in pairs({MenuClick=12221967,VoidMusic=97031842441992,FriendJoined=87437544236708}) do
+ assert(RS.XNMedia[name].SoundId=="rbxassetid://"..id)
+end
 local stepX,stepZ=grass:GetAttribute("StepX"),grass:GetAttribute("StepZ")
 assert(stepX>0 and stepX<grass:GetAttribute("FootprintX"))
 assert(stepZ>0 and stepZ<grass:GetAttribute("FootprintZ"))
@@ -50,7 +56,7 @@ local hit=workspace:Raycast(spawn.Position+Vector3.new(0,2,0),Vector3.new(0,-10,
 assert(hit and CS:HasTag(hit.Instance,"IslandGreenGround"),"Spawn does not touch green ground")
 local treeHit=workspace:Raycast(Vector3.new(runtime:GetAttribute("TreeGroundX"),runtime:GetAttribute("TreeGroundY")+2,runtime:GetAttribute("TreeGroundZ")),Vector3.new(0,-5,0),ray)
 assert(treeHit and CS:HasTag(treeHit.Instance,"IslandGreenGround"),"Tree has no ground")
-assert(math.abs(tcf.Position.Y-tsize.Y/2-treeHit.Position.Y+2)<.15,"Floating tree")
+assert(math.abs(tcf.Position.Y-tsize.Y/2-treeHit.Position.Y+6)<.15,"Floating tree")
 local shaderCount=0
 for _,d in ipairs(game:GetService("Lighting"):GetChildren()) do
  if d:GetAttribute("SourceAssetId")==86563808574363 then shaderCount+=1 end
@@ -71,4 +77,4 @@ assert(runtime:GetAttribute("VoidThreshold")>workspace.FallenPartsDestroyHeight+
 local wind=game.StarterPlayer.StarterPlayerScripts.WindController
 assert(wind.WindShake:FindFirstChild("Settings") and wind.WindShake:FindFirstChild("Octree"),"Wind dependencies missing")
 assert(tree.FallingLeavesEmitter.Transparency==1 and not tree.FallingLeavesEmitter.CanCollide)
-return {ok=true,fullMap=true,nametags=true,mysticalSpawn=true,voidSequence=true,version=112,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}
+return {ok=true,fullMap=true,nametags=true,mysticalSpawn=true,voidSequence=true,version=113,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}

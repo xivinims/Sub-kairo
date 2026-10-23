@@ -40,8 +40,8 @@ local function refresh()
  local ray=RaycastParams.new()
  ray.FilterType=Enum.RaycastFilterType.Include
  local island=workspace:FindFirstChild("FloatingIsland")
- local tree=workspace:FindFirstChild("BigCenterTree")
- ray.FilterDescendantsInstances={island,tree}
+ -- Raycast the ground only: the canopy must not suppress grass beneath it.
+ ray.FilterDescendantsInstances={island}
  local candidates={}
  local reach=radius+math.max(stepX,stepZ)
  for _,surface in ipairs(green) do
@@ -96,6 +96,7 @@ local function refresh()
  local active=0 for _ in pairs(alive) do active+=1 end
  folder:SetAttribute("ClientGrassPlaced",active)
  folder:SetAttribute("ClientGrassAllocated",created)
+ folder:SetAttribute("InitialGrassReady",active>=math.min(MAX,#candidates))
 end
 local elapsed,simElapsed=0,0
 RunService.Heartbeat:Connect(function(dt)

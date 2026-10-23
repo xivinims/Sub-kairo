@@ -118,7 +118,7 @@ end
 for _,child in ipairs(ReplicatedStorage:GetChildren()) do
 	if child.Name=="SweanRuntime" or child.Name=="SakuraRuntime" or child.Name=="ForestRuntime"
 		or child.Name=="GrassStaticTemplate" or child.Name=="GrassWindTemplate"
-		or child.Name=="GrassTemplate" or child.Name=="SkinnedGrassRuntimeModule" then
+		or child.Name=="XNMedia" or child.Name=="GrassTemplate" or child.Name=="SkinnedGrassRuntimeModule" then
 		child:Destroy()
 	end
 end
@@ -126,7 +126,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",112)
+runtime:SetAttribute("Version",113)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -229,7 +229,7 @@ for _,bone in ipairs(sourceMesh:GetDescendants()) do
  end
 end
 local rootCenter=(rootMin+rootMax)*.5
-local OVERLAP=1.28
+local OVERLAP=1.65
 local footprintX,footprintZ=rootMax.X-rootMin.X,rootMax.Z-rootMin.Z
 assert(footprintX>0 and footprintZ>0,"Grass roots have no footprint")
 local VISUAL_DIV=defaultSize.X/footprintX
@@ -363,7 +363,7 @@ assert(treeGround,"No green center ground found for tree")
 
 local targetTreeHeight=64
 assert(scaleHeight(tree,targetTreeHeight),"Tree scale failed")
-assert(bottomPlace(tree,treeGround.Position,0,2),"Tree grounding failed")
+assert(bottomPlace(tree,treeGround.Position,0,6),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
@@ -585,10 +585,17 @@ names:SetAttribute("AssetId",123212555736117) names.Parent=ServerScriptService
 nameAsset:Destroy()
 runtime:SetAttribute("NametagAssetId",123212555736117)
 runtime:SetAttribute("FullMapLoaded",true)
-runtime:SetAttribute("TreeSink",2)
+runtime:SetAttribute("TreeSink",6)
+runtime:SetAttribute("LogoAssetId",89648072626653)
+local media=Instance.new("Folder") media.Name="XNMedia" media.Parent=ReplicatedStorage
+for name,id in pairs({MenuClick=12221967,VoidMusic=97031842441992,FriendJoined=87437544236708}) do
+ local sound=Instance.new("Sound") sound.Name=name sound.SoundId="rbxassetid://"..id
+ sound.Volume=name=="VoidMusic" and .28 or .4 sound.Looped=name=="VoidMusic" sound.Parent=media
+end
+local friends=Instance.new("LocalScript") friends.Name="FriendPresence" friends.Source=__FRIENDS_SOURCE__ friends.Parent=StarterPlayer.StarterPlayerScripts
 
 return{
-	version=112,
+	version=113,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,

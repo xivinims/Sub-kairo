@@ -7,19 +7,24 @@ local event=RS:WaitForChild("SweanVoidEvent")
 local generation=0
 local gui,connection,track=nil,nil,nil
 local controls=nil
+local music=nil
 local function clean()
  generation+=1
  if connection then connection:Disconnect() connection=nil end
  if track then track:Stop() track=nil end
+ if music then music:Destroy() music=nil end
  if gui then gui:Destroy() gui=nil end
  if controls and not player:GetAttribute("InMenu") then controls:Enable() end
 end
 local function start()
  clean() local token=generation
+ music=RS:WaitForChild("XNMedia").VoidMusic:Clone()
+ music.Parent=game:GetService("SoundService")
+ if player:GetAttribute("MusicEnabled")~=false then music:Play() end
  gui=Instance.new("ScreenGui") gui.Name="BeyondTheIsland" gui.IgnoreGuiInset=true gui.ResetOnSpawn=false gui.DisplayOrder=2000 gui.Parent=player:WaitForChild("PlayerGui")
  local background=Instance.new("Frame") background.Size=UDim2.fromScale(1,1) background.BackgroundColor3=Color3.fromRGB(3,4,8) background.BackgroundTransparency=1 background.Parent=gui
  TweenService:Create(background,TweenInfo.new(.45),{BackgroundTransparency=0}):Play()
- local view=Instance.new("ViewportFrame") view.BackgroundTransparency=1 view.Size=UDim2.fromScale(1,.76) view.Position=UDim2.fromScale(0,.04)
+ local view=Instance.new("ViewportFrame") view.BackgroundTransparency=1 view.Size=UDim2.fromScale(1,.59) view.Position=UDim2.fromScale(0,.04)
  view.Ambient=Color3.fromRGB(70,80,100) view.LightColor=Color3.fromRGB(145,174,210) view.LightDirection=Vector3.new(-1,-1,-1) view.Parent=background
  local world=Instance.new("WorldModel") world.Parent=view
  local camera=Instance.new("Camera") camera.FieldOfView=42 camera.Parent=view view.CurrentCamera=camera
@@ -64,20 +69,34 @@ local function start()
   end
  end
  local label=Instance.new("TextLabel") label.BackgroundTransparency=1 label.TextColor3=Color3.fromRGB(196,215,233)
- label.Font=Enum.Font.GothamMedium label.TextSize=22 label.TextWrapped=true label.Size=UDim2.fromScale(.86,.18) label.Position=UDim2.fromScale(.07,.77) label.Text="" label.Parent=background
+ label.Font=Enum.Font.GothamMedium label.TextSize=22 label.TextWrapped=true label.Size=UDim2.fromScale(.86,.12) label.Position=UDim2.fromScale(.07,.64) label.Text="" label.Parent=background
  local function show(text)
   local length=utf8.len(text) or #text
   label.Text=text label.MaxVisibleGraphemes=0
   for i=1,length do if token~=generation then return false end label.MaxVisibleGraphemes=i task.wait(.035) end
   task.wait(.85) return token==generation
  end
- task.delay(10,function() if token==generation then clean() end end)
+ local back=Instance.new("TextButton") back.Name="ReturnFromVoid" back.Text="Voltar"
+ back.AnchorPoint=Vector2.new(.5,1) back.Position=UDim2.fromScale(.5,.94) back.Size=UDim2.fromOffset(180,46)
+ back.BackgroundColor3=Color3.fromRGB(36,36,40) back.BackgroundTransparency=.3 back.TextColor3=Color3.fromRGB(230,230,235)
+ back.Font=Enum.Font.GothamMedium back.TextSize=18 back.Visible=false back.Parent=background
+ local corner=Instance.new("UICorner") corner.CornerRadius=UDim.new(0,14) corner.Parent=back
+ local click=RS.XNMedia.MenuClick:Clone() click.Parent=back
+ local requested=false
+ back.Activated:Connect(function()
+  if requested then return end requested=true
+  if player:GetAttribute("MenuSounds")~=false then click:Play() end
+  back.Text="Voltando…" event:FireServer("return")
+  task.delay(3,function() if token==generation then requested=false back.Text="Voltar" end end)
+ end)
+ task.delay(2.2,function() if token==generation then back.Visible=true end end)
+ task.delay(48,function() if token==generation then clean() end end)
  task.spawn(function()
   task.wait(.65)
   if token~=generation then return end
   if not show("Você caiu além dos limites da ilha.") then return end
   if not show("Nem todo caminho continua depois da borda.") then return end
-  show("Respire. A ilha está trazendo você de volta.")
+  show("Respire. Quando quiser, volte para a ilha.")
  end)
  if controls then controls:Disable() end
 end

@@ -1,41 +1,80 @@
 local Players=game:GetService("Players")
 local ReplicatedFirst=game:GetService("ReplicatedFirst")
 local RS=game:GetService("ReplicatedStorage")
-local TweenService=game:GetService("TweenService")
+local ContentProvider=game:GetService("ContentProvider")
 local player=Players.LocalPlayer
-local gui=Instance.new("ScreenGui")
-gui.Name="SweanLoading" gui.IgnoreGuiInset=true gui.ResetOnSpawn=false gui.DisplayOrder=1000
-local frame=Instance.new("Frame") frame.Size=UDim2.fromScale(1,1) frame.BackgroundColor3=Color3.fromRGB(22,31,25) frame.Parent=gui
-local function text(value,y,size)
- local label=Instance.new("TextLabel") label.BackgroundTransparency=1 label.AnchorPoint=Vector2.new(.5,.5)
- label.Position=UDim2.fromScale(.5,y) label.Size=UDim2.new(.86,0,0,48)
- label.Font=Enum.Font.GothamMedium label.TextColor3=Color3.fromRGB(235,239,220) label.TextSize=size label.Text=value label.Parent=frame return label
+player:SetAttribute("SweanLoadingDone",false)
+local gui=Instance.new("ScreenGui") gui.Name="SweanLoading" gui.IgnoreGuiInset=true gui.ResetOnSpawn=false gui.DisplayOrder=1000
+local frame=Instance.new("Frame") frame.Size=UDim2.fromScale(1,1) frame.BackgroundColor3=Color3.fromRGB(17,17,20) frame.Parent=gui
+local logo=Instance.new("ImageLabel") logo.Name="BrandLogo" logo.Image="rbxassetid://89648072626653" logo.ScaleType=Enum.ScaleType.Fit
+logo.BackgroundTransparency=1 logo.AnchorPoint=Vector2.new(.5,.5) logo.Position=UDim2.fromScale(.5,.40) logo.Size=UDim2.fromScale(.72,.28) logo.Parent=frame
+local status=Instance.new("TextLabel") status.BackgroundTransparency=1 status.AnchorPoint=Vector2.new(.5,.5)
+status.Position=UDim2.fromScale(.5,.61) status.Size=UDim2.new(.86,0,0,60) status.TextWrapped=true
+status.Font=Enum.Font.GothamMedium status.TextColor3=Color3.fromRGB(220,220,226) status.TextSize=16 status.Text="Carregando a ilha…" status.Parent=frame
+local retry=Instance.new("TextButton") retry.Text="Tentar novamente" retry.Font=Enum.Font.GothamMedium retry.TextSize=16
+retry.AnchorPoint=Vector2.new(.5,.5) retry.Position=UDim2.fromScale(.5,.76) retry.Size=UDim2.fromOffset(200,46)
+retry.BackgroundColor3=Color3.fromRGB(46,46,50) retry.BackgroundTransparency=.3 retry.TextColor3=Color3.new(1,1,1) retry.Visible=false retry.Parent=frame
+local corner=Instance.new("UICorner") corner.CornerRadius=UDim.new(0,14) corner.Parent=retry
+local pg=player:WaitForChild("PlayerGui") gui.Parent=pg ReplicatedFirst:RemoveDefaultLoadingScreen()
+local running=false
+local function attempt()
+ if running then return end running=true retry.Visible=false
+ local started=os.clock()
+ local ok,err=pcall(function()
+  status.Text="Recebendo o mapa completo…"
+  while not game:IsLoaded() do
+   if os.clock()-started>45 then error("initial replication timeout") end task.wait(.1)
+  end
+  local function required(parent,name)
+   local value=parent:WaitForChild(name,20) assert(value,"Missing "..name) return value
+  end
+  local roots={required(workspace,"FloatingIsland"),required(workspace,"BigCenterTree"),required(workspace,"MysticalSpawn"),required(RS,"GrassWindTemplate"),game:GetService("Lighting")}
+  required(workspace,"IslandSpawn") required(RS,"SweanMenuConfig")
+  local coverage=required(workspace,"SkinnedGrassCoverage")
+  local completed=0 local failures={} local done=false local preloadOk,preloadError
+  task.spawn(function()
+   preloadOk,preloadError=pcall(function()
+    ContentProvider:PreloadAsync(roots,function(id,result)
+     completed+=1
+     if result~=Enum.AssetFetchStatus.Success then failures[#failures+1]=id end
+     if gui.Parent then status.Text="Carregando mapa, árvore e grama… "..completed end
+    end)
+   end)
+   done=true
+  end)
+  local slowAt=os.clock()+40
+  while not done do
+   if os.clock()>slowAt then status.Text="A conexão está demorando. Ainda carregando o mapa…" end
+   task.wait(.1)
+  end
+  assert(preloadOk,tostring(preloadError)) assert(#failures==0,"Map assets unavailable: "..#failures)
+  -- Audio permissions or logo moderation must not lock access to an otherwise loaded map.
+  status.Text="Preparando interface e sons…"
+  local optionalFailures=0
+  pcall(function() ContentProvider:PreloadAsync({logo,required(RS,"XNMedia")},function(_,result)
+   if result~=Enum.AssetFetchStatus.Success then optionalFailures+=1 end
+  end) end)
+  player:SetAttribute("OptionalMediaFailures",optionalFailures)
+  status.Text="Preparando a grama…"
+  local grassStart=os.clock()
+  while not coverage:GetAttribute("InitialGrassReady") do
+   assert(os.clock()-grassStart<30,"Initial grass timeout") task.wait(.1)
+  end
+ end)
+ running=false
+ if ok then
+  player:SetAttribute("SweanLoadingDone",true) gui:Destroy()
+ else
+  warn("XN loading: "..tostring(err))
+  status.Text="Não foi possível carregar o mapa. Confira sua conexão e tente novamente."
+  retry.Visible=true
+ end
 end
-text("Swean Island",.44,30)
-local status=text("Preparando a ilha…",.54,15)
-local skip=Instance.new("TextButton") skip.Text="Continuar" skip.Font=Enum.Font.GothamMedium skip.TextSize=16
-skip.AnchorPoint=Vector2.new(.5,.5) skip.Position=UDim2.fromScale(.5,.67) skip.Size=UDim2.fromOffset(160,44)
-skip.BackgroundColor3=Color3.fromRGB(55,73,52) skip.TextColor3=Color3.new(1,1,1) skip.Visible=false skip.Parent=frame
-local finished=false
-local function finish()
- if finished then return end finished=true
- player:SetAttribute("SweanLoadingDone",true)
- gui:Destroy()
-end
-skip.Activated:Connect(finish)
--- Fail-open timer exists before any yielding asset/player-GUI operation.
-task.delay(10,finish)
-task.delay(3,function() if not finished then skip.Visible=true end end)
-local pg=player:WaitForChild("PlayerGui",8)
-if not pg or finished then finish() return end
-gui.Parent=pg
-ReplicatedFirst:RemoveDefaultLoadingScreen()
-local start=os.clock()
-local loaded=false
-task.spawn(function()
- local template=RS:WaitForChild("GrassWindTemplate",5)
- if template then pcall(function() game:GetService("ContentProvider"):PreloadAsync({template}) end) end
- loaded=true
+retry.Activated:Connect(function()
+ local media=RS:FindFirstChild("XNMedia")
+ if media and player:GetAttribute("MenuSounds")~=false then
+  local click=media.MenuClick:Clone() click.Parent=game:GetService("SoundService") click:Play() game:GetService("Debris"):AddItem(click,3)
+ end
+ task.spawn(attempt)
 end)
-while not finished and os.clock()-start<8 and (not game:IsLoaded() or not loaded or os.clock()-start<1) do task.wait(.1) end
-finish()
+task.spawn(attempt)

@@ -70,11 +70,13 @@ const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'
 let installBody=read('install');
 const runtimeSource=read('nature-runtime');
 installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
-for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',SERVER:'island-server',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server'})) {
+for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',SERVER:'island-server',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server',FRIENDS:'friends-client'})) {
  installBody=installBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 }
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
+const menuBody=read('install-menu').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const verifySource=read('verify');
+const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
 
 const patch=`
@@ -88,11 +90,19 @@ end,function(err)
   return debug.traceback(tostring(err),2)
 end)
 assert(installOk,"INSTALL_TRACE: "..tostring(installErr))
+-- Publish map and UI atomically: no public intermediate map without its menu.
+do
+${menuBody}
+end
 
 local function runVerify()
 ${verifySource}
 end
 local checks=runVerify()
+local function verifyMenu()
+${menuVerifySource}
+end
+checks.menu=verifyMenu()
 local function runSimulationTests()
 ${simulationTests}
 end
@@ -105,6 +115,7 @@ return {
   sourceVersion=sourceVersion,
   mapParts=checks.mapParts,
   simulation=checks.simulation,
+  menu=checks.menu,
   lots=checks.lots,
   grass=checks.grass,
   pumpkins=checks.pumpkins,
@@ -128,6 +139,10 @@ for(let i=0;i<12;i++){
 ${verifySource}
       end
       local checks=runVerify()
+local function verifyMenu()
+${menuVerifySource}
+end
+checks.menu=verifyMenu()
       checks.placeVersion=game.PlaceVersion
       return checks
     `));
