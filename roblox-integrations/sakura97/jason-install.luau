@@ -7,7 +7,12 @@ local function replace(parent,name,class)
  local obj=Instance.new(class) obj.Name=name obj.Parent=parent return obj
 end
 local function load(id)
- local ok,a=pcall(function() return AS:LoadAssetAsync(id) end) assert(ok,"Cannot load exact asset "..id..": "..tostring(a)) return a
+ local last
+ for attempt=1,3 do
+  local ok,a=pcall(function() return AS:LoadAssetAsync(id) end)
+  if ok and a then return a end last=a task.wait(attempt*2)
+ end
+ error("Cannot load exact asset "..id..": "..tostring(last))
 end
 local function sanitize(m,anchored)
  for _,v in ipairs(m:GetDescendants()) do
