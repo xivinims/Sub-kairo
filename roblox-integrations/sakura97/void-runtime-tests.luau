@@ -15,7 +15,8 @@ local fakePlayer={Character=character,CharacterAdded=characterEvent.Event}
 function fakePlayer:GetAttribute(name) return attrs[name] end
 function fakePlayer:WaitForChild(name) if name=="PlayerGui" then return guiHost end return nil end
 local remote={OnClientEvent=remoteEvent.Event}
-function remote:FireServer(action) assert(action=="return","Invalid recovery request") end
+local returns=0
+function remote:FireServer(action) assert(action=="return","Invalid recovery request") returns+=1 end
 local proxyRS=setmetatable({}, {__index=function(_,key)
  if key=="WaitForChild" then return function(_,name) if name=="SweanVoidEvent" then return remote end return RS:WaitForChild(name) end end
  return RS[key]
@@ -52,11 +53,21 @@ local ok,result=xpcall(function()
  assert(view:FindFirstChildOfClass("WorldModel"):FindFirstChild("TestPlayer"),"Player avatar missing")
  remoteEvent:Fire("finish") task.wait(.7)
  assert(not guiHost:FindFirstChild("BeyondTheIsland"),"Recovery left screen behind")
+ remoteEvent:Fire("start","Figure","spectate") task.wait(.3)
+ local spectateScreen=assert(guiHost:FindFirstChild("BeyondTheIsland"))
+ local figureMessages={} local fc=spectateScreen.Darkness.DeathMessage:GetPropertyChangedSignal("Text"):Connect(function() table.insert(figureMessages,spectateScreen.Darkness.DeathMessage.Text) end)
+ local spectateDeadline=os.clock()+25
+ while returns==0 and os.clock()<spectateDeadline do task.wait(.1) end
+ fc:Disconnect()
+ assert(returns==1,"Spectator transition was not automatic")
+ assert(not spectateScreen.Darkness.Regenerate.Visible,"Eliminated player saw respawn button")
+ assert(#figureMessages==4 and figureMessages[1]=="ele ouve seus passos" and figureMessages[4]=="ele não vê mas escuta.","Wrong Figure messages")
+ remoteEvent:Fire("finish") task.wait(.7)
  remoteEvent:Fire("start") task.wait(.2) remoteEvent:Fire("start") task.wait(.2)
  assert(#guiHost:GetChildren()==1,"Repeated start duplicated scene")
  characterEvent:Fire(character) task.wait(.2)
  assert(#guiHost:GetChildren()==0,"Respawn left death UI behind")
- return {ok=true,messageOrder=true,avatarAboveText=true,regenerateAfterTransition=true,effectsFade=true,recoveryCleanup=true,repeatedStartSafe=true}
+ return {ok=true,spectatorTransition=true,figureMessages=true,messageOrder=true,avatarAboveText=true,regenerateAfterTransition=true,effectsFade=true,recoveryCleanup=true,repeatedStartSafe=true}
 end,debug.traceback)
 characterEvent:Fire(character) task.wait()
 heartbeat:Disconnect() characterEvent:Destroy() remoteEvent:Destroy() renderEvent:Destroy() host:Destroy() description:Destroy()

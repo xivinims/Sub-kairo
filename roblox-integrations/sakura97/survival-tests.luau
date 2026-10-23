@@ -1,5 +1,12 @@
 local SS=game:GetService("ServerStorage") local SSS=game:GetService("ServerScriptService")
 local Rules=require(SSS.RoundRules)
+local AI=require(SSS.PursuerAI) local configs=require(game.ReplicatedStorage.Survival.Config).Killers
+assert(not AI.visible("Figure",configs.Figure,2,20,true,1,false))
+assert(not AI.visible("Guerreiro",configs.Guerreiro,2,0,true,1,false))
+assert(AI.visible("Guerreiro",configs.Guerreiro,6,8,true,-1,false))
+assert(not AI.visible("Guerreiro",configs.Guerreiro,20,16,false,1,false))
+assert(AI.visible("Scarlat",configs.Scarlat,60,8,false,-1,true))
+assert(not AI.visible("Scarlat",configs.Scarlat,60,0,false,-1,true))
 local s=Rules.new() assert(not Rules.join(s,1)) Rules.begin(s)
 for i=1,8 do assert(Rules.join(s,i)) s.entries[i].status="alive" end
 assert(not Rules.join(s,9),"Arena capacity exceeded")
@@ -46,6 +53,11 @@ local f=assets.Killers.Freddy
 for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
  table.insert(freddyJoints,{p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name,pos=d.Part1 and tostring(f.PrimaryPart.CFrame:PointToObjectSpace(d.Part1.Position))})
 end end
+local mediaFailures={}
+local roots={workspace.LobbyTreeHouse,assets.Maps,assets.Killers}
+game:GetService("ContentProvider"):PreloadAsync(roots,function(id,status)
+ if status~=Enum.AssetFetchStatus.Success then table.insert(mediaFailures,{id=id,status=status.Name}) end
+end)
 local house=workspace.LobbyTreeHouse assert(house:GetAttribute("SourceAssetId")==15761692261)
 local cf,size=house:GetBoundingBox()
-return {ok=true,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=true}
+return {ok=true,mediaFailures=mediaFailures,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=true}

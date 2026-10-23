@@ -1,6 +1,11 @@
 local Pathfinding=game:GetService("PathfindingService")
 local RunService=game:GetService("RunService")
 local AI={}
+function AI.visible(kind,config,distance,speed,lineOfSight,facing,revealing)
+ if speed<=.6 then return false end
+ if kind=="Scarlat" and revealing and distance<100 then return true end
+ return config.vision>0 and distance<config.vision and lineOfSight and (distance<12 or facing>-.1)
+end
 function AI.start(model,map,config,ctx)
  local root=model.PrimaryPart local hum=model:FindFirstChildOfClass("Humanoid")
  local alive=true local lastPath=0 local busy=false local waypoints={} local waypoint=1
@@ -57,12 +62,9 @@ function AI.start(model,map,config,ctx)
    local r=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
    if r and ctx.vulnerable(pl) then
     local speed=ctx.speed(pl) local distance=(r.Position-root.Position).Magnitude
-    local visible=false
-    if config.vision>0 and distance<config.vision and los(r.Position,pl.Character) then
-     local direction=r.Position-root.Position
-     visible=(speed>.6) and (distance<12 or root.CFrame.LookVector:Dot(direction.Unit)>-.1)
-    end
-    if model.Name=="Scarlat" and now<revealUntil and speed>.6 and distance<100 then visible=true end
+    local direction=r.Position-root.Position
+    local facing=direction.Magnitude>.01 and root.CFrame.LookVector:Dot(direction.Unit) or 1
+    local visible=AI.visible(model.Name,config,distance,speed,los(r.Position,pl.Character),facing,now<revealUntil)
     if visible and distance<best then target=pl best=distance end
    end
   end

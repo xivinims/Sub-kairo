@@ -78,6 +78,8 @@ const menuBody=read('install-menu').replace('__MENU_SOURCE__',JSON.stringify(rea
 let survivalBody=read('survival-install').replace('__RIG_INSTALL__',read('rig-install'));
 for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 const survivalTests=read('survival-tests');
+const survivalClientTests=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
+const survivalRuntimeTests=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server'));
 const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
@@ -108,6 +110,14 @@ local function testSurvival()
 ${survivalTests}
 end
 local survivalChecks=testSurvival()
+local function testRoundController()
+${survivalRuntimeTests}
+end
+survivalChecks.runtime=testRoundController()
+local function testSurvivalClient()
+${survivalClientTests}
+end
+survivalChecks.client=testSurvivalClient()
 local function runVerify()
 ${verifySource}
 end
@@ -156,5 +166,5 @@ return {
 console.log("[Sakura97] Dispatching repaired Luau install to NEW place...");
 const applied=first(await execute(patch));
 if(!applied?.ok) throw new Error("Sakura97 install failed");
-console.log(JSON.stringify({stage:"installed-and-saved",...applied}));
+console.log(JSON.stringify({stage:"dry-run-verified",...applied}));
 
