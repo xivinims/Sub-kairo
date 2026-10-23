@@ -1,83 +1,51 @@
--- Evaluate the supplied keyframes locally. No animation upload/ownership substitution.
-local RunService=game:GetService("RunService")
-local current=nil local data=nil local elapsed=0
-local function prepare(model)
- local d={joints={},bones={},clips={},t=0,last=""}
- for _,j in ipairs(model:GetDescendants()) do
-  if j:IsA("Motor6D") and j.Part1 then d.joints[j:GetAttribute("PoseAlias") or j.Part1.Name]={joint=j,base=j.C0,basis=j:GetAttribute("RetargetBasis")}
-  elseif j:IsA("Bone") then d.bones[j.Name]=j end
- end
- local folder=model:FindFirstChild("MotionClips")
- if folder then
-  for _,seq in ipairs(folder:GetChildren()) do
-   if seq:IsA("KeyframeSequence") then
-    local frames=seq:GetKeyframes() table.sort(frames,function(a,b) return a.Time<b.Time end)
-    local clip={frames={},length=frames[#frames] and frames[#frames].Time or 0}
-    for _,frame in ipairs(frames) do
-     local poses={}
-     for _,p in ipairs(frame:GetDescendants()) do if p:IsA("Pose") and p.Weight>0 then poses[p.Name]=p.CFrame end end
-     table.insert(clip.frames,{time=frame.Time,poses=poses})
-    end
-    d.clips[seq.Name]=clip
-   end
-  end
- end
- return d
+-- Exact source keyframes, evaluated locally without animation ownership substitution.
+local Run=game:GetService("RunService") local Players=game:GetService("Players") local Http=game:GetService("HttpService")
+local net=game.ReplicatedStorage:WaitForChild("Survival") local cache=setmetatable({},{__mode="k"}) local models={} local elapsed=0
+local function prepare(model,folder)
+ local d={joints={},clips={},time=0,state="",active=false}
+ for _,j in ipairs(model:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then d.joints[j.Part1.Name]={joint=j,base=j.C0} end end
+ for _,v in ipairs(folder:GetChildren()) do if v:IsA("StringValue") then
+  local clip=Http:JSONDecode(v.Value)
+  for _,f in ipairs(clip.frames) do for n,components in pairs(f.poses) do f.poses[n]=CFrame.new(table.unpack(components)) end end
+  d.clips[v.Name]=clip
+ end end
+ cache[model]=d return d
 end
-RunService.RenderStepped:Connect(function(dt)
- elapsed+=dt if elapsed<1/30 then return end local step=elapsed elapsed=0
- if not current or not current.Parent then
-  current=nil data=nil
-  for _,m in ipairs(workspace:GetChildren()) do if m:IsA("Model") and m:GetAttribute("ActivePursuer") then current=m data=prepare(m) break end end
- end
- if not current or not data then return end
- local root=current.PrimaryPart if not root then return end
- local speed=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
- local state=speed>17 and "Run" or speed>1 and "Walk" or "Idle"
- if state~=data.last then data.t=0 data.last=state end data.t+=step
- local clip=data.clips[state] or data.clips.Walk
- if clip and clip.length>0 then
-  local t=data.t%clip.length local a,b=clip.frames[1],clip.frames[#clip.frames]
-  for i=1,#clip.frames-1 do if clip.frames[i+1].time>=t then a=clip.frames[i] b=clip.frames[i+1] break end end
-  local alpha=b.time>a.time and math.clamp((t-a.time)/(b.time-a.time),0,1) or 0
-  for name,cf in pairs(a.poses) do
-   local pose=cf:Lerp(b.poses[name] or cf,alpha)
-   local bone=data.bones[name] local motor=data.joints[name]
-   if bone then bone.Transform=pose elseif motor then
-    if motor.basis then pose=CFrame.new(pose.Position)*motor.basis*pose.Rotation*motor.basis:Inverse() end
-    motor.joint.C0=motor.base*pose
+local function reset(d)
+ if d.active then for _,j in pairs(d.joints) do if j.joint.Parent then j.joint.C0=j.base end end d.active=false end
+end
+local function apply(d,state,dt,loop,absolute)
+ if d.state~=state then d.state=state d.time=0 end d.time+=dt
+ local clip=d.clips[state] if not clip or clip.length<=0 then return end
+ local t=absolute or d.time t=loop and t%clip.length or math.min(t,clip.length)
+ local a,b=clip.frames[1],clip.frames[#clip.frames]
+ for i=1,#clip.frames-1 do if clip.frames[i+1].time>=t then a=clip.frames[i] b=clip.frames[i+1] break end end
+ local alpha=b.time>a.time and math.clamp((t-a.time)/(b.time-a.time),0,1) or 0
+ for name,j in pairs(d.joints) do
+  local pose=a.poses[name] or CFrame.identity
+  if j.joint.Parent then j.joint.C0=j.base*pose:Lerp(b.poses[name] or pose,alpha) j.joint.Transform=CFrame.identity end
+ end d.active=true
+end
+Run.PreSimulation:Connect(function(dt)
+ for _,model in ipairs(workspace:GetChildren()) do
+  if model:IsA("Model") and model:GetAttribute("ActivePursuer") and model.PrimaryPart then
+   local folder=model:FindFirstChild("MotionClips")
+   if folder then
+    local d=cache[model] or prepare(model,folder) local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+    local attack=model:GetAttribute("AttackAt") or -100
+    local since=workspace:GetServerTimeNow()-attack
+    local state=since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
+    apply(d,state,dt,state~="Jason Slash",state=="Jason Slash" and since or nil)
    end
-  end
- else
-  -- Native locomotion for rigs without a published walk clip.
-  for name,j in pairs(data.joints) do
-   local n=name:lower() local angle=math.sin(data.t*(speed>1 and 7 or 1.5))*(speed>1 and .45 or .025)
-   if n:find("arm") or n:find("leg") then j.joint.C0=j.base*CFrame.Angles(angle*(n:find("left") and 1 or -1),0,0) end
   end
  end
- local ability=current:GetAttribute("Ability")
- if ability=="Attack" then
-  for name,j in pairs(data.joints) do
-   local n=name:lower()
-   if n:find("arm") then
-    local side=n:find("left") and -1 or 1
-    j.joint.C0=j.base*CFrame.Angles(math.rad(-75),math.rad(12*side),math.rad(28*side))
-   elseif n:find("torso") or n=="root" then
-    j.joint.C0=j.base*CFrame.Angles(math.rad(-10),0,0)
-   elseif n:find("head") or n:find("neck") then
-    j.joint.C0=j.base*CFrame.Angles(math.rad(12),0,0)
-   end
-  end
- elseif ability=="Reveal" then
-  -- Scarlat's tell: lift the right hand toward the side of the head while she senses movement.
-  for name,j in pairs(data.joints) do
-   if name=="RightUpperArm" or name=="Right Arm" then
-    j.joint.C0=j.base*CFrame.Angles(math.rad(-112),math.rad(-8),math.rad(28))
-   elseif name=="RightLowerArm" then
-    j.joint.C0=j.base*CFrame.Angles(math.rad(-92),0,math.rad(-8))
-   elseif name=="RightHand" then
-    j.joint.C0=j.base*CFrame.Angles(math.rad(12),math.rad(-18),math.rad(10))
-   end
+ for _,p in ipairs(Players:GetPlayers()) do local model=p.Character
+  if model and not model:GetAttribute("ActivePursuer") then
+   if p:GetAttribute("MoveMode")=="slow" and p:GetAttribute("InRound") and not p:GetAttribute("Downed") then
+    local d=cache[model] or prepare(model,net.CrouchClips)
+    local root=model:FindFirstChild("HumanoidRootPart") local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
+    apply(d,speed>1 and "Crouch Walk" or "Crouch Idle",dt,true)
+   elseif cache[model] then reset(cache[model]) end
   end
  end
 end)

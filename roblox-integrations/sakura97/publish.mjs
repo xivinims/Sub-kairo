@@ -135,51 +135,34 @@ function first(task){
   try{return JSON.parse(v)}catch{return v}
 }
 
-async function uploadSurviversLogo(){
-  const fallback=0;
-  try{
-    const key=process.env.ROBLOX_API_KEY;
-    const creatorId=process.env.ROBLOX_CREATOR_USER_ID||'8344738123';
-    const bytes=fs.readFileSync('roblox-integrations/sakura97/branding/survivers-original.png');
-    const logoHash=createHash('sha256').update(bytes).digest('hex');
-    if(logoHash!=='286b7e57276a5d593b38c10c3a4cd41518d027c0e9346dfa6db3daf36521897e') throw new Error('Exact logo checksum mismatch');
-    console.log('[Survivers] logo reconstructed:',bytes.length,'bytes sha256='+logoHash);
-    const form=new FormData();
-    form.append('request',JSON.stringify({
-      assetType:'Decal',
-      displayName:'Survivers Logo',
-      description:'Survivers menu logo',
-      creationContext:{creator:{userId:String(creatorId)}}
-    }));
-    form.append('fileContent',new Blob([bytes],{type:'image/png'}),'survivers-logo.png');
-    const created=await fetch('https://apis.roblox.com/assets/v1/assets',{method:'POST',headers:{'x-api-key':key},body:form,signal:AbortSignal.timeout(60000)});
-    const raw=await created.text();
-    if(!created.ok){ console.warn('[Survivers] logo upload unavailable:',created.status,raw); return fallback; }
-    const op=JSON.parse(raw);
-    const directId=Number(op?.assetId||op?.response?.assetId||0);
-    if(directId>0){ console.log('[Survivers] logo asset:',directId); return directId; }
-    const opId=String(op.path||op.operationPath||'').replace(/^operations\//,'');
-    if(!opId){ console.warn('[Survivers] logo upload returned no operation:',raw); return fallback; }
-    console.log('[Survivers] logo operation:',opId);
-    for(let i=0;i<90;i++){
-      await sleep(2000);
-      const res=await fetch('https://apis.roblox.com/assets/v1/operations/'+opId,{headers:{'x-api-key':key},signal:AbortSignal.timeout(30000)});
-      const txt=await res.text();
-      if(!res.ok) continue;
-      const status=JSON.parse(txt);
-      if(status.done){
-        const id=Number(status?.response?.assetId||String(status?.response?.path||'').split('/').pop()||0);
-        if(id>0){ console.log('[Survivers] logo asset:',id); return id; }
-        console.warn('[Survivers] logo operation completed without asset:',txt);
-        break;
-      }
-      if(status.error){ console.warn('[Survivers] logo operation error:',txt); break; }
-    }
-    console.warn('[Survivers] logo operation ended without usable asset id:',opId);
-  }catch(err){ console.warn('[Survivers] logo upload failed:',String(err)); }
-  return fallback;
-}
-const surviversLogoId=await uploadSurviversLogo();
 
-
-console.log(JSON.stringify({logo:surviversLogoId,probe:first(await execute("\nlocal lobby=workspace.JediLibrary local door=lobby.Door local cf,sz=door:GetBoundingBox()\nlocal out={door={},floors={},rays={}}\nfor _,v in ipairs(door:GetDescendants()) do if v:IsA(\"BasePart\") then table.insert(out.door,{name=v.Name,cf={v.CFrame:GetComponents()},size=tostring(v.Size),collide=v.CanCollide}) end end\nlocal params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={lobby} params.RespectCanCollide=true\nfor _,dx in ipairs({-12,-6,0,6,12}) do\n local pos=cf.Position+Vector3.new(dx,0,0)\n local r=workspace:Raycast(pos,Vector3.new(0,-30,0),params)\n table.insert(out.rays,{x=dx,hit=r and r.Instance:GetFullName(),pos=r and tostring(r.Position)})\nend\nlocal a=game:GetService(\"AssetService\"):LoadAssetAsync(79671648850902)\na.Parent=workspace local c,z=a:GetBoundingBox();out.mapBounds={position=tostring(c.Position),size=tostring(z)}\nfor _,p in ipairs(a:GetDescendants()) do if p:IsA(\"BasePart\") and p.CanCollide and p.Size.X>10 and p.Size.Z>10 and p.CFrame.UpVector.Y>.9 then table.insert(out.floors,{name=p.Name,size=tostring(p.Size),position=tostring(p.Position),material=p.Material.Name}) end end\nreturn out\n"))}));
+const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
+const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'};
+let install=read('jason-install');
+for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
+const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
+const syntax=Object.values(sources).concat(['menu-client','loading-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
+console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const script=`
+local sourceVersion=game.PlaceVersion
+local function install()
+${install}
+end
+local result=install()
+do
+${menu}
+end
+local assets=game.ServerStorage.SurvivalAssets
+assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap)
+assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
+assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
+assert(game.ReplicatedStorage.Survival.CrouchClips:FindFirstChild("Crouch Walk"))
+local ui=game.StarterGui.TomiaszMenu
+assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://136450401317962")
+local ser=game:GetService("SerializationService")
+result.mapBytes=buffer.len(ser:SerializeInstancesAsync({assets.Maps}))
+result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
+result.sourceVersion=sourceVersion result.ok=true result.saved=false
+return result
+`;
+console.log('JASON_DRY_RUN',JSON.stringify(first(await execute(script))));

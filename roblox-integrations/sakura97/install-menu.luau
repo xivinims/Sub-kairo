@@ -13,7 +13,7 @@ local function corner(parent,r)
 end
 local function stroke(parent,t)
  local s=Instance.new("UIStroke") s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
- s.Color=Color3.fromRGB(150,150,158) s.Transparency=t or .7 s.Thickness=1 s.Parent=parent return s
+ s.Color=Color3.fromRGB(143,66,70) s.Transparency=t or .7 s.Thickness=1 s.Parent=parent return s
 end
 local function label(parent,name,textValue)
  local t=Instance.new("TextLabel") t.Name=name t.BackgroundTransparency=1 t.Text=textValue
@@ -22,7 +22,7 @@ local function label(parent,name,textValue)
 end
 local function button(parent,name,textValue)
  local b=Instance.new("TextButton") b.Name=name b.Text=textValue b.Active=true b.AutoButtonColor=false
- b.BackgroundColor3=Color3.fromRGB(20,20,24) b.BackgroundTransparency=.18
+ b.BackgroundColor3=Color3.fromRGB(26,16,18) b.BackgroundTransparency=.18
  b.TextColor3=Color3.fromRGB(242,242,245) b.Font=Enum.Font.GothamSemibold
  b.TextSize=16 b.BorderSizePixel=0 b.Parent=parent corner(b,14) stroke(b,.68) return b
 end
@@ -42,10 +42,11 @@ vg.Transparency=NumberSequence.new({
 }) vg.Parent=vignette
 
 local left=Instance.new("Frame") left.Name="LeftPanel" left.BackgroundColor3=Color3.fromRGB(10,9,12)
-left.BackgroundTransparency=.28 left.BorderSizePixel=0 left.Parent=main corner(left,22) stroke(left,.78)
+left.BackgroundTransparency=1 left.BorderSizePixel=0 left.Parent=main corner(left,22)
 
 local logo=Instance.new("ImageLabel") logo.Name="Logo" logo.BackgroundTransparency=1 logo.ScaleType=Enum.ScaleType.Fit
 local logoId=__SURVIVERS_LOGO_ID__
+assert(logoId and logoId>0,"Exact logo is required")
 if logoId and logoId>0 then logo.Image="rbxassetid://"..tostring(logoId) logo.Visible=true else logo.Image="" logo.Visible=false end
 logo.Parent=main
 
@@ -77,14 +78,14 @@ local credits,creditsTitle,creditsBody,creditsClose=modal("MenuCreditos","CRÉDI
 local controls=Instance.new("ScrollingFrame") controls.Name="Controls" controls.BackgroundTransparency=1 controls.BorderSizePixel=0
 controls.AutomaticCanvasSize=Enum.AutomaticSize.Y controls.CanvasSize=UDim2.new() controls.ScrollBarThickness=3 controls.Parent=settingsBody
 local list=Instance.new("UIListLayout") list.Padding=UDim.new(0,8) list.SortOrder=Enum.SortOrder.LayoutOrder list.Parent=controls
-for i,name in ipairs({"QualityToggle","WindToggle","GrassToggle","LeavesToggle","NametagsToggle","SoundToggle","MusicToggle","FriendsToggle"}) do
+for i,name in ipairs({"QualityToggle","NametagsToggle","SoundToggle","MusicToggle","FriendsToggle"}) do
  local b=button(controls,name,name) b.LayoutOrder=i b.Size=UDim2.new(1,-4,0,44)
 end
 
 local creditsText=label(creditsBody,"TextCreditos","Criado por\n\nch_ckz2n\n\nSurvivers")
 creditsText.TextSize=18 creditsText.TextXAlignment=Enum.TextXAlignment.Center creditsText.TextYAlignment=Enum.TextYAlignment.Center
 
-local back=button(ui,"ReturnToMenu","MENU") back.Visible=false
+local back=button(ui,"ReturnToMenu","☰") back.Visible=false
 local transition=Instance.new("Frame") transition.Name="FrameDeTransicion" transition.Size=UDim2.fromScale(1,1)
 transition.BackgroundColor3=Color3.new(0,0,0) transition.BackgroundTransparency=1 transition.Visible=false transition.ZIndex=100 transition.Parent=ui
 
@@ -103,7 +104,7 @@ config:SetAttribute("MenuOrigin",Vector3.new(10000,2500,10000))
 config:SetAttribute("MainCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("SettingsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("CreditsCamera",CFrame.new(10000,2505,10010))
-config:SetAttribute("Version",5)
+config:SetAttribute("Version",120)
 config:SetAttribute("GameName","Survivers")
 config:SetAttribute("MenuSceneAssetId",13327565335)
 config:SetAttribute("LogoAssetId",logoId or 0)
@@ -114,6 +115,6 @@ local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" lo
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
-runtime:SetAttribute("MenuVersion",5)
+runtime:SetAttribute("MenuVersion",120)
 runtime:SetAttribute("GameName","Survivers")
 runtime:SetAttribute("SurviversLogoAssetId",logoId or 0)

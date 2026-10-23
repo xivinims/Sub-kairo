@@ -25,29 +25,57 @@ local function button(parent,name,label,size,pos,callback)
  end) return b
 end
 local countdown=panel("Countdown",UDim2.fromOffset(208,44),UDim2.new(.5,-104,0,10))
-countdown.BackgroundTransparency=.16 countdown.Visible=false
+countdown.BackgroundTransparency=1 countdown.UIStroke.Enabled=false countdown.Visible=false
 local countdownIcon=text(countdown,"Icon","◷",UDim2.fromOffset(36,36),UDim2.fromOffset(7,4))
 countdownIcon.TextSize=24 countdownIcon.Font=Enum.Font.GothamBold
 local countdownText=text(countdown,"Time","00:30 • 1/8",UDim2.new(1,-48,1,0),UDim2.fromOffset(43,0))
 countdownText.TextSize=16 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left
 local top=panel("Round",UDim2.fromOffset(320,60),UDim2.new(.5,-160,0,58))
+top.BackgroundTransparency=1 top.UIStroke.Enabled=false
 local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
-local join=button(gui,"Join","Participar",UDim2.fromOffset(180,44),UDim2.new(.5,-90,1,-65),function() event:FireServer("join") end)
-local bar=panel("Actions",UDim2.new(.72,0,0,58),UDim2.new(.14,0,1,-76))
-local limit=Instance.new("UISizeConstraint",bar) limit.MinSize=Vector2.new(320,58) limit.MaxSize=Vector2.new(560,58)
 local mode="walk"
-local run=button(bar,"Run","Correr",UDim2.new(.25,-8,1,-12),UDim2.fromOffset(6,6),function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
-local slow=button(bar,"Slow","Devagar",UDim2.new(.25,-8,1,-12),UDim2.new(.25,2,0,6),function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
-local boost=button(bar,"Boost","Impulso",UDim2.new(.25,-8,1,-12),UDim2.new(.5,-2,0,6),function() event:FireServer("boost") end)
-local kit=button(bar,"Medkit","Kit",UDim2.new(.25,-8,1,-12),UDim2.new(.75,-6,0,6),function() event:FireServer("kit") end)
+local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(146,150) bar.Position=UDim2.new(1,-20,1,-175)
+local function circle(name,label,x,y,callback)
+ local b=button(bar,name,label,UDim2.fromOffset(62,62),UDim2.fromOffset(x,y),callback)
+ b.BackgroundColor3=Color3.fromRGB(90,90,90) b.BackgroundTransparency=.58 b.TextSize=14
+ b.UICorner.CornerRadius=UDim.new(1,0) b.UIStroke.Thickness=3 b.UIStroke.Transparency=.35
+ local inner=Instance.new("Frame",b) inner.Name="InnerRing" inner.Size=UDim2.new(1,-12,1,-12) inner.Position=UDim2.fromOffset(6,6) inner.BackgroundTransparency=1 inner.Active=false
+ local corner=Instance.new("UICorner",inner) corner.CornerRadius=UDim.new(1,0)
+ local ring=Instance.new("UIStroke",inner) ring.Thickness=1.5 ring.Color=Color3.fromRGB(180,180,180) ring.Transparency=.4
+ return b
+end
+local run=circle("Run","",78,0,function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
+local slow=circle("Slow","",0,76,function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
+local boost=circle("Boost","↑",0,0,function() event:FireServer("boost") end)
+local kit=circle("Medkit","+",78,76,function() event:FireServer("kit") end)
+local attack=circle("Attack","╱",78,76,function() event:FireServer("attack") end) attack.TextSize=36
+-- Scalable gray silhouettes within the double-ring controls.
+local function segment(parent,a,b,width)
+ local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(195,195,195)
+ local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(1,0)
+end
+local function figure(button,crouch)
+ local head=Instance.new("Frame",button) head.Size=UDim2.fromOffset(9,9) head.Position=UDim2.fromOffset(crouch and 35 or 33,crouch and 17 or 13) head.BackgroundColor3=Color3.fromRGB(195,195,195) head.BorderSizePixel=0
+ local c=Instance.new("UICorner",head) c.CornerRadius=UDim.new(1,0)
+ local lines=crouch and {{37,29,27,35},{27,35,39,40},{39,40,39,48},{29,35,19,43},{19,43,27,48},{35,28,23,26},{23,26,16,30}} or {{35,25,28,35},{28,35,38,40},{38,40,43,47},{28,35,21,43},{21,43,14,43},{33,27,42,30},{28,28,22,23},{22,23,17,30}}
+ for _,v in ipairs(lines) do segment(button,Vector2.new(v[1],v[2]),Vector2.new(v[3],v[4]),4) end
+end
+figure(run,false) figure(slow,true)
+local function actionLayout()
+ local cam=workspace.CurrentCamera if not cam then return end
+ local scale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar)
+ scale.Scale=math.clamp(cam.ViewportSize.Y/650,.78,1)
+ bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.26,115,190))
+end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","Sair da rodada",UDim2.fromOffset(118,36),UDim2.new(0,14,0,58),function() event:FireServer("leave") end)
+local leave=button(gui,"Leave","×",UDim2.fromOffset(40,40),UDim2.new(0,16,0,70),function() event:FireServer("leave") end)
 local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
 local spectatorName=text(spectate,"Player","Assistindo",UDim2.new(1,0,0,34),UDim2.new())
-local index=1 local watching=false
-button(spectate,"Previous","‹",UDim2.fromOffset(50,38),UDim2.fromOffset(8,42),function() index-=1 end)
-button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),function() index+=1 end)
+local index=1 local watching=false local watchedId=nil
+button(spectate,"Previous","‹",UDim2.fromOffset(50,38),UDim2.fromOffset(8,42),function() index-=1 watchedId=nil end)
+button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),function() index+=1 watchedId=nil end)
 button(spectate,"Exit","Sair da câmera",UDim2.fromOffset(170,38),UDim2.fromOffset(65,42),function() event:FireServer("spectateExit") end)
 local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new()) loading.BackgroundTransparency=0 loading.ZIndex=80 loading.Visible=false
 local loadingText=text(loading,"Status","Carregando a arena…",UDim2.new(.8,0,0,90),UDim2.fromScale(.1,.4)) loadingText.ZIndex=81
@@ -125,8 +153,19 @@ local function caughtAnimation(killer,killerCF)
  capture.Visible=false captureActive=false
 end
 
+local doorLeaf=nil local doorRound=nil local doorCF=nil
+local function clearDoor() if doorLeaf then doorLeaf:Destroy() doorLeaf=nil end doorRound=nil end
+local function closeDoor()
+ if doorLeaf or not doorCF then return end
+ doorLeaf=Instance.new("Part") doorLeaf.Name="PrivateEntranceDoor" doorLeaf.Size=Vector3.new(6,8,.6) doorLeaf.Anchored=true doorLeaf.CanCollide=true doorLeaf.Material=Enum.Material.WoodPlanks doorLeaf.Color=Color3.fromRGB(39,29,28)
+ doorLeaf.CFrame=doorCF*CFrame.new(-3,1,0)*CFrame.Angles(0,-math.pi/2,0)*CFrame.new(3,0,0) doorLeaf.Parent=workspace
+ TweenService:Create(doorLeaf,TweenInfo.new(.65,Enum.EasingStyle.Sine),{CFrame=doorCF*CFrame.new(0,1,0)}):Play()
+end
 net.Update.OnClientEvent:Connect(function(action,a,b)
- if action=="notice" then notice.Text=a noticeUntil=os.clock()+5
+ if action=="entrance" then clearDoor() doorRound=a doorCF=b
+ elseif action=="closeEntrance" and a==doorRound then closeDoor()
+ elseif action=="reset" then clearDoor() doorCF=nil loadToken+=1 loading.Visible=false
+ elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" then task.spawn(caughtAnimation,a,b) end
 end)
@@ -134,6 +173,7 @@ UIS.InputBegan:Connect(function(input,processed)
  if processed or not player:GetAttribute("InRound") then return end
  if input.KeyCode==Enum.KeyCode.LeftShift then mode="run" event:FireServer("mode",mode)
  elseif input.KeyCode==Enum.KeyCode.C then mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode)
+ elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
  elseif input.KeyCode==Enum.KeyCode.Q then event:FireServer("boost")
  elseif input.KeyCode==Enum.KeyCode.E then event:FireServer("kit") end
 end)
@@ -146,16 +186,18 @@ RunService.RenderStepped:Connect(function(dt)
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- countdown.Visible=phase=="Intervalo"
+ countdown.Visible=not hidden and phase=="Intervalo"
+ actionLayout()
  countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8)
  top.Visible=not hidden and phase=="Partida"
- join.Visible=not hidden and phase=="Partida" and not inRound and status~="eliminated" and status~="loading"
+ local isJason=player:GetAttribute("IsJason")
  bar.Visible=not hidden and inRound leave.Visible=not hidden and inRound
- run.Visible=not down slow.Visible=not down boost.Visible=not down
- boost.Text=player:GetAttribute("HasBoost") and "Impulso ×1" or "Impulso usado"
- kit.Text=player:GetAttribute("HasMedkit") and (down and "Me reanimar" or "Reanimar • kit ×1") or "Kit usado"
- mode=player:GetAttribute("MoveMode") or "walk" run.Text=mode=="run" and "Correr ✓" or "Correr" slow.Text=mode=="slow" and "Devagar ✓" or "Andar devagar"
- join.Text=player:GetAttribute("Queued") and "Cancelar participação" or net:GetAttribute("Phase")=="Partida" and "Entrar na partida" or "Participar da próxima"
+ run.Visible=not down and not isJason slow.Visible=not down and not isJason boost.Visible=not down and not isJason
+ kit.Visible=not isJason attack.Visible=isJason and not down
+ boost.Text=player:GetAttribute("HasBoost") and "↑" or "·"
+ kit.Text=player:GetAttribute("HasMedkit") and "+" or "·"
+ mode=player:GetAttribute("MoveMode") or "walk"
+ run.UIStroke.Transparency=mode=="run" and .05 or .4 slow.UIStroke.Transparency=mode=="slow" and .05 or .4
  timer.Text=string.format("%s • %d:%02d",phase,math.floor(left/60),left%60)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)
@@ -167,11 +209,22 @@ RunService.RenderStepped:Connect(function(dt)
  spectate.Visible=spec or false
  local camera=workspace.CurrentCamera
  if spec and camera and not captureActive then
-  local targets={} for _,p in ipairs(Players:GetPlayers()) do if p~=player and p:GetAttribute("InRound") and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then table.insert(targets,p) end end
+  local targets={}
+  for _,p in ipairs(Players:GetPlayers()) do
+   local hum=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+   if p~=player and p:GetAttribute("InRound") and not p:GetAttribute("IsJason") and not p:GetAttribute("VoidActive") and hum and hum.Health>0 then table.insert(targets,p) end
+  end
   table.sort(targets,function(a,b) return a.UserId<b.UserId end)
-  if #targets>0 then index=((index-1)%#targets)+1 local p=targets[index] camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") spectatorName.Text=p.DisplayName watching=true
-  else spectatorName.Text="Aguardando sobreviventes…" end
- elseif watching and not hidden and camera then watching=false camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") end
+  if #targets>0 then
+   if watchedId then for i,p in ipairs(targets) do if p.UserId==watchedId then index=i break end end end
+   index=((index-1)%#targets)+1 local p=targets[index] watchedId=p.UserId
+   camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70
+   spectatorName.Text=p.DisplayName watching=true
+  else
+   watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+   spectatorName.Text="Nenhum sobrevivente disponível" watching=true
+  end
+ elseif watching and not hidden and camera then watching=false watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70 end
  highlight.Enabled=false
  if inRound and not hidden then
   for _,m in ipairs(workspace:GetChildren()) do if m:GetAttribute("ActivePursuer") and (m:GetAttribute("TargetUserId") or 0)>0 then
@@ -201,3 +254,4 @@ task.spawn(function()
   task.wait(.35)
  end
 end)
+

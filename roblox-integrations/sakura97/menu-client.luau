@@ -110,9 +110,6 @@ local function buildPrivateScene()
 end
 
 local switches={
- {"WindToggle","WindEnabled","Vento"},
- {"GrassToggle","GrassInteraction","Grama"},
- {"LeavesToggle","LeavesEnabled","Folhas"},
  {"NametagsToggle","ShowNametags","Nomes"},
  {"SoundToggle","MenuSounds","Sons"},
  {"MusicToggle","MusicEnabled","Música"},
@@ -173,13 +170,14 @@ local function layout()
  main.GameName.TextSize=math.clamp(panelW*.12,28,42)
 
  local y=top+logoH+28
- for i,b in ipairs({main.Play,main.Ajustes,creditsButton}) do
+ for i,b in ipairs({main.Play,main.Ajustes}) do
   b.Position=UDim2.fromOffset(x+18,y+(i-1)*(buttonH+10))
   b.Size=UDim2.fromOffset(panelW-36,buttonH)
  end
 
- returnButton.Position=UDim2.fromOffset(16,16)
- returnButton.Size=UDim2.fromOffset(92,42)
+ creditsButton.Position=UDim2.new(1,-64,0,64) creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.Text="i" creditsButton.TextSize=24
+ returnButton.Position=UDim2.fromOffset(16,70)
+ returnButton.Size=UDim2.fromOffset(40,40) returnButton.TextSize=23
 
  for _,scene in ipairs({settings,credits}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")

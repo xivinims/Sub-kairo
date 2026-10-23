@@ -1,99 +1,87 @@
-local Pathfinding=game:GetService("PathfindingService")
-local RunService=game:GetService("RunService")
+-- Jason perception is server owned. A sound gives a position, never wall vision.
+local PF=game:GetService("PathfindingService")
+local Run=game:GetService("RunService")
 local AI={}
-function AI.visible(kind,config,distance,speed,lineOfSight,facing,revealing)
- if speed<=.6 then return false end
- if kind=="Scarlat" and revealing and distance<100 then return true end
- return config.vision>0 and distance<config.vision and lineOfSight and (distance<12 or facing>-.1)
-end
-function AI.start(model,map,config,ctx)
- local root=model.PrimaryPart local hum=model:FindFirstChildOfClass("Humanoid")
- local alive=true local lastPath=0 local busy=false local waypoints={} local waypoint=1
- local goal=nil local heardUntil=0 local nextAbility=0 local restUntil=0 local attackUntil=0
- local nextPatrol=0 local target=nil local revealUntil=0 local nextShot=0 local conn
- local points=map.SafePoints:GetChildren() local groundOffset=model:GetAttribute("GroundOffset") or 3
- local function los(pos,char)
-  local p=RaycastParams.new() p.FilterType=Enum.RaycastFilterType.Exclude p.FilterDescendantsInstances={model}
-  local hit=workspace:Raycast(root.Position,pos-root.Position,p)
-  return not hit or (char and hit.Instance:IsDescendantOf(char))
+function AI.start(model,map,spec,ctx)
+ local h=model:FindFirstChildOfClass("Humanoid") local r=model.PrimaryPart
+ local alive=true local target=nil local lastSeen=nil local seenAt=-100 local heard=nil
+ local goal=nil local waypoints={} local wi=1 local path=nil local blocked=nil local computing=false
+ local generation=0 local nextPath=0 local patrolUntil=0 local searchUntil=0 local attackAt=0
+ local lastPosition=r.Position local stuck=0 local sum=0 local clock=0
+ local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude params.FilterDescendantsInstances={model}
+ local pts=map.SafePoints:GetChildren()
+ local function see(p)
+  local pr=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+  if not pr or not ctx.vulnerable(p) then return false end
+  local delta=pr.Position-r.Position local distance=delta.Magnitude
+  if distance>spec.vision then return false end
+  if distance>12 and distance>.01 and r.CFrame.LookVector:Dot(delta.Unit)<.15 then return false end
+  local hit=workspace:Raycast(r.Position+Vector3.new(0,1.4,0),delta,params)
+  return not hit or hit.Instance:IsDescendantOf(p.Character)
  end
- local function noise(position,radius)
-  if alive and (root.Position-position).Magnitude<radius then goal=position heardUntil=os.clock()+5 end
+ local function clearPath()
+  if blocked then blocked:Disconnect() blocked=nil end
+  if path then path:Destroy() path=nil end
+  waypoints={} wi=1
  end
- local function path(destination)
-  if busy or os.clock()-lastPath<1 then return end
-  busy=true lastPath=os.clock()
+ local function route(pos)
+  if computing or clock<nextPath then return end
+  computing=true nextPath=clock+.8 generation+=1 local id=generation local origin=r.Position
   task.spawn(function()
-   local p=Pathfinding:CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true,WaypointSpacing=5})
-   local ok=pcall(function() p:ComputeAsync(root.Position,destination) end)
-   if alive and ok and p.Status==Enum.PathStatus.Success then waypoints=p:GetWaypoints() waypoint=2
-   elseif alive then waypoints={} end
-   p:Destroy() busy=false
+   local p=PF:CreatePath({AgentRadius=2,AgentHeight=5,AgentCanJump=true,WaypointSpacing=4})
+   local ok=pcall(function() p:ComputeAsync(origin,pos) end)
+   if not alive or id~=generation then p:Destroy() computing=false return end
+   if ok and p.Status==Enum.PathStatus.Success then
+    clearPath() path=p waypoints=p:GetWaypoints() wi=math.min(2,#waypoints)
+    blocked=p.Blocked:Connect(function(i) if i>=wi then nextPath=0 waypoints={} end end)
+   else p:Destroy() waypoints={} patrolUntil=0 end
+   computing=false
   end)
  end
- local function projectile(player)
-  local char=player.Character local r=char and char:FindFirstChild("HumanoidRootPart") if not r then return end
-  local start=root.Position+Vector3.new(0,1,0) local delta=r.Position-start if delta.Magnitude<.1 then return end
-  local dir=delta.Unit local orb=Instance.new("Part") orb.Name="ScarletProjectile" orb.Shape=Enum.PartType.Ball
-  orb.Size=Vector3.new(1.3,1.3,1.3) orb.Material=Enum.Material.Neon orb.Color=Color3.fromRGB(155,25,39)
-  orb.Anchored=true orb.CanCollide=false orb.CanTouch=false orb.CanQuery=false orb.Position=start orb.Parent=model
-  local fx=model:FindFirstChild("SpellParticles")
-  if fx then for _,d in ipairs(fx:GetChildren()) do local copy=d:Clone() copy.Parent=orb if copy:IsA("ParticleEmitter") then copy.Enabled=true end end end
-  local p=RaycastParams.new() p.FilterType=Enum.RaycastFilterType.Exclude p.FilterDescendantsInstances={model}
-  local elapsed=0 local c
-  c=RunService.Heartbeat:Connect(function(dt)
-   if not alive or not orb.Parent then c:Disconnect() orb:Destroy() return end
-   elapsed+=dt local move=dir*42*math.min(dt,.1)
-   local hit=workspace:Spherecast(orb.Position,.8,move,p)
-   if hit then
-    for _,pl in ipairs(ctx.players()) do if pl.Character and hit.Instance:IsDescendantOf(pl.Character) then (ctx.catch or ctx.down)(pl) break end end
-    c:Disconnect() orb:Destroy()
-   elseif elapsed>3 then c:Disconnect() orb:Destroy() else orb.Position+=move end
-  end)
- end
- local elapsed=0
- conn=RunService.Heartbeat:Connect(function(dt)
-  elapsed+=dt if elapsed<.2 then return end elapsed=0
-  if not model.Parent then return end
-  local now=os.clock() local best=math.huge target=nil
-  if model.Name=="Scarlat" and now>=nextAbility then revealUntil=now+2 nextAbility=now+18 model:SetAttribute("Ability","Reveal") end
-  if model:GetAttribute("Ability")=="Reveal" and now>revealUntil then model:SetAttribute("Ability","") end
-  for _,pl in ipairs(ctx.players()) do
-   local r=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
-   if r and ctx.vulnerable(pl) then
-    local speed=ctx.speed(pl) local distance=(r.Position-root.Position).Magnitude
-    local direction=r.Position-root.Position
-    local facing=direction.Magnitude>.01 and root.CFrame.LookVector:Dot(direction.Unit) or 1
-    local visible=AI.visible(model.Name,config,distance,speed,los(r.Position,pl.Character),facing,now<revealUntil)
-    if visible and distance<best then target=pl best=distance end
+ local conn
+ conn=Run.Heartbeat:Connect(function(dt)
+  sum+=dt if sum<.15 then return end local step=sum sum=0 clock+=step
+  if not alive or not model.Parent or h.Health<=0 then return end
+  local chosen=nil local nearest=math.huge
+  for _,p in ipairs(ctx.players()) do if see(p) then
+   local d=(p.Character.HumanoidRootPart.Position-r.Position).Magnitude
+   if p==target then d-=8 end
+   if d<nearest then nearest=d chosen=p end
+  end end
+  if chosen then target=chosen lastSeen=chosen.Character.HumanoidRootPart.Position seenAt=clock searchUntil=clock+8 end
+  local state="Patrol"
+  if target and chosen==target then goal=lastSeen state="Chase"
+  elseif lastSeen and clock-seenAt<4 then goal=lastSeen state="Search" target=nil
+  elseif heard and clock-heard.time<6 then goal=heard.position state="Investigate" target=nil
+  elseif lastSeen and clock<searchUntil then
+   state="Search" target=nil
+   if not goal or (r.Position-goal).Magnitude<5 then goal=lastSeen+Vector3.new(math.random(-12,12),0,math.random(-12,12)) end
+  else
+   target=nil lastSeen=nil
+   if not goal or clock>=patrolUntil or (r.Position-goal).Magnitude<5 then
+    goal=pts[math.random(#pts)].Value patrolUntil=clock+14 nextPath=0
    end
   end
-  model:SetAttribute("TargetUserId",target and target.UserId or 0)
-  if target then goal=target.Character.HumanoidRootPart.Position heardUntil=now+2 end
-  if now>heardUntil then goal=nil end
-  if not goal and now>=nextPatrol then goal=points[math.random(#points)].Value heardUntil=now+7 nextPatrol=now+7 end
-  local speed=target and config.speed or 12
-  if model.Name=="Freddy" and target and now>=nextAbility then nextAbility=now+12 attackUntil=now+2 restUntil=now+5 model:SetAttribute("Ability","Dash") end
-  if model.Name=="Freddy" and now<restUntil then speed=now<attackUntil and 26 or 5 else if model:GetAttribute("Ability")=="Dash" then model:SetAttribute("Ability","") end end
-  if model.Name=="Scarlat" and now<revealUntil then speed=0 end
-  hum.WalkSpeed=speed
-  if goal and speed>0 then
-   path(goal)
-   local w=waypoints[waypoint]
-   if w then
-    if (root.Position-w.Position).Magnitude<4 then waypoint+=1 w=waypoints[waypoint] end
-    if w then hum:MoveTo(Vector3.new(w.Position.X,w.Position.Y+groundOffset,w.Position.Z)) if w.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end end
-   elseif los(goal,nil) then hum:MoveTo(Vector3.new(goal.X,root.Position.Y,goal.Z)) else hum:MoveTo(root.Position) end
-  else hum:MoveTo(root.Position) end
-  if model.Name=="Scarlat" and target and best<65 and now>nextShot and now>revealUntil then nextShot=now+5 projectile(target) end
-  -- Figure can collide with a quiet player, but never tracks them silently.
-  for _,pl in ipairs(ctx.players()) do
-   local r=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
-   if r and ctx.vulnerable(pl) and (r.Position-root.Position).Magnitude<config.range and los(r.Position,pl.Character) then
-    if model.Name=="Figure" or ctx.speed(pl)>.6 or target==pl then (ctx.catch or ctx.down)(pl) end
-   end
+  model:SetAttribute("AIState",state) model:SetAttribute("TargetUserId",target and target.UserId or 0)
+  h.WalkSpeed=state=="Chase" and spec.speed or state=="Patrol" and 11 or 15
+  if target and clock>=attackAt and (target.Character.HumanoidRootPart.Position-r.Position).Magnitude<=spec.range then
+   attackAt=clock+1.8 ctx.catch(target)
   end
+  if (model:GetAttribute("AttackUntil") or 0)>workspace:GetServerTimeNow() then h:MoveTo(r.Position) return end
+  if goal then
+   route(goal)
+   local waypoint=waypoints[wi]
+   if waypoint then
+    if (r.Position-waypoint.Position).Magnitude<3 then wi+=1 waypoint=waypoints[wi] end
+    if waypoint then if waypoint.Action==Enum.PathWaypointAction.Jump then h.Jump=true end h:MoveTo(waypoint.Position) end
+   elseif chosen and see(chosen) then h:MoveTo(goal) end
+  end
+  if (r.Position-lastPosition).Magnitude<.15 and goal and (r.Position-goal).Magnitude>5 then stuck+=step else stuck=0 end
+  lastPosition=r.Position
+  if stuck>1.8 then nextPath=0 clearPath() h.Jump=true stuck=0 if state=="Patrol" then patrolUntil=0 end end
  end)
- return {noise=noise,stop=function() alive=false conn:Disconnect() end}
+ return {noise=function(pos,radius)
+  if alive and (r.Position-pos).Magnitude<=radius then heard={position=pos,time=clock} end
+ end,stop=function() alive=false generation+=1 conn:Disconnect() clearPath() end}
 end
 return AI

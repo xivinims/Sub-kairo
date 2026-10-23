@@ -19,3 +19,4 @@ function Rules.revive(s,healer,target,now)
  h.kit=false t.status="alive" t.deadline=nil if healer~=target then h.points+=10 end return true
 end
 return Rules
+
