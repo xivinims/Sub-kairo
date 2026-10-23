@@ -85,7 +85,7 @@ async function uploadSurviversLogo(){
     const raw=await created.text();
     if(!created.ok){ console.warn('[Survivers] logo upload unavailable:',created.status,raw); return fallback; }
     const op=JSON.parse(raw);
-    const opId=String(op.path||'').replace(/^operations\\//,'');
+    const opId=String(op.path||'').replace(/^operations\//,'');
     if(!opId) return fallback;
     for(let i=0;i<40;i++){
       await sleep(1500);
