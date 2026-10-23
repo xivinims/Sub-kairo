@@ -19,7 +19,7 @@ end
 character.PrimaryPart=templateRoot
 for i=1,9 do
  local f=Instance.new("Folder",host) f.Name="Player"..i
- local p={UserId=i,Parent=host,Character=character:Clone(),CharacterAdded=signal().Event,attrs={},folder=f}
+ local p={Name="Player"..i,UserId=i,Parent=host,Character=character:Clone(),CharacterAdded=signal().Event,attrs={},folder=f}
  p.Character.Name="Player"..i p.Character.Parent=host
  local h=p.Character:FindFirstChildOfClass("Humanoid") h.MaxHealth=100 h.Health=100
  local r=p.Character:FindFirstChild("HumanoidRootPart") assert(r,"Fake player root missing")

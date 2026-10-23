@@ -127,7 +127,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="ready" then local e=entry(p) if e and e.status=="loading" and value==state.id and state.phase=="Partida" then spawnPlayer(p) end
  elseif action=="loadFailed" then if p==jasonPlayer then endTime=now() end local e=entry(p) if e and e.status=="loading" then state.entries[p.UserId]=nil sync(p) end
  elseif action=="mode" then
-  local e=entry(p) if e and e.status=="alive" and (value=="walk" or value=="slow" or value=="run") then p:SetAttribute("MoveMode",value) sync(p) end
+  local e=entry(p) if p~=jasonPlayer and e and e.status=="alive" and (value=="walk" or value=="slow" or value=="run") then p:SetAttribute("MoveMode",value) sync(p) end
  elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
  elseif action=="kit" then if p~=jasonPlayer then channel(p) end
  elseif action=="voice" then
@@ -246,7 +246,8 @@ task.spawn(function()
    net:SetAttribute("Phase","Intervalo")
    net:SetAttribute("EndsAt",endTime)
    net:SetAttribute("Count",0)
-   net:SetAttribute("Waiting",math.min(#Players:GetPlayers(),Rules.Capacity))
+   local waiting=0 for p in pairs(queued) do if p.Parent then waiting+=1 end end
+   net:SetAttribute("Waiting",math.min(waiting,Rules.Capacity))
    net:SetAttribute("MaxPlayers",Rules.Capacity)
    task.wait(1)
   end
