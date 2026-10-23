@@ -132,9 +132,14 @@ local ok,result=xpcall(function()
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
  SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
  send(players[9],"join") local request=assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot load") send(players[9],"ready",request[1]) assert(players[9]:GetAttribute("InRound"),"Ninth player did not enter freed slot")
- advance(221) assert(aiStopped==1,"Round AI did not clean up")
- assert(not workspace:FindFirstChild("ActiveArena"))
- for _,pl in ipairs(players) do assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating")) end
+ local roundRemaining=math.max(0,(net:GetAttribute("EndsAt") or clock)-clock)
+ advance(roundRemaining+1)
+ assert(aiStopped==1,"Round AI did not clean up")
+ assert(net:GetAttribute("Phase")=="Intervalo","Next intermission did not start after round cleanup")
+ assert(not workspace:FindFirstChild("ActiveArena"),"Arena remained during next intermission")
+ for _,pl in ipairs(players) do
+  assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
+ end
  return {ok=true,selfAndAllyRevive=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
