@@ -11,7 +11,7 @@ function p:WaitForChild(n) if n=="PlayerGui" then return guiHost end end
 function p:FindFirstChild() return nil end
 function p:FindFirstChildWhichIsA() return nil end
 local survivor={Character=char,UserId=992,DisplayName="Sobrevivente",GetAttribute=function(_,n) return n=="InRound" end}
-local fakePlayers={LocalPlayer=p,GetPlayers=function() return {p,survivor} end,GetPlayerByUserId=function() return nil end}
+local fakePlayers={LocalPlayer=p,GetPlayers=function() return {p,survivor} end,GetPlayerByUserId=function(_,id) if id==991 then return p elseif id==992 then return survivor end end}
 local requests={}
 local fakeAction={FireServer=function(_,action) table.insert(requests,action) end}
 local fakeNet=setmetatable({Action=fakeAction,Update={OnClientEvent=update.Event},Config=RS.Survival.Config},{__index=function(_,k)
@@ -41,7 +41,7 @@ local ok,result=xpcall(function()
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby" step() assert(gui.Join.Visible and not gui.Actions.Visible)
  attrs.InMenu=true step() assert(not gui.Join.Visible and not gui.Round.Visible)
- return {ok=true,arenaOnlyControls=true,selfReviveButton=true,spectatorCamera=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,arenaOnlyControls=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result
