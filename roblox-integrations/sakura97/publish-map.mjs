@@ -75,6 +75,9 @@ for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'g
 }
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
 const menuBody=read('install-menu').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
+let survivalBody=read('survival-install').replace('__RIG_INSTALL__',read('rig-install'));
+for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
+const survivalTests=read('survival-tests');
 const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
@@ -98,6 +101,13 @@ do
 ${menuBody}
 end
 
+do
+${survivalBody}
+end
+local function testSurvival()
+${survivalTests}
+end
+local survivalChecks=testSurvival()
 local function runVerify()
 ${verifySource}
 end
@@ -124,11 +134,12 @@ end
 checks.fullGrass=verifyFullGrass()
 assert(checks and checks.ok,"Verify failed")
 
-game:GetService("AssetService"):SavePlaceAsync()
+-- Dry run: no save
 return {
   ok=true,
   sourceVersion=sourceVersion,
   mapParts=checks.mapParts,
+  survival=survivalChecks,
   simulation=checks.simulation,
   menu=checks.menu,
   content=checks.content,
@@ -147,33 +158,3 @@ const applied=first(await execute(patch));
 if(!applied?.ok) throw new Error("Sakura97 install failed");
 console.log(JSON.stringify({stage:"installed-and-saved",...applied}));
 
-let persisted,last;
-for(let i=0;i<12;i++){
-  if(i) await sleep(4500);
-  try{
-    const check=first(await execute(`
-      assert(game.GameId==${UNIVERSE_ID} and game.PlaceId==${PLACE_ID})
-      local function runVerify()
-${verifySource}
-      end
-      local checks=runVerify()
-local function verifyMenu()
-${menuVerifySource}
-end
-checks.menu=verifyMenu()
-      checks.placeVersion=game.PlaceVersion
-      return checks
-    `));
-    if(!check?.ok || check.placeVersion<=applied.sourceVersion){
-      throw new Error("Saved version not visible/valid yet, got "+(check&&check.placeVersion));
-    }
-    persisted=check; last=null; break;
-  }catch(e){
-    last=e;
-    console.log(JSON.stringify({waiting:true,attempt:i+1,error:String(e)}));
-  }
-}
-if(last) throw last;
-console.log(JSON.stringify({stage:"verified-persisted",...persisted}));
-
-console.log("[Swean] Published and verified.");

@@ -21,7 +21,7 @@ local function clean()
  if gui then gui:Destroy() gui=nil end
  if controls and not player:GetAttribute("InMenu") then controls:Enable() end
 end
-local function start()
+local function start(cause,mode)
  clean() local token=generation
  local media=RS:WaitForChild("XNMedia")
  if token~=generation then return end
@@ -168,10 +168,16 @@ local function start()
  end
  task.spawn(function()
   task.wait(.7)
-  if not show("cuidado") then return end
-  if not show("não pule mais no void") then return end
-  if not show("já pensou como é a vida pós morte?") then return end
-  if not show("Volte…",true) then return end
+  local messages={"cuidado","não pule mais no void","já pensou como é a vida pós morte?","Volte…"}
+  local causes={
+   Figure={"ele ouve seus passos","ande devagar","não pule","ele não vê mas escuta."},
+   Guerreiro={"ele ouviu você","fique parado","quebre a linha de visão","não faça barulho."},
+   Scarlat={"ela sente o movimento","pare durante a revelação","desvie dos feitiços","nem toda parede esconde você."},
+   Freddy={"você ouviu os passos dele?","desvie da arrancada","ele precisa descansar","aproveite esse momento."},
+   Amanda={"ela prepara o salto","mude de direção","não fique perto","observe antes de correr."}
+  }
+  messages=causes[cause] or messages
+  for i,text in ipairs(messages) do if not show(text,i==#messages) then return end end
   gui:SetAttribute("Phase","transition")
   tween(label,1.4,{TextTransparency=1,Position=UDim2.fromScale(.5,.42)})
   tween(fade,1.6,{Value=0})
@@ -180,6 +186,7 @@ local function start()
   task.wait(1.65)
   if token~=generation then return end
   atmosphere.Visible=false label.Visible=false
+  if mode=="spectate" then gui:SetAttribute("Phase","spectate") event:FireServer("return") return end
   gui:SetAttribute("Phase","regenerate")
   back.Visible=true
   tween(back,.5,{BackgroundTransparency=.28,TextTransparency=0}) tween(border,.5,{Transparency=.7})
@@ -190,8 +197,8 @@ local function start()
  if controls then controls:Disable() end
 end
 local finishing=false
-event.OnClientEvent:Connect(function(action)
- if action=="start" then finishing=false start()
+event.OnClientEvent:Connect(function(action,cause,mode)
+ if action=="start" then finishing=false start(cause,mode)
  elseif action=="finish" and not finishing then
   finishing=true local token=generation
   if gui then

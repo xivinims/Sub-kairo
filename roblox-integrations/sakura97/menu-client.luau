@@ -146,6 +146,7 @@ local function bindCamera()
  end)
 end
 local function open()
+ if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  inMenu=true
  player:SetAttribute("InMenu",true)
  if controls then controls:Disable() end
@@ -208,3 +209,9 @@ task.spawn(function()
 end)
 while not player:GetAttribute("SweanLoadingDone") do task.wait(.1) end
 open()
+
+local function updateReturnButton()
+ returnButton.Visible=not inMenu and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
+end
+player:GetAttributeChangedSignal("InRound"):Connect(updateReturnButton)
+player:GetAttributeChangedSignal("Spectating"):Connect(updateReturnButton)

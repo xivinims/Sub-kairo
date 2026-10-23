@@ -28,7 +28,7 @@ local function attempt()
   local function required(parent,name)
    local value=parent:WaitForChild(name,20) assert(value,"Missing "..name) return value
   end
-  local roots={required(workspace,"FloatingIsland"),required(workspace,"BigCenterTree"),required(workspace,"IslandRoads"),required(workspace,"FullIslandGrass"),required(RS,"GrassWindTemplate"),game:GetService("Lighting")}
+  local roots={required(workspace,"FloatingIsland"),required(workspace,"BigCenterTree"),required(workspace,"LobbyTreeHouse"),required(workspace,"IslandRoads"),required(workspace,"FullIslandGrass"),required(RS,"GrassWindTemplate"),game:GetService("Lighting")}
   required(workspace,"IslandSpawn") required(RS,"SweanMenuConfig")
   local coverage=required(workspace,"SkinnedGrassCoverage")
   local completed=0 local failures={} local done=false local preloadOk,preloadError

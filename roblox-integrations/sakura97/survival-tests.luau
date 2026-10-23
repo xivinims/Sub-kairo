@@ -1,0 +1,33 @@
+local SS=game:GetService("ServerStorage") local SSS=game:GetService("ServerScriptService")
+local Rules=require(SSS.RoundRules)
+local s=Rules.new() assert(not Rules.join(s,1)) Rules.begin(s)
+for i=1,8 do assert(Rules.join(s,i)) s.entries[i].status="alive" end
+assert(not Rules.join(s,9),"Arena capacity exceeded")
+assert(Rules.down(s,1,100)) assert(not Rules.down(s,1,101))
+assert(Rules.revive(s,1,1,103)) assert(not s.entries[1].kit)
+assert(Rules.down(s,1,104)) assert(not Rules.revive(s,1,1,105),"Kit reused")
+assert(Rules.revive(s,2,1,108)) assert(s.entries[2].points==10)
+assert(Rules.down(s,3,110)) assert(not Rules.revive(s,4,3,136),"Revived after deadline")
+s.entries[3].status="eliminated" assert(not Rules.join(s,3),"Eliminated player rejoined")
+assert(Rules.join(s,9),"Mid-round admission failed")
+Rules.begin(s) assert(Rules.join(s,3),"New round should reset elimination")
+local assets=SS.SurvivalAssets assert(#assets.Maps:GetChildren()==4) assert(#assets.Killers:GetChildren()==4)
+local maps={}
+for _,m in ipairs(assets.Maps:GetChildren()) do
+ local points=m.SafePoints:GetChildren() assert(#points>=9)
+ local parts=0 for _,d in ipairs(m:GetDescendants()) do assert(not d:IsA("LuaSourceContainer"),"Imported map script") if d:IsA("BasePart") then parts+=1 assert(d.Anchored) end end
+ maps[#maps+1]={name=m.Name,parts=parts,spawns=#points}
+end
+local rigs={}
+for _,m in ipairs(assets.Killers:GetChildren()) do
+ assert(m.PrimaryPart and m:FindFirstChildOfClass("Humanoid"))
+ local joints=0 local names={}
+ for _,d in ipairs(m:GetDescendants()) do
+  assert(not d:IsA("LuaSourceContainer"),"Imported rig script")
+  if d:IsA("Motor6D") then joints+=1 table.insert(names,{name=d.Name,part=d.Part1 and d.Part1.Name}) end
+ end
+ assert(joints>0) table.insert(rigs,{name=m.Name,joints=names,clips=#m.MotionClips:GetChildren()})
+end
+local house=workspace.LobbyTreeHouse assert(house:GetAttribute("SourceAssetId")==15761692261)
+local cf,size=house:GetBoundingBox()
+return {ok=true,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=true}

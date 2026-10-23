@@ -6,6 +6,7 @@ local event=RS:WaitForChild("SweanVoidEvent")
 local runtime=RS:WaitForChild("SweanRuntime")
 local threshold=runtime:GetAttribute("VoidThreshold")
 local active={}
+local bridge=game:GetService("ServerScriptService"):WaitForChild("SurvivalBridge")
 local function recover(player,record)
  if active[player]~=record then return end active[player]=nil
  local char=record.char local root=char:FindFirstChild("HumanoidRootPart") local hum=char:FindFirstChildOfClass("Humanoid")
@@ -16,8 +17,18 @@ local function recover(player,record)
   if hum then hum.AutoRotate=record.autoRotate end
  end
  player:SetAttribute("VoidActive",false)
- if player.Parent then event:FireClient(player,"finish") end
+ if player.Parent then event:FireClient(player,"finish") bridge.DeathFinished:Fire(player) end
 end
+local function begin(player,cause,mode)
+ if active[player] then return end
+ local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
+ if not root or not hum then return end
+ local record={started=os.clock(),char=char,anchored=false,autoRotate=true}
+ active[player]=record root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero hum.AutoRotate=false
+ player:SetAttribute("VoidActive",true) event:FireClient(player,"start",cause,mode)
+ task.delay(60,function() recover(player,record) end)
+end
+bridge.DeathRequest.Event:Connect(begin)
 event.OnServerEvent:Connect(function(player,action)
  local record=active[player]
  if action=="return" and record and os.clock()-record.started>=2 then recover(player,record) end
@@ -39,13 +50,7 @@ RunService.Heartbeat:Connect(function(dt)
  for _,player in ipairs(Players:GetPlayers()) do
   local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
   if root and hum and hum.Health>0 and root.Position.Y<threshold and not active[player] then
-   local record={started=os.clock(),char=char,anchored=root.Anchored,autoRotate=hum.AutoRotate}
-   active[player]=record
-   root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero hum.AutoRotate=false
-   player:SetAttribute("VoidActive",true)
-   event:FireClient(player,"start")
-   -- Server-owned timer: a missing client or a forged response cannot trap the player.
-   task.delay(60,function() recover(player,record) end)
+   if player:GetAttribute("InRound") then bridge.RoundEliminate:Fire(player,"void") else begin(player,"void") end
   end
  end
 end)
