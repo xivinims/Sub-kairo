@@ -48,11 +48,14 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
  local testRig=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
- local lookup={}
+ testRig.Name="AnimationCompatibilityRig" testRig.Parent=workspace
+ local lookup={} local jointNames={}
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
- for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then
-  lookup[norm(j.Part1.Name)]=true lookup[norm(j.Name)]=true
+ for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") then
+  table.insert(jointNames,j.Name..":"..tostring(j.Part1 and j.Part1.Name or "nil"))
+  if j.Part1 then lookup[norm(j.Part1.Name)]=true lookup[norm(j.Name)]=true end
  end end
+ table.sort(jointNames)
  for alias,partName in pairs({
   humanoidrootpart="lowertorso",rootpart="lowertorso",torso="uppertorso",uppertorso="uppertorso",
   head="head",leftarm="leftupperarm",rightarm="rightupperarm",leftleg="leftupperleg",rightleg="rightupperleg"
@@ -81,7 +84,7 @@ local function animationCompatibility(folder,names)
     if not seen[poseName] then seen[poseName]=true table.insert(names,poseName) end
    end end
    table.sort(names)
-   error(clipName.." cannot drive R15 rig; matched="..count.." moving="..tostring(moving).." poses="..table.concat(names,","))
+   error(clipName.." cannot drive R15 rig; matched="..count.." moving="..tostring(moving).." poses="..table.concat(names,",").." joints="..table.concat(jointNames,","))
   end
   report[clipName]=count
  end
