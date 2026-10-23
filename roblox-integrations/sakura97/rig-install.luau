@@ -86,10 +86,63 @@ for _,d in ipairs(particles:GetDescendants()) do
  end
 end
 assert(count>0,"Scarlet particles missing") particles:Destroy()
--- Preserve exact Jason clips and sword for the warrior; do not invent unresolved avatar IDs.
-local pending=Instance.new("Folder",storage) pending.Name="PendingWarrior"
+-- Build the Warrior from the exact avatar item IDs supplied by the owner.
+local warriorItems={88666724325984,109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066}
+local description=Instance.new("HumanoidDescription")
+local warrior=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
+description:Destroy()
+warrior.Name="Guerreiro"
+local warriorHum=warrior:FindFirstChildOfClass("Humanoid")
+local warriorRoot=warrior:FindFirstChild("HumanoidRootPart")
+assert(warriorHum and warriorRoot,"Warrior base rig missing")
+warrior.PrimaryPart=warriorRoot
+warriorHum.RequiresNeck=false
+warriorHum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+warriorHum.BreakJointsOnDeath=false
+warriorHum.MaxHealth=100000 warriorHum.Health=100000 warriorHum.HipHeight=2.4
+
+local function equipWarriorItem(id)
+ local asset=load(id) sanitize(asset,false)
+ local applied=0
+ local head=warrior:FindFirstChild("Head")
+ for _,d in ipairs(asset:GetDescendants()) do
+  if d:IsA("Accessory") then
+   warriorHum:AddAccessory(d:Clone()) applied+=1
+  elseif d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("BodyColors") or d:IsA("CharacterMesh") then
+   local old=warrior:FindFirstChildOfClass(d.ClassName) if old then old:Destroy() end
+   d:Clone().Parent=warrior applied+=1
+  elseif d:IsA("Decal") and head and (d.Name:lower()=="face" or id==206119001888066) then
+   local old=head:FindFirstChild("face") if old then old:Destroy() end
+   local face=d:Clone() face.Name="face" face.Parent=head applied+=1
+  end
+ end
+ asset:Destroy()
+ assert(applied>0,"Warrior avatar item did not contain wearable data: "..id)
+end
+for _,id in ipairs(warriorItems) do equipWarriorItem(id) end
+
+for _,d in ipairs(warrior:GetDescendants()) do
+ if d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.Massless=true end
+end
+warriorRoot.CanCollide=true warriorRoot.Massless=false warriorRoot.Transparency=1 warriorRoot.Size=Vector3.new(2,2,1.5)
+
+local warriorClips=Instance.new("Folder",warrior) warriorClips.Name="MotionClips"
 local jason=load(125165599816440)
-sequences(jason,125165599816440,{Idle="Jason Idle",Walk="Jason Walk",Run="Jason Run",Attack="Jason Slash"},pending) jason:Destroy()
-local sword=load(18709122295) sanitize(sword,false) sword.Name="Sword" sword.Parent=pending
-pending:SetAttribute("BlockedReason","Eight shared avatar links need direct catalog IDs")
+sequences(jason,125165599816440,{Idle="Jason Idle",Walk="Jason Walk",Run="Jason Run",Attack="Jason Slash"},warriorClips)
+jason:Destroy()
+
+-- Retarget the main R15 joints to the supplied Jason person animation pose names.
+local warriorAliases={
+ UpperTorso="Torso",Head="Head",
+ LeftUpperArm="Left Arm",RightUpperArm="Right Arm",
+ LeftUpperLeg="Left Leg",RightUpperLeg="Right Leg",
+}
+for _,j in ipairs(warrior:GetDescendants()) do
+ if j:IsA("Motor6D") and j.Part1 and warriorAliases[j.Part1.Name] then
+  j:SetAttribute("PoseAlias",warriorAliases[j.Part1.Name])
+ end
+end
+warrior:SetAttribute("AvatarItems","88666724325984,109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
+warrior:SetAttribute("AnimationAssetId",125165599816440)
+warrior.Parent=rigs
 for _,m in ipairs(maps:GetChildren()) do m:SetAttribute("DisplayName",m.Name) end
