@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { inflateSync, deflateSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 
 function crc32(buf){
   let crc=0xffffffff;
@@ -141,9 +142,14 @@ async function uploadSurviversLogo(){
   try{
     const key=process.env.ROBLOX_API_KEY;
     const creatorId=process.env.ROBLOX_CREATOR_USER_ID||'8344738123';
-    const sourceBytes=fs.readFileSync('roblox-integrations/sakura97/branding/survivers-logo.png');
-    const bytes=normalizeLogoPng(sourceBytes);
-    console.log('[Survivers] logo encoding normalized:',sourceBytes.length,'->',bytes.length,'bytes');
+    const logoBase64=[0,1,2,3].map(i=>fs.readFileSync(`roblox-integrations/sakura97/branding/survivers-logo.part${i}.b64`,'utf8').trim()).join('');
+    if(logoBase64.length!==28984) throw new Error('Logo base64 length mismatch: '+logoBase64.length);
+    const bytes=Buffer.from(logoBase64,'base64');
+    const logoHash=createHash('sha256').update(bytes).digest('hex');
+    if(bytes.length!==21736 || logoHash!=='96f4ca05c6a6cf571773cc42eda595e85825adfea93c1cab56a6e4c8be559371'){
+      throw new Error('Logo bytes/hash mismatch: '+bytes.length+' '+logoHash);
+    }
+    console.log('[Survivers] logo reconstructed:',bytes.length,'bytes sha256='+logoHash);
     const form=new FormData();
     form.append('request',JSON.stringify({
       assetType:'Decal',
