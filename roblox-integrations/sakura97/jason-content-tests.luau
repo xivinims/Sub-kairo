@@ -24,6 +24,8 @@ for _,folder in ipairs(rig.MotionClips:GetChildren()) do table.insert(jasonClipN
 end
 table.sort(jasonClipNames)
 assert(clips==17,"Missing exact Jason animation sequences")
+assert(rig.MotionClips:FindFirstChild("Jason Run"),"Jason Run clip missing for intro cinematic")
+assert(rig.MotionClips:FindFirstChild("Jason Intro"),"Jason Intro clip missing for intro cinematic")
 local hasExecution=false
 for _,n in ipairs(jasonClipNames) do local l=n:lower() if l:find("kill",1,true) or l:find("execution",1,true) or l:find("execute",1,true) or l:find("finisher",1,true) or l:find("fatal",1,true) then hasExecution=true break end end
 local map=assets.Maps.HorrorMap
@@ -97,4 +99,4 @@ assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAn
 assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
 assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
 assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
-return {ok=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}

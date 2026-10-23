@@ -133,12 +133,15 @@ local ok,result=xpcall(function()
  for _,p in ipairs(players) do if p:GetAttribute("IsJason") then killer=p killers+=1 end end
  assert(killers==1 and killer,"Exactly one player must become Jason")
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
+ assert(messages[killer] and messages[killer].jasonIntro,"Player Jason did not receive intro cinematic")
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==0,"Player Jason was not frozen during intro")
  local victim=nil
  for i,p in ipairs(players) do
   p.Character:PivotTo(CFrame.new(i*30,1000,0)) p.Character.HumanoidRootPart.Anchored=true
   if i<=8 and p~=killer then victim=p end
  end
- advance(6)
+ advance(4.2)
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player Jason movement was not restored after intro")
  killer.Character:PivotTo(victim.Character:GetPivot()*CFrame.new(0,0,3))
  send(killer,"attack") advance(1)
  assert(victim:GetAttribute("Injured") and not victim:GetAttribute("Downed"),"First player-Jason hit did not injure victim")
@@ -154,7 +157,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,eightParticipantPlayerJason=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true}
+ return {ok=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true}
 
 end,debug.traceback)
 dc:Disconnect()

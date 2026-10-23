@@ -126,9 +126,14 @@ local ok,result=xpcall(function()
   local status=players[i]:GetAttribute("RoundStatus")
   assert(status=="alive" and players[i]:GetAttribute("InRound"),"Player "..i.." was not teleported into round immediately; status="..tostring(status))
   assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive advisory preload request")
+  assert(messages[players[i]] and messages[players[i]].jasonIntro,"Player "..i.." did not receive Jason intro cinematic")
+  assert(players[i].Character.Humanoid.WalkSpeed==0,"Player "..i.." was not frozen during Jason intro")
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local count=0 for _,p in ipairs(players) do if p:GetAttribute("InRound") then count+=1 end end assert(count==8,"Expected 8 active players, got "..count)
+ assert((net:GetAttribute("IntroUntil") or 0)>clock,"Intro lock was not scheduled")
+ advance(4.2)
+ assert((net:GetAttribute("IntroUntil") or 0)<=clock,"Intro lock did not expire")
  for i=1,8 do
   local c=players[i].Character c:PivotTo(CFrame.new(i*25,1000,0)) c.HumanoidRootPart.Anchored=true
  end
@@ -176,7 +181,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

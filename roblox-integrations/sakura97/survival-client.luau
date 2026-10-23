@@ -124,6 +124,8 @@ local function preload(roundId,map)
 end
 local noticeUntil=0
 local captureActive=false
+local cinematicActive=false
+local introClone=nil local introOriginal=nil local introValue=nil local introConnection=nil local introTween=nil local introHidden={}
 local capture=Instance.new("Frame") capture.Name="Capture" capture.Size=UDim2.fromScale(1,1) capture.BackgroundColor3=Color3.fromRGB(105,0,7) capture.BackgroundTransparency=1 capture.BorderSizePixel=0 capture.ZIndex=95 capture.Visible=false capture.Parent=gui
 local captureText=text(capture,"Killer","",UDim2.new(1,0,0,60),UDim2.new(0,0,.16,0)) captureText.TextSize=22 captureText.Font=Enum.Font.GothamBold captureText.ZIndex=96
 
@@ -165,6 +167,105 @@ local function caughtAnimation(killer,killerCF)
   end
  end
  capture.Visible=false captureActive=false
+end
+
+local introTop=Instance.new("Frame",gui) introTop.Name="IntroTop" introTop.Size=UDim2.new(1,0,0,58) introTop.Position=UDim2.new() introTop.BackgroundColor3=Color3.new(0,0,0) introTop.BorderSizePixel=0 introTop.ZIndex=93 introTop.Visible=false
+local introBottom=Instance.new("Frame",gui) introBottom.Name="IntroBottom" introBottom.Size=UDim2.new(1,0,0,70) introBottom.AnchorPoint=Vector2.new(0,1) introBottom.Position=UDim2.new(0,0,1,0) introBottom.BackgroundColor3=Color3.new(0,0,0) introBottom.BorderSizePixel=0 introBottom.ZIndex=93 introBottom.Visible=false
+
+local function hideOriginalJason(model,hidden)
+ if hidden then
+  table.clear(introHidden)
+  if model then for _,p in ipairs(model:GetDescendants()) do if p:IsA("BasePart") then introHidden[p]=p.LocalTransparencyModifier p.LocalTransparencyModifier=1 end end end
+ else
+  for p,value in pairs(introHidden) do if p and p.Parent then p.LocalTransparencyModifier=value end end
+  table.clear(introHidden)
+ end
+end
+
+local function cameraBackTarget()
+ local char=player.Character
+ local root=char and char:FindFirstChild("HumanoidRootPart")
+ local head=char and char:FindFirstChild("Head")
+ local hum=char and char:FindFirstChildOfClass("Humanoid")
+ if root and head then
+  local pos=head.Position-root.CFrame.LookVector*7+Vector3.new(0,2.3,0)
+  return CFrame.lookAt(pos,head.Position+Vector3.new(0,.45,0)),hum
+ end
+ return nil,hum
+end
+
+local function cancelJasonIntro(restore)
+ cinematicActive=false gui:SetAttribute("CinematicActive",false)
+ if introTween then pcall(function() introTween:Cancel() end) introTween=nil end
+ if introConnection then introConnection:Disconnect() introConnection=nil end
+ if introValue then introValue:Destroy() introValue=nil end
+ if introClone then introClone:Destroy() introClone=nil end
+ hideOriginalJason(introOriginal,false) introOriginal=nil
+ introTop.Visible=false introBottom.Visible=false
+ if restore then
+  local camera=workspace.CurrentCamera
+  local _,hum=cameraBackTarget()
+  if camera then
+   camera.CameraType=Enum.CameraType.Custom
+   if hum then camera.CameraSubject=hum end
+   camera.FieldOfView=70
+  end
+ end
+end
+
+local function playJasonIntro(data,original)
+ if cinematicActive or captureActive or type(data)~="table" or not original or not original.Parent then return end
+ local camera=workspace.CurrentCamera
+ if not camera or typeof(data.startCF)~="CFrame" or typeof(data.endCF)~="CFrame" or typeof(data.cameraCF)~="CFrame" then return end
+ local duration=math.clamp(tonumber(data.duration) or 4,3.5,5)
+ local runDuration=math.clamp(tonumber(data.runDuration) or 3.15,2.5,duration-.5)
+ cinematicActive=true gui:SetAttribute("CinematicActive",true)
+ introTop.Visible=true introBottom.Visible=true
+ introOriginal=original hideOriginalJason(original,true)
+ introClone=original:Clone()
+ introClone.Name="LocalJasonIntro"
+ introClone:SetAttribute("ActivePursuer",nil)
+ introClone:SetAttribute("CinematicPursuer",true)
+ introClone:SetAttribute("IntroAt",workspace:GetServerTimeNow())
+ introClone:SetAttribute("IntroRunDuration",runDuration)
+ introClone:SetAttribute("IntroDuration",duration)
+ for _,p in ipairs(introClone:GetDescendants()) do
+  if p:IsA("BasePart") then p.Anchored=true p.CanCollide=false p.CanTouch=false p.CanQuery=false p.LocalTransparencyModifier=0 end
+ end
+ introClone.Parent=workspace
+ introClone:PivotTo(data.startCF)
+ camera.CameraType=Enum.CameraType.Scriptable
+ camera.CFrame=data.cameraCF
+ camera.FieldOfView=60
+ introValue=Instance.new("CFrameValue")
+ introValue.Name="JasonIntroPath"
+ introValue.Value=data.startCF
+ introConnection=introValue:GetPropertyChangedSignal("Value"):Connect(function()
+  if introClone and introClone.Parent then introClone:PivotTo(introValue.Value) end
+ end)
+ introTween=TweenService:Create(introValue,TweenInfo.new(runDuration,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Value=data.endCF})
+ introTween:Play()
+ task.delay(runDuration,function()
+  if not cinematicActive or not camera.Parent then return end
+  local targetCF=cameraBackTarget()
+  if targetCF then
+   TweenService:Create(camera,TweenInfo.new(math.max(.55,duration-runDuration),Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CFrame=targetCF,FieldOfView=70}):Play()
+  end
+ end)
+ task.delay(duration,function()
+  if not cinematicActive then return end
+  local _,hum=cameraBackTarget()
+  hideOriginalJason(introOriginal,false) introOriginal=nil
+  if introClone then introClone:Destroy() introClone=nil end
+  if introConnection then introConnection:Disconnect() introConnection=nil end
+  if introValue then introValue:Destroy() introValue=nil end
+  introTween=nil introTop.Visible=false introBottom.Visible=false
+  cinematicActive=false gui:SetAttribute("CinematicActive",false)
+  if camera then
+   camera.CameraType=Enum.CameraType.Custom
+   if hum then camera.CameraSubject=hum end
+  end
+ end)
 end
 
 local entryFlash=Instance.new("Frame")
@@ -213,15 +314,16 @@ local function closeDoor()
 end
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="lobbyDoorGlow" then pulseLobbyDoor()
+ elseif action=="jasonIntro" then playJasonIntro(a,b)
  elseif action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
- elseif action=="reset" then clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
+ elseif action=="reset" then cancelJasonIntro(true) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" then task.spawn(caughtAnimation,a,b) end
 end)
 UIS.InputBegan:Connect(function(input,processed)
- if processed or not player:GetAttribute("InRound") then return end
+ if processed or cinematicActive or not player:GetAttribute("InRound") then return end
  if input.KeyCode==Enum.KeyCode.LeftShift then mode="run" event:FireServer("mode",mode)
  elseif input.KeyCode==Enum.KeyCode.C then mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode)
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
@@ -247,7 +349,7 @@ RunService.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera
  if not camera then return end
  local isJason=player:GetAttribute("IsJason")==true
- local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive
+ local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and not cinematicActive
  if active then
   if not jasonTheme.IsPlaying then jasonTheme:Play() end
   local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -267,8 +369,8 @@ end)
 local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
- local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
- local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true
+ local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true or cinematicActive
+ local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
@@ -300,7 +402,7 @@ RunService.RenderStepped:Connect(function(dt)
  local spec=player:GetAttribute("Spectating") and not hidden
  spectate.Visible=spec or false
  local camera=workspace.CurrentCamera
- if spec and camera and not captureActive then
+ if spec and camera and not captureActive and not cinematicActive then
   local targets={}
   for _,p in ipairs(Players:GetPlayers()) do
    local hum=p.Character and p.Character:FindFirstChildOfClass("Humanoid")

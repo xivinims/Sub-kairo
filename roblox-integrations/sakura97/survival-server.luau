@@ -7,7 +7,7 @@ local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
-local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0
+local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0
 local jasonPlayer=nil local morphing={} local portalInside={} local lastAttack=0
 local gate=workspace:WaitForChild("LobbyJoinPortal")
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
@@ -29,9 +29,11 @@ local function sync(p)
  p:SetAttribute("Queued",queued[p] or false)
  local h=humanoid(p)
  if h then
+  local introLocked=e and e.status=="alive" and now()<introUntil
   h.PlatformStand=false h.AutoRotate=true
-  h.WalkSpeed=p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="slow" and 7 or p:GetAttribute("MoveMode")=="run" and 16 or 12)) or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
-  h.JumpPower=(e and e.status=="downed") and 0 or 50 h.JumpHeight=(e and e.status=="downed") and 0 or 7.2
+  h.WalkSpeed=introLocked and 0 or p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="slow" and 7 or p:GetAttribute("MoveMode")=="run" and 16 or 12)) or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
+  h.JumpPower=(introLocked or (e and e.status=="downed")) and 0 or 50
+  h.JumpHeight=(introLocked or (e and e.status=="downed")) and 0 or 7.2
  end
 end
 local function points(p,n)
@@ -163,6 +165,56 @@ local function join(p)
  net.Update:FireClient(p,"load",state.id,arena)
  return true
 end
+local function introSceneData()
+ if not arena or not npc or not npc.PrimaryPart then return nil end
+ local killerSpawn=arena:GetAttribute("KillerSpawn")
+ if typeof(killerSpawn)~="Vector3" then return nil end
+ local endPivot=npc:GetPivot()
+ local safe=arena:FindFirstChild("SafePoints")
+ local startPoint=nil local bestDistance=0
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={arena}
+ params.RespectCanCollide=true
+ if safe then
+  for _,v in ipairs(safe:GetChildren()) do
+   if v:IsA("Vector3Value") then
+    local distance=(v.Value-killerSpawn).Magnitude
+    if distance>=12 and distance<=34 then
+     local origin=v.Value+Vector3.new(0,1.7,0)
+     local delta=killerSpawn-v.Value
+     local hit=workspace:Raycast(origin,delta,params)
+     if not hit and distance>bestDistance then startPoint=v.Value bestDistance=distance end
+    end
+   end
+  end
+  if not startPoint then
+   local nearest=nil local nearestDistance=math.huge
+   for _,v in ipairs(safe:GetChildren()) do
+    if v:IsA("Vector3Value") then
+     local distance=(v.Value-killerSpawn).Magnitude
+     if distance>8 and distance<nearestDistance then nearest=v.Value nearestDistance=distance end
+    end
+   end
+   startPoint=nearest
+  end
+ end
+ local offset=endPivot.Position-killerSpawn
+ local endPos=endPivot.Position
+ local startPos=(startPoint or (killerSpawn-npc.PrimaryPart.CFrame.LookVector*18))+offset
+ local delta=endPos-startPos
+ if delta.Magnitude<1 then delta=npc.PrimaryPart.CFrame.LookVector*18 startPos=endPos-delta end
+ local forward=delta.Unit
+ local startCF=CFrame.lookAt(startPos,startPos+forward)
+ local endCF=CFrame.lookAt(endPos,endPos+forward)
+ local right=forward:Cross(Vector3.yAxis)
+ if right.Magnitude<.1 then right=Vector3.xAxis else right=right.Unit end
+ local focus=startPos:Lerp(endPos,.68)+Vector3.new(0,1.8,0)
+ local cameraPos=focus+right*7-forward*2.25+Vector3.new(0,2.4,0)
+ local cameraCF=CFrame.lookAt(cameraPos,focus)
+ return {duration=4,runDuration=3.15,startCF=startCF,endCF=endCF,cameraCF=cameraCF}
+end
+
 local function spawnPlayer(p)
  local e=entry(p) local r=root(p) if not r or not npc or not arena then return end
  local best=arena:GetAttribute("EntranceSpawn")
@@ -192,6 +244,7 @@ end
 net.Action.OnServerEvent:Connect(function(p,action,value)
  if type(action)~="string" then return end
  rates[p]=rates[p] or {} local t=now() if t-(rates[p][action] or 0)<.18 then return end rates[p][action]=t
+ if t<introUntil and action~="leave" and action~="spectateExit" then return end
  if action=="join" then return -- Admission is exclusively server-observed portal crossing.
  elseif action=="attack" then
   if p~=jasonPlayer then return end
@@ -298,10 +351,15 @@ RunService.Heartbeat:Connect(function(dt)
      local m=motions[p] or {position=r.Position,speed=0,grounded=true}
      local displacement=r.Position-m.position m.speed=Vector3.new(displacement.X,0,displacement.Z).Magnitude/step m.position=r.Position motions[p]=m
      if e.status=="alive" then
-      if p==jasonPlayer then h.WalkSpeed=22
-      elseif e.boostUntil and t<e.boostUntil then h.WalkSpeed=e.injured and 20 or 27
-      elseif e.injured then h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 16 or p:GetAttribute("MoveMode")=="slow" and 7 or 12
-      else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or p:GetAttribute("MoveMode")=="slow" and 8 or 16 end
+      if t<introUntil then
+       h.WalkSpeed=0 h.JumpPower=0 h.JumpHeight=0
+      else
+       h.JumpPower=50 h.JumpHeight=7.2
+       if p==jasonPlayer then h.WalkSpeed=22
+       elseif e.boostUntil and t<e.boostUntil then h.WalkSpeed=e.injured and 20 or 27
+       elseif e.injured then h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 16 or p:GetAttribute("MoveMode")=="slow" and 7 or 12
+       else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or p:GetAttribute("MoveMode")=="slow" and 8 or 16 end
+      end
       local grounded=h.FloorMaterial~=Enum.Material.Air
       local jump=m.grounded and not grounded and r.AssemblyLinearVelocity.Y>5
       if p~=jasonPlayer and brain and (jump or m.speed>10) and t-(e.lastNoise or 0)>.45 then
@@ -315,7 +373,7 @@ RunService.Heartbeat:Connect(function(dt)
  end
 end)
 local function finish()
- state.phase="Intervalo" if brain then brain.stop() brain=nil end
+ state.phase="Intervalo" introUntil=0 net:SetAttribute("IntroUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end
  for _,p in ipairs(Players:GetPlayers()) do
@@ -370,6 +428,12 @@ task.spawn(function()
     npc:SetAttribute("GroundOffset",npc.PrimaryPart.Position.Y-killerSpawn.Y)
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)
+    local introStarted=now()
+    introUntil=introStarted+4
+    npc:SetAttribute("RoundIntroAt",introStarted)
+    npc:SetAttribute("RoundIntroUntil",introUntil)
+    npc:SetAttribute("AttackUntil",introUntil)
+    net:SetAttribute("IntroUntil",introUntil)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
     local eligible={}
     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
@@ -385,7 +449,7 @@ task.spawn(function()
     else
      brain=AI.start(npc,arena,config.Killers.Jason,{players=players,vulnerable=vulnerable,catch=catchPlayer})
     end
-    endTime=now()+Rules.Duration
+    endTime=introUntil+Rules.Duration
     net:SetAttribute("Phase","Partida")
     net:SetAttribute("EndsAt",endTime)
     net:SetAttribute("Killer",killerName)
@@ -400,6 +464,14 @@ task.spawn(function()
      if admitted>=Rules.Capacity then break end
      if queued[p] and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
       if join(p) then spawnPlayer(p) admitted+=1 end
+     end
+    end
+
+    local introData=introSceneData()
+    if introData then
+     for _,p in ipairs(Players:GetPlayers()) do
+      local e=entry(p)
+      if e and e.status=="alive" then net.Update:FireClient(p,"jasonIntro",introData,npc) end
      end
     end
 

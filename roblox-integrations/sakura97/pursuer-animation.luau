@@ -187,19 +187,27 @@ end
 
 Run.PreSimulation:Connect(function(dt)
  for _,model in ipairs(workspace:GetChildren()) do
-  if model:IsA("Model") and model:GetAttribute("ActivePursuer") and model.PrimaryPart then
+  if model:IsA("Model") and (model:GetAttribute("ActivePursuer") or model:GetAttribute("CinematicPursuer")) and model.PrimaryPart then
    local folder=model:FindFirstChild("MotionClips")
    if folder then
     local d=prepare(model,folder)
-    local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
-    local execution=model:GetAttribute("ExecutionAt") or -100
-    local attack=model:GetAttribute("AttackAt") or -100
-    local execSince=workspace:GetServerTimeNow()-execution
-    local since=workspace:GetServerTimeNow()-attack
-    local execState=d and executionName(d) or nil
-    local executing=execSince>=0 and execSince<1.65
-    local state=executing and execState or since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
-    if d then apply(d,state,dt,not executing and state~="Jason Slash",executing and execSince or (state=="Jason Slash" and since or nil)) end
+    if model:GetAttribute("CinematicPursuer") then
+     local introAt=model:GetAttribute("IntroAt") or workspace:GetServerTimeNow()
+     local runDuration=model:GetAttribute("IntroRunDuration") or 3.15
+     local elapsed=workspace:GetServerTimeNow()-introAt
+     local state=elapsed<runDuration and "Jason Run" or "Jason Intro"
+     if d then apply(d,state,dt,state=="Jason Run",state=="Jason Intro" and math.max(0,elapsed-runDuration) or nil) end
+    else
+     local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+     local execution=model:GetAttribute("ExecutionAt") or -100
+     local attack=model:GetAttribute("AttackAt") or -100
+     local execSince=workspace:GetServerTimeNow()-execution
+     local since=workspace:GetServerTimeNow()-attack
+     local execState=d and executionName(d) or nil
+     local executing=execSince>=0 and execSince<1.65
+     local state=executing and execState or since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
+     if d then apply(d,state,dt,not executing and state~="Jason Slash",executing and execSince or (state=="Jason Slash" and since or nil)) end
+    end
    end
   end
  end

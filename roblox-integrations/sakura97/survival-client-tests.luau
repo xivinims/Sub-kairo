@@ -5,6 +5,7 @@ local attrs={InRound=true,SweanLoadingDone=true,HasMedkit=true,HasBoost=true,Rou
 local p={attrs=attrs,Character=nil,UserId=991,DisplayName="Tester"}
 local description=Instance.new("HumanoidDescription")
 local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15) char.Parent=host p.Character=char
+local introJason=game.ServerStorage.SurvivalAssets.Killers.Jason:Clone() introJason.Name="IntroJasonTest" introJason.Parent=host
 local guiHost=Instance.new("Folder",host) guiHost.Name="PlayerGui"
 function p:GetAttribute(n) return attrs[n] end
 function p:WaitForChild(n) if n=="PlayerGui" then return guiHost end end
@@ -32,6 +33,13 @@ local function step() render:Fire(.2) task.wait() end
 local ok,result=xpcall(function()
  controller() step()
  local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.Actions.Visible and not gui:FindFirstChild("Join"))
+ local introData={duration=4,runDuration=3.15,startCF=CFrame.new(0,1000,0),endCF=CFrame.new(0,1000,-18),cameraCF=CFrame.lookAt(Vector3.new(8,1005,-10),Vector3.new(0,1002,-10))}
+ update:Fire("jasonIntro",introData,introJason) task.wait()
+ assert(gui:GetAttribute("CinematicActive")==true,"Jason intro did not activate")
+ assert(camera.CameraType==Enum.CameraType.Scriptable,"Jason intro did not take camera")
+ assert(workspace:FindFirstChild("LocalJasonIntro"),"Local Jason cinematic clone missing")
+ update:Fire("reset") task.wait()
+ assert(gui:GetAttribute("CinematicActive")==false and not workspace:FindFirstChild("LocalJasonIntro"),"Jason intro did not clean up")
  local flash=assert(gui:FindFirstChild("EntryFlash"),"Entry glow flash missing")
  local before=flash:GetAttribute("PulseCount") or 0
  update:Fire("lobbyDoorGlow") task.wait()
@@ -62,7 +70,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and gui.Actions.Visible,"Portal admission must keep movement controls visible")
  assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Run/slow/boost controls disappeared outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result
