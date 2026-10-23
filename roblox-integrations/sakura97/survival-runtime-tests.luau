@@ -45,7 +45,8 @@ local proxyTask={spawn=function(fn,...) local co=coroutine.create(fn) resume(co,
 local aiContext
 local stubAI={start=function(_,_,_,ctx) aiContext=ctx return {noise=function() noiseCalls+=1 end,stop=function() aiStopped+=1 end} end}
 local function run()
- local game=proxyGame local workspace=proxyWorkspace local task=proxyTask local Instance=proxyInstance
+ local game=proxyGame local workspace=realWorkspace local task=proxyTask local Instance=proxyInstance
+ local TEST_NOW=function() return clock end
  local warn=function(message) table.insert(roundErrors,tostring(message)) end
  local require=function(module) if module==SSS.PursuerAI then return stubAI end return realRequire(module) end
 __SURVIVAL_SERVER_TEST_SOURCE__
