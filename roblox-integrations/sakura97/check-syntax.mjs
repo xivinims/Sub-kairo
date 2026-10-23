@@ -67,7 +67,11 @@ function first(task){
 
 
 const root='roblox-integrations/sakura97/';
-const sources=['menu-client','loading-client','grass-client','grass-module','wind-client','island-server','void-client','leaves-client','nametag-server','friends-client','runtime-tests','round-rules','survival-config','pursuer-ai','survival-server','survival-client','pursuer-animation'].map(name=>({name,code:fs.readFileSync(root+name+'.luau','utf8')}));
+const read=name=>fs.readFileSync(root+name+'.luau','utf8');
+const runtimeAssets=read('runtime-assets').replace('__RIG_INSTALL__',read('rig-install'));
+const islandServer=read('island-server').replace('__RUNTIME_ASSET_BOOTSTRAP__',runtimeAssets);
+const sources=['menu-client','loading-client','grass-client','grass-module','wind-client','void-client','leaves-client','nametag-server','friends-client','runtime-tests','round-rules','survival-config','pursuer-ai','survival-server','survival-client','pursuer-animation'].map(name=>({name,code:read(name)}));
+sources.push({name:'island-server',code:islandServer});
 const install=fs.readFileSync(root+'install.luau','utf8');
 for(const match of install.matchAll(/\.Source=\[(=*)\[([\s\S]*?)\]\1\]/g)) sources.push({name:'embedded-'+sources.length,code:match[2]});
 if(sources.length<6) throw new Error('Client syntax collection incomplete');
