@@ -130,6 +130,37 @@ for _,d in ipairs(warrior:GetDescendants()) do
  if d:IsA("LuaSourceContainer") then d:Destroy()
  elseif d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.Massless=true end
 end
+
+-- Open Cloud can return the generated humanoid without its runtime joints.
+-- Rebuild the standard R15 chain from the current bind pose when needed.
+local jointCount=0
+for _,d in ipairs(warrior:GetDescendants()) do if d:IsA("Motor6D") then jointCount+=1 end end
+if jointCount==0 then
+ local function link(name,p0Name,p1Name)
+  local p0=warrior:FindFirstChild(p0Name) local p1=warrior:FindFirstChild(p1Name)
+  if not (p0 and p1 and p0:IsA("BasePart") and p1:IsA("BasePart")) then return end
+  local m=Instance.new("Motor6D")
+  m.Name=name m.Part0=p0 m.Part1=p1
+  m.C0=p0.CFrame:ToObjectSpace(p1.CFrame) m.C1=CFrame.new()
+  m.Parent=p0 jointCount+=1
+ end
+ link("Root","HumanoidRootPart","LowerTorso")
+ link("Waist","LowerTorso","UpperTorso")
+ link("Neck","UpperTorso","Head")
+ link("LeftShoulder","UpperTorso","LeftUpperArm")
+ link("LeftElbow","LeftUpperArm","LeftLowerArm")
+ link("LeftWrist","LeftLowerArm","LeftHand")
+ link("RightShoulder","UpperTorso","RightUpperArm")
+ link("RightElbow","RightUpperArm","RightLowerArm")
+ link("RightWrist","RightLowerArm","RightHand")
+ link("LeftHip","LowerTorso","LeftUpperLeg")
+ link("LeftKnee","LeftUpperLeg","LeftLowerLeg")
+ link("LeftAnkle","LeftLowerLeg","LeftFoot")
+ link("RightHip","LowerTorso","RightUpperLeg")
+ link("RightKnee","RightUpperLeg","RightLowerLeg")
+ link("RightAnkle","RightLowerLeg","RightFoot")
+end
+assert(jointCount>0,"Warrior joint reconstruction failed")
 warriorRoot.CanCollide=true warriorRoot.Massless=false warriorRoot.Transparency=1 warriorRoot.Size=Vector3.new(2,2,1.5)
 
 local warriorClips=Instance.new("Folder",warrior) warriorClips.Name="MotionClips"
