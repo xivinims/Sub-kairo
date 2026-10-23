@@ -4,7 +4,7 @@ local RS=game:GetService("ReplicatedStorage") local SSS=game:GetService("ServerS
 local host=Instance.new("Folder",workspace) host.Name="RoundControllerTest"
 local events={} local function signal() local e=Instance.new("BindableEvent",host) table.insert(events,e) return e end
 local heartbeat=signal() local added=signal() local removed=signal() local action=signal()
-local players={} local messages={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0
+local players={} local messages={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
 local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
 for i=1,9 do
  local f=Instance.new("Folder",host) f.Name="Player"..i
@@ -59,7 +59,7 @@ local function send(p,kind,value) action:Fire(p,kind,value) realTask.wait() end
 local deathCount=0 local dc=SSS.SurvivalBridge.DeathRequest.Event:Connect(function() deathCount+=1 end)
 local ok,result=xpcall(function()
  run() assert(net:GetAttribute("Phase")=="Intervalo")
- advance(31) assert(net:GetAttribute("Phase")=="Partida","Round did not start")
+ advance(31) assert(net:GetAttribute("Phase")=="Partida","Round did not start: "..table.concat(roundErrors," | "))
  for _,p in ipairs(players) do send(p,"join") end
  for i=1,8 do assert(players[i]:GetAttribute("RoundStatus")=="loading") local load=messages[players[i]].load send(players[i],"ready",load[1]) end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
