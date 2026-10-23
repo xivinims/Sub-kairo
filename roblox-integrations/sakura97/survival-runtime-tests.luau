@@ -59,7 +59,7 @@ local function send(p,kind,value) action:Fire(p,kind,value) realTask.wait() end
 local deathCount=0 local dc=SSS.SurvivalBridge.DeathRequest.Event:Connect(function() deathCount+=1 end)
 local ok,result=xpcall(function()
  run() assert(net:GetAttribute("Phase")=="Intervalo")
- advance(31) assert(net:GetAttribute("Phase")=="Partida","Round did not start: "..table.concat(roundErrors," | "))
+ advance(31) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for _,p in ipairs(players) do send(p,"join") end
  for i=1,8 do assert(players[i]:GetAttribute("RoundStatus")=="loading") local load=messages[players[i]].load send(players[i],"ready",load[1]) end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
