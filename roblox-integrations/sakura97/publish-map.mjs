@@ -189,16 +189,37 @@ local function serializedSize(instances)
  if not ok or not buf then return -1 end
  return buffer.len(buf)
 end
+local function childrenSize(container)
+ local clone=Instance.new("Folder")
+ clone.Name="Measure"
+ for _,child in ipairs(container:GetChildren()) do
+  local ok,item=pcall(function() return child:Clone() end)
+  if ok and item then item.Parent=clone end
+ end
+ local bytes=serializedSize({clone})
+ clone:Destroy()
+ return bytes
+end
 local sizeReport={
  lobby=serializedSize({workspace.JediLibrary}),
  menuScene=serializedSize({game.ReplicatedStorage.MenuSceneTemplate}),
  maps=serializedSize({game.ServerStorage.SurvivalAssets.Maps}),
  killers=serializedSize({game.ServerStorage.SurvivalAssets.Killers}),
- starterGui=serializedSize({game.StarterGui}),
- starterPlayer=serializedSize({game.StarterPlayer.StarterPlayerScripts}),
- serverScripts=serializedSize({game.ServerScriptService}),
- replicated=serializedSize({game.ReplicatedStorage}),
+ starterGui=childrenSize(game.StarterGui),
+ starterPlayer=childrenSize(game.StarterPlayer.StarterPlayerScripts),
+ serverScripts=childrenSize(game.ServerScriptService),
+ replicated=childrenSize(game.ReplicatedStorage),
 }
+sizeReport.eachMap={}
+for _,m in ipairs(game.ServerStorage.SurvivalAssets.Maps:GetChildren()) do
+ sizeReport.eachMap[m.Name]=serializedSize({m})
+end
+sizeReport.eachKiller={}
+for _,m in ipairs(game.ServerStorage.SurvivalAssets.Killers:GetChildren()) do
+ local clips=m:FindFirstChild("MotionClips")
+ local clipBytes=clips and serializedSize({clips}) or 0
+ sizeReport.eachKiller[m.Name]={total=serializedSize({m}),clips=clipBytes}
+end
 print("SURVIVERS_SIZE_REPORT",game:GetService("HttpService"):JSONEncode(sizeReport))
 local saveOk,saveErr=pcall(function()
  game:GetService("AssetService"):SavePlaceAsync()
