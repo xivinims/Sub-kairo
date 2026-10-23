@@ -17,6 +17,10 @@ assert(not ui.MenuPrincipal:FindFirstChild("IslandTitle"))
 assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://89648072626653")
 assert(ui.Sonidos.Click.SoundId=="rbxassetid://12221967")
 assert(ui.Escenarios.MenuCreditos.CreditosFrame.TextCreditos.Text:find("ch_ckz2n",1,true))
+for _,b in ipairs({ui.Escenarios.MenuCreditos.Close,ui.Escenarios.MenuAjustes.Close}) do
+ assert(b:IsA("TextButton") and b:FindFirstChildWhichIsA("UICorner").CornerRadius.Offset==14,"Close button not rounded")
+ assert(b:FindFirstChildWhichIsA("UIStroke").ApplyStrokeMode==Enum.ApplyStrokeMode.Border)
+end
 local settingsCount=0
 for _,b in ipairs(ui.Escenarios.MenuAjustes.AjustesFrame.Controls:GetChildren()) do
  if b:IsA("GuiButton") then settingsCount+=1 end

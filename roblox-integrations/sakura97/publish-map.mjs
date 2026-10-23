@@ -79,6 +79,7 @@ const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
 const contentTests=read('content-tests');
+const fullGrassTests=read('full-grass-tests').replace('__FULL_GRASS_CLIENT_SOURCE__',read('grass-client'));
 const voidTests=read('void-runtime-tests').replace('__VOID_CLIENT_TEST_SOURCE__',read('void-client'));
 
 const patch=`
@@ -117,6 +118,10 @@ local function verifyVoidController()
 ${voidTests}
 end
 checks.voidController=verifyVoidController()
+local function verifyFullGrass()
+${fullGrassTests}
+end
+checks.fullGrass=verifyFullGrass()
 assert(checks and checks.ok,"Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
@@ -128,6 +133,7 @@ return {
   menu=checks.menu,
   content=checks.content,
   voidController=checks.voidController,
+  fullGrass=checks.fullGrass,
   lots=checks.lots,
   grass=checks.grass,
   pumpkins=checks.pumpkins,

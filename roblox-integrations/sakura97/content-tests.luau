@@ -2,7 +2,7 @@ local CP=game:GetService("ContentProvider")
 local failures={} local completed=0 local done=false
 local pending=task.spawn(function()
  local ok,err=pcall(function()
-  CP:PreloadAsync({workspace.FloatingIsland,workspace.BigCenterTree,workspace.MysticalSpawn,game.ReplicatedStorage.GrassWindTemplate,game.Lighting},function(id,status)
+  CP:PreloadAsync({workspace.FloatingIsland,workspace.BigCenterTree,workspace.IslandRoads,workspace.FullIslandGrass,game.ReplicatedStorage.GrassWindTemplate,game.Lighting},function(id,status)
    completed+=1 if status~=Enum.AssetFetchStatus.Success then failures[#failures+1]=id end
   end)
  end)

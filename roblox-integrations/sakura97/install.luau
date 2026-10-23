@@ -126,7 +126,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",113)
+runtime:SetAttribute("Version",115)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -518,23 +518,8 @@ end
 ]]
 quality.Parent=StarterPlayer.StarterPlayerScripts
 
--- Requested fixed spawn: keep exact geometry, anchored on green ground.
-local mysticalAsset=loadAsset(110144096035671)
-local mystical=mysticalAsset:FindFirstChild("Mystical Spawn Point",true)
-assert(mystical and mystical:IsA("Model"),"Mystical spawn model missing")
-mystical=mystical:Clone() mystical.Name="MysticalSpawn"
-sanitize(mystical)
-for _,d in ipairs(mystical:GetDescendants()) do
- if d:IsA("SpawnLocation") then d.Enabled=false d.Transparency=1 d.CanCollide=false end
-end
-mystical.Parent=workspace
-assert(bottomPlace(mystical,spawnHit.Position,0,.12),"Mystical spawn placement failed")
-mystical:SetAttribute("AssetId",110144096035671)
-local stone=assert(mystical:FindFirstChild("Stone",true),"Mystical stone missing")
-spawn.CFrame=CFrame.new(stone.Position.X,stone.Position.Y+stone.Size.Y/2+.2,stone.Position.Z)
-spawn:SetAttribute("VisualAssetId",110144096035671)
-mysticalAsset:Destroy()
-runtime:SetAttribute("SpawnAssetId",110144096035671)
+-- Keep the invisible fixed SpawnLocation; remove the decorative spawn model.
+runtime:SetAttribute("SpawnAssetId",0)
 -- Recover before the character reaches FallenPartsDestroyHeight.
 runtime:SetAttribute("VoidThreshold",islandCF.Position.Y-islandSize.Y/2-12)
 workspace.FallenPartsDestroyHeight=math.min(-500,runtime:GetAttribute("VoidThreshold")-150)
@@ -555,14 +540,127 @@ runtime:SetAttribute("FullMapLoaded",true)
 runtime:SetAttribute("TreeSink",6)
 runtime:SetAttribute("LogoAssetId",89648072626653)
 local media=Instance.new("Folder") media.Name="XNMedia" media.Parent=ReplicatedStorage
-for name,id in pairs({MenuClick=12221967,VoidMusic=97031842441992,FriendJoined=87437544236708}) do
+for name,id in pairs({MenuClick=12221967,VoidMusic=110526913527016,FriendJoined=87437544236708,Regenerate=73292002268424}) do
  local sound=Instance.new("Sound") sound.Name=name sound.SoundId="rbxassetid://"..id
  sound.Volume=name=="VoidMusic" and .28 or .4 sound.Looped=name=="VoidMusic" sound.Parent=media
 end
 local friends=Instance.new("LocalScript") friends.Name="FriendPresence" friends.Source=__FRIENDS_SOURCE__ friends.Parent=StarterPlayer.StarterPlayerScripts
 
+do
+-- Two complete asphalt loops. Use the ready-made road's surface, adapted to the island.
+local roadAsset=loadAsset(9709196115)
+local roadSource=nil
+for _,d in ipairs(roadAsset:GetDescendants()) do
+ if d:IsA("BasePart") and (not roadSource or d.Size.X*d.Size.Z>roadSource.Size.X*roadSource.Size.Z) then roadSource=d end
+end
+assert(roadSource,"Ready-made asphalt road has no surface")
+local roads=Instance.new("Folder") roads.Name="IslandRoads" roads.Parent=workspace
+roads:SetAttribute("SourceAssetId",9709196115)
+local center=treeGround.Position
+local width=8
+local groundRay=RaycastParams.new() groundRay.FilterType=Enum.RaycastFilterType.Include groundRay.FilterDescendantsInstances={island}
+local function ground(x,z)
+ return workspace:Raycast(Vector3.new(x,islandCF.Position.Y+islandSize.Y+80,z),Vector3.new(0,-islandSize.Y-180,0),groundRay)
+end
+local function ringFits(radius)
+ for i=0,95 do
+  local a=i/96*math.pi*2
+  for _,offset in ipairs({-width/2,0,width/2}) do
+   local hit=ground(center.X+math.cos(a)*(radius+offset),center.Z+math.sin(a)*(radius+offset))
+   if not hit or hit.Normal.Y<.55 then return false end
+  end
+ end
+ return true
+end
+local outerRadius
+for r=math.floor(math.min(islandSize.X,islandSize.Z)*.47)-width,45,-1 do
+ if ringFits(r) then outerRadius=r break end
+end
+assert(outerRadius,"No grounded outer circular road fits the island")
+local innerRadius=math.min(27,outerRadius*.4)
+assert(ringFits(innerRadius),"Inner road has unsupported ground")
+roads:SetAttribute("Center",center) roads:SetAttribute("InnerRadius",innerRadius) roads:SetAttribute("OuterRadius",outerRadius) roads:SetAttribute("Width",width)
+for _,ring in ipairs({{name="TreeLoop",radius=innerRadius,count=72},{name="EdgeLoop",radius=outerRadius,count=144}}) do
+ local model=Instance.new("Model") model.Name=ring.name model.Parent=roads model:SetAttribute("Radius",ring.radius)
+ local previous=nil local firstPoint=nil
+ for i=0,ring.count do
+  local a=i/ring.count*math.pi*2
+  local x,z=center.X+math.cos(a)*ring.radius,center.Z+math.sin(a)*ring.radius
+  local hit=assert(ground(x,z),"Road surface lost")
+  local point=hit.Position+Vector3.new(0,.12,0)
+  if previous then
+   local segment=roadSource:Clone() segment.Name="Asphalt"
+   for _,d in ipairs(segment:GetDescendants()) do
+    if not d:IsA("Texture") and not d:IsA("Decal") and not d:IsA("SurfaceAppearance") then d:Destroy() end
+   end
+   local length=(point-previous).Magnitude
+   segment.Size=Vector3.new(width,.24,length+.15)
+   segment.CFrame=CFrame.lookAt((previous+point)/2,point)
+   segment.Anchored=true segment.CanCollide=true segment.CanTouch=false segment.CastShadow=false
+   segment.Material=Enum.Material.Asphalt segment.Color=Color3.fromRGB(63,65,66)
+   segment:SetAttribute("Start",previous) segment:SetAttribute("End",point)
+   segment.Parent=model
+  end
+  previous=point firstPoint=firstPoint or point
+ end
+end
+roadAsset:Destroy()
+-- Full island bind-pose coverage. Only the nearby replacements carry animated bones.
+local static=Instance.new("Folder") static.Name="FullIslandGrass" static.Parent=workspace
+local offset=Vector3.new(rootCenter.X,rootMin.Y,rootCenter.Z)
+local margin=math.sqrt(footprintX^2+footprintZ^2)/2+2
+local function clearOfRoad(pos)
+ local distance=Vector2.new(pos.X-center.X,pos.Z-center.Z).Magnitude
+ return math.abs(distance-innerRadius)>width/2+margin and math.abs(distance-outerRadius)>width/2+margin
+end
+local count=0
+for _,surface in ipairs(greenSurfaces) do
+ local nx,nz=gridCount(surface.Size.X,stepX,footprintX),gridCount(surface.Size.Z,stepZ,footprintZ)
+ for x=1,nx do for z=1,nz do
+  local p=surface.CFrame:PointToWorldSpace(Vector3.new((x-(nx+1)/2)*stepX,surface.Size.Y/2,(z-(nz+1)/2)*stepZ))
+  local hit=ground(p.X,p.Z)
+  if hit and hit.Instance==surface and hit.Normal.Y>.6 and clearOfRoad(hit.Position) then
+   local mesh=ReplicatedStorage.GrassWindTemplate.SkinnedGrass:Clone()
+   for _,d in ipairs(mesh:GetDescendants()) do if d:IsA("Bone") then d:Destroy() end end
+   count+=1 mesh.Name="Grass_"..count mesh.Anchored=true mesh.CanCollide=false mesh.CanTouch=false mesh.CanQuery=false mesh.CastShadow=false
+   mesh.CFrame=(CFrame.new(hit.Position)*surface.CFrame.Rotation)*CFrame.new(-offset+Vector3.new(0,-.08,0))
+   mesh:SetAttribute("GroundPosition",hit.Position) mesh:SetAttribute("GrassScale",1) mesh.Parent=static
+  end
+ end end
+end
+local smallScale=.5
+local smallMargin=margin*smallScale
+for _,surface in ipairs(greenSurfaces) do
+ local sx,sz=stepX*smallScale,stepZ*smallScale
+ local nx,nz=gridCount(surface.Size.X,sx,footprintX*smallScale),gridCount(surface.Size.Z,sz,footprintZ*smallScale)
+ for x=1,nx do for z=1,nz do
+  local p=surface.CFrame:PointToWorldSpace(Vector3.new((x-(nx+1)/2)*sx,surface.Size.Y/2,(z-(nz+1)/2)*sz))
+  local distance=Vector2.new(p.X-center.X,p.Z-center.Z).Magnitude
+  local gap=math.min(math.abs(distance-innerRadius),math.abs(distance-outerRadius))-width/2
+  if gap>smallMargin and gap<margin+stepX*.5 then
+   local hit=ground(p.X,p.Z)
+   if hit and hit.Instance==surface and hit.Normal.Y>.6 then
+    local mesh=ReplicatedStorage.GrassWindTemplate.SkinnedGrass:Clone()
+    for _,d in ipairs(mesh:GetDescendants()) do if d:IsA("Bone") then d:Destroy() end end
+    count+=1 mesh.Name="Grass_"..count mesh.Size*=smallScale
+    mesh.Anchored=true mesh.CanCollide=false mesh.CanTouch=false mesh.CanQuery=false mesh.CastShadow=false
+    mesh.CFrame=(CFrame.new(hit.Position)*surface.CFrame.Rotation)*CFrame.new(-offset*smallScale+Vector3.new(0,-.08,0))
+    mesh:SetAttribute("GroundPosition",hit.Position) mesh:SetAttribute("GrassScale",smallScale) mesh.Parent=static
+   end
+  end
+ end end
+end
+assert(count>100,"Full island grass coverage unexpectedly small")
+static:SetAttribute("PatchCount",count) static:SetAttribute("AssetId",87377915371959)
+static:SetAttribute("RoadClearance",margin)
+runtime:SetAttribute("FullGrassPatchCount",count)
+runtime:SetAttribute("GrassSpawnMode","FullIslandWithNearbyAnimation")
+grassFolder:SetAttribute("SpawnMode","FullIslandWithNearbyAnimation")
+
+end
+
 return{
-	version=113,
+	version=115,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,

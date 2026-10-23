@@ -1,6 +1,6 @@
 assert(game.GameId==9419478735 and game.PlaceId==79738710219521)
 local RS=game:GetService("ReplicatedStorage")
-assert(RS.SweanRuntime:GetAttribute("Version")==113,"Publish compact map first")
+assert(RS.SweanRuntime:GetAttribute("Version")==115,"Publish compact map first")
 local starter=game:GetService("StarterGui")
 local first=game:GetService("ReplicatedFirst")
 local asset=game:GetService("AssetService"):LoadAssetAsync(84828163072141)
@@ -40,6 +40,11 @@ credits.CreditosFrame.TextCreditos.Text="Criado por\n\nch_ckz2n\n\nObrigado por 
 credits.CreditosFrame.TextCreditos.ZIndex=4
 local settings=ui.Escenarios.MenuAjustes
 settings.Tittle.TittleText.Text="AJUSTES"
+for _,scene in ipairs({settings,credits}) do
+ scene.Close:Destroy()
+ local close=Instance.new("TextButton") close.Name="Close" close.Text="×" close.Active=true close.Visible=false close.Parent=scene
+ close.TextSize=26 close.TextScaled=false close.BorderSizePixel=0
+end
 local scroll=Instance.new("ScrollingFrame") scroll.Name="Controls" scroll.BackgroundTransparency=1 scroll.BorderSizePixel=0
 scroll.Position=UDim2.fromScale(.04,.04) scroll.Size=UDim2.fromScale(.92,.92) scroll.CanvasSize=UDim2.fromOffset(0,0)
 scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y scroll.ScrollBarThickness=4 scroll.ZIndex=4 scroll.Parent=settings.AjustesFrame
@@ -58,7 +63,7 @@ for _,b in ipairs(ui:GetDescendants()) do
   b.AutoButtonColor=false b.BackgroundColor3=Color3.fromRGB(24,24,27) b.BackgroundTransparency=.28
   b.TextColor3=Color3.fromRGB(235,235,238) b.Font=Enum.Font.GothamMedium
   local corner=b:FindFirstChildWhichIsA("UICorner") or Instance.new("UICorner",b) corner.CornerRadius=UDim.new(0,14)
-  local stroke=b:FindFirstChildWhichIsA("UIStroke") or Instance.new("UIStroke",b) stroke.Color=Color3.fromRGB(155,155,162) stroke.Transparency=.55 stroke.Thickness=1
+  local stroke=b:FindFirstChildWhichIsA("UIStroke") or Instance.new("UIStroke",b) stroke.Color=Color3.fromRGB(155,155,162) stroke.Transparency=.55 stroke.Thickness=1 stroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
  end
 end
 for _,panel in ipairs({settings.AjustesFrame,credits.CreditosFrame}) do

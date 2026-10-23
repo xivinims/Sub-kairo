@@ -147,7 +147,11 @@ local function start()
  back.Activated:Connect(function()
   if requested or not back.Active or token~=generation then return end requested=true
   if player:GetAttribute("MenuSounds")~=false then click:Play() end
-  back.Text="Regenerando…" event:FireServer("return")
+  back.Text="Regenerando…"
+  local respawnSound=media.Regenerate:Clone() respawnSound.Name="RegenerationCue"
+  respawnSound.Parent=game:GetService("SoundService") respawnSound:Play()
+  game:GetService("Debris"):AddItem(respawnSound,20)
+  event:FireServer("return")
   task.delay(3,function() if token==generation then requested=false back.Text="Regenerar" end end)
  end)
  local function show(text,last)

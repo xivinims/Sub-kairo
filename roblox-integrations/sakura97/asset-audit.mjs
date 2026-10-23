@@ -73,14 +73,14 @@ const audit=first(await execute(`
 local CP=game:GetService("ContentProvider")
 local Market=game:GetService("MarketplaceService")
 local report={}
-for _,id in ipairs({89648072626653,12221967,97031842441992,87437544236708}) do
+for _,id in ipairs({89648072626653,12221967,110526913527016,87437544236708,73292002268424}) do
  local ok,info=pcall(function() return Market:GetProductInfoAsync(id,Enum.InfoType.Asset) end)
  report[tostring(id)]={metadataOk=ok,name=ok and info.Name or tostring(info),assetType=ok and info.AssetTypeId or nil}
 end
 local failures={} local completed=0 local done=false
 local pending=task.spawn(function()
  local ok,err=pcall(function()
-  CP:PreloadAsync({workspace.FloatingIsland,workspace.BigCenterTree,workspace.MysticalSpawn,game.ReplicatedStorage.GrassWindTemplate,game.Lighting},function(id,status)
+  CP:PreloadAsync({workspace.FloatingIsland,workspace.BigCenterTree,workspace.IslandRoads,workspace.FullIslandGrass,game.ReplicatedStorage.GrassWindTemplate,game.Lighting},function(id,status)
    completed+=1 if status~=Enum.AssetFetchStatus.Success then failures[#failures+1]={id=id,status=tostring(status)} end
   end)
  end)

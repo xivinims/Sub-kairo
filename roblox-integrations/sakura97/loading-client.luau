@@ -28,7 +28,7 @@ local function attempt()
   local function required(parent,name)
    local value=parent:WaitForChild(name,20) assert(value,"Missing "..name) return value
   end
-  local roots={required(workspace,"FloatingIsland"),required(workspace,"BigCenterTree"),required(workspace,"MysticalSpawn"),required(RS,"GrassWindTemplate"),game:GetService("Lighting")}
+  local roots={required(workspace,"FloatingIsland"),required(workspace,"BigCenterTree"),required(workspace,"IslandRoads"),required(workspace,"FullIslandGrass"),required(RS,"GrassWindTemplate"),game:GetService("Lighting")}
   required(workspace,"IslandSpawn") required(RS,"SweanMenuConfig")
   local coverage=required(workspace,"SkinnedGrassCoverage")
   local completed=0 local failures={} local done=false local preloadOk,preloadError
@@ -65,7 +65,14 @@ local function attempt()
   while not optionalDone and os.clock()<optionalDeadline do task.wait(.1) end
   if not optionalDone then optionalFailures+=1 pcall(task.cancel,optionalThread) end
   player:SetAttribute("OptionalMediaFailures",optionalFailures)
-  status.Text="Preparando a grama…"
+  status.Text="Conferindo toda a grama da ilha…"
+  local field=required(workspace,"FullIslandGrass")
+  local expected=field:GetAttribute("PatchCount")
+  local replicatedStart=os.clock()
+  while not expected or #field:GetChildren()<expected do
+   assert(os.clock()-replicatedStart<45,"Full grass replication timeout")
+   expected=field:GetAttribute("PatchCount") task.wait(.1)
+  end
   local grassStart=os.clock()
   while not coverage:GetAttribute("InitialGrassReady") do
    assert(os.clock()-grassStart<30,"Initial grass timeout") task.wait(.1)

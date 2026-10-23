@@ -2,7 +2,7 @@ assert(game.GameId==9419478735 and game.PlaceId==79738710219521,"Wrong place")
 local CS=game:GetService("CollectionService")
 local RS=game:GetService("ReplicatedStorage")
 local runtime=assert(RS:FindFirstChild("SweanRuntime"),"Missing runtime")
-assert(runtime:GetAttribute("Version")==113,"Wrong version")
+assert(runtime:GetAttribute("Version")==115,"Wrong version")
 local island=assert(workspace:FindFirstChild("FloatingIsland"),"Missing island")
 local cf,size=island:GetBoundingBox()
 assert(math.abs(math.max(size.X,size.Z)-260)<.1,"Island exceeds 260-stud budget")
@@ -38,7 +38,7 @@ assert(boneCount==100)
 assert(runtime:GetAttribute("TreeSink")==6)
 assert(grass:GetAttribute("TileOverlap")==1.65)
 assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"))
-for name,id in pairs({MenuClick=12221967,VoidMusic=97031842441992,FriendJoined=87437544236708}) do
+for name,id in pairs({MenuClick=12221967,VoidMusic=110526913527016,FriendJoined=87437544236708,Regenerate=73292002268424}) do
  assert(RS.XNMedia[name].SoundId=="rbxassetid://"..id)
 end
 local stepX,stepZ=grass:GetAttribute("StepX"),grass:GetAttribute("StepZ")
@@ -66,10 +66,32 @@ assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("MobileShaderQuali
 assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner"))
 -- Streaming radii are not exposed to Open Cloud; client pool and map size enforce budgets.
 assert(workspace.StreamingEnabled==false,"Full map streaming setting failed")
-assert(workspace.MysticalSpawn:GetAttribute("AssetId")==110144096035671)
-assert(spawn:GetAttribute("VisualAssetId")==110144096035671)
-local stone=workspace.MysticalSpawn:FindFirstChild("Stone",true)
-assert(math.abs(spawn.Position.Y-stone.Position.Y-stone.Size.Y/2-.2)<.05)
+assert(not workspace:FindFirstChild("MysticalSpawn"),"Decorative spawn was not removed")
+assert(spawn.Transparency==1 and spawn.Enabled and spawn.Neutral)
+assert(math.abs(spawn.Position.Y-hit.Position.Y-.2)<.1,"Invisible spawn not grounded")
+local roads=assert(workspace:FindFirstChild("IslandRoads"))
+assert(#roads:GetChildren()==2 and roads.TreeLoop and roads.EdgeLoop)
+assert(#roads.TreeLoop:GetChildren()==72 and #roads.EdgeLoop:GetChildren()==144)
+local center=roads:GetAttribute("Center") local width=roads:GetAttribute("Width")
+for _,ring in ipairs(roads:GetChildren()) do
+ local pieces=ring:GetChildren()
+ for i,part in ipairs(pieces) do
+  assert(part.Anchored and part.CanCollide and part.Material==Enum.Material.Asphalt)
+  local nextPart=pieces[i%#pieces+1]
+  assert((part:GetAttribute("End")-nextPart:GetAttribute("Start")).Magnitude<.01,"Road loop disconnected")
+ end
+end
+local field=assert(workspace:FindFirstChild("FullIslandGrass"))
+assert(#field:GetChildren()==field:GetAttribute("PatchCount") and #field:GetChildren()>100)
+for _,patch in ipairs(field:GetChildren()) do
+ assert(patch:IsA("MeshPart") and patch.MeshId==mesh.MeshId)
+ assert(not patch:FindFirstChildWhichIsA("Bone",true),"Distant grass has unnecessary bones")
+ local p=patch:GetAttribute("GroundPosition") local distance=Vector2.new(p.X-center.X,p.Z-center.Z).Magnitude
+ local margin=field:GetAttribute("RoadClearance")*(patch:GetAttribute("GrassScale") or 1)
+ for _,radius in ipairs({roads:GetAttribute("InnerRadius"),roads:GetAttribute("OuterRadius")}) do
+  assert(math.abs(distance-radius)>width/2+margin-.01,"Grass overlaps road corridor")
+ end
+end
 assert(game.ServerScriptService.NametagService.Nametag:IsA("BillboardGui"))
 assert(game.ReplicatedStorage.SweanVoidEvent:IsA("RemoteEvent"))
 assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence:IsA("LocalScript"))
@@ -78,4 +100,4 @@ local wind=game.StarterPlayer.StarterPlayerScripts.WindController
 assert(wind.WindShake:FindFirstChild("Settings") and wind.WindShake:FindFirstChild("Octree"),"Wind dependencies missing")
 assert(not tree.FallingLeavesEmitter:FindFirstChildWhichIsA("ParticleEmitter"),"Obsolete leaf texture remains")
 assert(tree.FallingLeavesEmitter.Transparency==1 and not tree.FallingLeavesEmitter.CanCollide)
-return {ok=true,fullMap=true,nametags=true,mysticalSpawn=true,voidSequence=true,version=113,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}
+return {ok=true,fullMap=true,nametags=true,invisibleSpawn=true,fullGrass=#field:GetChildren(),roadInner=roads:GetAttribute("InnerRadius"),roadOuter=roads:GetAttribute("OuterRadius"),voidSequence=true,version=115,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}

@@ -33,36 +33,22 @@ local function rootPosition()
  local root=char and char:FindFirstChild("HumanoidRootPart")
  return root and root.Position
 end
-local lastPosition=nil
+local field=workspace:WaitForChild("FullIslandGrass")
+local patches={}
+local function addPatch(mesh)
+ if mesh:IsA("MeshPart") then patches[#patches+1]=mesh end
+end
+for _,mesh in ipairs(field:GetChildren()) do addPatch(mesh) end
+field.ChildAdded:Connect(addPatch)
 local function refresh()
  local pos=rootPosition() if not pos then return end
- local green=CS:GetTagged("IslandGreenGround")
- local ray=RaycastParams.new()
- ray.FilterType=Enum.RaycastFilterType.Include
- local island=workspace:FindFirstChild("FloatingIsland")
- -- Raycast the ground only: the canopy must not suppress grass beneath it.
- ray.FilterDescendantsInstances={island}
  local candidates={}
- local reach=radius+math.max(stepX,stepZ)
- for _,surface in ipairs(green) do
-  if not surface:IsA("BasePart") or not surface:IsDescendantOf(workspace) then continue end
-  local lp=surface.CFrame:PointToObjectSpace(pos)
-  if math.abs(lp.X)>surface.Size.X/2+reach or math.abs(lp.Z)>surface.Size.Z/2+reach then continue end
-  local nx,nz=count(surface.Size.X,stepX,footX),count(surface.Size.Z,stepZ,footZ)
-  local ox,oz=-(nx-1)*stepX/2,-(nz-1)*stepZ/2
-  local ix,iz=math.floor((lp.X-ox)/stepX)+1,math.floor((lp.Z-oz)/stepZ)+1
-  local pad=math.ceil(reach/math.min(stepX,stepZ))+1
-  for x=math.max(1,ix-pad),math.min(nx,ix+pad) do
-   for z=math.max(1,iz-pad),math.min(nz,iz+pad) do
-    local p=surface.CFrame:PointToWorldSpace(Vector3.new(ox+(x-1)*stepX,surface.Size.Y/2,oz+(z-1)*stepZ))
-    local d=(Vector2.new(p.X-pos.X,p.Z-pos.Z)).Magnitude
-    if d<=radius then
-     local hit=workspace:Raycast(p+Vector3.new(0,80,0),Vector3.new(0,-160,0),ray)
-     if hit and hit.Instance==surface and hit.Normal.Y>.6 then
-      local key=tostring(surface:GetAttribute("GrassSurfaceId"))..":"..x..":"..z
-      candidates[#candidates+1]={key=key,surface=surface,pos=hit.Position,d=d}
-     end
-    end
+ for _,mesh in ipairs(patches) do
+  if mesh.Parent then
+   local p=mesh:GetAttribute("GroundPosition")
+   if p then
+    local d=Vector2.new(p.X-pos.X,p.Z-pos.Z).Magnitude
+    if d<=radius then candidates[#candidates+1]={key=mesh.Name,static=mesh,pos=p,d=d} end
    end
   end
  end
@@ -71,6 +57,7 @@ local function refresh()
  for i=1,math.min(MAX,#candidates) do wanted[candidates[i].key]=true end
  for key,entry in pairs(alive) do
   if not wanted[key] then
+   entry.static.LocalTransparencyModifier=0
    simulation:MovePooledMesh(entry.model,CFrame.new(0,-10000,0),false)
    pool[#pool+1]=entry.model alive[key]=nil
   end
@@ -86,9 +73,10 @@ local function refresh()
     simulation:AddMeshes({model}) created+=1
    end
    if model then
-    local cf=(CFrame.new(item.pos)*item.surface.CFrame.Rotation)*CFrame.new(-offset+Vector3.new(0,-.08,0))
-    simulation:MovePooledMesh(model,cf,true)
-    alive[item.key]={model=model,pos=item.pos,surface=item.surface}
+    model:ScaleTo(item.static:GetAttribute("GrassScale") or 1)
+    simulation:MovePooledMesh(model,item.static.CFrame,true)
+    item.static.LocalTransparencyModifier=1
+    alive[item.key]={model=model,static=item.static}
     budget-=1
    end
   end
@@ -96,7 +84,7 @@ local function refresh()
  local active=0 for _ in pairs(alive) do active+=1 end
  folder:SetAttribute("ClientGrassPlaced",active)
  folder:SetAttribute("ClientGrassAllocated",created)
- folder:SetAttribute("InitialGrassReady",active>=math.min(MAX,#candidates))
+ folder:SetAttribute("InitialGrassReady",#patches>=(field:GetAttribute("PatchCount") or math.huge) and active>=math.min(MAX,#candidates))
 end
 local elapsed,simElapsed=0,0
 RunService.Heartbeat:Connect(function(dt)
