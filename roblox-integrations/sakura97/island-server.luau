@@ -45,7 +45,7 @@ RunService.Heartbeat:Connect(function(dt)
    player:SetAttribute("VoidActive",true)
    event:FireClient(player,"start")
    -- Server-owned timer: a missing client or a forged response cannot trap the player.
-   task.delay(45,function() recover(player,record) end)
+   task.delay(60,function() recover(player,record) end)
   end
  end
 end)

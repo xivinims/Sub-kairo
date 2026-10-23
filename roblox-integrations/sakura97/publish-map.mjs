@@ -79,6 +79,7 @@ const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
 const simulationTests=read('runtime-tests');
 const contentTests=read('content-tests');
+const voidTests=read('void-runtime-tests').replace('__VOID_CLIENT_TEST_SOURCE__',read('void-client'));
 
 const patch=`
 assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
@@ -112,6 +113,10 @@ local function verifyContent()
 ${contentTests}
 end
 checks.content=verifyContent()
+local function verifyVoidController()
+${voidTests}
+end
+checks.voidController=verifyVoidController()
 assert(checks and checks.ok,"Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
@@ -122,6 +127,7 @@ return {
   simulation=checks.simulation,
   menu=checks.menu,
   content=checks.content,
+  voidController=checks.voidController,
   lots=checks.lots,
   grass=checks.grass,
   pumpkins=checks.pumpkins,
