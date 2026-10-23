@@ -53,8 +53,11 @@ local function animationCompatibility(folder,names)
  for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then
   lookup[norm(j.Part1.Name)]=true lookup[norm(j.Name)]=true
  end end
- for alias,motor in pairs({humanoidrootpart="root",rootpart="root",torso="waist",uppertorso="waist",head="neck",leftarm="leftshoulder",rightarm="rightshoulder",leftleg="lefthip",rightleg="righthip"}) do
-  if lookup[motor] then lookup[alias]=true end
+ for alias,partName in pairs({
+  humanoidrootpart="lowertorso",rootpart="lowertorso",torso="uppertorso",uppertorso="uppertorso",
+  head="head",leftarm="leftupperarm",rightarm="rightupperarm",leftleg="leftupperleg",rightleg="rightupperleg"
+ }) do
+  if lookup[partName] then lookup[alias]=true end
  end
  local report={}
  for _,clipName in ipairs(names) do
