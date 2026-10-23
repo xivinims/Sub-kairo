@@ -65,89 +65,27 @@ function first(task){
   try{return JSON.parse(v)}catch{return v}
 }
 
-const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
-let installBody=read('install');
-const runtimeSource=read('nature-runtime');
-installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
-installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
-const verifySource=read('verify');
-
-const patch=`
-assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
-local sourceVersion=game.PlaceVersion
-print("[Sakura97] Starting repaired install from version "..tostring(sourceVersion))
-
-local installOk,installErr=xpcall(function()
-${installBody}
-end,function(err)
-  return debug.traceback(tostring(err),2)
-end)
-assert(installOk,"INSTALL_TRACE: "..tostring(installErr))
-
-local function runVerify()
-${verifySource}
+const result=first(await execute(`
+local report={placeVersion=game.PlaceVersion,assets={}}
+local island=workspace:FindFirstChild("FloatingIsland")
+if island then local cf,sz=island:GetBoundingBox() report.island={size=tostring(sz),center=tostring(cf.Position)} end
+for _,id in ipairs({87377915371959,86563808574363,4617134997,84828163072141}) do
+ local ok,a=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
+ local item={id=id,ok=ok,items={}}
+ if ok then
+  for _,d in ipairs(a:GetDescendants()) do
+   if d:IsA("LuaSourceContainer") then table.insert(item.items,{path=d:GetFullName(),class=d.ClassName,source=d.Source})
+   elseif d:IsA("BasePart") or d:IsA("ScreenGui") or d:IsA("PostEffect") or d:IsA("Sky") or d:IsA("Atmosphere") then
+    local e={path=d:GetFullName(),class=d.ClassName}
+    if d:IsA("BasePart") then e.size=tostring(d.Size) e.position=tostring(d.Position) end
+    if #item.items<150 then table.insert(item.items,e) end
+   end
+  end
+  a:Destroy()
+ else item.error=tostring(a) end
+ table.insert(report.assets,item)
 end
-local checks=runVerify()
-assert(checks and checks.ok,"Verify failed")
-
-game:GetService("AssetService"):SavePlaceAsync()
-return {
-  ok=true,
-  sourceVersion=sourceVersion,
-  mapParts=checks.mapParts,
-  lots=checks.lots,
-  grass=checks.grass,
-  pumpkins=checks.pumpkins,
-  pumpkinClusters=checks.pumpkinClusters,
-  message="XN Brookhaven rebuild saved"
-}
-`;
-
-console.log("[Sakura97] Dispatching repaired Luau install to NEW place...");
-const applied=first(await execute(patch));
-if(!applied?.ok) throw new Error("Sakura97 install failed");
-console.log(JSON.stringify({stage:"installed-and-saved",...applied}));
-
-let persisted,last;
-for(let i=0;i<12;i++){
-  if(i) await sleep(4500);
-  try{
-    const check=first(await execute(`
-      assert(game.GameId==${UNIVERSE_ID} and game.PlaceId==${PLACE_ID})
-      local function runVerify()
-${verifySource}
-      end
-      local checks=runVerify()
-      checks.placeVersion=game.PlaceVersion
-      return checks
-    `));
-    if(!check?.ok || check.placeVersion<=applied.sourceVersion){
-      throw new Error("Saved version not visible/valid yet, got "+(check&&check.placeVersion));
-    }
-    persisted=check; last=null; break;
-  }catch(e){
-    last=e;
-    console.log(JSON.stringify({waiting:true,attempt:i+1,error:String(e)}));
-  }
-}
-if(last) throw last;
-console.log(JSON.stringify({stage:"verified-persisted",...persisted}));
-
-let rename={universe:false,place:false};
-try{
-  await patchCloud('universes/'+UNIVERSE_ID+'?updateMask=displayName',{displayName:'XN [VOICE]'});
-  const u=await req('universes/'+UNIVERSE_ID);
-  rename.universe=u?.displayName==='XN [VOICE]';
-}catch(e){
-  console.log(JSON.stringify({renameUniverseWarning:String(e)}));
-}
-try{
-  await patchCloud('universes/'+UNIVERSE_ID+'/places/'+PLACE_ID+'?updateMask=displayName',{displayName:'XN [VOICE]'});
-  const p=await req('universes/'+UNIVERSE_ID+'/places/'+PLACE_ID);
-  rename.place=p?.displayName==='XN [VOICE]';
-}catch(e){
-  console.log(JSON.stringify({renamePlaceWarning:String(e)}));
-}
-console.log(JSON.stringify({stage:"name-update",...rename}));
-console.log("[Sakura97] Done.");
+return report
+`));
+console.log(JSON.stringify(result));
