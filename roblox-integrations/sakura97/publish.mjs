@@ -67,33 +67,18 @@ function first(task){
 
 
 
-const ids=[15761692261,14101261109,119558547298374,18709122295,125165599816440,12796108766,72797028676916,14897466681,140005809574272,9526505226,13967333450,13366963505,8050959400];
-for(const id of ids){
- const result=first(await execute(`
- local ok,asset=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(${id}) end)
- if not ok then return {id=${id},ok=false,error=tostring(asset)} end
- local out={id=${id},ok=true,parts=0,joints=0,animations={},scripts={},rigs={},models={},spawns={}}
- for _,d in ipairs(asset:GetDescendants()) do
-  if d:IsA("BasePart") then out.parts+=1 end
-  if d:IsA("Motor6D") then out.joints+=1 end
-  if d:IsA("Animation") then table.insert(out.animations,{name=d:GetFullName(),id=d.AnimationId}) end
-  if d:IsA("LuaSourceContainer") then table.insert(out.scripts,{name=d:GetFullName(),source=d.Source:sub(1,16000)}) end
-  if d:IsA("Humanoid") or d:IsA("AnimationController") then table.insert(out.rigs,{name=d.Parent:GetFullName(),class=d.ClassName,root=d.Parent:FindFirstChild("HumanoidRootPart")~=nil}) end
-  if d:IsA("SpawnLocation") then table.insert(out.spawns,{name=d:GetFullName(),position=tostring(d.Position)}) end
-  if d:IsA("Model") and #out.models<14 then local cf,size=d:GetBoundingBox() table.insert(out.models,{name=d:GetFullName(),size=tostring(size),center=tostring(cf.Position)}) end
- end
- asset:Destroy() return out
- `));
- console.log('ASSET_PROBE '+JSON.stringify(result));
-}
-const codes=['483d9089ee796746bf3bda0b3e705594','4bf7976d414aba40be4cc07a77b0b737','ad59a91ca3e44146b60861ea0cc713f3','3b5c53fcdff14a44aab007e724d540d4','2e17b7b4b3140f4c8164a45dc71e00dd','d271494e46f4444cb9b3fba077e2364d','3a5addb1e07e0e46836390d7f917c460','6be90db2444eed40975531f3c3881ead'];
-for(const code of codes){
- const response=await fetch('https://www.roblox.com/share?code='+code+'&type=AvatarItemDetails');
- const html=await response.text();
- console.log('SHARE_PROBE '+JSON.stringify({code,status:response.status,url:response.url,hints:[...html.matchAll(/.{0,100}(?:catalog\/\d+|assetId|itemId|deepLink|shareLink|targetId|og:title).{0,250}/gi)].map(m=>m[0]).slice(0,25)}));
-}
-console.log('VOICE_PROBE '+JSON.stringify(first(await execute(`
- local v=game:GetService("VoiceChatService")
- local ok,err=pcall(function() v.UseAudioApi=Enum.AudioApiRollout.Enabled end)
- return {canSetAudioApi=ok,error=not ok and tostring(err) or nil}
+const js=await (await fetch('https://js.rbxcdn.com/a87af30de1fff7184646dd8bd3f5df248b51543ee088ab0380823cea48a30a17-ShareLinks.js')).text();
+console.log('RESOLVE_JS', [...js.matchAll(/.{0,700}(?:resolve-link|resolveLink|linkId|itemId).{0,700}/g)].map(m=>m[0]).slice(0,25));
+for(const id of [125165599816440,140005809574272,9526505226,72797028676916]){
+console.log('DETAIL',JSON.stringify(first(await execute(`
+local a=game:GetService("AssetService"):LoadAssetAsync(${id})
+local out={id=${id},sequences={},bones={},parts={},classes={}}
+for _,d in ipairs(a:GetDescendants()) do
+ out.classes[d.ClassName]=(out.classes[d.ClassName] or 0)+1
+ if d:IsA("KeyframeSequence") then local keys=d:GetKeyframes() table.insert(out.sequences,{name=d:GetFullName(),frames=#keys,length=keys[#keys] and keys[#keys].Time}) end
+ if d:IsA("Motor6D") then table.insert(out.bones,{name=d.Name,p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name}) end
+ if d:IsA("BasePart") and ${id}==9526505226 then table.insert(out.parts,{name=d:GetFullName(),anchored=d.Anchored}) end
+end
+return out
 `))));
+}
