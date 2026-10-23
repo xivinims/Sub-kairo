@@ -1,22 +1,24 @@
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
+local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
 local player=Players.LocalPlayer local net=RS:WaitForChild("Survival") local event=net.Action
 local config=require(net.Config)
 local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
- local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(22,25,29) f.BackgroundTransparency=.3 f.BorderSizePixel=0 f.Parent=gui
- local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(0,14)
+ local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(12,12,15) f.BackgroundTransparency=.22 f.BorderSizePixel=0 f.Parent=gui
+ local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(0,16)
+ local s=Instance.new("UIStroke",f) s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Color=Color3.fromRGB(142,142,150) s.Transparency=.78 s.Thickness=1
  return f
 end
 local function text(parent,name,value,size,pos)
  local l=Instance.new("TextLabel") l.Name=name l.Text=value l.Size=size l.Position=pos l.BackgroundTransparency=1 l.Font=Enum.Font.GothamMedium l.TextSize=15 l.TextColor3=Color3.fromRGB(224,228,232) l.TextWrapped=true l.Parent=parent return l
 end
 local function button(parent,name,label,size,pos,callback)
- local b=Instance.new("TextButton") b.Name=name b.Text=label b.Size=size b.Position=pos b.BackgroundColor3=Color3.fromRGB(42,46,51) b.BackgroundTransparency=.2 b.TextColor3=Color3.fromRGB(226,230,234) b.Font=Enum.Font.GothamMedium b.TextSize=14 b.BorderSizePixel=0 b.Parent=parent
+ local b=Instance.new("TextButton") b.Name=name b.Text=label b.Size=size b.Position=pos b.BackgroundColor3=Color3.fromRGB(18,18,22) b.BackgroundTransparency=.12 b.TextColor3=Color3.fromRGB(239,239,242) b.Font=Enum.Font.GothamSemibold b.TextSize=14 b.BorderSizePixel=0 b.Parent=parent
  local c=Instance.new("UICorner",b) c.CornerRadius=UDim.new(0,12)
- local stroke=Instance.new("UIStroke",b) stroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border stroke.Color=Color3.fromRGB(99,105,111) stroke.Transparency=.65
+ local stroke=Instance.new("UIStroke",b) stroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border stroke.Color=Color3.fromRGB(150,150,158) stroke.Transparency=.72
  b.Activated:Connect(function()
   if player:GetAttribute("MenuSounds")~=false then local s=RS.XNMedia.MenuClick:Clone() s.Parent=b s:Play() game:GetService("Debris"):AddItem(s,3) end
   callback()
@@ -28,18 +30,19 @@ local countdownIcon=text(countdown,"Icon","◷",UDim2.fromOffset(36,36),UDim2.fr
 countdownIcon.TextSize=24 countdownIcon.Font=Enum.Font.GothamBold
 local countdownText=text(countdown,"Time","00:30 • 1/8",UDim2.new(1,-48,1,0),UDim2.fromOffset(43,0))
 countdownText.TextSize=16 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left
-local top=panel("Round",UDim2.fromOffset(290,72),UDim2.new(.5,-145,0,60))
+local top=panel("Round",UDim2.fromOffset(320,60),UDim2.new(.5,-160,0,58))
 local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local join=button(gui,"Join","Participar",UDim2.fromOffset(180,44),UDim2.new(.5,-90,1,-65),function() event:FireServer("join") end)
-local bar=panel("Actions",UDim2.fromOffset(300,108),UDim2.new(1,-314,1,-180))
+local bar=panel("Actions",UDim2.new(.72,0,0,58),UDim2.new(.14,0,1,-76))
+local limit=Instance.new("UISizeConstraint",bar) limit.MinSize=Vector2.new(320,58) limit.MaxSize=Vector2.new(560,58)
 local mode="walk"
-local run=button(bar,"Run","Correr",UDim2.fromOffset(140,42),UDim2.fromOffset(8,8),function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
-local slow=button(bar,"Slow","Andar devagar",UDim2.fromOffset(140,42),UDim2.fromOffset(152,8),function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
-local boost=button(bar,"Boost","Impulso ×1",UDim2.fromOffset(140,42),UDim2.fromOffset(8,58),function() event:FireServer("boost") end)
-local kit=button(bar,"Medkit","Kit médico ×1",UDim2.fromOffset(140,42),UDim2.fromOffset(152,58),function() event:FireServer("kit") end)
-local notice=text(gui,"Notice","",UDim2.new(.8,0,0,52),UDim2.new(.1,0,.68,0)) notice.TextSize=16
-local leave=button(gui,"Leave","Voltar ao lobby",UDim2.fromOffset(130,36),UDim2.new(0,12,0,100),function() event:FireServer("leave") end)
+local run=button(bar,"Run","Correr",UDim2.new(.25,-8,1,-12),UDim2.fromOffset(6,6),function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
+local slow=button(bar,"Slow","Devagar",UDim2.new(.25,-8,1,-12),UDim2.new(.25,2,0,6),function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
+local boost=button(bar,"Boost","Impulso",UDim2.new(.25,-8,1,-12),UDim2.new(.5,-2,0,6),function() event:FireServer("boost") end)
+local kit=button(bar,"Medkit","Kit",UDim2.new(.25,-8,1,-12),UDim2.new(.75,-6,0,6),function() event:FireServer("kit") end)
+local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
+local leave=button(gui,"Leave","Sair da rodada",UDim2.fromOffset(118,36),UDim2.new(0,14,0,58),function() event:FireServer("leave") end)
 local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
 local spectatorName=text(spectate,"Player","Assistindo",UDim2.new(1,0,0,34),UDim2.new())
 local index=1 local watching=false
@@ -78,9 +81,54 @@ local function preload(roundId,map)
  end)
 end
 local noticeUntil=0
+local captureActive=false
+local capture=Instance.new("Frame") capture.Name="Capture" capture.Size=UDim2.fromScale(1,1) capture.BackgroundColor3=Color3.fromRGB(105,0,7) capture.BackgroundTransparency=1 capture.BorderSizePixel=0 capture.ZIndex=95 capture.Visible=false capture.Parent=gui
+local captureText=text(capture,"Killer","",UDim2.new(1,0,0,60),UDim2.new(0,0,.16,0)) captureText.TextSize=22 captureText.Font=Enum.Font.GothamBold captureText.ZIndex=96
+
+local function caughtAnimation(killer,killerCF)
+ if captureActive then return end
+ captureActive=true capture.Visible=true captureText.Text=tostring(killer or "")
+ local camera=workspace.CurrentCamera
+ local char=player.Character
+ local root=char and char:FindFirstChild("HumanoidRootPart")
+ local head=char and char:FindFirstChild("Head")
+ local oldType=camera and camera.CameraType
+ local oldCF=camera and camera.CFrame
+ local oldFov=camera and camera.FieldOfView or 70
+ local rootJoint=root and root:FindFirstChildWhichIsA("Motor6D")
+ local oldTransform=rootJoint and rootJoint.Transform
+ if rootJoint then
+  TweenService:Create(rootJoint,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Transform=CFrame.new(0,-.18,0)*CFrame.Angles(math.rad(22),0,math.rad(-8))}):Play()
+ end
+ if camera and head and typeof(killerCF)=="CFrame" then
+  local killerPos=killerCF.Position
+  local dir=head.Position-killerPos
+  if dir.Magnitude<.1 then dir=Vector3.new(0,0,1) end
+  camera.CameraType=Enum.CameraType.Scriptable
+  local start=CFrame.lookAt(head.Position+dir.Unit*1.2+Vector3.new(0,.35,0),killerPos+Vector3.new(0,1.8,0))
+  local finish=CFrame.lookAt(head.Position+dir.Unit*.25+Vector3.new(0,.15,0),killerPos+Vector3.new(0,1.7,0))
+  camera.CFrame=start camera.FieldOfView=58
+  TweenService:Create(camera,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{CFrame=finish,FieldOfView=72}):Play()
+ end
+ TweenService:Create(capture,TweenInfo.new(.10),{BackgroundTransparency=.58}):Play()
+ task.wait(.34)
+ TweenService:Create(capture,TweenInfo.new(.25),{BackgroundTransparency=1}):Play()
+ task.wait(.28)
+ if rootJoint and oldTransform then rootJoint.Transform=oldTransform end
+ if camera then
+  camera.CameraType=oldType or Enum.CameraType.Custom camera.FieldOfView=oldFov
+  if oldType==Enum.CameraType.Scriptable and oldCF then camera.CFrame=oldCF
+  else
+   local hum=char and char:FindFirstChildOfClass("Humanoid") if hum then camera.CameraSubject=hum end
+  end
+ end
+ capture.Visible=false captureActive=false
+end
+
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="notice" then notice.Text=a noticeUntil=os.clock()+5
- elseif action=="load" then preload(a,b) end
+ elseif action=="load" then preload(a,b)
+ elseif action=="caught" then task.spawn(caughtAnimation,a,b) end
 end)
 UIS.InputBegan:Connect(function(input,processed)
  if processed or not player:GetAttribute("InRound") then return end
@@ -118,7 +166,7 @@ RunService.RenderStepped:Connect(function(dt)
  local spec=player:GetAttribute("Spectating") and not hidden
  spectate.Visible=spec or false
  local camera=workspace.CurrentCamera
- if spec and camera then
+ if spec and camera and not captureActive then
   local targets={} for _,p in ipairs(Players:GetPlayers()) do if p~=player and p:GetAttribute("InRound") and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then table.insert(targets,p) end end
   table.sort(targets,function(a,b) return a.UserId<b.UserId end)
   if #targets>0 then index=((index-1)%#targets)+1 local p=targets[index] camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") spectatorName.Text=p.DisplayName watching=true

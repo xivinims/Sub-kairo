@@ -6,7 +6,7 @@ local RunService=game:GetService("RunService")
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets
-local state=Rules.new() local queued={} local rates={} local motions={}
+local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
 local arena,npc,brain=nil,nil,nil local killerName="" local endTime=0
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
@@ -55,6 +55,18 @@ local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
  local e=entry(p) e.channel=nil e.cause=killerName sync(p)
  net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
+end
+local function catchPlayer(p)
+ if catching[p] or not vulnerable(p) then return end
+ catching[p]=true
+ local killerCF=npc and npc.PrimaryPart and npc.PrimaryPart.CFrame or nil
+ net.Update:FireClient(p,"caught",killerName,killerCF)
+ if npc and npc.Parent then npc:SetAttribute("Ability","Attack") end
+ task.delay(.62,function()
+  catching[p]=nil
+  if npc and npc.Parent and npc:GetAttribute("Ability")=="Attack" then npc:SetAttribute("Ability","") end
+  if p.Parent and vulnerable(p) then down(p) end
+ end)
 end
 local function join(p)
  if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return end
@@ -125,7 +137,7 @@ Players.PlayerAdded:Connect(function(p)
  hook(p)
 end)
 for _,p in ipairs(Players:GetPlayers()) do hook(p) end
-Players.PlayerRemoving:Connect(function(p) state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil end)
+Players.PlayerRemoving:Connect(function(p) state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil end)
 local elapsed=0
 RunService.Heartbeat:Connect(function(dt)
  elapsed+=dt if elapsed<.2 then return end local step=elapsed elapsed=0 local t=now()
@@ -209,10 +221,17 @@ task.spawn(function()
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
-    local pts=arena.SafePoints:GetChildren() npc:PivotTo(CFrame.new(pts[math.random(#pts)].Value+Vector3.new(0,3,0)))
+    local pts=arena.SafePoints:GetChildren()
+    local spawnPoint=pts[math.random(#pts)].Value
+    npc:PivotTo(CFrame.new(spawnPoint+Vector3.new(0,12,0)))
+    local boxCF,boxSize=npc:GetBoundingBox()
+    local bottom=boxCF.Position.Y-boxSize.Y/2
+    npc:PivotTo(npc:GetPivot()+Vector3.new(0,spawnPoint.Y+.12-bottom,0))
+    local groundOffset=math.max(1,npc.PrimaryPart.Position.Y-spawnPoint.Y)
+    npc:SetAttribute("GroundOffset",groundOffset)
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)
-    brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=vulnerable,down=down,speed=function(p) return motions[p] and motions[p].speed or 0 end})
+    brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=vulnerable,down=down,catch=catchPlayer,speed=function(p) return motions[p] and motions[p].speed or 0 end})
 
     endTime=now()+Rules.Duration
     net:SetAttribute("Phase","Partida")

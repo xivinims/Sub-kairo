@@ -85,20 +85,26 @@ async function uploadSurviversLogo(){
     const raw=await created.text();
     if(!created.ok){ console.warn('[Survivers] logo upload unavailable:',created.status,raw); return fallback; }
     const op=JSON.parse(raw);
-    const opId=String(op.path||'').replace(/^operations\//,'');
-    if(!opId) return fallback;
-    for(let i=0;i<40;i++){
-      await sleep(1500);
+    const directId=Number(op?.assetId||op?.response?.assetId||0);
+    if(directId>0){ console.log('[Survivers] logo asset:',directId); return directId; }
+    const opId=String(op.path||op.operationPath||'').replace(/^operations\//,'');
+    if(!opId){ console.warn('[Survivers] logo upload returned no operation:',raw); return fallback; }
+    console.log('[Survivers] logo operation:',opId);
+    for(let i=0;i<90;i++){
+      await sleep(2000);
       const res=await fetch('https://apis.roblox.com/assets/v1/operations/'+opId,{headers:{'x-api-key':key},signal:AbortSignal.timeout(30000)});
       const txt=await res.text();
       if(!res.ok) continue;
       const status=JSON.parse(txt);
       if(status.done){
-        const id=Number(status?.response?.assetId||0);
+        const id=Number(status?.response?.assetId||String(status?.response?.path||'').split('/').pop()||0);
         if(id>0){ console.log('[Survivers] logo asset:',id); return id; }
+        console.warn('[Survivers] logo operation completed without asset:',txt);
         break;
       }
+      if(status.error){ console.warn('[Survivers] logo operation error:',txt); break; }
     }
+    console.warn('[Survivers] logo operation ended without usable asset id:',opId);
   }catch(err){ console.warn('[Survivers] logo upload failed:',String(err)); }
   return fallback;
 }

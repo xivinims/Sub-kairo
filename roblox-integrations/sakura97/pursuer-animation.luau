@@ -55,7 +55,20 @@ RunService.RenderStepped:Connect(function(dt)
    if n:find("arm") or n:find("leg") then j.joint.C0=j.base*CFrame.Angles(angle*(n:find("left") and 1 or -1),0,0) end
   end
  end
- if current:GetAttribute("Ability")=="Reveal" then
+ local ability=current:GetAttribute("Ability")
+ if ability=="Attack" then
+  for name,j in pairs(data.joints) do
+   local n=name:lower()
+   if n:find("arm") then
+    local side=n:find("left") and -1 or 1
+    j.joint.C0=j.base*CFrame.Angles(math.rad(-75),math.rad(12*side),math.rad(28*side))
+   elseif n:find("torso") or n=="root" then
+    j.joint.C0=j.base*CFrame.Angles(math.rad(-10),0,0)
+   elseif n:find("head") or n:find("neck") then
+    j.joint.C0=j.base*CFrame.Angles(math.rad(12),0,0)
+   end
+  end
+ elseif ability=="Reveal" then
   -- Scarlat's tell: lift the right hand toward the side of the head while she senses movement.
   for name,j in pairs(data.joints) do
    if name=="RightUpperArm" or name=="Right Arm" then

@@ -11,7 +11,7 @@ function AI.start(model,map,config,ctx)
  local alive=true local lastPath=0 local busy=false local waypoints={} local waypoint=1
  local goal=nil local heardUntil=0 local nextAbility=0 local restUntil=0 local attackUntil=0
  local nextPatrol=0 local target=nil local revealUntil=0 local nextShot=0 local conn
- local points=map.SafePoints:GetChildren()
+ local points=map.SafePoints:GetChildren() local groundOffset=model:GetAttribute("GroundOffset") or 3
  local function los(pos,char)
   local p=RaycastParams.new() p.FilterType=Enum.RaycastFilterType.Exclude p.FilterDescendantsInstances={model}
   local hit=workspace:Raycast(root.Position,pos-root.Position,p)
@@ -46,7 +46,7 @@ function AI.start(model,map,config,ctx)
    elapsed+=dt local move=dir*42*math.min(dt,.1)
    local hit=workspace:Spherecast(orb.Position,.8,move,p)
    if hit then
-    for _,pl in ipairs(ctx.players()) do if pl.Character and hit.Instance:IsDescendantOf(pl.Character) then ctx.down(pl) break end end
+    for _,pl in ipairs(ctx.players()) do if pl.Character and hit.Instance:IsDescendantOf(pl.Character) then (ctx.catch or ctx.down)(pl) break end end
     c:Disconnect() orb:Destroy()
    elseif elapsed>3 then c:Disconnect() orb:Destroy() else orb.Position+=move end
   end)
@@ -75,11 +75,6 @@ function AI.start(model,map,config,ctx)
   local speed=target and config.speed or 12
   if model.Name=="Freddy" and target and now>=nextAbility then nextAbility=now+12 attackUntil=now+2 restUntil=now+5 model:SetAttribute("Ability","Dash") end
   if model.Name=="Freddy" and now<restUntil then speed=now<attackUntil and 26 or 5 else if model:GetAttribute("Ability")=="Dash" then model:SetAttribute("Ability","") end end
-  if model.Name=="Amanda" and target and best<25 and now>=nextAbility then
-   nextAbility=now+10 attackUntil=now+.9 restUntil=now+2.2 model:SetAttribute("Ability","Leap")
-  end
-  if model.Name=="Amanda" and now<restUntil then speed=now<attackUntil and 0 or 25
-  elseif model:GetAttribute("Ability")=="Leap" then model:SetAttribute("Ability","") end
   if model.Name=="Scarlat" and now<revealUntil then speed=0 end
   hum.WalkSpeed=speed
   if goal and speed>0 then
@@ -87,15 +82,15 @@ function AI.start(model,map,config,ctx)
    local w=waypoints[waypoint]
    if w then
     if (root.Position-w.Position).Magnitude<4 then waypoint+=1 w=waypoints[waypoint] end
-    if w then hum:MoveTo(w.Position) if w.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end end
-   elseif los(goal,nil) then hum:MoveTo(goal) else hum:MoveTo(root.Position) end
+    if w then hum:MoveTo(Vector3.new(w.Position.X,w.Position.Y+groundOffset,w.Position.Z)) if w.Action==Enum.PathWaypointAction.Jump then hum.Jump=true end end
+   elseif los(goal,nil) then hum:MoveTo(Vector3.new(goal.X,root.Position.Y,goal.Z)) else hum:MoveTo(root.Position) end
   else hum:MoveTo(root.Position) end
   if model.Name=="Scarlat" and target and best<65 and now>nextShot and now>revealUntil then nextShot=now+5 projectile(target) end
   -- Figure can collide with a quiet player, but never tracks them silently.
   for _,pl in ipairs(ctx.players()) do
    local r=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
    if r and ctx.vulnerable(pl) and (r.Position-root.Position).Magnitude<config.range and los(r.Position,pl.Character) then
-    if model.Name=="Figure" or ctx.speed(pl)>.6 or target==pl then ctx.down(pl) end
+    if model.Name=="Figure" or ctx.speed(pl)>.6 or target==pl then (ctx.catch or ctx.down)(pl) end
    end
   end
  end)
