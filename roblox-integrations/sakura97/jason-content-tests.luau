@@ -19,4 +19,6 @@ assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magni
 assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
 assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
 assert(not workspace.StreamingEnabled)
-return {ok=true,originalClips=clips,originalFrames=frames,rigPoseBindings=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true}
+local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
+assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
+return {ok=true,originalClips=clips,originalFrames=frames,rigPoseBindings=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true}

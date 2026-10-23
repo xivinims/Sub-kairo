@@ -124,9 +124,8 @@ local ok,result=xpcall(function()
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
-  assert(status=="loading","Player "..i.." did not enter loading; status="..tostring(status).." notice="..tostring(messages[players[i]] and messages[players[i]].notice and messages[players[i]].notice[1]))
-  local load=assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive load request")
-  send(players[i],"ready",load[1])
+  assert(status=="alive" and players[i]:GetAttribute("InRound"),"Player "..i.." was not teleported into round immediately; status="..tostring(status))
+  assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive advisory preload request")
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local count=0 for _,p in ipairs(players) do if p:GetAttribute("InRound") then count+=1 end end assert(count==8,"Expected 8 active players, got "..count)
@@ -157,7 +156,9 @@ local ok,result=xpcall(function()
  assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Elimination flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
  SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
- players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1) local request=assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot load") send(players[9],"ready",request[1]) assert(players[9]:GetAttribute("InRound"),"Ninth player did not enter freed slot")
+ players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1)
+ assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot preload")
+ assert(players[9]:GetAttribute("InRound") and players[9]:GetAttribute("RoundStatus")=="alive","Ninth player was not teleported immediately into freed slot")
  local roundRemaining=math.max(0,(net:GetAttribute("EndsAt") or clock)-clock)
  advance(roundRemaining+1)
  assert(aiStopped==1,"Round AI did not clean up")
@@ -166,7 +167,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,selfAndAllyRevive=true,doorOnlyAdmission=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,selfAndAllyRevive=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

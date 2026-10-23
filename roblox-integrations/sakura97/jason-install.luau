@@ -46,8 +46,11 @@ if not door:GetAttribute("HeldOpen") then
  door:SetAttribute("HeldOpen",true)
 end
 local gate=replace(workspace,"LobbyJoinPortal","Part")
-gate.Size=Vector3.new(5,9,10) gate.CFrame=CFrame.new(original.X-5,floor.Position.Y+4.5,original.Z)
+-- Broad, door-aligned admission volume so walking through the physical doorway is reliably detected.
+gate.Size=Vector3.new(math.max(14,doorSize.X+6),12,math.max(14,doorSize.Z+6))
+gate.CFrame=CFrame.new(original.X,floor.Position.Y+gate.Size.Y/2,original.Z)*doorCF.Rotation
 gate.Anchored=true gate.CanCollide=false gate.CanTouch=false gate.CanQuery=false gate.Transparency=1
+gate:SetAttribute("DoorAdmission",true)
 local sign=Instance.new("BillboardGui",gate) sign.Name="EntrySign" sign.Size=UDim2.fromOffset(220,42) sign.StudsOffset=Vector3.new(0,5,0) sign.MaxDistance=55
 local label=Instance.new("TextLabel",sign) label.Size=UDim2.fromScale(1,1) label.BackgroundTransparency=1 label.Text="ENTRE PARA JOGAR" label.TextColor3=Color3.fromRGB(225,208,208) label.Font=Enum.Font.GothamMedium label.TextSize=18
 local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",120) runtime:SetAttribute("PreservedLobby",true)

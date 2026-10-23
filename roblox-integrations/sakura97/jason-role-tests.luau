@@ -125,9 +125,8 @@ local ok,result=xpcall(function()
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
-  assert(status=="loading","Player "..i.." did not enter loading; status="..tostring(status).." notice="..tostring(messages[players[i]] and messages[players[i]].notice and messages[players[i]].notice[1]))
-  local load=assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive load request")
-  send(players[i],"ready",load[1])
+  assert(status=="alive" and players[i]:GetAttribute("InRound"),"Player "..i.." was not admitted immediately; status="..tostring(status))
+  assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive advisory preload request")
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local killer=nil local killers=0
@@ -148,7 +147,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,eightParticipantPlayerJason=true,oneController=true,attack=true,restoreAvatar=true}
+ return {ok=true,eightParticipantPlayerJason=true,instantDoorTeleport=true,oneController=true,attack=true,restoreAvatar=true}
 
 end,debug.traceback)
 dc:Disconnect()

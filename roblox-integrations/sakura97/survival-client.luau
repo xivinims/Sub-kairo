@@ -183,6 +183,7 @@ local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
+ local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
@@ -191,10 +192,13 @@ RunService.RenderStepped:Connect(function(dt)
  countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8)
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
- bar.Visible=not hidden and inRound leave.Visible=not hidden and inRound
- run.Visible=not down and not isJason slow.Visible=not down and not isJason boost.Visible=not down and not isJason
- kit.Visible=not isJason attack.Visible=isJason and not down
- boost.Text=player:GetAttribute("HasBoost") and "↑" or "·"
+ bar.Visible=controlsVisible leave.Visible=not hidden and inRound
+ run.Visible=controlsVisible and not down and not isJason
+ slow.Visible=controlsVisible and not down and not isJason
+ boost.Visible=controlsVisible and not down and not isJason
+ kit.Visible=controlsVisible and inRound and not isJason
+ attack.Visible=controlsVisible and inRound and isJason and not down
+ boost.Text="↑" boost.TextTransparency=(inRound and player:GetAttribute("HasBoost")) and 0 or .38
  kit.Text=player:GetAttribute("HasMedkit") and "+" or "·"
  mode=player:GetAttribute("MoveMode") or "walk"
  run.UIStroke.Transparency=mode=="run" and .05 or .4 slow.UIStroke.Transparency=mode=="slow" and .05 or .4

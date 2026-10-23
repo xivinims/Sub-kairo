@@ -49,11 +49,13 @@ local ok,result=xpcall(function()
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
  fakeNet:SetAttribute("Phase","Intervalo") fakeNet:SetAttribute("EndsAt",workspace:GetServerTimeNow()+30)
  fakeNet:SetAttribute("Waiting",1) fakeNet:SetAttribute("MaxPlayers",8) step()
- assert(gui.Countdown.Visible and not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Intermission HUD mismatch")
+ assert(gui.Countdown.Visible and not gui:FindFirstChild("Join") and gui.Actions.Visible,"Intermission HUD mismatch")
+ assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Movement controls must remain visible in lobby")
  fakeNet:SetAttribute("Phase","Partida") step()
- assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Portal admission must not expose a join button")
+ assert(not gui:FindFirstChild("Join") and gui.Actions.Visible,"Portal admission must keep movement controls visible")
+ assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Run/slow/boost controls disappeared outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,arenaOnlyControls=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,persistentMovementControls=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result

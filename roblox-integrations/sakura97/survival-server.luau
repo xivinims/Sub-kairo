@@ -75,11 +75,13 @@ local function catchPlayer(p)
  end)
 end
 local function join(p)
- if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return end
- if not Rules.join(state,p.UserId) then net.Update:FireClient(p,"notice","Partida cheia ou você já participou desta rodada.") return end
- queued[p]=nil p:SetAttribute("Spectating",false) sync(p)
+ if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return false end
+ if not Rules.join(state,p.UserId) then net.Update:FireClient(p,"notice","Partida cheia ou você já participou desta rodada.") return false end
+ queued[p]=nil p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false) sync(p)
  local e=entry(p) e.loadDeadline=now()+50
+ -- Preload is advisory only. Admission itself is server-owned and must never wait on a client ready callback.
  net.Update:FireClient(p,"load",state.id,arena)
+ return true
 end
 local function spawnPlayer(p)
  local e=entry(p) local r=root(p) if not r or not npc or not arena then return end
@@ -87,7 +89,7 @@ local function spawnPlayer(p)
  if p==jasonPlayer then best=arena:GetAttribute("KillerSpawn") end
  if not best then return end
  e.status="alive" e.protectedUntil=now()+5 e.lastScore=now() e.lastNoise=0
- p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false)
+ p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
  local entranceCF=arena.ArenaEntrance:GetAttribute("DoorCFrame")
  p.Character:PivotTo(CFrame.lookAt(best,best+entranceCF.LookVector))
  if p~=jasonPlayer then e.doorClosed=false e.entryAt=now() net.Update:FireClient(p,"entrance",state.id,entranceCF) end r.AssemblyLinearVelocity=Vector3.zero r.Anchored=false
@@ -127,7 +129,8 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="ready" then local e=entry(p) if e and e.status=="loading" and value==state.id and state.phase=="Partida" then spawnPlayer(p) end
  elseif action=="loadFailed" then if p==jasonPlayer then endTime=now() end local e=entry(p) if e and e.status=="loading" then state.entries[p.UserId]=nil sync(p) end
  elseif action=="mode" then
-  local e=entry(p) if p~=jasonPlayer and e and e.status=="alive" and (value=="walk" or value=="slow" or value=="run") then p:SetAttribute("MoveMode",value) sync(p) end
+  local e=entry(p)
+  if p~=jasonPlayer and (value=="walk" or value=="slow" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
  elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
  elseif action=="kit" then if p~=jasonPlayer then channel(p) end
  elseif action=="voice" then
@@ -164,7 +167,11 @@ RunService.Heartbeat:Connect(function(dt)
    local pos=gate.CFrame:PointToObjectSpace(r.Position)
    local inside=math.abs(pos.X)<=gate.Size.X/2 and math.abs(pos.Y)<=gate.Size.Y/2 and math.abs(pos.Z)<=gate.Size.Z/2
    if inside and not portalInside[p] and not e then
-    if state.phase=="Partida" then join(p) else queued[p]=true lobby(p) sync(p) net.Update:FireClient(p,"notice","Você está na próxima partida.") end
+    if state.phase=="Partida" then
+     if join(p) then spawnPlayer(p) end
+    else
+     queued[p]=true sync(p) net.Update:FireClient(p,"notice","Você está na próxima partida.")
+    end
    end
    portalInside[p]=inside
   end
@@ -286,12 +293,13 @@ task.spawn(function()
     net:SetAttribute("MaxPlayers",Rules.Capacity)
 
     local admitted=0
-    if jasonPlayer then join(jasonPlayer) if entry(jasonPlayer) then admitted=1 end end
+    if jasonPlayer then
+     if join(jasonPlayer) then spawnPlayer(jasonPlayer) admitted=1 end
+    end
     for _,p in ipairs(Players:GetPlayers()) do
      if admitted>=Rules.Capacity then break end
      if queued[p] and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
-      join(p)
-      if entry(p) then admitted+=1 end
+      if join(p) then spawnPlayer(p) admitted+=1 end
      end
     end
 
