@@ -56,6 +56,15 @@ RunService.RenderStepped:Connect(function(dt)
   end
  end
  if current:GetAttribute("Ability")=="Reveal" then
-  for name,j in pairs(data.joints) do if name=="RightUpperArm" or name=="Right Arm" then j.joint.C0=j.base*CFrame.Angles(math.rad(-135),0,math.rad(25)) end end
+  -- Scarlat's tell: lift the right hand toward the side of the head while she senses movement.
+  for name,j in pairs(data.joints) do
+   if name=="RightUpperArm" or name=="Right Arm" then
+    j.joint.C0=j.base*CFrame.Angles(math.rad(-112),math.rad(-8),math.rad(28))
+   elseif name=="RightLowerArm" then
+    j.joint.C0=j.base*CFrame.Angles(math.rad(-92),0,math.rad(-8))
+   elseif name=="RightHand" then
+    j.joint.C0=j.base*CFrame.Angles(math.rad(12),math.rad(-18),math.rad(10))
+   end
+  end
  end
 end)
