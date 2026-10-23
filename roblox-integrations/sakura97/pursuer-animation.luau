@@ -18,14 +18,32 @@ local function decodePose(raw)
  return {cf=CFrame.new(table.unpack(raw)),easing="Linear",direction="InOut",weight=1}
 end
 
+local function normalized(name)
+ return tostring(name or ""):lower():gsub("[%s_%-%.]","")
+end
+
 local function prepare(model,folder)
  local perModel=cache[model]
  if not perModel then perModel={} cache[model]=perModel end
  if perModel[folder] then return perModel[folder] end
  if #folder:GetChildren()~=(folder:GetAttribute("ClipCount") or math.huge) then return nil end
- local d={joints={},clips={},time=0,state="",active=false,folder=folder}
+ local d={joints={},lookup={},clips={},time=0,state="",active=false,folder=folder}
  for _,j in ipairs(model:GetDescendants()) do
-  if j:IsA("Motor6D") and j.Part1 then d.joints[j.Part1.Name]=j end
+  if j:IsA("Motor6D") and j.Part1 then
+   d.joints[j]=true
+   d.lookup[normalized(j.Part1.Name)]=j
+   d.lookup[normalized(j.Name)]=j
+  end
+ end
+ local aliasTargets={
+  humanoidrootpart="Root",rootpart="Root",
+  torso="Waist",uppertorso="Waist",
+  head="Neck",
+  leftarm="LeftShoulder",rightarm="RightShoulder",
+  leftleg="LeftHip",rightleg="RightHip",
+ }
+ for alias,motorName in pairs(aliasTargets) do
+  for joint in pairs(d.joints) do if joint.Name==motorName then d.lookup[alias]=joint break end end
  end
  for _,v in ipairs(folder:GetChildren()) do
   if v:IsA("Folder") then
@@ -46,7 +64,12 @@ local function prepare(model,folder)
      local pose=decodePose(raw) pose.time=frame.time table.insert(channel,pose)
     end
    end
-   for _,channel in pairs(clip.channels) do table.sort(channel,function(a,b) return a.time<b.time end) end
+   clip.bound={} clip.boundCount=0
+   for name,channel in pairs(clip.channels) do
+    table.sort(channel,function(a,b) return a.time<b.time end)
+    local joint=d.lookup[normalized(name)]
+    if joint and not clip.bound[joint] then clip.bound[joint]=channel clip.boundCount+=1 end
+   end
    d.clips[v.Name]=clip
   end
  end
@@ -56,7 +79,7 @@ end
 
 local function resetData(d)
  if not d or not d.active then return end
- for _,joint in pairs(d.joints) do if joint.Parent then joint.Transform=CFrame.identity end end
+ for joint in pairs(d.joints) do if joint.Parent then joint.Transform=CFrame.identity end end
  d.active=false d.state="" d.time=0
 end
 
@@ -85,15 +108,27 @@ local function sample(channel,t)
  return CFrame.identity:Lerp(a.cf,a.weight):Lerp(CFrame.identity:Lerp(b.cf,b.weight),alpha)
 end
 
+local function canDrive(d,state)
+ local clip=state and d.clips[state]
+ return clip and clip.length>0 and (clip.boundCount or 0)>=4
+end
+
 local function apply(d,state,dt,loop,absolute)
- if not state then return end
- if d.state~=state then d.state=state d.time=0 end
+ if not state then return false end
+ local clip=d.clips[state]
+ if not clip or clip.length<=0 or (clip.boundCount or 0)<4 then return false end
+ if d.state~=state then
+  for joint in pairs(d.joints) do if joint.Parent then joint.Transform=CFrame.identity end end
+  d.state=state d.time=0
+ end
  d.time+=dt
- local clip=d.clips[state] if not clip or clip.length<=0 then return end
  local t=absolute or d.time
  t=loop and t%clip.length or math.min(t,clip.length)
- for name,joint in pairs(d.joints) do if joint.Parent then joint.Transform=sample(clip.channels[name],t) end end
+ for joint,channel in pairs(clip.bound) do
+  if joint.Parent then joint.Transform=sample(channel,t) end
+ end
  d.active=true
+ return true
 end
 
 local function matchName(clips,groups)
@@ -181,7 +216,6 @@ Run.PreSimulation:Connect(function(dt)
     if activeFolder[model]~=folder then
      resetModel(model) activeFolder[model]=folder
     end
-    if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
     local d=prepare(model,folder)
     local hum=model:FindFirstChildOfClass("Humanoid")
     local root=model:FindFirstChild("HumanoidRootPart")
@@ -194,7 +228,11 @@ Run.PreSimulation:Connect(function(dt)
      elseif speed>1 then kind=(not crouched and speed>16) and "run" or "move"
      else kind="idle" end
      local state=locomotionName(d,kind,crouched,injured)
-     apply(d,state,dt,kind~="jump" and kind~="fall")
+     local supported=canDrive(d,state)
+     if p==Players.LocalPlayer then setDefaultAnimate(model,not supported) end
+     if supported then apply(d,state,dt,kind~="jump" and kind~="fall") else resetData(d) end
+    elseif p==Players.LocalPlayer then
+     setDefaultAnimate(model,true)
     end
    else
     resetModel(model)

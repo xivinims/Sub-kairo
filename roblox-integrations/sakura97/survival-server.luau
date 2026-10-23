@@ -5,7 +5,7 @@ local SSS=game:GetService("ServerScriptService")
 local RunService=game:GetService("RunService")
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
-local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets
+local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
 local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0
 local jasonPlayer=nil local morphing={} local portalInside={} local lastAttack=0
@@ -37,7 +37,39 @@ end
 local function points(p,n)
  local stats=p:FindFirstChild("leaderstats") local v=stats and stats:FindFirstChild("Pontos") if v then v.Value+=n end
 end
+local function clearFlashlight(p)
+ local char=p.Character
+ local existing=char and char:FindFirstChild("EquippedFlashlight")
+ if existing then existing:Destroy() end
+ p:SetAttribute("FlashlightOn",false)
+end
+local function setFlashlight(p,on)
+ clearFlashlight(p)
+ if not on or p==jasonPlayer then return false end
+ local char=p.Character local h=humanoid(p)
+ if not char or not h or h.Health<=0 or p:GetAttribute("Downed") then return false end
+ local hand=char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+ if not hand or not hand:IsA("BasePart") then return false end
+ local tool=items.Flashlight:Clone()
+ tool.Name="EquippedFlashlight"
+ local handle=tool:FindFirstChild("Handle")
+ if not handle or not handle:IsA("BasePart") then tool:Destroy() return false end
+ for _,part in ipairs(tool:GetDescendants()) do
+  if part:IsA("BasePart") then part.Anchored=false part.CanCollide=false part.CanTouch=false part.Massless=true end
+ end
+ tool.Parent=char
+ local grip=tool.Grip
+ handle.CFrame=hand.CFrame*grip
+ local weld=Instance.new("WeldConstraint")
+ weld.Name="FlashlightGrip" weld.Part0=hand weld.Part1=handle weld.Parent=handle
+ local light=handle:FindFirstChild("GameplayLight") or Instance.new("PointLight")
+ light.Name="GameplayLight" light.Color=Color3.fromRGB(240,238,214) light.Range=24 light.Brightness=2.4 light.Shadows=false light.Parent=handle
+ p:SetAttribute("FlashlightOn",true)
+ return true
+end
+
 local function lobby(p)
+ clearFlashlight(p)
  local r=root(p) local h=humanoid(p)
  if r then r.Anchored=false p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(0,4,0)) r.AssemblyLinearVelocity=Vector3.zero end
  if h then h.PlatformStand=false h.AutoRotate=true h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7.2 end
@@ -66,6 +98,7 @@ local function injure(p)
 end
 local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
+ clearFlashlight(p)
  local e=entry(p) e.injured=true e.channel=nil e.cause=killerName sync(p)
  net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
 end
@@ -185,6 +218,9 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   local e=entry(p)
   if p~=jasonPlayer and (value=="walk" or value=="slow" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
  elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
+ elseif action=="flashlight" then
+  local e=entry(p)
+  if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
  elseif action=="kit" then if p~=jasonPlayer then channel(p) end
  elseif action=="voice" then
   local e=entry(p) local r=root(p) if brain and r and e and e.status=="alive" and type(value)=="number" and value==value and value>.015 and value<=1 then brain.noise(r.Position,config.Killers[killerName].hearing*.8) end
@@ -340,6 +376,7 @@ task.spawn(function()
     table.sort(eligible,function(a,b) return a.UserId<b.UserId end)
     if #eligible>=8 and math.random()<config.PlayerJasonChance then
      jasonPlayer=eligible[math.random(1,8)]
+     clearFlashlight(jasonPlayer)
      local old=jasonPlayer.Character morphing[jasonPlayer]=true
      npc.Name=jasonPlayer.Name jasonPlayer.Character=npc
      morphing[jasonPlayer]=nil if old then old:Destroy() end

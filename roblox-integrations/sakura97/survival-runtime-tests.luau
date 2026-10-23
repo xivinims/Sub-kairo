@@ -136,7 +136,10 @@ local ok,result=xpcall(function()
   killerModel:PivotTo(p.Character:GetPivot()*CFrame.new(0,0,2))
   aiContext.catch(p) advance(1)
  end
- local p=players[1] send(p,"boost") assert(not p:GetAttribute("HasBoost"),"Boost item was not consumed")
+ local p=players[1]
+ send(p,"flashlight") assert(p:GetAttribute("FlashlightOn") and p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not equip")
+ send(p,"flashlight") assert(not p:GetAttribute("FlashlightOn") and not p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not unequip")
+ send(p,"boost") assert(not p:GetAttribute("HasBoost"),"Boost item was not consumed")
  advance(1) assert(p.Character.Humanoid.WalkSpeed==27,"Boost speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  advance(5) assert(p.Character.Humanoid.WalkSpeed==16,"Boost did not expire")
  send(p,"mode","slow") assert(p.Character.Humanoid.WalkSpeed==8,"Slow speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
@@ -172,7 +175,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

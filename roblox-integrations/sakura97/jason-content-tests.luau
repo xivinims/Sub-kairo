@@ -31,6 +31,9 @@ assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magni
 assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
 assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
 assert(not workspace.StreamingEnabled)
+local flashlight=assert(assets:FindFirstChild("Items") and assets.Items:FindFirstChild("Flashlight"),"Flashlight template missing")
+assert(flashlight:IsA("Tool") and flashlight:GetAttribute("SourceAssetId")==4573262309,"Wrong flashlight asset")
+assert(flashlight:FindFirstChild("Handle"),"Flashlight handle missing")
 local theme=assert(game.ReplicatedStorage.Survival:FindFirstChild("JasonTheme"),"Jason theme missing")
 assert(theme:IsA("Sound") and theme:GetAttribute("SourceAssetId")==132120584214046,"Wrong Jason theme asset")
 assert(theme.Looped and theme.Volume>0,"Jason theme must loop with audible volume")
@@ -42,6 +45,40 @@ assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken survivor package ha
 assert((crouch:GetAttribute("ClipCount") or 0)>0,"Crouch package has no clips")
 local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Folder") then table.insert(survivorNames,v.Name) end end table.sort(survivorNames)
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
+local function animationCompatibility(folder,names)
+ local testRig=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
+ local lookup={}
+ local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
+ for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then
+  lookup[norm(j.Part1.Name)]=true lookup[norm(j.Name)]=true
+ end end
+ for alias,motor in pairs({humanoidrootpart="root",rootpart="root",torso="waist",uppertorso="waist",head="neck",leftarm="leftshoulder",rightarm="rightshoulder",leftleg="lefthip",rightleg="righthip"}) do
+  if lookup[motor] then lookup[alias]=true end
+ end
+ local report={}
+ for _,clipName in ipairs(names) do
+  local clipFolder=assert(folder:FindFirstChild(clipName),"Missing clip "..clipName)
+  local chunks=clipFolder:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
+  local packed={} for _,v in ipairs(chunks) do table.insert(packed,v.Value) end
+  local decoded=Http:JSONDecode(buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(game:GetService("EncodingService"):Base64Decode(buffer.fromstring(table.concat(packed))),Enum.CompressionAlgorithm.Zstd)))
+  local matched={} local moving=false
+  for _,frame in ipairs(decoded.frames) do for poseName,pose in pairs(frame.poses) do
+   if lookup[norm(poseName)] then matched[norm(poseName)]=true end
+   local c=pose.c or pose
+   if #c==12 then
+    local cf=CFrame.new(table.unpack(c))
+    if cf.Position.Magnitude>.001 or math.abs(select(2,cf:ToOrientation()))>.001 or math.abs(select(1,cf:ToOrientation()))>.001 or math.abs(select(3,cf:ToOrientation()))>.001 then moving=true end
+   end
+  end end
+  local count=0 for _ in pairs(matched) do count+=1 end
+  assert(count>=4 and moving,clipName.." cannot drive R15 rig")
+  report[clipName]=count
+ end
+ testRig:Destroy()
+ return report
+end
+local survivorCompatibility=animationCompatibility(survivor,{"Idle","Walk","Run","InjuredIdle","InjuredWalk","InjuredRun"})
+local crouchCompatibility=animationCompatibility(crouch,{"Crouch Idle","Crouch Walk"})
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
 local oldDoor=workspace.JediLibrary.Door
@@ -52,4 +89,4 @@ assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAn
 assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
 assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
 assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
-return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}

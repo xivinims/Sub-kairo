@@ -27,7 +27,7 @@ function AI.start(model,map,spec,ctx)
  local sum=0
  local lastPosition=r.Position
  local stuck=0
- local directChasing=false
+ local directChasing=false local smoothedGoal=nil local lastTargetVelocity=Vector3.zero
  local params=RaycastParams.new()
  params.FilterType=Enum.RaycastFilterType.Exclude
  params.FilterDescendantsInstances={model}
@@ -95,9 +95,10 @@ function AI.start(model,map,spec,ctx)
   local velocity=pr.AssemblyLinearVelocity
   local horizontal=Vector3.new(velocity.X,0,velocity.Z)
   local distance=(pr.Position-r.Position).Magnitude
-  local lead=math.clamp(distance/85,.10,.34)
+  local lead=math.clamp(distance/math.max(spec.speed+10,1),.08,.42)
   local ahead=horizontal*lead
   if ahead.Magnitude>8 then ahead=ahead.Unit*8 end
+  lastTargetVelocity=horizontal
   return pr.Position+ahead
  end
 
@@ -142,9 +143,15 @@ function AI.start(model,map,spec,ctx)
 
   if target and targetVisible and targetPr then
    state="Chase"
-   goal=predicted(targetPr)
+   local raw=predicted(targetPr)
+   smoothedGoal=smoothedGoal and smoothedGoal:Lerp(raw,math.clamp(step*8,0,1)) or raw
+   goal=smoothedGoal
    lastSeen=targetPr.Position
    seenAt=clock
+  elseif target and targetPr and lastSeen and clock-seenAt<.7 then
+   -- Keep pressure through very brief doorframe/corner occlusion without wall vision.
+   state="Chase"
+   goal=lastSeen+lastTargetVelocity*.12
   elseif lastSeen and clock-seenAt<4.5 then
    state="Search"
    goal=lastSeen
@@ -171,6 +178,7 @@ function AI.start(model,map,spec,ctx)
   model:SetAttribute("AIState",state)
   model:SetAttribute("TargetUserId",target and target.UserId or 0)
   model:SetAttribute("DirectChase",state=="Chase" and targetVisible)
+  model:SetAttribute("OcclusionGrace",state=="Chase" and not targetVisible)
   h.WalkSpeed=state=="Chase" and spec.speed or state=="Patrol" and 11 or 15
 
   if target and targetPr and clock>=attackAt and (targetPr.Position-r.Position).Magnitude<=spec.range then
@@ -186,7 +194,9 @@ function AI.start(model,map,spec,ctx)
   if state=="Chase" and targetVisible and targetPr then
    -- Never follow stale waypoints while the survivor is actually visible.
    if not directChasing then clearPath() directChasing=true end
-   goal=predicted(targetPr)
+   local raw=predicted(targetPr)
+   smoothedGoal=smoothedGoal and smoothedGoal:Lerp(raw,math.clamp(step*9,0,1)) or raw
+   goal=smoothedGoal
    h:MoveTo(goal)
   else
    directChasing=false
@@ -209,7 +219,7 @@ function AI.start(model,map,spec,ctx)
   local moved=(r.Position-lastPosition).Magnitude
   if goal and (r.Position-goal).Magnitude>4 and moved<.12 then stuck+=step else stuck=0 end
   lastPosition=r.Position
-  if stuck>1.15 then
+  if stuck>.85 then
    nextPath=0
    pathGoal=nil
    if state~="Chase" then clearPath() end

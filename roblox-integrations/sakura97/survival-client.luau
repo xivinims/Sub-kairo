@@ -42,7 +42,7 @@ local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local mode="walk"
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
-bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(146,150) bar.Position=UDim2.new(1,-20,1,-175)
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(146,226) bar.Position=UDim2.new(1,-20,1,-175)
 local function circle(name,label,x,y,callback)
  local b=button(bar,name,label,UDim2.fromOffset(62,62),UDim2.fromOffset(x,y),callback)
  b.BackgroundColor3=Color3.fromRGB(90,90,90) b.BackgroundTransparency=.58 b.TextSize=14
@@ -57,6 +57,7 @@ local slow=circle("Slow","",0,76,function() mode=mode=="slow" and "walk" or "slo
 local boost=circle("Boost","↑",0,0,function() event:FireServer("boost") end)
 local kit=circle("Medkit","+",78,76,function() event:FireServer("kit") end)
 local attack=circle("Attack","╱",78,76,function() event:FireServer("attack") end) attack.TextSize=36
+local flashlight=circle("Flashlight","",0,152,function() event:FireServer("flashlight") end)
 -- Scalable gray silhouettes within the double-ring controls.
 local function segment(parent,a,b,width)
  local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(195,195,195)
@@ -69,6 +70,13 @@ local function figure(button,crouch)
  for _,v in ipairs(lines) do segment(button,Vector2.new(v[1],v[2]),Vector2.new(v[3],v[4]),4) end
 end
 figure(run,false) figure(slow,true)
+do
+ local body=Instance.new("Frame",flashlight) body.Size=UDim2.fromOffset(23,11) body.Position=UDim2.fromOffset(20,27) body.Rotation=-18 body.BackgroundColor3=Color3.fromRGB(205,205,205) body.BorderSizePixel=0
+ local c=Instance.new("UICorner",body) c.CornerRadius=UDim.new(0,4)
+ segment(flashlight,Vector2.new(38,26),Vector2.new(47,20),3)
+ segment(flashlight,Vector2.new(39,31),Vector2.new(50,31),2)
+ segment(flashlight,Vector2.new(38,36),Vector2.new(47,42),3)
+end
 local function actionLayout()
  local cam=workspace.CurrentCamera if not cam then return end
  local scale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar)
@@ -272,12 +280,15 @@ RunService.RenderStepped:Connect(function(dt)
  run.Visible=controlsVisible and not down and not isJason
  slow.Visible=controlsVisible and not down and not isJason
  boost.Visible=controlsVisible and not down and not isJason
+ flashlight.Visible=controlsVisible and not down and not isJason
  kit.Visible=controlsVisible and inRound and not isJason
  attack.Visible=controlsVisible and inRound and isJason and not down
  boost.Text="↑" boost.TextTransparency=(inRound and player:GetAttribute("HasBoost")) and 0 or .38
  kit.Text=player:GetAttribute("HasMedkit") and "+" or "·"
  mode=player:GetAttribute("MoveMode") or "walk"
- run.UIStroke.Transparency=mode=="run" and .05 or .4 slow.UIStroke.Transparency=mode=="slow" and .05 or .4
+ run.UIStroke.Transparency=mode=="run" and .05 or .4
+ slow.UIStroke.Transparency=mode=="slow" and .05 or .4
+ flashlight.UIStroke.Transparency=player:GetAttribute("FlashlightOn") and .05 or .4
  timer.Text=string.format("%s • %d:%02d",phase,math.floor(left/60),left%60)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)

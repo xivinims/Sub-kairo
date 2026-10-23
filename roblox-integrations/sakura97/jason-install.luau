@@ -122,6 +122,7 @@ workspace.StreamingEnabled=false
 local storage=replace(SS,"SurvivalAssets","Folder")
 local maps=Instance.new("Folder",storage) maps.Name="Maps"
 local rigs=Instance.new("Folder",storage) rigs.Name="Killers"
+local items=Instance.new("Folder",storage) items.Name="Items"
 local net=replace(RS,"Survival","Folder")
 replace(net,"Action","RemoteEvent") replace(net,"Update","RemoteEvent")
 local config=replace(net,"Config","ModuleScript") config.Source=__CONFIG_SOURCE__
@@ -213,6 +214,20 @@ end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"
 local saves=assert(rig:FindFirstChild("AnimSaves")) compact(saves,clips) saves:Destroy()
 rig.Parent=rigs
+local flashlightAsset=load(4573262309)
+local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
+assert(flashlightSource,"LANTERNA asset 4573262309 contains no Tool")
+local flashlight=flashlightSource:Clone()
+flashlight.Name="Flashlight"
+flashlight:SetAttribute("SourceAssetId",4573262309)
+sanitize(flashlight,false)
+local flashlightHandle=assert(flashlight:FindFirstChild("Handle"),"LANTERNA Tool has no Handle")
+for _,p in ipairs(flashlight:GetDescendants()) do
+ if p:IsA("BasePart") then p.Anchored=false p.CanCollide=false p.CanTouch=false p.Massless=true end
+end
+flashlight.Parent=items
+flashlightAsset:Destroy()
+
 local theme=Instance.new("Sound")
 theme.Name="JasonTheme"
 theme.SoundId="rbxassetid://132120584214046"

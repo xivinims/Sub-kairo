@@ -228,6 +228,7 @@ if(applied?.saved){
   assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902)
   assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==120)
+  assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredIdle"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredWalk"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))
