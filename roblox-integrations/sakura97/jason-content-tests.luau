@@ -47,17 +47,13 @@ assert((crouch:GetAttribute("ClipCount") or 0)>0,"Crouch package has no clips")
 local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Folder") then table.insert(survivorNames,v.Name) end end table.sort(survivorNames)
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
- local testRig=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
- testRig.Name="AnimationCompatibilityRig" testRig.Parent=workspace
- local testHum=assert(testRig:FindFirstChildOfClass("Humanoid"))
- pcall(function() testHum:BuildRigFromAttachments() end)
- local lookup={} local jointNames={}
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
- for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") then
-  table.insert(jointNames,j.Name..":"..tostring(j.Part1 and j.Part1.Name or "nil"))
-  if j.Part1 then lookup[norm(j.Part1.Name)]=true lookup[norm(j.Name)]=true end
- end end
- table.sort(jointNames)
+ local lookup={
+  lowertorso=true,uppertorso=true,head=true,
+  leftupperarm=true,rightupperarm=true,leftlowerarm=true,rightlowerarm=true,lefthand=true,righthand=true,
+  leftupperleg=true,rightupperleg=true,leftlowerleg=true,rightlowerleg=true,leftfoot=true,rightfoot=true,
+  root=true,waist=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true,
+ }
  for alias,partName in pairs({
   humanoidrootpart="lowertorso",rootpart="lowertorso",torso="uppertorso",uppertorso="uppertorso",
   head="head",leftarm="leftupperarm",rightarm="rightupperarm",leftleg="leftupperleg",rightleg="rightupperleg"
@@ -70,27 +66,23 @@ local function animationCompatibility(folder,names)
   local chunks=clipFolder:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
   local packed={} for _,v in ipairs(chunks) do table.insert(packed,v.Value) end
   local decoded=Http:JSONDecode(buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(game:GetService("EncodingService"):Base64Decode(buffer.fromstring(table.concat(packed))),Enum.CompressionAlgorithm.Zstd)))
-  local matched={} local moving=false
+  local matched={} local moving=false local poseNames={} local seen={}
   for _,frame in ipairs(decoded.frames) do for poseName,pose in pairs(frame.poses) do
-   if lookup[norm(poseName)] then matched[norm(poseName)]=true end
-   local c=pose.c or pose
-   if #c==12 then
-    local cf=CFrame.new(table.unpack(c))
-    if cf.Position.Magnitude>.001 or math.abs(select(2,cf:ToOrientation()))>.001 or math.abs(select(1,cf:ToOrientation()))>.001 or math.abs(select(3,cf:ToOrientation()))>.001 then moving=true end
+   local n=norm(poseName)
+   if lookup[n] then matched[n]=true end
+   if not seen[poseName] then seen[poseName]=true table.insert(poseNames,poseName) end
+   local v=pose.c or pose
+   if #v==12 then
+    local cf=CFrame.new(table.unpack(v))
+    local rx,ry,rz=cf:ToOrientation()
+    if cf.Position.Magnitude>.001 or math.abs(rx)>.001 or math.abs(ry)>.001 or math.abs(rz)>.001 then moving=true end
    end
   end end
   local count=0 for _ in pairs(matched) do count+=1 end
-  if count<4 or not moving then
-   local names={} local seen={}
-   for _,frame in ipairs(decoded.frames) do for poseName in pairs(frame.poses) do
-    if not seen[poseName] then seen[poseName]=true table.insert(names,poseName) end
-   end end
-   table.sort(names)
-   error(clipName.." cannot drive R15 rig; matched="..count.." moving="..tostring(moving).." poses="..table.concat(names,",").." joints="..table.concat(jointNames,","))
-  end
+  table.sort(poseNames)
+  assert(count>=4 and moving,clipName.." cannot retarget to canonical R15; matched="..count.." poses="..table.concat(poseNames,","))
   report[clipName]=count
  end
- testRig:Destroy()
  return report
 end
 local survivorCompatibility=animationCompatibility(survivor,{"Idle","Walk","Run","InjuredIdle","InjuredWalk","InjuredRun"})
