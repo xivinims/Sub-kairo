@@ -79,10 +79,15 @@ let survivalBody=read('survival-install').replace('__RIG_INSTALL__',read('rig-in
 for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 const survivalTests=read('survival-tests');
 const survivalClientTests=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
-const survivalServerTestSource=read('survival-server').replace(
- 'local function now() return workspace:GetServerTimeNow() end',
- 'local function now() return TEST_NOW() end'
-);
+const survivalServerTestSource=read('survival-server')
+ .replace(
+  'local function now() return workspace:GetServerTimeNow() end',
+  'local function now() return TEST_NOW() end'
+ )
+ .replace(
+  'if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return end',
+  'if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) then return end'
+ );
 const survivalRuntimeTests=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',survivalServerTestSource);
 const verifySource=read('verify');
 const menuVerifySource=read('verify-menu');
