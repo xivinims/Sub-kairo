@@ -62,11 +62,24 @@ end
 local proxyTask={spawn=function(fn,...) local co=coroutine.create(fn) resume(co,...) return co end,wait=function(seconds) return coroutine.yield(seconds or .01) end}
 local aiContext
 local stubAI={start=function(_,_,_,ctx) aiContext=ctx return {noise=function() noiseCalls+=1 end,stop=function() aiStopped+=1 end} end}
+local stubFactory={create=function(name)
+ local model=Instance.new("Model")
+ model.Name=name
+ local root=Instance.new("Part")
+ root.Name="HumanoidRootPart" root.Size=Vector3.new(2,2,1) root.Anchored=false root.Parent=model
+ local hum=Instance.new("Humanoid") hum.RequiresNeck=false hum.Parent=model
+ model.PrimaryPart=root
+ return model
+end}
 local function run()
  local game=proxyGame local workspace=realWorkspace local task=proxyTask local Instance=proxyInstance
  local TEST_NOW=function() return clock end
  local warn=function(message) table.insert(roundErrors,tostring(message)) end
- local require=function(module) if module==SSS.PursuerAI then return stubAI end return realRequire(module) end
+ local require=function(module)
+ if module==SSS.PursuerAI then return stubAI
+ elseif module==SSS.KillerFactory then return stubFactory end
+ return realRequire(module)
+end
 __SURVIVAL_SERVER_TEST_SOURCE__
 end
 local function advance(seconds)
