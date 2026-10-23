@@ -1,4 +1,14 @@
 local Players=game:GetService("Players")
+local function bootstrapAssets()
+__RUNTIME_ASSET_BOOTSTRAP__
+end
+local bootstrapOk,bootstrapErr=xpcall(bootstrapAssets,debug.traceback)
+local bootRuntime=game:GetService("ReplicatedStorage"):WaitForChild("SweanRuntime")
+if not bootstrapOk then
+ bootRuntime:SetAttribute("AssetsReady",false)
+ bootRuntime:SetAttribute("AssetBootstrapError",tostring(bootstrapErr))
+ warn("Survivers asset bootstrap: "..tostring(bootstrapErr))
+end
 local RunService=game:GetService("RunService")
 local RS=game:GetService("ReplicatedStorage")
 local spawn=workspace:WaitForChild("IslandSpawn")
