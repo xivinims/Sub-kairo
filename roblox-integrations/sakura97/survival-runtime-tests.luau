@@ -153,12 +153,12 @@ local ok,result=xpcall(function()
  send(healer,"kit") advance(3.2)
  assert(not ally:GetAttribute("Downed") and not healer:GetAttribute("HasMedkit"),"Ally revive failed")
  assert(healer.folder.leaderstats.Pontos.Value>=10,"Revive points missing")
- assert(aiContext,"AI context missing before elimination")
+ assert(aiContext,"AI context missing before execution")
+ assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"Revived survivor must remain injured")
  advance(1)
- hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"Player was not injured before second hit")
- hit(p) assert(p:GetAttribute("Downed"),"Player was not downed before bleedout elimination")
- advance(26)
- assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Elimination flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
+ hit(p) assert(p:GetAttribute("Downed"),"Injured survivor was not downed by the next Jason hit")
+ hit(p) advance(2)
+ assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Jason execution flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
  SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
  players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1)
@@ -172,7 +172,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end
