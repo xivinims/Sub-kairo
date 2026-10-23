@@ -183,7 +183,29 @@ end
 checks.voidController=verifyVoidController()
 assert(checks and checks.ok,"Verify failed")
 
-game:GetService("AssetService"):SavePlaceAsync()
+local SerializationService=game:GetService("SerializationService")
+local function serializedSize(instances)
+ local ok,buf=pcall(function() return SerializationService:SerializeInstancesAsync(instances) end)
+ if not ok or not buf then return -1 end
+ return buffer.len(buf)
+end
+local sizeReport={
+ lobby=serializedSize({workspace.JediLibrary}),
+ menuScene=serializedSize({game.ReplicatedStorage.MenuSceneTemplate}),
+ maps=serializedSize({game.ServerStorage.SurvivalAssets.Maps}),
+ killers=serializedSize({game.ServerStorage.SurvivalAssets.Killers}),
+ starterGui=serializedSize({game.StarterGui}),
+ starterPlayer=serializedSize({game.StarterPlayer.StarterPlayerScripts}),
+ serverScripts=serializedSize({game.ServerScriptService}),
+ replicated=serializedSize({game.ReplicatedStorage}),
+}
+print("SURVIVERS_SIZE_REPORT",game:GetService("HttpService"):JSONEncode(sizeReport))
+local saveOk,saveErr=pcall(function()
+ game:GetService("AssetService"):SavePlaceAsync()
+end)
+if not saveOk then
+ error("SAVE_FAILED sizes="..game:GetService("HttpService"):JSONEncode(sizeReport).." err="..tostring(saveErr))
+end
 
 return {
   ok=true,
