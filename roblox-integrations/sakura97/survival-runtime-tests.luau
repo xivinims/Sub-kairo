@@ -130,12 +130,12 @@ local ok,result=xpcall(function()
  advance(26)
  assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Elimination flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
- SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait() assert(p:GetAttribute("Spectating"),"Spectator mode did not start")
+ SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
  send(players[9],"join") local request=assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot load") send(players[9],"ready",request[1]) assert(players[9]:GetAttribute("InRound"),"Ninth player did not enter freed slot")
  advance(221) assert(aiStopped==1,"Round AI did not clean up")
  assert(not workspace:FindFirstChild("ActiveArena"))
  for _,pl in ipairs(players) do assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating")) end
- return {ok=true,selfAndAllyRevive=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorAfterCinematic=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,selfAndAllyRevive=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end
