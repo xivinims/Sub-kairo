@@ -46,14 +46,27 @@ local aiContext
 local stubAI={start=function(_,_,_,ctx) aiContext=ctx return {noise=function() noiseCalls+=1 end,stop=function() aiStopped+=1 end} end}
 local function run()
  local game=proxyGame local workspace=proxyWorkspace local task=proxyTask local Instance=proxyInstance
+ local warn=function(message) table.insert(roundErrors,tostring(message)) end
  local require=function(module) if module==SSS.PursuerAI then return stubAI end return realRequire(module) end
 __SURVIVAL_SERVER_TEST_SOURCE__
 end
 local function advance(seconds)
- clock+=seconds
- local due=scheduled scheduled={}
- for _,s in ipairs(due) do if s.at<=clock then resume(s.co) else table.insert(scheduled,s) end end
- heartbeat:Fire(seconds) realTask.wait()
+ local target=clock+seconds
+ while clock<target do
+  local before=clock
+  clock=math.min(target,clock+1)
+  local progressed=true
+  while progressed do
+   progressed=false
+   local due=scheduled scheduled={}
+   for _,s in ipairs(due) do
+    if s.at<=clock then resume(s.co) progressed=true
+    else table.insert(scheduled,s) end
+   end
+  end
+  heartbeat:Fire(clock-before)
+  realTask.wait()
+ end
 end
 local function send(p,kind,value) action:Fire(p,kind,value) realTask.wait() end
 local deathCount=0 local dc=SSS.SurvivalBridge.DeathRequest.Event:Connect(function() deathCount+=1 end)
