@@ -268,7 +268,13 @@ task.spawn(function()
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
-    npc:PivotTo(CFrame.new(arena:GetAttribute("KillerSpawn")))
+    local killerSpawn=arena:GetAttribute("KillerSpawn")
+    local authoredRotation=npc:GetPivot().Rotation
+    npc:PivotTo(CFrame.new(killerSpawn+Vector3.new(0,20,0))*authoredRotation)
+    local boxCF,boxSize=npc:GetBoundingBox()
+    local bottom=boxCF.Position.Y-boxSize.Y/2
+    npc:PivotTo(npc:GetPivot()+Vector3.new(0,killerSpawn.Y+.08-bottom,0))
+    npc:SetAttribute("GroundOffset",npc.PrimaryPart.Position.Y-killerSpawn.Y)
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)

@@ -119,9 +119,12 @@ assert(source:IsA("Model") and source:FindFirstChildOfClass("Humanoid"),"Invalid
 local rig=source:Clone() rig.Parent=nil a:Destroy() sanitize(rig,false)
 rig.Name="Jason" rig:SetAttribute("SourceAssetId",125165599816440)
 local root=assert(rig:FindFirstChild("HumanoidRootPart")) rig.PrimaryPart=root
-local hum=rig:FindFirstChildOfClass("Humanoid") hum.RequiresNeck=false hum.BreakJointsOnDeath=false hum.MaxHealth=1000 hum.Health=1000 hum.HipHeight=0 hum.WalkSpeed=11 hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
-for _,p in ipairs(rig:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false p.Massless=p~=root end end
-root.CanCollide=true root.Size=Vector3.new(2,2,1)
+local hum=rig:FindFirstChildOfClass("Humanoid")
+-- Preserve the exact authored Jason body proportions and rig offsets from the source asset.
+rig:SetAttribute("SourceRootSize",root.Size)
+rig:SetAttribute("SourceHipHeight",hum.HipHeight)
+rig:SetAttribute("SourcePivot",rig:GetPivot())
+hum.RequiresNeck=false hum.BreakJointsOnDeath=false hum.MaxHealth=1000 hum.Health=1000 hum.WalkSpeed=11 hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
 -- Compact exact poses as JSON, avoiding tens of thousands of replicated Instances.
 local function compact(folder,destination)
  for _,seq in ipairs(folder:GetChildren()) do if seq:IsA("KeyframeSequence") then
@@ -129,7 +132,11 @@ local function compact(folder,destination)
   local data={length=frames[#frames].Time,frames={}}
   for _,f in ipairs(frames) do
    local poses={}
-   for _,p in ipairs(f:GetDescendants()) do if p:IsA("Pose") and p.Weight>0 then poses[p.Name]={p.CFrame:GetComponents()} end end
+   for _,p in ipairs(f:GetDescendants()) do
+    if p:IsA("Pose") and p.Weight>0 then
+     poses[p.Name]={c={p.CFrame:GetComponents()},e=p.EasingStyle.Name,d=p.EasingDirection.Name,w=p.Weight}
+    end
+   end
    table.insert(data.frames,{time=f.Time,poses=poses})
   end
   local json=game:GetService("HttpService"):JSONEncode(data)
