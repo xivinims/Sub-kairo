@@ -193,8 +193,13 @@ if ${process.env.SURVIVERS_DRY_RUN==='1'?'false':'true'} then
  game.ReplicatedStorage.Survival:SetAttribute("EndsAt",0)
  game.ReplicatedStorage.Survival:SetAttribute("Count",0)
  game.ReplicatedStorage.SweanRuntime:SetAttribute("LogoSHA256","286b7e57276a5d593b38c10c3a4cd41518d027c0e9346dfa6db3daf36521897e")
- game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
- result.saved=true
+ local saveOk,saveError=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
+ result.saved=saveOk result.saveError=saveOk and nil or tostring(saveError)
+ result.sizes={}
+ for _,name in ipairs({"Workspace","ReplicatedStorage","ServerStorage","ServerScriptService","StarterPlayer","StarterGui","ReplicatedFirst"}) do
+  local copy=Instance.new("Folder") for _,child in ipairs(game:GetService(name):GetChildren()) do local ok,c=pcall(function() return child:Clone() end) if ok and c then c.Parent=copy end end
+  local ok,b=pcall(function() return ser:SerializeInstancesAsync({copy}) end) result.sizes[name]=ok and buffer.len(b) or -1 copy:Destroy()
+ end
 end
 return result
 `;
@@ -213,4 +218,13 @@ if(applied?.saved){
   return {ok=true,version=game.PlaceVersion,build=120,logo=true,singleMap=true,singleJason=true,lobbyPreserved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
+}
+
+if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
+ console.log('UNCHANGED_SAVE_DIAGNOSTIC',JSON.stringify(first(await execute(`
+ local before=game.PlaceVersion
+ local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
+ return {sourceVersion=before,ok=ok,error=ok and nil or tostring(err)}
+ `))));
+ throw new Error('Jason build was not published; inspect diagnostic above');
 }
