@@ -183,7 +183,7 @@ end
 checks.voidController=verifyVoidController()
 assert(checks and checks.ok,"Verify failed")
 
-game:GetService("AssetService"):SavePlaceAsync({PlaceId=${PLACE_ID},SaveWithoutPublish=false})
+game:GetService("AssetService"):SavePlaceAsync()
 
 return {
   ok=true,
