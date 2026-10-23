@@ -14,9 +14,13 @@ local p={Character=char,UserId=991} local visible=true local attacks=0
 local brain=AI.start(rig,map,{vision=70,hearing=65,speed=22,range=5.5},{players=function() return visible and {p} or {} end,vulnerable=function() return true end,catch=function() attacks+=1 end})
 local function step(n) for i=1,n or 1 do event:Fire(.2) task.wait() end end
 local ok,err=xpcall(function()
- step() assert(rig:GetAttribute("AIState")=="Chase" and rig:GetAttribute("TargetUserId")==991,"Visible target was not acquired")
+ step()
+ assert(rig:GetAttribute("AIState")=="Chase" and rig:GetAttribute("TargetUserId")==991,"Visible target was not acquired")
+ assert(rig:GetAttribute("DirectChase")==true,"Visible chase must bypass stale path waypoints")
  local wall=Instance.new("Part",host) wall.Size=Vector3.new(20,20,1) wall.Position=Vector3.new(0,2000,-10) wall.Anchored=true
- step() assert(rig:GetAttribute("TargetUserId")==0 and rig:GetAttribute("AIState")=="Search","Jason sees through walls")
+ step()
+ assert(rig:GetAttribute("TargetUserId")==0 and rig:GetAttribute("AIState")=="Search","Jason sees through walls")
+ assert(rig:GetAttribute("DirectChase")==false,"Jason kept direct chase through wall")
  visible=false step(45) assert(rig:GetAttribute("AIState")=="Patrol","Jason did not abandon stale target")
  brain.noise(Vector3.new(15,2000,0),65) step() assert(rig:GetAttribute("AIState")=="Investigate","Audible noise not investigated")
  step(35) brain.noise(Vector3.new(500,2000,0),65) step() assert(rig:GetAttribute("AIState")=="Patrol","Jason heard outside hearing radius")
@@ -24,4 +28,4 @@ local ok,err=xpcall(function()
  step(3) assert(attacks==1,"Attack cooldown failed")
 end,debug.traceback)
 brain.stop() host:Destroy() assert(ok,err)
-return {ok=true,lineOfSight=true,searchMemoryExpires=true,hearingRadius=true,attackCooldown=true}
+return {ok=true,lineOfSight=true,directPredictiveChase=true,pathFallback=true,searchMemoryExpires=true,hearingRadius=true,attackCooldown=true}

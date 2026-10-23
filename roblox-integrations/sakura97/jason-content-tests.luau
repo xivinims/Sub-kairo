@@ -31,6 +31,9 @@ assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magni
 assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
 assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
 assert(not workspace.StreamingEnabled)
+local theme=assert(game.ReplicatedStorage.Survival:FindFirstChild("JasonTheme"),"Jason theme missing")
+assert(theme:IsA("Sound") and theme:GetAttribute("SourceAssetId")==132120584214046,"Wrong Jason theme asset")
+assert(theme.Looped and theme.Volume>0,"Jason theme must loop with audible volume")
 local survivor=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorClips"),"Forsaken Survivor clips missing")
 local crouch=assert(game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Crouch clips missing")
 assert(survivor:GetAttribute("SourceAssetId")==127092032896760,"Wrong Forsaken survivor animation asset")
@@ -41,4 +44,4 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
-return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}

@@ -44,6 +44,7 @@ local ok,result=xpcall(function()
  assert(gui.Spectate.Player.Text=="Nenhum sobrevivente disponível","Stale spectator target")
  attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
  assert(gui.Actions.Attack.Visible and not gui.Actions.Run.Visible,"Player Jason attack controls")
+ assert(camera.FieldOfView>70,"Jason FOV boost did not activate")
  attrs.IsJason=false attrs.InRound=false attrs.Spectating=true
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
@@ -55,7 +56,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and gui.Actions.Visible,"Portal admission must keep movement controls visible")
  assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Run/slow/boost controls disappeared outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,persistentMovementControls=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,persistentMovementControls=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result

@@ -4,6 +4,12 @@ local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
 local player=Players.LocalPlayer local net=RS:WaitForChild("Survival") local event=net.Action
+local SoundService=game:GetService("SoundService")
+local themeTemplate=net:WaitForChild("JasonTheme")
+local jasonTheme=themeTemplate:Clone()
+jasonTheme.Name="LocalJasonTheme"
+jasonTheme.Looped=true
+jasonTheme.Parent=SoundService
 local config=require(net.Config)
 local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
@@ -164,7 +170,7 @@ end
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
- elseif action=="reset" then clearDoor() doorCF=nil loadToken+=1 loading.Visible=false
+ elseif action=="reset" then clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" then task.spawn(caughtAnimation,a,b) end
@@ -179,6 +185,28 @@ UIS.InputBegan:Connect(function(input,processed)
 end)
 UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end end)
 local highlight=Instance.new("Highlight") highlight.Name="PursuerTarget" highlight.FillColor=Color3.fromRGB(200,35,43) highlight.OutlineColor=Color3.fromRGB(242,80,85) highlight.FillTransparency=.8 highlight.DepthMode=Enum.HighlightDepthMode.Occluded highlight.Enabled=false highlight.Parent=gui
+local jasonPresentationFov=70
+RunService.RenderStepped:Connect(function(dt)
+ local camera=workspace.CurrentCamera
+ if not camera then return end
+ local isJason=player:GetAttribute("IsJason")==true
+ local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive
+ if active then
+  if not jasonTheme.IsPlaying then jasonTheme:Play() end
+  local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+  local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
+  local targetFov=speed>4 and 84 or 78
+  jasonPresentationFov+=(targetFov-jasonPresentationFov)*math.min(1,dt*6)
+  if camera.CameraType~=Enum.CameraType.Scriptable then camera.FieldOfView=jasonPresentationFov end
+ else
+  if jasonTheme.IsPlaying then jasonTheme:Stop() end
+  jasonPresentationFov+=(70-jasonPresentationFov)*math.min(1,dt*6)
+  if player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and camera.CameraType~=Enum.CameraType.Scriptable then
+   camera.FieldOfView=jasonPresentationFov
+  end
+ end
+end)
+
 local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0

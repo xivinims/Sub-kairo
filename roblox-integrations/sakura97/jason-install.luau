@@ -150,6 +150,18 @@ end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"
 local saves=assert(rig:FindFirstChild("AnimSaves")) compact(saves,clips) saves:Destroy()
 rig.Parent=rigs
+local themeAsset=load(132120584214046)
+local themeSource=themeAsset:FindFirstChildWhichIsA("Sound",true)
+assert(themeSource,"Jason Voorhees Sound Effect asset contains no Sound")
+local theme=themeSource:Clone()
+theme.Name="JasonTheme"
+theme.Looped=true
+theme.Playing=false
+theme.Volume=.55
+theme:SetAttribute("SourceAssetId",132120584214046)
+theme.Parent=net
+themeAsset:Destroy()
+
 local survivorAsset=load(127092032896760)
 local survivor=Instance.new("Folder",net) survivor.Name="SurvivorClips" survivor:SetAttribute("SourceAssetId",127092032896760)
 local survivorSaves=survivorAsset:FindFirstChild("AnimSaves",true) or survivorAsset
