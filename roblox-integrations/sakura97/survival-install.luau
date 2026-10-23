@@ -91,8 +91,15 @@ for _,spec in ipairs(require(config).Maps) do
  map:SetAttribute("PartCount",partCount)
  map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("FloorY",30) map.Parent=maps
 end
--- Models and animation extraction are completed below.
-__RIG_INSTALL__
+-- Keep exact pursuer definitions in the place, but load the selected original rig only when a round starts.
+for name,spec in pairs(require(config).Killers) do
+ local def=Instance.new("Folder")
+ def.Name=name
+ if spec.id then def:SetAttribute("SourceAssetId",spec.id) end
+ if spec.animation then def:SetAttribute("AnimationAssetId",spec.animation) end
+ def.Parent=rigs
+end
+local factory=replace(SSS,"KillerFactory","ModuleScript") factory.Source=__KILLER_FACTORY_SOURCE__
 local ai=replace(SSS,"PursuerAI","ModuleScript") ai.Source=__AI_SOURCE__
 local server=replace(SSS,"SurvivalServer","Script") server.Source=__SURVIVAL_SERVER_SOURCE__
 local client=replace(game:GetService("StarterPlayer").StarterPlayerScripts,"SurvivalClient","LocalScript") client.Source=__SURVIVAL_CLIENT_SOURCE__

@@ -27,16 +27,38 @@ for _,m in ipairs(assets.Maps:GetChildren()) do
  local parts=0 for _,d in ipairs(m:GetDescendants()) do assert(not d:IsA("LuaSourceContainer"),"Imported map script") if d:IsA("BasePart") then parts+=1 assert(d.Anchored,"Unanchored map part in "..m.Name..": "..d.Name) end end
  maps[#maps+1]={name=m.Name,parts=parts,spawns=#points}
 end
-local rigs={}
-for _,m in ipairs(assets.Killers:GetChildren()) do
- assert(m.PrimaryPart,"Missing PrimaryPart in "..m.Name) assert(m:FindFirstChildOfClass("Humanoid"),"Missing Humanoid in "..m.Name)
+local Factory=require(SSS.KillerFactory)
+local rigs={} local freddyJoints={} local mediaFailures={} local warriorChecked=false
+for _,name in ipairs({"Figure","Guerreiro","Scarlat","Freddy","Amanda"}) do
+ local m=Factory.create(name,configs[name])
+ assert(m.PrimaryPart,"Missing PrimaryPart in "..name)
+ assert(m:FindFirstChildOfClass("Humanoid"),"Missing Humanoid in "..name)
  local joints=0 local names={}
  for _,d in ipairs(m:GetDescendants()) do
-  assert(not d:IsA("LuaSourceContainer"),"Imported rig script")
+  assert(not d:IsA("LuaSourceContainer"),"Imported rig script in "..name)
   if d:IsA("Motor6D") then joints+=1 table.insert(names,{name=d.Name,part=d.Part1 and d.Part1.Name}) end
  end
- assert(joints>0,"No Motor6D joints in "..m.Name) table.insert(rigs,{name=m.Name,joints=names,clips=#m.MotionClips:GetChildren()})
+ assert(joints>0,"No Motor6D joints in "..name)
+ local clips=m:FindFirstChild("MotionClips")
+ assert(clips,"MotionClips missing in "..name)
+ table.insert(rigs,{name=name,joints=names,clips=#clips:GetChildren()})
+ if name=="Guerreiro" then
+  assert(m:GetAttribute("AnimationAssetId")==125165599816440)
+  assert(#clips:GetChildren()==3,"Warrior movement clips missing")
+  assert(m:GetAttribute("AvatarItems")=="109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
+  assert((m:GetAttribute("AppliedItemCount") or 0)>=6,"Warrior cosmetic set did not load")
+  warriorChecked=true
+ elseif name=="Freddy" then
+  for _,d in ipairs(m:GetDescendants()) do if d:IsA("Motor6D") then
+   table.insert(freddyJoints,{p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name,pos=d.Part1 and tostring(m.PrimaryPart.CFrame:PointToObjectSpace(d.Part1.Position))})
+  end end
+ end
+ game:GetService("ContentProvider"):PreloadAsync({m},function(id,status)
+  if status~=Enum.AssetFetchStatus.Success then table.insert(mediaFailures,{id=id,status=status.Name,killer=name}) end
+ end)
+ m:Destroy()
 end
+assert(warriorChecked,"Warrior runtime validation missing")
 local pathChecks={}
 for _,template in ipairs(assets.Maps:GetChildren()) do
  local map=template:Clone() map.Parent=workspace
@@ -58,19 +80,7 @@ for _,template in ipairs(assets.Maps:GetChildren()) do
  end
  table.insert(pathChecks,{map=template.Name,paths=paths}) map:Destroy()
 end
-local warrior=assert(assets.Killers:FindFirstChild("Guerreiro"))
-assert(warrior:GetAttribute("AnimationAssetId")==125165599816440)
-assert(#warrior.MotionClips:GetChildren()==3,"Warrior movement clips missing")
-assert(warrior:GetAttribute("AvatarItems")=="109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
-assert((warrior:GetAttribute("AppliedItemCount") or 0)>=6,"Warrior cosmetic set did not load")
-local freddyJoints={}
-local f=assets.Killers.Freddy
-for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
- table.insert(freddyJoints,{p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name,pos=d.Part1 and tostring(f.PrimaryPart.CFrame:PointToObjectSpace(d.Part1.Position))})
-end end
-local mediaFailures={}
-local roots={workspace.JediLibrary,assets.Maps,assets.Killers}
-game:GetService("ContentProvider"):PreloadAsync(roots,function(id,status)
+game:GetService("ContentProvider"):PreloadAsync({workspace.JediLibrary,assets.Maps},function(id,status)
  if status~=Enum.AssetFetchStatus.Success then table.insert(mediaFailures,{id=id,status=status.Name}) end
 end)
 local lobby=workspace.JediLibrary assert(lobby:GetAttribute("SourceAssetId")==852951140)

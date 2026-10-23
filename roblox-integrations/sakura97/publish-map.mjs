@@ -115,7 +115,7 @@ const menuBody=read('install-menu')
  .replaceAll('__SURVIVERS_LOGO_ID__',String(surviversLogoId))
  .replace('__MENU_SOURCE__',JSON.stringify(read('menu-client')))
  .replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
-let survivalBody=read('survival-install').replace('__RIG_INSTALL__',read('rig-install'));
+let survivalBody=read('survival-install').replace('__KILLER_FACTORY_SOURCE__',JSON.stringify(read('killer-factory')));
 for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 const survivalTests=read('survival-tests');
 const survivalClientTests=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));

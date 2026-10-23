@@ -4,7 +4,7 @@ local SS=game:GetService("ServerStorage")
 local SSS=game:GetService("ServerScriptService")
 local RunService=game:GetService("RunService")
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
-local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI)
+local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets
 local state=Rules.new() local queued={} local rates={} local motions={}
 local arena,npc,brain=nil,nil,nil local killerName="" local endTime=0
@@ -205,7 +205,10 @@ task.spawn(function()
     Rules.begin(state)
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     arena=mapList[math.random(#mapList)]:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
-    npc=rigList[math.random(#rigList)]:Clone() killerName=npc.Name npc.Parent=workspace
+    local chosen=rigList[math.random(#rigList)]
+    killerName=chosen.Name
+    npc=KillerFactory.create(killerName,config.Killers[killerName])
+    npc.Parent=workspace
     local pts=arena.SafePoints:GetChildren() npc:PivotTo(CFrame.new(pts[math.random(#pts)].Value+Vector3.new(0,3,0)))
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)

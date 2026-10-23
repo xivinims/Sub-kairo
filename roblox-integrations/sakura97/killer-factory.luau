@@ -92,8 +92,7 @@ end
 
 local function makeFigure(spec)
  local model,clips=basicRig(spec.id,"Figure")
- local source=load(spec.id)
- local saves=source:FindFirstChild("AnimSaves",true)
+ local saves=model:FindFirstChild("AnimSaves",true)
  if saves then
   for _,d in ipairs(saves:GetChildren()) do
    if d:IsA("KeyframeSequence") then
@@ -101,10 +100,8 @@ local function makeFigure(spec)
     copy.Parent=clips
    end
   end
+  saves:Destroy()
  end
- source:Destroy()
- local old=model:FindFirstChild("AnimSaves")
- if old then old:Destroy() end
  return model
 end
 
@@ -167,12 +164,11 @@ end
 
 local function makeAmanda(spec)
  local model,clips=basicRig(spec.id,"Amanda")
- local asset=load(spec.id)
- local save=asset:FindFirstChild("AnimSaves",true)
- if save then sequences(save,spec.id,{Attack="AtticJumpscare",Walk="Automatic Save"},clips) end
- asset:Destroy()
- local old=model:FindFirstChild("AnimSaves")
- if old then old:Destroy() end
+ local save=model:FindFirstChild("AnimSaves",true)
+ if save then
+  sequences(save,spec.id,{Attack="AtticJumpscare",Walk="Automatic Save"},clips)
+  save:Destroy()
+ end
  return model
 end
 
