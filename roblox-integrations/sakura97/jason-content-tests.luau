@@ -1,3 +1,4 @@
+-- Validation retry: flashlight + R15 compatibility
 assert(not game.ServerStorage:FindFirstChild("NatureTemplates"),"Legacy NatureTemplates must not remain in Jason build")
 local assets=game.ServerStorage.SurvivalAssets local rig=assets.Killers.Jason local Http=game:GetService("HttpService")
 local sourceRoot=assert(rig:GetAttribute("SourceRootSize"),"Missing original Jason root size")
