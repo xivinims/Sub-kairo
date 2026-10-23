@@ -226,6 +226,7 @@ UIS.InputBegan:Connect(function(input,processed)
  elseif input.KeyCode==Enum.KeyCode.C then mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode)
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
  elseif input.KeyCode==Enum.KeyCode.Q then event:FireServer("boost")
+ elseif input.KeyCode==Enum.KeyCode.F then event:FireServer("flashlight")
  elseif input.KeyCode==Enum.KeyCode.E then event:FireServer("kit") end
 end)
 UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end end)
