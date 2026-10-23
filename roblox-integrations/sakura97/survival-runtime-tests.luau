@@ -6,10 +6,23 @@ local events={} local function signal() local e=Instance.new("BindableEvent",hos
 local heartbeat=signal() local added=signal() local removed=signal() local action=signal()
 local players={} local messages={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
 local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
+local templateHum=character:FindFirstChildOfClass("Humanoid")
+if not templateHum then templateHum=Instance.new("Humanoid",character) end
+templateHum.MaxHealth=100 templateHum.Health=100 templateHum.RequiresNeck=false
+local templateRoot=character:FindFirstChild("HumanoidRootPart")
+if not templateRoot then
+ templateRoot=Instance.new("Part") templateRoot.Name="HumanoidRootPart" templateRoot.Size=Vector3.new(2,2,1)
+ templateRoot.Transparency=1 templateRoot.CanCollide=false templateRoot.Anchored=false templateRoot.CFrame=character:GetPivot()
+ templateRoot.Parent=character
+end
+character.PrimaryPart=templateRoot
 for i=1,9 do
  local f=Instance.new("Folder",host) f.Name="Player"..i
  local p={UserId=i,Parent=host,Character=character:Clone(),CharacterAdded=signal().Event,attrs={},folder=f}
- p.Character.Name="Player"..i p.Character.Parent=host p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(i*3,4,0))
+ p.Character.Name="Player"..i p.Character.Parent=host
+ local h=p.Character:FindFirstChildOfClass("Humanoid") h.MaxHealth=100 h.Health=100
+ local r=p.Character:FindFirstChild("HumanoidRootPart") assert(r,"Fake player root missing")
+ p.Character.PrimaryPart=r p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(i*3,4,0))
  function p:GetAttribute(n) return self.attrs[n] end
  function p:SetAttribute(n,v) self.attrs[n]=v end
  function p:FindFirstChild(n) return self.folder:FindFirstChild(n) end
