@@ -138,6 +138,7 @@ local ok,result=xpcall(function()
  end
  local p=players[1]
  send(p,"flashlight") assert(p:GetAttribute("FlashlightOn") and p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not equip")
+ advance(.3)
  send(p,"flashlight") assert(not p:GetAttribute("FlashlightOn") and not p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not unequip")
  send(p,"boost") assert(not p:GetAttribute("HasBoost"),"Boost item was not consumed")
  advance(1) assert(p.Character.Humanoid.WalkSpeed==27,"Boost speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
