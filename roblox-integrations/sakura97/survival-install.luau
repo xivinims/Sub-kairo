@@ -28,17 +28,9 @@ local function sanitize(a,anchored)
  end
  for _,d in ipairs(a:GetDescendants()) do if d:IsA("SpawnLocation") then d.Enabled=false d.Transparency=1 d.CanCollide=false end end
 end
--- Tree House: preserve the supplied model, ground its lowest geometry.
-local house=load(15761692261) sanitize(house,true) house.Name="LobbyTreeHouse"
-local old=workspace:FindFirstChild(house.Name) if old then old:Destroy() end
-local ground=game:GetService("CollectionService"):GetTagged("IslandGreenGround")
-local rp=RaycastParams.new() rp.FilterType=Enum.RaycastFilterType.Include rp.FilterDescendantsInstances=ground
-local tc=workspace.BigCenterTree:GetPivot().Position
-local hit=workspace:Raycast(Vector3.new(tc.X+58,500,tc.Z+30),Vector3.new(0,-1000,0),rp)
-assert(hit,"Tree house needs green ground")
-local cf,size=house:GetBoundingBox()
-house:PivotTo(house:GetPivot()+Vector3.new(hit.Position.X-cf.X,hit.Position.Y-(cf.Y-size.Y/2)-.15,hit.Position.Z-cf.Z))
-house:SetAttribute("SourceAssetId",15761692261) house.Parent=workspace
+-- Lobby is installed by the base build.
+local lobby=assert(workspace:FindFirstChild("JediLibrary"),"Jedi Library lobby missing")
+assert(lobby:GetAttribute("SourceAssetId")==852951140,"Wrong lobby asset")
 -- Keep all inactive maps server-only. Imported legacy scripts never execute.
 for _,spec in ipairs(require(config).Maps) do
  local a=load(spec.id) sanitize(a,true)

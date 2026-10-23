@@ -59,10 +59,10 @@ for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
  table.insert(freddyJoints,{p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name,pos=d.Part1 and tostring(f.PrimaryPart.CFrame:PointToObjectSpace(d.Part1.Position))})
 end end
 local mediaFailures={}
-local roots={workspace.LobbyTreeHouse,assets.Maps,assets.Killers}
+local roots={workspace.JediLibrary,assets.Maps,assets.Killers}
 game:GetService("ContentProvider"):PreloadAsync(roots,function(id,status)
  if status~=Enum.AssetFetchStatus.Success then table.insert(mediaFailures,{id=id,status=status.Name}) end
 end)
-local house=workspace.LobbyTreeHouse assert(house:GetAttribute("SourceAssetId")==15761692261)
-local cf,size=house:GetBoundingBox()
-return {ok=true,mediaFailures=mediaFailures,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=false,warriorItems=7}
+local lobby=workspace.JediLibrary assert(lobby:GetAttribute("SourceAssetId")==852951140)
+local cf,size=lobby:GetBoundingBox()
+return {ok=true,mediaFailures=mediaFailures,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,lobbyAsset=852951140,lobbyBottom=cf.Y-size.Y/2,warriorPending=false,warriorItems=7}

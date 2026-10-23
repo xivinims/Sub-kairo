@@ -73,11 +73,11 @@ end
 local controller=Instance.new("LocalScript") controller.Name="MenuController" controller.Source=__MENU_SOURCE__ controller.Parent=ui
 local config=Instance.new("Folder") config.Name="SweanMenuConfig"
 local runtime=RS.SweanRuntime
-local base=Vector3.new(runtime:GetAttribute("TreeGroundX"),runtime:GetAttribute("TreeGroundY"),runtime:GetAttribute("TreeGroundZ"))
-local target=base+Vector3.new(0,24,0)
-config:SetAttribute("MainCamera",CFrame.lookAt(base+Vector3.new(80,48,100),target))
-config:SetAttribute("SettingsCamera",CFrame.lookAt(base+Vector3.new(90,40,70),target))
-config:SetAttribute("CreditsCamera",CFrame.lookAt(base+Vector3.new(65,54,95),target))
+local base=workspace.IslandSpawn.Position
+local target=base+Vector3.new(0,7,0)
+config:SetAttribute("MainCamera",CFrame.lookAt(base+Vector3.new(24,12,30),target))
+config:SetAttribute("SettingsCamera",CFrame.lookAt(base+Vector3.new(-20,10,24),target))
+config:SetAttribute("CreditsCamera",CFrame.lookAt(base+Vector3.new(18,15,-26),target))
 config:SetAttribute("Version",3)
 config:SetAttribute("LogoAssetId",89648072626653)
 config:SetAttribute("SourceAssetId",84828163072141)
