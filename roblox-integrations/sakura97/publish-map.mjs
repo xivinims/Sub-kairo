@@ -70,8 +70,12 @@ const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'
 let installBody=read('install');
 const runtimeSource=read('nature-runtime');
 installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
+for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',SERVER:'island-server',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server'})) {
+ installBody=installBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
+}
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
 const verifySource=read('verify');
+const simulationTests=read('runtime-tests');
 
 const patch=`
 assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
@@ -89,6 +93,10 @@ local function runVerify()
 ${verifySource}
 end
 local checks=runVerify()
+local function runSimulationTests()
+${simulationTests}
+end
+checks.simulation=runSimulationTests()
 assert(checks and checks.ok,"Verify failed")
 
 game:GetService("AssetService"):SavePlaceAsync()
@@ -96,6 +104,7 @@ return {
   ok=true,
   sourceVersion=sourceVersion,
   mapParts=checks.mapParts,
+  simulation=checks.simulation,
   lots=checks.lots,
   grass=checks.grass,
   pumpkins=checks.pumpkins,

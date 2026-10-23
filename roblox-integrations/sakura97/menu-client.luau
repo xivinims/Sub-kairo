@@ -13,12 +13,63 @@ local transition=ui:WaitForChild("FrameDeTransicion")
 local config=RS:WaitForChild("SweanMenuConfig")
 local controls=nil
 local inMenu=true
+ player:SetAttribute("InMenu",true)
 local state="main"
 local busy=false
 local low=game:GetService("UserInputService").TouchEnabled
 local returnButton=ui:WaitForChild("ReturnToMenu")
-local mode=settings.AjustesFrame:WaitForChild("QualityToggle")
+local mode=settings.AjustesFrame:WaitForChild("Controls"):WaitForChild("QualityToggle")
 local title=main:WaitForChild("IslandTitle")
+local switches={
+ {"WindToggle","WindEnabled","Vento"},{"GrassToggle","GrassInteraction","Grama ao pisar"},
+ {"LeavesToggle","LeavesEnabled","Folhas caindo"},{"NametagsToggle","ShowNametags","Nomes dos jogadores"},
+ {"SoundToggle","MenuSounds","Sons do menu"}
+}
+for _,setting in ipairs(switches) do
+ if player:GetAttribute(setting[2])==nil then player:SetAttribute(setting[2],true) end
+ local button=settings.AjustesFrame.Controls:WaitForChild(setting[1])
+ local function label() button.Text=setting[3]..": "..(player:GetAttribute(setting[2]) and "ligado" or "desligado") end
+ label()
+ button.Activated:Connect(function() player:SetAttribute(setting[2],not player:GetAttribute(setting[2])) label() end)
+end
+local function updateTag(tag)
+ if tag:IsA("BillboardGui") and tag.Name=="SweanNametag" then tag.Enabled=player:GetAttribute("ShowNametags")~=false end
+end
+local function watchCharacter(char)
+ local head=char:WaitForChild("Head",10) if not head then return end
+ for _,tag in ipairs(head:GetChildren()) do updateTag(tag) end
+ head.ChildAdded:Connect(updateTag)
+end
+local function watchPlayer(p)
+ p.CharacterAdded:Connect(watchCharacter)
+ if p.Character then task.spawn(watchCharacter,p.Character) end
+end
+Players.PlayerAdded:Connect(watchPlayer)
+for _,p in ipairs(Players:GetPlayers()) do watchPlayer(p) end
+player:GetAttributeChangedSignal("ShowNametags"):Connect(function()
+ for _,p in ipairs(Players:GetPlayers()) do
+  local head=p.Character and p.Character:FindFirstChild("Head")
+  if head then for _,tag in ipairs(head:GetChildren()) do updateTag(tag) end end
+ end
+end)
+for _,button in ipairs(ui:GetDescendants()) do
+ if button:IsA("TextButton") then
+  local scale=Instance.new("UIScale") scale.Parent=button
+  local tween
+  local function feedback(value)
+   if tween then tween:Cancel() end
+   tween=TweenService:Create(scale,TweenInfo.new(.1),{Scale=value}) tween:Play()
+  end
+  button.MouseEnter:Connect(function() feedback(1.02) end)
+  button.MouseLeave:Connect(function() feedback(1) end)
+  button.InputBegan:Connect(function(input)
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then feedback(.97) end
+  end)
+  button.InputEnded:Connect(function(input)
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then feedback(1) end
+  end)
+ end
+end
 local function visibility(container,value)
  for _,d in ipairs(container:GetDescendants()) do if d:IsA("GuiObject") then d.Visible=value end end
 end
@@ -35,12 +86,9 @@ local function layout()
  local viewport=camera.ViewportSize
  local w,h=viewport.X,viewport.Y
  local panelWidth=math.min(320,w*.86)
- local x=w-panelWidth-12
+ local x=16
  local buttonHeight=math.clamp(h*.10,38,48)
  local logoHeight=math.clamp(h*.22,40,120)
- main.Frame.Position=UDim2.fromOffset(x-12,0)
- main.Frame.Size=UDim2.fromOffset(panelWidth+24,h)
- main.Frame.ZIndex=1
  main.Logo.Position=UDim2.fromOffset(x+16,12)
  main.Logo.Size=UDim2.fromOffset(panelWidth-32,logoHeight)
  main.Logo.ScaleType=Enum.ScaleType.Fit main.Logo.ZIndex=2
@@ -75,7 +123,7 @@ end
 local function sound(name)
  local sounds=ui:FindFirstChild("Sonidos")
  local s=sounds and sounds:FindFirstChild(name)
- if s and s:IsA("Sound") then s:Play() end
+ if player:GetAttribute("MenuSounds")~=false and s and s:IsA("Sound") then s:Play() end
 end
 local function setQuality()
  for _,e in ipairs(Lighting:GetChildren()) do
@@ -89,7 +137,7 @@ end
 local function bindCamera()
  RunService:UnbindFromRenderStep("SweanMenuCamera")
  RunService:BindToRenderStep("SweanMenuCamera",Enum.RenderPriority.Camera.Value+1,function()
-  if not inMenu then return end
+  if not inMenu or player:GetAttribute("VoidActive") then return end
   local camera=workspace.CurrentCamera if not camera then return end
   camera.CameraType=Enum.CameraType.Scriptable
   camera.CFrame=config:GetAttribute(state=="credits" and "CreditsCamera" or state=="settings" and "SettingsCamera" or "MainCamera")
@@ -97,11 +145,13 @@ local function bindCamera()
 end
 local function open()
  inMenu=true
+ player:SetAttribute("InMenu",true)
  if controls then controls:Disable() end
  bindCamera() show("main") layout()
 end
 local function close()
  inMenu=false
+ player:SetAttribute("InMenu",false)
  RunService:UnbindFromRenderStep("SweanMenuCamera")
  local camera=workspace.CurrentCamera
  if camera then
@@ -110,11 +160,11 @@ local function close()
   local humanoid=char and char:FindFirstChildOfClass("Humanoid")
   if humanoid then camera.CameraSubject=humanoid end
  end
- if controls then controls:Enable() end
+ if controls and not player:GetAttribute("VoidActive") then controls:Enable() end
  show("playing")
 end
 local function navigate(action)
- if busy then return end busy=true
+ if busy or player:GetAttribute("VoidActive") then return end busy=true
  sound("Click")
  transition.Visible=true
  local fade=TweenService:Create(transition,TweenInfo.new(.18),{BackgroundTransparency=0})
@@ -133,7 +183,7 @@ returnButton.Activated:Connect(function() navigate(open) end)
 mode.Activated:Connect(function() low=not low setQuality() end)
 player.CharacterAdded:Connect(function(char)
  local h=char:WaitForChild("Humanoid",10)
- if not inMenu and h and workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject=h end
+ if not inMenu and not player:GetAttribute("VoidActive") and h and workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject=h end
 end)
 local cameraConnection
 local function connectCamera()

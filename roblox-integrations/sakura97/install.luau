@@ -126,17 +126,13 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",111)
+runtime:SetAttribute("Version",112)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
 runtime:SetAttribute("WindAssetId",WIND_ID)
 
-pcall(function()
-	workspace.StreamingEnabled=true
-	workspace.StreamingMinRadius=64
-	workspace.StreamingTargetRadius=160
-end)
+workspace.StreamingEnabled=false
 workspace.FallenPartsDestroyHeight=-300
 
 -- ILHA EXATA
@@ -255,6 +251,7 @@ assert(sourceModule,"SkinnedGrass module missing")
 
 local grassModule=sourceModule:Clone()
 grassModule.Name="SkinnedGrassRuntimeModule"
+grassModule.Source=__GRASS_MODULE_SOURCE__
 grassModule.Parent=ReplicatedStorage
 
 local function prepareMesh(mesh)
@@ -336,115 +333,7 @@ runtime:SetAttribute("GrassSpawnMode","ClientSafeRadius")
 -- celular aguenta ao mesmo tempo. Anda junto com o jogador.
 local grassRunner=Instance.new("LocalScript")
 grassRunner.Name="SkinnedGrassRunner"
-grassRunner.Source=[==========[
--- One exact SkinnedGrass variant. Pool meshes to avoid repeated skinning allocations.
-local CS=game:GetService("CollectionService")
-local RS=game:GetService("ReplicatedStorage")
-local RunService=game:GetService("RunService")
-local player=game:GetService("Players").LocalPlayer
-local touch=game:GetService("UserInputService").TouchEnabled
-local folder=workspace:WaitForChild("SkinnedGrassCoverage")
-local template=RS:WaitForChild("GrassWindTemplate"):WaitForChild("SkinnedGrass")
-local MAX=touch and 96 or 240
-local stepX,stepZ=folder:GetAttribute("StepX"),folder:GetAttribute("StepZ")
-local footX,footZ=folder:GetAttribute("FootprintX"),folder:GetAttribute("FootprintZ")
-local offset=Vector3.new(folder:GetAttribute("RootCenterX"),folder:GetAttribute("RootMinY"),folder:GetAttribute("RootCenterZ"))
-local radius=math.sqrt(MAX/math.pi)*math.min(stepX,stepZ)*.94
-local alive,pool,boneCache={},{},{}
-local created=0
-local function count(length,step,foot) return math.max(1,math.ceil((length-foot)/step)+1) end
-local function rootPosition()
- local char=player.Character
- local root=char and char:FindFirstChild("HumanoidRootPart")
- return root and root.Position
-end
-local function reset(mesh)
- for _,b in ipairs(boneCache[mesh] or {}) do b.Transform=CFrame.identity end
-end
-local lastPosition=nil
-local function refresh()
- local pos=rootPosition() if not pos then return end
- local green=CS:GetTagged("IslandGreenGround")
- local ray=RaycastParams.new()
- ray.FilterType=Enum.RaycastFilterType.Include
- local island=workspace:FindFirstChild("FloatingIsland")
- local tree=workspace:FindFirstChild("BigCenterTree")
- ray.FilterDescendantsInstances={island,tree}
- local candidates={}
- local reach=radius+math.max(stepX,stepZ)
- for _,surface in ipairs(green) do
-  if not surface:IsA("BasePart") or not surface:IsDescendantOf(workspace) then continue end
-  local lp=surface.CFrame:PointToObjectSpace(pos)
-  if math.abs(lp.X)>surface.Size.X/2+reach or math.abs(lp.Z)>surface.Size.Z/2+reach then continue end
-  local nx,nz=count(surface.Size.X,stepX,footX),count(surface.Size.Z,stepZ,footZ)
-  local ox,oz=-(nx-1)*stepX/2,-(nz-1)*stepZ/2
-  local ix,iz=math.floor((lp.X-ox)/stepX)+1,math.floor((lp.Z-oz)/stepZ)+1
-  local pad=math.ceil(reach/math.min(stepX,stepZ))+1
-  for x=math.max(1,ix-pad),math.min(nx,ix+pad) do
-   for z=math.max(1,iz-pad),math.min(nz,iz+pad) do
-    local p=surface.CFrame:PointToWorldSpace(Vector3.new(ox+(x-1)*stepX,surface.Size.Y/2,oz+(z-1)*stepZ))
-    local d=(Vector2.new(p.X-pos.X,p.Z-pos.Z)).Magnitude
-    if d<=radius then
-     local hit=workspace:Raycast(p+Vector3.new(0,80,0),Vector3.new(0,-160,0),ray)
-     if hit and hit.Instance==surface and hit.Normal.Y>.6 then
-      local key=tostring(surface:GetAttribute("GrassSurfaceId"))..":"..x..":"..z
-      candidates[#candidates+1]={key=key,surface=surface,pos=hit.Position,d=d}
-     end
-    end
-   end
-  end
- end
- table.sort(candidates,function(a,b) return a.d<b.d end)
- local wanted={}
- for i=1,math.min(MAX,#candidates) do wanted[candidates[i].key]=true end
- for key,entry in pairs(alive) do
-  if not wanted[key] then
-   reset(entry.mesh) entry.mesh.Parent=nil
-   pool[#pool+1]=entry.mesh alive[key]=nil
-  end
- end
- local budget=touch and 4 or 8
- for i=1,math.min(MAX,#candidates) do
-  local item=candidates[i]
-  if not alive[item.key] and budget>0 then
-   local mesh=table.remove(pool)
-   if not mesh and created<MAX then
-    mesh=template:Clone() created+=1
-    boneCache[mesh]={}
-    for _,b in ipairs(mesh:GetDescendants()) do if b:IsA("Bone") then table.insert(boneCache[mesh],b) end end
-   end
-   if mesh then
-    mesh.CFrame=(CFrame.new(item.pos)*item.surface.CFrame.Rotation)*CFrame.new(-offset+Vector3.new(0,-.08,0))
-    mesh.Parent=folder
-    alive[item.key]={mesh=mesh,pos=item.pos,surface=item.surface}
-    budget-=1
-   end
-  end
- end
- local active=0 for _ in pairs(alive) do active+=1 end
- folder:SetAttribute("ClientGrassPlaced",active)
- folder:SetAttribute("ClientGrassAllocated",created)
-end
-local elapsed,windElapsed=0,0
-RunService.Heartbeat:Connect(function(dt)
- elapsed+=dt windElapsed+=dt
- if elapsed>=.2 then elapsed=0 refresh() end
- if windElapsed<(touch and .1 or .05) then return end
- windElapsed=0
- local pos=rootPosition() if not pos then return end
- local time=os.clock()
- for _,entry in pairs(alive) do
-  if (entry.pos-pos).Magnitude<24 then
-   local bend=math.sin(time*1.4+entry.pos.X*.08)*.055
-   for _,b in ipairs(boneCache[entry.mesh]) do
-    local distance=(b.WorldPosition-pos).Magnitude
-    b.Transform=CFrame.Angles(bend+math.clamp(1-distance/4,0,1)*.7,0,bend*.5)
-   end
-   entry.animated=true
-  elseif entry.animated then reset(entry.mesh) entry.animated=false end
- end
-end)
-]==========]
+grassRunner.Source=__GRASS_SOURCE__
 grassRunner.Parent=StarterPlayer.StarterPlayerScripts
 
 -- ÁRVORE GRANDE EXATA NO MEIO, ENCOSTADA NO CHÃO.
@@ -474,7 +363,7 @@ assert(treeGround,"No green center ground found for tree")
 
 local targetTreeHeight=64
 assert(scaleHeight(tree,targetTreeHeight),"Tree scale failed")
-assert(bottomPlace(tree,treeGround.Position,0,.55),"Tree grounding failed")
+assert(bottomPlace(tree,treeGround.Position,0,2),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
 runtime:SetAttribute("TreeGroundZ",treeGround.Position.Z)
@@ -559,6 +448,7 @@ leaves.Color=ColorSequence.new({
 	ColorSequenceKeypoint.new(1,Color3.fromRGB(142,169,82))
 })
 leaves.LightInfluence=.8
+leaves.Enabled=false -- visible leaf geometry is simulated by FallingLeavesController
 leaves.Parent=emitterHost
 
 -- VENTO REAL: GlobalWind + módulos WindLines/WindShake.
@@ -573,40 +463,10 @@ assert(windLines and windShake,"Wind modules missing")
 local controller=Instance.new("LocalScript")
 controller.Name="WindController"
 controller:SetAttribute("AssetId",WIND_ID)
-controller.Source=[==========[
-local CollectionService=game:GetService("CollectionService")
-local WindLines=require(script:WaitForChild("WindLines"))
-local WindShake=require(script:WaitForChild("WindShake"))
+controller.Source=__WIND_SOURCE__
 
-local wind=workspace.GlobalWind
-local dir=wind.Magnitude>0 and wind.Unit or Vector3.new(1,0,0)
-local speed=math.max(1,wind.Magnitude)
-
-WindLines:Init({
-	Direction=dir;
-	Speed=speed;
-	Lifetime=1.8;
-	SpawnRate=4;
-})
-
-pcall(function()
-	WindShake:SetDefaultSettings({
-		WindSpeed=speed;
-		WindDirection=dir;
-		WindPower=.34;
-	})
-end)
-WindShake:Init()
-]==========]
-
-local wl=Instance.new("ModuleScript")
-wl.Name="WindLines"
-wl.Source=windLines.Source
-wl.Parent=controller
-local ws=Instance.new("ModuleScript")
-ws.Name="WindShake"
-ws.Source=windShake.Source
-ws.Parent=controller
+local wl=windLines:Clone() wl.Parent=controller
+local ws=windShake:Clone() ws.Parent=controller
 controller.Parent=StarterPlayer.StarterPlayerScripts
 windAsset:Destroy()
 
@@ -651,29 +511,7 @@ safety.Parent=workspace
 
 local server=Instance.new("Script")
 server.Name="IslandServer"
-server.Source=[[
-local Players=game:GetService("Players")
-local spawn=workspace:WaitForChild("IslandSpawn")
-local safetyY=workspace:WaitForChild("VoidSafety").Position.Y
-local function protect(char)
-	task.spawn(function()
-		while char.Parent do
-			local root=char:FindFirstChild("HumanoidRootPart")
-			if root and root.Position.Y<safetyY+3 then
-				char:PivotTo(spawn.CFrame*CFrame.new(0,4,0))
-			end
-			task.wait(.4)
-		end
-	end)
-end
-local function hook(p)
-	p.RespawnLocation=spawn
-	p.CharacterAdded:Connect(protect)
-	if p.Character then protect(p.Character) end
-end
-Players.PlayerAdded:Connect(hook)
-for _,p in ipairs(Players:GetPlayers()) do hook(p) end
-]]
+server.Source=__SERVER_SOURCE__
 server.Parent=ServerScriptService
 
 Lighting.ClockTime=16.2
@@ -713,8 +551,44 @@ end
 ]]
 quality.Parent=StarterPlayer.StarterPlayerScripts
 
+-- Requested fixed spawn: keep exact geometry, anchored on green ground.
+local mysticalAsset=loadAsset(110144096035671)
+local mystical=mysticalAsset:FindFirstChild("Mystical Spawn Point",true)
+assert(mystical and mystical:IsA("Model"),"Mystical spawn model missing")
+mystical=mystical:Clone() mystical.Name="MysticalSpawn"
+sanitize(mystical)
+for _,d in ipairs(mystical:GetDescendants()) do
+ if d:IsA("SpawnLocation") then d.Enabled=false d.Transparency=1 d.CanCollide=false end
+end
+mystical.Parent=workspace
+assert(bottomPlace(mystical,spawnHit.Position,0,.12),"Mystical spawn placement failed")
+mystical:SetAttribute("AssetId",110144096035671)
+local stone=assert(mystical:FindFirstChild("Stone",true),"Mystical stone missing")
+spawn.CFrame=CFrame.new(stone.Position.X,stone.Position.Y+stone.Size.Y/2+.2,stone.Position.Z)
+spawn:SetAttribute("VisualAssetId",110144096035671)
+mysticalAsset:Destroy()
+runtime:SetAttribute("SpawnAssetId",110144096035671)
+-- Recover before the character reaches FallenPartsDestroyHeight.
+runtime:SetAttribute("VoidThreshold",islandCF.Position.Y-islandSize.Y/2-12)
+workspace.FallenPartsDestroyHeight=math.min(-500,runtime:GetAttribute("VoidThreshold")-150)
+local remoteOld=ReplicatedStorage:FindFirstChild("SweanVoidEvent") if remoteOld then remoteOld:Destroy() end
+local remote=Instance.new("RemoteEvent") remote.Name="SweanVoidEvent" remote.Parent=ReplicatedStorage
+local void=Instance.new("LocalScript") void.Name="VoidSequence" void.Source=__VOID_SOURCE__ void.Parent=StarterPlayer.StarterPlayerScripts
+local falling=Instance.new("LocalScript") falling.Name="FallingLeavesController" falling.Source=__LEAVES_SOURCE__ falling.Parent=StarterPlayer.StarterPlayerScripts
+-- Use the asset's billboard and typography, without duplicate default labels.
+local nameAsset=loadAsset(123212555736117)
+local tag=assert(nameAsset:FindFirstChild("Nametag",true),"Nametag asset missing")
+assert(tag:IsA("BillboardGui") and tag:FindFirstChild("Username"))
+local names=Instance.new("Script") names.Name="NametagService" names.Source=__NAMETAG_SOURCE__
+local templateTag=tag:Clone() templateTag.Parent=names
+names:SetAttribute("AssetId",123212555736117) names.Parent=ServerScriptService
+nameAsset:Destroy()
+runtime:SetAttribute("NametagAssetId",123212555736117)
+runtime:SetAttribute("FullMapLoaded",true)
+runtime:SetAttribute("TreeSink",2)
+
 return{
-	version=111,
+	version=112,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,

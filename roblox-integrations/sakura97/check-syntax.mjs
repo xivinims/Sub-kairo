@@ -67,7 +67,7 @@ function first(task){
 
 
 const root='roblox-integrations/sakura97/';
-const sources=['menu-client','loading-client'].map(name=>({name,code:fs.readFileSync(root+name+'.luau','utf8')}));
+const sources=['menu-client','loading-client','grass-client','grass-module','wind-client','island-server','void-client','leaves-client','nametag-server','runtime-tests'].map(name=>({name,code:fs.readFileSync(root+name+'.luau','utf8')}));
 const install=fs.readFileSync(root+'install.luau','utf8');
 for(const match of install.matchAll(/\.Source=\[(=*)\[([\s\S]*?)\]\1\]/g)) sources.push({name:'embedded-'+sources.length,code:match[2]});
 if(sources.length<6) throw new Error('Client syntax collection incomplete');
