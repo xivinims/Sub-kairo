@@ -19,7 +19,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout publisher source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -29,5 +29,3 @@ jobs:
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-publisher/publish.mjs
-
-# republish-trigger-2
