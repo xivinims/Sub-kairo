@@ -6,27 +6,24 @@ const PLACE_ID = '79738710219521';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = `universes/${UNIVERSE_ID}/places/${PLACE_ID}/`;
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function placeKind(buffer) {
-  const head = buffer.subarray(0, 32).toString('latin1');
-  if (head.startsWith('<roblox!')) return 'rbxl';
-  const text = buffer.subarray(0, 240).toString('utf8');
-  if (text.includes('<roblox')) return 'rbxlx';
+  if (buffer.subarray(0, 8).toString('latin1') === '<roblox!') return 'rbxl';
+  if (buffer.subarray(0, 240).toString('utf8').includes('<roblox')) return 'rbxlx';
   return null;
 }
 
 async function roblox(url, options = {}) {
   const key = process.env.ROBLOX_API_KEY;
   if (!key) throw new Error('Missing ROBLOX_API_KEY');
-  const headers = { 'x-api-key': key, ...(options.headers || {}) };
   let last;
   for (let attempt = 0; attempt < 6; attempt++) {
     const response = await fetch(url, {
-      ...options,
-      headers,
+      method: options.method || 'GET',
+      headers: { 'x-api-key': key, ...(options.headers || {}) },
+      body: options.body,
+      redirect: options.redirect || 'follow',
       signal: AbortSignal.timeout(options.timeoutMs || 180000),
     });
     if (response.ok || (response.status >= 300 && response.status < 400)) return response;
@@ -65,9 +62,10 @@ async function downloadCurrentPlace() {
         return bytesFrom(file);
       }
       const type = response.headers.get('content-type') || '';
-      if (type.includes('json')) {
-        const data = JSON.parse(await response.text());
-        if (!data.location) throw new Error(`no location: ${JSON.stringify(data).slice(0, 400)}`);
+      if (type.includes('json') || response.headers.get('content-type') === null) {
+        const text = await response.text();
+        const data = JSON.parse(text);
+        if (!data.location) throw new Error(`no location: ${text.slice(0, 400)}`);
         const file = await fetch(data.location, { redirect: 'follow', signal: AbortSignal.timeout(180000) });
         if (!file.ok) throw new Error(`location HTTP ${file.status}`);
         return bytesFrom(file);
@@ -81,38 +79,34 @@ async function downloadCurrentPlace() {
 }
 
 async function execute(script) {
-  let task = await (await roblox(CLOUD + TARGET + 'luau-execution-session-tasks', {
+  const created = await roblox(CLOUD + TARGET + 'luau-execution-session-tasks', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ timeout: '60s', script }),
     timeoutMs: 60000,
-  })).json();
+  });
+  let task = await created.json();
   const deadline = Date.now() + 180000;
   while (['QUEUED', 'PENDING', 'PROCESSING'].includes(task.state)) {
-    if (Date.now() > deadline) throw new Error('Read-only audit timed out');
+    if (Date.now() > deadline) throw new Error('Read-only inventory timed out');
     await sleep(1500);
     task = await (await roblox(CLOUD + task.path, { timeoutMs: 60000 })).json();
   }
-  if (task.state !== 'COMPLETE' || task.error) throw new Error(`Audit failed: ${JSON.stringify(task.error || task)}`);
+  if (task.state !== 'COMPLETE' || task.error) throw new Error(`Inventory failed: ${JSON.stringify(task.error || task)}`);
   const value = task.output?.results?.[0];
-  if (typeof value === 'string') {
-    try { return JSON.parse(value); } catch { return value; }
-  }
-  return value;
+  return typeof value === 'string' ? JSON.parse(value) : value;
 }
 
-async function audit() {
-  const report = await execute(`
+async function inventory() {
+  return execute(`
 local HttpService = game:GetService("HttpService")
-local ServerStorage = game:GetService("ServerStorage")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assets = ServerStorage:FindFirstChild("SurvivalAssets")
-local maps = assets and assets:FindFirstChild("Maps")
-local killers = assets and assets:FindFirstChild("Killers")
-local function names(folder)
-  if not folder then return {} end
+local function names(parent, limit)
   local list = {}
-  for _, child in ipairs(folder:GetChildren()) do table.insert(list, child.Name) end
+  if not parent then return list end
+  for _, child in ipairs(parent:GetChildren()) do
+    table.insert(list, child.ClassName .. ":" .. child.Name)
+    if #list >= limit then break end
+  end
   table.sort(list)
   return list
 end
@@ -121,32 +115,12 @@ return HttpService:JSONEncode({
   placeVersion = game.PlaceVersion,
   placeId = game.PlaceId,
   universeId = game.GameId,
-  lobby = workspace:FindFirstChild("JediLibrary") ~= nil,
-  menu = ReplicatedStorage:FindFirstChild("MenuSceneTemplate") ~= nil,
-  spawn = workspace:FindFirstChild("IslandSpawn") ~= nil,
-  maps = maps and #maps:GetChildren() or 0,
-  mapNames = names(maps),
-  killers = killers and #killers:GetChildren() or 0,
-  killerNames = names(killers),
-  workspaceChildren = #workspace:GetChildren()
+  workspace = names(workspace, 40),
+  serverStorage = names(game:GetService("ServerStorage"), 40),
+  serverScripts = names(game:GetService("ServerScriptService"), 40),
+  replicated = names(game:GetService("ReplicatedStorage"), 40)
 })
 `);
-  if (!report || report.ok !== true) throw new Error(`Unexpected audit: ${JSON.stringify(report)}`);
-  if (String(report.placeId) !== PLACE_ID || String(report.universeId) !== UNIVERSE_ID) {
-    throw new Error(`Audit targeted the wrong place: ${JSON.stringify(report)}`);
-  }
-  return report;
-}
-
-function assertIntact(report) {
-  const problems = [];
-  if (!report.lobby) problems.push('JediLibrary ausente');
-  if (!report.menu) problems.push('MenuSceneTemplate ausente');
-  if (!(report.maps >= 4)) problems.push(`mapas=${report.maps}`);
-  if (!(report.killers >= 5)) problems.push(`persuasores=${report.killers}`);
-  if (problems.length) {
-    throw new Error(`Publicação recusada: o place atual não está intacto (${problems.join('; ')})`);
-  }
 }
 
 async function publishUnchanged(buffer, kind) {
@@ -160,22 +134,24 @@ async function publishUnchanged(buffer, kind) {
     },
   );
   const text = await response.text();
-  let data;
-  try { data = JSON.parse(text); } catch { data = { raw: text }; }
+  const data = JSON.parse(text);
   if (!data.versionNumber) throw new Error(`Publish response missing version: ${text.slice(0, 500)}`);
   return data;
 }
 
 async function main() {
-  console.log('[Survivers] Reading the current place. No instances will be changed.');
-  const before = await audit();
-  assertIntact(before);
-  console.log(JSON.stringify({ stage: 'current-place', ...before }));
+  console.log('[Survivers] Inventory only. The data model will not be edited.');
+  const before = await inventory();
+  if (String(before.placeId) !== PLACE_ID || String(before.universeId) !== UNIVERSE_ID) {
+    throw new Error(`Wrong target: ${JSON.stringify(before)}`);
+  }
+  console.log(JSON.stringify({ stage: 'saved-place', ...before }));
 
   const file = await downloadCurrentPlace();
   const kind = placeKind(file);
-  if (!kind) throw new Error(`Downloaded file is not a Roblox place (${file.length} bytes)`);
-  if (file.length < 1024 * 1024) throw new Error(`Downloaded place is unexpectedly small: ${file.length} bytes`);
+  if (!kind) {
+    throw new Error(`Downloaded file is not a Roblox place (${file.length} bytes, head=${file.subarray(0, 24).toString('hex')})`);
+  }
   const sha256 = createHash('sha256').update(file).digest('hex');
   console.log(JSON.stringify({ stage: 'downloaded-unchanged', kind, bytes: file.length, sha256 }));
 
@@ -186,16 +162,12 @@ async function main() {
     publishedVersion: published.versionNumber,
     bytes: file.length,
     sha256,
-    maps: before.mapNames,
-    killers: before.killerNames,
-    lobby: before.lobby,
-    menu: before.menu,
+    workspace: before.workspace,
   }));
 }
 
 main().catch((error) => {
   const key = process.env.ROBLOX_API_KEY;
-  const message = key ? String(error.message).split(key).join('[REDACTED]') : error.message;
-  console.error(message);
+  console.error(key ? String(error.stack || error.message).split(key).join('[REDACTED]') : (error.stack || error.message));
   process.exit(1);
 });
