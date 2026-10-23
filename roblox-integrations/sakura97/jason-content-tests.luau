@@ -50,10 +50,20 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
- local canonicalMotors={root=true,waist=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true}
- local r6ToR15={
-  humanoidrootpart="root",rootpart="root",torso="root",uppertorso="waist",
-  head="neck",leftarm="leftshoulder",rightarm="rightshoulder",leftleg="lefthip",rightleg="righthip"
+ local canonicalMotors={
+  root=true,waist=true,neck=true,
+  leftshoulder=true,leftelbow=true,leftwrist=true,
+  rightshoulder=true,rightelbow=true,rightwrist=true,
+  lefthip=true,leftknee=true,leftankle=true,
+  righthip=true,rightknee=true,rightankle=true
+ }
+ local poseToMotor={
+  humanoidrootpart="root",rootpart="root",lowertorso="root",torso="root",
+  uppertorso="waist",head="neck",
+  leftarm="leftshoulder",leftupperarm="leftshoulder",leftlowerarm="leftelbow",lefthand="leftwrist",
+  rightarm="rightshoulder",rightupperarm="rightshoulder",rightlowerarm="rightelbow",righthand="rightwrist",
+  leftleg="lefthip",leftupperleg="lefthip",leftlowerleg="leftknee",leftfoot="leftankle",
+  rightleg="righthip",rightupperleg="righthip",rightlowerleg="rightknee",rightfoot="rightankle"
  }
  local report={}
  for _,clipName in ipairs(names) do
@@ -65,7 +75,7 @@ local function animationCompatibility(folder,names)
   for _,frame in ipairs(decoded.frames) do
    for poseName,pose in pairs(frame.poses) do
     local n=norm(poseName)
-    local motor=r6ToR15[n] or (canonicalMotors[n] and n or nil)
+    local motor=poseToMotor[n] or (canonicalMotors[n] and n or nil)
     if motor then motors[motor]=true end
     if not seen[poseName] then seen[poseName]=true table.insert(poseNames,poseName) end
     local v=pose.c or pose
