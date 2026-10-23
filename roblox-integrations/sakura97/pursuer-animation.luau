@@ -112,7 +112,9 @@ local function matchName(clips,groups)
 end
 
 local function executionName(d)
- return matchName(d.clips,{{"kill"},{"execution"},{"execute"},{"finisher"},{"fatal"}}) or matchName(d.clips,{{"slash"},{"attack"}}) or "Jason Slash"
+ if d.clips["Jason_Kill"] then return "Jason_Kill" end
+ if d.clips["Guest Kill Animation (jason)"] then return "Guest Kill Animation (jason)" end
+ return matchName(d.clips,{{"behead"},{"gashing","wound"},{"kill"},{"execution"},{"execute"},{"finisher"},{"fatal"}}) or matchName(d.clips,{{"slash"},{"attack"}}) or "Jason Slash"
 end
 
 local function locomotionName(d,kind,crouched,injured)
