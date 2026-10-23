@@ -49,6 +49,8 @@ local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder
 local function animationCompatibility(folder,names)
  local testRig=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
  testRig.Name="AnimationCompatibilityRig" testRig.Parent=workspace
+ local testHum=assert(testRig:FindFirstChildOfClass("Humanoid"))
+ pcall(function() testHum:BuildRigFromAttachments() end)
  local lookup={} local jointNames={}
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
  for _,j in ipairs(testRig:GetDescendants()) do if j:IsA("Motor6D") then
