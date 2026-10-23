@@ -58,6 +58,42 @@ local function sanitize(root)
   end
  end
 end
+local BROKEN_CONTENT_IDS={["720367485"]=true}
+local function hasBrokenContent(value)
+ if type(value)~="string" then return false end
+ for id in pairs(BROKEN_CONTENT_IDS) do
+  if value:find(id,1,true) then return true end
+ end
+ return false
+end
+local function stripBrokenContent(root)
+ local removed=0
+ for _,d in ipairs(root:GetDescendants()) do
+  if d:IsA("Decal") or d:IsA("Texture") then
+   if hasBrokenContent(d.Texture) then d:Destroy() removed+=1 end
+  elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") then
+   if hasBrokenContent(d.Texture) then d.Texture="" removed+=1 end
+  elseif d:IsA("Sound") then
+   if hasBrokenContent(d.SoundId) then d:Destroy() removed+=1 end
+  elseif d:IsA("Animation") then
+   if hasBrokenContent(d.AnimationId) then d:Destroy() removed+=1 end
+  elseif d:IsA("SpecialMesh") then
+   if hasBrokenContent(d.MeshId) or hasBrokenContent(d.TextureId) then d:Destroy() removed+=1 end
+  elseif d:IsA("MeshPart") then
+   local badTexture=false
+   pcall(function() badTexture=hasBrokenContent(d.TextureID) end)
+   if badTexture then pcall(function() d.TextureID="" end) removed+=1 end
+  elseif d:IsA("SurfaceAppearance") then
+   local bad=false
+   for _,prop in ipairs({"ColorMap","MetalnessMap","NormalMap","RoughnessMap"}) do
+    local ok,value=pcall(function() return d[prop] end)
+    if ok and hasBrokenContent(value) then bad=true break end
+   end
+   if bad then d:Destroy() removed+=1 end
+  end
+ end
+ return removed
+end
 
 -- Remove the old floating-island lobby and every old world decoration.
 for _,child in ipairs(workspace:GetChildren()) do
@@ -118,6 +154,7 @@ lobby:PivotTo(lobby:GetPivot()+Vector3.new(-cf.Position.X,-bottom,-cf.Position.Z
 cf,size=lobby:GetBoundingBox()
 lobbyAsset:Destroy()
 runtime:SetAttribute("LobbyParts",countParts(lobby))
+runtime:SetAttribute("StrippedBrokenLobbyContent",strippedLobbyContent)
 runtime:SetAttribute("LobbySizeX",size.X)
 runtime:SetAttribute("LobbySizeY",size.Y)
 runtime:SetAttribute("LobbySizeZ",size.Z)
@@ -129,6 +166,7 @@ local menuTemplate=asModel(menuSource:Clone())
 menuTemplate.Name="MenuSceneTemplate"
 menuTemplate:SetAttribute("SourceAssetId",MENU_SCENE_ID)
 sanitize(menuTemplate)
+stripBrokenContent(menuTemplate)
 for _,d in ipairs(menuTemplate:GetDescendants()) do
  if d:IsA("BasePart") then
   d.CanCollide=false d.CanTouch=false d.CanQuery=false
