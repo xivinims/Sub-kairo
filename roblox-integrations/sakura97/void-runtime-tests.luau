@@ -38,7 +38,7 @@ local ok,result=xpcall(function()
  local screen=assert(guiHost:FindFirstChild("BeyondTheIsland"),"Death screen did not open")
  local bg=screen.Darkness local view=bg.PlayerSwimming local label=bg.DeathMessage local button=bg.Regenerate
  assert(view.ZIndex>label.ZIndex,"Avatar must cover message")
- assert(view.Position.Y.Scale==.30 and view.Size.Y.Scale==1.12,"Initial lower framing missing")
+ assert(math.abs(view.Position.Y.Scale-.30)<.001 and math.abs(view.Size.Y.Scale-1.12)<.001,"Initial lower framing missing")
  assert(not button.Visible and not button.Active,"Regenerate exposed before messages")
  local messages={} local changed=label:GetPropertyChangedSignal("Text"):Connect(function() messages[#messages+1]=label.Text end)
  local deadline=os.clock()+25
