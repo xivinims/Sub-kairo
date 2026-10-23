@@ -48,8 +48,8 @@ async function patchCloud(path,body){
 }
 
 async function execute(script){
-  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'300s',script});
-  const deadline=Date.now()+420000;
+  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'180s',script});
+  const deadline=Date.now()+360000;
   while(['QUEUED','PENDING','PROCESSING'].includes(task.state)){
     if(Date.now()>deadline) throw new Error('Luau timeout');
     await sleep(1500);
@@ -107,12 +107,9 @@ const surviversLogoId=await uploadSurviversLogo();
 let installBody=read('install');
 const runtimeSource=read('nature-runtime');
 installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
-const runtimeAssetBootstrap=read('runtime-assets').replace('__RIG_INSTALL__',read('rig-install'));
-const islandServerSource=read('island-server').replace('__RUNTIME_ASSET_BOOTSTRAP__',runtimeAssetBootstrap);
-for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server',FRIENDS:'friends-client'})) {
+for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',SERVER:'island-server',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server',FRIENDS:'friends-client'})) {
  installBody=installBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 }
-installBody=installBody.replace('__SERVER_SOURCE__',JSON.stringify(islandServerSource));
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
 const menuBody=read('install-menu')
  .replaceAll('__SURVIVERS_LOGO_ID__',String(surviversLogoId))
@@ -186,21 +183,50 @@ end
 checks.voidController=verifyVoidController()
 assert(checks and checks.ok,"Verify failed")
 
-local runtime=game.ReplicatedStorage.SweanRuntime
-runtime:SetAttribute("AssetsReady",false)
-runtime:SetAttribute("AssetBootstrapError",nil)
-
--- Persist only the lightweight runtime. The fresh server reconstructs these from exact IDs.
-local heavyLobby=workspace:FindFirstChild("JediLibrary") if heavyLobby then heavyLobby:Destroy() end
-local heavyMenu=game.ReplicatedStorage:FindFirstChild("MenuSceneTemplate") if heavyMenu then heavyMenu:Destroy() end
-local heavyAssets=game.ServerStorage:FindFirstChild("SurvivalAssets") if heavyAssets then heavyAssets:Destroy() end
-
-local temp=workspace:FindFirstChild("BootstrapFloor") or Instance.new("Part")
-temp.Name="BootstrapFloor" temp.Size=Vector3.new(28,1,28) temp.Anchored=true temp.CanCollide=true
-temp.Position=Vector3.new(0,0,0) temp.Transparency=1 temp.Parent=workspace
-workspace.IslandSpawn.CFrame=CFrame.new(0,4,0)
-
-game:GetService("AssetService"):SavePlaceAsync()
+local SerializationService=game:GetService("SerializationService")
+local function serializedSize(instances)
+ local ok,buf=pcall(function() return SerializationService:SerializeInstancesAsync(instances) end)
+ if not ok or not buf then return -1 end
+ return buffer.len(buf)
+end
+local function childrenSize(container)
+ local clone=Instance.new("Folder")
+ clone.Name="Measure"
+ for _,child in ipairs(container:GetChildren()) do
+  local ok,item=pcall(function() return child:Clone() end)
+  if ok and item then item.Parent=clone end
+ end
+ local bytes=serializedSize({clone})
+ clone:Destroy()
+ return bytes
+end
+local sizeReport={
+ lobby=serializedSize({workspace.JediLibrary}),
+ menuScene=serializedSize({game.ReplicatedStorage.MenuSceneTemplate}),
+ maps=serializedSize({game.ServerStorage.SurvivalAssets.Maps}),
+ killers=serializedSize({game.ServerStorage.SurvivalAssets.Killers}),
+ starterGui=childrenSize(game.StarterGui),
+ starterPlayer=childrenSize(game.StarterPlayer.StarterPlayerScripts),
+ serverScripts=childrenSize(game.ServerScriptService),
+ replicated=childrenSize(game.ReplicatedStorage),
+}
+sizeReport.eachMap={}
+for _,m in ipairs(game.ServerStorage.SurvivalAssets.Maps:GetChildren()) do
+ sizeReport.eachMap[m.Name]=serializedSize({m})
+end
+sizeReport.eachKiller={}
+for _,m in ipairs(game.ServerStorage.SurvivalAssets.Killers:GetChildren()) do
+ local clips=m:FindFirstChild("MotionClips")
+ local clipBytes=clips and serializedSize({clips}) or 0
+ sizeReport.eachKiller[m.Name]={total=serializedSize({m}),clips=clipBytes}
+end
+print("SURVIVERS_SIZE_REPORT",game:GetService("HttpService"):JSONEncode(sizeReport))
+local saveOk,saveErr=pcall(function()
+ game:GetService("AssetService"):SavePlaceAsync()
+end)
+if not saveOk then
+ error("SAVE_FAILED sizes="..game:GetService("HttpService"):JSONEncode(sizeReport).." err="..tostring(saveErr))
+end
 
 return {
   ok=true,
@@ -224,21 +250,4 @@ console.log("[Survivers] Applying tested build to place...");
 const applied=first(await execute(patch));
 if(!applied?.ok) throw new Error("Sakura97 install failed");
 console.log(JSON.stringify({stage:"saved-and-published",...applied}));
-const freshVerify=`
-local RS=game:GetService("ReplicatedStorage")
-local runtime=RS:WaitForChild("SweanRuntime",30)
-local deadline=os.clock()+150
-while runtime and runtime:GetAttribute("AssetsReady")~=true and os.clock()<deadline do task.wait(.5) end
-assert(runtime and runtime:GetAttribute("AssetsReady")==true,"Runtime assets not ready: "..tostring(runtime and runtime:GetAttribute("AssetBootstrapError")))
-assert(workspace:FindFirstChild("JediLibrary"),"Fresh lobby missing")
-assert(RS:FindFirstChild("MenuSceneTemplate"),"Fresh menu scene missing")
-local assets=game:GetService("ServerStorage"):FindFirstChild("SurvivalAssets")
-assert(assets and #assets.Maps:GetChildren()==4,"Fresh maps missing")
-assert(#assets.Killers:GetChildren()==5,"Fresh killers missing")
-assert(workspace:FindFirstChild("IslandSpawn"),"Fresh spawn missing")
-return {ok=true,placeVersion=game.PlaceVersion,maps=#assets.Maps:GetChildren(),killers=#assets.Killers:GetChildren(),thirdParty=runtime:GetAttribute("ThirdPartyAssetsAllowed")}
-`;
-const fresh=first(await execute(freshVerify));
-if(!fresh?.ok) throw new Error("Fresh Survivers runtime verification failed");
-console.log(JSON.stringify({stage:"fresh-runtime-verified",...fresh}));
 

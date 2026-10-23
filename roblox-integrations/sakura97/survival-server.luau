@@ -5,15 +5,7 @@ local SSS=game:GetService("ServerScriptService")
 local RunService=game:GetService("RunService")
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
-local bridge=SSS.SurvivalBridge
-local runtime=RS:WaitForChild("SweanRuntime")
-while runtime:GetAttribute("AssetsReady")~=true do
- if runtime:GetAttribute("AssetBootstrapError") then
-  warn("Waiting for Survivers assets: "..tostring(runtime:GetAttribute("AssetBootstrapError")))
- end
- task.wait(.5)
-end
-local assets=SS:WaitForChild("SurvivalAssets")
+local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets
 local state=Rules.new() local queued={} local rates={} local motions={}
 local arena,npc,brain=nil,nil,nil local killerName="" local endTime=0
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
