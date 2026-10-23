@@ -130,6 +130,9 @@ local ok,result=xpcall(function()
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local count=0 for _,p in ipairs(players) do if p:GetAttribute("InRound") then count+=1 end end assert(count==8,"Expected 8 active players, got "..count)
+ for i=1,8 do
+  local c=players[i].Character c:PivotTo(CFrame.new(i*25,1000,0)) c.HumanoidRootPart.Anchored=true
+ end
  local function hit(p)
   killerModel:PivotTo(p.Character:GetPivot()*CFrame.new(0,0,2))
   aiContext.catch(p) advance(1)

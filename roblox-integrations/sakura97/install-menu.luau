@@ -48,6 +48,10 @@ local logo=Instance.new("ImageLabel") logo.Name="Logo" logo.BackgroundTransparen
 local logoId=__SURVIVERS_LOGO_ID__
 assert(logoId and logoId>0,"Exact logo is required")
 if logoId and logoId>0 then logo.Image="rbxassetid://"..tostring(logoId) logo.Visible=true else logo.Image="" logo.Visible=false end
+local logoAsset=game:GetService("AssetService"):LoadAssetAsync(logoId)
+local decal=logoAsset:FindFirstChildWhichIsA("Decal",true)
+assert(decal and decal.Texture~="","Exact logo texture unavailable")
+logo.Image=decal.Texture logo:SetAttribute("SourceAssetId",logoId) logoAsset:Destroy()
 logo.Parent=main
 
 local gameName=label(main,"GameName","SURVIVERS")

@@ -144,6 +144,7 @@ const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317
 const syntax=Object.values(sources).concat(['menu-client','loading-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const script=`
 local sourceVersion=game.PlaceVersion
 local function install()
@@ -159,7 +160,8 @@ assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.CrouchClips:FindFirstChild("Crouch Walk"))
 local ui=game.StarterGui.TomiaszMenu
-assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://136450401317962")
+assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
+result.logoTexture=ui.MenuPrincipal.Logo.Image
 local ser=game:GetService("SerializationService")
 result.mapBytes=buffer.len(ser:SerializeInstancesAsync({assets.Maps}))
 result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
@@ -167,6 +169,10 @@ local function testController()
 ${test}
 end
 result.controller=testController()
+local function testClient()
+${clientTest}
+end
+result.client=testClient()
 result.sourceVersion=sourceVersion result.ok=true result.saved=false
 return result
 `;

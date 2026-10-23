@@ -31,22 +31,30 @@ end
 local function step() render:Fire(.2) task.wait() end
 local ok,result=xpcall(function()
  controller() step()
- local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.Actions.Visible and not gui.Join.Visible)
+ local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.Actions.Visible and not gui:FindFirstChild("Join"))
+ assert(gui.Actions.Run.UICorner.CornerRadius.Scale==1 and gui.Actions.Run.Size.X.Offset==gui.Actions.Run.Size.Y.Offset,"Sprint must be circular")
+ assert(gui.Actions.Run.InnerRing and gui.Round.BackgroundTransparency==1 and gui.Countdown.BackgroundTransparency==1,"Circular rings and transparent timer")
  input:Fire({KeyCode=Enum.KeyCode.E},false) task.wait() assert(requests[#requests]=="kit")
  attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+25 step()
- assert(not gui.Actions.Run.Visible and not gui.Actions.Slow.Visible and gui.Actions.Medkit.Text=="Me reanimar")
+ assert(not gui.Actions.Run.Visible and not gui.Actions.Slow.Visible and gui.Actions.Medkit.Text=="+")
  attrs.InRound=false attrs.Downed=false attrs.RoundStatus="eliminated" attrs.Spectating=true step()
- assert(gui.Spectate.Visible and not gui.Actions.Visible and not gui.Join.Visible)
+ assert(gui.Spectate.Visible and not gui.Actions.Visible and not gui:FindFirstChild("Join"))
  assert(camera.CameraSubject==char.Humanoid and gui.Spectate.Player.Text=="Sobrevivente")
+ survivor.GetAttribute=function() return false end step()
+ assert(gui.Spectate.Player.Text=="Nenhum sobrevivente disponível","Stale spectator target")
+ attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
+ assert(gui.Actions.Attack.Visible and not gui.Actions.Run.Visible,"Player Jason attack controls")
+ attrs.IsJason=false attrs.InRound=false attrs.Spectating=true
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
  fakeNet:SetAttribute("Phase","Intervalo") fakeNet:SetAttribute("EndsAt",workspace:GetServerTimeNow()+30)
  fakeNet:SetAttribute("Waiting",1) fakeNet:SetAttribute("MaxPlayers",8) step()
- assert(gui.Countdown.Visible and not gui.Join.Visible and not gui.Actions.Visible,"Intermission HUD mismatch")
+ assert(gui.Countdown.Visible and not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Intermission HUD mismatch")
  fakeNet:SetAttribute("Phase","Partida") step()
- assert(gui.Join.Visible and not gui.Actions.Visible,"Mid-round join button missing")
- attrs.InMenu=true step() assert(not gui.Join.Visible and not gui.Round.Visible and not gui.Countdown.Visible)
+ assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Portal admission must not expose a join button")
+ attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
  return {ok=true,arenaOnlyControls=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result
+
