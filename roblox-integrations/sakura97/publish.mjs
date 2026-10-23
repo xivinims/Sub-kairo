@@ -65,28 +65,73 @@ function first(task){
   try{return JSON.parse(v)}catch{return v}
 }
 
+const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
+let installBody=read('install');
+const runtimeSource=read('nature-runtime');
+installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
+installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
+const verifySource=read('verify');
 
-const result=first(await execute(`
-local out={}
-for _,id in ipairs({87377915371959,4617134997,84828163072141}) do
- local a=game:GetService("AssetService"):LoadAssetAsync(id)
- local item={id=id,details={}}
- for _,d in ipairs(a:GetDescendants()) do
-  if d:IsA("MeshPart") and id==87377915371959 then
-   local mn=Vector3.new(math.huge,math.huge,math.huge) local mx=-mn local n=0
-   for _,b in ipairs(d:GetDescendants()) do if b:IsA("Bone") then
-    local v=d.CFrame:PointToObjectSpace(b.WorldPosition) mn=mn:Min(v) mx=mx:Max(v) n+=1
-   end end
-   table.insert(item.details,{name=d:GetFullName(),mesh=d.MeshId,size=tostring(d.Size),rotation=tostring(d.CFrame.Rotation),bones=n,min=tostring(mn),max=tostring(mx),color=tostring(d.Color),material=d.Material.Name})
-  elseif d:IsA("GuiObject") then
-   local e={name=d:GetFullName(),class=d.ClassName,position=tostring(d.Position),size=tostring(d.Size),visible=d.Visible}
-   if d:IsA("TextLabel") or d:IsA("TextButton") then e.text=d.Text end
-   table.insert(item.details,e)
-  end
- end
- if id==4617134997 then local cf,sz=a:GetBoundingBox() item.size=tostring(sz) item.parts=#a:GetDescendants() end
- table.insert(out,item) a:Destroy()
+const patch=`
+assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
+local sourceVersion=game.PlaceVersion
+print("[Sakura97] Starting repaired install from version "..tostring(sourceVersion))
+
+local installOk,installErr=xpcall(function()
+${installBody}
+end,function(err)
+  return debug.traceback(tostring(err),2)
+end)
+assert(installOk,"INSTALL_TRACE: "..tostring(installErr))
+
+local function runVerify()
+${verifySource}
 end
-return out
-`));console.log(JSON.stringify(result));
+local checks=runVerify()
+assert(checks and checks.ok,"Verify failed")
+
+game:GetService("AssetService"):SavePlaceAsync()
+return {
+  ok=true,
+  sourceVersion=sourceVersion,
+  mapParts=checks.mapParts,
+  lots=checks.lots,
+  grass=checks.grass,
+  pumpkins=checks.pumpkins,
+  pumpkinClusters=checks.pumpkinClusters,
+  message="Compact island saved"
+}
+`;
+
+console.log("[Sakura97] Dispatching repaired Luau install to NEW place...");
+const applied=first(await execute(patch));
+if(!applied?.ok) throw new Error("Sakura97 install failed");
+console.log(JSON.stringify({stage:"installed-and-saved",...applied}));
+
+let persisted,last;
+for(let i=0;i<12;i++){
+  if(i) await sleep(4500);
+  try{
+    const check=first(await execute(`
+      assert(game.GameId==${UNIVERSE_ID} and game.PlaceId==${PLACE_ID})
+      local function runVerify()
+${verifySource}
+      end
+      local checks=runVerify()
+      checks.placeVersion=game.PlaceVersion
+      return checks
+    `));
+    if(!check?.ok || check.placeVersion<=applied.sourceVersion){
+      throw new Error("Saved version not visible/valid yet, got "+(check&&check.placeVersion));
+    }
+    persisted=check; last=null; break;
+  }catch(e){
+    last=e;
+    console.log(JSON.stringify({waiting:true,attempt:i+1,error:String(e)}));
+  }
+}
+if(last) throw last;
+console.log(JSON.stringify({stage:"verified-persisted",...persisted}));
+
+console.log("[Swean] Published and verified.");

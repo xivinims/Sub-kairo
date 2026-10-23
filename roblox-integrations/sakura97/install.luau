@@ -11,7 +11,7 @@ local Terrain=workspace.Terrain
 
 local ISLAND_ID=10485490600
 local GRASS_ID=87377915371959
-local TREE_ID=86013526879602
+local TREE_ID=4617134997
 local WIND_ID=11946229834
 
 local function loadAsset(id)
@@ -126,7 +126,7 @@ end
 local runtime=Instance.new("Folder")
 runtime.Name="SweanRuntime"
 runtime.Parent=ReplicatedStorage
-runtime:SetAttribute("Version",110)
+runtime:SetAttribute("Version",111)
 runtime:SetAttribute("IslandAssetId",ISLAND_ID)
 runtime:SetAttribute("GrassAssetId",GRASS_ID)
 runtime:SetAttribute("TreeAssetId",TREE_ID)
@@ -134,8 +134,8 @@ runtime:SetAttribute("WindAssetId",WIND_ID)
 
 pcall(function()
 	workspace.StreamingEnabled=true
-	workspace.StreamingMinRadius=128
-	workspace.StreamingTargetRadius=420
+	workspace.StreamingMinRadius=64
+	workspace.StreamingTargetRadius=160
 end)
 workspace.FallenPartsDestroyHeight=-300
 
@@ -149,12 +149,9 @@ island:SetAttribute("AssetId",ISLAND_ID)
 island.Parent=workspace
 sanitize(island)
 
--- A ilha original é muito pequena perto de um avatar R15 normal.
--- Aumenta só um pouco, sem mudar formato/proporções.
-pcall(function()
-	island:ScaleTo(island:GetScale()*82)
-end)
-island:SetAttribute("ScaleMultiplier",82)
+-- Fixed world-space budget; never multiply an already enlarged island.
+assert(scaleFootprint(island,260),"Island scale failed")
+island:SetAttribute("TargetFootprint",260)
 
 local islandCF,islandSize=bounds(island)
 assert(islandSize,"Floating Island has invalid bounds")
@@ -179,6 +176,7 @@ for _,p in ipairs(island:GetDescendants()) do
 		and p.Size.X>=2 and p.Size.Z>=2
 		and (p.Material==Enum.Material.Grass or greenish(p.Color)) then
 		table.insert(greenSurfaces,p)
+		p:SetAttribute("GrassSurfaceId",#greenSurfaces)
 		CollectionService:AddTag(p,"IslandGreenGround")
 	end
 end
@@ -224,9 +222,21 @@ end
 assert(sourceMesh and sourceBones==100,"Green SkinnedGrass mesh (100 Bones) not found")
 
 local defaultSize=sourceMesh.Size
-local VISUAL_DIV=7.15
+-- Measure bone roots in mesh-local space; the 100x100 MeshPart bounds
+-- are much larger than the actual grass (about 14x14 studs).
+local rootMin=Vector3.new(math.huge,math.huge,math.huge)
+local rootMax=-rootMin
+for _,bone in ipairs(sourceMesh:GetDescendants()) do
+ if bone:IsA("Bone") then
+  local p=sourceMesh.CFrame:PointToObjectSpace(bone.WorldPosition)
+  rootMin=rootMin:Min(p) rootMax=rootMax:Max(p)
+ end
+end
+local rootCenter=(rootMin+rootMax)*.5
 local OVERLAP=1.28
-local footprintX,footprintZ=defaultSize.X/VISUAL_DIV,defaultSize.Z/VISUAL_DIV
+local footprintX,footprintZ=rootMax.X-rootMin.X,rootMax.Z-rootMin.Z
+assert(footprintX>0 and footprintZ>0,"Grass roots have no footprint")
+local VISUAL_DIV=defaultSize.X/footprintX
 local stepX,stepZ=footprintX/OVERLAP,footprintZ/OVERLAP
 local GROUND_OFFSET=-0.08
 local function gridCount(length,step,foot)
@@ -248,6 +258,7 @@ grassModule.Name="SkinnedGrassRuntimeModule"
 grassModule.Parent=ReplicatedStorage
 
 local function prepareMesh(mesh)
+	for _,d in ipairs(mesh:GetDescendants()) do if d:IsA("LuaSourceContainer") then d:Destroy() end end
 	mesh.Name="SkinnedGrass"
 	mesh.Anchored=true
 	mesh.CanCollide=false
@@ -282,12 +293,15 @@ grassFolder:SetAttribute("DefaultSizeY",defaultSize.Y)
 grassFolder:SetAttribute("DefaultSizeZ",defaultSize.Z)
 grassFolder:SetAttribute("FootprintX",footprintX)
 grassFolder:SetAttribute("FootprintZ",footprintZ)
+grassFolder:SetAttribute("RootCenterX",rootCenter.X)
+grassFolder:SetAttribute("RootCenterZ",rootCenter.Z)
+grassFolder:SetAttribute("RootMinY",rootMin.Y)
 grassFolder:SetAttribute("StepX",stepX)
 grassFolder:SetAttribute("StepZ",stepZ)
 grassFolder:SetAttribute("VisualDiv",VISUAL_DIV)
 grassFolder:SetAttribute("SpawnMode","ClientSafeRadius")
-grassFolder:SetAttribute("MaxTouch",400)
-grassFolder:SetAttribute("MaxDesktop",1600)
+grassFolder:SetAttribute("MaxTouch",96)
+grassFolder:SetAttribute("MaxDesktop",240)
 grassFolder.Parent=workspace
 
 local placed=0
@@ -301,7 +315,7 @@ end
 grassAsset:Destroy()
 
 assert(coveredSurfaces==#greenSurfaces,"Not every green surface received SkinnedGrass")
-assert(placed>=#greenSurfaces*20,"Grass is still using the sparse bounding-box step")
+assert(placed>=#greenSurfaces,"Grass grid is empty")
 runtime:SetAttribute("GrassPatchCount",placed)
 runtime:SetAttribute("GrassCoveredSurfaces",coveredSurfaces)
 runtime:SetAttribute("GrassVisualOverlap",OVERLAP)
@@ -323,127 +337,112 @@ runtime:SetAttribute("GrassSpawnMode","ClientSafeRadius")
 local grassRunner=Instance.new("LocalScript")
 grassRunner.Name="SkinnedGrassRunner"
 grassRunner.Source=[==========[
--- SAFE_GRASS_CAP
--- PACKED_DEFAULT_GRASS
-local CollectionService=game:GetService("CollectionService")
-local ReplicatedStorage=game:GetService("ReplicatedStorage")
+-- One exact SkinnedGrass variant. Pool meshes to avoid repeated skinning allocations.
+local CS=game:GetService("CollectionService")
+local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
-local UserInputService=game:GetService("UserInputService")
-local Players=game:GetService("Players")
-
-local touch=UserInputService.TouchEnabled
-local MAX=touch and 400 or 1600
-local PER=touch and 5 or 14
-
-local function gridCount(length,step,foot)
-	if length<=foot then return 1 end
-	return math.ceil((length-foot)/step)+1
-end
-
+local player=game:GetService("Players").LocalPlayer
+local touch=game:GetService("UserInputService").TouchEnabled
 local folder=workspace:WaitForChild("SkinnedGrassCoverage")
-local windTemplate=ReplicatedStorage:WaitForChild("GrassWindTemplate")
-local meshTemplate=windTemplate:WaitForChild("SkinnedGrass")
-local defaultSize=meshTemplate.Size
-local footX=folder:GetAttribute("FootprintX")
-local footZ=folder:GetAttribute("FootprintZ")
-local stepX=folder:GetAttribute("StepX")
-local stepZ=folder:GetAttribute("StepZ")
-local GROUND_OFFSET=folder:GetAttribute("GroundOffset") or -0.08
-local step=math.min(stepX,stepZ)
-local RADIUS=math.sqrt(MAX/math.pi)*step*0.92
-
-local player=Players.LocalPlayer
-local function playerXZ()
-	local char=player.Character
-	local root=char and char:FindFirstChild("HumanoidRootPart")
-	if root then return root.Position.X,root.Position.Z end
-	return nil
+local template=RS:WaitForChild("GrassWindTemplate"):WaitForChild("SkinnedGrass")
+local MAX=touch and 96 or 240
+local stepX,stepZ=folder:GetAttribute("StepX"),folder:GetAttribute("StepZ")
+local footX,footZ=folder:GetAttribute("FootprintX"),folder:GetAttribute("FootprintZ")
+local offset=Vector3.new(folder:GetAttribute("RootCenterX"),folder:GetAttribute("RootMinY"),folder:GetAttribute("RootCenterZ"))
+local radius=math.sqrt(MAX/math.pi)*math.min(stepX,stepZ)*.94
+local alive,pool,boneCache={},{},{}
+local created=0
+local function count(length,step,foot) return math.max(1,math.ceil((length-foot)/step)+1) end
+local function rootPosition()
+ local char=player.Character
+ local root=char and char:FindFirstChild("HumanoidRootPart")
+ return root and root.Position
 end
-
-local alive={}
-local count=0
-local nextId=0
-local surfaceId={}
-local function sid(surface)
-	local id=surfaceId[surface]
-	if not id then
-		nextId+=1
-		id=nextId
-		surfaceId[surface]=id
-	end
-	return id
+local function reset(mesh)
+ for _,b in ipairs(boneCache[mesh] or {}) do b.Transform=CFrame.identity end
 end
-
+local lastPosition=nil
 local function refresh()
-	local px,pz=playerXZ()
-	if not px then return end
-	local keep={}
-	local queue={}
-	local reach=RADIUS+math.max(stepX,stepZ)
-	for _,surface in ipairs(CollectionService:GetTagged("IslandGreenGround")) do
-		if surface:IsA("BasePart") then
-			local lp=surface.CFrame:PointToObjectSpace(Vector3.new(px,surface.Position.Y,pz))
-			local nx=gridCount(surface.Size.X,stepX,footX)
-			local nz=gridCount(surface.Size.Z,stepZ,footZ)
-			local spanX=(nx-1)*stepX
-			local spanZ=(nz-1)*stepZ
-			local originX,originZ=-spanX*.5,-spanZ*.5
-			local pad=math.ceil(reach/step)+1
-			local cx=math.clamp(math.floor((lp.X-originX)/stepX+.5)+1,1,nx)
-			local cz=math.clamp(math.floor((lp.Z-originZ)/stepZ+.5)+1,1,nz)
-			local id=sid(surface)
-			for ix=math.max(1,cx-pad),math.min(nx,cx+pad) do
-				for iz=math.max(1,cz-pad),math.min(nz,cz+pad) do
-					local lx=originX+(ix-1)*stepX
-					local lz=originZ+(iz-1)*stepZ
-					local world=surface.CFrame:PointToWorldSpace(Vector3.new(lx,0,lz))
-					local dx,dz=world.X-px,world.Z-pz
-					local dist=dx*dx+dz*dz
-					if dist<=RADIUS*RADIUS then
-						local k=id..":"..ix..":"..iz
-						keep[k]=true
-						if not alive[k] then
-							queue[#queue+1]={k=k,surface=surface,lx=lx,lz=lz,d=dist}
-						end
-					end
-				end
-			end
-		end
-	end
-	for k,mesh in pairs(alive) do
-		if not keep[k] then
-			mesh:Destroy()
-			alive[k]=nil
-			count-=1
-		end
-	end
-	table.sort(queue,function(a,b) return a.d<b.d end)
-	local budget=PER
-	for i=1,#queue do
-		if budget<=0 or count>=MAX then break end
-		local item=queue[i]
-		local mesh=meshTemplate:Clone()
-		mesh.Anchored=true
-		mesh.CanCollide=false
-		mesh.CanTouch=false
-		mesh.CanQuery=false
-		mesh.CastShadow=false
-		mesh.Size=defaultSize
-		mesh.CFrame=item.surface.CFrame*CFrame.new(item.lx,item.surface.Size.Y*.5+GROUND_OFFSET,item.lz)
-		mesh.Parent=folder
-		alive[item.k]=mesh
-		count+=1
-		budget-=1
-	end
-	folder:SetAttribute("ClientGrassPlaced",count)
+ local pos=rootPosition() if not pos then return end
+ local green=CS:GetTagged("IslandGreenGround")
+ local ray=RaycastParams.new()
+ ray.FilterType=Enum.RaycastFilterType.Include
+ local island=workspace:FindFirstChild("FloatingIsland")
+ local tree=workspace:FindFirstChild("BigCenterTree")
+ ray.FilterDescendantsInstances={island,tree}
+ local candidates={}
+ local reach=radius+math.max(stepX,stepZ)
+ for _,surface in ipairs(green) do
+  if not surface:IsA("BasePart") or not surface:IsDescendantOf(workspace) then continue end
+  local lp=surface.CFrame:PointToObjectSpace(pos)
+  if math.abs(lp.X)>surface.Size.X/2+reach or math.abs(lp.Z)>surface.Size.Z/2+reach then continue end
+  local nx,nz=count(surface.Size.X,stepX,footX),count(surface.Size.Z,stepZ,footZ)
+  local ox,oz=-(nx-1)*stepX/2,-(nz-1)*stepZ/2
+  local ix,iz=math.floor((lp.X-ox)/stepX)+1,math.floor((lp.Z-oz)/stepZ)+1
+  local pad=math.ceil(reach/math.min(stepX,stepZ))+1
+  for x=math.max(1,ix-pad),math.min(nx,ix+pad) do
+   for z=math.max(1,iz-pad),math.min(nz,iz+pad) do
+    local p=surface.CFrame:PointToWorldSpace(Vector3.new(ox+(x-1)*stepX,surface.Size.Y/2,oz+(z-1)*stepZ))
+    local d=(Vector2.new(p.X-pos.X,p.Z-pos.Z)).Magnitude
+    if d<=radius then
+     local hit=workspace:Raycast(p+Vector3.new(0,80,0),Vector3.new(0,-160,0),ray)
+     if hit and hit.Instance==surface and hit.Normal.Y>.6 then
+      local key=tostring(surface:GetAttribute("GrassSurfaceId"))..":"..x..":"..z
+      candidates[#candidates+1]={key=key,surface=surface,pos=hit.Position,d=d}
+     end
+    end
+   end
+  end
+ end
+ table.sort(candidates,function(a,b) return a.d<b.d end)
+ local wanted={}
+ for i=1,math.min(MAX,#candidates) do wanted[candidates[i].key]=true end
+ for key,entry in pairs(alive) do
+  if not wanted[key] then
+   reset(entry.mesh) entry.mesh.Parent=nil
+   pool[#pool+1]=entry.mesh alive[key]=nil
+  end
+ end
+ local budget=touch and 4 or 8
+ for i=1,math.min(MAX,#candidates) do
+  local item=candidates[i]
+  if not alive[item.key] and budget>0 then
+   local mesh=table.remove(pool)
+   if not mesh and created<MAX then
+    mesh=template:Clone() created+=1
+    boneCache[mesh]={}
+    for _,b in ipairs(mesh:GetDescendants()) do if b:IsA("Bone") then table.insert(boneCache[mesh],b) end end
+   end
+   if mesh then
+    mesh.CFrame=(CFrame.new(item.pos)*item.surface.CFrame.Rotation)*CFrame.new(-offset+Vector3.new(0,-.08,0))
+    mesh.Parent=folder
+    alive[item.key]={mesh=mesh,pos=item.pos,surface=item.surface}
+    budget-=1
+   end
+  end
+ end
+ local active=0 for _ in pairs(alive) do active+=1 end
+ folder:SetAttribute("ClientGrassPlaced",active)
+ folder:SetAttribute("ClientGrassAllocated",created)
 end
-
-local acc=0
+local elapsed,windElapsed=0,0
 RunService.Heartbeat:Connect(function(dt)
-	acc+=dt
-	if acc<0.35 then return end
-	acc=0
-	refresh()
+ elapsed+=dt windElapsed+=dt
+ if elapsed>=.2 then elapsed=0 refresh() end
+ if windElapsed<(touch and .1 or .05) then return end
+ windElapsed=0
+ local pos=rootPosition() if not pos then return end
+ local time=os.clock()
+ for _,entry in pairs(alive) do
+  if (entry.pos-pos).Magnitude<24 then
+   local bend=math.sin(time*1.4+entry.pos.X*.08)*.055
+   for _,b in ipairs(boneCache[entry.mesh]) do
+    local distance=(b.WorldPosition-pos).Magnitude
+    b.Transform=CFrame.Angles(bend+math.clamp(1-distance/4,0,1)*.7,0,bend*.5)
+   end
+   entry.animated=true
+  elseif entry.animated then reset(entry.mesh) entry.animated=false end
+ end
 end)
 ]==========]
 grassRunner.Parent=StarterPlayer.StarterPlayerScripts
@@ -473,8 +472,8 @@ if not treeGround then
 end
 assert(treeGround,"No green center ground found for tree")
 
-local targetTreeHeight=math.clamp(math.min(islandSize.X,islandSize.Z)*.085,108,122)
-scaleHeight(tree,targetTreeHeight)
+local targetTreeHeight=64
+assert(scaleHeight(tree,targetTreeHeight),"Tree scale failed")
 assert(bottomPlace(tree,treeGround.Position,0,.55),"Tree grounding failed")
 runtime:SetAttribute("TreeGroundX",treeGround.Position.X)
 runtime:SetAttribute("TreeGroundY",treeGround.Position.Y)
@@ -534,7 +533,7 @@ leaves.Texture="rbxasset://textures/particles/leaf_main.dds"
 leaves.Shape=Enum.ParticleEmitterShape.Box
 leaves.ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume
 leaves.EmissionDirection=Enum.NormalId.Bottom
-leaves.Rate=math.clamp(treeSize.X*.25,7,16)
+leaves.Rate=4
 leaves.Lifetime=NumberRange.new(4.5,7.5)
 leaves.Speed=NumberRange.new(.25,1.1)
 leaves.Acceleration=Vector3.new(0,-1.8,0)
@@ -587,7 +586,7 @@ WindLines:Init({
 	Direction=dir;
 	Speed=speed;
 	Lifetime=1.8;
-	SpawnRate=13;
+	SpawnRate=4;
 })
 
 pcall(function()
@@ -683,10 +682,42 @@ Lighting.GlobalShadows=true
 Lighting.Ambient=Color3.fromRGB(142,143,137)
 Lighting.OutdoorAmbient=Color3.fromRGB(174,171,161)
 
+-- Exact Flat Shader preset; no arbitrary imported scripts are executed.
+for _,d in ipairs(Lighting:GetChildren()) do
+ if d:IsA("PostEffect") or d:IsA("Sky") or d:IsA("Atmosphere") then d:Destroy() end
+end
+local shaderAsset=loadAsset(86563808574363)
+local shaderCount=0
+for _,d in ipairs(shaderAsset:GetDescendants()) do
+ if d:IsA("PostEffect") or d:IsA("Sky") or d:IsA("Atmosphere") then
+  local copy=d:Clone()
+  for _,child in ipairs(copy:GetDescendants()) do if child:IsA("LuaSourceContainer") then child:Destroy() end end
+  copy:SetAttribute("SourceAssetId",86563808574363)
+  copy.Parent=Lighting
+  shaderCount+=1
+ end
+end
+shaderAsset:Destroy()
+assert(shaderCount==6,"Incomplete Flat Shader preset")
+runtime:SetAttribute("ShaderAssetId",86563808574363)
+local quality=Instance.new("LocalScript")
+quality.Name="MobileShaderQuality"
+quality.Source=[[
+local mobile=game:GetService("UserInputService").TouchEnabled
+if mobile then
+ for _,effect in ipairs(game:GetService("Lighting"):GetChildren()) do
+  if effect:GetAttribute("SourceAssetId")==86563808574363 and
+   (effect:IsA("DepthOfFieldEffect") or effect:IsA("BlurEffect") or effect:IsA("SunRaysEffect")) then effect.Enabled=false end
+ end
+end
+]]
+quality.Parent=StarterPlayer.StarterPlayerScripts
+
 return{
-	version=110,
+	version=111,
 	islandParts=countParts(island),
 	greenSurfaces=#greenSurfaces,
 	grassPatches=placed,
 	treeFoliage=#foliageParts
 }
+
