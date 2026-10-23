@@ -43,10 +43,18 @@ for _,template in ipairs(assets.Maps:GetChildren()) do
  task.wait(.2)
  local pts=map.SafePoints:GetChildren() local paths={}
  for i=2,#pts do
-  local path=game:GetService("PathfindingService"):CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true})
-  path:ComputeAsync(pts[1].Value,pts[i].Value)
-  assert(path.Status==Enum.PathStatus.Success,"Unreachable spawn "..template.Name.."/"..pts[i].Name)
-  table.insert(paths,{index=pts[i].Name,status=path.Status.Name,waypoints=#path:GetWaypoints()}) path:Destroy()
+  local status=nil local waypointCount=0
+  for attempt=1,3 do
+   local path=game:GetService("PathfindingService"):CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true,WaypointSpacing=5})
+   local ok=pcall(function() path:ComputeAsync(pts[1].Value,pts[i].Value) end)
+   status=ok and path.Status or Enum.PathStatus.NoPath
+   waypointCount=#path:GetWaypoints()
+   path:Destroy()
+   if status==Enum.PathStatus.Success then break end
+   task.wait(.15)
+  end
+  assert(status==Enum.PathStatus.Success,"Unreachable spawn after retries "..template.Name.."/"..pts[i].Name)
+  table.insert(paths,{index=pts[i].Name,status=status.Name,waypoints=waypointCount})
  end
  table.insert(pathChecks,{map=template.Name,paths=paths}) map:Destroy()
 end
