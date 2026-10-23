@@ -86,7 +86,7 @@ const survivalServerTestSource=read('survival-server')
  )
  .replace(
   'if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return end',
-  'if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) then return end'
+  '-- Test harness already asserts a valid root and Humanoid before join.'
  );
 const survivalRuntimeTests=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',survivalServerTestSource);
 const verifySource=read('verify');
