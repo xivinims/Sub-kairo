@@ -196,10 +196,23 @@ if ${process.env.SURVIVERS_DRY_RUN==='1'?'false':'true'} then
  local saveOk,saveError=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
  result.saved=saveOk result.saveError=saveOk and nil or tostring(saveError)
  result.sizes={}
+ result.serverStorageChildren={}
  for _,name in ipairs({"Workspace","ReplicatedStorage","ServerStorage","ServerScriptService","StarterPlayer","StarterGui","ReplicatedFirst"}) do
   local copy=Instance.new("Folder") for _,child in ipairs(game:GetService(name):GetChildren()) do local ok,c=pcall(function() return child:Clone() end) if ok and c then c.Parent=copy end end
   local ok,b=pcall(function() return ser:SerializeInstancesAsync({copy}) end) result.sizes[name]=ok and buffer.len(b) or -1 copy:Destroy()
  end
+ for _,child in ipairs(game.ServerStorage:GetChildren()) do
+  local ok,clone=pcall(function() return child:Clone() end)
+  if ok and clone then
+   local holder=Instance.new("Folder") clone.Parent=holder
+   local ok2,b=pcall(function() return ser:SerializeInstancesAsync({holder}) end)
+   table.insert(result.serverStorageChildren,{name=child.Name,class=child.ClassName,bytes=ok2 and buffer.len(b) or -1})
+   holder:Destroy()
+  else
+   table.insert(result.serverStorageChildren,{name=child.Name,class=child.ClassName,bytes=-1})
+  end
+ end
+ table.sort(result.serverStorageChildren,function(a,b) return a.bytes>b.bytes end)
 end
 return result
 `;
