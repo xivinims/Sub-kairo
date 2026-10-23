@@ -50,39 +50,38 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
- local lookup={
-  lowertorso=true,uppertorso=true,head=true,
-  leftupperarm=true,rightupperarm=true,leftlowerarm=true,rightlowerarm=true,lefthand=true,righthand=true,
-  leftupperleg=true,rightupperleg=true,leftlowerleg=true,rightlowerleg=true,leftfoot=true,rightfoot=true,
-  root=true,waist=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true,
+ local canonicalMotors={root=true,waist=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true}
+ local r6ToR15={
+  humanoidrootpart="root",rootpart="root",torso="root",uppertorso="waist",
+  head="neck",leftarm="leftshoulder",rightarm="rightshoulder",leftleg="lefthip",rightleg="righthip"
  }
- for alias,partName in pairs({
-  humanoidrootpart="lowertorso",rootpart="lowertorso",torso="uppertorso",uppertorso="uppertorso",
-  head="head",leftarm="leftupperarm",rightarm="rightupperarm",leftleg="leftupperleg",rightleg="rightupperleg"
- }) do
-  if lookup[partName] then lookup[alias]=true end
- end
  local report={}
  for _,clipName in ipairs(names) do
   local clipFolder=assert(folder:FindFirstChild(clipName),"Missing clip "..clipName)
   local chunks=clipFolder:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
   local packed={} for _,v in ipairs(chunks) do table.insert(packed,v.Value) end
   local decoded=Http:JSONDecode(buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(game:GetService("EncodingService"):Base64Decode(buffer.fromstring(table.concat(packed))),Enum.CompressionAlgorithm.Zstd)))
-  local matched={} local moving=false local poseNames={} local seen={}
-  for _,frame in ipairs(decoded.frames) do for poseName,pose in pairs(frame.poses) do
-   local n=norm(poseName)
-   if lookup[n] then matched[n]=true end
-   if not seen[poseName] then seen[poseName]=true table.insert(poseNames,poseName) end
-   local v=pose.c or pose
-   if #v==12 then
-    local cf=CFrame.new(table.unpack(v))
-    local rx,ry,rz=cf:ToOrientation()
-    if cf.Position.Magnitude>.001 or math.abs(rx)>.001 or math.abs(ry)>.001 or math.abs(rz)>.001 then moving=true end
+  local motors={} local moving=false local poseNames={} local seen={}
+  for _,frame in ipairs(decoded.frames) do
+   for poseName,pose in pairs(frame.poses) do
+    local n=norm(poseName)
+    local motor=r6ToR15[n] or (canonicalMotors[n] and n or nil)
+    if motor then motors[motor]=true end
+    if not seen[poseName] then seen[poseName]=true table.insert(poseNames,poseName) end
+    local v=pose.c or pose
+    if #v==12 then
+     local cf=CFrame.new(table.unpack(v))
+     local rx,ry,rz=cf:ToOrientation()
+     if cf.Position.Magnitude>.001 or math.abs(rx)>.001 or math.abs(ry)>.001 or math.abs(rz)>.001 then moving=true end
+    end
    end
-  end end
-  local count=0 for _ in pairs(matched) do count+=1 end
+  end
+  local count=0 for _ in pairs(motors) do count+=1 end
   table.sort(poseNames)
-  assert(count>=4 and moving,clipName.." cannot retarget to canonical R15; matched="..count.." poses="..table.concat(poseNames,","))
+  assert(count>=4 and moving,clipName.." cannot retarget to R15 motors; matched="..count.." poses="..table.concat(poseNames,","))
+  if clipName=="Idle" then
+   assert(motors.root and motors.neck and motors.leftshoulder and motors.rightshoulder,"Idle misses core R15 motors")
+  end
   report[clipName]=count
  end
  return report

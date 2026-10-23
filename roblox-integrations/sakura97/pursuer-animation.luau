@@ -35,15 +35,19 @@ local function prepare(model,folder)
    d.lookup[normalized(j.Name)]=j
   end
  end
+ local motors={}
+ for joint in pairs(d.joints) do motors[normalized(joint.Name)]=joint end
+ -- Forsaken survivor clips are authored on an R6 hierarchy.
+ -- Retarget R6 body poses directly to the equivalent R15 Motor6D joints.
  local aliasTargets={
-  humanoidrootpart="LowerTorso",rootpart="LowerTorso",
-  torso="UpperTorso",uppertorso="UpperTorso",
-  head="Head",
-  leftarm="LeftUpperArm",rightarm="RightUpperArm",
-  leftleg="LeftUpperLeg",rightleg="RightUpperLeg",
+  humanoidrootpart="root",rootpart="root",torso="root",
+  uppertorso="waist",
+  head="neck",
+  leftarm="leftshoulder",rightarm="rightshoulder",
+  leftleg="lefthip",rightleg="righthip",
  }
- for alias,partName in pairs(aliasTargets) do
-  local joint=d.lookup[normalized(partName)]
+ for alias,motorName in pairs(aliasTargets) do
+  local joint=motors[normalized(motorName)]
   if joint then d.lookup[alias]=joint end
  end
  for _,v in ipairs(folder:GetChildren()) do
@@ -119,8 +123,11 @@ local function apply(d,state,dt,loop,absolute)
  local clip=d.clips[state]
  if not clip or clip.length<=0 or (clip.boundCount or 0)<4 then return false end
  if d.state~=state then
-  for joint in pairs(d.joints) do if joint.Parent then joint.Transform=CFrame.identity end end
-  d.state=state d.time=0
+  for joint in pairs(d.joints) do
+   if joint.Parent then joint.Transform=CFrame.identity end
+  end
+  d.state=state
+  d.time=0
  end
  d.time+=dt
  local t=absolute or d.time
@@ -238,8 +245,13 @@ Run.PreSimulation:Connect(function(dt)
      else kind="idle" end
      local state=locomotionName(d,kind,crouched,injured)
      local supported=canDrive(d,state)
-     if p==Players.LocalPlayer then setDefaultAnimate(model,not supported) end
-     if supported then apply(d,state,dt,kind~="jump" and kind~="fall") else resetData(d) end
+     if p==Players.LocalPlayer and supported then setDefaultAnimate(model,false) end
+     if supported then
+      apply(d,state,dt,kind~="jump" and kind~="fall")
+     else
+      resetData(d)
+      if p==Players.LocalPlayer then setDefaultAnimate(model,true) end
+     end
     elseif p==Players.LocalPlayer then
      setDefaultAnimate(model,true)
     end
