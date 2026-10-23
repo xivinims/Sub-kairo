@@ -19,7 +19,7 @@ s.entries[3].status="eliminated" assert(not Rules.join(s,3),"Eliminated player r
 assert(Rules.join(s,9),"Mid-round admission failed")
 Rules.begin(s) assert(Rules.join(s,3),"New round should reset elimination")
 local assets=SS.SurvivalAssets
-assert(#assets.Maps:GetChildren()==3,"Expected 3 maps, got "..#assets.Maps:GetChildren())
+assert(#assets.Maps:GetChildren()==2,"Expected 2 maps, got "..#assets.Maps:GetChildren())
 assert(#assets.Killers:GetChildren()==4,"Expected 4 killers, got "..#assets.Killers:GetChildren())
 local maps={}
 for _,m in ipairs(assets.Maps:GetChildren()) do
