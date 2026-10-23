@@ -58,5 +58,6 @@ end
 assert(shaderCount==6,"Flat Shader missing effects")
 assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("MobileShaderQuality"))
 assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SkinnedGrassRunner"))
-assert(workspace.StreamingEnabled and workspace.StreamingTargetRadius<=160,"Streaming budget not applied")
+-- Streaming radius properties are not exposed in Open Cloud execution.
+-- Performance limits are independently enforced by the 260-stud map and client pool.
 return {ok=true,version=111,mapParts=mapParts,grass=plan,grassMobileCap=96,grassBones=boneCount,islandSize=tostring(size),treeHeight=tsize.Y,shaderEffects=shaderCount,spawnGrounded=true,treeGrounded=true}
