@@ -85,7 +85,8 @@ for _,spec in ipairs(require(config).Maps) do
  end
  assert(#selected>=9,"Need 9 connected floor positions in "..spec.name..", got "..#selected)
  local points=Instance.new("Folder",map) points.Name="SafePoints"
- for i,p in ipairs(selected) do local v=Instance.new("Vector3Value",points) v.Name=tostring(i) v.Value=p end
+ -- Capacity is 8 players plus one pursuer, so keep exactly 9 connected points.
+ for i=1,9 do local v=Instance.new("Vector3Value",points) v.Name=tostring(i) v.Value=selected[i] end
  local partCount=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then partCount+=1 end end
  map:SetAttribute("PartCount",partCount)
  map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("FloorY",30) map.Parent=maps
