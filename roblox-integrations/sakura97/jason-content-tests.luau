@@ -72,7 +72,14 @@ local function animationCompatibility(folder,names)
    end
   end end
   local count=0 for _ in pairs(matched) do count+=1 end
-  assert(count>=4 and moving,clipName.." cannot drive R15 rig")
+  if count<4 or not moving then
+   local names={} local seen={}
+   for _,frame in ipairs(decoded.frames) do for poseName in pairs(frame.poses) do
+    if not seen[poseName] then seen[poseName]=true table.insert(names,poseName) end
+   end end
+   table.sort(names)
+   error(clipName.." cannot drive R15 rig; matched="..count.." moving="..tostring(moving).." poses="..table.concat(names,","))
+  end
   report[clipName]=count
  end
  testRig:Destroy()
