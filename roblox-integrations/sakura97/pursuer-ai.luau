@@ -95,13 +95,7 @@ function AI.start(model,map,config,ctx)
   for _,pl in ipairs(ctx.players()) do
    local r=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
    if r and ctx.vulnerable(pl) and (r.Position-root.Position).Magnitude<config.range and los(r.Position,pl.Character) then
-    if model.Name=="Figure" or ctx.speed(pl)>.6 or target==pl then
-     if model.Name=="Guerreiro" then
-      model:SetAttribute("Ability","Attack")
-      task.delay(.55,function() if model.Parent and model:GetAttribute("Ability")=="Attack" then model:SetAttribute("Ability","") end end)
-     end
-     ctx.down(pl)
-    end
+    if model.Name=="Figure" or ctx.speed(pl)>.6 or target==pl then ctx.down(pl) end
    end
   end
  end)

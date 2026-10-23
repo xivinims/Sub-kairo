@@ -87,7 +87,7 @@ for _,d in ipairs(particles:GetDescendants()) do
 end
 assert(count>0,"Scarlet particles missing") particles:Destroy()
 -- Build the Warrior from the exact avatar item IDs supplied by the owner.
-local warriorItems={88666724325984,109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066}
+local warriorItems={109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066}
 local description=Instance.new("HumanoidDescription")
 local warrior=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
 description:Destroy()
@@ -128,7 +128,7 @@ warriorRoot.CanCollide=true warriorRoot.Massless=false warriorRoot.Transparency=
 
 local warriorClips=Instance.new("Folder",warrior) warriorClips.Name="MotionClips"
 local jason=load(125165599816440)
-sequences(jason,125165599816440,{Idle="Jason Idle",Walk="Jason Walk",Run="Jason Run",Attack="Jason Slash"},warriorClips)
+sequences(jason,125165599816440,{Idle="Jason Idle",Walk="Jason Walk",Run="Jason Run"},warriorClips)
 jason:Destroy()
 
 -- Retarget the main R15 joints to the supplied Jason person animation pose names.
@@ -142,7 +142,7 @@ for _,j in ipairs(warrior:GetDescendants()) do
   j:SetAttribute("PoseAlias",warriorAliases[j.Part1.Name])
  end
 end
-warrior:SetAttribute("AvatarItems","88666724325984,109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
+warrior:SetAttribute("AvatarItems","109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
 warrior:SetAttribute("AnimationAssetId",125165599816440)
 warrior.Parent=rigs
 for _,m in ipairs(maps:GetChildren()) do m:SetAttribute("DisplayName",m.Name) end

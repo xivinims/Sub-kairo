@@ -50,8 +50,8 @@ for _,template in ipairs(assets.Maps:GetChildren()) do
 end
 local warrior=assert(assets.Killers:FindFirstChild("Guerreiro"))
 assert(warrior:GetAttribute("AnimationAssetId")==125165599816440)
-assert(#warrior.MotionClips:GetChildren()==4,"Warrior Jason clips missing")
-assert(warrior:GetAttribute("AvatarItems")=="88666724325984,109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
+assert(#warrior.MotionClips:GetChildren()==3,"Warrior movement clips missing")
+assert(warrior:GetAttribute("AvatarItems")=="109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
 local freddyJoints={}
 local f=assets.Killers.Freddy
 for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
@@ -64,4 +64,4 @@ game:GetService("ContentProvider"):PreloadAsync(roots,function(id,status)
 end)
 local house=workspace.LobbyTreeHouse assert(house:GetAttribute("SourceAssetId")==15761692261)
 local cf,size=house:GetBoundingBox()
-return {ok=true,mediaFailures=mediaFailures,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=false,warriorItems=8}
+return {ok=true,mediaFailures=mediaFailures,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=false,warriorItems=7}

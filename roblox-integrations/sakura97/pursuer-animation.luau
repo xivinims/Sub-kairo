@@ -33,8 +33,7 @@ RunService.RenderStepped:Connect(function(dt)
  if not current or not data then return end
  local root=current.PrimaryPart if not root then return end
  local speed=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
- local ability=current:GetAttribute("Ability")
- local state=ability=="Attack" and "Attack" or speed>17 and "Run" or speed>1 and "Walk" or "Idle"
+ local state=speed>17 and "Run" or speed>1 and "Walk" or "Idle"
  if state~=data.last then data.t=0 data.last=state end data.t+=step
  local clip=data.clips[state] or data.clips.Walk
  if clip and clip.length>0 then
