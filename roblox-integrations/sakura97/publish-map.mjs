@@ -135,202 +135,82 @@ function first(task){
   try{return JSON.parse(v)}catch{return v}
 }
 
-const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
-async function uploadSurviversLogo(){
-  const fallback=0;
-  try{
-    const key=process.env.ROBLOX_API_KEY;
-    const creatorId=process.env.ROBLOX_CREATOR_USER_ID||'8344738123';
-    const logoBase64=[0,1,2,3].map(i=>fs.readFileSync(`roblox-integrations/sakura97/branding/survivers-logo.part${i}.b64`,'utf8').trim()).join('');
-    if(logoBase64.length!==28984) throw new Error('Logo base64 length mismatch: '+logoBase64.length);
-    const bytes=Buffer.from(logoBase64,'base64');
-    const logoHash=createHash('sha256').update(bytes).digest('hex');
-    if(bytes.length!==21736 || logoHash!=='96f4ca05c6a6cf571773cc42eda595e85825adfea93c1cab56a6e4c8be559371'){
-      throw new Error('Logo bytes/hash mismatch: '+bytes.length+' '+logoHash);
-    }
-    console.log('[Survivers] logo reconstructed:',bytes.length,'bytes sha256='+logoHash);
-    const form=new FormData();
-    form.append('request',JSON.stringify({
-      assetType:'Decal',
-      displayName:'Survivers Logo',
-      description:'Survivers menu logo',
-      creationContext:{creator:{userId:String(creatorId)}}
-    }));
-    form.append('fileContent',new Blob([bytes],{type:'image/png'}),'survivers-logo.png');
-    const created=await fetch('https://apis.roblox.com/assets/v1/assets',{method:'POST',headers:{'x-api-key':key},body:form,signal:AbortSignal.timeout(60000)});
-    const raw=await created.text();
-    if(!created.ok){ console.warn('[Survivers] logo upload unavailable:',created.status,raw); return fallback; }
-    const op=JSON.parse(raw);
-    const directId=Number(op?.assetId||op?.response?.assetId||0);
-    if(directId>0){ console.log('[Survivers] logo asset:',directId); return directId; }
-    const opId=String(op.path||op.operationPath||'').replace(/^operations\//,'');
-    if(!opId){ console.warn('[Survivers] logo upload returned no operation:',raw); return fallback; }
-    console.log('[Survivers] logo operation:',opId);
-    for(let i=0;i<90;i++){
-      await sleep(2000);
-      const res=await fetch('https://apis.roblox.com/assets/v1/operations/'+opId,{headers:{'x-api-key':key},signal:AbortSignal.timeout(30000)});
-      const txt=await res.text();
-      if(!res.ok) continue;
-      const status=JSON.parse(txt);
-      if(status.done){
-        const id=Number(status?.response?.assetId||String(status?.response?.path||'').split('/').pop()||0);
-        if(id>0){ console.log('[Survivers] logo asset:',id); return id; }
-        console.warn('[Survivers] logo operation completed without asset:',txt);
-        break;
-      }
-      if(status.error){ console.warn('[Survivers] logo operation error:',txt); break; }
-    }
-    console.warn('[Survivers] logo operation ended without usable asset id:',opId);
-  }catch(err){ console.warn('[Survivers] logo upload failed:',String(err)); }
-  return fallback;
-}
-const surviversLogoId=await uploadSurviversLogo();
-
-let installBody=read('install');
-const runtimeSource=read('nature-runtime');
-installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
-for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'grass-module',WIND:'wind-client',SERVER:'island-server',VOID:'void-client',LEAVES:'leaves-client',NAMETAG:'nametag-server',FRIENDS:'friends-client'})) {
- installBody=installBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
-}
-installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
-const menuBody=read('install-menu')
- .replaceAll('__SURVIVERS_LOGO_ID__',String(surviversLogoId))
- .replace('__MENU_SOURCE__',JSON.stringify(read('menu-client')))
- .replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
-let survivalBody=read('survival-install').replace('__KILLER_FACTORY_SOURCE__',JSON.stringify(read('killer-factory')));
-for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
-const survivalTests=read('survival-tests');
-const survivalClientTests=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
-const survivalServerTestSource=read('survival-server')
- .replace(
-  'local function now() return workspace:GetServerTimeNow() end',
-  'local function now() return TEST_NOW() end'
- )
- .replace(
-  'if p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return end',
-  '-- Test harness already asserts a valid root and Humanoid before join.'
- );
-const survivalRuntimeTests=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',survivalServerTestSource);
-const verifySource=read('verify');
-const menuVerifySource=read('verify-menu');
-const contentTests=read('content-tests');
-const voidTests=read('void-runtime-tests').replace('__VOID_CLIENT_TEST_SOURCE__',read('void-client'));
-
-const patch=`
-assert(game.GameId == ${UNIVERSE_ID} and game.PlaceId == ${PLACE_ID}, "Wrong target place")
+const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
+const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'};
+let install=read('jason-install');
+for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
+const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
+const syntax=Object.values(sources).concat(['menu-client','loading-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
+console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
+const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
+const script=`
 local sourceVersion=game.PlaceVersion
-print("[Sakura97] Starting repaired install from version "..tostring(sourceVersion))
-
-local installOk,installErr=xpcall(function()
-${installBody}
-end,function(err)
-  return debug.traceback(tostring(err),2)
-end)
-assert(installOk,"INSTALL_TRACE: "..tostring(installErr))
--- Publish map and UI atomically: no public intermediate map without its menu.
+local function install()
+${install}
+end
+local result=install()
 do
-${menuBody}
+${menu}
 end
-
-do
-${survivalBody}
+local assets=game.ServerStorage.SurvivalAssets
+assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap)
+assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
+assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
+assert(game.ReplicatedStorage.Survival.CrouchClips:FindFirstChild("Crouch Walk"))
+local ui=game.StarterGui.TomiaszMenu
+assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
+result.logoTexture=ui.MenuPrincipal.Logo.Image
+local ser=game:GetService("SerializationService")
+result.mapBytes=buffer.len(ser:SerializeInstancesAsync({assets.Maps}))
+result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
+local function testController()
+${test}
 end
-local function testSurvival()
-${survivalTests}
+result.controller=testController()
+local function testClient()
+${clientTest}
 end
-local survivalChecks=testSurvival()
-local function testRoundController()
-${survivalRuntimeTests}
+result.client=testClient()
+local function testRole()
+${roleTest}
 end
-survivalChecks.runtime=testRoundController()
-local function testSurvivalClient()
-${survivalClientTests}
+result.playerJason=testRole()
+local function testAI()
+${aiTest}
 end
-survivalChecks.client=testSurvivalClient()
-local function runVerify()
-${verifySource}
+result.ai=testAI()
+local function testContent()
+${read('jason-content-tests')}
 end
-local checks=runVerify()
-local function verifyMenu()
-${menuVerifySource}
-end
-checks.menu=verifyMenu()
-local function verifyContent()
-${contentTests}
-end
-checks.content=verifyContent()
-local function verifyVoidController()
-${voidTests}
-end
-checks.voidController=verifyVoidController()
-assert(checks and checks.ok,"Verify failed")
-
-local SerializationService=game:GetService("SerializationService")
-local function serializedSize(instances)
- local ok,buf=pcall(function() return SerializationService:SerializeInstancesAsync(instances) end)
- if not ok or not buf then return -1 end
- return buffer.len(buf)
-end
-local function childrenSize(container)
- local clone=Instance.new("Folder")
- clone.Name="Measure"
- for _,child in ipairs(container:GetChildren()) do
-  local ok,item=pcall(function() return child:Clone() end)
-  if ok and item then item.Parent=clone end
- end
- local bytes=serializedSize({clone})
- clone:Destroy()
- return bytes
-end
-local sizeReport={
- lobby=serializedSize({workspace.JediLibrary}),
- menuScene=serializedSize({game.ReplicatedStorage.MenuSceneTemplate}),
- maps=serializedSize({game.ServerStorage.SurvivalAssets.Maps}),
- killers=serializedSize({game.ServerStorage.SurvivalAssets.Killers}),
- starterGui=childrenSize(game.StarterGui),
- starterPlayer=childrenSize(game.StarterPlayer.StarterPlayerScripts),
- serverScripts=childrenSize(game.ServerScriptService),
- replicated=childrenSize(game.ReplicatedStorage),
-}
-sizeReport.eachMap={}
-for _,m in ipairs(game.ServerStorage.SurvivalAssets.Maps:GetChildren()) do
- sizeReport.eachMap[m.Name]=serializedSize({m})
-end
-sizeReport.eachKiller={}
-for _,m in ipairs(game.ServerStorage.SurvivalAssets.Killers:GetChildren()) do
- local clips=m:FindFirstChild("MotionClips")
- local clipBytes=clips and serializedSize({clips}) or 0
- sizeReport.eachKiller[m.Name]={total=serializedSize({m}),clips=clipBytes}
-end
-print("SURVIVERS_SIZE_REPORT",game:GetService("HttpService"):JSONEncode(sizeReport))
-local saveOk,saveErr=pcall(function()
+result.content=testContent()
+result.sourceVersion=sourceVersion result.ok=true result.saved=false
+if ${process.env.SURVIVERS_DRY_RUN==='1'?'false':'true'} then
+ game.ReplicatedStorage.Survival:SetAttribute("Phase","Aguardando")
+ game.ReplicatedStorage.Survival:SetAttribute("EndsAt",0)
+ game.ReplicatedStorage.Survival:SetAttribute("Count",0)
+ game.ReplicatedStorage.SweanRuntime:SetAttribute("LogoSHA256","286b7e57276a5d593b38c10c3a4cd41518d027c0e9346dfa6db3daf36521897e")
  game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
-end)
-if not saveOk then
- error("SAVE_FAILED sizes="..game:GetService("HttpService"):JSONEncode(sizeReport).." err="..tostring(saveErr))
+ result.saved=true
 end
-
-return {
-  ok=true,
-  sourceVersion=sourceVersion,
-  mapParts=checks.mapParts,
-  survival=survivalChecks,
-  menu=checks.menu,
-  content=checks.content,
-  voidController=checks.voidController,
-  lots=checks.lots,
-  grass=checks.grass,
-  pumpkins=checks.pumpkins,
-  pumpkinClusters=checks.pumpkinClusters,
-  logoAssetId=${surviversLogoId},
-  saved=true,
-  message="Survivers menu + round flow saved and published"
-}
+return result
 `;
-
-console.log("[Survivers] Publishing reduced Survivers build...");
-const applied=first(await execute(patch));
-if(!applied?.ok) throw new Error("Sakura97 install failed");
-console.log(JSON.stringify({stage:"saved-and-published",...applied}));
-
+const applied=first(await execute(script));
+console.log('JASON_VALIDATED_BUILD',JSON.stringify(applied));
+if(applied?.saved){
+ const persisted=first(await execute(`
+  local assets=game.ServerStorage.SurvivalAssets
+  assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
+  assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902)
+  assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
+  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==120)
+  assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
+  assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
+  assert(game.ServerScriptService.SurvivalServer.Source:find('LobbyJoinPortal',1,true))
+  return {ok=true,version=game.PlaceVersion,build=120,logo=true,singleMap=true,singleJason=true,lobbyPreserved=true}
+ `));
+ console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
+}
