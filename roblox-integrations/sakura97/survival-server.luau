@@ -22,6 +22,7 @@ local function sync(p)
  local e=entry(p)
  p:SetAttribute("InRound",e~=nil and (e.status=="alive" or e.status=="downed"))
  p:SetAttribute("Downed",e~=nil and e.status=="downed")
+ p:SetAttribute("Injured",e~=nil and e.injured==true)
  p:SetAttribute("BleedoutAt",e and e.deadline or 0)
  p:SetAttribute("HasMedkit",e~=nil and e.kit or false) p:SetAttribute("HasBoost",e~=nil and e.boost or false)
  p:SetAttribute("RoundStatus",e and e.status or "lobby")
@@ -29,7 +30,7 @@ local function sync(p)
  local h=humanoid(p)
  if h then
   h.PlatformStand=false h.AutoRotate=true
-  h.WalkSpeed=p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
+  h.WalkSpeed=p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="slow" and 7 or p:GetAttribute("MoveMode")=="run" and 16 or 12)) or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
   h.JumpPower=(e and e.status=="downed") and 0 or 50 h.JumpHeight=(e and e.status=="downed") and 0 or 7.2
  end
 end
@@ -40,7 +41,7 @@ local function lobby(p)
  local r=root(p) local h=humanoid(p)
  if r then r.Anchored=false p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(0,4,0)) r.AssemblyLinearVelocity=Vector3.zero end
  if h then h.PlatformStand=false h.AutoRotate=true h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7.2 end
- p:SetAttribute("MoveMode","walk") p:SetAttribute("InRound",false) p:SetAttribute("Downed",false)
+ p:SetAttribute("MoveMode","walk") p:SetAttribute("InRound",false) p:SetAttribute("Downed",false) p:SetAttribute("Injured",false)
 end
 local function eliminate(p,cause)
  local e=entry(p) if not e or (e.status~="alive" and e.status~="downed") then return end
@@ -54,13 +55,57 @@ end)
 local function vulnerable(p)
  local e=entry(p) return p~=jasonPlayer and e and e.status=="alive" and now()>(e.protectedUntil or 0)
 end
+local function injure(p)
+ if not vulnerable(p) then return false end
+ local e=entry(p)
+ if e.injured then return false end
+ e.injured=true e.channel=nil
+ sync(p)
+ net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
+ return true
+end
 local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
- local e=entry(p) e.channel=nil e.cause=killerName sync(p)
+ local e=entry(p) e.injured=true e.channel=nil e.cause=killerName sync(p)
  net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
 end
+local function executeDowned(p,attacker)
+ local e=entry(p)
+ if not e or e.status~="downed" or catching[p] or not attacker or not attacker.PrimaryPart then return false end
+ local rr=root(p)
+ if not rr or (rr.Position-attacker.PrimaryPart.Position).Magnitude>7 then return false end
+ catching[p]=true
+ local t=now()
+ attacker:SetAttribute("ExecutionAt",t)
+ attacker:SetAttribute("ExecutionTargetUserId",p.UserId)
+ attacker:SetAttribute("AttackUntil",t+1.65)
+ p:SetAttribute("BeingExecuted",true)
+ local facing=attacker.PrimaryPart.CFrame
+ local targetCF=facing*CFrame.new(0,0,-2.15)
+ p.Character:PivotTo(CFrame.lookAt(targetCF.Position,attacker.PrimaryPart.Position))
+ rr.Anchored=true
+ net.Update:FireClient(p,"executed","Jason",attacker.PrimaryPart.CFrame)
+ task.delay(1.25,function()
+  catching[p]=nil
+  if rr and rr.Parent then rr.Anchored=false end
+  if p.Parent then p:SetAttribute("BeingExecuted",false) end
+  if attacker and attacker.Parent then
+   attacker:SetAttribute("ExecutionTargetUserId",0)
+  end
+  local current=entry(p)
+  if current and current.status=="downed" then eliminate(p,"Jason") end
+ end)
+ return true
+end
 local function catchPlayer(p)
- if catching[p] or not vulnerable(p) or not npc or not npc.PrimaryPart then return end
+ if catching[p] or not npc or not npc.PrimaryPart then return end
+ local e=entry(p)
+ if not e then return end
+ if e.status=="downed" then
+  executeDowned(p,npc)
+  return
+ end
+ if not vulnerable(p) then return end
  local r=root(p) if not r or (r.Position-npc.PrimaryPart.Position).Magnitude>6 then return end
  catching[p]=true local attacker=npc local roundId=state.id
  attacker:SetAttribute("AttackAt",now()) attacker:SetAttribute("AttackUntil",now()+.75)
@@ -71,7 +116,9 @@ local function catchPlayer(p)
   local param=RaycastParams.new() param.FilterType=Enum.RaycastFilterType.Exclude param.FilterDescendantsInstances={attacker}
   local hit=workspace:Raycast(attacker.PrimaryPart.Position,rr.Position-attacker.PrimaryPart.Position,param)
   if hit and not hit.Instance:IsDescendantOf(p.Character) then return end
-  net.Update:FireClient(p,"caught","Jason",attacker.PrimaryPart.CFrame) down(p)
+  net.Update:FireClient(p,"caught","Jason",attacker.PrimaryPart.CFrame)
+  local current=entry(p)
+  if current and current.injured then down(p) else injure(p) end
  end)
 end
 local function join(p)
@@ -120,9 +167,15 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   local rr=root(p) if not rr then return end
   npc:SetAttribute("AttackAt",t) npc:SetAttribute("AttackUntil",t+.75)
   local best=nil local distance=6
-  for _,other in ipairs(players()) do local pr=root(other)
-   if pr then local delta=pr.Position-rr.Position
-    if delta.Magnitude<distance and (delta.Magnitude<.1 or rr.CFrame.LookVector:Dot(delta.Unit)>.1) then best=other distance=delta.Magnitude end
+  for _,other in ipairs(Players:GetPlayers()) do
+   if other~=p then
+    local oe=entry(other) local pr=root(other)
+    if oe and (oe.status=="alive" or oe.status=="downed") and pr then
+     local delta=pr.Position-rr.Position
+     if delta.Magnitude<distance and (delta.Magnitude<.1 or rr.CFrame.LookVector:Dot(delta.Unit)>.1) then
+      best=other distance=delta.Magnitude
+     end
+    end
    end
   end
   if best then catchPlayer(best) end
@@ -188,7 +241,7 @@ RunService.Heartbeat:Connect(function(dt)
     if not valid then e.channel=nil p:SetAttribute("ReviveAt",0)
     elseif t-c.started>=Rules.ReviveTime then
      if Rules.revive(state,p.UserId,c.target.UserId,t) then
-      te.protectedUntil=t+4 sync(c.target) sync(p) if c.target~=p then points(p,10) end
+      te.injured=true te.protectedUntil=t+4 sync(c.target) sync(p) if c.target~=p then points(p,10) end
      end e.channel=nil p:SetAttribute("ReviveAt",0)
     end
    end
@@ -208,7 +261,10 @@ RunService.Heartbeat:Connect(function(dt)
      local m=motions[p] or {position=r.Position,speed=0,grounded=true}
      local displacement=r.Position-m.position m.speed=Vector3.new(displacement.X,0,displacement.Z).Magnitude/step m.position=r.Position motions[p]=m
      if e.status=="alive" then
-      if p==jasonPlayer then h.WalkSpeed=22 elseif e.boostUntil and t<e.boostUntil then h.WalkSpeed=27 else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or p:GetAttribute("MoveMode")=="slow" and 8 or 16 end
+      if p==jasonPlayer then h.WalkSpeed=22
+      elseif e.boostUntil and t<e.boostUntil then h.WalkSpeed=e.injured and 20 or 27
+      elseif e.injured then h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 16 or p:GetAttribute("MoveMode")=="slow" and 7 or 12
+      else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or p:GetAttribute("MoveMode")=="slow" and 8 or 16 end
       local grounded=h.FloorMaterial~=Enum.Material.Air
       local jump=m.grounded and not grounded and r.AssemblyLinearVelocity.Y>5
       if p~=jasonPlayer and brain and (jump or m.speed>10) and t-(e.lastNoise or 0)>.45 then

@@ -111,12 +111,21 @@ local function matchName(clips,groups)
  return nil
 end
 
-local function locomotionName(d,kind,crouched)
+local function executionName(d)
+ return matchName(d.clips,{{"kill"},{"execution"},{"execute"},{"finisher"},{"fatal"}}) or matchName(d.clips,{{"slash"},{"attack"}}) or "Jason Slash"
+end
+
+local function locomotionName(d,kind,crouched,injured)
  if crouched then
   if kind=="jump" then return matchName(d.clips,{{"crouch","jump"},{"jump"}}) or matchName(d.clips,{{"crouch","walk"},{"walk"},{"idle"}}) end
   if kind=="fall" then return matchName(d.clips,{{"crouch","fall"},{"fall"}}) or matchName(d.clips,{{"crouch","idle"},{"idle"}}) end
   if kind=="move" then return matchName(d.clips,{{"crouch","walk"},{"crouch","move"},{"walk"},{"move"}}) or matchName(d.clips,{{"idle"}}) end
   return matchName(d.clips,{{"crouch","idle"},{"idle"}}) or next(d.clips)
+ end
+ if injured then
+  if kind=="run" then return matchName(d.clips,{{"injured","run"}}) or matchName(d.clips,{{"injured","walk"}}) end
+  if kind=="move" then return matchName(d.clips,{{"injured","walk"}}) or matchName(d.clips,{{"injured","run"}}) end
+  return matchName(d.clips,{{"injured","idle"}}) or matchName(d.clips,{{"idle"}}) or next(d.clips)
  end
  if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"idle"}}) end
  if kind=="fall" then return matchName(d.clips,{{"fall"},{"freefall"},{"air"}}) or matchName(d.clips,{{"jump"},{"idle"}}) end
@@ -145,10 +154,14 @@ Run.PreSimulation:Connect(function(dt)
    if folder then
     local d=prepare(model,folder)
     local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+    local execution=model:GetAttribute("ExecutionAt") or -100
     local attack=model:GetAttribute("AttackAt") or -100
+    local execSince=workspace:GetServerTimeNow()-execution
     local since=workspace:GetServerTimeNow()-attack
-    local state=since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
-    if d then apply(d,state,dt,state~="Jason Slash",state=="Jason Slash" and since or nil) end
+    local execState=d and executionName(d) or nil
+    local executing=execSince>=0 and execSince<1.65
+    local state=executing and execState or since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
+    if d then apply(d,state,dt,not executing and state~="Jason Slash",executing and execSince or (state=="Jason Slash" and since or nil)) end
    end
   end
  end
@@ -161,6 +174,7 @@ Run.PreSimulation:Connect(function(dt)
    local downed=p:GetAttribute("Downed")
    if inRound and not isJason and not downed then
     local crouched=p:GetAttribute("MoveMode")=="slow"
+    local injured=p:GetAttribute("Injured")==true
     local folder=crouched and net.CrouchClips or net.SurvivorClips
     if activeFolder[model]~=folder then
      resetModel(model) activeFolder[model]=folder
@@ -177,7 +191,7 @@ Run.PreSimulation:Connect(function(dt)
      elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
      elseif speed>1 then kind=(not crouched and speed>16) and "run" or "move"
      else kind="idle" end
-     local state=locomotionName(d,kind,crouched)
+     local state=locomotionName(d,kind,crouched,injured)
      apply(d,state,dt,kind~="jump" and kind~="fall")
     end
    else

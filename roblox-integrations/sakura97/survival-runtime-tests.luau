@@ -140,17 +140,22 @@ local ok,result=xpcall(function()
  advance(1) assert(p.Character.Humanoid.WalkSpeed==27,"Boost speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  advance(5) assert(p.Character.Humanoid.WalkSpeed==16,"Boost did not expire")
  send(p,"mode","slow") assert(p.Character.Humanoid.WalkSpeed==8,"Slow speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
- assert(aiContext,"AI context missing after round start") hit(p) assert(p:GetAttribute("Downed"),"Player was not downed")
+ assert(aiContext,"AI context missing after round start")
+ hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"First Jason hit must injure, not down")
+ assert(p.Character.Humanoid.WalkSpeed<=16,"Injured survivor was not slowed")
+ hit(p) assert(p:GetAttribute("Downed"),"Second Jason hit must down injured survivor")
  send(p,"kit") advance(3.2)
  assert(not p:GetAttribute("Downed") and not p:GetAttribute("HasMedkit"),"Self revive failed")
  local ally=players[2] local healer=players[3]
- hit(ally) assert(ally:GetAttribute("Downed"),"Ally was not downed")
+ hit(ally) assert(ally:GetAttribute("Injured") and not ally:GetAttribute("Downed"),"Ally first hit must injure")
+ hit(ally) assert(ally:GetAttribute("Downed"),"Ally second hit must down")
  healer.Character:PivotTo(ally.Character:GetPivot()*CFrame.new(3,0,0))
  send(healer,"kit") advance(3.2)
  assert(not ally:GetAttribute("Downed") and not healer:GetAttribute("HasMedkit"),"Ally revive failed")
  assert(healer.folder.leaderstats.Pontos.Value>=10,"Revive points missing")
  assert(aiContext,"AI context missing before elimination")
  advance(1)
+ hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"Player was not injured before second hit")
  hit(p) assert(p:GetAttribute("Downed"),"Player was not downed before bleedout elimination")
  advance(26)
  assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Elimination flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
@@ -167,7 +172,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,selfAndAllyRevive=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

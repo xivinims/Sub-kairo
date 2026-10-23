@@ -5,8 +5,8 @@ local sourceHip=rig:GetAttribute("SourceHipHeight")
 assert(rig.HumanoidRootPart.Size==sourceRoot,"Jason root was resized")
 assert(math.abs(rig:FindFirstChildOfClass("Humanoid").HipHeight-sourceHip)<1e-5,"Jason HipHeight was changed")
 local matched={} for _,j in ipairs(rig:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then matched[j.Part1.Name]=true end end
-local clips=0 local frames=0
-for _,folder in ipairs(rig.MotionClips:GetChildren()) do
+local clips=0 local frames=0 local jasonClipNames={}
+for _,folder in ipairs(rig.MotionClips:GetChildren()) do table.insert(jasonClipNames,folder.Name)
  local chunks=folder:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
  local values={} for _,v in ipairs(chunks) do assert(#v.Value<200000) table.insert(values,v.Value) end
  local data=Http:JSONDecode(buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(game:GetService("EncodingService"):Base64Decode(buffer.fromstring(table.concat(values))),Enum.CompressionAlgorithm.Zstd))) assert(data.length>0 and #data.frames>0)
@@ -21,7 +21,10 @@ for _,folder in ipairs(rig.MotionClips:GetChildren()) do
  end
  assert(animatedJoints>0,"Clip has no matching rig joints") clips+=1 frames+=#data.frames
 end
+table.sort(jasonClipNames)
 assert(clips==17,"Missing exact Jason animation sequences")
+local hasExecution=false
+for _,n in ipairs(jasonClipNames) do local l=n:lower() if l:find("kill",1,true) or l:find("execution",1,true) or l:find("execute",1,true) or l:find("finisher",1,true) or l:find("fatal",1,true) then hasExecution=true break end end
 local map=assets.Maps.HorrorMap
 assert(map:GetAttribute("SourceAssetId")==79671648850902 and rig:GetAttribute("SourceAssetId")==125165599816440)
 assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magnitude>45)
@@ -38,4 +41,4 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
-return {ok=true,originalClips=clips,originalFrames=frames,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
