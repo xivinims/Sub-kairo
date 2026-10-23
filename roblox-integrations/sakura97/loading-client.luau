@@ -32,7 +32,7 @@ local function attempt()
   required(workspace,"IslandSpawn") required(RS,"SweanMenuConfig")
   local coverage=required(workspace,"SkinnedGrassCoverage")
   local completed=0 local failures={} local done=false local preloadOk,preloadError
-  task.spawn(function()
+  local pending=task.spawn(function()
    preloadOk,preloadError=pcall(function()
     ContentProvider:PreloadAsync(roots,function(id,result)
      completed+=1
@@ -44,6 +44,7 @@ local function attempt()
   end)
   local slowAt=os.clock()+40
   while not done do
+   if os.clock()>slowAt+35 then pcall(task.cancel,pending) error("Map loading timeout") end
    if os.clock()>slowAt then status.Text="A conexão está demorando. Ainda carregando o mapa…" end
    task.wait(.1)
   end
@@ -51,9 +52,18 @@ local function attempt()
   -- Audio permissions or logo moderation must not lock access to an otherwise loaded map.
   status.Text="Preparando interface e sons…"
   local optionalFailures=0
-  pcall(function() ContentProvider:PreloadAsync({logo,required(RS,"XNMedia")},function(_,result)
-   if result~=Enum.AssetFetchStatus.Success then optionalFailures+=1 end
-  end) end)
+  local media=required(RS,"XNMedia")
+  local optionalDone=false
+  local optionalThread=task.spawn(function()
+   local optionalOk=pcall(function() ContentProvider:PreloadAsync({logo,media},function(_,result)
+    if result~=Enum.AssetFetchStatus.Success then optionalFailures+=1 end
+   end) end)
+   if not optionalOk then optionalFailures+=1 end
+   optionalDone=true
+  end)
+  local optionalDeadline=os.clock()+20
+  while not optionalDone and os.clock()<optionalDeadline do task.wait(.1) end
+  if not optionalDone then optionalFailures+=1 pcall(task.cancel,optionalThread) end
   player:SetAttribute("OptionalMediaFailures",optionalFailures)
   status.Text="Preparando a grama…"
   local grassStart=os.clock()

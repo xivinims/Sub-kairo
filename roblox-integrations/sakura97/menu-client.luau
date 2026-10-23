@@ -94,6 +94,7 @@ local function layout()
  local x=16
  local buttonHeight=math.clamp(h*.10,38,48)
  local logoHeight=math.clamp(h*.22,40,120)
+ main.Logo.AnchorPoint=Vector2.zero
  main.Logo.Position=UDim2.fromOffset(x+16,12)
  main.Logo.Size=UDim2.fromOffset(panelWidth-32,logoHeight)
  main.Logo.ScaleType=Enum.ScaleType.Fit main.Logo.ZIndex=2
