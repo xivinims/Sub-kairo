@@ -51,9 +51,18 @@ local function preload(roundId,map)
    if os.clock()>deadline or token~=loadToken then break end
    map=workspace:FindFirstChild("ActiveArena") task.wait(.2)
   end
+  if map then
+   while os.clock()<deadline and token==loadToken do
+    local count=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then count+=1 end end
+    if count>=(map:GetAttribute("PartCount") or math.huge) then break end
+    task.wait(.2)
+   end
+  end
   local done=false local ok=false
   task.spawn(function()
-   if map and map.Parent then ok=pcall(function() game:GetService("ContentProvider"):PreloadAsync({map}) end) end done=true
+   if map and map.Parent then local failed=false
+    ok=pcall(function() game:GetService("ContentProvider"):PreloadAsync({map},function(_,status) if status~=Enum.AssetFetchStatus.Success then failed=true end end) end)
+    ok=ok and not failed and os.clock()<deadline end done=true
   end)
   while not done and os.clock()<deadline and token==loadToken do task.wait(.1) end
   if token~=loadToken then return end

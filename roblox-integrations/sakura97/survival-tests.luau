@@ -28,6 +28,23 @@ for _,m in ipairs(assets.Killers:GetChildren()) do
  end
  assert(joints>0) table.insert(rigs,{name=m.Name,joints=names,clips=#m.MotionClips:GetChildren()})
 end
+local pathChecks={}
+for _,template in ipairs(assets.Maps:GetChildren()) do
+ local map=template:Clone() map.Parent=workspace
+ task.wait(.2)
+ local pts=map.SafePoints:GetChildren() local paths={}
+ for i=2,#pts do
+  local path=game:GetService("PathfindingService"):CreatePath({AgentRadius=2,AgentHeight=6,AgentCanJump=true})
+  path:ComputeAsync(pts[1].Value,pts[i].Value)
+  table.insert(paths,{index=pts[i].Name,status=path.Status.Name,waypoints=#path:GetWaypoints()}) path:Destroy()
+ end
+ table.insert(pathChecks,{map=template.Name,paths=paths}) map:Destroy()
+end
+local freddyJoints={}
+local f=assets.Killers.Freddy
+for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
+ table.insert(freddyJoints,{p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name,pos=d.Part1 and tostring(f.PrimaryPart.CFrame:PointToObjectSpace(d.Part1.Position))})
+end end
 local house=workspace.LobbyTreeHouse assert(house:GetAttribute("SourceAssetId")==15761692261)
 local cf,size=house:GetBoundingBox()
-return {ok=true,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=true}
+return {ok=true,pathChecks=pathChecks,freddyJoints=freddyJoints,capacity=8,roundSeconds=Rules.Duration,intermission=Rules.Intermission,reviveRules=true,maps=maps,rigs=rigs,treeHouseBottom=cf.Y-size.Y/2,warriorPending=true}

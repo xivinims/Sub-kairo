@@ -91,6 +91,8 @@ for _,spec in ipairs(require(config).Maps) do
  assert(#selected>=9,"Need 9 separated floor positions in "..spec.name)
  local points=Instance.new("Folder",map) points.Name="SafePoints"
  for i,p in ipairs(selected) do local v=Instance.new("Vector3Value",points) v.Name=tostring(i) v.Value=p end
+ local partCount=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then partCount+=1 end end
+ map:SetAttribute("PartCount",partCount)
  map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("FloorY",30) map.Parent=maps
 end
 -- Models and animation extraction are completed below.
