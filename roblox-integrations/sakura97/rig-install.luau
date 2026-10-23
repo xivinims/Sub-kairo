@@ -101,8 +101,11 @@ warriorHum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
 warriorHum.BreakJointsOnDeath=false
 warriorHum.MaxHealth=100000 warriorHum.Health=100000 warriorHum.HipHeight=2.4
 
+local warriorApplied=0 local warriorFailed={}
 local function equipWarriorItem(id)
- local asset=load(id) sanitize(asset,false)
+ local ok,asset=pcall(function() return load(id) end)
+ if not ok then table.insert(warriorFailed,id) return false end
+ sanitize(asset,false)
  local applied=0
  local head=warrior:FindFirstChild("Head")
  for _,d in ipairs(asset:GetDescendants()) do
@@ -117,9 +120,11 @@ local function equipWarriorItem(id)
   end
  end
  asset:Destroy()
- assert(applied>0,"Warrior avatar item did not contain wearable data: "..id)
+ if applied==0 then table.insert(warriorFailed,id) return false end
+ warriorApplied+=1 return true
 end
 for _,id in ipairs(warriorItems) do equipWarriorItem(id) end
+assert(warriorApplied>=6,"Too few Warrior avatar items loaded")
 
 for _,d in ipairs(warrior:GetDescendants()) do
  if d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.Massless=true end
@@ -144,5 +149,7 @@ for _,j in ipairs(warrior:GetDescendants()) do
 end
 warrior:SetAttribute("AvatarItems","109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
 warrior:SetAttribute("AnimationAssetId",125165599816440)
+warrior:SetAttribute("AppliedItemCount",warriorApplied)
+warrior:SetAttribute("FailedItemCount",#warriorFailed)
 warrior.Parent=rigs
 for _,m in ipairs(maps:GetChildren()) do m:SetAttribute("DisplayName",m.Name) end

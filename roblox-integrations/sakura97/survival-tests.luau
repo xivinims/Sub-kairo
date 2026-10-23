@@ -52,6 +52,7 @@ local warrior=assert(assets.Killers:FindFirstChild("Guerreiro"))
 assert(warrior:GetAttribute("AnimationAssetId")==125165599816440)
 assert(#warrior.MotionClips:GetChildren()==3,"Warrior movement clips missing")
 assert(warrior:GetAttribute("AvatarItems")=="109013223175977,131536373946103,108562010348687,78897239250220,10982591410,10982519012,206119001888066")
+assert((warrior:GetAttribute("AppliedItemCount") or 0)>=6,"Warrior cosmetic set did not load")
 local freddyJoints={}
 local f=assets.Killers.Freddy
 for _,d in ipairs(f:GetDescendants()) do if d:IsA("Motor6D") then
