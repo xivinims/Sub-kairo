@@ -36,14 +36,15 @@ local function prepare(model,folder)
   end
  end
  local aliasTargets={
-  humanoidrootpart="Root",rootpart="Root",
-  torso="Waist",uppertorso="Waist",
-  head="Neck",
-  leftarm="LeftShoulder",rightarm="RightShoulder",
-  leftleg="LeftHip",rightleg="RightHip",
+  humanoidrootpart="LowerTorso",rootpart="LowerTorso",
+  torso="UpperTorso",uppertorso="UpperTorso",
+  head="Head",
+  leftarm="LeftUpperArm",rightarm="RightUpperArm",
+  leftleg="LeftUpperLeg",rightleg="RightUpperLeg",
  }
- for alias,motorName in pairs(aliasTargets) do
-  for joint in pairs(d.joints) do if joint.Name==motorName then d.lookup[alias]=joint break end end
+ for alias,partName in pairs(aliasTargets) do
+  local joint=d.lookup[normalized(partName)]
+  if joint then d.lookup[alias]=joint end
  end
  for _,v in ipairs(folder:GetChildren()) do
   if v:IsA("Folder") then
