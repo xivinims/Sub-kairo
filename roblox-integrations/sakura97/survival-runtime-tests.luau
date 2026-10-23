@@ -87,7 +87,14 @@ local deathCount=0 local dc=SSS.SurvivalBridge.DeathRequest.Event:Connect(functi
 local ok,result=xpcall(function()
  run() assert(net:GetAttribute("Phase")=="Intervalo")
  advance(31) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
- for _,p in ipairs(players) do send(p,"join") end
+ for i,p in ipairs(players) do
+  local r=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+  local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+  assert(r and h,"Fake player "..i.." missing character root/humanoid before join")
+  h.RequiresNeck=false h.MaxHealth=100 h.Health=100 h.BreakJointsOnDeath=false
+  r.Anchored=true p.attrs.VoidActive=false
+  send(p,"join")
+ end
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
   assert(status=="loading","Player "..i.." did not enter loading; status="..tostring(status).." notice="..tostring(messages[players[i]] and messages[players[i]].notice and messages[players[i]].notice[1]))
