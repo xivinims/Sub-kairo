@@ -127,7 +127,8 @@ for _,id in ipairs(warriorItems) do equipWarriorItem(id) end
 assert(warriorApplied>=6,"Too few Warrior avatar items loaded")
 
 for _,d in ipairs(warrior:GetDescendants()) do
- if d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.Massless=true end
+ if d:IsA("LuaSourceContainer") then d:Destroy()
+ elseif d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.Massless=true end
 end
 warriorRoot.CanCollide=true warriorRoot.Massless=false warriorRoot.Transparency=1 warriorRoot.Size=Vector3.new(2,2,1.5)
 
