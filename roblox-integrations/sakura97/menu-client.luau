@@ -20,6 +20,51 @@ local low=game:GetService("UserInputService").TouchEnabled
 local returnButton=ui:WaitForChild("ReturnToMenu")
 local mode=settings.AjustesFrame:WaitForChild("Controls"):WaitForChild("QualityToggle")
 local creditsButton=ui:WaitForChild("CreditsButton")
+local menuScene=nil local menuAvatar=nil local menuCameraCF=nil
+local MENU_ORIGIN=config:GetAttribute("MenuOrigin") or Vector3.new(10000,2500,10000)
+
+local function clearPrivateScene()
+ if menuAvatar then menuAvatar:Destroy() menuAvatar=nil end
+ if menuScene then menuScene:Destroy() menuScene=nil end
+ menuCameraCF=nil
+end
+
+local function buildPrivateScene()
+ clearPrivateScene()
+ local template=RS:WaitForChild("MenuSceneTemplate")
+ menuScene=template:Clone() menuScene.Name="LocalMenuScene" menuScene.Parent=workspace
+ local rotation=menuScene:GetPivot().Rotation
+ menuScene:PivotTo(CFrame.new(MENU_ORIGIN)*rotation)
+ local cf,size=menuScene:GetBoundingBox()
+ local target=cf.Position+Vector3.new(0,math.clamp(size.Y*.03,2,8),0)
+ local distance=math.max(18,math.min(46,math.max(size.X,size.Z)*.42))
+ local height=math.max(7,math.min(18,size.Y*.24))
+ local cameraPos=target+Vector3.new(-distance*.42,height,distance)
+ menuCameraCF=CFrame.lookAt(cameraPos,target)
+
+ local candidate=target+menuCameraCF.RightVector*math.max(5,math.min(13,size.X*.18))
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={menuScene}
+ local hit=workspace:Raycast(candidate+Vector3.new(0,size.Y*.65+15,0),Vector3.new(0,-size.Y-40,0),params)
+ local avatarPos=hit and hit.Position+Vector3.new(0,3.1,0) or candidate
+ local char=player.Character
+ if char then
+  local archivable=char.Archivable char.Archivable=true
+  menuAvatar=char:Clone() char.Archivable=archivable
+  if menuAvatar then
+   menuAvatar.Name="LocalMenuAvatar"
+   for _,d in ipairs(menuAvatar:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") or d:IsA("Tool") then d:Destroy()
+    elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+   end
+   local hum=menuAvatar:FindFirstChildOfClass("Humanoid")
+   if hum then hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None end
+   menuAvatar.Parent=workspace
+   menuAvatar:PivotTo(CFrame.lookAt(avatarPos,Vector3.new(cameraPos.X,avatarPos.Y,cameraPos.Z)))
+  end
+ end
+end
+
 local switches={
  {"WindToggle","WindEnabled","Vento"},{"GrassToggle","GrassInteraction","Grama ao pisar"},
  {"LeavesToggle","LeavesEnabled","Folhas caindo"},{"NametagsToggle","ShowNametags","Nomes dos jogadores"},
@@ -90,24 +135,30 @@ local function layout()
  local camera=workspace.CurrentCamera if not camera then return end
  local viewport=camera.ViewportSize
  local w,h=viewport.X,viewport.Y
- local panelWidth=math.min(320,w*.86)
- local x=16
- local buttonHeight=math.clamp(h*.10,38,48)
- local logoHeight=math.clamp(h*.22,40,120)
+ local panelWidth=math.clamp(w*.34,230,340)
+ local x=math.clamp(w*.035,14,40)
+ local buttonHeight=math.clamp(h*.075,42,52)
+ local logoHeight=math.clamp(h*.22,82,142)
+ local leftPanel=main:FindFirstChild("LeftPanel")
+ if leftPanel then
+  leftPanel.Position=UDim2.fromOffset(x,math.max(12,h*.055))
+  leftPanel.Size=UDim2.fromOffset(panelWidth,math.min(h-34,logoHeight+buttonHeight*3+98))
+ end
  main.Logo.AnchorPoint=Vector2.zero
- main.Logo.Position=UDim2.fromOffset(x+16,12)
- main.Logo.Size=UDim2.fromOffset(panelWidth-32,logoHeight)
- main.Logo.ScaleType=Enum.ScaleType.Fit main.Logo.ZIndex=2
- creditsButton.AnchorPoint=Vector2.new(1,0)
- creditsButton.Position=UDim2.new(1,-16,0,12)
- creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.ZIndex=8
- local top=logoHeight+28
- for i,name in ipairs({"Play","Ajustes"}) do
-  local b=main[name]
+ main.Logo.Position=UDim2.fromOffset(x+18,math.max(18,h*.07))
+ main.Logo.Size=UDim2.fromOffset(panelWidth-36,logoHeight)
+ main.Logo.ScaleType=Enum.ScaleType.Fit main.Logo.ZIndex=3
+ local gameName=main:FindFirstChild("GameName")
+ if gameName then
+  gameName.Position=UDim2.fromOffset(x+22,math.max(18,h*.07)+logoHeight-7)
+  gameName.Size=UDim2.fromOffset(panelWidth-44,30)
+ end
+ local top=math.max(18,h*.07)+logoHeight+37
+ for i,b in ipairs({main.Play,main.Ajustes,creditsButton}) do
   b.AnchorPoint=Vector2.zero
-  b.Position=UDim2.fromOffset(x+16,top+(i-1)*(buttonHeight+8))
-  b.Size=UDim2.fromOffset(panelWidth-32,buttonHeight)
-  b.ZIndex=3
+  b.Position=UDim2.fromOffset(x+18,top+(i-1)*(buttonHeight+10))
+  b.Size=UDim2.fromOffset(panelWidth-36,buttonHeight)
+  b.ZIndex=4
  end
  for _,scene in ipairs({credits,settings}) do
   local panel=scene:FindFirstChild("CreditosFrame") or scene:FindFirstChild("AjustesFrame")
@@ -142,7 +193,7 @@ local function bindCamera()
   if not inMenu or player:GetAttribute("VoidActive") then return end
   local camera=workspace.CurrentCamera if not camera then return end
   camera.CameraType=Enum.CameraType.Scriptable
-  camera.CFrame=config:GetAttribute(state=="credits" and "CreditsCamera" or state=="settings" and "SettingsCamera" or "MainCamera")
+  camera.CFrame=menuCameraCF or config:GetAttribute("MainCamera")
  end)
 end
 local function open()
@@ -150,12 +201,14 @@ local function open()
  inMenu=true
  player:SetAttribute("InMenu",true)
  if controls then controls:Disable() end
+ buildPrivateScene()
  bindCamera() show("main") layout()
 end
 local function close()
  inMenu=false
  player:SetAttribute("InMenu",false)
  RunService:UnbindFromRenderStep("SweanMenuCamera")
+ clearPrivateScene()
  local camera=workspace.CurrentCamera
  if camera then
   camera.CameraType=Enum.CameraType.Custom
@@ -185,7 +238,8 @@ returnButton.Activated:Connect(function() navigate(open) end)
 mode.Activated:Connect(function() low=not low setQuality() end)
 player.CharacterAdded:Connect(function(char)
  local h=char:WaitForChild("Humanoid",10)
- if not inMenu and not player:GetAttribute("VoidActive") and h and workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject=h end
+ if inMenu then task.defer(buildPrivateScene)
+ elseif not player:GetAttribute("VoidActive") and h and workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject=h end
 end)
 local cameraConnection
 local function connectCamera()

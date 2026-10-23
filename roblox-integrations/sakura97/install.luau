@@ -9,6 +9,7 @@ local StarterPlayer=game:GetService("StarterPlayer")
 local Terrain=workspace.Terrain
 
 local LOBBY_ID=852951140
+local MENU_SCENE_ID=13327565335
 
 local function loadAsset(id)
  local last
@@ -71,7 +72,7 @@ for _,container in ipairs({
 }) do
  for _,child in ipairs(container:GetChildren()) do child:Destroy() end
 end
-for _,name in ipairs({"SweanRuntime","SakuraRuntime","ForestRuntime","XNMedia","SweanVoidEvent","SweanMenuConfig","Survival"}) do
+for _,name in ipairs({"SweanRuntime","SakuraRuntime","ForestRuntime","XNMedia","SweanVoidEvent","SweanMenuConfig","Survival","MenuSceneTemplate"}) do
  local old=ReplicatedStorage:FindFirstChild(name) if old then old:Destroy() end
 end
 
@@ -106,6 +107,22 @@ runtime:SetAttribute("LobbyParts",countParts(lobby))
 runtime:SetAttribute("LobbySizeX",size.X)
 runtime:SetAttribute("LobbySizeY",size.Y)
 runtime:SetAttribute("LobbySizeZ",size.Z)
+
+-- Non-playable menu set. It never enters the server Workspace.
+local menuAsset=loadAsset(MENU_SCENE_ID)
+local menuSource=assert(largestVisual(menuAsset),"Doors menu scene missing")
+local menuTemplate=asModel(menuSource:Clone())
+menuTemplate.Name="MenuSceneTemplate"
+menuTemplate:SetAttribute("SourceAssetId",MENU_SCENE_ID)
+sanitize(menuTemplate)
+for _,d in ipairs(menuTemplate:GetDescendants()) do
+ if d:IsA("BasePart") then
+  d.CanCollide=false d.CanTouch=false d.CanQuery=false
+ end
+end
+menuTemplate.Parent=ReplicatedStorage
+menuAsset:Destroy()
+runtime:SetAttribute("MenuSceneAssetId",MENU_SCENE_ID)
 
 -- Prefer an authored spawn if the library has one. Otherwise choose a large,
 -- low, horizontal floor with enough headroom near the center.

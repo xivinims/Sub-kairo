@@ -25,11 +25,21 @@ end
 local main=ui.MenuPrincipal
 main.Frame:Destroy()
 main.Play.Text="Jogar" main.Ajustes.Text="Ajustes" main.Creditos.Text="Créditos"
-main.Logo.Image="rbxassetid://89648072626653"
+main.Logo.Image="rbxassetid://"..tostring(__SURVIVERS_LOGO_ID__)
 main.Logo.ImageColor3=Color3.new(1,1,1) main.Logo.ImageTransparency=0 main.Logo.BackgroundTransparency=1
 main.Creditos.Name="CreditsButton"
 main.CreditsButton.Parent=ui
-ui.CreditsButton.Text="ⓘ" ui.CreditsButton:SetAttribute("AccessibleLabel","Créditos")
+ui.CreditsButton.Text="Créditos" ui.CreditsButton:SetAttribute("AccessibleLabel","Créditos")
+local leftPanel=Instance.new("Frame")
+leftPanel.Name="LeftPanel" leftPanel.BackgroundColor3=Color3.fromRGB(8,7,8) leftPanel.BackgroundTransparency=.32
+leftPanel.BorderSizePixel=0 leftPanel.ZIndex=1 leftPanel.Parent=main
+local panelCorner=Instance.new("UICorner",leftPanel) panelCorner.CornerRadius=UDim.new(0,22)
+local panelGradient=Instance.new("UIGradient",leftPanel)
+panelGradient.Rotation=90 panelGradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.05),NumberSequenceKeypoint.new(1,.62)})
+local gameName=Instance.new("TextLabel")
+gameName.Name="GameName" gameName.BackgroundTransparency=1 gameName.Text="SURVIVERS"
+gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(232,232,235)
+gameName.TextScaled=true gameName.TextXAlignment=Enum.TextXAlignment.Left gameName.ZIndex=3 gameName.Parent=main
 local sounds=ui:FindFirstChild("Sonidos")
 if sounds then sounds:Destroy() end
 sounds=Instance.new("Folder") sounds.Name="Sonidos" sounds.Parent=ui
@@ -73,13 +83,15 @@ end
 local controller=Instance.new("LocalScript") controller.Name="MenuController" controller.Source=__MENU_SOURCE__ controller.Parent=ui
 local config=Instance.new("Folder") config.Name="SweanMenuConfig"
 local runtime=RS.SweanRuntime
-local base=workspace.IslandSpawn.Position
-local target=base+Vector3.new(0,7,0)
-config:SetAttribute("MainCamera",CFrame.lookAt(base+Vector3.new(24,12,30),target))
-config:SetAttribute("SettingsCamera",CFrame.lookAt(base+Vector3.new(-20,10,24),target))
-config:SetAttribute("CreditsCamera",CFrame.lookAt(base+Vector3.new(18,15,-26),target))
-config:SetAttribute("Version",3)
-config:SetAttribute("LogoAssetId",89648072626653)
+local menuOrigin=Vector3.new(10000,2500,10000)
+config:SetAttribute("MenuOrigin",menuOrigin)
+config:SetAttribute("MainCamera",CFrame.new(menuOrigin))
+config:SetAttribute("SettingsCamera",CFrame.new(menuOrigin))
+config:SetAttribute("CreditsCamera",CFrame.new(menuOrigin))
+config:SetAttribute("Version",4)
+config:SetAttribute("GameName","Survivers")
+config:SetAttribute("MenuSceneAssetId",13327565335)
+config:SetAttribute("LogoAssetId",__SURVIVERS_LOGO_ID__)
 config:SetAttribute("SourceAssetId",84828163072141)
 for _,e in ipairs(game:GetService("Lighting"):GetChildren()) do
  if e:IsA("PostEffect") and e:GetAttribute("SourceAssetId")==86563808574363 then e:SetAttribute("OriginalEnabled",e.Enabled) end
@@ -91,5 +103,7 @@ for _,pair in ipairs({{starter,"TomiaszMenu"},{first,"SweanLoadingController"},{
 end
 config.Parent=RS ui.Parent=starter loader.Parent=first
 runtime:SetAttribute("MenuAssetId",84828163072141)
-runtime:SetAttribute("MenuVersion",3)
+runtime:SetAttribute("MenuVersion",4)
+runtime:SetAttribute("GameName","Survivers")
+runtime:SetAttribute("SurviversLogoAssetId",__SURVIVERS_LOGO_ID__)
 asset:Destroy()

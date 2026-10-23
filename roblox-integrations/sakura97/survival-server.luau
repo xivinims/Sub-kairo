@@ -117,7 +117,14 @@ local function hook(p)
   if h then h.Died:Connect(function() local x=entry(p) if x and (x.status=="alive" or x.status=="downed") then x.status="eliminated" sync(p) p:SetAttribute("Spectating",true) end end) end
  end)
 end
-Players.PlayerAdded:Connect(hook) for _,p in ipairs(Players:GetPlayers()) do hook(p) end
+Players.PlayerAdded:Connect(function(p)
+ if #Players:GetPlayers()>Rules.Capacity then
+  p:Kick("Servidor cheio • limite 8 jogadores")
+  return
+ end
+ hook(p)
+end)
+for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p) state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil end)
 local elapsed=0
 RunService.Heartbeat:Connect(function(dt)
@@ -172,22 +179,63 @@ local function finish()
 end
 task.spawn(function()
  while true do
-  finish() endTime=now()+Rules.Intermission
-  while now()<endTime do net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",endTime) net:SetAttribute("Count",0) task.wait(1) end
-  local ok,err=xpcall(function()
-   Rules.begin(state)
-   local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
-   arena=mapList[math.random(#mapList)]:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
-   npc=rigList[math.random(#rigList)]:Clone() killerName=npc.Name npc.Parent=workspace
-   local pts=arena.SafePoints:GetChildren() npc:PivotTo(CFrame.new(pts[math.random(#pts)].Value+Vector3.new(0,3,0)))
-   for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
-   npc:SetAttribute("ActivePursuer",true)
-   brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=vulnerable,down=down,speed=function(p) return motions[p] and motions[p].speed or 0 end})
-   endTime=now()+Rules.Duration net:SetAttribute("Phase","Partida") net:SetAttribute("EndsAt",endTime)
-   net:SetAttribute("Killer",killerName) net:SetAttribute("Map",arena:GetAttribute("DisplayName") or "Mapa")
-   for p in pairs(queued) do if p.Parent then join(p) end end
-   while now()<endTime do net:SetAttribute("Count",Rules.count(state)) task.wait(1) end
-  end,debug.traceback)
-  if not ok then warn("Survival round: "..tostring(err)) net.Update:FireAllClients("notice","A rodada foi reiniciada com segurança.") end
+  finish()
+
+  while #Players:GetPlayers()<1 do
+   net:SetAttribute("Phase","Aguardando")
+   net:SetAttribute("EndsAt",0)
+   net:SetAttribute("Count",0)
+   net:SetAttribute("Waiting",0)
+   net:SetAttribute("MaxPlayers",Rules.Capacity)
+   task.wait(1)
+  end
+
+  endTime=now()+Rules.Intermission
+  while now()<endTime and #Players:GetPlayers()>0 do
+   net:SetAttribute("Phase","Intervalo")
+   net:SetAttribute("EndsAt",endTime)
+   net:SetAttribute("Count",0)
+   net:SetAttribute("Waiting",math.min(#Players:GetPlayers(),Rules.Capacity))
+   net:SetAttribute("MaxPlayers",Rules.Capacity)
+   task.wait(1)
+  end
+
+  if #Players:GetPlayers()>0 then
+   local ok,err=xpcall(function()
+    Rules.begin(state)
+    local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
+    arena=mapList[math.random(#mapList)]:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
+    npc=rigList[math.random(#rigList)]:Clone() killerName=npc.Name npc.Parent=workspace
+    local pts=arena.SafePoints:GetChildren() npc:PivotTo(CFrame.new(pts[math.random(#pts)].Value+Vector3.new(0,3,0)))
+    for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
+    npc:SetAttribute("ActivePursuer",true)
+    brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=vulnerable,down=down,speed=function(p) return motions[p] and motions[p].speed or 0 end})
+
+    endTime=now()+Rules.Duration
+    net:SetAttribute("Phase","Partida")
+    net:SetAttribute("EndsAt",endTime)
+    net:SetAttribute("Killer",killerName)
+    net:SetAttribute("Map",arena:GetAttribute("DisplayName") or "Mapa")
+    net:SetAttribute("MaxPlayers",Rules.Capacity)
+
+    local admitted=0
+    for _,p in ipairs(Players:GetPlayers()) do
+     if admitted>=Rules.Capacity then break end
+     if p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
+      join(p)
+      if entry(p) then admitted+=1 end
+     end
+    end
+
+    while now()<endTime do
+     net:SetAttribute("Count",Rules.count(state))
+     task.wait(1)
+    end
+   end,debug.traceback)
+   if not ok then
+    warn("Survival round: "..tostring(err))
+    net.Update:FireAllClients("notice","A rodada foi reiniciada com segurança.")
+   end
+  end
  end
 end)

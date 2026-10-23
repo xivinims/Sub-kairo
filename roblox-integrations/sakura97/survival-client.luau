@@ -22,8 +22,14 @@ local function button(parent,name,label,size,pos,callback)
   callback()
  end) return b
 end
-local top=panel("Round",UDim2.fromOffset(290,72),UDim2.new(.5,-145,0,10))
-local timer=text(top,"Timer","Intervalo • 0:30",UDim2.new(1,0,0,30),UDim2.new())
+local countdown=panel("Countdown",UDim2.fromOffset(208,44),UDim2.new(.5,-104,0,10))
+countdown.BackgroundTransparency=.16 countdown.Visible=false
+local countdownIcon=text(countdown,"Icon","◷",UDim2.fromOffset(36,36),UDim2.fromOffset(7,4))
+countdownIcon.TextSize=24 countdownIcon.Font=Enum.Font.GothamBold
+local countdownText=text(countdown,"Time","00:30 • 1/8",UDim2.new(1,-48,1,0),UDim2.fromOffset(43,0))
+countdownText.TextSize=16 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left
+local top=panel("Round",UDim2.fromOffset(290,72),UDim2.new(.5,-145,0,60))
+local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local join=button(gui,"Join","Participar",UDim2.fromOffset(180,44),UDim2.new(.5,-90,1,-65),function() event:FireServer("join") end)
 local bar=panel("Actions",UDim2.fromOffset(300,108),UDim2.new(1,-314,1,-180))
@@ -90,15 +96,19 @@ RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
- top.Visible=not hidden join.Visible=not hidden and not inRound and status~="eliminated" and status~="loading"
+ local phase=net:GetAttribute("Phase") or "Aguardando"
+ local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
+ countdown.Visible=phase=="Intervalo"
+ countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8)
+ top.Visible=not hidden and phase=="Partida"
+ join.Visible=not hidden and phase=="Partida" and not inRound and status~="eliminated" and status~="loading"
  bar.Visible=not hidden and inRound leave.Visible=not hidden and inRound
  run.Visible=not down slow.Visible=not down boost.Visible=not down
  boost.Text=player:GetAttribute("HasBoost") and "Impulso ×1" or "Impulso usado"
  kit.Text=player:GetAttribute("HasMedkit") and (down and "Me reanimar" or "Reanimar • kit ×1") or "Kit usado"
  mode=player:GetAttribute("MoveMode") or "walk" run.Text=mode=="run" and "Correr ✓" or "Correr" slow.Text=mode=="slow" and "Devagar ✓" or "Andar devagar"
  join.Text=player:GetAttribute("Queued") and "Cancelar participação" or net:GetAttribute("Phase")=="Partida" and "Entrar na partida" or "Participar da próxima"
- local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- timer.Text=string.format("%s • %d:%02d",net:GetAttribute("Phase") or "Intervalo",math.floor(left/60),left%60)
+ timer.Text=string.format("%s • %d:%02d",phase,math.floor(left/60),left%60)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)
  notice.Visible=not hidden

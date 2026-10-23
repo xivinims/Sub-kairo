@@ -67,6 +67,43 @@ function first(task){
 
 const read=(name)=>fs.readFileSync(`roblox-integrations/sakura97/${name}.luau`,'utf8');
 
+async function uploadSurviversLogo(){
+  const fallback=89648072626653;
+  try{
+    const key=process.env.ROBLOX_API_KEY;
+    const creatorId=process.env.ROBLOX_CREATOR_USER_ID||'8344738123';
+    const bytes=fs.readFileSync('roblox-integrations/sakura97/branding/survivers-logo.png');
+    const form=new FormData();
+    form.append('request',JSON.stringify({
+      assetType:'Decal',
+      displayName:'Survivers Logo',
+      description:'Survivers menu logo',
+      creationContext:{creator:{userId:String(creatorId)}}
+    }));
+    form.append('fileContent',new Blob([bytes],{type:'image/png'}),'survivers-logo.png');
+    const created=await fetch('https://apis.roblox.com/assets/v1/assets',{method:'POST',headers:{'x-api-key':key},body:form,signal:AbortSignal.timeout(60000)});
+    const raw=await created.text();
+    if(!created.ok){ console.warn('[Survivers] logo upload unavailable:',created.status,raw); return fallback; }
+    const op=JSON.parse(raw);
+    const opId=String(op.path||'').replace(/^operations\\//,'');
+    if(!opId) return fallback;
+    for(let i=0;i<40;i++){
+      await sleep(1500);
+      const res=await fetch('https://apis.roblox.com/assets/v1/operations/'+opId,{headers:{'x-api-key':key},signal:AbortSignal.timeout(30000)});
+      const txt=await res.text();
+      if(!res.ok) continue;
+      const status=JSON.parse(txt);
+      if(status.done){
+        const id=Number(status?.response?.assetId||0);
+        if(id>0){ console.log('[Survivers] logo asset:',id); return id; }
+        break;
+      }
+    }
+  }catch(err){ console.warn('[Survivers] logo upload failed:',String(err)); }
+  return fallback;
+}
+const surviversLogoId=await uploadSurviversLogo();
+
 let installBody=read('install');
 const runtimeSource=read('nature-runtime');
 installBody=installBody.replace('__RUNTIME_SOURCE__',JSON.stringify(runtimeSource));
@@ -74,7 +111,10 @@ for (const [marker,name] of Object.entries({GRASS:'grass-client',GRASS_MODULE:'g
  installBody=installBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 }
 installBody=installBody.replace(/\nreturn\s*\{[\s\S]*\}\s*$/,'\n-- install finished');
-const menuBody=read('install-menu').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
+const menuBody=read('install-menu')
+ .replaceAll('__SURVIVERS_LOGO_ID__',String(surviversLogoId))
+ .replace('__MENU_SOURCE__',JSON.stringify(read('menu-client')))
+ .replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 let survivalBody=read('survival-install').replace('__RIG_INSTALL__',read('rig-install'));
 for(const [marker,name] of Object.entries({CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'})) survivalBody=survivalBody.replace(`__${marker}_SOURCE__`,JSON.stringify(read(name)));
 const survivalTests=read('survival-tests');
@@ -143,7 +183,8 @@ end
 checks.voidController=verifyVoidController()
 assert(checks and checks.ok,"Verify failed")
 
--- Dry run: no save
+game:GetService("AssetService"):SavePlaceAsync({PlaceId=${PLACE_ID},SaveWithoutPublish=false})
+
 return {
   ok=true,
   sourceVersion=sourceVersion,
@@ -156,12 +197,14 @@ return {
   grass=checks.grass,
   pumpkins=checks.pumpkins,
   pumpkinClusters=checks.pumpkinClusters,
-  message="Jedi Library lobby verified"
+  logoAssetId=${surviversLogoId},
+  saved=true,
+  message="Survivers menu + round flow saved and published"
 }
 `;
 
-console.log("[Sakura97] Dispatching repaired Luau install to NEW place...");
+console.log("[Survivers] Applying tested build to place...");
 const applied=first(await execute(patch));
 if(!applied?.ok) throw new Error("Sakura97 install failed");
-console.log(JSON.stringify({stage:"dry-run-verified",...applied}));
+console.log(JSON.stringify({stage:"saved-and-published",...applied}));
 
