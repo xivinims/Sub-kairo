@@ -18,22 +18,15 @@ frame.BackgroundColor3=Color3.fromRGB(17,17,20)
 frame.BorderSizePixel=0
 frame.Parent=gui
 
-local title=Instance.new("TextLabel")
+local title=Instance.new("ImageLabel")
 title.Name="BrandTitle"
 title.BackgroundTransparency=1
 title.AnchorPoint=Vector2.new(.5,.5)
 title.Position=UDim2.fromScale(.5,.42)
-title.Size=UDim2.new(.8,0,0,90)
-title.Text="SURVIVERS"
-title.Font=Enum.Font.GothamBlack
-title.TextColor3=Color3.fromRGB(235,235,238)
-title.TextScaled=true
+title.Size=UDim2.new(.78,0,.26,0)
+title.Image="rbxassetid://99002027743613"
+title.ScaleType=Enum.ScaleType.Fit
 title.Parent=frame
-
-local titleLimit=Instance.new("UITextSizeConstraint")
-titleLimit.MinTextSize=28
-titleLimit.MaxTextSize=64
-titleLimit.Parent=title
 
 local status=Instance.new("TextLabel")
 status.BackgroundTransparency=1
@@ -101,7 +94,7 @@ local function attempt()
   local preloadDone=false
   local preloadThread=task.spawn(function()
    pcall(function()
-    ContentProvider:PreloadAsync({lobby,menuScene,survival})
+    ContentProvider:PreloadAsync({lobby,menuScene,survival,title})
    end)
    preloadDone=true
   end)
@@ -133,3 +126,4 @@ retry.Activated:Connect(function()
 end)
 
 task.spawn(attempt)
+

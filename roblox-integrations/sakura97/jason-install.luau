@@ -121,10 +121,13 @@ local function compact(folder,destination)
    for _,p in ipairs(f:GetDescendants()) do if p:IsA("Pose") and p.Weight>0 then poses[p.Name]={p.CFrame:GetComponents()} end end
    table.insert(data.frames,{time=f.Time,poses=poses})
   end
-  local packed=game:GetService("HttpService"):JSONEncode(data)
-  local clip=Instance.new("Folder",destination) clip.Name=seq.Name
+  local json=game:GetService("HttpService"):JSONEncode(data)
+  local encoder=game:GetService("EncodingService")
+  local packed=buffer.tostring(encoder:Base64Encode(encoder:CompressBuffer(buffer.fromstring(json),Enum.CompressionAlgorithm.Zstd,19)))
+  local clip=Instance.new("Folder",destination) clip.Name=seq.Name clip:SetAttribute("ChunkCount",math.ceil(#packed/100000))
   for offset=1,#packed,100000 do local value=Instance.new("StringValue",clip) value.Name=string.format("%04d",math.floor((offset-1)/100000)+1) value.Value=packed:sub(offset,offset+99999) end
  end end
+ destination:SetAttribute("ClipCount",#destination:GetChildren())
 end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"
 local saves=assert(rig:FindFirstChild("AnimSaves")) compact(saves,clips) saves:Destroy()

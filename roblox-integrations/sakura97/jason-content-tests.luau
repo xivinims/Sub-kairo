@@ -4,7 +4,7 @@ local clips=0 local frames=0
 for _,folder in ipairs(rig.MotionClips:GetChildren()) do
  local chunks=folder:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
  local values={} for _,v in ipairs(chunks) do assert(#v.Value<200000) table.insert(values,v.Value) end
- local data=Http:JSONDecode(table.concat(values)) assert(data.length>0 and #data.frames>0)
+ local data=Http:JSONDecode(buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(game:GetService("EncodingService"):Base64Decode(buffer.fromstring(table.concat(values))),Enum.CompressionAlgorithm.Zstd))) assert(data.length>0 and #data.frames>0)
  local previous=-1 local animatedJoints=0
  for _,f in ipairs(data.frames) do assert(f.time>=previous,"Unsorted original frames") previous=f.time
   for name,components in pairs(f.poses) do assert(#components==12,"Invalid CFrame") if matched[name] then animatedJoints+=1 end end
