@@ -2,6 +2,9 @@ assert(game.PlaceId==79738710219521 and game.GameId==9419478735,"Wrong place")
 local SS=game:GetService("ServerStorage") local RS=game:GetService("ReplicatedStorage")
 local SSS=game:GetService("ServerScriptService") local SP=game:GetService("StarterPlayer").StarterPlayerScripts
 local AS=game:GetService("AssetService")
+-- Remove legacy island build data. The Jason build only needs SurvivalAssets.
+local legacyNature=SS:FindFirstChild("NatureTemplates")
+if legacyNature then legacyNature:Destroy() end
 local function replace(parent,name,class)
  local old=parent:FindFirstChild(name) if old then old:Destroy() end
  local obj=Instance.new(class) obj.Name=name obj.Parent=parent return obj
