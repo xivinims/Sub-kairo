@@ -222,7 +222,7 @@ for _,m in ipairs(game.ServerStorage.SurvivalAssets.Killers:GetChildren()) do
 end
 print("SURVIVERS_SIZE_REPORT",game:GetService("HttpService"):JSONEncode(sizeReport))
 local saveOk,saveErr=pcall(function()
- game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=true})
+ game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
 end)
 if not saveOk then
  error("SAVE_FAILED sizes="..game:GetService("HttpService"):JSONEncode(sizeReport).." err="..tostring(saveErr))
@@ -246,8 +246,8 @@ return {
 }
 `;
 
-console.log("[Survivers] Saving Survivers draft to place without publishing...");
+console.log("[Survivers] Publishing reduced Survivers build...");
 const applied=first(await execute(patch));
 if(!applied?.ok) throw new Error("Sakura97 install failed");
-console.log(JSON.stringify({stage:"saved-draft-unpublished",...applied}));
+console.log(JSON.stringify({stage:"saved-and-published",...applied}));
 

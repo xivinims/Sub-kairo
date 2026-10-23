@@ -42,13 +42,8 @@ end
 local function basicRig(id,name)
  local asset=load(id)
  sanitize(asset)
- local model
- if name=="Amanda" then
-  model=asset:FindFirstChild("AmandaRIG",true)
- else
-  local hum=asset:FindFirstChildWhichIsA("Humanoid",true)
-  model=hum and hum.Parent
- end
+ local hum=asset:FindFirstChildWhichIsA("Humanoid",true)
+ local model=hum and hum.Parent
  assert(model,"No rig for "..name)
  model.Parent=nil
  asset:Destroy()
@@ -162,16 +157,6 @@ local function makeFreddy(spec)
  return model
 end
 
-local function makeAmanda(spec)
- local model,clips=basicRig(spec.id,"Amanda")
- local save=model:FindFirstChild("AnimSaves",true)
- if save then
-  sequences(save,spec.id,{Attack="AtticJumpscare",Walk="Automatic Save"},clips)
-  save:Destroy()
- end
- return model
-end
-
 local function makeWarrior(spec)
  local description=Instance.new("HumanoidDescription")
  local warrior=Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
@@ -278,7 +263,6 @@ function Factory.create(name,spec)
  if name=="Figure" then return makeFigure(spec)
  elseif name=="Scarlat" then return makeScarlet(spec)
  elseif name=="Freddy" then return makeFreddy(spec)
- elseif name=="Amanda" then return makeAmanda(spec)
  elseif name=="Guerreiro" then return makeWarrior(spec)
  end
  error("Unknown killer "..tostring(name))

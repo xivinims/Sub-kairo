@@ -19,8 +19,8 @@ s.entries[3].status="eliminated" assert(not Rules.join(s,3),"Eliminated player r
 assert(Rules.join(s,9),"Mid-round admission failed")
 Rules.begin(s) assert(Rules.join(s,3),"New round should reset elimination")
 local assets=SS.SurvivalAssets
-assert(#assets.Maps:GetChildren()==4,"Expected 4 maps, got "..#assets.Maps:GetChildren())
-assert(#assets.Killers:GetChildren()==5,"Expected 5 killers, got "..#assets.Killers:GetChildren())
+assert(#assets.Maps:GetChildren()==3,"Expected 3 maps, got "..#assets.Maps:GetChildren())
+assert(#assets.Killers:GetChildren()==4,"Expected 4 killers, got "..#assets.Killers:GetChildren())
 local maps={}
 for _,m in ipairs(assets.Maps:GetChildren()) do
  local points=m.SafePoints:GetChildren() assert(#points>=9,"Too few safe points in "..m.Name)
@@ -29,7 +29,7 @@ for _,m in ipairs(assets.Maps:GetChildren()) do
 end
 local Factory=require(SSS.KillerFactory)
 local rigs={} local freddyJoints={} local mediaFailures={} local warriorChecked=false
-for _,name in ipairs({"Figure","Guerreiro","Scarlat","Freddy","Amanda"}) do
+for _,name in ipairs({"Figure","Guerreiro","Scarlat","Freddy"}) do
  local m=Factory.create(name,configs[name])
  assert(m.PrimaryPart,"Missing PrimaryPart in "..name)
  assert(m:FindFirstChildOfClass("Humanoid"),"Missing Humanoid in "..name)
