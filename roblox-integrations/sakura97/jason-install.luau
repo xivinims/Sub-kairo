@@ -127,7 +127,7 @@ rig:SetAttribute("SourcePivot",rig:GetPivot())
 hum.RequiresNeck=false hum.BreakJointsOnDeath=false hum.MaxHealth=1000 hum.Health=1000 hum.WalkSpeed=11 hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
 -- Compact exact poses as JSON, avoiding tens of thousands of replicated Instances.
 local function compact(folder,destination)
- for _,seq in ipairs(folder:GetChildren()) do if seq:IsA("KeyframeSequence") then
+ for _,seq in ipairs(folder:GetDescendants()) do if seq:IsA("KeyframeSequence") then
   local frames=seq:GetKeyframes() table.sort(frames,function(x,y) return x.Time<y.Time end)
   local data={length=frames[#frames].Time,frames={}}
   for _,f in ipairs(frames) do
@@ -150,9 +150,17 @@ end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"
 local saves=assert(rig:FindFirstChild("AnimSaves")) compact(saves,clips) saves:Destroy()
 rig.Parent=rigs
+local survivorAsset=load(127092032896760)
+local survivor=Instance.new("Folder",net) survivor.Name="SurvivorClips" survivor:SetAttribute("SourceAssetId",127092032896760)
+local survivorSaves=survivorAsset:FindFirstChild("AnimSaves",true) or survivorAsset
+compact(survivorSaves,survivor) survivorAsset:Destroy()
+assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken Survivor Animations contains no KeyframeSequence")
+
 local crouchAsset=load(134326820545987)
 local crouch=Instance.new("Folder",net) crouch.Name="CrouchClips" crouch:SetAttribute("SourceAssetId",134326820545987)
-compact(assert(crouchAsset:FindFirstChild("AnimSaves",true)),crouch) crouchAsset:Destroy()
+local crouchSaves=crouchAsset:FindFirstChild("AnimSaves",true) or crouchAsset
+compact(crouchSaves,crouch) crouchAsset:Destroy()
+assert((crouch:GetAttribute("ClipCount") or 0)>0,"R15 Crouch Animation contains no KeyframeSequence")
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
 scriptAt(SSS,"RoundRules","ModuleScript",__RULES_SOURCE__)
 scriptAt(SSS,"PursuerAI","ModuleScript",__AI_SOURCE__)

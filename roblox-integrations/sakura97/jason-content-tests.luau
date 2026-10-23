@@ -28,6 +28,14 @@ assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magni
 assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
 assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
 assert(not workspace.StreamingEnabled)
+local survivor=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorClips"),"Forsaken Survivor clips missing")
+local crouch=assert(game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Crouch clips missing")
+assert(survivor:GetAttribute("SourceAssetId")==127092032896760,"Wrong Forsaken survivor animation asset")
+assert(crouch:GetAttribute("SourceAssetId")==134326820545987,"Wrong crouch animation asset")
+assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken survivor package has no clips")
+assert((crouch:GetAttribute("ClipCount") or 0)>0,"Crouch package has no clips")
+local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Folder") then table.insert(survivorNames,v.Name) end end table.sort(survivorNames)
+local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
-return {ok=true,originalClips=clips,originalFrames=frames,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true}
+return {ok=true,originalClips=clips,originalFrames=frames,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}

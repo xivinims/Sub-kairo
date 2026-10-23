@@ -1,5 +1,6 @@
--- Faithful local playback of the authored Jason KeyframeSequences.
--- Roblox Pose.CFrame belongs on Motor6D.Transform; C0/C1 remain untouched.
+-- Exact animation playback for Jason and survivors.
+-- Survivor default = Forsaken Survivor Animations (127092032896760).
+-- Crouching = full-body R15 Crouch Animation set (134326820545987).
 local Run=game:GetService("RunService")
 local Players=game:GetService("Players")
 local Http=game:GetService("HttpService")
@@ -7,68 +8,62 @@ local TweenService=game:GetService("TweenService")
 local Encoding=game:GetService("EncodingService")
 local net=game.ReplicatedStorage:WaitForChild("Survival")
 local cache=setmetatable({},{__mode="k"})
+local activeFolder=setmetatable({},{__mode="k"})
+local animateState=setmetatable({},{__mode="k"})
 
 local function decodePose(raw)
  if typeof(raw)=="table" and raw.c then
-  return {
-   cf=CFrame.new(table.unpack(raw.c)),
-   easing=raw.e or "Linear",
-   direction=raw.d or "InOut",
-   weight=raw.w or 1,
-  }
+  return {cf=CFrame.new(table.unpack(raw.c)),easing=raw.e or "Linear",direction=raw.d or "InOut",weight=raw.w or 1}
  end
- -- Compatibility with older compact clips.
  return {cf=CFrame.new(table.unpack(raw)),easing="Linear",direction="InOut",weight=1}
 end
 
 local function prepare(model,folder)
+ local perModel=cache[model]
+ if not perModel then perModel={} cache[model]=perModel end
+ if perModel[folder] then return perModel[folder] end
  if #folder:GetChildren()~=(folder:GetAttribute("ClipCount") or math.huge) then return nil end
- local d={joints={},clips={},time=0,state="",active=false}
+ local d={joints={},clips={},time=0,state="",active=false,folder=folder}
  for _,j in ipairs(model:GetDescendants()) do
-  if j:IsA("Motor6D") and j.Part1 then
-   d.joints[j.Part1.Name]=j
-  end
+  if j:IsA("Motor6D") and j.Part1 then d.joints[j.Part1.Name]=j end
  end
-
  for _,v in ipairs(folder:GetChildren()) do
   if v:IsA("Folder") then
    local chunks=v:GetChildren()
    if #chunks~=(v:GetAttribute("ChunkCount") or math.huge) then return nil end
    table.sort(chunks,function(a,b) return a.Name<b.Name end)
-   local values={}
-   for _,chunk in ipairs(chunks) do table.insert(values,chunk.Value) end
+   local values={} for _,chunk in ipairs(chunks) do table.insert(values,chunk.Value) end
    local ok,clip=pcall(function()
     local compressed=Encoding:Base64Decode(buffer.fromstring(table.concat(values)))
     return Http:JSONDecode(buffer.tostring(Encoding:DecompressBuffer(compressed,Enum.CompressionAlgorithm.Zstd)))
    end)
    if not ok then return nil end
-
    clip.channels={}
    for _,frame in ipairs(clip.frames) do
     for name,raw in pairs(frame.poses) do
      local channel=clip.channels[name]
      if not channel then channel={} clip.channels[name]=channel end
-     local pose=decodePose(raw)
-     pose.time=frame.time
-     table.insert(channel,pose)
+     local pose=decodePose(raw) pose.time=frame.time table.insert(channel,pose)
     end
    end
-   for _,channel in pairs(clip.channels) do
-    table.sort(channel,function(a,b) return a.time<b.time end)
-   end
+   for _,channel in pairs(clip.channels) do table.sort(channel,function(a,b) return a.time<b.time end) end
    d.clips[v.Name]=clip
   end
  end
- cache[model]=d
+ perModel[folder]=d
  return d
 end
 
-local function reset(d)
- if not d.active then return end
- for _,joint in pairs(d.joints) do
-  if joint.Parent then joint.Transform=CFrame.identity end
- end
- d.active=false
+local function resetData(d)
+ if not d or not d.active then return end
+ for _,joint in pairs(d.joints) do if joint.Parent then joint.Transform=CFrame.identity end end
+ d.active=false d.state="" d.time=0
+end
+
+local function resetModel(model)
+ local perModel=cache[model]
+ if perModel then for _,d in pairs(perModel) do resetData(d) end end
+ activeFolder[model]=nil
 end
 
 local function easedAlpha(alpha,pose)
@@ -80,33 +75,67 @@ end
 
 local function sample(channel,t)
  if not channel or #channel==0 then return CFrame.identity end
- if #channel==1 or t<=channel[1].time then
-  return CFrame.identity:Lerp(channel[1].cf,channel[1].weight)
- end
+ if #channel==1 or t<=channel[1].time then return CFrame.identity:Lerp(channel[1].cf,channel[1].weight) end
  local last=channel[#channel]
  if t>=last.time then return CFrame.identity:Lerp(last.cf,last.weight) end
  local a,b=channel[1],last
- for i=1,#channel-1 do
-  if channel[i+1].time>=t then a=channel[i] b=channel[i+1] break end
- end
+ for i=1,#channel-1 do if channel[i+1].time>=t then a=channel[i] b=channel[i+1] break end end
  local alpha=b.time>a.time and math.clamp((t-a.time)/(b.time-a.time),0,1) or 0
  alpha=easedAlpha(alpha,a)
- local acf=CFrame.identity:Lerp(a.cf,a.weight)
- local bcf=CFrame.identity:Lerp(b.cf,b.weight)
- return acf:Lerp(bcf,alpha)
+ return CFrame.identity:Lerp(a.cf,a.weight):Lerp(CFrame.identity:Lerp(b.cf,b.weight),alpha)
 end
 
 local function apply(d,state,dt,loop,absolute)
+ if not state then return end
  if d.state~=state then d.state=state d.time=0 end
  d.time+=dt
- local clip=d.clips[state]
- if not clip or clip.length<=0 then return end
+ local clip=d.clips[state] if not clip or clip.length<=0 then return end
  local t=absolute or d.time
  t=loop and t%clip.length or math.min(t,clip.length)
- for name,joint in pairs(d.joints) do
-  if joint.Parent then joint.Transform=sample(clip.channels[name],t) end
- end
+ for name,joint in pairs(d.joints) do if joint.Parent then joint.Transform=sample(clip.channels[name],t) end end
  d.active=true
+end
+
+local function matchName(clips,groups)
+ local names={}
+ for name in pairs(clips) do table.insert(names,name) end
+ table.sort(names)
+ for _,tokens in ipairs(groups) do
+  for _,name in ipairs(names) do
+   local low=name:lower()
+   local ok=true
+   for _,token in ipairs(tokens) do if not low:find(token,1,true) then ok=false break end end
+   if ok then return name end
+  end
+ end
+ return nil
+end
+
+local function locomotionName(d,kind,crouched)
+ if crouched then
+  if kind=="jump" then return matchName(d.clips,{{"crouch","jump"},{"jump"}}) or matchName(d.clips,{{"crouch","walk"},{"walk"},{"idle"}}) end
+  if kind=="fall" then return matchName(d.clips,{{"crouch","fall"},{"fall"}}) or matchName(d.clips,{{"crouch","idle"},{"idle"}}) end
+  if kind=="move" then return matchName(d.clips,{{"crouch","walk"},{"crouch","move"},{"walk"},{"move"}}) or matchName(d.clips,{{"idle"}}) end
+  return matchName(d.clips,{{"crouch","idle"},{"idle"}}) or next(d.clips)
+ end
+ if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"idle"}}) end
+ if kind=="fall" then return matchName(d.clips,{{"fall"},{"freefall"},{"air"}}) or matchName(d.clips,{{"jump"},{"idle"}}) end
+ if kind=="run" then return matchName(d.clips,{{"run"},{"sprint"}}) or matchName(d.clips,{{"walk"},{"move"}}) end
+ if kind=="move" then return matchName(d.clips,{{"walk"},{"move"}}) or matchName(d.clips,{{"run"},{"idle"}}) end
+ return matchName(d.clips,{{"idle"},{"stand"}}) or next(d.clips)
+end
+
+local function setDefaultAnimate(model,enabled)
+ local a=model:FindFirstChild("Animate")
+ if a and a:IsA("LocalScript") then
+  if animateState[model]==nil then animateState[model]=not a.Disabled end
+  a.Disabled=not enabled
+ end
+ local hum=model:FindFirstChildOfClass("Humanoid")
+ local animator=hum and hum:FindFirstChildOfClass("Animator")
+ if animator and not enabled then
+  for _,track in ipairs(animator:GetPlayingAnimationTracks()) do pcall(function() track:Stop(.08) end) end
+ end
 end
 
 Run.PreSimulation:Connect(function(dt)
@@ -114,7 +143,7 @@ Run.PreSimulation:Connect(function(dt)
   if model:IsA("Model") and model:GetAttribute("ActivePursuer") and model.PrimaryPart then
    local folder=model:FindFirstChild("MotionClips")
    if folder then
-    local d=cache[model] or prepare(model,folder)
+    local d=prepare(model,folder)
     local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
     local attack=model:GetAttribute("AttackAt") or -100
     local since=workspace:GetServerTimeNow()-attack
@@ -127,13 +156,33 @@ Run.PreSimulation:Connect(function(dt)
  for _,p in ipairs(Players:GetPlayers()) do
   local model=p.Character
   if model and not model:GetAttribute("ActivePursuer") then
-   if p:GetAttribute("MoveMode")=="slow" and p:GetAttribute("InRound") and not p:GetAttribute("Downed") then
-    local d=cache[model] or prepare(model,net.CrouchClips)
+   local isJason=p:GetAttribute("IsJason")
+   local inRound=p:GetAttribute("InRound")
+   local downed=p:GetAttribute("Downed")
+   if inRound and not isJason and not downed then
+    local crouched=p:GetAttribute("MoveMode")=="slow"
+    local folder=crouched and net.CrouchClips or net.SurvivorClips
+    if activeFolder[model]~=folder then
+     resetModel(model) activeFolder[model]=folder
+    end
+    if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
+    local d=prepare(model,folder)
+    local hum=model:FindFirstChildOfClass("Humanoid")
     local root=model:FindFirstChild("HumanoidRootPart")
-    local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
-    if d then apply(d,speed>1 and "Crouch Walk" or "Crouch Idle",dt,true) end
-   elseif cache[model] then
-    reset(cache[model])
+    if d and hum and root then
+     local speed=(root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+     local hs=hum:GetState()
+     local kind
+     if hs==Enum.HumanoidStateType.Jumping then kind="jump"
+     elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
+     elseif speed>1 then kind=(not crouched and speed>16) and "run" or "move"
+     else kind="idle" end
+     local state=locomotionName(d,kind,crouched)
+     apply(d,state,dt,kind~="jump" and kind~="fall")
+    end
+   else
+    resetModel(model)
+    if p==Players.LocalPlayer then setDefaultAnimate(model,true) end
    end
   end
  end

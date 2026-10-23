@@ -160,7 +160,10 @@ local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap)
 assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
-assert(game.ReplicatedStorage.Survival.CrouchClips:FindFirstChild("Crouch Walk"))
+assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
+assert(game.ReplicatedStorage.Survival.CrouchClips:GetAttribute("SourceAssetId")==134326820545987)
+assert((game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("ClipCount") or 0)>0)
+assert((game.ReplicatedStorage.Survival.CrouchClips:GetAttribute("ClipCount") or 0)>0)
 local ui=game.StarterGui.TomiaszMenu
 assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
 result.logoTexture=ui.MenuPrincipal.Logo.Image
