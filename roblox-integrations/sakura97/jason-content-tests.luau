@@ -44,4 +44,12 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
-return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+local oldDoor=workspace.JediLibrary.Door
+assert(oldDoor:GetAttribute("VisualReplaced") and oldDoor:GetAttribute("HeldOpen"),"Old lobby door was not retired")
+for _,p in ipairs(oldDoor:GetDescendants()) do if p:IsA("BasePart") then assert(p.Transparency==1 and not p.CanCollide,"Old stone/block door still visible or collidable") end end
+local visualDoor=assert(workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Open lobby door visual missing")
+assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAngle")==78,"Lobby door is not authored open")
+assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
+assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
+assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
+return {ok=true,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}

@@ -159,6 +159,42 @@ local function caughtAnimation(killer,killerCF)
  capture.Visible=false captureActive=false
 end
 
+local entryFlash=Instance.new("Frame")
+entryFlash.Name="EntryFlash" entryFlash.Size=UDim2.fromScale(1,1) entryFlash.BackgroundColor3=Color3.fromRGB(176,42,47)
+entryFlash.BackgroundTransparency=1 entryFlash.BorderSizePixel=0 entryFlash.ZIndex=94 entryFlash.Visible=true
+entryFlash:SetAttribute("PulseCount",0) entryFlash.Parent=gui
+
+local doorGlowBusy=false
+local function pulseLobbyDoor()
+ if doorGlowBusy then return end
+ doorGlowBusy=true
+ entryFlash:SetAttribute("PulseCount",(entryFlash:GetAttribute("PulseCount") or 0)+1)
+ local visual=workspace:FindFirstChild("SurviversLobbyDoorVisual")
+ local glow
+ if visual then
+  glow=Instance.new("Highlight")
+  glow.Name="LobbyDoorGlowFX" glow.Adornee=visual glow.FillColor=Color3.fromRGB(196,54,58)
+  glow.OutlineColor=Color3.fromRGB(255,208,204) glow.FillTransparency=1 glow.OutlineTransparency=1
+  glow.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop glow.Parent=workspace
+  TweenService:Create(glow,TweenInfo.new(.12,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{FillTransparency=.38,OutlineTransparency=.08}):Play()
+  for _,p in ipairs(visual:GetDescendants()) do
+   if p:IsA("PointLight") and p.Name=="EntryGlow" then
+    TweenService:Create(p,TweenInfo.new(.12),{Brightness=3.2,Range=22}):Play()
+    task.delay(.18,function() if p.Parent then TweenService:Create(p,TweenInfo.new(.45),{Brightness=.35,Range=14}):Play() end end)
+   end
+  end
+ end
+ entryFlash.BackgroundTransparency=.86
+ TweenService:Create(entryFlash,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=1}):Play()
+ task.delay(.52,function()
+  if glow and glow.Parent then
+   local t=TweenService:Create(glow,TweenInfo.new(.25),{FillTransparency=1,OutlineTransparency=1})
+   t:Play() t.Completed:Connect(function() if glow.Parent then glow:Destroy() end end)
+  end
+  doorGlowBusy=false
+ end)
+end
+
 local doorLeaf=nil local doorRound=nil local doorCF=nil
 local function clearDoor() if doorLeaf then doorLeaf:Destroy() doorLeaf=nil end doorRound=nil end
 local function closeDoor()
@@ -168,7 +204,8 @@ local function closeDoor()
  TweenService:Create(doorLeaf,TweenInfo.new(.65,Enum.EasingStyle.Sine),{CFrame=doorCF*CFrame.new(0,1,0)}):Play()
 end
 net.Update.OnClientEvent:Connect(function(action,a,b)
- if action=="entrance" then clearDoor() doorRound=a doorCF=b
+ if action=="lobbyDoorGlow" then pulseLobbyDoor()
+ elseif action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
  elseif action=="reset" then clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
@@ -185,6 +222,17 @@ UIS.InputBegan:Connect(function(input,processed)
 end)
 UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end end)
 local highlight=Instance.new("Highlight") highlight.Name="PursuerTarget" highlight.FillColor=Color3.fromRGB(200,35,43) highlight.OutlineColor=Color3.fromRGB(242,80,85) highlight.FillTransparency=.8 highlight.DepthMode=Enum.HighlightDepthMode.Occluded highlight.Enabled=false highlight.Parent=gui
+local localPortalInside=false
+RunService.RenderStepped:Connect(function()
+ local gate=workspace:FindFirstChild("LobbyJoinPortal")
+ local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+ if not gate or not root or player:GetAttribute("InRound") then localPortalInside=false return end
+ local lp=gate.CFrame:PointToObjectSpace(root.Position)
+ local inside=math.abs(lp.X)<=gate.Size.X/2 and math.abs(lp.Y)<=gate.Size.Y/2 and math.abs(lp.Z)<=gate.Size.Z/2
+ if inside and not localPortalInside then pulseLobbyDoor() end
+ localPortalInside=inside
+end)
+
 local jasonPresentationFov=70
 RunService.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera

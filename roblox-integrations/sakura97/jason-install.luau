@@ -27,32 +27,95 @@ end
 -- Preserve the actual published lobby and all user edits. Never reload its asset.
 local lobby=assert(workspace:FindFirstChild("JediLibrary"),"Existing lobby is required; abort rather than overwrite")
 local door=assert(lobby:FindFirstChild("Door"),"Existing lobby door missing")
-local doorCF,doorSize=door:GetBoundingBox()
-local original=door:GetAttribute("OriginalCenter") or doorCF.Position door:SetAttribute("OriginalCenter",original)
-local lobbyParams=RaycastParams.new() lobbyParams.FilterType=Enum.RaycastFilterType.Include lobbyParams.FilterDescendantsInstances={lobby} lobbyParams.RespectCanCollide=true
+local original=door:GetAttribute("OriginalCenter")
+if not original then
+ local cf=door:GetBoundingBox()
+ original=cf.Position
+ door:SetAttribute("OriginalCenter",original)
+end
+local rotation=door:GetPivot().Rotation
+local lobbyParams=RaycastParams.new()
+lobbyParams.FilterType=Enum.RaycastFilterType.Include
+lobbyParams.FilterDescendantsInstances={lobby}
+lobbyParams.RespectCanCollide=true
 local inside=original-Vector3.new(12,0,0)
 local floor=assert(workspace:Raycast(inside,Vector3.new(0,-30,0),lobbyParams),"Lobby entry floor missing")
 assert(floor.Normal.Y>.8,"Lobby spawn slope")
 local spawn=assert(workspace:FindFirstChild("IslandSpawn"))
 spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,.2,0),Vector3.new(original.X,floor.Position.Y+.2,original.Z))
 spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.Duration=0
--- Slide the original shutters away while retaining the frame.
-if not door:GetAttribute("HeldOpen") then
- for _,v in ipairs(door:GetDescendants()) do if v:IsA("BasePart") then
-  if v.Size.X<1.1 and v.Size.Z>7 and v.Size.Y>7 then
-   v.CFrame+=Vector3.new(0,v.Position.Y<original.Y and -8 or 8,0) v.CanCollide=false
-  elseif v.Size.X<3.2 and v.Size.Y>10 then v.CanCollide=false v.Transparency=1 end
- end end
- door:SetAttribute("HeldOpen",true)
+
+-- Retire the old broken door geometry. It stays in the lobby hierarchy for preservation,
+-- but no old shutter/frame piece is allowed to block or visually fill the doorway.
+for _,v in ipairs(door:GetDescendants()) do
+ if v:IsA("BasePart") then
+  v.CanCollide=false v.CanTouch=false v.CanQuery=false v.CastShadow=false v.Transparency=1
+ elseif v:IsA("Decal") or v:IsA("Texture") then
+  v.Transparency=1
+ end
 end
+door:SetAttribute("HeldOpen",true)
+door:SetAttribute("VisualReplaced",true)
+
+local visual=replace(workspace,"SurviversLobbyDoorVisual","Model")
+visual:SetAttribute("Open",true)
+visual:SetAttribute("OpenAngle",78)
+visual:SetAttribute("OriginalDoorCenter",original)
+
+local centerCF=CFrame.new(original.X,floor.Position.Y+4.6,original.Z)*rotation
+local function visualPart(name,size,cf,color,material,transparency)
+ local p=Instance.new("Part")
+ p.Name=name p.Size=size p.CFrame=cf p.Anchored=true p.CanCollide=false p.CanTouch=false p.CanQuery=false
+ p.Color=color p.Material=material or Enum.Material.WoodPlanks p.Transparency=transparency or 0
+ p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth
+ p.Parent=visual
+ return p
+end
+
+-- Dark frame, leaving a real empty opening.
+local frameColor=Color3.fromRGB(36,30,32)
+visualPart("FrameLeft",Vector3.new(.75,9.2,.75),centerCF*CFrame.new(0,0,-4.25),frameColor,Enum.Material.Metal)
+visualPart("FrameRight",Vector3.new(.75,9.2,.75),centerCF*CFrame.new(0,0,4.25),frameColor,Enum.Material.Metal)
+visualPart("FrameTop",Vector3.new(.75,.75,9.25),centerCF*CFrame.new(0,4.25,0),frameColor,Enum.Material.Metal)
+
+-- Two actual door leaves, already swung open around their hinges.
+local leafColor=Color3.fromRGB(67,35,36)
+local angle=math.rad(78)
+local left=visualPart("LeftLeaf",Vector3.new(.42,8.1,3.55),
+ centerCF*CFrame.new(0,-.3,-3.9)*CFrame.Angles(0,angle,0)*CFrame.new(0,0,1.775),
+ leafColor,Enum.Material.WoodPlanks)
+local right=visualPart("RightLeaf",Vector3.new(.42,8.1,3.55),
+ centerCF*CFrame.new(0,-.3,3.9)*CFrame.Angles(0,-angle,0)*CFrame.new(0,0,-1.775),
+ leafColor,Enum.Material.WoodPlanks)
+left:SetAttribute("OpenLeaf",true) right:SetAttribute("OpenLeaf",true)
+
+-- Thin luminous trim for the entry pulse.
+local glowColor=Color3.fromRGB(174,42,45)
+for _,spec in ipairs({
+ {"GlowLeft",Vector3.new(.16,8.1,.16),CFrame.new(0,-.25,-3.78)},
+ {"GlowRight",Vector3.new(.16,8.1,.16),CFrame.new(0,-.25,3.78)},
+ {"GlowTop",Vector3.new(.16,.16,7.7),CFrame.new(0,3.78,0)},
+}) do
+ local p=visualPart(spec[1],spec[2],centerCF*spec[3],glowColor,Enum.Material.Neon,.52)
+ p:SetAttribute("LobbyGlowPart",true)
+end
+local glowCore=visualPart("GlowCore",Vector3.new(.2,.2,.2),centerCF*CFrame.new(0,1.2,0),glowColor,Enum.Material.Neon,1)
+glowCore:SetAttribute("LobbyGlowPart",true)
+local light=Instance.new("PointLight")
+light.Name="EntryGlow" light.Color=glowColor light.Range=14 light.Brightness=.35 light.Shadows=false light.Parent=glowCore
+
 local gate=replace(workspace,"LobbyJoinPortal","Part")
--- Broad, door-aligned admission volume so walking through the physical doorway is reliably detected.
-gate.Size=Vector3.new(math.max(14,doorSize.X+6),12,math.max(14,doorSize.Z+6))
-gate.CFrame=CFrame.new(original.X,floor.Position.Y+gate.Size.Y/2,original.Z)*doorCF.Rotation
+gate.Size=Vector3.new(14,12,14)
+gate.CFrame=CFrame.new(original.X,floor.Position.Y+gate.Size.Y/2,original.Z)*rotation
 gate.Anchored=true gate.CanCollide=false gate.CanTouch=false gate.CanQuery=false gate.Transparency=1
 gate:SetAttribute("DoorAdmission",true)
-local sign=Instance.new("BillboardGui",gate) sign.Name="EntrySign" sign.Size=UDim2.fromOffset(220,42) sign.StudsOffset=Vector3.new(0,5,0) sign.MaxDistance=55
-local label=Instance.new("TextLabel",sign) label.Size=UDim2.fromScale(1,1) label.BackgroundTransparency=1 label.Text="ENTRE PARA JOGAR" label.TextColor3=Color3.fromRGB(225,208,208) label.Font=Enum.Font.GothamMedium label.TextSize=18
+gate:SetAttribute("VisualDoor","SurviversLobbyDoorVisual")
+local sign=Instance.new("BillboardGui",gate)
+sign.Name="EntrySign" sign.Size=UDim2.fromOffset(220,42) sign.StudsOffset=Vector3.new(0,5,0) sign.MaxDistance=55
+local label=Instance.new("TextLabel",sign)
+label.Size=UDim2.fromScale(1,1) label.BackgroundTransparency=1 label.Text="ENTRE PARA JOGAR"
+label.TextColor3=Color3.fromRGB(225,208,208) label.Font=Enum.Font.GothamMedium label.TextSize=18
+
 local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",120) runtime:SetAttribute("PreservedLobby",true)
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
 workspace.StreamingEnabled=false

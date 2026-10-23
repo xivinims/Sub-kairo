@@ -220,6 +220,7 @@ RunService.Heartbeat:Connect(function(dt)
    local pos=gate.CFrame:PointToObjectSpace(r.Position)
    local inside=math.abs(pos.X)<=gate.Size.X/2 and math.abs(pos.Y)<=gate.Size.Y/2 and math.abs(pos.Z)<=gate.Size.Z/2
    if inside and not portalInside[p] and not e then
+    net.Update:FireClient(p,"lobbyDoorGlow")
     if state.phase=="Partida" then
      if join(p) then spawnPlayer(p) end
     else

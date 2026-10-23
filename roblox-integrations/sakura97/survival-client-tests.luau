@@ -32,6 +32,10 @@ local function step() render:Fire(.2) task.wait() end
 local ok,result=xpcall(function()
  controller() step()
  local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.Actions.Visible and not gui:FindFirstChild("Join"))
+ local flash=assert(gui:FindFirstChild("EntryFlash"),"Entry glow flash missing")
+ local before=flash:GetAttribute("PulseCount") or 0
+ update:Fire("lobbyDoorGlow") task.wait()
+ assert((flash:GetAttribute("PulseCount") or 0)==before+1,"Lobby door glow event did not pulse")
  assert(gui.Actions.Run.UICorner.CornerRadius.Scale==1 and gui.Actions.Run.Size.X.Offset==gui.Actions.Run.Size.Y.Offset,"Sprint must be circular")
  assert(gui.Actions.Run.InnerRing and gui.Round.BackgroundTransparency==1 and gui.Countdown.BackgroundTransparency==1,"Circular rings and transparent timer")
  input:Fire({KeyCode=Enum.KeyCode.E},false) task.wait() assert(requests[#requests]=="kit")
@@ -56,7 +60,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and gui.Actions.Visible,"Portal admission must keep movement controls visible")
  assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Run/slow/boost controls disappeared outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,persistentMovementControls=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result
