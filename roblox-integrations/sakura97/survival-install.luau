@@ -58,7 +58,7 @@ for _,spec in ipairs(require(config).Maps) do
  map:PivotTo(map:GetPivot()+Vector3.new(2200-cf2.X,30-(cf2.Y-sz.Y/2),-cf2.Z))
  map.Parent=workspace
  local candidates={}
- local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={map}
+ local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={map} params.RespectCanCollide=true
  local function candidate(pos)
   local hit2=workspace:Raycast(pos+Vector3.new(0,2,0),Vector3.new(0,-8,0),params)
   if not hit2 or not hit2.Instance.CanCollide or hit2.Normal.Y<.8 then return end
@@ -68,27 +68,30 @@ for _,spec in ipairs(require(config).Maps) do
   table.insert(candidates,p)
  end
  local markers=map:FindFirstChild("Spawns",true)
- if markers then for _,d in ipairs(markers:GetDescendants()) do if d:IsA("BasePart") then d.CanCollide=false d.Transparency=1 candidate(d.Position) end end end
+ if markers then for _,d in ipairs(markers:GetDescendants()) do if d:IsA("BasePart") then d.CanCollide=false d.CanQuery=false d.Transparency=1 candidate(d.Position) end end end
  for _,d in ipairs(map:GetDescendants()) do
   if d:IsA("BasePart") and d.CanCollide and d.Transparency<.95 and d.Size.X>=8 and d.Size.Z>=8 and math.abs(d.CFrame.UpVector.Y)>.97 then
    candidate(d.Position+Vector3.new(0,d.Size.Y/2+.1,0))
   end
  end
  assert(#candidates>=9,"Too few safe spawn candidates in "..spec.name)
- -- Prefer low, separated walkable points, avoid rooftop starts.
- table.sort(candidates,function(x,y) return x.Y<y.Y end)
- local selected={candidates[1]}
- while #selected<math.min(20,#candidates) do
-  local best,score=nil,-1
-  for _,p in ipairs(candidates) do
-   if p.Y<candidates[1].Y+22 then
-    local nearest=math.huge for _,q in ipairs(selected) do nearest=math.min(nearest,(p-q).Magnitude) end
-    if nearest>score then best=p score=nearest end
-   end
-  end
-  if not best or score<8 then break end table.insert(selected,best)
+ -- Accept only positions reachable from a shared anchor. Seed authored spawns first.
+ local selected={}
+ local pf=game:GetService("PathfindingService")
+ local function reachable(a,b)
+  local path=pf:CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true,WaypointSpacing=5})
+  path:ComputeAsync(a,b) local ok=path.Status==Enum.PathStatus.Success path:Destroy() return ok
  end
- assert(#selected>=9,"Need 9 separated floor positions in "..spec.name)
+ for seed=1,math.min(12,#candidates) do
+  local cluster={candidates[seed]}
+  for _,pos in ipairs(candidates) do
+   if (pos-candidates[seed]).Magnitude>8 and reachable(candidates[seed],pos) then table.insert(cluster,pos) end
+   if #cluster>=20 then break end
+  end
+  if #cluster>#selected then selected=cluster end
+  if #selected>=9 then break end
+ end
+ assert(#selected>=9,"Need 9 connected floor positions in "..spec.name..", got "..#selected)
  local points=Instance.new("Folder",map) points.Name="SafePoints"
  for i,p in ipairs(selected) do local v=Instance.new("Vector3Value",points) v.Name=tostring(i) v.Value=p end
  local partCount=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then partCount+=1 end end

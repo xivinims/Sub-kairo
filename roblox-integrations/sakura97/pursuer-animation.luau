@@ -4,7 +4,7 @@ local current=nil local data=nil local elapsed=0
 local function prepare(model)
  local d={joints={},bones={},clips={},t=0,last=""}
  for _,j in ipairs(model:GetDescendants()) do
-  if j:IsA("Motor6D") and j.Part1 then d.joints[j.Part1.Name]={joint=j,base=j.C0}
+  if j:IsA("Motor6D") and j.Part1 then d.joints[j:GetAttribute("PoseAlias") or j.Part1.Name]={joint=j,base=j.C0,basis=j:GetAttribute("RetargetBasis")}
   elseif j:IsA("Bone") then d.bones[j.Name]=j end
  end
  local folder=model:FindFirstChild("MotionClips")
@@ -43,7 +43,10 @@ RunService.RenderStepped:Connect(function(dt)
   for name,cf in pairs(a.poses) do
    local pose=cf:Lerp(b.poses[name] or cf,alpha)
    local bone=data.bones[name] local motor=data.joints[name]
-   if bone then bone.Transform=pose elseif motor then motor.joint.C0=motor.base*pose end
+   if bone then bone.Transform=pose elseif motor then
+    if motor.basis then pose=CFrame.new(pose.Position)*motor.basis*pose.Rotation*motor.basis:Inverse() end
+    motor.joint.C0=motor.base*pose
+   end
   end
  else
   -- Native locomotion for rigs without a published walk clip.

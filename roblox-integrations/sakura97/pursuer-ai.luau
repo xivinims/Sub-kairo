@@ -19,7 +19,7 @@ function AI.start(model,map,config,ctx)
   if busy or os.clock()-lastPath<1 then return end
   busy=true lastPath=os.clock()
   task.spawn(function()
-   local p=Pathfinding:CreatePath({AgentRadius=2,AgentHeight=6,AgentCanJump=true,WaypointSpacing=5})
+   local p=Pathfinding:CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true,WaypointSpacing=5})
    local ok=pcall(function() p:ComputeAsync(root.Position,destination) end)
    if alive and ok and p.Status==Enum.PathStatus.Success then waypoints=p:GetWaypoints() waypoint=2
    elseif alive then waypoints={} end

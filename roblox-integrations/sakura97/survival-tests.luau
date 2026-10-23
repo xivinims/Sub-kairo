@@ -34,8 +34,9 @@ for _,template in ipairs(assets.Maps:GetChildren()) do
  task.wait(.2)
  local pts=map.SafePoints:GetChildren() local paths={}
  for i=2,#pts do
-  local path=game:GetService("PathfindingService"):CreatePath({AgentRadius=2,AgentHeight=6,AgentCanJump=true})
+  local path=game:GetService("PathfindingService"):CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true})
   path:ComputeAsync(pts[1].Value,pts[i].Value)
+  assert(path.Status==Enum.PathStatus.Success,"Unreachable spawn "..template.Name.."/"..pts[i].Name)
   table.insert(paths,{index=pts[i].Name,status=path.Status.Name,waypoints=#path:GetWaypoints()}) path:Destroy()
  end
  table.insert(pathChecks,{map=template.Name,paths=paths}) map:Destroy()
