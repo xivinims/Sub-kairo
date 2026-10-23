@@ -4,8 +4,10 @@ local net=game.ReplicatedStorage:WaitForChild("Survival") local cache=setmetatab
 local function prepare(model,folder)
  local d={joints={},clips={},time=0,state="",active=false}
  for _,j in ipairs(model:GetDescendants()) do if j:IsA("Motor6D") and j.Part1 then d.joints[j.Part1.Name]={joint=j,base=j.C0} end end
- for _,v in ipairs(folder:GetChildren()) do if v:IsA("StringValue") then
-  local clip=Http:JSONDecode(v.Value)
+ for _,v in ipairs(folder:GetChildren()) do if v:IsA("Folder") then
+  local chunks=v:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
+  local values={} for _,chunk in ipairs(chunks) do table.insert(values,chunk.Value) end
+  local clip=Http:JSONDecode(table.concat(values))
   for _,f in ipairs(clip.frames) do for n,components in pairs(f.poses) do f.poses[n]=CFrame.new(table.unpack(components)) end end
   d.clips[v.Name]=clip
  end end

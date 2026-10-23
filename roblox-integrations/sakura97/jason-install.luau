@@ -121,7 +121,9 @@ local function compact(folder,destination)
    for _,p in ipairs(f:GetDescendants()) do if p:IsA("Pose") and p.Weight>0 then poses[p.Name]={p.CFrame:GetComponents()} end end
    table.insert(data.frames,{time=f.Time,poses=poses})
   end
-  local value=Instance.new("StringValue",destination) value.Name=seq.Name value.Value=game:GetService("HttpService"):JSONEncode(data)
+  local packed=game:GetService("HttpService"):JSONEncode(data)
+  local clip=Instance.new("Folder",destination) clip.Name=seq.Name
+  for offset=1,#packed,100000 do local value=Instance.new("StringValue",clip) value.Name=string.format("%04d",math.floor((offset-1)/100000)+1) value.Value=packed:sub(offset,offset+99999) end
  end end
 end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"

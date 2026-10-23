@@ -112,7 +112,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  rates[p]=rates[p] or {} local t=now() if t-(rates[p][action] or 0)<.18 then return end rates[p][action]=t
  if action=="join" then return -- Admission is exclusively server-observed portal crossing.
  elseif action=="attack" then
-  if p~=jasonPlayer or not vulnerable then return end
+  if p~=jasonPlayer then return end
   local e=entry(p) if not e or e.status~="alive" or t-lastAttack<1.8 then return end
   lastAttack=t
   local rr=root(p) if not rr then return end
@@ -125,7 +125,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   end
   if best then catchPlayer(best) end
  elseif action=="ready" then local e=entry(p) if e and e.status=="loading" and value==state.id and state.phase=="Partida" then spawnPlayer(p) end
- elseif action=="loadFailed" then local e=entry(p) if e and e.status=="loading" then state.entries[p.UserId]=nil sync(p) end
+ elseif action=="loadFailed" then if p==jasonPlayer then endTime=now() end local e=entry(p) if e and e.status=="loading" then state.entries[p.UserId]=nil sync(p) end
  elseif action=="mode" then
   local e=entry(p) if e and e.status=="alive" and (value=="walk" or value=="slow" or value=="run") then p:SetAttribute("MoveMode",value) sync(p) end
  elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
@@ -133,6 +133,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="voice" then
   local e=entry(p) local r=root(p) if brain and r and e and e.status=="alive" and type(value)=="number" and value==value and value>.015 and value<=1 then brain.noise(r.Position,config.Killers[killerName].hearing*.8) end
  elseif action=="leave" then
+  if p==jasonPlayer then endTime=now() end
   local e=entry(p) if e then e.status="eliminated" e.channel=nil end queued[p]=nil p:SetAttribute("Spectating",false) lobby(p) sync(p)
  elseif action=="spectateExit" then p:SetAttribute("Spectating",false) end
 end)
@@ -150,13 +151,7 @@ end
 Players.PlayerAdded:Connect(hook)
 for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
- if p==jasonPlayer then
-  jasonPlayer=nil
-  if npc and npc.Parent then
-   for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then pcall(function() d:SetNetworkOwner(nil) end) end end
-   brain=AI.start(npc,arena,config.Killers.Jason,{players=players,vulnerable=vulnerable,catch=catchPlayer})
-  end
- end
+ if p==jasonPlayer then jasonPlayer=nil endTime=now() end
  portalInside[p]=nil morphing[p]=nil
  state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil end)
 local elapsed=0
@@ -174,7 +169,7 @@ RunService.Heartbeat:Connect(function(dt)
    portalInside[p]=inside
   end
   if e then
-   if e.status=="loading" and t>e.loadDeadline then state.entries[p.UserId]=nil sync(p) net.Update:FireClient(p,"notice","Carregamento demorou. Tente entrar novamente.") end
+   if e.status=="loading" and t>e.loadDeadline then if p==jasonPlayer then endTime=t end state.entries[p.UserId]=nil sync(p) net.Update:FireClient(p,"notice","Carregamento demorou. Tente entrar novamente.") end
    if e.status=="downed" and t>=e.deadline then eliminate(p,e.cause) end
    if e.channel then
     local c=e.channel local tr=root(c.target) local te=entry(c.target)
@@ -289,6 +284,7 @@ task.spawn(function()
     net:SetAttribute("MaxPlayers",Rules.Capacity)
 
     local admitted=0
+    if jasonPlayer then join(jasonPlayer) if entry(jasonPlayer) then admitted=1 end end
     for _,p in ipairs(Players:GetPlayers()) do
      if admitted>=Rules.Capacity then break end
      if queued[p] and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then

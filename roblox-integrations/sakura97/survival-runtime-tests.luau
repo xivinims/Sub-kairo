@@ -60,7 +60,8 @@ local function resume(co,...)
  if coroutine.status(co)~="dead" then table.insert(scheduled,{co=co,at=clock+(tonumber(delay) or 0)}) end
 end
 local proxyTask={spawn=function(fn,...) local co=coroutine.create(fn) resume(co,...) return co end,wait=function(seconds) return coroutine.yield(seconds or .01) end}
-local aiContext
+proxyTask.delay=function(seconds,fn,...) local args={...} local co=coroutine.create(function() fn(table.unpack(args)) end) table.insert(scheduled,{co=co,at=clock+seconds}) end
+local aiContext local killerModel
 local stubAI={start=function(_,_,_,ctx) aiContext=ctx return {noise=function() noiseCalls+=1 end,stop=function() aiStopped+=1 end} end}
 local stubFactory={create=function(name)
  local model=Instance.new("Model")
@@ -68,7 +69,7 @@ local stubFactory={create=function(name)
  local root=Instance.new("Part")
  root.Name="HumanoidRootPart" root.Size=Vector3.new(2,2,1) root.Anchored=false root.Parent=model
  local hum=Instance.new("Humanoid") hum.RequiresNeck=false hum.Parent=model
- model.PrimaryPart=root
+ model.PrimaryPart=root killerModel=model
  return model
 end}
 local function run()
@@ -76,7 +77,8 @@ local function run()
  local TEST_NOW=function() return clock end
  local warn=function(message) table.insert(roundErrors,tostring(message)) end
  local require=function(module)
- if module==SSS.PursuerAI then return stubAI
+ if module==net.Config then local c=realRequire(module) local copy=table.clone(c) copy.PlayerJasonChance=0 return copy
+ elseif module==SSS.PursuerAI then return stubAI
  elseif module==SSS.KillerFactory then return stubFactory end
  return realRequire(module)
 end
@@ -115,7 +117,11 @@ local ok,result=xpcall(function()
   h.RequiresNeck=false h.MaxHealth=100 h.Health=100 h.BreakJointsOnDeath=false
   r.Anchored=true p.attrs.VoidActive=false
  end
- advance(31) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
+ for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
+ advance(1)
+ for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") end
+ send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote bypassed portal")
+ advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
   assert(status=="loading","Player "..i.." did not enter loading; status="..tostring(status).." notice="..tostring(messages[players[i]] and messages[players[i]].notice and messages[players[i]].notice[1]))
@@ -124,27 +130,31 @@ local ok,result=xpcall(function()
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local count=0 for _,p in ipairs(players) do if p:GetAttribute("InRound") then count+=1 end end assert(count==8,"Expected 8 active players, got "..count)
+ local function hit(p)
+  killerModel:PivotTo(p.Character:GetPivot()*CFrame.new(0,0,2))
+  aiContext.catch(p) advance(1)
+ end
  local p=players[1] send(p,"boost") assert(not p:GetAttribute("HasBoost"),"Boost item was not consumed")
  advance(1) assert(p.Character.Humanoid.WalkSpeed==27,"Boost speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  advance(5) assert(p.Character.Humanoid.WalkSpeed==16,"Boost did not expire")
  send(p,"mode","slow") assert(p.Character.Humanoid.WalkSpeed==8,"Slow speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
- assert(aiContext,"AI context missing after round start") aiContext.down(p) assert(p:GetAttribute("Downed"),"Player was not downed")
+ assert(aiContext,"AI context missing after round start") hit(p) assert(p:GetAttribute("Downed"),"Player was not downed")
  send(p,"kit") advance(3.2)
  assert(not p:GetAttribute("Downed") and not p:GetAttribute("HasMedkit"),"Self revive failed")
  local ally=players[2] local healer=players[3]
- aiContext.down(ally) assert(ally:GetAttribute("Downed"),"Ally was not downed")
+ hit(ally) assert(ally:GetAttribute("Downed"),"Ally was not downed")
  healer.Character:PivotTo(ally.Character:GetPivot()*CFrame.new(3,0,0))
  send(healer,"kit") advance(3.2)
  assert(not ally:GetAttribute("Downed") and not healer:GetAttribute("HasMedkit"),"Ally revive failed")
  assert(healer.folder.leaderstats.Pontos.Value>=10,"Revive points missing")
  assert(aiContext,"AI context missing before elimination")
  advance(1)
- aiContext.down(p) assert(p:GetAttribute("Downed"),"Player was not downed before bleedout elimination")
+ hit(p) assert(p:GetAttribute("Downed"),"Player was not downed before bleedout elimination")
  advance(26)
  assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Elimination flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
  SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
- send(players[9],"join") local request=assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot load") send(players[9],"ready",request[1]) assert(players[9]:GetAttribute("InRound"),"Ninth player did not enter freed slot")
+ players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1) local request=assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot load") send(players[9],"ready",request[1]) assert(players[9]:GetAttribute("InRound"),"Ninth player did not enter freed slot")
  local roundRemaining=math.max(0,(net:GetAttribute("EndsAt") or clock)-clock)
  advance(roundRemaining+1)
  assert(aiStopped==1,"Round AI did not clean up")
@@ -153,7 +163,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,selfAndAllyRevive=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,selfAndAllyRevive=true,doorOnlyAdmission=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end
@@ -161,3 +171,4 @@ for _,m in ipairs(workspace:GetChildren()) do if m.Name=="ActiveArena" or m:GetA
 host:Destroy() table.clear(scheduled)
 assert(ok,result)
 return result
+

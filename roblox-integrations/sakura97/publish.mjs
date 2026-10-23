@@ -143,6 +143,7 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const script=`
 local sourceVersion=game.PlaceVersion
 local function install()
@@ -162,6 +163,10 @@ assert(ui.MenuPrincipal.Logo.Image=="rbxassetid://136450401317962")
 local ser=game:GetService("SerializationService")
 result.mapBytes=buffer.len(ser:SerializeInstancesAsync({assets.Maps}))
 result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
+local function testController()
+${test}
+end
+result.controller=testController()
 result.sourceVersion=sourceVersion result.ok=true result.saved=false
 return result
 `;
