@@ -548,14 +548,14 @@ local friends=Instance.new("LocalScript") friends.Name="FriendPresence" friends.
 
 do
 -- Two complete asphalt loops. Use the ready-made road's surface, adapted to the island.
-local roadAsset=loadAsset(9709196115)
+local roadAsset=loadAsset(9709196113)
 local roadSource=nil
 for _,d in ipairs(roadAsset:GetDescendants()) do
  if d:IsA("BasePart") and (not roadSource or d.Size.X*d.Size.Z>roadSource.Size.X*roadSource.Size.Z) then roadSource=d end
 end
 assert(roadSource,"Ready-made asphalt road has no surface")
 local roads=Instance.new("Folder") roads.Name="IslandRoads" roads.Parent=workspace
-roads:SetAttribute("SourceAssetId",9709196115)
+roads:SetAttribute("SourceAssetId",9709196113)
 local center=treeGround.Position
 local width=8
 local groundRay=RaycastParams.new() groundRay.FilterType=Enum.RaycastFilterType.Include groundRay.FilterDescendantsInstances={island}
