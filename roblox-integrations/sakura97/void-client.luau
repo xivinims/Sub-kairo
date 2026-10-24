@@ -19,7 +19,7 @@ local function clean()
  if connection then connection:Disconnect() connection=nil end
  if track then track:Stop() track:Destroy() track=nil end
  if gui then gui:Destroy() gui=nil end
- if controls and not player:GetAttribute("InMenu") then controls:Enable() end
+ if controls and not player:GetAttribute("InMenu") and not player:GetAttribute("Spectating") and not player:GetAttribute("VoidActive") then controls:Enable() end
 end
 local function start(cause,mode)
  clean() local token=generation
