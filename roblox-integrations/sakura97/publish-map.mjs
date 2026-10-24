@@ -158,6 +158,7 @@ local result=install()
 do
 ${menu}
 end
+assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
 local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.MilitaryBase and assets.Maps.AlpineFortress)
 assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason)
@@ -232,7 +233,8 @@ const applied=first(await execute(script));
 console.log('JASON_VALIDATED_BUILD',JSON.stringify(applied));
 if(applied?.saved){
  const persisted=first(await execute(`
-  local assets=game.ServerStorage.SurvivalAssets
+  assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
+local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
   assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902 and assets.Maps.MilitaryBase:GetAttribute("SourceAssetId")==13967333450 and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==8050959400)
   assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)

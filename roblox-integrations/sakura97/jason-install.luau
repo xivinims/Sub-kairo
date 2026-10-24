@@ -24,9 +24,44 @@ local function sanitize(m,anchored)
  end
  for _,v in ipairs(m:GetDescendants()) do if v:IsA("SpawnLocation") then v.Enabled=false v.Transparency=1 v.CanCollide=false v.CanQuery=false end end
 end
--- Preserve the actual published lobby and all user edits. Never reload its asset.
-local lobby=assert(workspace:FindFirstChild("JediLibrary"),"Existing lobby is required; abort rather than overwrite")
-local door=assert(lobby:FindFirstChild("Door"),"Existing lobby door missing")
+-- User-requested exact replacement, performed once; later releases preserve this lobby.
+local lobby=workspace:FindFirstChild("JediLibrary")
+if not lobby or lobby:GetAttribute("SourceAssetId")~=1043225187 then
+ local asset=load(1043225187)
+ local replacement=assert(asset:FindFirstChild("Map [New]",true),"Requested Map-Lobby root missing")
+ replacement.Parent=nil asset:Destroy() sanitize(replacement,true)
+ local cf,size=replacement:GetBoundingBox()
+ replacement:PivotTo(replacement:GetPivot()+Vector3.new(-cf.X,40-(cf.Y-size.Y/2),-cf.Z))
+ replacement.Name="RequestedLobbyCandidate" replacement.Parent=workspace
+ local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={replacement} params.RespectCanCollide=true
+ local surfaces={}
+ for _,part in ipairs(replacement:GetDescendants()) do
+  if part:IsA("BasePart") and part.CanCollide and part.Transparency<.9 and part.CFrame.UpVector.Y>.98 and part.Size.X>=16 and part.Size.Z>=16 and part.Size.Y<=12 then table.insert(surfaces,part) end
+ end
+ table.sort(surfaces,function(x,y) return x.Size.X*x.Size.Z>y.Size.X*y.Size.Z end)
+ local ground
+ for _,part in ipairs(surfaces) do
+  for _,offset in ipairs({Vector3.zero,Vector3.new(6,0,0),Vector3.new(-6,0,0),Vector3.new(0,0,6)}) do
+   local point=part.CFrame:PointToWorldSpace(Vector3.new(0,part.Size.Y/2,0)+offset)
+   local hit=workspace:Raycast(point+Vector3.new(0,1,0),Vector3.new(0,-3,0),params)
+   if hit and hit.Normal.Y>.95 and not workspace:Raycast(hit.Position+Vector3.new(0,.2,0),Vector3.new(0,8,0),params) then
+    local clear=true
+    for _,direction in ipairs({Vector3.new(4,0,0),Vector3.new(-4,0,0),Vector3.new(0,0,4),Vector3.new(0,0,-4)}) do
+     if workspace:Raycast(hit.Position+Vector3.new(0,2.5,0),direction,params) then clear=false end
+    end
+    if clear then ground=hit.Position break end
+   end
+  end
+  if ground then break end
+ end
+ assert(ground,"Requested lobby has no verified clear spawn")
+ if lobby then lobby:Destroy() end
+ lobby=replacement lobby.Name="JediLibrary" lobby:SetAttribute("SourceAssetId",1043225187) lobby:SetAttribute("VerifiedSpawn",ground)
+ local existing=lobby:FindFirstChild("Door") if existing then existing.Name="OriginalLobbyDoor" end
+ local marker=Instance.new("Model",lobby) marker.Name="Door" marker:SetAttribute("OriginalCenter",ground+Vector3.new(12,8,0))
+ marker:PivotTo(CFrame.new(ground+Vector3.new(12,8,0)))
+end
+local door=assert(lobby:FindFirstChild("Door"))
 local original=door:GetAttribute("OriginalCenter")
 if not original then
  local cf=door:GetBoundingBox()
