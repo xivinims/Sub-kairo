@@ -213,19 +213,3 @@ workspace.ChildRemoved:Connect(function(child)
  if child.Name=="ActiveArena" then restoreReflectance() end
 end)
 refresh(true)
-
--- Player-selected music, if a future feature re-enables it, still obeys user audio settings.
-local songs=setmetatable({},{__mode="k"})
-local function soundAdded(sound)
- if sound:IsA("Sound") and sound.Name=="CantorMusic" then
-  songs[sound]=sound.Volume
-  if player:GetAttribute("MusicEnabled")==false then sound.Volume=0 end
- end
-end
-workspace.DescendantAdded:Connect(soundAdded)
-for _,v in ipairs(workspace:GetDescendants()) do soundAdded(v) end
-player:GetAttributeChangedSignal("MusicEnabled"):Connect(function()
- for sound,volume in pairs(songs) do
-  if sound.Parent then sound.Volume=player:GetAttribute("MusicEnabled")==false and 0 or volume else songs[sound]=nil end
- end
-end)
