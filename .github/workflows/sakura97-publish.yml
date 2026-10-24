@@ -1,4 +1,4 @@
-name: Sakura Island v97 Publish
+name: Suvivers Validate and Publish
 
 on:
   workflow_dispatch:
@@ -23,8 +23,9 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Install & publish Sakura Island v97
+      - name: Validate Suvivers and publish when enabled
         env:
+          SURVIVERS_DRY_RUN: '1'
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-integrations/sakura97/publish.mjs
 
@@ -35,3 +36,4 @@ jobs:
 # final v104 single-run trigger
 
 # trigger survivers menu-round head
+

@@ -106,8 +106,9 @@ local function sample(channel,t)
  if #channel==1 or t<=channel[1].time then return CFrame.identity:Lerp(channel[1].cf,channel[1].weight) end
  local last=channel[#channel]
  if t>=last.time then return CFrame.identity:Lerp(last.cf,last.weight) end
- local a,b=channel[1],last
- for i=1,#channel-1 do if channel[i+1].time>=t then a=channel[i] b=channel[i+1] break end end
+ local lo,hi=1,#channel
+ while hi-lo>1 do local mid=math.floor((lo+hi)/2) if channel[mid].time<=t then lo=mid else hi=mid end end
+ local a,b=channel[lo],channel[hi]
  local alpha=b.time>a.time and math.clamp((t-a.time)/(b.time-a.time),0,1) or 0
  alpha=easedAlpha(alpha,a)
  return CFrame.identity:Lerp(a.cf,a.weight):Lerp(CFrame.identity:Lerp(b.cf,b.weight),alpha)
@@ -179,11 +180,14 @@ local function locomotionName(d,kind,crouched,injured)
  return matchName(d.clips,{{"idle"},{"stand"}}) or next(d.clips)
 end
 
+local driven=setmetatable({},{__mode="k"})
 local function setDefaultAnimate(model,enabled)
+ if driven[model]==enabled then return end
+ driven[model]=enabled
  local a=model:FindFirstChild("Animate")
  if a and a:IsA("LocalScript") then
   if animateState[model]==nil then animateState[model]=not a.Disabled end
-  a.Disabled=not enabled
+  a.Disabled=not (enabled and animateState[model])
  end
  local hum=model:FindFirstChildOfClass("Humanoid")
  local animator=hum and hum:FindFirstChildOfClass("Animator")

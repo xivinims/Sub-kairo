@@ -137,7 +137,7 @@ function first(task){
 
 
 const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
-const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation'};
+const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder'};
 let install=read('jason-install');
 for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
@@ -157,7 +157,7 @@ do
 ${menu}
 end
 local assets=game.ServerStorage.SurvivalAssets
-assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap)
+assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.MilitaryBase and assets.Maps.AlpineFortress)
 assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
@@ -173,6 +173,7 @@ result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
 local function testController()
 ${test}
 end
+result.profiles=(function()\n${read('profile-tests')}\nend)()
 result.controller=testController()
 local function testClient()
 ${clientTest}
@@ -225,9 +226,9 @@ if(applied?.saved){
  const persisted=first(await execute(`
   local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
-  assert(#assets.Maps:GetChildren()==1 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902)
+  assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.MilitaryBase and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==79671648850902)
   assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
-  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==120)
+  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==121)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Intro"))
@@ -237,7 +238,7 @@ if(applied?.saved){
   assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
   assert(game.ServerScriptService.SurvivalServer.Source:find('LobbyJoinPortal',1,true))
-  return {ok=true,version=game.PlaceVersion,build=120,logo=true,singleMap=true,singleJason=true,lobbyPreserved=true}
+  return {ok=true,version=game.PlaceVersion,build=121,logo=true,mapCount=3,singleJason=true,lobbyPreserved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
@@ -250,3 +251,4 @@ if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
  `))));
  throw new Error('Jason build was not published; inspect diagnostic above');
 }
+

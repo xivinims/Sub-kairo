@@ -50,6 +50,7 @@ function proxyRS:WaitForChild(name) if name=="Survival" then return proxyNet end
 local proxyGame={}
 function proxyGame:GetService(name)
  if name=="Players" then return fakePlayers elseif name=="ReplicatedStorage" then return proxyRS elseif name=="RunService" then return {Heartbeat=heartbeat.Event} end
+ if name=="DataStoreService" then return {GetDataStore=function() return {GetAsync=function() return nil end,UpdateAsync=function(_,_,fn) return fn(nil) end} end} end
  return realGame:GetService(name)
 end
 local proxyWorkspace=setmetatable({GetServerTimeNow=function() return clock end},{__index=function(_,k)
@@ -166,4 +167,5 @@ for _,m in ipairs(workspace:GetChildren()) do if m.Name=="ActiveArena" or m:GetA
 host:Destroy() table.clear(scheduled)
 assert(ok,result)
 return result
+
 

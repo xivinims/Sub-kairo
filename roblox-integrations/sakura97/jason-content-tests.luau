@@ -34,6 +34,15 @@ assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magni
 assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
 assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
 assert(not workspace.StreamingEnabled)
+local mapReport={}
+for _,arena in ipairs(assets.Maps:GetChildren()) do
+ assert(arena:GetAttribute("PartCount")<=3015 and arena:GetAttribute("PartCount")>30,"Part budget")
+ assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
+ assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=60,"Separated spawns")
+ for _,obj in ipairs(arena:GetDescendants()) do assert(not obj:IsA("LuaSourceContainer"),"Imported script survived sanitization") end
+ table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths")})
+end
+assert(#mapReport==3,"Expected three arena templates")
 local flashlight=assert(assets:FindFirstChild("Items") and assets.Items:FindFirstChild("Flashlight"),"Flashlight template missing")
 assert(flashlight:IsA("Tool") and flashlight:GetAttribute("SourceAssetId")==4573262309,"Wrong flashlight asset")
 assert(flashlight:FindFirstChild("Handle"),"Flashlight handle missing")
@@ -108,4 +117,5 @@ assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAn
 assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
 assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
 assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
-return {ok=true,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+

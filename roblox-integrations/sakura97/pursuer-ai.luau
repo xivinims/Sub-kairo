@@ -20,6 +20,7 @@ function AI.start(model,map,spec,ctx)
  local computing=false
  local nextPath=0
  local pathGoal=nil
+ local routeEpoch=0 local recoveryUntil=0 local recoveryGoal=nil
  local patrolUntil=0
  local searchUntil=0
  local attackAt=0
@@ -32,6 +33,7 @@ function AI.start(model,map,spec,ctx)
  params.FilterType=Enum.RaycastFilterType.Exclude
  params.FilterDescendantsInstances={model}
  local pts=map.SafePoints:GetChildren()
+ table.sort(pts,function(a,b) return a.Name<b.Name end)
 
  local function targetRoot(p)
   return p and p.Character and p.Character:FindFirstChild("HumanoidRootPart")
@@ -51,6 +53,7 @@ function AI.start(model,map,spec,ctx)
  end
 
  local function clearPath()
+  routeEpoch+=1
   if blocked then blocked:Disconnect() blocked=nil end
   if path then path:Destroy() path=nil end
   waypoints={} wi=1 pathGoal=nil
@@ -58,9 +61,12 @@ function AI.start(model,map,spec,ctx)
 
  local function buildRoute(pos,urgent)
   local moved=not pathGoal or (pathGoal-pos).Magnitude>5
-  if computing or (not urgent and clock<nextPath and not moved) then return end
+  if computing or clock<nextPath then return end
+  if not moved and path and clock<nextPath+.35 then return end
   computing=true
-  nextPath=clock+(urgent and .22 or .38)
+  nextPath=clock+(urgent and .55 or .85)
+  local requestEpoch=routeEpoch
+  model:SetAttribute("PathRequests",(model:GetAttribute("PathRequests") or 0)+1)
   local origin=r.Position
   local requested=pos
   task.spawn(function()
@@ -72,7 +78,7 @@ function AI.start(model,map,spec,ctx)
     WaypointSpacing=3,
    })
    local ok=pcall(function() p:ComputeAsync(origin,requested) end)
-   if not alive then p:Destroy() computing=false return end
+   if not alive or directChasing or requestEpoch~=routeEpoch then p:Destroy() computing=false return end
    if ok and p.Status==Enum.PathStatus.Success then
     clearPath()
     path=p
@@ -84,8 +90,8 @@ function AI.start(model,map,spec,ctx)
     end)
    else
     p:Destroy()
-    waypoints={}
-    pathGoal=nil
+    clearPath()
+    nextPath=clock+1.25
    end
    computing=false
   end)
@@ -169,7 +175,7 @@ function AI.start(model,map,spec,ctx)
   else
    target=nil lastSeen=nil
    if not goal or clock>=patrolUntil or (r.Position-goal).Magnitude<4 then
-    goal=pts[math.random(#pts)].Value
+    goal=#pts>0 and pts[math.random(#pts)].Value or r.Position
     patrolUntil=clock+12
     nextPath=0
    end
@@ -181,7 +187,7 @@ function AI.start(model,map,spec,ctx)
   model:SetAttribute("OcclusionGrace",state=="Chase" and not targetVisible)
   h.WalkSpeed=state=="Chase" and spec.speed or state=="Patrol" and 11 or 15
 
-  if target and targetPr and clock>=attackAt and (targetPr.Position-r.Position).Magnitude<=spec.range then
+  if target and targetVisible and targetPr and clock>=attackAt and (targetPr.Position-r.Position).Magnitude<=spec.range then
    attackAt=clock+1.8
    ctx.catch(target)
   end
@@ -191,6 +197,7 @@ function AI.start(model,map,spec,ctx)
    return
   end
 
+  if clock<recoveryUntil and recoveryGoal then h:MoveTo(recoveryGoal) return end
   if state=="Chase" and targetVisible and targetPr then
    -- Never follow stale waypoints while the survivor is actually visible.
    if not directChasing then clearPath() directChasing=true end
@@ -226,7 +233,9 @@ function AI.start(model,map,spec,ctx)
    h.Jump=true
    -- Small recovery sidestep prevents getting pinned on doorframes/corners.
    local side=r.CFrame.RightVector*((math.random(0,1)==0) and -3.5 or 3.5)
-   h:MoveTo(r.Position+side+r.CFrame.LookVector*2)
+   recoveryGoal=r.Position+side+r.CFrame.LookVector*2
+   recoveryUntil=clock+.45
+   h:MoveTo(recoveryGoal)
    stuck=0
   end
  end)
