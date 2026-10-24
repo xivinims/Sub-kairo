@@ -1,6 +1,6 @@
 -- Exact animation playback for Jason and survivors.
 -- Survivor default = Forsaken Survivor Animations (127092032896760).
--- Survivors are R6. Crouching retargets the supplied R15 crouch set (134326820545987) onto the six R6 motors.
+-- Survivors are R6. Locomotion drives only the live walk/run/injured/downed states.
 local Run=game:GetService("RunService")
 local Players=game:GetService("Players")
 local Http=game:GetService("HttpService")
@@ -232,16 +232,12 @@ local function pursuerStateName(d,kind)
  return matchName(d.clips,{{"idle"},{"stand"},{"raging","pace","idle"}}) or next(d.clips)
 end
 
-local function resolveLocomotion(d,kind,crouched,injured)
- if crouched then
-  if kind=="jump" then return matchName(d.clips,{{"crouch","jump"},{"jump"}}) or matchName(d.clips,{{"crouch","walk"},{"walk"},{"idle"}}) end
-  if kind=="fall" then return matchName(d.clips,{{"crouch","fall"},{"fall"}}) or matchName(d.clips,{{"crouch","idle"},{"idle"}}) end
-  if kind=="move" then return matchName(d.clips,{{"crouch","walk"},{"crouch","move"},{"walk"},{"move"}}) or matchName(d.clips,{{"idle"}}) end
-  return matchName(d.clips,{{"crouch","idle"},{"idle"}}) or next(d.clips)
- end
+local function resolveLocomotion(d,kind,injured)
  if injured then
   if kind=="run" then return matchName(d.clips,{{"injured","run"}}) or matchName(d.clips,{{"injured","walk"}}) end
   if kind=="move" then return matchName(d.clips,{{"injured","walk"}}) or matchName(d.clips,{{"injured","run"}}) end
+  if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"injured","idle"},{"idle"}}) end
+  if kind=="fall" then return matchName(d.clips,{{"fall"},{"freefall"},{"air"}}) or matchName(d.clips,{{"injured","idle"},{"idle"}}) end
   return matchName(d.clips,{{"injured","idle"}}) or matchName(d.clips,{{"idle"}}) or next(d.clips)
  end
  if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"idle"}}) end
@@ -251,10 +247,10 @@ local function resolveLocomotion(d,kind,crouched,injured)
  return matchName(d.clips,{{"idle"},{"stand"}}) or next(d.clips)
 end
 
-local function locomotionName(d,kind,crouched,injured)
+local function locomotionName(d,kind,injured)
  d.locomotion=d.locomotion or {}
- local key=kind..tostring(crouched)..tostring(injured)
- if d.locomotion[key]==nil then d.locomotion[key]=resolveLocomotion(d,kind,crouched,injured) or false end
+ local key=kind..tostring(injured)
+ if d.locomotion[key]==nil then d.locomotion[key]=resolveLocomotion(d,kind,injured) or false end
  return d.locomotion[key] or nil
 end
 local driven=setmetatable({},{__mode="k"})
@@ -302,32 +298,24 @@ Run.PreSimulation:Connect(function(dt)
   end
  end
  for _,model in ipairs(workspace:GetChildren()) do
-  if model:IsA("Model") and (model:GetAttribute("ActivePursuer") or model:GetAttribute("CinematicPursuer")) and model.PrimaryPart then
+  if model:IsA("Model") and model:GetAttribute("ActivePursuer") and model.PrimaryPart then
    local folder=motionFolder(model)
    if folder then
     local d=prepare(model,folder)
-    if model:GetAttribute("CinematicPursuer") then
-     local introAt=model:GetAttribute("IntroAt") or workspace:GetServerTimeNow()
-     local runDuration=model:GetAttribute("IntroRunDuration") or 3.15
-     local elapsed=workspace:GetServerTimeNow()-introAt
-     local state=elapsed<runDuration and "Jason Run" or "Jason Intro"
-     if d then apply(d,state,dt,state=="Jason Run",state=="Jason Intro" and math.max(0,elapsed-runDuration) or nil) end
-    else
-     local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
-     local execution=model:GetAttribute("ExecutionAt") or -100
-     local attack=model:GetAttribute("AttackAt") or -100
-     local execSince=workspace:GetServerTimeNow()-execution
-     local since=workspace:GetServerTimeNow()-attack
-     local executing=execSince>=0 and execSince<1.65
-     local attacking=not executing and since>=0 and since<.75
-     local state=executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle")
-     local scale=1
-     if not executing and not attacking then
-      if speed>15 then scale=math.clamp(speed/18,.82,1.42)
-      elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
-     end
-     if d then apply(d,state,dt*scale,not executing and not attacking,executing and execSince or (attacking and since or nil)) end
+    local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+    local execution=model:GetAttribute("ExecutionAt") or -100
+    local attack=model:GetAttribute("AttackAt") or -100
+    local execSince=workspace:GetServerTimeNow()-execution
+    local since=workspace:GetServerTimeNow()-attack
+    local executing=execSince>=0 and execSince<1.65
+    local attacking=not executing and since>=0 and since<.75
+    local state=executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle")
+    local scale=1
+    if not executing and not attacking then
+     if speed>15 then scale=math.clamp(speed/18,.82,1.42)
+     elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
     end
+    if d then apply(d,state,dt*scale,not executing and not attacking,executing and execSince or (attacking and since or nil)) end
    end
   end
  end
@@ -347,9 +335,8 @@ Run.PreSimulation:Connect(function(dt)
     local joint=downedPoses[model]
     if joint and joint.Parent then joint.Transform=CFrame.new(0,-.92+math.sin(os.clock()*1.8)*.018,.08)*CFrame.Angles(math.rad(88),0,math.rad(4)+math.sin(os.clock()*1.3)*.01) end
    elseif inRound and not isJason then
-    local crouched=p:GetAttribute("MoveMode")=="slow"
     local injured=p:GetAttribute("Injured")==true
-    local folder=crouched and net.CrouchClips or net.SurvivorClips
+    local folder=net.SurvivorClips
     if activeFolder[model]~=folder then
      resetModel(model) activeFolder[model]=folder
     end
@@ -362,9 +349,9 @@ Run.PreSimulation:Connect(function(dt)
      local kind
      if hs==Enum.HumanoidStateType.Jumping then kind="jump"
      elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
-     elseif speed>1 then kind=(not crouched and not injured and p:GetAttribute("MoveMode")=="run") and "run" or "move"
+     elseif speed>1 then kind=(not injured and p:GetAttribute("MoveMode")=="run") and "run" or "move"
      else kind="idle" end
-     local state=locomotionName(d,kind,crouched,injured)
+     local state=locomotionName(d,kind,injured)
      local supported=canDrive(d,state)
      if p==Players.LocalPlayer and supported then setDefaultAnimate(model,false) end
      if supported then
