@@ -1,5 +1,11 @@
 return {
- Maps={{name="HorrorMap",id=79671648850902},{name="MilitaryBase",id=13967333450},{name="AlpineFortress",id=8050959400}},
+ Maps={
+  {name="DoomspireBrickbattle",id=109440846094241},
+  {name="JuggernautFightArena",id=137884561019081},
+  {name="PirateBayIsland",id=127398591748883},
+  {name="NaturalDisasterSurvival",id=92220535332787},
+  {name="RocketArena",id=112232657511704},
+ },
  Killers={
  JohnDoe={id=103232099547025,speed=20,hearing=62,vision=72,range=5,tip="Use obstáculos para quebrar a visão."},
  Chucky={id=95580261594507,speed=21,hearing=58,vision=62,range=4,tip="Mantenha distância e evite cantos fechados."},
