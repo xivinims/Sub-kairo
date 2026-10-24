@@ -204,7 +204,13 @@ for _,spec in ipairs({
  for _,v in ipairs(model:GetDescendants()) do
   if v:IsA("KeyframeSequence") or (v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")) then v:Destroy() end
  end
- local h=assert(model:FindFirstChildOfClass("Humanoid")) local root=assert(model:FindFirstChild("HumanoidRootPart"))
+ local h=assert(model:FindFirstChildOfClass("Humanoid"),spec.name.." missing Humanoid")
+ local root=model:FindFirstChild("HumanoidRootPart")
+ if not root then
+  local torso=assert(model:FindFirstChild("Torso") or model:FindFirstChild("LowerTorso"),spec.name.." missing torso")
+  root=Instance.new("Part") root.Name="HumanoidRootPart" root.Size=Vector3.new(2,2,1) root.Transparency=1 root.CanCollide=false root.CFrame=torso.CFrame root.Parent=model
+  local motor=Instance.new("Motor6D",root) motor.Name="RootJoint" motor.Part0=root motor.Part1=torso
+ end
  model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
  h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
