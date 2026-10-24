@@ -50,29 +50,29 @@ dof.Enabled=false
 
 local themes={
  ["Doomspire Brickbattle"]={
-  ambient=Color3.fromRGB(67,73,82),outdoor=Color3.fromRGB(105,112,124),air=Color3.fromRGB(158,175,192),
-  decay=Color3.fromRGB(76,84,94),density=.13,haze=.42,exposure=.05,brightness=1.9,clock=8.25,
-  tint=Color3.fromRGB(224,231,239),contrast=.08,saturation=-.10,bloom=.10,rays=.02,
+  ambient=Color3.fromRGB(64,68,78),outdoor=Color3.fromRGB(105,111,126),air=Color3.fromRGB(164,177,194),
+  decay=Color3.fromRGB(74,79,91),density=.13,haze=.42,exposure=.08,brightness=1.9,clock=8.25,
+  tint=Color3.fromRGB(226,231,239),contrast=.08,saturation=-.08,bloom=.12,rays=.018,
  },
  ["Juggernaut Fight Arena"]={
-  ambient=Color3.fromRGB(62,59,60),outdoor=Color3.fromRGB(94,90,91),air=Color3.fromRGB(150,144,144),
-  decay=Color3.fromRGB(73,68,68),density=.17,haze=.58,exposure=.02,brightness=1.8,clock=8.25,
-  tint=Color3.fromRGB(230,220,218),contrast=.13,saturation=-.16,bloom=.11,rays=.012,
+  ambient=Color3.fromRGB(60,58,63),outdoor=Color3.fromRGB(98,92,96),air=Color3.fromRGB(164,153,157),
+  decay=Color3.fromRGB(76,68,71),density=.17,haze=.62,exposure=.05,brightness=1.82,clock=8.25,
+  tint=Color3.fromRGB(232,222,224),contrast=.13,saturation=-.16,bloom=.1,rays=.01,
  },
  ["Pirate Bay Island Cove"]={
-  ambient=Color3.fromRGB(64,75,79),outdoor=Color3.fromRGB(100,122,127),air=Color3.fromRGB(155,184,190),
-  decay=Color3.fromRGB(72,88,91),density=.16,haze=.7,exposure=.08,brightness=1.95,clock=8.25,
-  tint=Color3.fromRGB(217,233,232),contrast=.09,saturation=-.08,bloom=.12,rays=.025,
+  ambient=Color3.fromRGB(59,72,79),outdoor=Color3.fromRGB(103,126,136),air=Color3.fromRGB(168,195,203),
+  decay=Color3.fromRGB(67,85,91),density=.12,haze=.45,exposure=.1,brightness=1.92,clock=8.25,
+  tint=Color3.fromRGB(220,235,236),contrast=.08,saturation=-.06,bloom=.13,rays=.025,
  },
  ["Natural Disaster Survival"]={
-  ambient=Color3.fromRGB(72,72,75),outdoor=Color3.fromRGB(113,112,113),air=Color3.fromRGB(166,166,171),
-  decay=Color3.fromRGB(81,81,84),density=.12,haze=.38,exposure=.06,brightness=1.95,clock=8.25,
-  tint=Color3.fromRGB(232,232,235),contrast=.07,saturation=-.12,bloom=.08,rays=.018,
+  ambient=Color3.fromRGB(67,69,72),outdoor=Color3.fromRGB(111,116,121),air=Color3.fromRGB(174,182,189),
+  decay=Color3.fromRGB(82,87,91),density=.14,haze=.55,exposure=.08,brightness=1.88,clock=8.25,
+  tint=Color3.fromRGB(231,234,235),contrast=.1,saturation=-.1,bloom=.1,rays=.016,
  },
  ["RocketArena"]={
-  ambient=Color3.fromRGB(66,69,78),outdoor=Color3.fromRGB(101,108,123),air=Color3.fromRGB(154,169,188),
-  decay=Color3.fromRGB(74,81,94),density=.14,haze=.5,exposure=.04,brightness=1.9,clock=8.25,
-  tint=Color3.fromRGB(219,228,240),contrast=.11,saturation=-.13,bloom=.10,rays=.018,
+  ambient=Color3.fromRGB(63,65,72),outdoor=Color3.fromRGB(104,109,122),air=Color3.fromRGB(166,178,195),
+  decay=Color3.fromRGB(74,79,91),density=.12,haze=.4,exposure=.09,brightness=1.92,clock=8.25,
+  tint=Color3.fromRGB(227,232,240),contrast=.09,saturation=-.08,bloom=.12,rays=.02,
  },
 }
 
