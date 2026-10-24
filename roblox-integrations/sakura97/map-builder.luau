@@ -147,13 +147,13 @@ function Builder.build(load,sanitize,destination)
   for _,p in ipairs(selected) do
    local d=(p-start).Magnitude
    local ground=p-Vector3.new(0,3,0)
-   if d>distance and d>=minimumKillerDistance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) then far=p distance=d end
+   if d>distance and d>=minimumKillerDistance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and route(start,p) then far=p distance=d end
   end
   if not far then
    for _,p in ipairs(selected) do
     local d=(p-start).Magnitude
     local ground=p-Vector3.new(0,3,0)
-    if d>distance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) then far=p distance=d end
+    if d>distance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and route(start,p) then far=p distance=d end
    end
   end
   assert(far and distance>=math.min(30,minimumKillerDistance) and killerClearance>=10,"No safe pursuer spawn away from walls in "..spec.name)
@@ -198,7 +198,9 @@ function Builder.build(load,sanitize,destination)
    local light=Instance.new("PointLight",lamp) light.Color=lamp.Color light.Brightness=.7 light.Range=17 light.Shadows=false
   end
   local count=0 for _,v in ipairs(map:GetDescendants()) do if v:IsA("BasePart") then count+=1 end end
+  assert(route(start,far),"Pursuer spawn is not path-connected to survivor region in "..spec.name)
   map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance) map:SetAttribute("KillerSpawnDistance",distance)
+  map:SetAttribute("KillerSpawnPathValidated",true)
   map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("DisplayName",spec.label)
   map:SetAttribute("FloorY",lowest) map:SetAttribute("VoidY",lowest-35) map:SetAttribute("PartCount",count)
   map:SetAttribute("Footprint",Vector3.new(size.X,0,size.Z)) map:SetAttribute("ValidatedPaths",#selected-1)
