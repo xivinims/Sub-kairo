@@ -65,11 +65,22 @@ local ok,err=xpcall(function()
  local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
  assert(not rows:FindFirstChild("MusicVolume") and not rows:FindFirstChild("BoomboxVolume") and not rows:FindFirstChild("MusicEnabled"),"Audio settings still expose removed player music")
  assert(rows.EffectsVolume.Slider and rows.MenuSounds.Check and rows.FriendAlerts.Check,"Current audio settings missing")
- api.settings.select("visual") assert(rows.LowGraphics.Check and rows.MapShadows.Check and rows.Reflections.Check,"Visual toggles missing")
+ api.settings.select("visual")
+ assert(rows.CameraFOV.Slider and rows.VisualSaturation.Slider and rows.VisualContrast.Slider and rows.VisualExposure.Slider and rows.VisualTime.Slider and rows.MapShadows.Check,"Reference visual settings missing")
+ assert(p:GetAttribute("CameraFOV")==48,"Camera FOV default must match reference")
+ assert(p:GetAttribute("VisualSaturation")==-.65,"Saturation default must match reference")
+ assert(p:GetAttribute("VisualContrast")==0,"Contrast default must match reference")
+ assert(p:GetAttribute("VisualExposure")==1.5,"Exposure default must match reference")
+ assert(p:GetAttribute("VisualTime")==8.25,"Time default must be 08:15")
+ assert(p:GetAttribute("MapShadows")==true,"Shadows must default on")
+ api.settings.setValue("VisualSaturation",-.62) assert(p:GetAttribute("VisualSaturation")==-.6,"Saturation step rounding failed")
+ api.settings.setValue("VisualContrast",.17) assert(p:GetAttribute("VisualContrast")==.15,"Contrast step rounding failed")
+ api.settings.setValue("VisualExposure",1.46) assert(p:GetAttribute("VisualExposure")==1.5,"Exposure step rounding failed")
+ api.settings.setValue("VisualTime",8.22) assert(p:GetAttribute("VisualTime")==8.25,"Time quarter-hour rounding failed")
+ api.settings.setValue("CameraFOV",500) assert(p:GetAttribute("CameraFOV")==100,"FOV bounds failed")
  api.settings.setValue("LowGraphics",true) task.wait()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
- api.settings.select("gameplay") assert(rows.CameraFOV.Slider and rows.ControlScale.Slider,"Gameplay settings missing")
- api.settings.setValue("CameraFOV",500) assert(p:GetAttribute("CameraFOV")==90,"FOV bounds failed")
+ api.settings.select("gameplay") assert(rows.ControlScale.Slider and not rows:FindFirstChild("CameraFOV"),"Camera FOV must live only in visual settings")
  assert(ui.Sonidos.PlayClick.SoundId=="rbxassetid://87437544236708","Requested play click sound missing")
  assert(ui.Sonidos.LightFlicker.SoundId=="rbxassetid://137413271824429","Requested light flicker sound missing")
  api.close() assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
@@ -83,4 +94,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,leftReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
+return {ok=true,leftReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,referenceVisualControls=true,decimalVisualSliders=true,time0815=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
