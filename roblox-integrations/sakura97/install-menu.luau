@@ -136,18 +136,18 @@ config:SetAttribute("MenuOrigin",Vector3.new(10000,2500,10000))
 config:SetAttribute("MainCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("SettingsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("CreditsCamera",CFrame.new(10000,2505,10010))
-config:SetAttribute("Version",121)
+config:SetAttribute("Version",123)
 config:SetAttribute("GameName","Suvivers [ALFA]")
 config:SetAttribute("MenuSceneAssetId",13327565335)
 config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
-local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("LogoOnlyLoading",true) loader.Parent=first
+local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("AnimatedAvatarLoading",true) loader:SetAttribute("GoodLuckBackdrop",true) loader.Parent=first
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
-runtime:SetAttribute("MenuVersion",121)
+runtime:SetAttribute("MenuVersion",123)
 runtime:SetAttribute("GameName","Suvivers [ALFA]")
 runtime:SetAttribute("SurviversLogoAssetId",logoId or 0)
 
