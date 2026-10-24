@@ -42,7 +42,9 @@ local ok,err=xpcall(function()
  assert(not ui.Escenarios:FindFirstChild("MenuShop"),"Shop modal returned")
  assert(not ui.Escenarios:FindFirstChild("MenuInventory"),"Inventory modal returned")
  assert(not ui:FindFirstChild("ReturnToMenu"),"Obsolete return-to-menu object returned")
- assert(ui.MenuPrincipal.Play.Position.X.Scale==.5 and ui.MenuPrincipal.Ajustes.Position.X.Scale==.5 and ui.MenuPrincipal.Updates.Position.X.Scale==.5,"Main navigation is not centered vertically")
+ assert(ui.MenuPrincipal.Play.Position.X.Scale==0 and ui.MenuPrincipal.Ajustes.Position.X.Scale==0 and ui.MenuPrincipal.Updates.Position.X.Scale==0,"Main navigation did not move to the left")
+ assert(ui.MenuPrincipal.Play.Position.X.Offset>0 and ui.MenuPrincipal.Play.TextXAlignment==Enum.TextXAlignment.Left,"Left navigation alignment is incorrect")
+ assert(not ui.MenuPrincipal.Play.UIStroke.Enabled and not ui.MenuPrincipal.Ajustes.UIStroke.Enabled,"Menu buttons must stay clean/text-only")
  assert(ui.MenuPrincipal.Play.BackgroundTransparency==1 and ui.MenuPrincipal.Play.UIStroke.Thickness<=1.5,"Main buttons are not clean reference-style outlines")
  assert(ui:GetAttribute("MenuIntroAnimated")==true,"Logo-to-top intro animation was not armed")
  local closeAvatar=workspace:FindFirstChild("LocalMenuAvatar")
@@ -81,4 +83,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
+return {ok=true,leftReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
