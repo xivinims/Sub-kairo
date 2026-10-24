@@ -19,7 +19,7 @@ local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local Killer
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
 local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local roundJoinUntil=0
-local jasonPlayer=nil local morphing={} local rigRetries={} local lastAttack=0
+local jasonPlayer=nil local morphing={} local rigRetries={} local hookedCharacters=setmetatable({},{__mode="k"}) local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
@@ -453,8 +453,8 @@ local function hook(p)
  local onCharacter
  onCharacter=function(char)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
-  if char:GetAttribute("SurvivalCharacterHooked") then return end
-  char:SetAttribute("SurvivalCharacterHooked",true)
+  if hookedCharacters[char] then return end
+  hookedCharacters[char]=true
   local h=char:WaitForChild("Humanoid",10)
   if h and h.RigType~=Enum.HumanoidRigType.R6 and p~=jasonPlayer then
    morphing[p]=true
