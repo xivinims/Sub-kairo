@@ -764,7 +764,7 @@ RunService.RenderStepped:Connect(function(dt)
   if #targets>0 then
    if watchedId then for i,p in ipairs(targets) do if p.UserId==watchedId then index=i break end end end
    index=((index-1)%#targets)+1 local p=targets[index] watchedId=p.UserId
-   camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70
+   camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=player:GetAttribute("CameraFOV") or 48
    spectatorName.Text=p.DisplayName watching=true
   else
    watchedId=nil
@@ -773,7 +773,7 @@ RunService.RenderStepped:Connect(function(dt)
    if not watching then camera.CameraType=Enum.CameraType.Scriptable end
    watching=true
   end
- elseif watching and not hidden and camera then watching=false watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70 end
+ elseif watching and not hidden and camera then watching=false watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=player:GetAttribute("CameraFOV") or 48 end
  highlight.Enabled=false
  if inRound and not hidden then
   for _,m in ipairs(workspace:GetChildren()) do if m:GetAttribute("ActivePursuer") and (m:GetAttribute("TargetUserId") or 0)>0 then
