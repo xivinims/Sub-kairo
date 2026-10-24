@@ -6,9 +6,6 @@ local Settings={}
 local initialized=false
 local categories={
  {key="audio",label="ÁUDIO",color=Color3.fromRGB(99,145,212),title="AJUSTES DE ÁUDIO",rows={
-  {section="MÚSICAS DOS JOGADORES"},
-  {key="BoomboxVolume",label="Músicas dos jogadores",description="Volume das músicas tocadas por ID",min=0,max=100,default=65,suffix="%"},
-  {key="MusicEnabled",label="Permitir músicas",description="Liga ou silencia músicas tocadas pelos jogadores",default=true},
   {section="SONS"},{key="EffectsVolume",label="Efeitos e interface",description="Cliques, avisos e regeneração",min=0,max=100,default=80,suffix="%"},
   {key="MenuSounds",label="Sons dos botões",description="Resposta sonora ao tocar",default=true},
   {key="FriendAlerts",label="Avisos de amizade",description="Som quando um amigo entra",default=true},
@@ -46,21 +43,14 @@ function Settings.initialize(player)
   if row.key and player:GetAttribute(row.key)==nil then player:SetAttribute(row.key,row.default) end
  end end
  local groups={}
- for _,name in ipairs({"Music","Boombox","Effects"}) do
-  local g=Instance.new("SoundGroup") g.Name="Suvivers"..name g.Parent=SoundService groups[name]=g
- end
+ local effects=Instance.new("SoundGroup") effects.Name="SuviversEffects" effects.Parent=SoundService groups.Effects=effects
  local function applyAudio()
-  local enabled=player:GetAttribute("MusicEnabled")~=false
-  groups.Music.Volume=0
-  groups.Boombox.Volume=enabled and (player:GetAttribute("BoomboxVolume") or 65)/100 or 0
   groups.Effects.Volume=(player:GetAttribute("EffectsVolume") or 80)/100
  end
- for _,key in ipairs({"MusicEnabled","BoomboxVolume","EffectsVolume"}) do player:GetAttributeChangedSignal(key):Connect(applyAudio) end
+ player:GetAttributeChangedSignal("EffectsVolume"):Connect(applyAudio)
  local function sound(sound)
   if not sound:IsA("Sound") then return end
-  if sound.Name=="CantorMusic" then sound.SoundGroup=groups.Boombox
-  elseif sound.Name=="LocalJasonTheme" or sound.Name=="VoidMusic" or sound.Name=="JasonTheme" then sound.SoundGroup=groups.Music
-  elseif sound.Name=="MenuClick" or sound.Name=="Click" or sound.Name=="PlayClick" or sound.Name=="LightFlicker" or sound.Name=="MapLoadGlitch" or sound.Name=="FriendJoined" or sound.Name=="Regenerate" or sound.Name=="RegenerationCue" then sound.SoundGroup=groups.Effects end
+  if sound.Name=="MenuClick" or sound.Name=="Click" or sound.Name=="PlayClick" or sound.Name=="LightFlicker" or sound.Name=="MapLoadGlitch" or sound.Name=="FriendJoined" or sound.Name=="Regenerate" or sound.Name=="RegenerationCue" then sound.SoundGroup=groups.Effects end
  end
  for _,root in ipairs({SoundService,workspace,player:WaitForChild("PlayerGui")}) do
   root.DescendantAdded:Connect(sound) for _,s in ipairs(root:GetDescendants()) do sound(s) end
