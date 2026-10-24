@@ -104,10 +104,16 @@ assert(crouchCompatibility["Crouch Idle"]>=6 and crouchCompatibility["Crouch Wal
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6" and game.ReplicatedStorage.Survival:GetAttribute("SurvivorRig")=="R6","R6 survivor contract missing")
 local islandSource=assert(game.ServerScriptService:FindFirstChild("IslandServer"),"Island server missing").Source
 local voidSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("VoidSequence"),"Void client missing").Source
+local survivalServerSource=assert(game.ServerScriptService:FindFirstChild("SurvivalServer"),"Survival server missing").Source
+local survivalClientSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SurvivalClient"),"Survival client missing").Source
 assert(not islandSource:find('begin(player,"void")',1,true),"Lobby void still triggers death presentation")
 assert(islandSource:find('RoundStatus")~="eliminated"',1,true) or islandSource:find('RoundStatus")~=',1,true),"Server death presentation is not gated by elimination status")
 assert(voidSource:find('local realDeath=mode=="spectate"',1,true),"Client death screen lacks real-death guard")
 assert(voidSource:find('player:GetAttribute("InMenu")~=true',1,true),"Client death screen is not blocked in menu")
+assert(survivalServerSource:find("safeRoundSpawnCF",1,true) and survivalServerSource:find("spawnGraceUntil",1,true),"Round spawn recovery guard missing")
+assert(survivalServerSource:find("lastVictimUserId=lastKilledUserId",1,true),"Exact final victim is not sent to result scene")
+assert(not survivalClientSource:find('Name="MusicButton"',1,true),"Gameplay music icon returned")
+assert(survivalClientSource:find('PresentationState","Execution"',1,true),"Killer result does not start with execution animation")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
@@ -129,5 +135,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 
