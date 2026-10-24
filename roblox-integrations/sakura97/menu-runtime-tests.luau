@@ -43,6 +43,12 @@ local ok,err=xpcall(function()
  local closeAvatar=workspace:FindFirstChild("LocalMenuAvatar")
  assert(closeAvatar and closeAvatar:GetAttribute("ClosePortrait")==true,"Menu avatar is not a close portrait")
  assert(ui:GetAttribute("HorrorMenuEffect")==true,"Menu light/avatar horror beat missing")
+ task.wait(1.55)
+ local horrorJason=workspace:FindFirstChild("LocalMenuJason")
+ assert(horrorJason and horrorJason:GetAttribute("MenuHorrorJason")==true,"Jason was not revealed after menu flicker")
+ assert(ui:GetAttribute("HorrorJasonReveal")==true and ui:GetAttribute("MenuJasonVisible")==true,"Jason reveal state missing")
+ assert(closeAvatar:GetAttribute("HorrorVisible")==false,"Player avatar did not disappear before Jason reveal")
+ assert(game.Lighting:FindFirstChild("SuviversMenuHorrorDark"),"Menu background did not darken during horror beat")
  assert(ui.MenuPrincipal.Profile.XPBar.Value.Text:find("NÍVEL 2",1,true),"Level header missing")
  assert(ui.MenuPrincipal.Play.Size.X.Offset>=168 and ui.MenuPrincipal.Play.Size.Y.Offset>=28,"Centered phone menu target too small")
  assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Shop.Position.Y.Scale and ui.MenuPrincipal.Shop.Position.Y.Scale<ui.MenuPrincipal.Inventory.Position.Y.Scale,"Main menu is not a vertical stack")
@@ -68,4 +74,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
