@@ -180,7 +180,7 @@ for _,killer in ipairs(assets.Killers:GetChildren()) do
  result.killerBytes[killer.Name]=ok and buffer.len(b) or -1
 end
 local function testController()
-${test}
+${roleTest}
 end
 result.profiles=(function()\n${read('profile-tests')}\nend)()
 result.controller=testController()

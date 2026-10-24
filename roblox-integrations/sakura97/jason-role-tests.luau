@@ -123,6 +123,11 @@ local ok,result=xpcall(function()
  advance(1)
  for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Automatic lobby admission did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
  send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote join bypassed AFK admission")
+ for i=1,8 do send(players[i],"chooseKiller","Jeff") end
+ local mapName=game.ServerStorage.SurvivalAssets.Maps:GetChildren()[1].Name
+ send(players[1],"voteMap",mapName)
+ send(players[1],"voteMap","invalid-map")
+ assert(players[1]:GetAttribute("MapVote")==mapName,"Invalid map overwrote vote")
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
@@ -132,6 +137,8 @@ local ok,result=xpcall(function()
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local killer=nil local killers=0
  for _,p in ipairs(players) do if p:GetAttribute("IsJason") then killer=p killers+=1 end end
+ assert(net:GetAttribute("Killer")=="Jeff","Chosen killer was ignored")
+ assert(workspace.ActiveArena:GetAttribute("DisplayName")==game.ServerStorage.SurvivalAssets.Maps[mapName]:GetAttribute("DisplayName"),"Winning map vote ignored")
  assert(killers==1 and killer,"Exactly one player must become Jason")
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
  assert(not (messages[killer] and messages[killer].jasonIntro),"Removed killer intro cinematic was sent")
