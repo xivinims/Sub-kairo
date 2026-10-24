@@ -188,7 +188,10 @@ local function start(cause,mode)
 end
 local finishing=false
 event.OnClientEvent:Connect(function(action,cause,mode)
- if action=="start" then finishing=false start(cause,mode)
+ if action=="start" then
+  local realDeath=mode=="spectate" and player:GetAttribute("RoundStatus")=="eliminated" and player:GetAttribute("InMenu")~=true
+  if not realDeath then clean() finishing=false return end
+  finishing=false start(cause,mode)
  elseif action=="finish" and not finishing then
   finishing=true local token=generation
   if gui then
@@ -208,7 +211,10 @@ player:GetAttributeChangedSignal("Spectating"):Connect(function()
  if player:GetAttribute("Spectating") then clean() finishing=false end
 end)
 player:GetAttributeChangedSignal("InRound"):Connect(function()
- if player:GetAttribute("InRound")~=true then clean() finishing=false end
+ if player:GetAttribute("InRound")~=true and player:GetAttribute("RoundStatus")~="eliminated" then clean() finishing=false end
+end)
+player:GetAttributeChangedSignal("InMenu"):Connect(function()
+ if player:GetAttribute("InMenu")==true then clean() finishing=false end
 end)
 task.spawn(function()
  local ps=player:WaitForChild("PlayerScripts",10) local pm=ps and ps:WaitForChild("PlayerModule",10)
