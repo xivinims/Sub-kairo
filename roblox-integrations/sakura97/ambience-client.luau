@@ -69,6 +69,7 @@ local themes={
 local lightTween,airTween,gradeTween
 local lastKey=nil
 local arenaReflectance=setmetatable({},{__mode="k"})
+local arenaLights=setmetatable({},{__mode="k"})
 
 local function active()
  return (player:GetAttribute("InRound") or player:GetAttribute("Spectating"))
@@ -79,31 +80,46 @@ local function reflectionEnabled()
  return player:GetAttribute("LowGraphics")~=true and player:GetAttribute("Reflections")~=false
 end
 
-local function restoreReflectance()
+local function restoreArenaEnhancements()
  for part,value in pairs(arenaReflectance) do
   if part.Parent then part.Reflectance=value end
   arenaReflectance[part]=nil
  end
+ for light,state in pairs(arenaLights) do
+  if light.Parent then
+   light.Shadows=state.shadows
+   light.Brightness=state.brightness
+  end
+  arenaLights[light]=nil
+ end
 end
 
 local function enhanceArena(model)
- restoreReflectance()
- if not model or not reflectionEnabled() then return end
- local count=0
- for _,part in ipairs(model:GetDescendants()) do
-  if part:IsA("BasePart") and part.Transparency<.96 and count<340 then
+ restoreArenaEnhancements()
+ if not model then return end
+ local low=player:GetAttribute("LowGraphics")==true
+ local reflect=reflectionEnabled()
+ local shadowLights=0
+ local reflectedParts=0
+ for _,obj in ipairs(model:GetDescendants()) do
+  if obj:IsA("Light") and obj.Enabled and shadowLights<10 then
+   arenaLights[obj]={shadows=obj.Shadows,brightness=obj.Brightness}
+   obj.Shadows=not low and player:GetAttribute("MapShadows")==true
+   obj.Brightness=math.min(1.75,obj.Brightness*(low and 1 or 1.08))
+   shadowLights+=1
+  elseif reflect and obj:IsA("BasePart") and obj.Transparency<.96 and reflectedParts<340 then
    local target=nil
-   if part.Material==Enum.Material.Metal or part.Material==Enum.Material.DiamondPlate then
+   if obj.Material==Enum.Material.Metal or obj.Material==Enum.Material.DiamondPlate then
     target=.13
-   elseif part.Material==Enum.Material.Glass then
+   elseif obj.Material==Enum.Material.Glass then
     target=.09
-   elseif part.Material==Enum.Material.SmoothPlastic and part.Size.X*part.Size.Z>=36 and part.CFrame.UpVector.Y>.9 then
+   elseif obj.Material==Enum.Material.SmoothPlastic and obj.Size.X*obj.Size.Z>=36 and obj.CFrame.UpVector.Y>.9 then
     target=.035
    end
-   if target and part.Reflectance<target then
-    arenaReflectance[part]=part.Reflectance
-    part.Reflectance=target
-    count+=1
+   if target and obj.Reflectance<target then
+    arenaReflectance[obj]=obj.Reflectance
+    obj.Reflectance=target
+    reflectedParts+=1
    end
   end
  end
@@ -198,7 +214,7 @@ local function refresh(force)
   }) lightTween:Play()
   airTween=TweenService:Create(atmosphere,TweenInfo.new(1),originalAir) airTween:Play()
   grade.Enabled=false bloom.Enabled=false rays.Enabled=false dof.Enabled=false
-  applyWater(false) restoreReflectance()
+  applyWater(false) restoreArenaEnhancements()
  end
 end
 
@@ -210,6 +226,6 @@ workspace.ChildAdded:Connect(function(child)
  if child.Name=="ActiveArena" then task.defer(function() refresh(true) end) end
 end)
 workspace.ChildRemoved:Connect(function(child)
- if child.Name=="ActiveArena" then restoreReflectance() end
+ if child.Name=="ActiveArena" then restoreArenaEnhancements() end
 end)
 refresh(true)
