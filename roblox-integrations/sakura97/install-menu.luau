@@ -61,11 +61,9 @@ gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(231,225,2
 gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Color3.fromRGB(126,12,20) gameName.TextStrokeTransparency=.25 gameName.Visible=true
 
 local play=button(main,"Play","ENTRAR NO LOBBY")
-local shopButton=button(main,"Shop","LOJA") shopButton.Visible=false shopButton.Active=false
-local inventoryButton=button(main,"Inventory","INVENTÁRIO") inventoryButton.Visible=false inventoryButton.Active=false
 local settingsButton=button(main,"Ajustes","AJUSTES")
 local updatesButton=button(main,"Updates","NOVIDADES")
-for _,b in ipairs({play,shopButton,inventoryButton,settingsButton,updatesButton}) do
+for _,b in ipairs({play,settingsButton,updatesButton}) do
  b.BackgroundTransparency=1
  b.UICorner.CornerRadius=UDim.new(0,3)
  b.UIStroke.Thickness=1.4
@@ -104,12 +102,8 @@ end
 
 local settings,settingsTitle,settingsBody,settingsClose=modal("MenuAjustes","AJUSTES")
 local credits,creditsTitle,creditsBody,creditsClose=modal("MenuCreditos","CRÉDITOS")
-local shop,_,shopBody=modal("MenuShop","LOJA")
-local inventory,_,inventoryBody=modal("MenuInventory","EQUIPAMENTO")
-local updates,_,updatesBody=modal("MenuUpdates","NOVIDADES • ALFA 121")
-local shopInfo=label(shopBody,"Info","EM BREVE\n\nA loja ainda está sendo preparada.") shopInfo.Size=UDim2.new(1,-48,1,-48) shopInfo.Position=UDim2.fromOffset(24,24) shopInfo.TextSize=21 shopInfo.Font=Enum.Font.GothamBold shopInfo.TextXAlignment=Enum.TextXAlignment.Center shopInfo.TextYAlignment=Enum.TextYAlignment.Center
-local inventoryText=label(inventoryBody,"Info","LANTERNA\nIlumine o caminho sem revelar sua posição por muito tempo.\n\nREVIVER ALIADO\nChegue perto de alguém caído e use o botão + antes dos 30 segundos acabarem.") inventoryText.Position=UDim2.fromOffset(20,12) inventoryText.Size=UDim2.new(1,-40,1,-24) inventoryText.TextSize=15 inventoryText.TextXAlignment=Enum.TextXAlignment.Left
-local news=label(updatesBody,"Info","TRÊS CENÁRIOS\nBosque do Silêncio • Base Abandonada • Fortaleza da Névoa\n\nJASON E SOBREVIVENTES\nCaçada revisada, proteção na entrada e animações corrigidas.\n\nINTERFACE E PROGRESSO\nNovo HUD, ajustes completos e salvamento de pontos e XP.") news.Position=UDim2.fromOffset(20,12) news.Size=UDim2.new(1,-40,1,-24) news.TextSize=15 news.TextXAlignment=Enum.TextXAlignment.Left
+local updates,_,updatesBody=modal("MenuUpdates","NOVIDADES • ALFA 123")
+local news=label(updatesBody,"Info","TRÊS CENÁRIOS\nBosque do Silêncio • Base Abandonada • Fortaleza da Névoa\n\nPERSEGUIDORES\nSpawns protegidos, movimentação por personagem e animações revisadas.\n\nVISUAL\nIluminação adaptativa, reflexos opcionais e nova tela de carregamento.\n\nINTERFACE\nHUD limpa, corrida por toque segurado e revive contextual.") news.Position=UDim2.fromOffset(20,12) news.Size=UDim2.new(1,-40,1,-24) news.TextSize=15 news.TextXAlignment=Enum.TextXAlignment.Left
 
 
 local controls=Instance.new("ScrollingFrame") controls.Name="Controls" controls.BackgroundTransparency=1 controls.BorderSizePixel=0
