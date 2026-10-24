@@ -17,7 +17,7 @@ local creditsButton=ui:WaitForChild("CreditsButton")
 local settingsModule=require(RS:WaitForChild("Survival"):WaitForChild("SettingsPanel"))
 settingsModule.initialize(player)
 local low=player:GetAttribute("LowGraphics")==true
-local shop=scenes:WaitForChild("MenuShop") local inventory=scenes:WaitForChild("MenuInventory") local updates=scenes:WaitForChild("MenuUpdates")
+local updates=scenes:WaitForChild("MenuUpdates")
 local settingsControl
 local controls=nil
 local inMenu=true
@@ -187,7 +187,6 @@ local function layout()
  main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.19) main.Logo.Size=UDim2.new(.42,0,.17,0)
  main.GameName.Visible=false
  local navW=math.clamp(w*.23,168,224) local navH=math.clamp(h*.072,28,38)
- main.Shop.Visible=false main.Shop.Active=false main.Inventory.Visible=false main.Inventory.Active=false
  local nav={main.Play,main.Ajustes,main.Updates,creditsButton}
  local labels={"ENTRAR NO LOBBY","AJUSTES","NOVIDADES","CRÉDITOS"}
  for i,b in ipairs(nav) do
@@ -210,7 +209,7 @@ local function layout()
  main.Profile.Position=UDim2.new(0,x,0,math.clamp(h*.13,58,92)) main.Profile.Size=UDim2.fromOffset(math.min(285,w*.30),72)
  returnButton.Position=UDim2.new(0,18,0,72) returnButton.Size=UDim2.fromOffset(42,42) returnButton.Text="⌂" returnButton.TextSize=23
  returnButton.BackgroundTransparency=1 returnButton.UIStroke.Enabled=false
- for _,scene in ipairs({credits,shop,inventory,updates}) do
+ for _,scene in ipairs({credits,updates}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")
   local title=scene.Tittle
   local pw=math.min(600,w-44) local ph=math.min(390,h-120)
@@ -227,7 +226,7 @@ local function show(name)
  main.Visible=name=="main"
  settings.Visible=name=="settings"
  credits.Visible=name=="credits"
- shop.Visible=name=="shop" inventory.Visible=name=="inventory" updates.Visible=name=="updates"
+ updates.Visible=name=="updates"
  creditsButton.Visible=inMenu and name=="main"
  returnButton.Visible=false
 end
@@ -248,44 +247,6 @@ task.spawn(function()
  if stats then for _,v in ipairs(stats:GetChildren()) do if v:IsA("IntValue") then v.Changed:Connect(profileDisplay) end end end
  profileDisplay()
 end)
-local function cardPreview(card,model)
- if not model then return end
- local view=Instance.new("ViewportFrame",card) view.Name="Preview" view.BackgroundTransparency=1 view.Position=UDim2.fromOffset(6,6) view.Size=UDim2.new(1,-12,1,-12) view.ZIndex=1 view.Ambient=Color3.fromRGB(125,112,116) view.LightColor=Color3.fromRGB(255,216,198) view.LightDirection=Vector3.new(-1,-.6,-1)
- local world=Instance.new("WorldModel",view)
- for _,d in ipairs(model:GetDescendants()) do if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") then d:Destroy() elseif d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.CanQuery=false d.Anchored=d.Name=="HumanoidRootPart" end end
- model.Parent=world model:PivotTo(CFrame.identity)
- local camera=Instance.new("Camera",view) camera.FieldOfView=35 view.CurrentCamera=camera
- local cf,size=model:GetBoundingBox() local focus=cf.Position+Vector3.new(0,size.Y*.12,0)
- local forward=model.PrimaryPart and model.PrimaryPart.CFrame.LookVector or Vector3.new(0,0,-1)
- camera.CFrame=CFrame.lookAt(focus+forward*math.max(size.Y,size.X)*1.65,focus)
- local caption=Instance.new("TextLabel",card) caption.Name="Caption" caption.Size=UDim2.new(1,-8,0,30) caption.Position=UDim2.new(0,4,1,-34) caption.BackgroundColor3=Color3.fromRGB(10,10,14) caption.BackgroundTransparency=.25 caption.BorderSizePixel=0 caption.Text=card.Text caption.TextColor3=Color3.fromRGB(245,244,245) caption.TextStrokeTransparency=.2 caption.Font=Enum.Font.GothamBold caption.TextScaled=true caption.ZIndex=3
- local cap=Instance.new("UITextSizeConstraint",caption) cap.MaxTextSize=18 cap.MinTextSize=10
- card.TextTransparency=1
-end
-local jason=RS.Survival:FindFirstChild("PresentationJason")
-local function avatarPreview()
- local old=main.Inventory:FindFirstChild("Preview") if old then old:Destroy() end
- local caption=main.Inventory:FindFirstChild("Caption") if caption then caption:Destroy() end
-end
-local function equipmentPreview()
- local body=inventory.CreditosFrame body.Info.Visible=false
- local old=body:FindFirstChild("Avatar") if old then old:Destroy() end
- if not player.Character then return end
- local a=player.Character.Archivable player.Character.Archivable=true local clone=player.Character:Clone() player.Character.Archivable=a
- local holder=Instance.new("TextButton",body) holder.Name="Avatar" holder.Text="" holder.BackgroundTransparency=1 holder.Position=UDim2.fromScale(.3,.04) holder.Size=UDim2.fromScale(.4,.92) holder.Active=false
- cardPreview(holder,clone)
- local cap=holder:FindFirstChild("Caption") if cap then cap.Text="SEU AVATAR" cap.BackgroundTransparency=1 cap.TextSize=12 end
-end
-for i,item in ipairs({{"LANTERNA","☼","Ilumine o caminho",.03,.12},{"IMPULSO","↑","1 por rodada",.71,.12},{"KIT MÉDICO","+","1 por rodada",.71,.55}}) do
- local slot=Instance.new("Frame",inventory.CreditosFrame) slot.Name="Equipment"..i slot.Position=UDim2.fromScale(item[4],item[5]) slot.Size=UDim2.fromScale(.26,.34) slot.BackgroundColor3=Color3.fromRGB(27,28,34) slot.BackgroundTransparency=.3 slot.BorderSizePixel=0
- local corner=Instance.new("UICorner",slot) corner.CornerRadius=UDim.new(0,9)
- local stroke=Instance.new("UIStroke",slot) stroke.Color=Color3.fromRGB(151,149,166) stroke.Thickness=2 stroke.Transparency=.4
- local icon=Instance.new("TextLabel",slot) icon.Size=UDim2.fromScale(1,.6) icon.BackgroundTransparency=1 icon.Text=item[2] icon.TextColor3=Color3.fromRGB(218,216,227) icon.TextScaled=true icon.Font=Enum.Font.GothamBold
- local title=Instance.new("TextLabel",slot) title.Size=UDim2.fromScale(1,.2) title.Position=UDim2.fromScale(0,.59) title.BackgroundTransparency=1 title.Text=item[1] title.TextColor3=Color3.new(1,1,1) title.TextScaled=true title.Font=Enum.Font.GothamBold local limit=Instance.new("UITextSizeConstraint",title) limit.MaxTextSize=13
- local desc=Instance.new("TextLabel",slot) desc.Size=UDim2.fromScale(1,.18) desc.Position=UDim2.fromScale(0,.8) desc.BackgroundTransparency=1 desc.Text=item[3] desc.TextColor3=Color3.fromRGB(166,165,178) desc.TextScaled=true desc.Font=Enum.Font.Gotham local cap=Instance.new("UITextSizeConstraint",desc) cap.MaxTextSize=11
-end
-avatarPreview() equipmentPreview()
-player.CharacterAdded:Connect(function() if inMenu then avatarPreview() equipmentPreview() end end)
 local function revealMenuJason()
  if menuJason then menuJason:Destroy() menuJason=nil end
  local template=RS:WaitForChild("Survival"):FindFirstChild("PresentationJason")
@@ -436,12 +397,7 @@ local function open()
  end
  if controls then controls:Disable() end
  local camera=workspace.CurrentCamera if camera then oldFov=camera.FieldOfView end
- avatarPreview() equipmentPreview()
- for _,card in ipairs({main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates}) do
-  local preview=card:FindFirstChild("Preview") if preview then preview:Destroy() end
-  local caption=card:FindFirstChild("Caption") if caption then caption:Destroy() end
-  card.TextTransparency=0
- end
+ for _,card in ipairs({main.Play,main.Ajustes,main.Updates}) do card.TextTransparency=0 end
  buildPrivateScene()
  enableMenuLook()
  bindCamera()
@@ -457,10 +413,6 @@ local function close()
  disableMenuLook()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  clearPrivateScene()
- for _,card in ipairs({main.Play,main.Inventory}) do
-  for _,name in ipairs({"Preview","Caption"}) do local v=card:FindFirstChild(name) if v then v:Destroy() end end
- end
- local portrait=inventory.CreditosFrame:FindFirstChild("Avatar") if portrait then portrait:Destroy() end
  local camera=workspace.CurrentCamera
  if camera then
   camera.CameraType=Enum.CameraType.Custom camera.FieldOfView=oldFov
@@ -483,7 +435,7 @@ end
 main.Play.Activated:Connect(function() navigate(close) end)
 main.Ajustes.Activated:Connect(function() navigate(function() show("settings") end) end)
 main.Updates.Activated:Connect(function() navigate(function() show("updates") end) end)
-for _,scene in ipairs({shop,inventory,updates}) do scene.Close.Activated:Connect(function() navigate(function() show("main") end) end) end
+updates.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 creditsButton.Activated:Connect(function() navigate(function() show("credits") end) end)
 settings.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 credits.Close.Activated:Connect(function() navigate(function() show("main") end) end)
