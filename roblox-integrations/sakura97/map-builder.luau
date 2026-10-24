@@ -144,6 +144,26 @@ function Builder.build(load,sanitize,destination)
   local entrance=Instance.new("Model",map) entrance.Name="ArenaEntrance"
   local doorCF=CFrame.lookAt(start-toward*5,start) entrance:SetAttribute("DoorCFrame",doorCF)
   entrance:SetAttribute("InvisibleMarker",true)
+  local bounds=Instance.new("Folder",map) bounds.Name="InvisibleBounds"
+  local function barrier(name,partSize,localCF)
+   local wall=Instance.new("Part")
+   wall.Name=name wall.Size=partSize wall.CFrame=cf*localCF
+   wall.Anchored=true wall.CanCollide=true wall.CanTouch=false wall.CanQuery=true
+   wall.Transparency=1 wall.CastShadow=false wall.TopSurface=Enum.SurfaceType.Smooth wall.BottomSurface=Enum.SurfaceType.Smooth
+   wall:SetAttribute("InvisibleBoundary",true) wall.Parent=bounds
+   return wall
+  end
+  local wallThickness=6
+  local wallHeight=math.max(64,size.Y+28)
+  local wallY=(lowest-cf.Position.Y)+wallHeight/2-4
+  barrier("LeftWall",Vector3.new(wallThickness,wallHeight,size.Z+wallThickness*2),CFrame.new(-size.X/2-wallThickness/2,wallY,0))
+  barrier("RightWall",Vector3.new(wallThickness,wallHeight,size.Z+wallThickness*2),CFrame.new(size.X/2+wallThickness/2,wallY,0))
+  barrier("FrontWall",Vector3.new(size.X+wallThickness*2,wallHeight,wallThickness),CFrame.new(0,wallY,-size.Z/2-wallThickness/2))
+  barrier("BackWall",Vector3.new(size.X+wallThickness*2,wallHeight,wallThickness),CFrame.new(0,wallY,size.Z/2+wallThickness/2))
+  local safety=barrier("SafetyFloor",Vector3.new(size.X+wallThickness*2,4,size.Z+wallThickness*2),CFrame.new(0,(lowest-cf.Position.Y)-7,0))
+  safety:SetAttribute("SafetyFloor",true)
+  map:SetAttribute("RecoveryY",lowest-3)
+
   local markers=Instance.new("Folder",map) markers.Name="RouteLanterns"
   for i=1,math.min(6,#selected) do
    local pos=selected[i]+Vector3.new(3,1,0)
@@ -157,7 +177,7 @@ function Builder.build(load,sanitize,destination)
   map:SetAttribute("FloorY",lowest) map:SetAttribute("VoidY",lowest-35) map:SetAttribute("PartCount",count)
   map:SetAttribute("Footprint",Vector3.new(size.X,0,size.Z)) map:SetAttribute("ValidatedPaths",#selected-1)
   map.Parent=destination
-  table.insert(reports,{name=spec.name,id=spec.id,parts=count,connected=#selected,arrivals=#arrivals:GetChildren(),killerClearance=killerClearance,width=size.X,depth=size.Z})
+  table.insert(reports,{name=spec.name,id=spec.id,parts=count,connected=#selected,arrivals=#arrivals:GetChildren(),killerClearance=killerClearance,invisibleBounds=#bounds:GetChildren(),width=size.X,depth=size.Z})
  end
  return reports
 end
