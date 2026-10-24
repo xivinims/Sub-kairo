@@ -58,10 +58,16 @@ local gameName=label(main,"GameName","SUVIVERS [ALFA]")
 gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(231,225,226)
 gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Color3.fromRGB(126,12,20) gameName.TextStrokeTransparency=.25 gameName.Visible=true
 
-local play=button(main,"Play","JOGAR")
+local play=button(main,"Play","ENTRAR NO LOBBY")
 local settingsButton=button(main,"Ajustes","AJUSTES")
 local creditsButton=button(ui,"CreditsButton","CRÉDITOS")
 
+local guide=label(main,"Guide","ATRAVESSE A PORTA PARA JOGAR")
+guide.TextSize=11 guide.TextColor3=Color3.fromRGB(177,157,160) guide.TextXAlignment=Enum.TextXAlignment.Left
+local edition=label(main,"Edition","3 CENÁRIOS  •  ATÉ 8 JOGADORES")
+edition.Font=Enum.Font.GothamSemibold edition.TextSize=10 edition.TextColor3=Color3.fromRGB(178,118,125) edition.TextXAlignment=Enum.TextXAlignment.Left
+local help=label(main,"QuickHelp","Correr faz barulho. Agache para se esconder.\nUm kit pode salvar você ou um aliado caído.")
+help.TextSize=12 help.TextColor3=Color3.fromRGB(190,182,188) help.TextXAlignment=Enum.TextXAlignment.Left
 local scenes=Instance.new("Frame") scenes.Name="Escenarios" scenes.Size=UDim2.fromScale(1,1)
 scenes.BackgroundTransparency=1 scenes.Parent=ui
 
@@ -108,7 +114,7 @@ config:SetAttribute("MenuOrigin",Vector3.new(10000,2500,10000))
 config:SetAttribute("MainCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("SettingsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("CreditsCamera",CFrame.new(10000,2505,10010))
-config:SetAttribute("Version",120)
+config:SetAttribute("Version",121)
 config:SetAttribute("GameName","Suvivers [ALFA]")
 config:SetAttribute("MenuSceneAssetId",13327565335)
 config:SetAttribute("LogoAssetId",logoId or 0)
@@ -119,6 +125,7 @@ local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" lo
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
-runtime:SetAttribute("MenuVersion",120)
+runtime:SetAttribute("MenuVersion",121)
 runtime:SetAttribute("GameName","Suvivers [ALFA]")
 runtime:SetAttribute("SurviversLogoAssetId",logoId or 0)
+

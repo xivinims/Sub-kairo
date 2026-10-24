@@ -40,6 +40,17 @@ local ok,result=xpcall(function()
  assert(workspace:FindFirstChild("LocalJasonIntro"),"Local Jason cinematic clone missing")
  update:Fire("reset") task.wait()
  assert(gui:GetAttribute("CinematicActive")==false and not workspace:FindFirstChild("LocalJasonIntro"),"Jason intro did not clean up")
+ update:Fire("caught","Jason",CFrame.new(0,0,-3)) task.wait()
+ update:Fire("reset") task.wait()
+ attrs.VoidActive=true camera.CameraType=Enum.CameraType.Scriptable
+ task.wait(.7)
+ assert(camera.CameraType==Enum.CameraType.Scriptable and not gui.Capture.Visible,"Old hit callback reclaimed death camera")
+ attrs.VoidActive=false
+ update:Fire("roundResult",{jasonWon=true,map="Base Abandonada",xp=50,board={{name="Tester",userId=991,time=125,hits=2,falls=1,level=4}}}) task.wait()
+ assert(gui.RoundResult.Ranking:IsA("ScrollingFrame") and gui.RoundResult.Ranking.Rank1,"Scrollable result ranking missing")
+ assert(gui.RoundResult.WinnerPortrait:FindFirstChildOfClass("WorldModel"):FindFirstChild("WinnerJason"),"Winning Jason portrait missing")
+ assert(gui.RoundResult.Subtitle.Text:find("50 XP",1,true),"Earned XP not shown")
+ assert(not gui.RoundResult.Winner.Text:find("\\n",1,true),"Result contains literal newline escape")
  local flash=assert(gui:FindFirstChild("EntryFlash"),"Entry glow flash missing")
  local before=flash:GetAttribute("PulseCount") or 0
  update:Fire("lobbyDoorGlow") task.wait()
@@ -49,8 +60,14 @@ local ok,result=xpcall(function()
  assert(gui.Actions:FindFirstChild("Flashlight") and gui.Actions.Flashlight.UICorner.CornerRadius.Scale==1,"Circular flashlight button missing")
  input:Fire({KeyCode=Enum.KeyCode.F},false) task.wait() assert(requests[#requests]=="flashlight")
  input:Fire({KeyCode=Enum.KeyCode.E},false) task.wait() assert(requests[#requests]=="kit")
+ attrs.MusicEnabled=false attrs.IsJason=true step()
+ assert(not game:GetService("SoundService").LocalJasonTheme.IsPlaying,"Music toggle ignored by Jason theme")
+ attrs.IsJason=false
  attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+25 step()
  assert(not gui.Actions.Run.Visible and not gui.Actions.Slow.Visible and gui.Actions.Medkit.Text=="+")
+ attrs.ReviveAt=workspace:GetServerTimeNow()+3 step()
+ assert(gui.Notice.Text:find("Reanimando",1,true),"Self-revive progress hidden by downed message")
+ attrs.ReviveAt=0
  attrs.InRound=false attrs.Downed=false attrs.RoundStatus="eliminated" attrs.Spectating=true step()
  assert(gui.Spectate.Visible and not gui.Actions.Visible and not gui:FindFirstChild("Join"))
  assert(camera.CameraSubject==char.Humanoid and gui.Spectate.Player.Text=="Sobrevivente")
@@ -70,8 +87,9 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and gui.Actions.Visible,"Portal admission must keep movement controls visible")
  assert(gui.Actions.Run.Visible and gui.Actions.Slow.Visible and gui.Actions.Boost.Visible,"Run/slow/boost controls disappeared outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,scrollableResults=true,winningPortrait=true,musicPreference=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 assert(ok,result) return result
+
 

@@ -38,6 +38,7 @@ function Profiles:load(p)
  stats.Pontos.Value=math.max(0,integer(data.points)+r.points)
  stats["Nível"].Value=Profiles.level(stats.XP.Value)
  p:SetAttribute("Cantor",data.singer==true or p:GetAttribute("Cantor")==true)
+ r.savedSinger=data.singer==true
  r.loaded=true p:SetAttribute("ProfileLoaded",true)
  return true
 end
@@ -56,6 +57,7 @@ function Profiles:save(p)
  local r=self.records[p]
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
+ if r.xp==r.savedXP and r.points==r.savedPoints and (p:GetAttribute("Cantor")==true)==r.savedSinger then return true end
  r.busy=true
  local xp,points,singer=r.xp,r.points,p:GetAttribute("Cantor")==true
  local timestamp=os.time()
@@ -76,9 +78,15 @@ function Profiles:save(p)
   end)
  end)
  r.busy=false
- if ok then r.savedXP=xp r.savedPoints=points end
+ if ok then r.savedXP=xp r.savedPoints=points r.savedSinger=singer end
  local again=r.pending r.pending=false
  if again and (r.xp~=xp or r.points~=points or (p:GetAttribute("Cantor")==true and not singer)) then return self:save(p) end
  return ok
+end
+function Profiles:flush(p,timeout)
+ local deadline=os.clock()+(timeout or 20)
+ local r=self.records[p]
+ while r and r.busy and os.clock()<deadline do task.wait(.05) end
+ return self:save(p)
 end
 return Profiles

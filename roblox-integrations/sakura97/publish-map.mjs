@@ -137,7 +137,7 @@ function first(task){
 
 
 const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
-const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder'};
+const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder',ISLAND_SERVER:'island-server',VOID:'void-client',AMBIENCE:'ambience-client'};
 let install=read('jason-install');
 for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
@@ -146,6 +146,7 @@ console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
 const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
 local sourceVersion=game.PlaceVersion
@@ -187,6 +188,9 @@ local function testAI()
 ${aiTest}
 end
 result.ai=testAI()
+result.animations=(function()
+${animationTest}
+end)()
 local function testContent()
 ${read('jason-content-tests')}
 end
@@ -226,7 +230,7 @@ if(applied?.saved){
  const persisted=first(await execute(`
   local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
-  assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.MilitaryBase and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==79671648850902)
+  assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902 and assets.Maps.MilitaryBase:GetAttribute("SourceAssetId")==13967333450 and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==8050959400)
   assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==121)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
@@ -244,11 +248,6 @@ if(applied?.saved){
 }
 
 if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
- console.log('UNCHANGED_SAVE_DIAGNOSTIC',JSON.stringify(first(await execute(`
- local before=game.PlaceVersion
- local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
- return {sourceVersion=before,ok=ok,error=ok and nil or tostring(err)}
- `))));
- throw new Error('Jason build was not published; inspect diagnostic above');
+ throw new Error('Suvivers build was not published; inspect saveError above');
 }
 

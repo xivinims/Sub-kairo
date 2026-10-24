@@ -25,8 +25,8 @@ local oldFov=70
 local MENU_ORIGIN=config:GetAttribute("MenuOrigin") or Vector3.new(10000,2500,10000)
 local menuGrade=nil local menuGlow=nil
 local function enableMenuLook()
- if not menuGrade then menuGrade=Instance.new("ColorCorrectionEffect") menuGrade.Name="SuviversMenuGrade" menuGrade.Brightness=.035 menuGrade.Contrast=.1 menuGrade.Saturation=-.12 menuGrade.TintColor=Color3.fromRGB(255,232,232) menuGrade.Parent=Lighting end
- if not menuGlow then menuGlow=Instance.new("BloomEffect") menuGlow.Name="SuviversMenuBloom" menuGlow.Intensity=.18 menuGlow.Size=18 menuGlow.Threshold=1.2 menuGlow.Parent=Lighting end
+ if not menuGrade then menuGrade=Instance.new("ColorCorrectionEffect") menuGrade.Name="SuviversMenuGrade" menuGrade.Brightness=.035 menuGrade.Contrast=.1 menuGrade.Saturation=-.12 menuGrade.TintColor=Color3.fromRGB(255,232,232) menuGrade.Enabled=not low menuGrade.Parent=Lighting end
+ if not menuGlow then menuGlow=Instance.new("BloomEffect") menuGlow.Name="SuviversMenuBloom" menuGlow.Intensity=.18 menuGlow.Size=18 menuGlow.Threshold=1.2 menuGlow.Enabled=not low menuGlow.Parent=Lighting end
 end
 local function disableMenuLook() if menuGrade then menuGrade:Destroy() menuGrade=nil end if menuGlow then menuGlow:Destroy() menuGlow=nil end end
 
@@ -109,6 +109,10 @@ local function buildPrivateScene()
    end
    local hum=menuAvatar:FindFirstChildOfClass("Humanoid")
    if hum then hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.AutoRotate=false end
+   local head=menuAvatar:FindFirstChild("Head")
+   if head then
+    local key=Instance.new("PointLight",head) key.Color=Color3.fromRGB(255,175,158) key.Brightness=.65 key.Range=12 key.Shadows=false
+   end
    menuAvatar.Parent=workspace
    menuAvatar:PivotTo(CFrame.lookAt(avatarPos,Vector3.new(cameraPos.X,avatarPos.Y,cameraPos.Z)))
   end
@@ -130,10 +134,19 @@ for _,setting in ipairs(switches) do
 end
 
 local quality=settings.AjustesFrame.Controls:WaitForChild("QualityToggle")
+local effectDefaults=setmetatable({},{__mode="k"})
+local function qualityEffect(e)
+ if e:IsA("PostEffect") then
+  if effectDefaults[e]==nil then effectDefaults[e]=e.Name=="SuviversMenuGrade" or e.Name=="SuviversMenuBloom" or e.Enabled end
+  e.Enabled=not low and effectDefaults[e]
+ end
+end
+Lighting.ChildAdded:Connect(qualityEffect)
 local function setQuality()
+ player:SetAttribute("LowGraphics",low)
  quality.Text="Gráficos  "..(low and "LEVE" or "COMPLETO")
  for _,e in ipairs(Lighting:GetChildren()) do
-  if e:IsA("PostEffect") then e.Enabled=not low end
+  qualityEffect(e)
  end
 end
 quality.Activated:Connect(function() low=not low setQuality() end)
@@ -160,11 +173,11 @@ end
 local function layout()
  local camera=workspace.CurrentCamera if not camera then return end
  local v=camera.ViewportSize local w,h=v.X,v.Y
- local panelW=math.clamp(w*.30,220,340)
+ local panelW=math.clamp(w*.32,220,360)
  local x=math.clamp(w*.035,14,42)
  local top=math.clamp(h*.07,18,48)
- local logoH=math.clamp(h*.18,78,128)
- local buttonH=math.clamp(h*.07,42,52)
+ local logoH=math.clamp(h*.18,60,132)
+ local buttonH=math.clamp(h*.07,40,52)
 
  main.LeftPanel.Position=UDim2.fromOffset(x,top)
  main.LeftPanel.Size=UDim2.fromOffset(panelW,math.min(h-top-20,logoH+buttonH*3+74))
@@ -181,6 +194,11 @@ local function layout()
   b.Size=UDim2.fromOffset(panelW-36,buttonH)
  end
 
+ main.Guide.Position=UDim2.fromOffset(x+18,y+buttonH*2+26)
+ main.Guide.Size=UDim2.fromOffset(panelW-36,24)
+ main.Edition.Position=UDim2.fromOffset(x+18,math.max(y+buttonH*2+60,h-90)) main.Edition.Size=UDim2.fromOffset(math.max(230,panelW-36),18)
+ main.QuickHelp.Position=UDim2.fromOffset(x+18,h-65) main.QuickHelp.Size=UDim2.fromOffset(panelW+40,48)
+ main.QuickHelp.Visible=h>=520 main.Edition.Visible=h>=450
  creditsButton.Position=UDim2.new(1,-64,0,64) creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.Text="i" creditsButton.TextSize=24
  returnButton.Position=UDim2.new(1,-64,0,122)
  returnButton.Size=UDim2.fromOffset(46,46) returnButton.Text="⌂" returnButton.TextSize=23
@@ -214,7 +232,10 @@ local function bindCamera()
   local camera=workspace.CurrentCamera if not camera then return end
   camera.CameraType=Enum.CameraType.Scriptable
   camera.FieldOfView=56
-  if menuCameraCF then camera.CFrame=menuCameraCF end
+  if menuCameraCF then
+   local t=os.clock()
+   camera.CFrame=low and menuCameraCF or menuCameraCF*CFrame.Angles(math.sin(t*.18)*.006,math.sin(t*.13)*.012,0)
+  end
  end)
 end
 
@@ -224,6 +245,7 @@ local function open()
  if controls then controls:Disable() end
  local camera=workspace.CurrentCamera if camera then oldFov=camera.FieldOfView end
  buildPrivateScene()
+ enableMenuLook()
  bindCamera()
  show("main")
  layout()
@@ -293,3 +315,4 @@ local function refreshReturn()
 end
 player:GetAttributeChangedSignal("InRound"):Connect(refreshReturn)
 player:GetAttributeChangedSignal("Spectating"):Connect(refreshReturn)
+

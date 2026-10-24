@@ -4,10 +4,10 @@ local RS=game:GetService("ReplicatedStorage")
 local spawn=workspace:WaitForChild("IslandSpawn")
 local event=RS:WaitForChild("SweanVoidEvent")
 local runtime=RS:WaitForChild("SweanRuntime")
-local threshold=runtime:GetAttribute("VoidThreshold")
+local threshold=runtime:GetAttribute("VoidThreshold") or spawn.Position.Y-30
 local active={}
 local bridge=game:GetService("ServerScriptService"):WaitForChild("SurvivalBridge")
-local function recover(player,record)
+local function recover(player,record,cancelled)
  if active[player]~=record then return end active[player]=nil
  local char=record.char local root=char:FindFirstChild("HumanoidRootPart") local hum=char:FindFirstChildOfClass("Humanoid")
  if char.Parent and root and player.Character==char then
@@ -17,7 +17,7 @@ local function recover(player,record)
   if hum then hum.AutoRotate=record.autoRotate end
  end
  player:SetAttribute("VoidActive",false)
- if player.Parent then event:FireClient(player,"finish") bridge.DeathFinished:Fire(player) end
+ if player.Parent then event:FireClient(player,"finish") if not cancelled then bridge.DeathFinished:Fire(player) end end
 end
 local function begin(player,cause,mode)
  if active[player] then return end
@@ -26,9 +26,13 @@ local function begin(player,cause,mode)
  local record={started=os.clock(),char=char,anchored=false,autoRotate=true}
  active[player]=record root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero hum.AutoRotate=false
  player:SetAttribute("VoidActive",true) event:FireClient(player,"start",cause,mode)
- task.delay(60,function() recover(player,record) end)
+ task.delay(12,function() recover(player,record) end)
 end
 bridge.DeathRequest.Event:Connect(begin)
+bridge.CancelDeath.Event:Connect(function(player)
+ local record=active[player]
+ if record then recover(player,record,true) elseif player.Parent then player:SetAttribute("VoidActive",false) end
+end)
 event.OnServerEvent:Connect(function(player,action)
  local record=active[player]
  if action=="return" and record and os.clock()-record.started>=2 then recover(player,record) end
@@ -49,8 +53,9 @@ RunService.Heartbeat:Connect(function(dt)
  elapsed+=dt if elapsed<.1 then return end elapsed=0
  for _,player in ipairs(Players:GetPlayers()) do
   local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
-  if root and hum and hum.Health>0 and root.Position.Y<threshold and not active[player] then
-   if player:GetAttribute("InRound") then bridge.RoundEliminate:Fire(player,"void") else begin(player,"void") end
+  if root and hum and hum.Health>0 and root.Position.Y<threshold and not active[player] and not player:GetAttribute("InRound") then
+   begin(player,"void")
   end
  end
 end)
+

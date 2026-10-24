@@ -11,6 +11,7 @@ jasonTheme.Name="LocalJasonTheme"
 jasonTheme.Looped=true
 jasonTheme.Parent=SoundService
 local config=require(net.Config)
+local Lighting=game:GetService("Lighting")
 local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
  local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(12,12,15) f.BackgroundTransparency=.22 f.BorderSizePixel=0 f.Parent=gui
@@ -24,6 +25,17 @@ end
 local function button(parent,name,label,size,pos,callback)
  local b=Instance.new("TextButton") b.Name=name b.Text=label b.Size=size b.Position=pos b.BackgroundColor3=Color3.fromRGB(18,18,22) b.BackgroundTransparency=.12 b.TextColor3=Color3.fromRGB(239,239,242) b.Font=Enum.Font.GothamSemibold b.TextSize=14 b.BorderSizePixel=0 b.Parent=parent
  local c=Instance.new("UICorner",b) c.CornerRadius=UDim.new(0,12)
+ b.AutoButtonColor=false
+ local scale=Instance.new("UIScale",b)
+ local feedback
+ local function pulse(value)
+  if feedback then feedback:Cancel() end
+  feedback=TweenService:Create(scale,TweenInfo.new(.1),{Scale=value}) feedback:Play()
+ end
+ b.MouseEnter:Connect(function() pulse(1.04) end)
+ b.MouseLeave:Connect(function() pulse(1) end)
+ b.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then pulse(.92) end end)
+ b.InputEnded:Connect(function() pulse(1) end)
  local stroke=Instance.new("UIStroke",b) stroke.ApplyStrokeMode=Enum.ApplyStrokeMode.Border stroke.Color=Color3.fromRGB(150,150,158) stroke.Transparency=.72
  b.Activated:Connect(function()
   if player:GetAttribute("MenuSounds")~=false then local s=RS.XNMedia.MenuClick:Clone() s.Parent=b s:Play() game:GetService("Debris"):AddItem(s,3) end
@@ -98,25 +110,56 @@ local musicStop=button(musicPanel,"StopMusic","Parar",UDim2.fromOffset(124,28),U
 local function updateSinger() local owned=player:GetAttribute("Cantor")==true musicId.TextEditable=owned musicStatus.Text=owned and "🎤 CANTOR • use um ID de áudio" or "Desbloqueie Music por 20 Pontos para receber o distintivo Cantor." musicBuy.Visible=not owned end
 updateSinger() if player.GetAttributeChangedSignal then player:GetAttributeChangedSignal("Cantor"):Connect(updateSinger) end
 musicId.FocusLost:Connect(function(enter) if enter and player:GetAttribute("Cantor") then event:FireServer("musicPlay",musicId.Text) end end)
-local result=panel("RoundResult",UDim2.new(.9,0,.8,0),UDim2.fromScale(.5,.5)) result.AnchorPoint=Vector2.new(.5,.5) result.Visible=false result.ZIndex=70
-local resultHeader=text(result,"Header","FIM DA PARTIDA",UDim2.new(1,-24,0,42),UDim2.fromOffset(12,8)) resultHeader.Font=Enum.Font.GothamBlack resultHeader.TextSize=25 resultHeader.ZIndex=71
-local resultRows=Instance.new("Frame",result) resultRows.Name="Ranking" resultRows.BackgroundTransparency=1 resultRows.Position=UDim2.fromOffset(16,62) resultRows.Size=UDim2.new(.62,-18,1,-74) resultRows.ZIndex=71
-local resultList=Instance.new("UIListLayout",resultRows) resultList.Padding=UDim.new(0,4) resultList.SortOrder=Enum.SortOrder.LayoutOrder
-local resultSide=text(result,"WinnerIcon","",UDim2.new(.34,-20,.68,0),UDim2.new(.64,0,.18,0)) resultSide.Font=Enum.Font.GothamBlack resultSide.TextSize=34 resultSide.ZIndex=71
-local resultWinner=text(result,"Winner","",UDim2.new(.33,-20,.2,0),UDim2.new(.64,0,.77,0)) resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=15 resultWinner.ZIndex=71
-local resultUntil=0
+local result=panel("RoundResult",UDim2.new(.92,0,.82,0),UDim2.fromScale(.5,.5)) result.AnchorPoint=Vector2.new(.5,.5) result.Visible=false result.ZIndex=70 result.ClipsDescendants=true
+local resultLimit=Instance.new("UISizeConstraint",result) resultLimit.MaxSize=Vector2.new(1050,650)
+local resultHeader=text(result,"Header","FIM DA PARTIDA",UDim2.new(1,-74,0,34),UDim2.fromOffset(18,12)) resultHeader.Font=Enum.Font.GothamBlack resultHeader.TextSize=22 resultHeader.TextXAlignment=Enum.TextXAlignment.Left resultHeader.ZIndex=71
+local resultSubtitle=text(result,"Subtitle","",UDim2.new(.65,-20,0,26),UDim2.fromOffset(18,46)) resultSubtitle.TextSize=12 resultSubtitle.TextXAlignment=Enum.TextXAlignment.Left resultSubtitle.ZIndex=71
+local resultRows=Instance.new("ScrollingFrame",result) resultRows.Name="Ranking" resultRows.BackgroundTransparency=1 resultRows.BorderSizePixel=0 resultRows.Position=UDim2.fromOffset(16,80) resultRows.Size=UDim2.new(.64,-20,1,-100) resultRows.ZIndex=71 resultRows.AutomaticCanvasSize=Enum.AutomaticSize.Y resultRows.CanvasSize=UDim2.new() resultRows.ScrollBarThickness=3 resultRows.ScrollBarImageColor3=Color3.fromRGB(156,83,86)
+local resultList=Instance.new("UIListLayout",resultRows) resultList.Padding=UDim.new(0,6) resultList.SortOrder=Enum.SortOrder.LayoutOrder
+local resultSide=text(result,"WinnerIcon","✦",UDim2.new(.34,-12,.6,0),UDim2.new(.65,0,.17,0)) resultSide.Font=Enum.Font.GothamBlack resultSide.TextSize=72 resultSide.ZIndex=71
+local resultView=Instance.new("ViewportFrame",result) resultView.Name="WinnerPortrait" resultView.BackgroundTransparency=1 resultView.Size=UDim2.new(.36,-14,.64,0) resultView.Position=UDim2.new(.64,0,.14,0) resultView.ZIndex=72 resultView.Ambient=Color3.fromRGB(120,95,96) resultView.LightColor=Color3.fromRGB(255,188,177) resultView.LightDirection=Vector3.new(-1,-.4,-1)
+local resultWorld=Instance.new("WorldModel",resultView)
+local resultCamera=Instance.new("Camera",resultView) resultCamera.FieldOfView=38 resultView.CurrentCamera=resultCamera
+local resultWinner=text(result,"Winner","",UDim2.new(.34,-20,.17,0),UDim2.new(.65,0,.78,0)) resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=14 resultWinner.ZIndex=73
+local resultUntil=0 local resultGeneration=0
+local function hideResult()
+ result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren()
+end
+local resultClose=button(result,"Close","×",UDim2.fromOffset(40,40),UDim2.new(1,-52,0,10),hideResult) resultClose.ZIndex=74 resultClose.TextSize=26
 local function showResult(data)
- for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("TextLabel") then old:Destroy() end end
+ hideResult()
+ local generation=resultGeneration
+ for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("Frame") then old:Destroy() end end
+ resultRows.CanvasPosition=Vector2.zero
  resultHeader.Text=data.jasonWon and "JASON VENCEU" or "SOBREVIVENTES VENCERAM"
- resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(215,67,70) or Color3.fromRGB(224,225,230)
- resultSide.Text=data.jasonWon and "🔪\\nJASON" or "✦\\nSOBREVIVENTES"
- resultWinner.Text=(data.killer or "Jason").."  •  +"..tostring(data.xp or 0).." XP"
- for i,row in ipairs(data.board or {}) do if i>8 then break end
-  local line=string.format("%d. %s   %ds   •   %d hits   •   %d quedas   •   Nv. %d",i,row.name or "Jogador",row.time or 0,row.hits or 0,row.falls or 0,row.level or 1)
-  local label=text(resultRows,"Rank"..i,line,UDim2.new(1,0,0,32),UDim2.new()) label.LayoutOrder=i label.TextSize=11 label.TextXAlignment=Enum.TextXAlignment.Left label.ZIndex=72 label.BackgroundColor3=Color3.fromRGB(39,35,40) label.BackgroundTransparency=.42 Instance.new("UICorner",label).CornerRadius=UDim.new(0,7)
+ resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(227,97,102) or Color3.fromRGB(224,225,230)
+ resultSubtitle.Text=(data.map or "").."  •  SUA RECOMPENSA +"..tostring(data.xp or 0).." XP"
+ resultSide.Visible=not data.jasonWon resultView.Visible=data.jasonWon==true
+ resultWinner.Text=data.jasonWon and "JASON\nNINGUÉM ESCAPOU" or "SOBREVIVENTES\nA ESPERANÇA RESISTIU"
+ if data.jasonWon then
+  local template=net:FindFirstChild("PresentationJason")
+  if template then
+   local model=template:Clone() model.Name="WinnerJason" model:SetAttribute("PresentationPursuer",true)
+   model.Parent=resultWorld model:PivotTo(CFrame.identity)
+   local cf,size=model:GetBoundingBox()
+   local focus=cf.Position+Vector3.new(0,size.Y*.08,0)
+   local distance=math.max(size.Y,size.X)*1.75
+   local forward=model.PrimaryPart and model.PrimaryPart.CFrame.LookVector or Vector3.new(0,0,-1)
+   resultCamera.CFrame=CFrame.lookAt(focus+forward*distance+Vector3.new(0,size.Y*.04,0),focus)
+  end
  end
- result.BackgroundTransparency=.75 result.Position=UDim2.fromScale(.5,.53) result.Visible=true resultUntil=os.clock()+10
- TweenService:Create(result,TweenInfo.new(.42,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{BackgroundTransparency=.22,Position=UDim2.fromScale(.5,.5)}):Play()
+ for i,row in ipairs(data.board or {}) do if i>8 then break end
+  local card=Instance.new("Frame",resultRows) card.Name="Rank"..i card.Size=UDim2.new(1,-6,0,62) card.LayoutOrder=i card.BorderSizePixel=0 card.ZIndex=72 card.BackgroundColor3=row.userId==player.UserId and Color3.fromRGB(79,35,40) or Color3.fromRGB(39,35,40) card.BackgroundTransparency=.28 Instance.new("UICorner",card).CornerRadius=UDim.new(0,10)
+  local rank=text(card,"Position",string.format("%02d",i),UDim2.fromOffset(34,58),UDim2.fromOffset(2,0)) rank.TextSize=17 rank.ZIndex=73 rank.TextColor3=Color3.fromRGB(174,130,134)
+  local name=text(card,"Name",row.name or "Jogador",UDim2.new(1,-48,0,26),UDim2.fromOffset(40,5)) name.Font=Enum.Font.GothamBold name.TextSize=13 name.TextXAlignment=Enum.TextXAlignment.Left name.ZIndex=73 name.TextTruncate=Enum.TextTruncate.AtEnd name.TextWrapped=false
+  local seconds=math.max(0,row.time or 0)
+  local level=math.clamp(row.level or 1,1,1000) local symbol=level>=100 and "✦" or level>=25 and "◆" or "◇"
+  local stats=string.format("%d:%02d  •  %d golpes  •  %d quedas  •  %s %d",math.floor(seconds/60),seconds%60,row.hits or 0,row.falls or 0,symbol,level)
+  local metrics=text(card,"Stats",stats,UDim2.new(1,-48,0,26),UDim2.fromOffset(40,30)) metrics.TextSize=11 metrics.TextXAlignment=Enum.TextXAlignment.Left metrics.ZIndex=73 metrics.TextColor3=Color3.fromRGB(183,178,186)
+ end
+ result.BackgroundTransparency=.75 result.Position=UDim2.fromScale(.5,.53) result.Visible=true resultUntil=os.clock()+12
+ TweenService:Create(result,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=.08,Position=UDim2.fromScale(.5,.5)}):Play()
+ task.delay(12,function() if generation==resultGeneration then hideResult() end end)
 end
 
 local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
@@ -127,44 +170,55 @@ button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),fu
 button(spectate,"Exit","Sair da câmera",UDim2.fromOffset(170,38),UDim2.fromOffset(65,42),function() event:FireServer("spectateExit") end)
 local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new()) loading.BackgroundTransparency=0 loading.ZIndex=80 loading.Visible=false
 local loadingText=text(loading,"Status","Carregando a arena…",UDim2.new(.8,0,0,90),UDim2.fromScale(.1,.4)) loadingText.ZIndex=81
+local cinematicActive=false
 local loadToken=0
 local function preload(roundId,map)
- loadToken+=1 local token=loadToken loading.Visible=true loadingText.Text="Carregando a arena…"
+ loadToken+=1 local token=loadToken loading.Visible=true loadingText.Text="Preparando a arena…"
  task.spawn(function()
-  local deadline=os.clock()+40
-  while not map or not map.Parent or not map:FindFirstChild("SafePoints") do
-   if os.clock()>deadline or token~=loadToken then break end
-   map=workspace:FindFirstChild("ActiveArena") task.wait(.2)
-  end
-  if map then
-   while os.clock()<deadline and token==loadToken do
+  local deadline=os.clock()+18 local geometryReady=false
+  while os.clock()<deadline and token==loadToken do
+   map=map and map.Parent and map or workspace:FindFirstChild("ActiveArena")
+   if map and map:GetAttribute("RoundId")==roundId and map:FindFirstChild("SafePoints") then
     local count=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then count+=1 end end
-    if count>=(map:GetAttribute("PartCount") or math.huge) then break end
-    task.wait(.2)
+    local expected=map:GetAttribute("PartCount") or math.huge
+    loadingText.Text="Recebendo mapa • "..math.floor(math.min(1,count/expected)*100).."%"
+    if count>=expected then geometryReady=true break end
    end
+   task.wait(.1)
   end
-  local done=false local ok=false
+  if token~=loadToken then return end
+  if not geometryReady then
+   loading.Visible=false event:FireServer("loadFailed",roundId)
+   notice.Text="A conexão está lenta. A arena continua carregando." return
+  end
+  local done=false local mediaDeadline=os.clock()+8
+  loadingText.Text="Preparando texturas e luzes…"
   task.spawn(function()
-   if map and map.Parent then local failed=false
-    ok=pcall(function() game:GetService("ContentProvider"):PreloadAsync({map},function(_,status) if status~=Enum.AssetFetchStatus.Success then failed=true end end) end)
-    ok=ok and not failed and os.clock()<deadline end done=true
+   pcall(function() game:GetService("ContentProvider"):PreloadAsync({map}) end)
+   done=true
   end)
-  while not done and os.clock()<deadline and token==loadToken do task.wait(.1) end
+  while not done and os.clock()<mediaDeadline and token==loadToken and not cinematicActive do task.wait(.1) end
   if token~=loadToken then return end
   loading.Visible=false
-  if done and ok and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId)
-  else event:FireServer("loadFailed") notice.Text="Não foi possível carregar a arena. Tente novamente." end
+  -- Geometry gates readiness; optional unavailable audio/decals must not eject a player.
+  if map.Parent and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId) end
  end)
 end
 local noticeUntil=0
-local captureActive=false
-local cinematicActive=false
+local captureActive=false local captureToken=0 local captureTween=nil
+local introToken=0
 local introClone=nil local introOriginal=nil local introValue=nil local introConnection=nil local introTween=nil local introHidden={}
 local capture=Instance.new("Frame") capture.Name="Capture" capture.Size=UDim2.fromScale(1,1) capture.BackgroundColor3=Color3.fromRGB(105,0,7) capture.BackgroundTransparency=1 capture.BorderSizePixel=0 capture.ZIndex=95 capture.Visible=false capture.Parent=gui
 local captureText=text(capture,"Killer","",UDim2.new(1,0,0,60),UDim2.new(0,0,.16,0)) captureText.TextSize=22 captureText.Font=Enum.Font.GothamBold captureText.ZIndex=96
 
+local function cancelCapture()
+ captureToken+=1 captureActive=false capture.Visible=false
+ if captureTween then captureTween:Cancel() captureTween=nil end
+end
+
 local function caughtAnimation(killer,killerCF)
  if captureActive then return end
+ captureToken+=1 local token=captureToken
  captureActive=true capture.Visible=true captureText.Text=tostring(killer or "")
  local camera=workspace.CurrentCamera
  local char=player.Character
@@ -186,14 +240,16 @@ local function caughtAnimation(killer,killerCF)
   local start=CFrame.lookAt(head.Position+dir.Unit*1.2+Vector3.new(0,.35,0),killerPos+Vector3.new(0,1.8,0))
   local finish=CFrame.lookAt(head.Position+dir.Unit*.25+Vector3.new(0,.15,0),killerPos+Vector3.new(0,1.7,0))
   camera.CFrame=start camera.FieldOfView=58
-  TweenService:Create(camera,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{CFrame=finish,FieldOfView=72}):Play()
+  captureTween=TweenService:Create(camera,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{CFrame=finish,FieldOfView=72}) captureTween:Play()
  end
  TweenService:Create(capture,TweenInfo.new(.10),{BackgroundTransparency=.58}):Play()
  task.wait(.34)
+ if token~=captureToken then return end
  TweenService:Create(capture,TweenInfo.new(.25),{BackgroundTransparency=1}):Play()
  task.wait(.28)
+ if token~=captureToken then return end
  if rootJoint and oldTransform then rootJoint.Transform=oldTransform end
- if camera then
+ if camera and player.Character==char and not cinematicActive and not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu") and not player:GetAttribute("Spectating") then
   camera.CameraType=oldType or Enum.CameraType.Custom camera.FieldOfView=oldFov
   if oldType==Enum.CameraType.Scriptable and oldCF then camera.CFrame=oldCF
   else
@@ -229,6 +285,7 @@ local function cameraBackTarget()
 end
 
 local function cancelJasonIntro(restore)
+ introToken+=1
  cinematicActive=false gui:SetAttribute("CinematicActive",false)
  if introTween then pcall(function() introTween:Cancel() end) introTween=nil end
  if introConnection then introConnection:Disconnect() introConnection=nil end
@@ -253,7 +310,9 @@ local function playJasonIntro(data,original)
  if not camera or typeof(data.startCF)~="CFrame" or typeof(data.endCF)~="CFrame" or typeof(data.cameraCF)~="CFrame" then return end
  local duration=math.clamp(tonumber(data.duration) or 4,3.5,5)
  local runDuration=math.clamp(tonumber(data.runDuration) or 3.15,2.5,duration-.5)
+ introToken+=1 local token=introToken
  cinematicActive=true gui:SetAttribute("CinematicActive",true)
+ loading.Visible=false
  introTop.Visible=true introBottom.Visible=true
  introOriginal=original hideOriginalJason(original,true)
  introClone=original:Clone()
@@ -280,14 +339,14 @@ local function playJasonIntro(data,original)
  introTween=TweenService:Create(introValue,TweenInfo.new(runDuration,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Value=data.endCF})
  introTween:Play()
  task.delay(runDuration,function()
-  if not cinematicActive or not camera.Parent then return end
+  if token~=introToken or not cinematicActive or not camera.Parent then return end
   local targetCF=cameraBackTarget()
   if targetCF then
    TweenService:Create(camera,TweenInfo.new(math.max(.55,duration-runDuration),Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CFrame=targetCF,FieldOfView=70}):Play()
   end
  end)
  task.delay(duration,function()
-  if not cinematicActive then return end
+  if token~=introToken or not cinematicActive then return end
   local _,hum=cameraBackTarget()
   hideOriginalJason(introOriginal,false) introOriginal=nil
   if introClone then introClone:Destroy() introClone=nil end
@@ -351,7 +410,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="jasonIntro" then playJasonIntro(a,b)
  elseif action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
- elseif action=="reset" then cancelJasonIntro(true) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
+ elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" then task.spawn(caughtAnimation,a,b)
@@ -386,7 +445,9 @@ RunService.RenderStepped:Connect(function(dt)
  local isJason=player:GetAttribute("IsJason")==true
  local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and not cinematicActive
  if active then
-  if not jasonTheme.IsPlaying then jasonTheme:Play() end
+  if player:GetAttribute("MusicEnabled")~=false then
+   if not jasonTheme.IsPlaying then jasonTheme:Play() end
+  elseif jasonTheme.IsPlaying then jasonTheme:Stop() end
   local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
   local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
   local targetFov=speed>4 and 84 or 78
@@ -405,7 +466,7 @@ local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true or cinematicActive
- result.Visible=result.Visible and os.clock()<resultUntil
+ if result.Visible and os.clock()>=resultUntil then hideResult() end
  musicButton.Visible=not hidden musicPanel.Visible=musicPanel.Visible and not hidden
  local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
@@ -413,7 +474,7 @@ RunService.RenderStepped:Connect(function(dt)
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  countdown.Visible=not hidden and phase=="Intervalo"
  actionLayout()
- countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8)
+ if left==0 and phase=="Intervalo" then countdownText.Text="Atravesse a porta" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
  bar.Visible=controlsVisible leave.Visible=not hidden and inRound
@@ -433,8 +494,12 @@ RunService.RenderStepped:Connect(function(dt)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)
  notice.Visible=not hidden
- if down then notice.Text="Caído • "..math.max(0,math.ceil((player:GetAttribute("BleedoutAt") or 0)-workspace:GetServerTimeNow())).."s para receber ajuda"
- elseif (player:GetAttribute("ReviveAt") or 0)>workspace:GetServerTimeNow() then notice.Text="Reanimando… fique parado"
+ local reviveLeft=(player:GetAttribute("ReviveAt") or 0)-workspace:GetServerTimeNow()
+ local protected=(player:GetAttribute("ProtectedUntil") or 0)-workspace:GetServerTimeNow()
+ if reviveLeft>0 then notice.Text=string.format("Reanimando • %.1fs • fique parado",reviveLeft)
+ elseif protected>0 and inRound then notice.Text="Proteção de entrada • "..math.ceil(protected).."s"
+ elseif down then notice.Text="Caído • "..math.max(0,math.ceil((player:GetAttribute("BleedoutAt") or 0)-workspace:GetServerTimeNow())).."s para receber ajuda"
+
  elseif os.clock()>noticeUntil then notice.Text=inRound and config.Killers[killer] and config.Killers[killer].tip or "" end
  local spec=player:GetAttribute("Spectating") and not hidden
  spectate.Visible=spec or false
@@ -486,3 +551,13 @@ task.spawn(function()
  end
 end)
 
+
+
+if player.CharacterAdded then player.CharacterAdded:Connect(function()
+ cancelCapture() cancelJasonIntro(not player:GetAttribute("InMenu") and not player:GetAttribute("VoidActive"))
+end) end
+if player.GetAttributeChangedSignal then
+ player:GetAttributeChangedSignal("VoidActive"):Connect(function()
+  if player:GetAttribute("VoidActive") then cancelCapture() cancelJasonIntro(false) loading.Visible=false end
+ end)
+end

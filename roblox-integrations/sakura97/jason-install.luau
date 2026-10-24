@@ -127,7 +127,7 @@ local net=replace(RS,"Survival","Folder")
 replace(net,"Action","RemoteEvent") replace(net,"Update","RemoteEvent")
 local config=replace(net,"Config","ModuleScript") config.Source=__CONFIG_SOURCE__
 local bridge=replace(SSS,"SurvivalBridge","Folder")
-for _,n in ipairs({"DeathRequest","DeathFinished","RoundEliminate"}) do replace(bridge,n,"BindableEvent") end
+for _,n in ipairs({"DeathRequest","DeathFinished","RoundEliminate","CancelDeath"}) do replace(bridge,n,"BindableEvent") end
 local builder=replace(SSS,"MapBuilder","ModuleScript") builder.Source=__MAP_BUILDER_SOURCE__
 local mapReports=require(builder).build(load,sanitize,maps)
 local a
@@ -169,6 +169,16 @@ end
 local clips=Instance.new("Folder",rig) clips.Name="MotionClips"
 local saves=assert(rig:FindFirstChild("AnimSaves")) compact(saves,clips) saves:Destroy()
 rig.Parent=rigs
+-- A tiny presentation copy keeps only the winning pose clip, not the full combat animation library.
+local portrait=rig:Clone() portrait.Name="PresentationJason"
+for _,clip in ipairs(portrait.MotionClips:GetChildren()) do if clip.Name~="Winning Screen" then clip:Destroy() end end
+portrait.MotionClips:SetAttribute("ClipCount",#portrait.MotionClips:GetChildren())
+assert(portrait.MotionClips:FindFirstChild("Winning Screen"),"Winning animation missing")
+for _,p in ipairs(portrait:GetDescendants()) do
+ if p:IsA("BasePart") then p.Anchored=p==portrait.PrimaryPart p.CanCollide=false p.CanTouch=false p.CanQuery=false p.CastShadow=false end
+end
+portrait.Parent=net
+
 local flashlightAsset=load(4573262309)
 local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
 assert(flashlightSource,"LANTERNA asset 4573262309 contains no Tool")
@@ -205,6 +215,9 @@ local crouchSaves=crouchAsset:FindFirstChild("AnimSaves",true) or crouchAsset
 compact(crouchSaves,crouch) crouchAsset:Destroy()
 assert((crouch:GetAttribute("ClipCount") or 0)>0,"R15 Crouch Animation contains no KeyframeSequence")
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
+scriptAt(SSS,"IslandServer","Script",__ISLAND_SERVER_SOURCE__)
+scriptAt(SP,"VoidSequence","LocalScript",__VOID_SOURCE__)
+scriptAt(SP,"ArenaAmbience","LocalScript",__AMBIENCE_SOURCE__)
 scriptAt(SSS,"ProfileService","ModuleScript",__PROFILE_SOURCE__)
 scriptAt(SSS,"RoundRules","ModuleScript",__RULES_SOURCE__)
 scriptAt(SSS,"PursuerAI","ModuleScript",__AI_SOURCE__)

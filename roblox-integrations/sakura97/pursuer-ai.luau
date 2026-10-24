@@ -115,6 +115,7 @@ function AI.start(model,map,spec,ctx)
    local canSee,pr=visible(p)
    if canSee and pr then
     local d=(pr.Position-r.Position).Magnitude
+    if p.GetAttribute and p:GetAttribute("Downed") then d+=25 end
     if p==target then d-=10 end
     if d<nearest then nearest=d chosen=p end
    end

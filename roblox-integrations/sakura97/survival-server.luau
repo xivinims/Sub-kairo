@@ -8,8 +8,10 @@ pcall(function() profileStore=game:GetService("DataStoreService"):GetDataStore("
 local Profiles=require(SSS:WaitForChild("ProfileService"))
 local profiles=Profiles.new(profileStore)
 local musicObjects={} local MUSIC_PRICE=20
-local function saveProfile(p)
- local ok=profiles:save(p)
+local function saveProfile(p,flush)
+ if not p:GetAttribute("ProfileLoaded") and p.Parent then profiles:load(p) end
+ local ok
+ if flush then ok=profiles:flush(p,20) else ok=profiles:save(p) end
  if not ok and p.Parent and p:GetAttribute("ProfileLoaded") then warn("Suvivers profile save pending for "..tostring(p.UserId)) end
  return ok
 end
@@ -26,7 +28,7 @@ local function humanoid(p) return p.Character and p.Character:FindFirstChildOfCl
 local function entry(p) return state.entries[p.UserId] end
 local function now() return workspace:GetServerTimeNow() end
 local function players()
- local list={} for _,p in ipairs(Players:GetPlayers()) do local e=entry(p) if e and e.status=="alive" and p~=jasonPlayer then table.insert(list,p) end end return list
+ local list={} for _,p in ipairs(Players:GetPlayers()) do local e=entry(p) if e and (e.status=="alive" or e.status=="downed") and p~=jasonPlayer then table.insert(list,p) end end return list
 end
 local function sync(p)
  p:SetAttribute("IsJason",p==jasonPlayer)
@@ -35,6 +37,7 @@ local function sync(p)
  p:SetAttribute("Downed",e~=nil and e.status=="downed")
  p:SetAttribute("Injured",e~=nil and e.injured==true)
  p:SetAttribute("BleedoutAt",e and e.deadline or 0)
+ p:SetAttribute("ProtectedUntil",e and e.protectedUntil or 0)
  p:SetAttribute("HasMedkit",e~=nil and e.kit or false) p:SetAttribute("HasBoost",e~=nil and e.boost or false)
  p:SetAttribute("RoundStatus",e and e.status or "lobby")
  p:SetAttribute("Queued",queued[p] or false)
@@ -82,6 +85,7 @@ local function setFlashlight(p,on)
 end
 
 local function lobby(p)
+ bridge.CancelDeath:Fire(p)
  clearFlashlight(p)
  local r=root(p) local h=humanoid(p)
  if r then r.Anchored=false p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(0,4,0)) r.AssemblyLinearVelocity=Vector3.zero end
@@ -100,6 +104,10 @@ end)
 local function vulnerable(p)
  local e=entry(p) return p~=jasonPlayer and e and e.status=="alive" and now()>(e.protectedUntil or 0)
 end
+local function targetable(p)
+ local e=entry(p)
+ return vulnerable(p) or (p~=jasonPlayer and e and e.status=="downed" and now()>(e.downedAt or now())+5 and not p:GetAttribute("BeingExecuted"))
+end
 local function injure(p)
  if not vulnerable(p) then return false end
  local e=entry(p)
@@ -114,7 +122,7 @@ end
 local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
  clearFlashlight(p)
- local e=entry(p) e.hits=(e.hits or 0)+1 local hitStats=p:FindFirstChild("leaderstats") if hitStats and hitStats:FindFirstChild("Atingido") then hitStats.Atingido.Value+=1 end e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName sync(p)
+ local e=entry(p) e.downedAt=now() e.hits=(e.hits or 0)+1 local hitStats=p:FindFirstChild("leaderstats") if hitStats and hitStats:FindFirstChild("Atingido") then hitStats.Atingido.Value+=1 end e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName sync(p)
  net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
 end
 local function executeDowned(p,attacker)
@@ -160,11 +168,11 @@ local function catchPlayer(p)
  end
  if not vulnerable(p) then return end
  local r=root(p) if not r or (r.Position-npc.PrimaryPart.Position).Magnitude>6 then return end
- catching[p]=true local attacker=npc local roundId=state.id
+ catching[p]=true local attacker=npc local roundId=state.id local targetCharacter=p.Character
  attacker:SetAttribute("AttackAt",now()) attacker:SetAttribute("AttackUntil",now()+.75)
  task.delay(.3,function()
   catching[p]=nil
-  if state.id~=roundId or npc~=attacker or not attacker.Parent or not p.Parent or not vulnerable(p) then return end
+  if p.Character~=targetCharacter or state.id~=roundId or npc~=attacker or not attacker.Parent or not p.Parent or not vulnerable(p) then return end
   local rr=root(p) if not rr or (rr.Position-attacker.PrimaryPart.Position).Magnitude>6 then return end
   local param=RaycastParams.new() param.FilterType=Enum.RaycastFilterType.Exclude param.FilterDescendantsInstances={attacker}
   local hit=workspace:Raycast(attacker.PrimaryPart.Position,rr.Position-attacker.PrimaryPart.Position,param)
@@ -368,12 +376,14 @@ Players.PlayerAdded:Connect(hook)
 for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
  if p==jasonPlayer then jasonPlayer=nil endTime=now() end
- saveProfile(p) profiles.records[p]=nil saveAt[p]=nil if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
+ saveAt[p]=nil if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
  portalInside[p]=nil morphing[p]=nil
- state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil end)
+ state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil
+ saveProfile(p,true) profiles.records[p]=nil
+end)
 if game.BindToClose then game:BindToClose(function()
  local pending=0
- for _,p in ipairs(Players:GetPlayers()) do pending+=1 task.spawn(function() saveProfile(p) pending-=1 end) end
+ for _,p in ipairs(Players:GetPlayers()) do pending+=1 task.spawn(function() saveProfile(p,true) pending-=1 end) end
  local deadline=os.clock()+25
  while pending>0 and os.clock()<deadline do task.wait(.1) end
 end) end
@@ -470,7 +480,7 @@ local function finish()
    if e then
     local reward=math.max(10,math.floor((e.survivalTime or 0)/4))+(jasonWon and p==jasonPlayer and 30 or 0)
     earned[p]=reward profiles:awardXP(p,reward)
-    for _,row in ipairs(participants) do if row.userId==p.UserId then row.level=Profiles.level(p.leaderstats and p.leaderstats.XP.Value or (p:FindFirstChild("leaderstats") and p:FindFirstChild("leaderstats").XP.Value or 0)) end end
+    for _,row in ipairs(participants) do if row.userId==p.UserId then row.level=Profiles.level(p:FindFirstChild("leaderstats") and p:FindFirstChild("leaderstats").XP.Value or 0) end end
     task.spawn(saveProfile,p)
    end
   end
@@ -562,7 +572,7 @@ task.spawn(function()
      for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then pcall(function() d:SetNetworkOwner(jasonPlayer) end) end end
      net.Update:FireClient(jasonPlayer,"notice","Você é Jason. Persiga os sobreviventes e use o botão de ataque.")
     else
-     brain=AI.start(npc,arena,config.Killers.Jason,{players=players,vulnerable=vulnerable,catch=catchPlayer})
+     brain=AI.start(npc,arena,config.Killers.Jason,{players=players,vulnerable=targetable,catch=catchPlayer})
     end
     endTime=introUntil+Rules.Duration
     net:SetAttribute("Phase","Partida")

@@ -23,11 +23,17 @@ local ok,err=xpcall(function()
  step(4)
  assert(rig:GetAttribute("TargetUserId")==0 and rig:GetAttribute("AIState")=="Search","Jason failed to switch to path search after occlusion grace")
  assert(rig:GetAttribute("DirectChase")==false,"Jason kept direct chase through wall")
- visible=false step(45) assert(rig:GetAttribute("AIState")=="Patrol","Jason did not abandon stale target")
+ local before=rig:GetAttribute("PathRequests") or 0
+ visible=false step(45)
+ assert((rig:GetAttribute("PathRequests") or 0)-before<=17,"Pathfinding requests were not rate limited")
+  assert(rig:GetAttribute("AIState")=="Patrol","Jason did not abandon stale target")
  brain.noise(Vector3.new(15,2000,0),65) step() assert(rig:GetAttribute("AIState")=="Investigate","Audible noise not investigated")
  step(35) brain.noise(Vector3.new(500,2000,0),65) step() assert(rig:GetAttribute("AIState")=="Patrol","Jason heard outside hearing radius")
- wall:Destroy() visible=true root.Position=Vector3.new(0,2000,-3) step() assert(attacks==1,"Close target not attacked")
+ visible=true root.Position=Vector3.new(0,2000,-3) wall.Position=Vector3.new(0,2000,-1.5) step(5)
+ assert(attacks==0,"Jason attacked through a solid wall")
+ wall:Destroy() step() assert(attacks==1,"Close target not attacked")
  step(3) assert(attacks==1,"Attack cooldown failed")
 end,debug.traceback)
 brain.stop() host:Destroy() assert(ok,err)
-return {ok=true,lineOfSight=true,directPredictiveChase=true,occlusionGrace=true,pathFallback=true,searchMemoryExpires=true,hearingRadius=true,attackCooldown=true}
+return {ok=true,pathRequestBudget=true,noAttacksThroughWalls=true,lineOfSight=true,directPredictiveChase=true,occlusionGrace=true,pathFallback=true,searchMemoryExpires=true,hearingRadius=true,attackCooldown=true}
+

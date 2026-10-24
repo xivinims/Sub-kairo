@@ -182,9 +182,9 @@ end
 
 local driven=setmetatable({},{__mode="k"})
 local function setDefaultAnimate(model,enabled)
- if driven[model]==enabled then return end
- driven[model]=enabled
  local a=model:FindFirstChild("Animate")
+ if driven[model]==enabled and (not a or animateState[model]~=nil) then return end
+ driven[model]=enabled
  if a and a:IsA("LocalScript") then
   if animateState[model]==nil then animateState[model]=not a.Disabled end
   a.Disabled=not (enabled and animateState[model])
@@ -196,7 +196,21 @@ local function setDefaultAnimate(model,enabled)
  end
 end
 
+local presentationModels=setmetatable({},{__mode="k"})
+local pg=Players.LocalPlayer:WaitForChild("PlayerGui")
+local function presentation(instance)
+ if instance:IsA("Model") and instance:GetAttribute("PresentationPursuer") then presentationModels[instance]=true end
+end
+pg.DescendantAdded:Connect(presentation)
+for _,d in ipairs(pg:GetDescendants()) do presentation(d) end
 Run.PreSimulation:Connect(function(dt)
+ for model in pairs(presentationModels) do
+  if not model.Parent then presentationModels[model]=nil
+  else
+   local folder=model:FindFirstChild("MotionClips") local d=folder and prepare(model,folder)
+   if d then apply(d,"Winning Screen",dt,false) end
+  end
+ end
  for _,model in ipairs(workspace:GetChildren()) do
   if model:IsA("Model") and (model:GetAttribute("ActivePursuer") or model:GetAttribute("CinematicPursuer")) and model.PrimaryPart then
    local folder=model:FindFirstChild("MotionClips")
