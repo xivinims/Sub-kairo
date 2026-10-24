@@ -103,22 +103,11 @@ local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132))
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
-local firstPerson=false
-local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-102,0,2),function()
- firstPerson=not firstPerson
-end)
-cameraButton.TextSize=23 cameraButton.BackgroundTransparency=1 cameraButton.UIStroke.Enabled=false
 RunService.RenderStepped:Connect(function()
  local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
- cameraButton.Visible=not blocked and not settingsOverlay.Visible
  if blocked then return end
- if firstPerson then
-  player.CameraMode=Enum.CameraMode.LockFirstPerson
- else
-  player.CameraMode=Enum.CameraMode.Classic
-  player.CameraMinZoomDistance=10 player.CameraMaxZoomDistance=10
- end
- cameraButton.Text=firstPerson and "1ª" or "3ª"
+ player.CameraMode=Enum.CameraMode.Classic
+ player.CameraMinZoomDistance=10 player.CameraMaxZoomDistance=10
 end)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,22) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
@@ -813,7 +802,7 @@ RunService.RenderStepped:Connect(function(dt)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
- run.Visible=controlsVisible and inRound and not down
+ run.Visible=controlsVisible and inRound and not down and (isJason or not player:GetAttribute("Injured"))
  run.Text=isJason and "ATACAR" or "CORRER"
  run.TextTransparency=(not isJason and mode=="run") and 0 or .12
  mode=player:GetAttribute("MoveMode") or "walk"
