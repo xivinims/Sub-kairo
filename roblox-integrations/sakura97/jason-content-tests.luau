@@ -127,7 +127,7 @@ assert(not survivalServerSource:find('action=="boost"',1,true),"Legacy boost ser
 assert(not survivalServerSource:find('action=="musicPlay"',1,true) and not survivalServerSource:find('action=="musicBuy"',1,true),"Legacy music server actions returned")
 assert(not survivalServerSource:find('value=="slow"',1,true) and not survivalServerSource:find("introSceneData",1,true),"Legacy slow/intro server code returned")
 assert(not survivalServerSource:find("ArenaEntrance",1,true),"Removed arena entrance marker logic returned")
-assert(survivalServerSource:find("SurvivalCharacterHooked",1,true),"Character death-hook deduplication missing")
+assert(survivalServerSource:find("hookedCharacters=setmetatable",1,true),"Character death-hook deduplication missing")
 assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
 assert(survivalClientSource:find('GoodLuck","GOOD LUCK"',1,true),"Map Good Luck backdrop missing")
 assert(not survivalClientSource:find("cancelJasonIntro",1,true) and not survivalClientSource:find("EntryFlash",1,true),"Dead killer intro/door client code returned")
