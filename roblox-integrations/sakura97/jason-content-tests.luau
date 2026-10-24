@@ -114,7 +114,15 @@ assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAn
 assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
 assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
 assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
+local shared=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerMotionLibraries"),"Shared pursuer motion libraries missing")
+assert(shared:FindFirstChild("Default") and shared.Default:GetAttribute("ClipCount")==7,"Default shared motion library invalid")
+assert(shared:FindFirstChild("Cool") and shared.Cool:GetAttribute("ClipCount")==7,"Cool shared motion library invalid")
+for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
+ local k=assert(assets.Killers:FindFirstChild(name))
+ assert(not k:FindFirstChild("MotionClips"),name.." still duplicates MotionClips")
+ assert(k:GetAttribute("MotionLibrary")=="Default" or k:GetAttribute("MotionLibrary")=="Cool",name.." missing shared motion reference")
+end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 

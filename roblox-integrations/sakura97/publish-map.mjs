@@ -174,6 +174,12 @@ result.logoTexture=ui.MenuPrincipal.Logo.Image
 local ser=game:GetService("SerializationService")
 result.mapBytes=buffer.len(ser:SerializeInstancesAsync({assets.Maps}))
 result.rigBytes=buffer.len(ser:SerializeInstancesAsync({assets.Killers}))
+result.motionLibraryBytes=buffer.len(ser:SerializeInstancesAsync({game.ReplicatedStorage.Survival.KillerMotionLibraries}))
+result.killerBytes={}
+for _,killer in ipairs(assets.Killers:GetChildren()) do
+ local ok,b=pcall(function() return ser:SerializeInstancesAsync({killer}) end)
+ result.killerBytes[killer.Name]=ok and buffer.len(b) or -1
+end
 local function testController()
 ${test}
 end
@@ -243,6 +249,9 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Intro"))
+  assert(game.ReplicatedStorage.Survival.KillerMotionLibraries.Default:GetAttribute("ClipCount")==7)
+  assert(game.ReplicatedStorage.Survival.KillerMotionLibraries.Cool:GetAttribute("ClipCount")==7)
+  assert(not game.ServerStorage.SurvivalAssets.Killers.JohnDoe:FindFirstChild("MotionClips"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredIdle"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredWalk"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))

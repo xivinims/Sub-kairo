@@ -64,6 +64,14 @@ local function decodeClips(folder)
  sharedClips[folder]=clips return clips
 end
 
+local function motionFolder(model)
+ local localFolder=model:FindFirstChild("MotionClips")
+ if localFolder then return localFolder end
+ local name=model:GetAttribute("MotionLibrary")
+ local libraries=net:FindFirstChild("KillerMotionLibraries")
+ return name and libraries and libraries:FindFirstChild(name) or nil
+end
+
 local function prepare(model,folder)
  if not watchedRigs[model] then
   watchedRigs[model]=true
@@ -265,7 +273,7 @@ Run.PreSimulation:Connect(function(dt)
  for model in pairs(presentationModels) do
   if not model.Parent then presentationModels[model]=nil
   else
-   local folder=model:FindFirstChild("MotionClips") local d=folder and prepare(model,folder)
+   local folder=motionFolder(model) local d=folder and prepare(model,folder)
    local visible=true local ancestor=model.Parent
    while ancestor and ancestor~=pg do
     if ancestor:IsA("GuiObject") and not ancestor.Visible then visible=false break end
@@ -276,7 +284,7 @@ Run.PreSimulation:Connect(function(dt)
  end
  for _,model in ipairs(workspace:GetChildren()) do
   if model:IsA("Model") and (model:GetAttribute("ActivePursuer") or model:GetAttribute("CinematicPursuer")) and model.PrimaryPart then
-   local folder=model:FindFirstChild("MotionClips")
+   local folder=motionFolder(model)
    if folder then
     local d=prepare(model,folder)
     if model:GetAttribute("CinematicPursuer") then

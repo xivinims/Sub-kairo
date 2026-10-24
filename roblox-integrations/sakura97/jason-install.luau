@@ -227,6 +227,24 @@ local function slot(destination,name,source,original,id)
  local clip=assert(source:FindFirstChild(original),"Missing animation "..original):Clone()
  clip.Name=name clip:SetAttribute("OriginalClipName",original) clip:SetAttribute("SourceAssetId",id) clip.Parent=destination
 end
+-- Shared compressed motion libraries prevent the same animation payload from being embedded in every pursuer rig.
+local motionLibraries=Instance.new("Folder",net) motionLibraries.Name="KillerMotionLibraries"
+local defaultMotion=Instance.new("Folder",motionLibraries) defaultMotion.Name="Default"
+for _,motion in ipairs({"Idle","Walk","Run"}) do slot(defaultMotion,"Jason "..motion,donor,motion,103232099547025) end
+slot(defaultMotion,"Jason Slash",donor,"Slash",103232099547025)
+slot(defaultMotion,"Jason_Kill",donor,"Kill",103232099547025)
+slot(defaultMotion,"Jason Intro",donor,"JohnDoe Intro",103232099547025)
+slot(defaultMotion,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
+defaultMotion:SetAttribute("ClipCount",#defaultMotion:GetChildren())
+
+local coolMotion=Instance.new("Folder",motionLibraries) coolMotion.Name="Cool"
+for _,motion in ipairs({"Idle","Walk","Run"}) do slot(coolMotion,"Jason "..motion,cool,"M4C00lkidd_"..motion,125287203669107) end
+slot(coolMotion,"Jason Slash",donor,"Slash",103232099547025)
+slot(coolMotion,"Jason_Kill",donor,"Kill",103232099547025)
+slot(coolMotion,"Jason Intro",donor,"JohnDoe Intro",103232099547025)
+slot(coolMotion,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
+coolMotion:SetAttribute("ClipCount",#coolMotion:GetChildren())
+
 for _,spec in ipairs({
  {name="JohnDoe",id=103232099547025,root="John"},
  {name="Chucky",id=95580261594507,root="Chucky",cool=true},
@@ -249,15 +267,8 @@ for _,spec in ipairs({
  model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
  h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
- local motions=Instance.new("Folder",model) motions.Name="MotionClips"
- for _,motion in ipairs({"Idle","Walk","Run"}) do
-  slot(motions,"Jason "..motion,spec.cool and cool or donor,spec.cool and "M4C00lkidd_"..motion or motion,spec.cool and 125287203669107 or 103232099547025)
- end
- slot(motions,"Jason Slash",donor,"Slash",103232099547025)
- slot(motions,"Jason_Kill",donor,"Kill",103232099547025)
- slot(motions,"Jason Intro",donor,"JohnDoe Intro",103232099547025)
- slot(motions,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
- motions:SetAttribute("ClipCount",#motions:GetChildren()) model.Parent=rigs
+ model:SetAttribute("MotionLibrary",spec.cool and "Cool" or "Default")
+ model.Parent=rigs
  if asset~=johnAsset then asset:Destroy() end
 end
 johnAsset:Destroy() donor:Destroy() cool:Destroy()
