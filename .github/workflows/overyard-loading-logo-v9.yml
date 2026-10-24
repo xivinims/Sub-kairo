@@ -1,0 +1,30 @@
+name: Overyard Loading Logo V9
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-loading-logo-v9/**"
+      - ".github/workflows/overyard-loading-logo-v9.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155-loading-logo-v9
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Fix loading logo and verify
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-loading-logo-v9/publish.mjs

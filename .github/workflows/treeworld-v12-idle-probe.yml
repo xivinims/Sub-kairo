@@ -1,0 +1,28 @@
+name: Inspect Naoya idle before forest release
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: [".github/workflows/treeworld-v12-idle-probe.yml"]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          node --input-type=module <<'JS'
+          import {execute,first} from './treeworld-v12/cloud.mjs';
+          const result=first(await execute(`
+          local result={version=game.PlaceVersion,idle={}}
+          local ok,asset=pcall(function()return game:GetService('InsertService'):LoadAsset(82585639490423)end)
+          result.loaded=ok
+          if ok then for _,p in ipairs(asset:GetDescendants())do local row={name=p.Name,class=p.ClassName};if p:IsA('Animation')then row.id=p.AnimationId elseif p:IsA('StringValue')then row.value=p.Value end;table.insert(result.idle,row)end else result.error=tostring(asset)end
+          return result`));
+          console.log(JSON.stringify(result));
+          JS

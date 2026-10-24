@@ -1,0 +1,26 @@
+name: TreeWorld Clean V6 Final Verify
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-clean-v6-check/**"
+      - ".github/workflows/treeworld-clean-v6-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify saved clean v6
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-clean-v6-check/verify.mjs

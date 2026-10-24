@@ -1,0 +1,33 @@
+name: Overyard Mage Duel V1
+
+on:
+  push:
+    branches: [roblox-publisher]
+    paths:
+      - "mage-duel-v1/install.luau"
+      - "mage-duel-v1/magic-server.luau"
+      - "mage-duel-v1/magic-client.luau"
+      - "mage-duel-v1/verify.luau"
+      - "mage-duel-v1/publish.mjs"
+      - ".github/workflows/overyard-mage-duel-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: overyard-place-publisher
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install clean mage duel and verify
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node mage-duel-v1/publish.mjs

@@ -1,0 +1,30 @@
+name: Suvivers Validate and Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [roblox-publisher]
+    paths:
+      - 'roblox-integrations/sakura97/**'
+      - '.github/workflows/sakura97-publish.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sakura97-place-publisher
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate Suvivers and publish when enabled
+        env:
+          SURVIVERS_DRY_RUN: '0'
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node roblox-integrations/sakura97/publish.mjs

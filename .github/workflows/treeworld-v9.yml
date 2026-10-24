@@ -1,0 +1,25 @@
+name: TreeWorld V9 Photo Scenes and Logo Loading
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ["treeworld-v9/patch.luau", "treeworld-v9/verify.luau", "treeworld-v9/*-client.luau", "treeworld-v9/loading-view.luau", "treeworld-v9/publish.mjs", ".github/workflows/treeworld-v9.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155-v9
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check publisher syntax
+        run: node --check treeworld-v9/publish.mjs
+      - name: Apply scenes, check passage geometry, save and verify persisted version
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v9/publish.mjs

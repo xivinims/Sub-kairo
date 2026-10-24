@@ -1,0 +1,53 @@
+{
+  "sourceSha256": "640b3d960d6fb445442b9d3b6876d4af54f71026030e7bef7f4c7129bb747349",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/90/luau-execution-sessions/7892572e-c0c1-4161-a207-37884c25e552/tasks/7892572e-c0c1-4161-a207-37884c25e552",
+    "createTime": "2026-10-14T03:31:34.568Z",
+    "updateTime": "2026-10-14T03:31:37.845Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "readOnly": true,
+          "audio": [
+            {
+              "loaded": true,
+              "length": 27.018666666666668,
+              "id": 9120552550
+            },
+            {
+              "loaded": true,
+              "length": 5.978412698412699,
+              "id": 9083826864
+            },
+            {
+              "loaded": true,
+              "length": 0.3798185941043084,
+              "id": 135037154891351
+            }
+          ],
+          "seats": [
+            {
+              "rig": "R6",
+              "weldDot": 1.0000081062316895,
+              "sit": true,
+              "rootDot": 1.0000081062316895,
+              "weld": "HumanoidRootPart"
+            },
+            {
+              "rig": "R15",
+              "weldDot": 1.0000081062316895,
+              "sit": false,
+              "rootDot": 1.0000040531158447,
+              "weld": "HumanoidRootPart"
+            }
+          ]
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "freshVerification": null
+}

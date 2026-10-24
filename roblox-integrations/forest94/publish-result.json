@@ -1,0 +1,123 @@
+{
+  "sourceSha256": "4dfc49a86031d0a7702c80957a503595e5c84dc230a26879bf0379120803c85e",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/93/luau-execution-sessions/1af78c7f-e515-4242-b60b-7f7a459e1cef/tasks/1af78c7f-e515-4242-b60b-7f7a459e1cef",
+    "createTime": "2026-10-14T12:19:52.163Z",
+    "updateTime": "2026-10-14T12:19:59.416Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "expectedVersion": 94,
+          "published": true,
+          "reports": {
+            "water": {
+              "stoneFaces": 210,
+              "waterAsset": 6833503207,
+              "stones": 10,
+              "waterTiles": 188,
+              "shoreFoam": 138
+            },
+            "bridges": {
+              "parts": 1142,
+              "bridges": 2
+            },
+            "landscape": {
+              "stairSteps": 20,
+              "lakeColumns": 1118,
+              "flowers": 114,
+              "removedLogs": 12,
+              "removedVegetation": 29
+            },
+            "tests": {
+              "cartoonWaterTiles": 188,
+              "facetedStones": 10,
+              "exactLampPosts": 30,
+              "teaTables": 4,
+              "teaCups": 16,
+              "noAnimals": true,
+              "directCupServe": true,
+              "trees": 453,
+              "parts": 10455,
+              "actualRootProbes": 7723,
+              "nativeGrassRequested": true,
+              "lakeWaterProbes": 45,
+              "stoneWalkProbes": 30,
+              "pbr": 3074,
+              "lowLakeFlowers": 114,
+              "fogStable": true,
+              "plants": 1443,
+              "ruins": 4,
+              "noTeaPopups": true,
+              "walkProbes": 855,
+              "audio": 7,
+              "compiled": 28,
+              "finiteWorldGeometry": true
+            },
+            "roots": {
+              "plants": 1443,
+              "removedDecor": 0,
+              "rootProbes": 7723,
+              "trees": 453,
+              "removedPlants": 0
+            },
+            "lamps": {
+              "lamps": 30,
+              "sourceAssetId": 11324928349
+            }
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "publication": null,
+  "freshVerification": {
+    "path": "universes/9421311218/places/118064584465155/versions/94/luau-execution-sessions/dba6ca14-1d8d-4d0c-976f-fc77ab22f850/tasks/dba6ca14-1d8d-4d0c-976f-fc77ab22f850",
+    "createTime": "2026-10-14T12:20:01.039Z",
+    "updateTime": "2026-10-14T12:20:06.008Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "version": 94,
+          "tests": {
+            "cartoonWaterTiles": 188,
+            "facetedStones": 10,
+            "exactLampPosts": 30,
+            "teaTables": 4,
+            "teaCups": 16,
+            "noAnimals": true,
+            "directCupServe": true,
+            "trees": 453,
+            "parts": 10455,
+            "actualRootProbes": 7723,
+            "nativeGrassRequested": true,
+            "lakeWaterProbes": 45,
+            "stoneWalkProbes": 30,
+            "pbr": 3074,
+            "lowLakeFlowers": 114,
+            "fogStable": true,
+            "plants": 1443,
+            "ruins": 4,
+            "noTeaPopups": true,
+            "walkProbes": 855,
+            "audio": 7,
+            "compiled": 28,
+            "finiteWorldGeometry": true
+          },
+          "ok": true,
+          "nativeGrassSettings": {
+            "Decoration": true,
+            "GrassLength": 0.4000000059604645
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  }
+}

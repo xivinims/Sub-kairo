@@ -1,0 +1,42 @@
+name: Resolve Caio outfit and animation
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ['.github/workflows/treeworld-v14-assets-inspect.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          node --input-type=module <<'JS'
+          import {execute,first} from './treeworld-v12/cloud.mjs';
+          const result=first(await execute(`
+          local result={}
+          for kind,id in pairs({hat=18654587595,glasses=18557389382,hair=124964364612906,head=107154176765760,shirt=135542921435071,pants=93944579042140,waist=15591115363,idle=99777856614604})do
+           local row={id=id,items={}};result[kind]=row
+           local ok,err=pcall(function()
+            local model=game:GetService('InsertService'):LoadAsset(id)
+            for _,p in ipairs(model:GetDescendants())do
+             if p:IsA('Animation')then table.insert(row.items,{class=p.ClassName,path=p:GetFullName(),id=p.AnimationId})
+             elseif p:IsA('Shirt')then row.template=p.ShirtTemplate
+             elseif p:IsA('Pants')then row.template=p.PantsTemplate
+             elseif p:IsA('Accessory')then row.accessoryType=tostring(p.AccessoryType);row.name=p.Name
+             elseif p:IsA('FaceControls')then row.faceControls=true
+             elseif p:IsA('Attachment')then table.insert(row.items,{class=p.ClassName,name=p.Name})
+             end
+            end
+            model:Destroy()
+           end)
+           row.ok=ok;row.error=not ok and tostring(err)or nil
+          end
+          return result`));
+          console.log(JSON.stringify({stage:'outfit-assets',result}));
+          JS
