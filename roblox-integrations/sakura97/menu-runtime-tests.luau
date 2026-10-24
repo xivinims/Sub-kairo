@@ -48,9 +48,9 @@ local ok,err=xpcall(function()
  assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Shop.Position.Y.Scale and ui.MenuPrincipal.Shop.Position.Y.Scale<ui.MenuPrincipal.Inventory.Position.Y.Scale,"Main menu is not a vertical stack")
  api.show("settings") api.settings.select("audio")
  local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
- assert(rows.MusicVolume.Slider and rows.EffectsVolume.Slider,"Audio sliders missing")
- api.settings.setValue("MusicVolume",25) task.wait()
- assert(p:GetAttribute("MusicVolume")==25,"Audio slider does not update preference")
+ assert(not rows:FindFirstChild("MusicVolume") and rows.BoomboxVolume.Slider and rows.EffectsVolume.Slider,"Audio settings still expose removed game music")
+ api.settings.setValue("BoomboxVolume",25) task.wait()
+ assert(p:GetAttribute("BoomboxVolume")==25,"Player music slider does not update preference")
  api.settings.select("visual") assert(rows.LowGraphics.Check and rows.MapShadows.Check,"Visual toggles missing")
  api.settings.setValue("LowGraphics",true) task.wait()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
@@ -68,4 +68,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,phoneLayout=true,avatarPreview=true,levelProgress=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
