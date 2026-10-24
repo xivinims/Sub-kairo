@@ -60,7 +60,7 @@ function Settings.initialize(player)
   if not sound:IsA("Sound") then return end
   if sound.Name=="CantorMusic" then sound.SoundGroup=groups.Boombox
   elseif sound.Name=="LocalJasonTheme" or sound.Name=="VoidMusic" or sound.Name=="JasonTheme" then sound.SoundGroup=groups.Music
-  elseif sound.Name=="MenuClick" or sound.Name=="Click" or sound.Name=="FriendJoined" or sound.Name=="Regenerate" or sound.Name=="RegenerationCue" then sound.SoundGroup=groups.Effects end
+  elseif sound.Name=="MenuClick" or sound.Name=="Click" or sound.Name=="PlayClick" or sound.Name=="LightFlicker" or sound.Name=="MapLoadGlitch" or sound.Name=="FriendJoined" or sound.Name=="Regenerate" or sound.Name=="RegenerationCue" then sound.SoundGroup=groups.Effects end
  end
  for _,root in ipairs({SoundService,workspace,player:WaitForChild("PlayerGui")}) do
   root.DescendantAdded:Connect(sound) for _,s in ipairs(root:GetDescendants()) do sound(s) end
