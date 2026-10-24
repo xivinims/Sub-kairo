@@ -72,7 +72,7 @@ for _,name in ipairs({"GameSettingsAvatar","AvatarJointUpgrade","LoadCharacterAp
  local ok,value=pcall(function() return sp[name] end)
  report.avatarSettings[name]={readable=ok,value=tostring(value)}
 end
-for _,id in ipairs({135876330138383,107434715,96745259834227,109440846094241}) do
+for _,id in ipairs({103232099547025,95580261594507,15578797832,18663196733,125287203669107,99824847238106,1043225187}) do
  local ok,m=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
  local rec={id=id,loaded=ok}
  if ok and m then
