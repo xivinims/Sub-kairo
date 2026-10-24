@@ -155,6 +155,8 @@ local ok,result=xpcall(function()
  send(p,"mode","run") assert(p.Character.Humanoid.WalkSpeed==21,"Held run speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  send(p,"mode","walk") assert(p.Character.Humanoid.WalkSpeed==16,"Release-to-walk speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  assert(aiContext,"AI context missing after round start")
+ local protectedFor=math.max(0,(p:GetAttribute("ProtectedUntil") or 0)-clock)
+ if protectedFor>0 then advance(protectedFor+.2) end
  hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"First Jason hit must injure, not down")
  send(p,"mode","run")
  assert(p.Character.Humanoid.WalkSpeed<=12 and p:GetAttribute("MoveMode")~="run","Injured survivor could sprint")
