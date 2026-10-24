@@ -300,6 +300,22 @@ scriptAt(SSS,"KillerFactory","ModuleScript",__KILLER_FACTORY_SOURCE__)
 scriptAt(SSS,"SurvivalServer","Script",__SURVIVAL_SERVER_SOURCE__)
 scriptAt(SP,"SurvivalClient","LocalScript",__SURVIVAL_CLIENT_SOURCE__)
 scriptAt(SP,"PursuerAnimation","LocalScript",__ANIMATION_SOURCE__)
+
+local nametagService=SSS:FindFirstChild("NametagService")
+if not nametagService then
+ local nameAsset=load(123212555736117)
+ local tag=assert(nameAsset:FindFirstChild("Nametag",true),"Nametag asset missing")
+ nametagService=Instance.new("Script") nametagService.Name="NametagService"
+ tag:Clone().Parent=nametagService nametagService.Parent=SSS
+ nameAsset:Destroy()
+end
+nametagService.Source=__NAMETAG_SOURCE__
+nametagService:SetAttribute("AssetId",123212555736117)
+
+local friendPresence=SP:FindFirstChild("FriendPresence")
+if not friendPresence then friendPresence=Instance.new("LocalScript") friendPresence.Name="FriendPresence" friendPresence.Parent=SP end
+friendPresence.Source=__FRIENDS_SOURCE__
+
 net:SetAttribute("Version",123) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
 local light=game:GetService("Lighting")
 light.ClockTime=0
