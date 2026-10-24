@@ -6,7 +6,7 @@ local player=Players.LocalPlayer
 local event=RS:WaitForChild("SweanVoidEvent")
 local media=RS:WaitForChild("XNMedia")
 local generation=0
-local gui,connection,track,music=nil,nil,nil,nil
+local gui,connection,track=nil,nil,nil
 local controls=nil
 local tweens={}
 local function tween(object,duration,properties)
@@ -18,7 +18,6 @@ local function clean()
  for _,t in ipairs(tweens) do t:Cancel() end table.clear(tweens)
  if connection then connection:Disconnect() connection=nil end
  if track then track:Stop() track:Destroy() track=nil end
- if music then music:Destroy() music=nil end
  if gui then gui:Destroy() gui=nil end
  if controls and not player:GetAttribute("InMenu") then controls:Enable() end
 end
@@ -209,7 +208,6 @@ event.OnClientEvent:Connect(function(action,cause,mode)
     elseif d:IsA("UIStroke") then tween(d,.4,{Transparency=1}) end
    end
   end
-  if music then tween(music,.4,{Volume=0}) end
   task.delay(.45,function() if token==generation then clean() end finishing=false end)
  end
 end)
@@ -229,6 +227,4 @@ task.spawn(function()
 end)
 
 
-player:GetAttributeChangedSignal("MusicEnabled"):Connect(function()
- if music then if player:GetAttribute("MusicEnabled")==false then music:Pause() else music:Resume() end end
-end)
+
