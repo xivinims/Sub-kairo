@@ -257,9 +257,20 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))
   assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
-  assert(game.ServerScriptService.SurvivalServer.Source:find('LobbyJoinPortal',1,true))
+  assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Removed lobby join portal returned")
+  assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Removed lobby join door visual returned")
+  assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Automatic lobby admission missing")
+  assert(workspace.JediLibrary:FindFirstChild("InvisibleBounds") and #workspace.JediLibrary.InvisibleBounds:GetChildren()>=5,"Lobby invisible bounds missing")
+  for _,arena in ipairs(assets.Maps:GetChildren()) do
+   assert(arena:FindFirstChild("InvisibleBounds") and #arena.InvisibleBounds:GetChildren()>=5,"Arena invisible bounds missing: "..arena.Name)
+   assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=10,"Unsafe killer spawn persisted: "..arena.Name)
+  end
+  assert(not game.ServerScriptService.SurvivalServer.Source:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro returned")
   assert(game.ServerScriptService.SurvivalServer.Source:find('CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)',1,true),"R6 appearance-preserving conversion missing")
-  return {ok=true,version=game.PlaceVersion,build=122,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true}
+  assert(game.ServerScriptService.SurvivalServer.Source:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Pose-safe flashlight visual missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultView.Size=UDim2.fromScale(1,1)',1,true),"Full-screen killer result missing")
+  return {ok=true,version=game.PlaceVersion,build=122,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
