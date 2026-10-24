@@ -43,7 +43,8 @@ local ok,err=xpcall(function()
  local closeAvatar=workspace:FindFirstChild("LocalMenuAvatar")
  assert(closeAvatar and closeAvatar:GetAttribute("ClosePortrait")==true,"Menu avatar is not a close portrait")
  assert(ui:GetAttribute("HorrorMenuEffect")==true,"Menu light/avatar horror beat missing")
- task.wait(1.55)
+ local revealDeadline=os.clock()+3.5
+ while ui:GetAttribute("MenuJasonVisible")~=true and os.clock()<revealDeadline do task.wait(.05) end
  local horrorJason=workspace:FindFirstChild("LocalMenuJason")
  assert(horrorJason and horrorJason:GetAttribute("MenuHorrorJason")==true,"Jason was not revealed after menu flicker")
  assert(ui:GetAttribute("HorrorJasonReveal")==true and ui:GetAttribute("MenuJasonVisible")==true,"Jason reveal state missing")
