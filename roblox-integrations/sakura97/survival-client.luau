@@ -280,6 +280,36 @@ local function showResult(data)
    resultCamera.CFrame=CFrame.lookAt(base-forward*10+Vector3.new(0,size.Y*.54,0),focus)
    resultCamera.FieldOfView=48
   end
+  -- The longest-surviving player appears in the ending as the final defeated survivor.
+  local lastRow=(data.board or {})[1]
+  local victimPlayer=lastRow and Players:GetPlayerByUserId(lastRow.userId or 0)
+  local victimCharacter=victimPlayer and victimPlayer.Character
+  if victimCharacter then
+   local oldArchivable=victimCharacter.Archivable victimCharacter.Archivable=true
+   local ok,victim=pcall(function() return victimCharacter:Clone() end)
+   victimCharacter.Archivable=oldArchivable
+   if ok and victim then
+    victim.Name="VictorySurvivor"
+    for _,d in ipairs(victim:GetDescendants()) do
+     if d:IsA("LuaSourceContainer") or d:IsA("Tool") or d:IsA("BillboardGui") then d:Destroy()
+     elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+    end
+    victim.Parent=resultWorld
+    local vcf,vsize=victim:GetBoundingBox()
+    local standing=CFrame.lookAt(base+forward*4+Vector3.new(0,vsize.Y*.5,0),base-forward*2+Vector3.new(0,vsize.Y*.45,0))
+    victim:PivotTo(standing)
+    task.delay(1.15,function()
+     if generation~=resultGeneration or not victim.Parent then return end
+     local start=victim:GetPivot()
+     local value=Instance.new("CFrameValue") value.Value=start value.Parent=resultView
+     local conn=value:GetPropertyChangedSignal("Value"):Connect(function() if victim.Parent then victim:PivotTo(value.Value) end end)
+     local finish=start*CFrame.new(0,-.75,1.15)*CFrame.Angles(math.rad(72),0,math.rad(8))
+     local tween=TweenService:Create(value,TweenInfo.new(.48,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Value=finish})
+     tween:Play()
+     tween.Completed:Connect(function() conn:Disconnect() value:Destroy() end)
+    end)
+   end
+  end
  end
  for i,row in ipairs(data.board or {}) do if i>8 then break end
   local card=Instance.new("Frame",resultRows) card.Name="Rank"..i card.Size=UDim2.new(1,-6,0,62) card.LayoutOrder=i card.BorderSizePixel=0 card.ZIndex=72 card.BackgroundColor3=row.userId==player.UserId and Color3.fromRGB(79,35,40) or Color3.fromRGB(39,35,40) card.BackgroundTransparency=.18 Instance.new("UICorner",card).CornerRadius=UDim.new(0,10)
