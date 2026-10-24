@@ -303,7 +303,10 @@ local function spawnPlayer(p)
 
  e.status="alive" e.spawnRecovery=nil e.spawnGraceUntil=now()+12
  e.protectedUntil=math.max(e.protectedUntil or 0,now()+10)
+ e.channel=nil e.deadline=nil e.downedAt=nil
  e.lastScore=now() e.lastNoise=0
+ clearFlashlight(p)
+ p:SetAttribute("BeingExecuted",false) p:SetAttribute("ReviveAt",0)
  p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
 
  local h=humanoid(p)
@@ -450,6 +453,8 @@ local function hook(p)
  local onCharacter
  onCharacter=function(char)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
+  if char:GetAttribute("SurvivalCharacterHooked") then return end
+  char:SetAttribute("SurvivalCharacterHooked",true)
   local h=char:WaitForChild("Humanoid",10)
   if h and h.RigType~=Enum.HumanoidRigType.R6 and p~=jasonPlayer then
    morphing[p]=true
