@@ -294,7 +294,7 @@ Run.PreSimulation:Connect(function(dt)
     if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
     if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
     local joint=downedPoses[model]
-    if joint and joint.Parent then joint.Transform=CFrame.new(0,-.7,0)*CFrame.Angles(math.rad(75),0,0) end
+    if joint and joint.Parent then joint.Transform=CFrame.new(0,-.7+math.sin(os.clock()*2)*.025,0)*CFrame.Angles(math.rad(75),0,math.sin(os.clock()*1.4)*.012) end
    elseif inRound and not isJason then
     local crouched=p:GetAttribute("MoveMode")=="slow"
     local injured=p:GetAttribute("Injured")==true
@@ -311,7 +311,7 @@ Run.PreSimulation:Connect(function(dt)
      local kind
      if hs==Enum.HumanoidStateType.Jumping then kind="jump"
      elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
-     elseif speed>1 then kind=(not crouched and speed>16) and "run" or "move"
+     elseif speed>1 then kind=(not crouched and speed>(injured and 13 or 16)) and "run" or "move"
      else kind="idle" end
      local state=locomotionName(d,kind,crouched,injured)
      local supported=canDrive(d,state)
