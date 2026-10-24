@@ -109,6 +109,7 @@ local islandSource=assert(game.ServerScriptService:FindFirstChild("IslandServer"
 local voidSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("VoidSequence"),"Void client missing").Source
 local survivalServerSource=assert(game.ServerScriptService:FindFirstChild("SurvivalServer"),"Survival server missing").Source
 local survivalClientSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SurvivalClient"),"Survival client missing").Source
+local pursuerAnimationSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("PursuerAnimation"),"Pursuer animation controller missing").Source
 assert(not islandSource:find('begin(player,"void")',1,true),"Lobby void still triggers death presentation")
 assert(islandSource:find('RoundStatus")~="eliminated"',1,true) or islandSource:find('RoundStatus")~=',1,true),"Server death presentation is not gated by elimination status")
 assert(voidSource:find('local realDeath=mode=="spectate"',1,true),"Client death screen lacks real-death guard")
@@ -118,6 +119,8 @@ assert(survivalServerSource:find("lastVictimUserId=lastKilledUserId",1,true),"Ex
 assert(survivalServerSource:find("recoverFromFall",1,true),"Arena fall recovery missing")
 assert(not survivalServerSource:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro is still sent by server")
 assert(survivalServerSource:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Flashlight still uses Tool pose inside character")
+assert(pursuerAnimationSource:find("pursuerStateName",1,true),"Per-killer locomotion clip resolver missing")
+assert(pursuerAnimationSource:find('speed/(injured and 14 or 18)',1,true),"Survivor run animation is not velocity-synchronized")
 assert(not survivalClientSource:find('Name="MusicButton"',1,true),"Gameplay music icon returned")
 assert(survivalClientSource:find('PresentationState","Execution"',1,true),"Killer result does not start with execution animation")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
@@ -139,5 +142,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 
