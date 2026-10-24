@@ -39,9 +39,12 @@ for _,arena in ipairs(assets.Maps:GetChildren()) do
  assert(arena:GetAttribute("PartCount")<=3015 and arena:GetAttribute("PartCount")>30,"Part budget")
  assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
  assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=60,"Separated spawns")
- assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=5.5,"Pursuer spawn has insufficient wall clearance")
+ assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=7,"Pursuer spawn has insufficient wall clearance")
+ local bounds=assert(arena:FindFirstChild("InvisibleBounds"),"Invisible arena bounds missing")
+ assert(#bounds:GetChildren()>=5 and bounds:FindFirstChild("SafetyFloor"),"Arena must have four invisible walls plus safety floor")
+ for _,wall in ipairs(bounds:GetChildren()) do assert(wall:IsA("BasePart") and wall.Transparency==1 and wall.CanCollide,"Invalid invisible safety boundary") end
  for _,obj in ipairs(arena:GetDescendants()) do assert(not obj:IsA("LuaSourceContainer"),"Imported script survived sanitization") end
- table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths")})
+ table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths"),bounds=#bounds:GetChildren()})
 end
 assert(#mapReport==3,"Expected three arena templates")
 local flashlight=assert(assets:FindFirstChild("Items") and assets.Items:FindFirstChild("Flashlight"),"Flashlight template missing")
@@ -112,19 +115,18 @@ assert(voidSource:find('local realDeath=mode=="spectate"',1,true),"Client death 
 assert(voidSource:find('player:GetAttribute("InMenu")~=true',1,true),"Client death screen is not blocked in menu")
 assert(survivalServerSource:find("safeRoundSpawnCF",1,true) and survivalServerSource:find("spawnGraceUntil",1,true),"Round spawn recovery guard missing")
 assert(survivalServerSource:find("lastVictimUserId=lastKilledUserId",1,true),"Exact final victim is not sent to result scene")
+assert(survivalServerSource:find("recoverFromFall",1,true),"Arena fall recovery missing")
+assert(not survivalServerSource:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro is still sent by server")
+assert(survivalServerSource:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Flashlight still uses Tool pose inside character")
 assert(not survivalClientSource:find('Name="MusicButton"',1,true),"Gameplay music icon returned")
 assert(survivalClientSource:find('PresentationState","Execution"',1,true),"Killer result does not start with execution animation")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
-local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
-assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
+assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Lobby join portal returned")
+assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Lobby join door visual returned")
+assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Lobby automatic admission contract missing")
 local oldDoor=workspace.JediLibrary.Door
 assert(oldDoor:GetAttribute("VisualReplaced") and oldDoor:GetAttribute("HeldOpen"),"Old lobby door was not retired")
 for _,p in ipairs(oldDoor:GetDescendants()) do if p:IsA("BasePart") then assert(p.Transparency==1 and not p.CanCollide,"Old stone/block door still visible or collidable") end end
-local visualDoor=assert(workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Open lobby door visual missing")
-assert(visualDoor:GetAttribute("Open")==true and visualDoor:GetAttribute("OpenAngle")==78,"Lobby door is not authored open")
-assert(visualDoor:FindFirstChild("LeftLeaf") and visualDoor.LeftLeaf:GetAttribute("OpenLeaf"),"Left open door leaf missing")
-assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttribute("OpenLeaf"),"Right open door leaf missing")
-assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
 local shared=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerMotionLibraries"),"Shared pursuer motion libraries missing")
 assert(shared:FindFirstChild("Default") and shared.Default:GetAttribute("ClipCount")==7,"Default shared motion library invalid")
 assert(shared:FindFirstChild("Cool") and shared.Cool:GetAttribute("ClipCount")==7,"Cool shared motion library invalid")
@@ -135,5 +137,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 
