@@ -37,8 +37,6 @@ function Profiles:load(p)
  stats.XP.Value=integer(data.xp)+r.xp
  stats.Pontos.Value=math.max(0,integer(data.points)+r.points)
  stats["Nível"].Value=Profiles.level(stats.XP.Value)
- p:SetAttribute("Cantor",data.singer==true or p:GetAttribute("Cantor")==true)
- r.savedSinger=data.singer==true
  r.loaded=true p:SetAttribute("ProfileLoaded",true)
  return true
 end
@@ -57,9 +55,9 @@ function Profiles:save(p)
  local r=self.records[p]
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
- if r.xp==r.savedXP and r.points==r.savedPoints and (p:GetAttribute("Cantor")==true)==r.savedSinger then return true end
+ if r.xp==r.savedXP and r.points==r.savedPoints then return true end
  r.busy=true
- local xp,points,singer=r.xp,r.points,p:GetAttribute("Cantor")==true
+ local xp,points=r.xp,r.points
  local timestamp=os.time()
  local ok=self:retry(function()
   return self.store:UpdateAsync(tostring(p.UserId),function(old)
@@ -68,7 +66,6 @@ function Profiles:save(p)
    local previous=type(receipts[r.id])=="table" and receipts[r.id] or {xp=0,points=0}
    old.xp=integer(old.xp)+math.max(0,xp-integer(previous.xp))
    old.points=math.max(0,integer(old.points)+points-(tonumber(previous.points) or 0))
-   old.singer=old.singer==true or singer
    receipts[r.id]={xp=xp,points=points,at=timestamp}
    local keys={} for id,v in pairs(receipts) do if id~=r.id then table.insert(keys,{id=id,at=type(v)=="table" and (v.at or 0) or 0}) end end
    table.sort(keys,function(a,b) return a.at>b.at end)
@@ -78,9 +75,9 @@ function Profiles:save(p)
   end)
  end)
  r.busy=false
- if ok then r.savedXP=xp r.savedPoints=points r.savedSinger=singer end
+ if ok then r.savedXP=xp r.savedPoints=points end
  local again=r.pending r.pending=false
- if again and (r.xp~=xp or r.points~=points or (p:GetAttribute("Cantor")==true and not singer)) then return self:save(p) end
+ if again and (r.xp~=xp or r.points~=points) then return self:save(p) end
  return ok
 end
 function Profiles:flush(p,timeout)
