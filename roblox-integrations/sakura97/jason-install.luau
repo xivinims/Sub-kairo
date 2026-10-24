@@ -287,15 +287,12 @@ end
 flashlight.Parent=items
 flashlightAsset:Destroy()
 
-local theme=Instance.new("Sound")
-theme.Name="JasonTheme"
-theme.SoundId="rbxassetid://132120584214046"
-theme.Looped=true
-theme.Playing=false
-theme.Volume=.55
-theme.RollOffMode=Enum.RollOffMode.Inverse
-theme:SetAttribute("SourceAssetId",132120584214046)
-theme.Parent=net
+-- No automatic game music. Keep only explicit player-triggered audio and interface/SFX.
+local media=RS:FindFirstChild("XNMedia")
+if media then
+ local oldVoidMusic=media:FindFirstChild("VoidMusic")
+ if oldVoidMusic then oldVoidMusic:Destroy() end
+end
 
 local survivorAsset=load(127092032896760)
 local survivor=Instance.new("Folder",net) survivor.Name="SurvivorClips" survivor:SetAttribute("SourceAssetId",127092032896760)
