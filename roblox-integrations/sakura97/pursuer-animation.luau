@@ -221,6 +221,17 @@ local function executionName(d)
  return matchName(d.clips,{{"behead"},{"gashing","wound"},{"kill"},{"execution"},{"execute"},{"finisher"},{"fatal"}}) or matchName(d.clips,{{"slash"},{"attack"}}) or "Jason Slash"
 end
 
+local function pursuerStateName(d,kind)
+ if kind=="run" then
+  return matchName(d.clips,{{"run"},{"sprint"},{"chase"},{"raging","pace","walk"}}) or matchName(d.clips,{{"walk"},{"move"}})
+ elseif kind=="walk" then
+  return matchName(d.clips,{{"walk"},{"move"},{"pace"}}) or matchName(d.clips,{{"run"}})
+ elseif kind=="attack" then
+  return matchName(d.clips,{{"slash"},{"attack"},{"swing"},{"stab"},{"hit"}}) or executionName(d)
+ end
+ return matchName(d.clips,{{"idle"},{"stand"},{"raging","pace","idle"}}) or next(d.clips)
+end
+
 local function resolveLocomotion(d,kind,crouched,injured)
  if crouched then
   if kind=="jump" then return matchName(d.clips,{{"crouch","jump"},{"jump"}}) or matchName(d.clips,{{"crouch","walk"},{"walk"},{"idle"}}) end
@@ -307,10 +318,15 @@ Run.PreSimulation:Connect(function(dt)
      local attack=model:GetAttribute("AttackAt") or -100
      local execSince=workspace:GetServerTimeNow()-execution
      local since=workspace:GetServerTimeNow()-attack
-     local execState=d and executionName(d) or nil
      local executing=execSince>=0 and execSince<1.65
-     local state=executing and execState or since<.75 and "Jason Slash" or speed>16 and "Jason Run" or speed>1 and "Jason Walk" or "Jason Idle"
-     if d then apply(d,state,dt,not executing and state~="Jason Slash",executing and execSince or (state=="Jason Slash" and since or nil)) end
+     local attacking=not executing and since>=0 and since<.75
+     local state=executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle")
+     local scale=1
+     if not executing and not attacking then
+      if speed>15 then scale=math.clamp(speed/18,.82,1.42)
+      elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
+     end
+     if d then apply(d,state,dt*scale,not executing and not attacking,executing and execSince or (attacking and since or nil)) end
     end
    end
   end
@@ -352,7 +368,10 @@ Run.PreSimulation:Connect(function(dt)
      local supported=canDrive(d,state)
      if p==Players.LocalPlayer and supported then setDefaultAnimate(model,false) end
      if supported then
-      apply(d,state,dt,kind~="jump" and kind~="fall")
+      local rate=1
+      if kind=="run" then rate=math.clamp(speed/(injured and 14 or 18),.78,1.38)
+      elseif kind=="move" then rate=math.clamp(speed/(injured and 9 or 11),.78,1.28) end
+      apply(d,state,dt*rate,kind~="jump" and kind~="fall")
      else
       resetData(d)
       if p==Players.LocalPlayer then setDefaultAnimate(model,true) end
