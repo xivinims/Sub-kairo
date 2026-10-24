@@ -293,6 +293,13 @@ if media then
  local oldVoidMusic=media:FindFirstChild("VoidMusic")
  if oldVoidMusic then oldVoidMusic:Destroy() end
 end
+for _,root in ipairs({game:GetService("SoundService"),workspace,RS}) do
+ for _,obj in ipairs(root:GetDescendants()) do
+  if obj:IsA("Sound") and (obj.Name=="LocalJasonTheme" or obj.Name=="JasonTheme" or obj.Name=="VoidMusic") then
+   obj:Destroy()
+  end
+ end
+end
 
 local survivorAsset=load(127092032896760)
 local survivor=Instance.new("Folder",net) survivor.Name="SurvivorClips" survivor:SetAttribute("SourceAssetId",127092032896760)
