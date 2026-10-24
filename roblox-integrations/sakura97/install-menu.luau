@@ -63,9 +63,15 @@ gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Col
 local play=button(main,"Play","ENTRAR NO LOBBY")
 local shopButton=button(main,"Shop","LOJA")
 local inventoryButton=button(main,"Inventory","INVENTÁRIO")
-local settingsButton=button(main,"Ajustes","⚙")
-settingsButton.TextSize=28
+local settingsButton=button(main,"Ajustes","AJUSTES")
 local updatesButton=button(main,"Updates","NOVIDADES")
+for _,b in ipairs({play,shopButton,inventoryButton,settingsButton,updatesButton}) do
+ b.BackgroundTransparency=1
+ b.UICorner.CornerRadius=UDim.new(0,3)
+ b.UIStroke.Thickness=1.4
+ b.UIStroke.Transparency=.68
+ local inset=b:FindFirstChild("Inset") if inset then inset.Visible=false end
+end
 local profile=Instance.new("Frame",main) profile.Name="Profile" profile.BackgroundTransparency=1
 local xpBar=Instance.new("Frame",profile) xpBar.Name="XPBar" xpBar.Size=UDim2.new(1,0,0,26) xpBar.BackgroundColor3=Color3.fromRGB(18,18,25) xpBar.BackgroundTransparency=.3 xpBar.BorderSizePixel=0 corner(xpBar,5)
 local fill=Instance.new("Frame",xpBar) fill.Name="Fill" fill.Size=UDim2.fromScale(0,1) fill.BackgroundColor3=Color3.fromRGB(94,116,204) fill.BorderSizePixel=0 corner(fill,5)
@@ -73,6 +79,8 @@ local xp=label(xpBar,"Value","NÍVEL 1") xp.Size=UDim2.new(1,-14,1,0) xp.Positio
 local coins=label(profile,"Coins","◉  0") coins.Position=UDim2.fromOffset(0,32) coins.Size=UDim2.fromOffset(150,30) coins.TextSize=20 coins.TextColor3=Color3.fromRGB(164,214,114) coins.TextXAlignment=Enum.TextXAlignment.Left
 
 local creditsButton=button(ui,"CreditsButton","CRÉDITOS")
+creditsButton.BackgroundTransparency=1 creditsButton.UICorner.CornerRadius=UDim.new(0,3) creditsButton.UIStroke.Thickness=1.4 creditsButton.UIStroke.Transparency=.68
+local creditsInset=creditsButton:FindFirstChild("Inset") if creditsInset then creditsInset.Visible=false end
 
 local guide=label(main,"Guide","ATRAVESSE A PORTA PARA JOGAR")
 guide.TextSize=11 guide.TextColor3=Color3.fromRGB(177,157,160) guide.TextXAlignment=Enum.TextXAlignment.Left
@@ -141,7 +149,7 @@ config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
-local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader.Parent=first
+local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("LogoOnlyLoading",true) loader.Parent=first
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)

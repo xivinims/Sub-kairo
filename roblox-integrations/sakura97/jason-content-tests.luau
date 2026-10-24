@@ -39,6 +39,7 @@ for _,arena in ipairs(assets.Maps:GetChildren()) do
  assert(arena:GetAttribute("PartCount")<=3015 and arena:GetAttribute("PartCount")>30,"Part budget")
  assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
  assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=60,"Separated spawns")
+ assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=5.5,"Pursuer spawn has insufficient wall clearance")
  for _,obj in ipairs(arena:GetDescendants()) do assert(not obj:IsA("LuaSourceContainer"),"Imported script survived sanitization") end
  table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths")})
 end
@@ -124,5 +125,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 

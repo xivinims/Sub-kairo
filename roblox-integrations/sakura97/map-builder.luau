@@ -51,15 +51,32 @@ function Builder.build(load,sanitize,destination)
   assert(parts>30 and parts<=3000,"Map part budget exceeded: "..spec.name.." "..parts)
   table.sort(floors,function(a,b) if a.y~=b.y then return a.y<b.y end return a.part.Size.X*a.part.Size.Z>b.part.Size.X*b.part.Size.Z end)
   local candidates={} local scans=0
+  local directions={}
+  for i=0,7 do local a=math.rad(i*45) table.insert(directions,Vector3.new(math.cos(a),0,math.sin(a))) end
+  local function radialClear(g,radius)
+   for _,dir in ipairs(directions) do
+    for _,height in ipairs({1.6,3.2,4.8}) do
+     if workspace:Raycast(g+Vector3.new(0,height,0),dir*radius,params) then return false end
+    end
+    local edge=g+dir*(radius*.82)
+    local floorHit=workspace:Raycast(edge+Vector3.new(0,2,0),Vector3.new(0,-5,0),params)
+    if not floorHit or floorHit.Normal.Y<.82 then return false end
+   end
+   return true
+  end
+  local footprintMargin=math.min(10,math.max(5,math.min(size.X,size.Z)*.025))
+  local function insideFootprint(g,margin)
+   local lp=cf:PointToObjectSpace(g)
+   return math.abs(lp.X)<=size.X/2-margin and math.abs(lp.Z)<=size.Z/2-margin
+  end
   local function candidate(pos)
    scans+=1
    local hit=workspace:Raycast(pos+Vector3.new(0,.5,0),Vector3.new(0,-4,0),params)
    if not hit or hit.Normal.Y<.92 then return end
    local g=hit.Position
+   if not insideFootprint(g,footprintMargin) then return end
    if workspace:Raycast(g+Vector3.new(0,.2,0),Vector3.new(0,5.8,0),params) then return end
-   for _,off in ipairs({Vector3.new(2.4,0,0),Vector3.new(-2.4,0,0),Vector3.new(0,0,2.4),Vector3.new(0,0,-2.4)}) do
-    if workspace:Raycast(g+Vector3.new(0,2.5,0),off,params) then return end
-   end
+   if not radialClear(g,4.5) then return end
    local p=g+Vector3.new(0,3,0)
    for _,other in ipairs(candidates) do if (other-p).Magnitude<8 then return end end
    table.insert(candidates,p)
@@ -98,9 +115,20 @@ function Builder.build(load,sanitize,destination)
    if #selected>=12 then break end
   end
   assert(#selected>=9,"No connected playable region for "..spec.name)
-  local start=selected[1] local far=start local distance=0
-  for _,p in ipairs(selected) do if (p-start).Magnitude>distance then far=p distance=(p-start).Magnitude end end
-  assert(distance>=60,"Killer spawn too close in "..spec.name)
+  local start=selected[1] local far=nil local distance=0 local killerClearance=8
+  for _,p in ipairs(selected) do
+   local d=(p-start).Magnitude
+   local ground=p-Vector3.new(0,3,0)
+   if d>distance and d>=60 and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) then far=p distance=d end
+  end
+  if not far then
+   killerClearance=5.5
+   for _,p in ipairs(selected) do
+    local d=(p-start).Magnitude local ground=p-Vector3.new(0,3,0)
+    if d>distance and d>=60 and radialClear(ground,killerClearance) then far=p distance=d end
+   end
+  end
+  assert(far and distance>=60,"No safe pursuer spawn away from walls in "..spec.name)
   local points=Instance.new("Folder",map) points.Name="SafePoints"
   for i,p in ipairs(selected) do addPoint(points,i,p) end
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
@@ -127,12 +155,12 @@ function Builder.build(load,sanitize,destination)
   local sign=Instance.new("BillboardGui",entrance.Top) sign.Size=UDim2.fromOffset(240,42) sign.StudsOffset=Vector3.new(0,1,0) sign.MaxDistance=55
   local text=Instance.new("TextLabel",sign) text.Size=UDim2.fromScale(1,1) text.BackgroundTransparency=1 text.Text=spec.label text.Font=Enum.Font.GothamMedium text.TextSize=16 text.TextColor3=Color3.fromRGB(231,212,205)
   local count=0 for _,v in ipairs(map:GetDescendants()) do if v:IsA("BasePart") then count+=1 end end
-  map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start)
+  map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance)
   map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("DisplayName",spec.label)
   map:SetAttribute("FloorY",lowest) map:SetAttribute("VoidY",lowest-35) map:SetAttribute("PartCount",count)
   map:SetAttribute("Footprint",Vector3.new(size.X,0,size.Z)) map:SetAttribute("ValidatedPaths",#selected-1)
   map.Parent=destination
-  table.insert(reports,{name=spec.name,id=spec.id,parts=count,connected=#selected,arrivals=#arrivals:GetChildren(),width=size.X,depth=size.Z})
+  table.insert(reports,{name=spec.name,id=spec.id,parts=count,connected=#selected,arrivals=#arrivals:GetChildren(),killerClearance=killerClearance,width=size.X,depth=size.Z})
  end
  return reports
 end

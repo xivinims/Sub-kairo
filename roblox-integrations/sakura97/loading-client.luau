@@ -22,8 +22,8 @@ local title=Instance.new("ImageLabel")
 title.Name="BrandTitle"
 title.BackgroundTransparency=1
 title.AnchorPoint=Vector2.new(.5,.5)
-title.Position=UDim2.fromScale(.5,.42)
-title.Size=UDim2.new(.78,0,.26,0)
+title.Position=UDim2.fromScale(.5,.5)
+title.Size=UDim2.new(.72,0,.24,0)
 title.Image="rbxassetid://99002027743613"
 title.ScaleType=Enum.ScaleType.Fit
 title.Parent=frame
@@ -38,18 +38,16 @@ status.Font=Enum.Font.GothamMedium
 status.TextColor3=Color3.fromRGB(220,220,226)
 status.TextSize=16
 status.Text="Carregando Suvivers…"
+status.Visible=false
 status.Parent=frame
 
-local track=Instance.new("Frame",frame) track.Name="LoadingTrack" track.AnchorPoint=Vector2.new(.5,.5) track.Position=UDim2.fromScale(.5,.66) track.Size=UDim2.new(.45,0,0,5) track.BackgroundColor3=Color3.fromRGB(50,42,47) track.BorderSizePixel=0 Instance.new("UICorner",track).CornerRadius=UDim.new(0,3)
-local progress=Instance.new("Frame",track) progress.Name="Stage" progress.Size=UDim2.fromScale(.08,1) progress.BackgroundColor3=Color3.fromRGB(173,72,82) progress.BorderSizePixel=0 Instance.new("UICorner",progress).CornerRadius=UDim.new(0,3)
-local tip=Instance.new("TextLabel",frame) tip.AnchorPoint=Vector2.new(.5,.5) tip.Size=UDim2.new(.85,0,0,40) tip.Position=UDim2.fromScale(.5,.84) tip.BackgroundTransparency=1 tip.Text="Correr faz barulho. Agache, escute e use seu kit com cuidado." tip.Font=Enum.Font.Gotham tip.TextSize=12 tip.TextWrapped=true tip.TextColor3=Color3.fromRGB(159,151,160)
-local function stage(value) game:GetService("TweenService"):Create(progress,TweenInfo.new(.35),{Size=UDim2.fromScale(value,1)}):Play() end
+local function stage(_) end
 local retry=Instance.new("TextButton")
 retry.Text="Tentar novamente"
 retry.Font=Enum.Font.GothamMedium
 retry.TextSize=16
 retry.AnchorPoint=Vector2.new(.5,.5)
-retry.Position=UDim2.fromScale(.5,.72)
+retry.Position=UDim2.fromScale(.5,.68)
 retry.Size=UDim2.fromOffset(200,46)
 retry.BackgroundColor3=Color3.fromRGB(46,46,50)
 retry.BackgroundTransparency=.3
@@ -111,7 +109,8 @@ local function attempt()
    pcall(task.cancel,preloadThread)
   end
 
-  status.Text="Pronto" stage(1)
+  stage(1)
+  player:SetAttribute("MenuIntroPending",true)
   task.wait(.15)
  end)
 
@@ -121,6 +120,8 @@ local function attempt()
   gui:Destroy()
  else
   warn("Survivers loading: "..tostring(err))
+  status.Visible=true
+  status.Position=UDim2.fromScale(.5,.62)
   status.Text="Não foi possível carregar o Suvivers. Tente novamente."
   retry.Visible=true
  end

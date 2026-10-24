@@ -35,8 +35,14 @@ __MENU_TEST_SOURCE__
 end
 local ok,err=xpcall(function()
  api=controller() task.wait()
- assert(ui.MenuPrincipal.Visible and ui.MenuPrincipal.Play.Preview,"Reference menu lacks real Jason preview")
- assert(ui.MenuPrincipal.Inventory.Preview,"Inventory card lacks the player's avatar")
+ assert(ui.MenuPrincipal.Visible,"Main menu did not open")
+ assert(not ui.MenuPrincipal.Play:FindFirstChild("Preview") and not ui.MenuPrincipal.Inventory:FindFirstChild("Preview"),"Large menu cards/previews must not cover the background")
+ assert(ui.MenuPrincipal.Play.Position.X.Scale==.5 and ui.MenuPrincipal.Shop.Position.X.Scale==.5 and ui.MenuPrincipal.Inventory.Position.X.Scale==.5,"Main navigation is not centered vertically")
+ assert(ui.MenuPrincipal.Play.BackgroundTransparency==1 and ui.MenuPrincipal.Play.UIStroke.Thickness<=1.5,"Main buttons are not clean reference-style outlines")
+ assert(ui:GetAttribute("MenuIntroAnimated")==true,"Logo-to-top intro animation was not armed")
+ local closeAvatar=workspace:FindFirstChild("LocalMenuAvatar")
+ assert(closeAvatar and closeAvatar:GetAttribute("ClosePortrait")==true,"Menu avatar is not a close portrait")
+ assert(ui:GetAttribute("HorrorMenuEffect")==true,"Menu light/avatar horror beat missing")
  assert(ui.MenuPrincipal.Profile.XPBar.Value.Text:find("NÍVEL 2",1,true),"Level header missing")
  assert(ui.MenuPrincipal.Play.Size.X.Offset>150 and ui.MenuPrincipal.Play.Size.Y.Offset>=75,"Phone menu targets too small")
  api.show("settings") api.settings.select("audio")
@@ -61,4 +67,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,referenceCards=true,phoneLayout=true,avatarPreview=true,levelProgress=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,phoneLayout=true,avatarPreview=true,levelProgress=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}

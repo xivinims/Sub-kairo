@@ -25,6 +25,8 @@ local busy=false
 local menuScene=nil
 local menuAvatar=nil
 local menuCameraCF=nil
+local horrorToken=0
+local firstMenuIntro=true
 local oldFov=70
 local MENU_ORIGIN=config:GetAttribute("MenuOrigin") or Vector3.new(10000,2500,10000)
 local menuGrade=nil local menuGlow=nil
@@ -115,11 +117,24 @@ local function buildPrivateScene()
    local hum=menuAvatar:FindFirstChildOfClass("Humanoid")
    if hum then hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.AutoRotate=false end
    local head=menuAvatar:FindFirstChild("Head")
+   for _,d in ipairs(menuAvatar:GetDescendants()) do
+    if d:IsA("BasePart") then
+     local accessory=d:FindFirstAncestorOfClass("Accessory")
+     if d.Name~="Head" and not accessory then d.LocalTransparencyModifier=1 end
+    end
+   end
    if head then
     local key=Instance.new("PointLight",head) key.Color=Color3.fromRGB(255,175,158) key.Brightness=.65 key.Range=12 key.Shadows=false
    end
    menuAvatar.Parent=workspace
    menuAvatar:PivotTo(CFrame.lookAt(avatarPos,Vector3.new(cameraPos.X,avatarPos.Y,cameraPos.Z)))
+   if head and menuCameraCF then
+    local desired=menuCameraCF.Position+menuCameraCF.LookVector*1.55+menuCameraCF.RightVector*.52-menuCameraCF.UpVector*.08
+    local delta=desired-head.Position
+    menuAvatar:PivotTo(menuAvatar:GetPivot()+delta)
+   end
+   menuAvatar:SetAttribute("ClosePortrait",true)
+   menuAvatar:SetAttribute("HorrorVisible",true)
   end
  end
 end
@@ -164,21 +179,31 @@ local function layout()
  local v=camera.ViewportSize local w,h=v.X,v.Y
  local x=math.clamp(w*.035,14,42)
  main.LeftPanel.Visible=false
- main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.34) main.Logo.Size=UDim2.new(.52,0,.22,0)
- main.GameName.AnchorPoint=Vector2.new(.5,0) main.GameName.Position=UDim2.fromScale(.5,.43) main.GameName.Size=UDim2.fromOffset(160,24) main.GameName.Text="[ALFA]" main.GameName.TextSize=14
- local cardW=math.min(240,w*.235) local cardH=math.clamp(h*.20,75,132) local gap=10
- for i,card in ipairs({main.Shop,main.Play,main.Inventory}) do
-  card.AnchorPoint=Vector2.new(.5,.5) card.Position=UDim2.new(.5,(i-2)*(cardW+gap),.62,0) card.Size=UDim2.fromOffset(cardW,cardH) card.TextSize=math.clamp(w*.018,12,19)
+ main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.19) main.Logo.Size=UDim2.new(.42,0,.17,0)
+ main.GameName.Visible=false
+ local navW=math.clamp(w*.23,168,224) local navH=math.clamp(h*.072,28,38)
+ local nav={main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates,creditsButton}
+ local labels={"ENTRAR NO LOBBY","LOJA","INVENTÁRIO","AJUSTES","NOVIDADES","CRÉDITOS"}
+ for i,b in ipairs(nav) do
+  b.AnchorPoint=Vector2.new(.5,.5)
+  b.Position=UDim2.new(.5,0,.44+(i-1)*.072,0)
+  b.Size=UDim2.fromOffset(navW,navH)
+  b.Text=labels[i]
+  b.TextSize=math.clamp(w*.017,13,18)
+  b.Font=Enum.Font.GothamMedium
+  b.BackgroundTransparency=1
+  b.TextTransparency=0
+  b.UIStroke.Enabled=true
+  b.UIStroke.Color=Color3.fromRGB(235,235,239)
+  b.UIStroke.Thickness=1.2
+  b.UIStroke.Transparency=i==1 and .22 or .82
+  local inset=b:FindFirstChild("Inset") if inset then inset.Visible=false end
  end
- main.Play.Text="ENTRAR NO LOBBY"
- main.Play.UIStroke.Color=Color3.fromRGB(142,180,105) main.Shop.UIStroke.Color=Color3.fromRGB(193,157,93) main.Inventory.UIStroke.Color=Color3.fromRGB(143,126,185)
- main.Guide.Position=UDim2.new(.5,-math.min(280,w*.40),.62,cardH/2+8) main.Guide.Size=UDim2.fromOffset(math.min(560,w*.8),22) main.Guide.TextXAlignment=Enum.TextXAlignment.Center
+ main.Guide.AnchorPoint=Vector2.new(.5,0) main.Guide.Position=UDim2.new(.5,0,.90,0) main.Guide.Size=UDim2.fromOffset(math.min(480,w*.72),20) main.Guide.TextXAlignment=Enum.TextXAlignment.Center
  main.Edition.Visible=false main.QuickHelp.Visible=false
- main.Updates.AnchorPoint=Vector2.new(.5,1) main.Updates.Position=UDim2.new(.5,0,1,-24) main.Updates.Size=UDim2.fromOffset(math.min(260,w*.4),34) main.Updates.TextSize=12
- main.Profile.Position=UDim2.new(0,x,0,math.clamp(h*.15,65,108)) main.Profile.Size=UDim2.fromOffset(math.min(300,w*.28),78)
- main.Ajustes.Position=UDim2.new(1,-118,0,22) main.Ajustes.Size=UDim2.fromOffset(44,44)
- creditsButton.Position=UDim2.new(1,-64,0,22) creditsButton.Size=UDim2.fromOffset(44,44) creditsButton.Text="i" creditsButton.TextSize=24
- returnButton.Position=UDim2.new(1,-64,0,122) returnButton.Size=UDim2.fromOffset(46,46) returnButton.Text="⌂" returnButton.TextSize=23
+ main.Profile.Position=UDim2.new(0,x,0,math.clamp(h*.13,58,92)) main.Profile.Size=UDim2.fromOffset(math.min(285,w*.30),72)
+ returnButton.Position=UDim2.new(0,18,0,72) returnButton.Size=UDim2.fromOffset(42,42) returnButton.Text="⌂" returnButton.TextSize=23
+ returnButton.BackgroundTransparency=1 returnButton.UIStroke.Enabled=false
  for _,scene in ipairs({credits,shop,inventory,updates}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")
   local title=scene.Tittle
@@ -239,11 +264,9 @@ local function cardPreview(card,model)
  card.TextTransparency=1
 end
 local jason=RS.Survival:FindFirstChild("PresentationJason")
-if jason then local clone=jason:Clone() clone:SetAttribute("PresentationPursuer",true) cardPreview(main.Play,clone) end
 local function avatarPreview()
  local old=main.Inventory:FindFirstChild("Preview") if old then old:Destroy() end
  local caption=main.Inventory:FindFirstChild("Caption") if caption then caption:Destroy() end
- if player.Character then local oldA=player.Character.Archivable player.Character.Archivable=true local clone=player.Character:Clone() player.Character.Archivable=oldA cardPreview(main.Inventory,clone) end
 end
 local function equipmentPreview()
  local body=inventory.CreditosFrame body.Info.Visible=false
@@ -266,6 +289,56 @@ avatarPreview() equipmentPreview()
 player.CharacterAdded:Connect(function() if inMenu then avatarPreview() equipmentPreview() end end)
 local musicIcon=Instance.new("TextLabel",main.Shop) musicIcon.BackgroundTransparency=1 musicIcon.Text="♫" musicIcon.TextColor3=Color3.fromRGB(215,185,124) musicIcon.TextSize=45 musicIcon.Size=UDim2.fromScale(1,.65) musicIcon.Position=UDim2.fromScale(0,0)
 main.Shop.TextYAlignment=Enum.TextYAlignment.Bottom
+local function startHorrorBeat()
+ horrorToken+=1 local token=horrorToken
+ ui:SetAttribute("HorrorMenuEffect",true)
+ local lights={}
+ if menuScene then
+  for _,d in ipairs(menuScene:GetDescendants()) do
+   if d:IsA("Light") then table.insert(lights,{light=d,enabled=d.Enabled,brightness=d.Brightness}) end
+  end
+ end
+ local function lightsOn(on)
+  for _,entry in ipairs(lights) do if entry.light.Parent then
+   entry.light.Enabled=on and entry.enabled or false
+   entry.light.Brightness=on and entry.brightness or 0
+  end end
+ end
+ task.spawn(function()
+  task.wait(1.15)
+  for _,delay in ipairs({.07,.12,.05,.16,.08,.10}) do
+   if token~=horrorToken or not inMenu then return end
+   lightsOn(false) task.wait(delay)
+   lightsOn(true) task.wait(.09)
+  end
+  if token~=horrorToken or not inMenu then return end
+  lightsOn(false) task.wait(.11)
+  if menuAvatar and menuAvatar.Parent then
+   for _,d in ipairs(menuAvatar:GetDescendants()) do if d:IsA("BasePart") then d.LocalTransparencyModifier=1 end end
+   menuAvatar:SetAttribute("HorrorVisible",false)
+  end
+  task.wait(.16) lightsOn(true)
+ end)
+end
+
+local function animateMenuIntro()
+ if not firstMenuIntro and not player:GetAttribute("MenuIntroPending") then return end
+ firstMenuIntro=false player:SetAttribute("MenuIntroPending",false)
+ ui:SetAttribute("MenuIntroAnimated",true)
+ local finalPos=main.Logo.Position local finalSize=main.Logo.Size
+ main.Logo.Position=UDim2.fromScale(.5,.50) main.Logo.Size=UDim2.new(.68,0,.25,0)
+ local nav={main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates,creditsButton}
+ for _,b in ipairs(nav) do b.TextTransparency=1 b.UIStroke.Transparency=1 end
+ TweenService:Create(main.Logo,TweenInfo.new(.7,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Position=finalPos,Size=finalSize}):Play()
+ task.delay(.42,function()
+  for i,b in ipairs(nav) do task.delay((i-1)*.055,function()
+   if not inMenu then return end
+   TweenService:Create(b,TweenInfo.new(.22,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=0}):Play()
+   TweenService:Create(b.UIStroke,TweenInfo.new(.22),{Transparency=i==1 and .22 or .82}):Play()
+  end) end
+ end)
+end
+
 local function bindCamera()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  RunService:BindToRenderStep("SurviversMenuCamera",Enum.RenderPriority.Camera.Value+2,function()
@@ -286,15 +359,22 @@ local function open()
  if controls then controls:Disable() end
  local camera=workspace.CurrentCamera if camera then oldFov=camera.FieldOfView end
  avatarPreview() equipmentPreview()
- if not main.Play:FindFirstChild("Preview") and jason then local clone=jason:Clone() clone:SetAttribute("PresentationPursuer",true) cardPreview(main.Play,clone) end
+ for _,card in ipairs({main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates}) do
+  local preview=card:FindFirstChild("Preview") if preview then preview:Destroy() end
+  local caption=card:FindFirstChild("Caption") if caption then caption:Destroy() end
+  card.TextTransparency=0
+ end
  buildPrivateScene()
  enableMenuLook()
  bindCamera()
  show("main")
  layout()
+ animateMenuIntro()
+ startHorrorBeat()
 end
 
 local function close()
+ horrorToken+=1
  inMenu=false player:SetAttribute("InMenu",false)
  disableMenuLook()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")

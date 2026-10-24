@@ -113,7 +113,8 @@ local function actionLayout()
  topActions.Position=UDim2.new(1,-174,0,8)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,18,0,136),function() event:FireServer("leave") end)
+local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,16,0,8),function() event:FireServer("leave") end)
+leave.BackgroundTransparency=1 leave.UIStroke.Enabled=false leave.TextSize=25
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
