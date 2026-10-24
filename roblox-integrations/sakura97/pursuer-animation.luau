@@ -224,7 +224,7 @@ local function setDefaultAnimate(model,enabled)
  local a=model:FindFirstChild("Animate")
  if driven[model]==enabled and (not a or animateState[model]~=nil) then return end
  driven[model]=enabled
- if a and a:IsA("LocalScript") then
+ if a and a:IsA("BaseScript") then
   if animateState[model]==nil then animateState[model]=not a.Disabled end
   a.Disabled=not (enabled and animateState[model])
  end

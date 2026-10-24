@@ -8,7 +8,7 @@ function p:WaitForChild(name) if name=="PlayerGui" then return pg end end
 function p:GetAttribute(name) return self.attrs[name] end
 p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
 p.Character.Parent=host
-local animate=Instance.new("LocalScript",p.Character) animate.Name="Animate" animate.Enabled=true
+local animate=p.Character:FindFirstChild("Animate") or Instance.new("LocalScript",p.Character) animate.Name="Animate" animate.Enabled=true
 local simulate
 local proxy={ReplicatedStorage=RS}
 function proxy:GetService(name)
