@@ -36,8 +36,10 @@ end
 local ok,err=xpcall(function()
  api=controller() task.wait()
  assert(ui.MenuPrincipal.Visible,"Main menu did not open")
- assert(not ui.MenuPrincipal.Play:FindFirstChild("Preview") and not ui.MenuPrincipal.Inventory:FindFirstChild("Preview"),"Large menu cards/previews must not cover the background")
- assert(ui.MenuPrincipal.Play.Position.X.Scale==.5 and ui.MenuPrincipal.Shop.Position.X.Scale==.5 and ui.MenuPrincipal.Inventory.Position.X.Scale==.5,"Main navigation is not centered vertically")
+ assert(not ui.MenuPrincipal.Play:FindFirstChild("Preview"),"Large menu preview must not cover the background")
+ assert(not ui.MenuPrincipal.Shop.Visible and not ui.MenuPrincipal.Shop.Active,"Shop button must stay removed from main menu")
+ assert(not ui.MenuPrincipal.Inventory.Visible and not ui.MenuPrincipal.Inventory.Active,"Inventory button must stay removed from main menu")
+ assert(ui.MenuPrincipal.Play.Position.X.Scale==.5 and ui.MenuPrincipal.Ajustes.Position.X.Scale==.5 and ui.MenuPrincipal.Updates.Position.X.Scale==.5,"Main navigation is not centered vertically")
  assert(ui.MenuPrincipal.Play.BackgroundTransparency==1 and ui.MenuPrincipal.Play.UIStroke.Thickness<=1.5,"Main buttons are not clean reference-style outlines")
  assert(ui:GetAttribute("MenuIntroAnimated")==true,"Logo-to-top intro animation was not armed")
  local closeAvatar=workspace:FindFirstChild("LocalMenuAvatar")
@@ -52,7 +54,7 @@ local ok,err=xpcall(function()
  assert(game.Lighting:FindFirstChild("SuviversMenuHorrorDark"),"Menu background did not darken during horror beat")
  assert(ui.MenuPrincipal.Profile.XPBar.Value.Text:find("NÍVEL 2",1,true),"Level header missing")
  assert(ui.MenuPrincipal.Play.Size.X.Offset>=168 and ui.MenuPrincipal.Play.Size.Y.Offset>=28,"Centered phone menu target too small")
- assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Shop.Position.Y.Scale and ui.MenuPrincipal.Shop.Position.Y.Scale<ui.MenuPrincipal.Inventory.Position.Y.Scale,"Main menu is not a vertical stack")
+ assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Ajustes.Position.Y.Scale and ui.MenuPrincipal.Ajustes.Position.Y.Scale<ui.MenuPrincipal.Updates.Position.Y.Scale,"Main menu is not a clean vertical stack")
  api.show("settings") api.settings.select("audio")
  assert(not ui.Escenarios.MenuAjustes.ReferenceSettings.Heading:FindFirstChild("REDEFINIR"),"Reset settings button returned")
  local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
@@ -64,9 +66,6 @@ local ok,err=xpcall(function()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
  api.settings.select("gameplay") assert(rows.CameraFOV.Slider and rows.ControlScale.Slider,"Gameplay settings missing")
  api.settings.setValue("CameraFOV",500) assert(p:GetAttribute("CameraFOV")==90,"FOV bounds failed")
- api.show("shop")
- assert(ui.Escenarios.MenuShop.Visible and ui.Escenarios.MenuShop.CreditosFrame.Info.Text:find("EM BREVE",1,true),"Shop must be a clean coming-soon screen")
- assert(not ui.Escenarios.MenuShop.CreditosFrame:FindFirstChild("Purchase"),"Old shop purchase button returned")
  assert(ui.Sonidos.PlayClick.SoundId=="rbxassetid://87437544236708","Requested play click sound missing")
  assert(ui.Sonidos.LightFlicker.SoundId=="rbxassetid://137413271824429","Requested light flicker sound missing")
  api.close() assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
@@ -80,4 +79,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopComingSoon=true,noResetButton=true,requestedMenuSounds=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryButtonsRemoved=true,noResetButton=true,requestedMenuSounds=true}
