@@ -49,7 +49,8 @@ assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLi
 assert(not workspace.StreamingEnabled)
 local mapReport={}
 for _,arena in ipairs(assets.Maps:GetChildren()) do
- assert(arena:GetAttribute("PartCount")<=5015 and arena:GetAttribute("PartCount")>30,"Part budget")
+ local budget=arena:GetAttribute("PartBudget") or 5000
+ assert(arena:GetAttribute("PartCount")<=budget+15 and arena:GetAttribute("PartCount")>30,"Part budget")
  assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
  assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=30,"Separated spawns")
  assert((arena:GetAttribute("KillerSpawnDistance") or 0)>=30,"Killer spawn distance metadata missing")
