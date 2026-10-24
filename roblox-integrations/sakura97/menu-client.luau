@@ -69,6 +69,7 @@ local function buildPrivateScene()
  local template=RS:WaitForChild("MenuSceneTemplate")
  menuScene=template:Clone()
  menuScene.Name="LocalMenuScene"
+ for _,d in ipairs(menuScene:GetDescendants()) do if d:IsA("LuaSourceContainer") or d:IsA("ProximityPrompt") or d:IsA("ClickDetector") then d:Destroy() end end
  menuScene.Parent=workspace
  local rotation=menuScene:GetPivot().Rotation
  menuScene:PivotTo(CFrame.new(MENU_ORIGIN)*rotation)

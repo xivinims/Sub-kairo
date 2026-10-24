@@ -19,6 +19,7 @@ end
 local function controller()
  local game=proxy
 __ANIMATION_TEST_SOURCE__
+ return {prepare=prepare,resolve=locomotionName}
 end
 local function posed(model)
  local count=0
@@ -26,10 +27,16 @@ local function posed(model)
  return count
 end
 local ok,err=xpcall(function()
- controller() assert(simulate)
+ local api=controller() assert(simulate)
+ local d=api.prepare(p.Character,RS.Survival.CrouchClips)
+ local diagnostics={}
+ if d then for name,c in pairs(d.clips) do diagnostics[name]={bound=c.boundCount,frames=c.frameCount,length=c.length} end else diagnostics.prepare="nil" end
+ diagnostics.motors={}
+ for _,v in ipairs(p.Character:GetDescendants()) do if v:IsA("Motor6D") then table.insert(diagnostics.motors,v.Name..":"..(v.Part1 and v.Part1.Name or "nil")) end end
+ local diagnosticText=game:GetService("HttpService"):JSONEncode(diagnostics)
  for i=1,6 do simulate(.2) end
  assert(posed(portrait)>=4,"Winning clip did not animate the original Jason portrait")
- assert(posed(p.Character)>=4,"Crouch clip did not animate R15 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()))
+ assert(posed(p.Character)>=4,"Crouch clip did not animate R15 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
