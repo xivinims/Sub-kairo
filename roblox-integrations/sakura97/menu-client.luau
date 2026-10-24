@@ -305,7 +305,7 @@ local function startHorrorBeat()
   end end
  end
  task.spawn(function()
-  task.wait(1.15)
+  task.wait(90)
   for _,delay in ipairs({.07,.12,.05,.16,.08,.10}) do
    if token~=horrorToken or not inMenu then return end
    lightsOn(false) task.wait(delay)
@@ -317,7 +317,16 @@ local function startHorrorBeat()
    for _,d in ipairs(menuAvatar:GetDescendants()) do if d:IsA("BasePart") then d.LocalTransparencyModifier=1 end end
    menuAvatar:SetAttribute("HorrorVisible",false)
   end
-  task.wait(.16) lightsOn(true)
+  task.wait(.16)
+  lightsOn(false)
+  local vignette=main:FindFirstChild("Vignette")
+  if vignette then
+   vignette.BackgroundColor3=Color3.new(0,0,0)
+   vignette.BackgroundTransparency=0
+   local gradient=vignette:FindFirstChildOfClass("UIGradient")
+   if gradient then gradient.Enabled=false end
+  end
+  ui:SetAttribute("HorrorBlackout",true)
  end)
 end
 
