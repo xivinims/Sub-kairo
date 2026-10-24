@@ -25,15 +25,6 @@ jobs:
           persist-credentials: false
       - name: Validate Suvivers and publish when enabled
         env:
-          SURVIVERS_DRY_RUN: '1'
+          SURVIVERS_DRY_RUN: '0'
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-integrations/sakura97/publish.mjs
-
-# trigger floating-island-v102
-
-# serialize publisher for v104
-
-# final v104 single-run trigger
-
-# trigger survivers menu-round head
-
