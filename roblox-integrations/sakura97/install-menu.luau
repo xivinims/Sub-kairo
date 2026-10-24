@@ -104,12 +104,11 @@ end
 
 local settings,settingsTitle,settingsBody,settingsClose=modal("MenuAjustes","AJUSTES")
 local credits,creditsTitle,creditsBody,creditsClose=modal("MenuCreditos","CRÉDITOS")
-local shop,_,shopBody=modal("MenuShop","LOJA • MUSIC")
+local shop,_,shopBody=modal("MenuShop","LOJA")
 local inventory,_,inventoryBody=modal("MenuInventory","EQUIPAMENTO")
 local updates,_,updatesBody=modal("MenuUpdates","NOVIDADES • ALFA 121")
-local shopInfo=label(shopBody,"Info","MUSIC\n\nDesbloqueie músicas por ID e receba o distintivo Cantor.\n\n20 PONTOS • pagamento com pontos do jogo") shopInfo.Size=UDim2.new(1,-36,1,-88) shopInfo.Position=UDim2.fromOffset(18,12) shopInfo.TextSize=17
-local purchase=button(shopBody,"Purchase","DESBLOQUEAR MUSIC • 20 PONTOS") purchase.Position=UDim2.new(.1,0,1,-64) purchase.Size=UDim2.new(.8,0,0,44)
-local inventoryText=label(inventoryBody,"Info","LANTERNA\nIlumine o caminho pelo botão da lanterna.\n\nIMPULSO • 1 POR RODADA\nAceleração temporária para escapar.\n\nKIT MÉDICO • 1 POR RODADA\nReviva você ou um aliado caído. Fique parado durante o uso.") inventoryText.Position=UDim2.fromOffset(20,12) inventoryText.Size=UDim2.new(1,-40,1,-24) inventoryText.TextSize=15 inventoryText.TextXAlignment=Enum.TextXAlignment.Left
+local shopInfo=label(shopBody,"Info","EM BREVE\n\nA loja ainda está sendo preparada.") shopInfo.Size=UDim2.new(1,-48,1,-48) shopInfo.Position=UDim2.fromOffset(24,24) shopInfo.TextSize=21 shopInfo.Font=Enum.Font.GothamBold shopInfo.TextXAlignment=Enum.TextXAlignment.Center shopInfo.TextYAlignment=Enum.TextYAlignment.Center
+local inventoryText=label(inventoryBody,"Info","LANTERNA\nIlumine o caminho sem revelar sua posição por muito tempo.\n\nREVIVER ALIADO\nChegue perto de alguém caído e use o botão + antes dos 30 segundos acabarem.") inventoryText.Position=UDim2.fromOffset(20,12) inventoryText.Size=UDim2.new(1,-40,1,-24) inventoryText.TextSize=15 inventoryText.TextXAlignment=Enum.TextXAlignment.Left
 local news=label(updatesBody,"Info","TRÊS CENÁRIOS\nBosque do Silêncio • Base Abandonada • Fortaleza da Névoa\n\nJASON E SOBREVIVENTES\nCaçada revisada, proteção na entrada e animações corrigidas.\n\nINTERFACE E PROGRESSO\nNovo HUD, ajustes completos e salvamento de pontos e XP.") news.Position=UDim2.fromOffset(20,12) news.Size=UDim2.new(1,-40,1,-24) news.TextSize=15 news.TextXAlignment=Enum.TextXAlignment.Left
 
 
@@ -132,8 +131,10 @@ local media=RS:FindFirstChild("XNMedia")
 if media and media:FindFirstChild("MenuClick") then
  local click=media.MenuClick:Clone() click.Name="Click" click.Parent=sounds
 else
- local click=Instance.new("Sound") click.Name="Click" click.SoundId="rbxassetid://12221967" click.Volume=.35 click.Parent=sounds
+ local click=Instance.new("Sound") click.Name="Click" click.SoundId="rbxassetid://12221967" click.Volume=.28 click.Parent=sounds
 end
+local playClick=Instance.new("Sound") playClick.Name="PlayClick" playClick.SoundId="rbxassetid://87437544236708" playClick.Volume=.55 playClick.Parent=sounds
+local flicker=Instance.new("Sound") flicker.Name="LightFlicker" flicker.SoundId="rbxassetid://137413271824429" flicker.Volume=.52 flicker.Parent=sounds
 
 local controller=Instance.new("LocalScript") controller.Name="MenuController" controller.Source=__MENU_SOURCE__ controller.Parent=ui
 
