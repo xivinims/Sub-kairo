@@ -398,8 +398,7 @@ end
 net.Action.OnServerEvent:Connect(function(p,action,value)
  if type(action)~="string" or #action>24 then return end
  rates[p]=rates[p] or {} local t=now()
- local minGap=action=="mode" and .02 or .18
- if t-(rates[p][action] or 0)<minGap then return end
+ if action~="mode" and t-(rates[p][action] or 0)<.18 then return end
  rates[p][action]=t
  if action=="afk" then
   if type(value)~="boolean" then return end
