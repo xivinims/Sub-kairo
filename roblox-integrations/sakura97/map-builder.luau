@@ -164,9 +164,26 @@ function Builder.build(load,sanitize,destination)
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
   for _,p in ipairs(candidates) do
    if #arrivals:GetChildren()>=8 then break end
-   if (p-start).Magnitude>=8 and (p-start).Magnitude<=math.max(48,minimumKillerDistance*.9) and (p-far).Magnitude>math.max(28,minimumKillerDistance*.72) and route(start,p) then addPoint(arrivals,#arrivals:GetChildren()+1,p) end
+   if (p-start).Magnitude>=8 and (p-start).Magnitude<=math.max(48,minimumKillerDistance*.9) and (p-far).Magnitude>math.max(28,minimumKillerDistance*.72) and route(start,p) then
+    addPoint(arrivals,#arrivals:GetChildren()+1,p)
+   end
   end
-  assert(#arrivals:GetChildren()>=2,"Arrival area too cramped")
+  if #arrivals:GetChildren()<2 then
+   local fallback={}
+   for _,p in ipairs(selected) do
+    local fromStart=(p-start).Magnitude
+    local fromKiller=(p-far).Magnitude
+    if fromStart>=5 and fromKiller>=math.min(18,minimumKillerDistance*.45) then
+     table.insert(fallback,{p=p,d=fromStart})
+    end
+   end
+   table.sort(fallback,function(a,b) return a.d<b.d end)
+   for _,entry in ipairs(fallback) do
+    if #arrivals:GetChildren()>=math.min(4,#selected) then break end
+    addPoint(arrivals,#arrivals:GetChildren()+1,entry.p)
+   end
+  end
+  assert(#arrivals:GetChildren()>=2,"Arrival area too cramped in "..spec.name)
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
   if toward.Magnitude<1 then toward=Vector3.new(far.X-start.X,0,far.Z-start.Z) end
   toward=toward.Unit
