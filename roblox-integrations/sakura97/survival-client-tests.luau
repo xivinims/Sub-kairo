@@ -16,7 +16,8 @@ function p:SetAttribute(n,v) attrs[n]=v if attributeEvents[n] then attributeEven
 function p:WaitForChild(n) if n=="PlayerGui" then return guiHost end end
 function p:FindFirstChild() return nil end
 function p:FindFirstChildWhichIsA() return nil end
-local survivor={Character=char,UserId=992,DisplayName="Sobrevivente",Parent=host,GetAttribute=function(_,n) return n=="InRound" end}
+local survivorAttrs={InRound=true,Downed=false,IsJason=false,VoidActive=false}
+local survivor={Character=char,UserId=992,DisplayName="Sobrevivente",Parent=host,GetAttribute=function(_,n) return survivorAttrs[n] end}
 local fakePlayers={LocalPlayer=p,GetPlayers=function() return {p,survivor} end,GetPlayerByUserId=function(_,id) if id==991 then return p elseif id==992 then return survivor end end}
 local requests={}
 local fakeAction={FireServer=function(_,action) table.insert(requests,action) end}
@@ -52,7 +53,7 @@ local ok,result=xpcall(function()
  update:Fire("reset") task.wait()
  attrs.VoidActive=true camera.CameraType=Enum.CameraType.Scriptable
  task.wait(.7)
- assert(camera.CameraType==Enum.CameraType.Scriptable and not gui.Capture.Visible,"Old hit callback reclaimed death camera")
+ assert(camera.CameraType==Enum.CameraType.Scriptable and not gui.Capture.Visible,"Hit reaction must never steal the death/menu camera")
  attrs.VoidActive=false
  update:Fire("roundResult",{jasonWon=true,killer="JohnDoe",killerPlayer=false,killerWinnerName="JohnDoe",winnerText="JohnDoe venceu a partida",lastVictimUserId=992,lastVictimName="Sobrevivente",map="Base Abandonada",xp=50,board={{name="Tester",userId=991,time=125,hits=2,falls=1,level=4},{name="Sobrevivente",userId=992,time=111,hits=3,falls=2,level=2}}}) task.wait()
  assert(gui.RoundResult.Ranking:IsA("ScrollingFrame") and gui.RoundResult.Ranking.Rank1,"Scrollable result ranking missing")
@@ -71,22 +72,30 @@ local ok,result=xpcall(function()
  local before=flash:GetAttribute("PulseCount") or 0
  update:Fire("lobbyDoorGlow") task.wait()
  assert((flash:GetAttribute("PulseCount") or 0)==before+1,"Lobby door glow event did not pulse")
- assert(gui.TopActions and gui.TopActions:FindFirstChild("Run") and gui.TopActions:FindFirstChild("Boost") and gui.TopActions:FindFirstChild("Flashlight") and gui.TopActions:FindFirstChild("Medkit"),"Top utility actions missing")
+ assert(gui.TopActions and gui.TopActions:FindFirstChild("Run") and gui.TopActions:FindFirstChild("Flashlight"),"Top run/flashlight actions missing")
+ assert(not gui.TopActions:FindFirstChild("Boost") and not gui.TopActions:FindFirstChild("Medkit"),"Removed boost/medkit buttons returned")
+ assert(not gui:FindFirstChild("Leave"),"Return-to-menu button returned to gameplay")
  assert(gui.Actions:FindFirstChild("Slow") and gui.Actions:FindFirstChild("Jump") and gui.Actions:FindFirstChild("Attack"),"Bottom actions must be crouch/jump/attack")
- assert(not gui.Actions:FindFirstChild("Run") and not gui.Actions:FindFirstChild("Boost") and not gui.Actions:FindFirstChild("Flashlight") and not gui.Actions:FindFirstChild("Medkit"),"Utility actions leaked into bottom bar")
+ assert(not gui.Actions:FindFirstChild("Run") and not gui.Actions:FindFirstChild("Boost") and not gui.Actions:FindFirstChild("Flashlight") and not gui.Actions:FindFirstChild("Medkit"),"Removed utility actions leaked into bottom bar")
+ assert(gui.Actions:FindFirstChild("ReviveNearby"),"Proximity revive button missing")
  assert(gui.TopActions.Run.BackgroundTransparency==1 and gui.Actions.Jump.BackgroundTransparency==1 and gui.Actions.Attack.BackgroundTransparency==1,"Action button backgrounds must be transparent")
  assert(gui.Round.BackgroundTransparency==1 and gui.Countdown.BackgroundTransparency==1,"Timer must remain transparent")
  assert(gui.PlayerRoster and gui.PlayerRoster:FindFirstChild("Player_991") and gui.PlayerRoster:FindFirstChild("Player_992"),"Reference-style player roster missing")
  input:Fire({KeyCode=Enum.KeyCode.F},false) task.wait() assert(requests[#requests]=="flashlight")
- input:Fire({KeyCode=Enum.KeyCode.E},false) task.wait() assert(requests[#requests]=="kit")
+ local beforeRemovedHotkeys=#requests
+ input:Fire({KeyCode=Enum.KeyCode.E},false) input:Fire({KeyCode=Enum.KeyCode.Q},false) task.wait()
+ assert(#requests==beforeRemovedHotkeys,"Removed boost/kit hotkeys still fire actions")
  attrs.MusicEnabled=false attrs.IsJason=true step()
  assert(not game:GetService("SoundService"):FindFirstChild("LocalJasonTheme"),"Automatic Jason theme was recreated")
  attrs.IsJason=false
- attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+25 step()
- assert(not gui.TopActions.Run.Visible and not gui.Actions.Slow.Visible and gui.TopActions.Medkit.Text=="+")
- attrs.ReviveAt=workspace:GetServerTimeNow()+3 step()
- assert(gui.Notice.Text:find("Reanimando",1,true),"Self-revive progress hidden by downed message")
- attrs.ReviveAt=0
+ attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+30 step()
+ assert(not gui.TopActions.Run.Visible and not gui.Actions.Slow.Visible and not gui.Actions.ReviveNearby.Visible,"Downed player must not see self-revive button")
+ assert(gui.Notice.Text:find("30",1,true) or gui.Notice.Text:find("29",1,true),"30-second downed countdown missing")
+ attrs.Downed=false survivorAttrs.Downed=true step()
+ assert(gui.Actions.ReviveNearby.Visible,"Nearby downed teammate did not expose + revive button")
+ attrs.ReviveAt=workspace:GetServerTimeNow()+2 step()
+ assert(gui.Notice.Text:find("Reanimando",1,true),"Teammate revive progress hidden")
+ attrs.ReviveAt=0 survivorAttrs.Downed=false
  attrs.InRound=false attrs.Downed=false attrs.RoundStatus="eliminated" attrs.Spectating=true step()
  assert(gui.Spectate.Visible and not gui.Actions.Visible and not gui:FindFirstChild("Join"))
  assert(camera.CameraSubject==char.Humanoid and gui.Spectate.Player.Text=="Sobrevivente")
@@ -106,7 +115,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Portal admission must not display round controls")
  assert(not gui.Actions.Visible,"Round controls leaked outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,genshinActionLayout=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,genshinActionLayout=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
