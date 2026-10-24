@@ -7,7 +7,6 @@ local profileStore=nil
 pcall(function() profileStore=game:GetService("DataStoreService"):GetDataStore("SuviversProfiles_v1") end)
 local Profiles=require(SSS:WaitForChild("ProfileService"))
 local profiles=Profiles.new(profileStore)
-local musicObjects={} local MUSIC_PRICE=20
 local function saveProfile(p,flush)
  if not p:GetAttribute("ProfileLoaded") and p.Parent then profiles:load(p) end
  local ok
@@ -19,7 +18,7 @@ local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
-local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0 local roundJoinUntil=0
+local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local roundJoinUntil=0
 local jasonPlayer=nil local morphing={} local rigRetries={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
@@ -38,7 +37,6 @@ local function sync(p)
  p:SetAttribute("Injured",e~=nil and e.injured==true)
  p:SetAttribute("BleedoutAt",e and e.deadline or 0)
  p:SetAttribute("ProtectedUntil",e and e.protectedUntil or 0)
- p:SetAttribute("HasMedkit",false) p:SetAttribute("HasBoost",e~=nil and e.boost or false)
  p:SetAttribute("RoundStatus",e and e.status or "lobby")
  p:SetAttribute("Queued",queued[p] or false)
  local h=humanoid(p)
@@ -138,7 +136,7 @@ local function injure(p)
  if e.injured then return false end
  e.hits=(e.hits or 0)+1
  local stats=p:FindFirstChild("leaderstats") local hitCount=stats and stats:FindFirstChild("Atingido") if hitCount then hitCount.Value+=1 end
- e.injured=true e.channel=nil e.boostUntil=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",now())
+ e.injured=true e.channel=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",now())
  sync(p)
  net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
  return true
@@ -147,7 +145,7 @@ local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
  clearFlashlight(p)
  local e=entry(p) e.downedAt=now() e.hits=(e.hits or 0)+1 local hitStats=p:FindFirstChild("leaderstats") if hitStats and hitStats:FindFirstChild("Atingido") then hitStats.Atingido.Value+=1 end e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName sync(p)
- net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
+ net.Update:FireClient(p,"notice","Você caiu. Outro sobrevivente tem 30 segundos para ajudar.")
 end
 local function executeDowned(p,attacker)
  local e=entry(p)
@@ -215,58 +213,6 @@ local function join(p)
  net.Update:FireClient(p,"load",state.id,arena)
  return true
 end
-local function introSceneData()
- if not arena or not npc or not npc.PrimaryPart then return nil end
- local killerSpawn=arena:GetAttribute("KillerSpawn")
- if typeof(killerSpawn)~="Vector3" then return nil end
- local endPivot=npc:GetPivot()
- local safe=arena:FindFirstChild("SafePoints")
- local startPoint=nil local bestDistance=0
- local params=RaycastParams.new()
- params.FilterType=Enum.RaycastFilterType.Include
- params.FilterDescendantsInstances={arena}
- params.RespectCanCollide=true
- if safe then
-  for _,v in ipairs(safe:GetChildren()) do
-   if v:IsA("Vector3Value") then
-    local distance=(v.Value-killerSpawn).Magnitude
-    if distance>=12 and distance<=34 then
-     local origin=v.Value+Vector3.new(0,1.7,0)
-     local delta=killerSpawn-v.Value
-     local hit=workspace:Raycast(origin,delta,params)
-     if not hit and distance>bestDistance then startPoint=v.Value bestDistance=distance end
-    end
-   end
-  end
-  if not startPoint then
-   local nearest=nil local nearestDistance=math.huge
-   for _,v in ipairs(safe:GetChildren()) do
-    if v:IsA("Vector3Value") then
-     local distance=(v.Value-killerSpawn).Magnitude
-     if distance>8 and distance<nearestDistance then nearest=v.Value nearestDistance=distance end
-    end
-   end
-   startPoint=nearest
-  end
- end
- -- Start at the real pursuer spawn and let the local clone walk straight through a low camera.
- local startPos=endPivot.Position
- local toward=startPoint and (startPoint-startPos) or npc.PrimaryPart.CFrame.LookVector*24
- toward=Vector3.new(toward.X,0,toward.Z)
- if toward.Magnitude<1 then toward=Vector3.new(npc.PrimaryPart.CFrame.LookVector.X,0,npc.PrimaryPart.CFrame.LookVector.Z) end
- if toward.Magnitude<1 then toward=Vector3.new(0,0,-1) end
- local forward=toward.Unit
- local endPos=startPos+forward*22
- local startCF=CFrame.lookAt(startPos,startPos+forward)
- local endCF=CFrame.lookAt(endPos,endPos+forward)
- local right=forward:Cross(Vector3.yAxis)
- if right.Magnitude<.1 then right=Vector3.xAxis else right=right.Unit end
- local cameraPos=startPos+forward*10+right*1.4+Vector3.new(0,.65,0)
- local focus=cameraPos+forward*7+Vector3.new(0,1.35,0)
- local cameraCF=CFrame.lookAt(cameraPos,focus)
- return {duration=4,runDuration=3.25,startCF=startCF,endCF=endCF,cameraCF=cameraCF,passThroughCamera=true}
-end
-
 local function safeRoundSpawnCF(character,desired,face)
  if not character or typeof(desired)~="Vector3" or not arena then return nil end
  local params=RaycastParams.new()
@@ -307,8 +253,9 @@ local function recoverFromFall(p)
   target=target or arena:GetAttribute("EntranceSpawn")
  end
  if typeof(target)~="Vector3" then return false end
- local face=arena.ArenaEntrance and arena.ArenaEntrance:GetAttribute("DoorCFrame")
- local cf=safeRoundSpawnCF(p.Character,target,typeof(face)=="CFrame" and face.LookVector or Vector3.new(0,0,-1))
+ local face=arena:GetAttribute("SpawnFacing")
+ if typeof(face)~="Vector3" then face=Vector3.new(0,0,-1) end
+ local cf=safeRoundSpawnCF(p.Character,target,face)
  if not cf then return false end
  r.Anchored=true p.Character:PivotTo(cf) r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
  task.delay(.18,function() if r.Parent then r.Anchored=false end end)
@@ -319,8 +266,8 @@ end
 local function spawnPlayer(p)
  local e=entry(p) local r=root(p)
  if not e or not r or not p.Character or not npc or not arena then return false end
- local entranceCF=arena.ArenaEntrance:GetAttribute("DoorCFrame")
- local face=entranceCF and entranceCF.LookVector or Vector3.new(0,0,-1)
+ local face=arena:GetAttribute("SpawnFacing")
+ if typeof(face)~="Vector3" then face=Vector3.new(0,0,-1) end
  local chosenCF=nil local ground=nil
 
  if p==jasonPlayer then
@@ -367,7 +314,6 @@ local function spawnPlayer(p)
  r.Anchored=true
  p.Character:PivotTo(chosenCF)
  r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
- if p~=jasonPlayer then e.doorClosed=false e.entryAt=now() net.Update:FireClient(p,"entrance",state.id,entranceCF) end
  motions[p]={position=ground or chosenCF.Position,speed=0,grounded=true}
  sync(p)
  task.delay(.4,function()
@@ -408,9 +354,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   net.Update:FireClient(p,"notice",value and "AFK ativado. Você não entra nas próximas partidas." or "AFK desativado. Você participa da próxima partida.")
   return
  end
- if t<introUntil and action~="leave" and action~="spectateExit" then return end
- if action=="join" then return -- Admission is exclusively server-observed portal crossing.
- elseif action=="attack" then
+ if action=="attack" then
   if p~=jasonPlayer then return end
   local e=entry(p) if not e or e.status~="alive" or t-lastAttack<1.8 then return end
   lastAttack=t
@@ -439,27 +383,11 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="mode" then
   local e=entry(p)
   if e and e.injured and value=="run" then value="walk" end
-  if p~=jasonPlayer and (value=="walk" or value=="slow" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
- elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and not e.injured and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
+  if p~=jasonPlayer and (value=="walk" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
  elseif action=="flashlight" then
   local e=entry(p)
   if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
  elseif action=="revive" then if p~=jasonPlayer then channelRevive(p) end
- elseif action=="musicBuy" then
-  if not p:GetAttribute("ProfileLoaded") then net.Update:FireClient(p,"notice","Seu progresso ainda está carregando. Aguarde para comprar.") return end
-  if p:GetAttribute("Cantor") then net.Update:FireClient(p,"notice","Você já liberou o distintivo Cantor.") return end
-  local stats=p:FindFirstChild("leaderstats") local currency=stats and stats:FindFirstChild("Pontos")
-  if not currency or currency.Value<MUSIC_PRICE then net.Update:FireClient(p,"notice","Music custa 20 Pontos.") return end
-  points(p,-MUSIC_PRICE) p:SetAttribute("Cantor",true) task.spawn(saveProfile,p)
-  net.Update:FireClient(p,"notice","Music desbloqueado! Distintivo Cantor liberado.")
- elseif action=="musicPlay" then
-  if not p:GetAttribute("Cantor") or type(value)~="string" or #value<1 or #value>20 or not value:match("^%d+$") then return end
-  local id=tonumber(value) if not id or id<1 or id>9007199254740991 or id%1~=0 then return end
-  if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
-  local r=root(p) if not r then return end
-  local sound=Instance.new("Sound") sound.Name="CantorMusic" sound.SoundId="rbxassetid://"..id sound.Volume=.16 sound.Looped=true sound.RollOffMaxDistance=45 sound.RollOffMinDistance=8 sound.Parent=r
-  musicObjects[p]=sound pcall(function() sound:Play() end)
- elseif action=="musicStop" then if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
  elseif action=="voice" then
   local e=entry(p) local r=root(p) if brain and r and e and e.status=="alive" and type(value)=="number" and value==value and value>.015 and value<=1 then brain.noise(r.Position,config.Killers[killerName].hearing*.8) end
  elseif action=="leave" then
@@ -574,7 +502,7 @@ Players.PlayerAdded:Connect(hook)
 for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
  if p==jasonPlayer then jasonPlayer=nil endTime=now() end
- saveAt[p]=nil if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
+ saveAt[p]=nil
  morphing[p]=nil rigRetries[p]=nil
  state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil
  saveProfile(p,true) profiles.records[p]=nil
@@ -621,22 +549,12 @@ RunService.Heartbeat:Connect(function(dt)
     if r.Position.Y<(arena:GetAttribute("RecoveryY") or (arena:GetAttribute("FloorY") or 20)-3) then
      recoverFromFall(p)
     else
-     if p~=jasonPlayer and e.entryAt then
-      local doorCF=arena.ArenaEntrance:GetAttribute("DoorCFrame") local localPos=doorCF:PointToObjectSpace(r.Position)
-      if not e.doorClosed and (localPos.Z < -7 or t-e.entryAt>2.5) then
-       e.doorClosed=true net.Update:FireClient(p,"closeEntrance",state.id)
-      end
-      if e.doorClosed and math.abs(localPos.X)<4 and math.abs(localPos.Y)<6 and localPos.Z>-.8 and localPos.Z<6 then
-       p.Character:PivotTo(doorCF*CFrame.new(math.clamp(localPos.X,-2,2),0,-2)) r.AssemblyLinearVelocity=Vector3.zero
-      end
-     end
      local m=motions[p] or {position=r.Position,speed=0,grounded=true}
      local displacement=r.Position-m.position m.speed=Vector3.new(displacement.X,0,displacement.Z).Magnitude/step m.position=r.Position motions[p]=m
      if e.status=="alive" then
       h.JumpPower=50 h.JumpHeight=7.2
       if p==jasonPlayer then h.WalkSpeed=22
-      elseif e.boostUntil and t<e.boostUntil then h.WalkSpeed=e.injured and 20 or 27
-      elseif e.injured then h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 16 or 12
+      elseif e.injured then h.WalkSpeed=12
       else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or 16 end
       local grounded=h.FloorMaterial~=Enum.Material.Air
       local jump=m.grounded and not grounded and r.AssemblyLinearVelocity.Y>5
@@ -756,9 +674,7 @@ task.spawn(function()
     npc:SetAttribute("GroundOffset",npc.PrimaryPart.Position.Y-killerSpawn.Y)
     for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then d.Anchored=false pcall(function() d:SetNetworkOwner(nil) end) end end
     npc:SetAttribute("ActivePursuer",true)
-    introUntil=0
     npc:SetAttribute("AttackUntil",0)
-    net:SetAttribute("IntroUntil",0)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
     local eligible={}
     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
