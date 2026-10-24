@@ -222,6 +222,27 @@ slot(coolMotion,"Jason Intro",donor,"JohnDoe Intro",103232099547025)
 slot(coolMotion,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
 coolMotion:SetAttribute("ClipCount",#coolMotion:GetChildren())
 
+local noliAsset=load(140625681515398)
+local noliClips=Instance.new("Folder") compact(assert(noliAsset:FindFirstChild("Noli",true)),noliClips)
+local noliMotion=Instance.new("Folder",motionLibraries) noliMotion.Name="Noli"
+for _,pair in ipairs({{"Jason Idle","Idle"},{"Jason Walk","Walk"},{"Jason Run","Run"},{"Jason Slash","m1"},{"Jason_Kill","Noli Kill"},{"Jason Intro","Noli Intro"},{"Winning Screen","Noli Outro"}}) do
+ slot(noliMotion,pair[1],noliClips,pair[2],140625681515398)
+end
+noliMotion:SetAttribute("ClipCount",#noliMotion:GetChildren()) noliClips:Destroy() noliAsset:Destroy()
+local freddyMotion=coolMotion:Clone() freddyMotion.Name="Animatronic" freddyMotion.Parent=motionLibraries
+for _,item in ipairs({{"Jason Idle",101544755943444},{"Jason Walk",134168450460030},{"Jason Run",90846537286775}}) do
+ local wrapper=load(item[2])
+ local animation=assert(wrapper:FindFirstChildWhichIsA("Animation",true),"Animatronic package contains no animation: "..item[2])
+ local sequence=game:GetService("KeyframeSequenceProvider"):GetKeyframeSequenceAsync(animation.AnimationId)
+ local holder=Instance.new("Folder") sequence.Name=item[1] sequence.Parent=holder
+ local old=freddyMotion:FindFirstChild(item[1]) if old then old:Destroy() end
+ compact(holder,freddyMotion)
+ freddyMotion[item[1]]:SetAttribute("SourceAssetId",item[2])
+ holder:Destroy() wrapper:Destroy()
+end
+freddyMotion:SetAttribute("ClipCount",#freddyMotion:GetChildren())
+freddyMotion:SetAttribute("BundleId",251391123581565)
+
 for _,spec in ipairs({
  {name="JohnDoe",id=103232099547025,root="John"},
  {name="Chucky",id=95580261594507,root="Chucky",cool=true},
@@ -244,7 +265,7 @@ for _,spec in ipairs({
  model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
  h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
- model:SetAttribute("MotionLibrary",spec.cool and "Cool" or "Default")
+ model:SetAttribute("MotionLibrary",spec.name=="Jeff" and "Noli" or spec.name=="Freddy" and "Animatronic" or spec.cool and "Cool" or "Default")
  model.Parent=rigs
  if asset~=johnAsset then asset:Destroy() end
 end
@@ -329,4 +350,5 @@ for _,v in ipairs(light:GetChildren()) do
  if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end
 end
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true}
+
 
