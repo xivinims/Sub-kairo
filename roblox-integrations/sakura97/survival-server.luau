@@ -19,7 +19,7 @@ local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local Killer
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
 local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local roundJoinUntil=0
-local jasonPlayer=nil local morphing={} local rigRetries={} local hookedCharacters=setmetatable({},{__mode="k"}) local lastAttack=0
+local jasonPlayer=nil local morphing={} local rigRetries={} local hookedCharacters=setmetatable({},{__mode="k"}) local expectedCharacters={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
@@ -462,6 +462,7 @@ local function hook(p)
    morphing[p]=nil
    if converted and converted~=char then
     rigRetries[p]=nil
+    expectedCharacters[p]=converted
     onCharacter(converted)
     return
    end
@@ -473,9 +474,11 @@ local function hook(p)
    char:SetAttribute("AppearanceUserId",p.UserId)
    p:SetAttribute("SurvivorRig","R6")
   end
+  local expectedReplacement=expectedCharacters[p]==char
+  if expectedReplacement then expectedCharacters[p]=nil end
   local e=entry(p)
   if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then
-   if state.phase=="Partida" and e.spawnRecovery then
+   if state.phase=="Partida" and (e.spawnRecovery or expectedReplacement) then
     e.spawnRecovery=nil
     task.defer(function() if p.Parent and entry(p)==e and state.phase=="Partida" then spawnPlayer(p) end end)
    elseif state.phase=="Partida" then
@@ -509,7 +512,7 @@ for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
  if p==jasonPlayer then jasonPlayer=nil endTime=now() end
  saveAt[p]=nil
- morphing[p]=nil rigRetries[p]=nil
+ morphing[p]=nil rigRetries[p]=nil expectedCharacters[p]=nil
  state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil
  saveProfile(p,true) profiles.records[p]=nil
 end)
