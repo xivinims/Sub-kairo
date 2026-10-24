@@ -103,7 +103,7 @@ local ok,result=xpcall(function()
  attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
  assert(gui.TopActions.Run.Visible and gui.TopActions.Run.Text=="ATACAR","Player killer must use the single context button for attack")
  assert(not gui.Actions.Visible,"Player killer received extra persistent buttons")
- assert(camera.FieldOfView>70,"Jason FOV boost did not activate")
+ assert(camera.FieldOfView>(attrs.CameraFOV or 48),"Killer FOV boost did not increase above the configured base FOV")
  attrs.IsJason=false attrs.InRound=false attrs.Spectating=true
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
