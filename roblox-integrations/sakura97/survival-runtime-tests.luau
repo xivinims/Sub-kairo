@@ -5,7 +5,7 @@ local host=Instance.new("Folder",workspace) host.Name="RoundControllerTest"
 local events={} local function signal() local e=Instance.new("BindableEvent",host) table.insert(events,e) return e end
 local heartbeat=signal() local added=signal() local removed=signal()
 local serverActionHandler=nil
-local players={} local messages={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
+local players={} local messages={} local characterAdded={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
 local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
 local templateHum=character:FindFirstChildOfClass("Humanoid")
 if not templateHum then templateHum=Instance.new("Humanoid",character) end
@@ -19,7 +19,8 @@ end
 character.PrimaryPart=templateRoot
 for i=1,9 do
  local f=Instance.new("Folder",host) f.Name="Player"..i
- local p={Name="Player"..i,UserId=i,Parent=host,Character=character:Clone(),CharacterAdded=signal().Event,attrs={},folder=f}
+ local addedCharacter=signal() characterAdded[i]=addedCharacter
+ local p={Name="Player"..i,UserId=i,Parent=host,Character=character:Clone(),CharacterAdded=addedCharacter.Event,attrs={},folder=f}
  p.Character.Name="Player"..i p.Character.Parent=host
  local h=p.Character:FindFirstChildOfClass("Humanoid") h.MaxHealth=100 h.Health=100
  local r=p.Character:FindFirstChild("HumanoidRootPart") assert(r,"Fake player root missing")
@@ -170,6 +171,12 @@ local ok,result=xpcall(function()
  assert(p:GetAttribute("RoundStatus")=="eliminated" and deathCount>=1,"Jason execution flow mismatch: status="..tostring(p:GetAttribute("RoundStatus")).." deaths="..deathCount)
  send(p,"join") assert(p:GetAttribute("RoundStatus")=="eliminated","Eliminated player rejoined")
  SSS.SurvivalBridge.DeathFinished:Fire(p) realTask.wait()
+ local resetPlayer=players[4]
+ local resetCharacter=resetPlayer.Character:Clone() resetCharacter.Name=resetPlayer.Name resetCharacter.Parent=host resetPlayer.Character=resetCharacter
+ characterAdded[4]:Fire(resetCharacter) realTask.wait()
+ assert(resetPlayer:GetAttribute("RoundStatus")=="eliminated" and not resetPlayer:GetAttribute("InRound"),"Manual character reset did not safely eliminate the active participant")
+ SSS.SurvivalBridge.DeathFinished:Fire(resetPlayer) realTask.wait()
+ assert(resetPlayer:GetAttribute("Spectating")==true,"Manual character reset did not enter spectator flow")
  players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1)
  assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot preload")
  assert(players[9]:GetAttribute("InRound") and players[9]:GetAttribute("RoundStatus")=="alive","Ninth player was not teleported immediately into freed slot")
@@ -181,7 +188,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
- return {ok=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

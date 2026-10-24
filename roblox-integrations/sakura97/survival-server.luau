@@ -316,10 +316,13 @@ local function hook(p)
  sync(p)
  p.CharacterAdded:Connect(function(char)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
-  local e=entry(p) if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then e.status="eliminated" end
+  local e=entry(p)
+  if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then
+   if state.phase=="Partida" then eliminate(p,"reset") else e.status="eliminated" end
+  end
   sync(p)
   local h=char:WaitForChild("Humanoid",10)
-  if h then h.Died:Connect(function() local x=entry(p) if x and (x.status=="alive" or x.status=="downed") then x.status="eliminated" sync(p) p:SetAttribute("Spectating",true) end end) end
+  if h then h.Died:Connect(function() local x=entry(p) if x and (x.status=="alive" or x.status=="downed") then eliminate(p,"death") end end) end
  end)
 end
 Players.PlayerAdded:Connect(hook)
