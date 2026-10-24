@@ -116,7 +116,6 @@ end
 local creditsText=label(creditsBody,"TextCreditos","Criado por\n\nch_ckz2n\n\nSurvivers")
 creditsText.TextSize=18 creditsText.TextXAlignment=Enum.TextXAlignment.Center creditsText.TextYAlignment=Enum.TextYAlignment.Center
 
-local back=button(ui,"ReturnToMenu","☰") back.Visible=false
 local transition=Instance.new("Frame") transition.Name="FrameDeTransicion" transition.Size=UDim2.fromScale(1,1)
 transition.BackgroundColor3=Color3.new(0,0,0) transition.BackgroundTransparency=1 transition.Visible=false transition.ZIndex=100 transition.Parent=ui
 
