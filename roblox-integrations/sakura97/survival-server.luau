@@ -22,6 +22,7 @@ local state=Rules.new() local queued={} local rates={} local motions={} local ca
 local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0
 local jasonPlayer=nil local morphing={} local rigRetries={} local portalInside={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
+local lastKilledUserId=0 local lastKilledName=nil
 local gate=workspace:WaitForChild("LobbyJoinPortal")
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
@@ -88,14 +89,35 @@ local function lobby(p)
  bridge.CancelDeath:Fire(p)
  clearFlashlight(p)
  local r=root(p) local h=humanoid(p)
- if r then r.Anchored=false p.Character:PivotTo(workspace.IslandSpawn.CFrame*CFrame.new(0,4,0)) r.AssemblyLinearVelocity=Vector3.zero end
- if h then h.PlatformStand=false h.AutoRotate=true h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7.2 end
+ if r and p.Character then
+  local spawn=workspace:FindFirstChild("IslandSpawn")
+  local lobbyModel=workspace:FindFirstChild("JediLibrary")
+  local base=lobbyModel and lobbyModel:GetAttribute("VerifiedSpawn")
+  if typeof(base)~="Vector3" then base=spawn and spawn.Position or r.Position end
+  local pivot=p.Character:GetPivot()
+  local bcf,bsize=p.Character:GetBoundingBox()
+  local bottom=bcf.Position.Y-bsize.Y/2
+  local pivotToBottom=math.max(2.5,pivot.Position.Y-bottom)
+  local pos=Vector3.new(base.X,base.Y+pivotToBottom+.3,base.Z)
+  local forward=spawn and Vector3.new(spawn.CFrame.LookVector.X,0,spawn.CFrame.LookVector.Z) or Vector3.new(0,0,-1)
+  if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+  r.Anchored=true
+  p.Character:PivotTo(CFrame.lookAt(pos,pos+forward))
+  r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
+  task.delay(.2,function() if r.Parent and p.Character and p.Character:IsAncestorOf(r) then r.Anchored=false end end)
+ end
+ if h then h.Health=h.MaxHealth h.PlatformStand=false h.AutoRotate=true h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7.2 end
  p:SetAttribute("MoveMode","walk") p:SetAttribute("InRound",false) p:SetAttribute("Downed",false) p:SetAttribute("Injured",false)
 end
 local function eliminate(p,cause)
  local e=entry(p) if not e or (e.status~="alive" and e.status~="downed") then return end
+ local actualCause=cause or killerName
+ if p~=jasonPlayer and actualCause==killerName then
+  lastKilledUserId=p.UserId
+  lastKilledName=p.DisplayName or p.Name
+ end
  e.status="eliminated" e.channel=nil p:SetAttribute("ReviveAt",0) sync(p)
- bridge.DeathRequest:Fire(p,cause or killerName,"spectate")
+ bridge.DeathRequest:Fire(p,actualCause,"spectate")
 end
 bridge.RoundEliminate.Event:Connect(function(p,cause) eliminate(p,cause) end)
 bridge.DeathFinished.Event:Connect(function(p)
@@ -243,31 +265,87 @@ local function introSceneData()
  return {duration=4,runDuration=3.25,startCF=startCF,endCF=endCF,cameraCF=cameraCF,passThroughCamera=true}
 end
 
+local function safeRoundSpawnCF(character,desired,face)
+ if not character or typeof(desired)~="Vector3" or not arena then return nil end
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={arena}
+ params.RespectCanCollide=true
+ local hit=workspace:Raycast(desired+Vector3.new(0,12,0),Vector3.new(0,-30,0),params)
+ if not hit or hit.Normal.Y<.82 then return nil end
+ local _,size=character:GetBoundingBox()
+ if workspace:Raycast(hit.Position+Vector3.new(0,.35,0),Vector3.new(0,size.Y+1.2,0),params) then return nil end
+ local pivot=character:GetPivot()
+ local bcf,bsize=character:GetBoundingBox()
+ local bottom=bcf.Position.Y-bsize.Y/2
+ local pivotToBottom=math.max(2.5,pivot.Position.Y-bottom)
+ local pos=Vector3.new(hit.Position.X,hit.Position.Y+pivotToBottom+.25,hit.Position.Z)
+ local forward=Vector3.new(face.X,0,face.Z)
+ if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+ return CFrame.lookAt(pos,pos+forward),hit.Position
+end
+
 local function spawnPlayer(p)
- local e=entry(p) local r=root(p) if not r or not npc or not arena then return end
- local best=arena:GetAttribute("EntranceSpawn")
- if p==jasonPlayer then best=arena:GetAttribute("KillerSpawn")
+ local e=entry(p) local r=root(p)
+ if not e or not r or not p.Character or not npc or not arena then return false end
+ local entranceCF=arena.ArenaEntrance:GetAttribute("DoorCFrame")
+ local face=entranceCF and entranceCF.LookVector or Vector3.new(0,0,-1)
+ local chosenCF=nil local ground=nil
+
+ if p==jasonPlayer then
+  local wanted=arena:GetAttribute("KillerSpawn")
+  chosenCF,ground=safeRoundSpawnCF(p.Character,wanted,face)
  else
   local spawns=arena:FindFirstChild("ArrivalSpawns")
-  local bestClearance=-1
-  if spawns then for _,point in ipairs(spawns:GetChildren()) do
-   if point:IsA("Vector3Value") then
-    local clearance=1000
-    for _,other in ipairs(Players:GetPlayers()) do
-     local oe=entry(other) local oroot=root(other)
-     if other~=p and oe and oe.status=="alive" and oroot then clearance=math.min(clearance,(oroot.Position-point.Value).Magnitude) end
+  local choices={}
+  if spawns then
+   for _,point in ipairs(spawns:GetChildren()) do
+    if point:IsA("Vector3Value") then
+     local cf,g=safeRoundSpawnCF(p.Character,point.Value,face)
+     if cf then
+      local clearance=1000
+      for _,other in ipairs(Players:GetPlayers()) do
+       local oe=entry(other) local oroot=root(other)
+       if other~=p and oe and oe.status=="alive" and oroot then clearance=math.min(clearance,(oroot.Position-g).Magnitude) end
+      end
+      table.insert(choices,{cf=cf,ground=g,clearance=clearance})
+     end
     end
-    if clearance>bestClearance then bestClearance=clearance best=point.Value end
    end
-  end end
+  end
+  table.sort(choices,function(a,b) return a.clearance>b.clearance end)
+  if choices[1] then chosenCF,ground=choices[1].cf,choices[1].ground end
  end
- if not best then return end
- e.status="alive" e.protectedUntil=now()+10 e.lastScore=now() e.lastNoise=0
+
+ if not chosenCF then
+  warn("No safe round spawn for "..p.Name)
+  return false
+ end
+
+ e.status="alive" e.spawnRecovery=nil e.spawnGraceUntil=now()+12
+ e.protectedUntil=math.max(e.protectedUntil or 0,now()+10)
+ e.lastScore=now() e.lastNoise=0
  p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
- local entranceCF=arena.ArenaEntrance:GetAttribute("DoorCFrame")
- p.Character:PivotTo(CFrame.lookAt(best,best+entranceCF.LookVector))
- if p~=jasonPlayer then e.doorClosed=false e.entryAt=now() net.Update:FireClient(p,"entrance",state.id,entranceCF) end r.AssemblyLinearVelocity=Vector3.zero r.Anchored=false
- motions[p]={position=best,speed=0,grounded=true} sync(p)
+
+ local h=humanoid(p)
+ if h then h.Health=h.MaxHealth h.PlatformStand=false h.AutoRotate=true end
+ local oldShield=p.Character:FindFirstChild("RoundSpawnProtection")
+ if oldShield then oldShield:Destroy() end
+ local shield=Instance.new("ForceField") shield.Name="RoundSpawnProtection" shield.Visible=false shield.Parent=p.Character
+
+ r.Anchored=true
+ p.Character:PivotTo(chosenCF)
+ r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero
+ if p~=jasonPlayer then e.doorClosed=false e.entryAt=now() net.Update:FireClient(p,"entrance",state.id,entranceCF) end
+ motions[p]={position=ground or chosenCF.Position,speed=0,grounded=true}
+ sync(p)
+ task.delay(.4,function()
+  if r.Parent and p.Character and p.Character:IsAncestorOf(r) and entry(p)==e and e.status=="alive" then
+   r.AssemblyLinearVelocity=Vector3.zero r.AssemblyAngularVelocity=Vector3.zero r.Anchored=false
+  end
+ end)
+ task.delay(6,function() if shield.Parent then shield:Destroy() end end)
+ return true
 end
 local function channel(p)
  local h=entry(p) local r=root(p) if not h or not h.kit or h.channel or not r then return end
@@ -428,7 +506,10 @@ local function hook(p)
   end
   local e=entry(p)
   if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then
-   if state.phase=="Partida" then
+   if state.phase=="Partida" and e.spawnRecovery then
+    e.spawnRecovery=nil
+    task.defer(function() if p.Parent and entry(p)==e and state.phase=="Partida" then spawnPlayer(p) end end)
+   elseif state.phase=="Partida" then
     eliminate(p,"reset")
     p:SetAttribute("Spectating",true)
    else
@@ -440,7 +521,15 @@ local function hook(p)
   if h then h.Died:Connect(function()
    if p.Character~=char then return end
    if p==jasonPlayer then endTime=now() return end
-   local x=entry(p) if x and (x.status=="alive" or x.status=="downed") then eliminate(p,"death") end
+   local x=entry(p)
+   if x and (x.status=="alive" or x.status=="downed") then
+    if now()<(x.spawnGraceUntil or 0) then
+     x.spawnRecovery=true
+     warn("Recovered accidental spawn death for "..p.Name)
+     return
+    end
+    eliminate(p,"death")
+   end
   end) end
  end
  p.CharacterAdded:Connect(onCharacter)
@@ -555,7 +644,7 @@ local function finish()
   local killerWasPlayer=jasonPlayer~=nil
   local killerWinnerName=killerWasPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName
   for _,p in ipairs(Players:GetPlayers()) do
-   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
+   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
  end
  state.phase="Intervalo" roundClosing=false introUntil=0 net:SetAttribute("IntroUntil",0) if brain then brain.stop() brain=nil end
@@ -604,7 +693,7 @@ task.spawn(function()
   end
   if #Players:GetPlayers()>0 then
    local ok,err=xpcall(function()
-    Rules.begin(state) roundClosing=false
+    Rules.begin(state) roundClosing=false lastKilledUserId=0 lastKilledName=nil
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     table.sort(mapList,function(a,b) return a.Name<b.Name end)
     local choices={} for _,candidate in ipairs(mapList) do if candidate.Name~=previousMap or #mapList==1 then table.insert(choices,candidate) end end
