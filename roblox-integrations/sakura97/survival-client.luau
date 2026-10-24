@@ -115,9 +115,9 @@ RunService.RenderStepped:Connect(function()
  player.CameraMinZoomDistance=10 player.CameraMaxZoomDistance=10
 end)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
-local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,22) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
+local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
-local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,1,0),UDim2.fromOffset(6,0)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
+local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,1,0),UDim2.fromOffset(6,-18)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
 local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=14 condition.TextColor3=Color3.fromRGB(144,223,111)
@@ -687,6 +687,29 @@ RunService.RenderStepped:Connect(function(dt)
  end
 end)
 
+local votePanel=panel("MapVoting",UDim2.new(.66,0,.68,0),UDim2.fromScale(.17,.15))
+votePanel.BackgroundTransparency=.18 votePanel.Visible=false
+local voteTitle=text(votePanel,"Title","VOTAR UM MAPA",UDim2.new(1,0,0,34),UDim2.new()) voteTitle.Font=Enum.Font.GothamBold
+local mapButtons={}
+for i,map in ipairs(config.Maps) do
+ local col=(i-1)%2 local row=math.floor((i-1)/2)
+ local b=button(votePanel,map.name,map.name,UDim2.new(.48,0,.19,0),UDim2.new(.01+col*.50,0,.12+row*.21,0),function() event:FireServer("voteMap",map.name) end)
+ b.TextSize=11 b.TextWrapped=true mapButtons[map.name]=b
+end
+local killerBar=Instance.new("Frame",votePanel) killerBar.BackgroundTransparency=1 killerBar.Size=UDim2.new(1,-12,0,44) killerBar.Position=UDim2.new(0,6,1,-48)
+local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
+for i,name in ipairs(names) do
+ local b=button(killerBar,name,name,UDim2.new(1/#names,-6,1,0),UDim2.new((i-1)/#names,0,0,0),function() event:FireServer("chooseKiller",name) end) b.TextSize=11
+end
+RunService.RenderStepped:Connect(function()
+ votePanel.Visible=net:GetAttribute("Phase")=="Intervalo" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
+ if not votePanel.Visible then return end
+ local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
+ voteTitle.Text="VOTAR UM MAPA • "..seconds.."s"
+ local ok,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
+ for name,b in pairs(mapButtons) do b.Text=name.." • "..tostring(ok and counts[name] or 0).." votos" b.BackgroundColor3=player:GetAttribute("MapVote")==name and Color3.fromRGB(42,90,46) or Color3.fromRGB(18,18,22) end
+end)
+
 local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
@@ -806,4 +829,5 @@ if player.GetAttributeChangedSignal then
   if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() end
  end)
 end
+
 

@@ -345,8 +345,22 @@ local function channelRevive(p)
  h.channel={target=target,started=now(),position=r.Position,status=h.status}
  p:SetAttribute("ReviveAt",now()+Rules.ReviveTime)
 end
+local mapVotes={} local killerChoices={}
+local function voteCounts()
+ local counts={} for _,map in ipairs(assets.Maps:GetChildren()) do counts[map.Name]=0 end
+ for p,name in pairs(mapVotes) do if p.Parent and not p:GetAttribute("AFK") and counts[name] then counts[name]+=1 end end
+ net:SetAttribute("MapVotes",game:GetService("HttpService"):JSONEncode(counts))
+ return counts
+end
 net.Action.OnServerEvent:Connect(function(p,action,value)
  if type(action)~="string" or #action>24 then return end
+ if action=="voteMap" then
+  if state.phase~="Intervalo" or p:GetAttribute("AFK") or type(value)~="string" or not assets.Maps:FindFirstChild(value) then return end
+  mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
+ elseif action=="chooseKiller" then
+  if state.phase~="Intervalo" or type(value)~="string" or not assets.Killers:FindFirstChild(value) then return end
+  killerChoices[p]=value p:SetAttribute("KillerChoice",value) return
+ end
  rates[p]=rates[p] or {} local t=now()
  if action~="mode" and t-(rates[p][action] or 0)<.18 then return end
  rates[p][action]=t
@@ -644,6 +658,8 @@ task.spawn(function()
    task.wait(1)
   end
 
+  table.clear(mapVotes) voteCounts()
+  for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
   endTime=now()+Rules.Intermission
   while now()<endTime and #Players:GetPlayers()>0 do
    net:SetAttribute("Phase","Intervalo")
@@ -656,8 +672,9 @@ task.spawn(function()
   end
 
   local function hasQueued()
-   for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then return true end end
-   return false
+   local count=0
+   for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then count+=1 end end
+   return count>=2
   end
   while #Players:GetPlayers()>0 and not hasQueued() do
    net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",0) net:SetAttribute("Waiting",0) task.wait(.5)
@@ -668,9 +685,18 @@ task.spawn(function()
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     table.sort(mapList,function(a,b) return a.Name<b.Name end)
     local choices={} for _,candidate in ipairs(mapList) do if candidate.Name~=previousMap or #mapList==1 then table.insert(choices,candidate) end end
-    local selected=choices[math.random(#choices)] previousMap=selected.Name
+    local counts=voteCounts() local winners={} local highest=0
+    for _,map in ipairs(mapList) do
+     local count=counts[map.Name] or 0
+     if count>highest then highest=count winners={map} elseif count==highest and count>0 then table.insert(winners,map) end
+    end
+    local selected=highest>0 and winners[math.random(#winners)] or mapList[math.random(#mapList)] previousMap=selected.Name
+    local eligible={}
+    for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
+    assert(#eligible>=2,"Two participants required for player-controlled killer")
+    jasonPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
-    local chosen=rigList[math.random(#rigList)]
+    local chosen=assets.Killers:FindFirstChild(killerChoices[jasonPlayer] or "Jason") or rigList[1]
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
@@ -685,19 +711,13 @@ task.spawn(function()
     npc:SetAttribute("ActivePursuer",true)
     npc:SetAttribute("AttackUntil",0)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
-    local eligible={}
-    for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
-    table.sort(eligible,function(a,b) return a.UserId<b.UserId end)
-    if #eligible>=8 and math.random()<config.PlayerJasonChance then
-     jasonPlayer=eligible[math.random(1,8)]
+    do
      clearFlashlight(jasonPlayer)
      local old=jasonPlayer.Character morphing[jasonPlayer]=true
      npc.Name=jasonPlayer.Name jasonPlayer.Character=npc
      morphing[jasonPlayer]=nil if old then old:Destroy() end
      for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then pcall(function() d:SetNetworkOwner(jasonPlayer) end) end end
      net.Update:FireClient(jasonPlayer,"notice","Você é "..killerName..". Persiga os sobreviventes e use o botão de ataque.")
-    else
-     brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=targetable,catch=catchPlayer})
     end
     endTime=now()+Rules.Duration
     net:SetAttribute("Phase","Partida")
@@ -740,5 +760,6 @@ task.spawn(function()
   end
  end
 end)
+
 
 
