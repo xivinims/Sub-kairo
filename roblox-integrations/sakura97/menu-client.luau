@@ -24,6 +24,8 @@ local inMenu=true
 local busy=false
 local menuScene=nil
 local menuAvatar=nil
+local menuJason=nil
+local menuHorrorDark=nil
 local menuCameraCF=nil
 local horrorToken=0
 local firstMenuIntro=true
@@ -40,6 +42,8 @@ player:SetAttribute("InMenu",true)
 
 local function clearPrivateScene()
  if menuAvatar then menuAvatar:Destroy() menuAvatar=nil end
+ if menuJason then menuJason:Destroy() menuJason=nil end
+ if menuHorrorDark then menuHorrorDark:Destroy() menuHorrorDark=nil end
  if menuScene then menuScene:Destroy() menuScene=nil end
  menuCameraCF=nil
 end
@@ -289,9 +293,40 @@ avatarPreview() equipmentPreview()
 player.CharacterAdded:Connect(function() if inMenu then avatarPreview() equipmentPreview() end end)
 local musicIcon=Instance.new("TextLabel",main.Shop) musicIcon.BackgroundTransparency=1 musicIcon.Text="♫" musicIcon.TextColor3=Color3.fromRGB(215,185,124) musicIcon.TextSize=45 musicIcon.Size=UDim2.fromScale(1,.65) musicIcon.Position=UDim2.fromScale(0,0)
 main.Shop.TextYAlignment=Enum.TextYAlignment.Bottom
+local function revealMenuJason()
+ if menuJason then menuJason:Destroy() menuJason=nil end
+ local template=RS:WaitForChild("Survival"):FindFirstChild("PresentationJason")
+ if not template or not menuCameraCF or not menuScene then return end
+ menuJason=template:Clone()
+ menuJason.Name="LocalMenuJason"
+ menuJason:SetAttribute("MenuHorrorJason",true)
+ for _,d in ipairs(menuJason:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") or d:IsA("Tool") then d:Destroy()
+  elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false d.CastShadow=true end
+ end
+ local _,jasonSize=menuJason:GetBoundingBox()
+ local desired=menuCameraCF.Position+menuCameraCF.LookVector*9.5+menuCameraCF.RightVector*1.7
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={menuScene}
+ local hit=workspace:Raycast(desired+Vector3.new(0,18,0),Vector3.new(0,-36,0),params)
+ local ground=hit and hit.Position or desired
+ local pos=ground+Vector3.new(0,jasonSize.Y*.5,0)
+ local look=Vector3.new(menuCameraCF.Position.X,pos.Y,menuCameraCF.Position.Z)
+ menuJason.Parent=workspace
+ menuJason:PivotTo(CFrame.lookAt(pos,look))
+ local head=menuJason:FindFirstChild("Head",true)
+ if head and head:IsA("BasePart") then
+  local glow=Instance.new("PointLight",head)
+  glow.Name="MenuJasonGlow" glow.Color=Color3.fromRGB(118,18,22) glow.Brightness=.42 glow.Range=8 glow.Shadows=false
+ end
+ ui:SetAttribute("MenuJasonVisible",true)
+end
+
 local function startHorrorBeat()
  horrorToken+=1 local token=horrorToken
  ui:SetAttribute("HorrorMenuEffect",true)
+ ui:SetAttribute("MenuJasonVisible",false)
  local lights={}
  if menuScene then
   for _,d in ipairs(menuScene:GetDescendants()) do
@@ -305,28 +340,47 @@ local function startHorrorBeat()
   end end
  end
  task.spawn(function()
-  task.wait(ui:GetAttribute("HorrorDelaySeconds") or 120)
-  for _,delay in ipairs({.07,.12,.05,.16,.08,.10}) do
+  task.wait(ui:GetAttribute("HorrorDelaySeconds") or 12)
+  if token~=horrorToken or not inMenu then return end
+
+  if menuHorrorDark then menuHorrorDark:Destroy() end
+  menuHorrorDark=Instance.new("ColorCorrectionEffect")
+  menuHorrorDark.Name="SuviversMenuHorrorDark"
+  menuHorrorDark.Brightness=0 menuHorrorDark.Contrast=0 menuHorrorDark.Saturation=0 menuHorrorDark.Parent=Lighting
+  TweenService:Create(menuHorrorDark,TweenInfo.new(.9,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
+   Brightness=-.18,Contrast=.14,Saturation=-.36,TintColor=Color3.fromRGB(188,168,176)
+  }):Play()
+
+  for _,delay in ipairs({.07,.12,.05,.16,.08,.10,.06,.15}) do
    if token~=horrorToken or not inMenu then return end
    lightsOn(false) task.wait(delay)
-   lightsOn(true) task.wait(.09)
+   lightsOn(true) task.wait(.075)
   end
   if token~=horrorToken or not inMenu then return end
-  lightsOn(false) task.wait(.11)
+
+  lightsOn(false)
+  task.wait(.13)
   if menuAvatar and menuAvatar.Parent then
-   for _,d in ipairs(menuAvatar:GetDescendants()) do if d:IsA("BasePart") then d.LocalTransparencyModifier=1 end end
+   for _,d in ipairs(menuAvatar:GetDescendants()) do
+    if d:IsA("BasePart") then d.LocalTransparencyModifier=1 end
+   end
    menuAvatar:SetAttribute("HorrorVisible",false)
   end
-  task.wait(.16)
-  lightsOn(false)
+
+  task.wait(.18)
+  if token~=horrorToken or not inMenu then return end
+  revealMenuJason()
+  lightsOn(true)
+
   local vignette=main:FindFirstChild("Vignette")
   if vignette then
    vignette.BackgroundColor3=Color3.new(0,0,0)
-   vignette.BackgroundTransparency=0
+   vignette.BackgroundTransparency=.68
    local gradient=vignette:FindFirstChildOfClass("UIGradient")
    if gradient then gradient.Enabled=false end
   end
-  ui:SetAttribute("HorrorBlackout",true)
+  ui:SetAttribute("HorrorBlackout",false)
+  ui:SetAttribute("HorrorJasonReveal",true)
  end)
 end
 
@@ -366,6 +420,10 @@ local function open()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  inMenu=true player:SetAttribute("InMenu",true)
  ui:SetAttribute("HorrorBlackout",false)
+ ui:SetAttribute("HorrorJasonReveal",false)
+ ui:SetAttribute("MenuJasonVisible",false)
+ if menuJason then menuJason:Destroy() menuJason=nil end
+ if menuHorrorDark then menuHorrorDark:Destroy() menuHorrorDark=nil end
  local vignette=main:FindFirstChild("Vignette")
  if vignette then
   vignette.BackgroundTransparency=1
