@@ -124,6 +124,8 @@ assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1
 assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Lobby join portal returned")
 assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Lobby join door visual returned")
 assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Lobby automatic admission contract missing")
+local lobbyBounds=assert(workspace.JediLibrary:FindFirstChild("InvisibleBounds"),"Lobby invisible bounds missing")
+assert(#lobbyBounds:GetChildren()>=5 and lobbyBounds:FindFirstChild("SafetyFloor"),"Lobby safety walls/floor missing")
 local oldDoor=workspace.JediLibrary.Door
 assert(oldDoor:GetAttribute("VisualReplaced") and oldDoor:GetAttribute("HeldOpen"),"Old lobby door was not retired")
 for _,p in ipairs(oldDoor:GetDescendants()) do if p:IsA("BasePart") then assert(p.Transparency==1 and not p.CanCollide,"Old stone/block door still visible or collidable") end end
@@ -137,5 +139,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 
