@@ -28,8 +28,8 @@ local function begin(player,cause,mode)
  end
  local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
  if not root or not hum then return end
- local record={started=os.clock(),char=char,anchored=false,autoRotate=true}
- active[player]=record root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero hum.AutoRotate=false
+ local record={started=os.clock(),char=char,anchored=root.Anchored,autoRotate=hum.AutoRotate}
+ active[player]=record root.Anchored=true root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero hum.AutoRotate=false
  player:SetAttribute("VoidActive",true) event:FireClient(player,"start",cause,mode)
  task.delay(12,function() recover(player,record) end)
 end
