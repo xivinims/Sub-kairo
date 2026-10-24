@@ -19,7 +19,7 @@ local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
-local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0
+local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0 local roundJoinUntil=0
 local jasonPlayer=nil local morphing={} local rigRetries={} local portalInside={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
@@ -39,7 +39,7 @@ local function sync(p)
  p:SetAttribute("Injured",e~=nil and e.injured==true)
  p:SetAttribute("BleedoutAt",e and e.deadline or 0)
  p:SetAttribute("ProtectedUntil",e and e.protectedUntil or 0)
- p:SetAttribute("HasMedkit",e~=nil and e.kit or false) p:SetAttribute("HasBoost",e~=nil and e.boost or false)
+ p:SetAttribute("HasMedkit",false) p:SetAttribute("HasBoost",e~=nil and e.boost or false)
  p:SetAttribute("RoundStatus",e and e.status or "lobby")
  p:SetAttribute("Queued",queued[p] or false)
  local h=humanoid(p)
@@ -347,18 +347,20 @@ local function spawnPlayer(p)
  task.delay(6,function() if shield.Parent then shield:Destroy() end end)
  return true
 end
-local function channel(p)
- local h=entry(p) local r=root(p) if not h or not h.kit or h.channel or not r then return end
- local target=p
- if h.status=="alive" then
-  local nearest=9 target=nil
-  for _,other in ipairs(Players:GetPlayers()) do
+local function channelRevive(p)
+ local h=entry(p) local r=root(p)
+ if not h or h.status~="alive" or h.channel or not r or p:GetAttribute("BeingExecuted") then return end
+ local target=nil local nearest=8.5
+ for _,other in ipairs(Players:GetPlayers()) do
+  if other~=p then
    local t=entry(other) local rr=root(other)
-   if t and t.status=="downed" and rr and (rr.Position-r.Position).Magnitude<nearest then nearest=(rr.Position-r.Position).Magnitude target=other end
+   if t and t.status=="downed" and rr and not other:GetAttribute("BeingExecuted") then
+    local distance=(rr.Position-r.Position).Magnitude
+    if distance<nearest then nearest=distance target=other end
+   end
   end
- elseif h.status~="downed" then return end
- if not target then net.Update:FireClient(p,"notice","Aproxime-se de alguém caído para usar o kit.") return end
- if p:GetAttribute("BeingExecuted") or target:GetAttribute("BeingExecuted") then return end
+ end
+ if not target then return end
  h.channel={target=target,started=now(),position=r.Position,status=h.status}
  p:SetAttribute("ReviveAt",now()+Rules.ReviveTime)
 end
@@ -409,7 +411,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="flashlight" then
   local e=entry(p)
   if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
- elseif action=="kit" then if p~=jasonPlayer then channel(p) end
+ elseif action=="revive" then if p~=jasonPlayer then channelRevive(p) end
  elseif action=="musicBuy" then
   if not p:GetAttribute("ProfileLoaded") then net.Update:FireClient(p,"notice","Seu progresso ainda está carregando. Aguarde para comprar.") return end
   if p:GetAttribute("Cantor") then net.Update:FireClient(p,"notice","Você já liberou o distintivo Cantor.") return end
@@ -559,7 +561,7 @@ RunService.Heartbeat:Connect(function(dt)
   -- Admission is automatic between rounds; AFK never cancels an active death or round.
   if not e then
    local eligible=not p:GetAttribute("AFK") and not p:GetAttribute("InMenu") and not p:GetAttribute("VoidActive") and r and h and h.Health>0
-   if eligible and state.phase=="Partida" then
+   if eligible and state.phase=="Partida" and t<=roundJoinUntil then
     if Rules.count(state)<Rules.Capacity and not roundClosing then if join(p) then spawnPlayer(p) end end
    elseif eligible and not queued[p] then queued[p]=true sync(p)
    elseif not eligible and queued[p] then queued[p]=nil sync(p) end
@@ -647,7 +649,7 @@ local function finish()
    net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
  end
- state.phase="Intervalo" roundClosing=false introUntil=0 net:SetAttribute("IntroUntil",0) if brain then brain.stop() brain=nil end
+ state.phase="Intervalo" roundClosing=false introUntil=0 roundJoinUntil=0 net:SetAttribute("IntroUntil",0) net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end
  for _,p in ipairs(Players:GetPlayers()) do
@@ -735,6 +737,8 @@ task.spawn(function()
     end
     endTime=introUntil+Rules.Duration
     net:SetAttribute("Phase","Partida")
+    roundJoinUntil=now()+5
+    net:SetAttribute("JoinUntil",roundJoinUntil)
     net:SetAttribute("EndsAt",endTime)
     net:SetAttribute("Killer",killerName)
     net:SetAttribute("Map",arena:GetAttribute("DisplayName") or "Mapa")
