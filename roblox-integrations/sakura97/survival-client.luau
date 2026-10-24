@@ -3,6 +3,8 @@ local RS=game:GetService("ReplicatedStorage")
 local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
+local SoundService=game:GetService("SoundService")
+local Debris=game:GetService("Debris")
 local player=Players.LocalPlayer local net=RS:WaitForChild("Survival") local event=net.Action
 local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
@@ -350,20 +352,95 @@ local index=1 local watching=false local watchedId=nil
 button(spectate,"Previous","‹",UDim2.fromOffset(50,38),UDim2.fromOffset(8,42),function() index-=1 watchedId=nil end)
 button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),function() index+=1 watchedId=nil end)
 button(spectate,"Exit","Sair da câmera",UDim2.fromOffset(170,38),UDim2.fromOffset(65,42),function() event:FireServer("spectateExit") end)
-local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new()) loading.BackgroundTransparency=0 loading.ZIndex=80 loading.Visible=false
-local loadingText=text(loading,"Status","Carregando a arena…",UDim2.new(.8,0,0,90),UDim2.fromScale(.1,.4)) loadingText.ZIndex=81
+local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new())
+loading.BackgroundColor3=Color3.fromRGB(4,4,6) loading.BackgroundTransparency=0 loading.ZIndex=80 loading.Visible=false loading.ClipsDescendants=true
+loading.UIStroke.Enabled=false loading.UICorner.CornerRadius=UDim.new()
+local loadingText=text(loading,"Status","CARREGANDO MAPA",UDim2.new(.8,0,0,32),UDim2.new(.1,0,.78,0))
+loadingText.ZIndex=82 loadingText.TextSize=11 loadingText.TextTransparency=.28 loadingText.Font=Enum.Font.GothamMedium
+local goodLuck=text(loading,"GoodLuck","GOOD LUCK",UDim2.new(.8,0,0,80),UDim2.new(.1,0,.5,-40))
+goodLuck.ZIndex=83 goodLuck.Font=Enum.Font.GothamBlack goodLuck.TextSize=30 goodLuck.TextTransparency=1 goodLuck.Visible=false
+local progressTrack=Instance.new("Frame",loading)
+progressTrack.Name="MapProgress" progressTrack.AnchorPoint=Vector2.new(0,1) progressTrack.Position=UDim2.new(0,0,1,0)
+progressTrack.Size=UDim2.new(1,0,0,7) progressTrack.BorderSizePixel=0 progressTrack.BackgroundColor3=Color3.fromRGB(21,21,25) progressTrack.ZIndex=84
+local progressFill=Instance.new("Frame",progressTrack)
+progressFill.Name="Fill" progressFill.Size=UDim2.fromScale(0,1) progressFill.BorderSizePixel=0 progressFill.BackgroundColor3=Color3.fromRGB(222,222,226) progressFill.ZIndex=85
+local progressGlow=Instance.new("Frame",progressFill)
+progressGlow.Name="Tip" progressGlow.AnchorPoint=Vector2.new(1,.5) progressGlow.Position=UDim2.new(1,0,.5,0) progressGlow.Size=UDim2.fromOffset(18,16)
+progressGlow.BackgroundColor3=Color3.fromRGB(245,245,248) progressGlow.BackgroundTransparency=.35 progressGlow.BorderSizePixel=0 progressGlow.ZIndex=86
 local cinematicActive=false
 local loadToken=0
+
+local function setMapProgress(value,duration)
+ value=math.clamp(value,0,1)
+ TweenService:Create(progressFill,TweenInfo.new(duration or .16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.fromScale(value,1)}):Play()
+end
+
+local function glitchLeadIn()
+ local media=RS:FindFirstChild("XNMedia")
+ local template=media and media:FindFirstChild("MenuClick")
+ if not template then return end
+ for i,speed in ipairs({.34,.51,.27,.68}) do
+  task.delay((i-1)*.075,function()
+   if not loading.Visible then return end
+   local sound=template:Clone()
+   sound.Name="MapLoadGlitch" sound.Volume=.12+(i%2)*.04 sound.PlaybackSpeed=speed
+   local ok=pcall(function()
+    local distortion=Instance.new("DistortionSoundEffect") distortion.Level=.35+(i*.08) distortion.Parent=sound
+    local pitch=Instance.new("PitchShiftSoundEffect") pitch.Octave=.72+(i*.05) pitch.Parent=sound
+   end)
+   sound.Parent=SoundService sound:Play() Debris:AddItem(sound,3)
+  end)
+ end
+end
+
+local function playGoodLuckVoice(token)
+ if token~=loadToken or not loading.Visible then return end
+ glitchLeadIn()
+ task.wait(.24)
+ if token~=loadToken or not loading.Visible then return end
+ goodLuck.Visible=true
+ goodLuck.TextTransparency=1
+ TweenService:Create(goodLuck,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=0}):Play()
+ -- Layer Roblox TTS voices to create an original broken/interference-like delivery.
+ task.spawn(function()
+  local holder=Instance.new("Folder") holder.Name="GoodLuckTTS" holder.Parent=SoundService
+  local ok=pcall(function()
+   local output=Instance.new("AudioDeviceOutput") output.Name="GoodLuckOutput" output.Player=player output.Parent=holder
+   for i,voice in ipairs({
+    {id="9",pitch=.86,speed=.90,volume=.38,delay=0},
+    {id="10",pitch=1.08,speed=1.02,volume=.30,delay=.045},
+    {id="11",pitch=.96,speed=.96,volume=.20,delay=.09},
+   }) do
+    local speech=Instance.new("AudioTextToSpeech")
+    speech.Name="GoodLuckVoice"..i speech.Text="Good Luck" speech.AutoLocalize=false
+    speech.VoiceId=voice.id speech.Pitch=voice.pitch speech.PlaybackSpeed=voice.speed speech.Volume=voice.volume speech.Parent=holder
+    local wire=Instance.new("Wire") wire.Name="VoiceWire"..i wire.SourceInstance=speech wire.TargetInstance=output wire.Parent=holder
+    task.spawn(function()
+     pcall(function() speech:LoadAsync() end)
+     task.wait(voice.delay)
+     if token==loadToken and loading.Visible then pcall(function() speech:Play() end) end
+    end)
+   end
+  end)
+  task.delay(3,function() if holder.Parent then holder:Destroy() end end)
+ end)
+end
+
 local function preload(roundId,map)
- loadToken+=1 local token=loadToken loading.Visible=true loadingText.Text="Preparando a arena…"
+ loadToken+=1 local token=loadToken
+ loading.Visible=true goodLuck.Visible=false goodLuck.TextTransparency=1
+ progressFill.Size=UDim2.fromScale(0,1) loadingText.Text="CARREGANDO MAPA"
+ setMapProgress(.04,.05)
  task.spawn(function()
   local deadline=os.clock()+18 local geometryReady=false
   while os.clock()<deadline and token==loadToken do
    map=map and map.Parent and map or workspace:FindFirstChild("ActiveArena")
    if map and map:GetAttribute("RoundId")==roundId and map:FindFirstChild("SafePoints") then
     local count=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then count+=1 end end
-    local expected=map:GetAttribute("PartCount") or math.huge
-    loadingText.Text="Recebendo mapa • "..math.floor(math.min(1,count/expected)*100).."%"
+    local expected=math.max(1,map:GetAttribute("PartCount") or count)
+    local ratio=math.clamp(count/expected,0,1)
+    loadingText.Text="CARREGANDO MAPA  "..math.floor(ratio*100).."%"
+    setMapProgress(.06+ratio*.68,.12)
     if count>=expected then geometryReady=true break end
    end
    task.wait(.1)
@@ -374,16 +451,25 @@ local function preload(roundId,map)
    notice.Text="A conexão está lenta. A arena continua carregando." return
   end
   local done=false local mediaDeadline=os.clock()+8
-  loadingText.Text="Preparando texturas e luzes…"
+  loadingText.Text="PREPARANDO O AMBIENTE"
+  setMapProgress(.82,.22)
   task.spawn(function()
    pcall(function() game:GetService("ContentProvider"):PreloadAsync({map}) end)
    done=true
   end)
   while not done and os.clock()<mediaDeadline and token==loadToken and not cinematicActive do task.wait(.1) end
   if token~=loadToken then return end
+  setMapProgress(.96,.22)
+  loadingText.Text=""
+  playGoodLuckVoice(token)
+  task.wait(1.35)
+  if token~=loadToken then return end
+  setMapProgress(1,.15)
+  task.wait(.18)
   loading.Visible=false
+  goodLuck.Visible=false
   -- Geometry gates readiness; optional unavailable audio/decals must not eject a player.
-  if map.Parent and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId) end
+  if map and map.Parent and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId) end
  end)
 end
 local noticeUntil=0
@@ -593,10 +679,15 @@ local function closeDoor()
 end
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="lobbyDoorGlow" then pulseLobbyDoor()
- elseif action=="jasonIntro" then playJasonIntro(a,b)
+ elseif action=="jasonIntro" then
+  local introLoadToken=loadToken
+  task.spawn(function()
+   while loading.Visible and introLoadToken==loadToken do task.wait(.05) end
+   if introLoadToken==loadToken then playJasonIntro(a,b) end
+  end)
  elseif action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
- elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false
+ elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false goodLuck.Visible=false progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" or action=="executed" then task.spawn(caughtAnimation,a,b)
