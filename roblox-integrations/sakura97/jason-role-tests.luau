@@ -147,6 +147,8 @@ local ok,result=xpcall(function()
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
  advance(6)
+ local protectedFor=math.max(0,(victim:GetAttribute("ProtectedUntil") or 0)-clock)
+ if protectedFor>0 then advance(protectedFor+.2) end
  killer.Character:PivotTo(victim.Character:GetPivot()*CFrame.new(0,0,3))
  send(killer,"attack") advance(1)
  assert(victim:GetAttribute("Injured") and not victim:GetAttribute("Downed"),"First player-Jason hit did not injure victim")
