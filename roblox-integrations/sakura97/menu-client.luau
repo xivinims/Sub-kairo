@@ -305,7 +305,7 @@ local function startHorrorBeat()
   end end
  end
  task.spawn(function()
-  task.wait(120)
+  task.wait(ui:GetAttribute("HorrorDelaySeconds") or 120)
   for _,delay in ipairs({.07,.12,.05,.16,.08,.10}) do
    if token~=horrorToken or not inMenu then return end
    lightsOn(false) task.wait(delay)
