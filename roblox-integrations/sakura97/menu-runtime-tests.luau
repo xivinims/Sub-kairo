@@ -3,7 +3,7 @@ local originalShadows=game.Lighting.GlobalShadows
 local realGame=game local RS=game:GetService("ReplicatedStorage")
 local host=Instance.new("Folder",workspace) host.Name="MenuInterfaceTest"
 local pg=Instance.new("Folder",host)
-local ui=game.StarterGui.TomiaszMenu:Clone() ui.Parent=pg
+local ui=game.StarterGui.TomiaszMenu:Clone() ui:SetAttribute("HorrorDelaySeconds",.05) ui.Parent=pg
 local added=Instance.new("BindableEvent",host) local attributeEvents={}
 local p={attrs={SweanLoadingDone=true},CharacterAdded=added.Event}
 p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15) p.Character.Parent=host
