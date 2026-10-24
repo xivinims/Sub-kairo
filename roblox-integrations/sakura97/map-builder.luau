@@ -75,10 +75,10 @@ function Builder.build(load,sanitize,destination)
    if not hit or hit.Normal.Y<.92 then return end
    local g=hit.Position
    if not insideFootprint(g,footprintMargin) then return end
-   if workspace:Raycast(g+Vector3.new(0,.2,0),Vector3.new(0,5.8,0),params) then return end
-   if not radialClear(g,4.5) then return end
+   if workspace:Raycast(g+Vector3.new(0,.25,0),Vector3.new(0,7.4,0),params) then return end
+   if not radialClear(g,5.8) then return end
    local p=g+Vector3.new(0,3,0)
-   for _,other in ipairs(candidates) do if (other-p).Magnitude<8 then return end end
+   for _,other in ipairs(candidates) do if (other-p).Magnitude<10 then return end end
    table.insert(candidates,p)
   end
   for _,surface in ipairs(floors) do
@@ -115,14 +115,14 @@ function Builder.build(load,sanitize,destination)
    if #selected>=12 then break end
   end
   assert(#selected>=9,"No connected playable region for "..spec.name)
-  local start=selected[1] local far=nil local distance=0 local killerClearance=8
+  local start=selected[1] local far=nil local distance=0 local killerClearance=10
   for _,p in ipairs(selected) do
    local d=(p-start).Magnitude
    local ground=p-Vector3.new(0,3,0)
    if d>distance and d>=60 and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) then far=p distance=d end
   end
   if not far then
-   killerClearance=5.5
+   killerClearance=7
    for _,p in ipairs(selected) do
     local d=(p-start).Magnitude local ground=p-Vector3.new(0,3,0)
     if d>distance and d>=60 and radialClear(ground,killerClearance) then far=p distance=d end
@@ -134,7 +134,7 @@ function Builder.build(load,sanitize,destination)
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
   for _,p in ipairs(candidates) do
    if #arrivals:GetChildren()>=8 then break end
-   if (p-start).Magnitude>=4 and (p-start).Magnitude<=40 and (p-far).Magnitude>50 and route(start,p) then addPoint(arrivals,#arrivals:GetChildren()+1,p) end
+   if (p-start).Magnitude>=8 and (p-start).Magnitude<=48 and (p-far).Magnitude>60 and route(start,p) then addPoint(arrivals,#arrivals:GetChildren()+1,p) end
   end
   assert(#arrivals:GetChildren()>=2,"Arrival area too cramped")
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
