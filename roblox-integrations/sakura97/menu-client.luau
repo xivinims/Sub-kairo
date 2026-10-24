@@ -172,7 +172,8 @@ for _,b in ipairs(ui:GetDescendants()) do
   b.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then pulse(.965) end end)
   b.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then pulse(1) end end)
   b.Activated:Connect(function()
-   local click=ui.Sonidos:FindFirstChild("Click")
+   local soundName=b==main.Play and "PlayClick" or "Click"
+   local click=ui.Sonidos:FindFirstChild(soundName)
    if click and player:GetAttribute("MenuSounds")~=false then click:Stop() click:Play() end
   end)
  end
@@ -227,7 +228,7 @@ local function show(name)
  credits.Visible=name=="credits"
  shop.Visible=name=="shop" inventory.Visible=name=="inventory" updates.Visible=name=="updates"
  creditsButton.Visible=inMenu and name=="main"
- returnButton.Visible=not inMenu and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
+ returnButton.Visible=false
 end
 
 settings.AjustesFrame.Visible=false settings.Tittle.Visible=false settings.Close.Visible=false
@@ -240,14 +241,7 @@ local function profileDisplay()
  main.Profile.XPBar.Fill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((value-floorXP)/(nextXP-floorXP),0,1),1)
  main.Profile.XPBar.Value.Text="NÍVEL "..n.."  •  "..(n>=1000 and "MÁXIMO" or tostring(math.max(0,value-floorXP)).."/"..tostring(nextXP-floorXP))
  main.Profile.Coins.Text="◉  "..tostring(points and points.Value or 0)
- local purchase=shop.CreditosFrame.Purchase
- purchase.Text=player:GetAttribute("Cantor") and "✓ MUSIC DESBLOQUEADO" or "DESBLOQUEAR MUSIC • 20 PONTOS"
- purchase.Active=not player:GetAttribute("Cantor")
 end
-shop.CreditosFrame.Purchase.Activated:Connect(function()
- if not player:GetAttribute("Cantor") then RS.Survival.Action:FireServer("musicBuy") end
-end)
-player:GetAttributeChangedSignal("Cantor"):Connect(profileDisplay)
 task.spawn(function()
  local stats=player:WaitForChild("leaderstats",25)
  if stats then for _,v in ipairs(stats:GetChildren()) do if v:IsA("IntValue") then v.Changed:Connect(profileDisplay) end end end
@@ -305,7 +299,13 @@ local function revealMenuJason()
   elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false d.CastShadow=true end
  end
  local _,jasonSize=menuJason:GetBoundingBox()
- local desired=menuCameraCF.Position+menuCameraCF.LookVector*9.5+menuCameraCF.RightVector*1.7
+ if jasonSize.Y>0 then
+  local targetHeight=5.7
+  local factor=math.clamp(targetHeight/jasonSize.Y,.42,1.35)
+  pcall(function() menuJason:ScaleTo(menuJason:GetScale()*factor) end)
+  _,jasonSize=menuJason:GetBoundingBox()
+ end
+ local desired=menuCameraCF.Position+menuCameraCF.LookVector*11.2+menuCameraCF.RightVector*1.5
  local params=RaycastParams.new()
  params.FilterType=Enum.RaycastFilterType.Include
  params.FilterDescendantsInstances={menuScene}
@@ -353,6 +353,11 @@ local function startHorrorBeat()
 
   for _,delay in ipairs({.07,.12,.05,.16,.08,.10,.06,.15}) do
    if token~=horrorToken or not inMenu then return end
+   local flicker=ui.Sonidos:FindFirstChild("LightFlicker")
+   if flicker and player:GetAttribute("MenuSounds")~=false then
+    local sound=flicker:Clone() sound.PlaybackSpeed=.92+math.random()*0.16 sound.Parent=ui.Sonidos sound:Play()
+    game:GetService("Debris"):AddItem(sound,3)
+   end
    lightsOn(false) task.wait(delay)
    lightsOn(true) task.wait(.075)
   end
