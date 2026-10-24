@@ -12,7 +12,6 @@ local credits=scenes:WaitForChild("MenuCreditos")
 local settings=scenes:WaitForChild("MenuAjustes")
 local transition=ui:WaitForChild("FrameDeTransicion")
 local config=RS:WaitForChild("SweanMenuConfig")
-local returnButton=ui:WaitForChild("ReturnToMenu")
 local creditsButton=ui:WaitForChild("CreditsButton")
 local settingsModule=require(RS:WaitForChild("Survival"):WaitForChild("SettingsPanel"))
 settingsModule.initialize(player)
@@ -207,8 +206,6 @@ local function layout()
  main.Guide.AnchorPoint=Vector2.new(.5,0) main.Guide.Position=UDim2.new(.5,0,.90,0) main.Guide.Size=UDim2.fromOffset(math.min(480,w*.72),20) main.Guide.TextXAlignment=Enum.TextXAlignment.Center
  main.Edition.Visible=false main.QuickHelp.Visible=false
  main.Profile.Position=UDim2.new(0,x,0,math.clamp(h*.13,58,92)) main.Profile.Size=UDim2.fromOffset(math.min(285,w*.30),72)
- returnButton.Position=UDim2.new(0,18,0,72) returnButton.Size=UDim2.fromOffset(42,42) returnButton.Text="⌂" returnButton.TextSize=23
- returnButton.BackgroundTransparency=1 returnButton.UIStroke.Enabled=false
  for _,scene in ipairs({credits,updates}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")
   local title=scene.Tittle
@@ -228,7 +225,6 @@ local function show(name)
  credits.Visible=name=="credits"
  updates.Visible=name=="updates"
  creditsButton.Visible=inMenu and name=="main"
- returnButton.Visible=false
 end
 
 settings.AjustesFrame.Visible=false settings.Tittle.Visible=false settings.Close.Visible=false
@@ -439,7 +435,6 @@ updates.Close.Activated:Connect(function() navigate(function() show("main") end)
 creditsButton.Activated:Connect(function() navigate(function() show("credits") end) end)
 settings.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 credits.Close.Activated:Connect(function() navigate(function() show("main") end) end)
-returnButton.Activated:Connect(function() navigate(open) end)
 
 player.CharacterAdded:Connect(function(char)
  if inMenu then task.defer(buildPrivateScene) end
@@ -469,9 +464,4 @@ end)
 while not player:GetAttribute("SweanLoadingDone") do task.wait(.1) end
 open()
 
-local function refreshReturn()
- returnButton.Visible=not inMenu and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
-end
-player:GetAttributeChangedSignal("InRound"):Connect(refreshReturn)
-player:GetAttributeChangedSignal("Spectating"):Connect(refreshReturn)
 
