@@ -67,7 +67,7 @@ function first(task){
 
 const script=`
 local report={version=game.PlaceVersion,assets={},scripts={}}
-for _,id in ipairs({8469929407,8050959400,79671648850902}) do
+for _,id in ipairs({4977080604,14495430620,13967333450}) do
  local ok,m=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
  local rec={id=id,loaded=ok}
  if ok and m then
@@ -91,7 +91,7 @@ end
 for _,v in ipairs(game.ServerScriptService:GetDescendants()) do
  if v:IsA("LuaSourceContainer") then
   local src=v.Source
-  table.insert(report.scripts,{name=v.Name,length=#src,source=(v.Name~="SurvivalServer" and (src:find("DeathRequest",1,true) or src:find("VoidActive",1,true))) and src or nil})
+  table.insert(report.scripts,{name=v.Name,length=#src,source=nil})
  end
 end
 return report
