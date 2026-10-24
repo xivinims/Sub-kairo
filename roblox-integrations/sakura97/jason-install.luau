@@ -126,6 +126,7 @@ local items=Instance.new("Folder",storage) items.Name="Items"
 local net=replace(RS,"Survival","Folder")
 replace(net,"Action","RemoteEvent") replace(net,"Update","RemoteEvent")
 local config=replace(net,"Config","ModuleScript") config.Source=__CONFIG_SOURCE__
+local settings=replace(net,"SettingsPanel","ModuleScript") settings.Source=__SETTINGS_SOURCE__
 local bridge=replace(SSS,"SurvivalBridge","Folder")
 for _,n in ipairs({"DeathRequest","DeathFinished","RoundEliminate","CancelDeath"}) do replace(bridge,n,"BindableEvent") end
 local builder=replace(SSS,"MapBuilder","ModuleScript") builder.Source=__MAP_BUILDER_SOURCE__

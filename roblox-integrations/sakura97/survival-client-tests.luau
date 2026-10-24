@@ -1,3 +1,4 @@
+local originalSounds={} for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do originalSounds[v]=true end
 local realGame=game local RS=game:GetService("ReplicatedStorage")
 local host=Instance.new("Folder",workspace) host.Name="SurvivalClientTest"
 local render=Instance.new("BindableEvent",host) local input=Instance.new("BindableEvent",host) local ended=Instance.new("BindableEvent",host) local update=Instance.new("BindableEvent",host)
@@ -8,6 +9,10 @@ local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(de
 local introJason=game.ServerStorage.SurvivalAssets.Killers.Jason:Clone() introJason.Name="IntroJasonTest" introJason.Parent=host
 local guiHost=Instance.new("Folder",host) guiHost.Name="PlayerGui"
 function p:GetAttribute(n) return attrs[n] end
+local attributeEvents={}
+function p:GetAttributeChangedSignal(n) if not attributeEvents[n] then attributeEvents[n]=Instance.new("BindableEvent",host) end return attributeEvents[n].Event end
+function p:SetAttribute(n,v) attrs[n]=v if attributeEvents[n] then attributeEvents[n]:Fire() end end
+
 function p:WaitForChild(n) if n=="PlayerGui" then return guiHost end end
 function p:FindFirstChild() return nil end
 function p:FindFirstChildWhichIsA() return nil end
@@ -51,6 +56,7 @@ local ok,result=xpcall(function()
  assert(gui.RoundResult.WinnerPortrait:FindFirstChildOfClass("WorldModel"):FindFirstChild("WinnerJason"),"Winning Jason portrait missing")
  assert(gui.RoundResult.Subtitle.Text:find("50 XP",1,true),"Earned XP not shown")
  assert(not gui.RoundResult.Winner.Text:find("\\n",1,true),"Result contains literal newline escape")
+ gui.RoundResult.Visible=false
  local flash=assert(gui:FindFirstChild("EntryFlash"),"Entry glow flash missing")
  local before=flash:GetAttribute("PulseCount") or 0
  update:Fire("lobbyDoorGlow") task.wait()
@@ -90,6 +96,7 @@ local ok,result=xpcall(function()
  return {ok=true,scrollableResults=true,winningPortrait=true,musicPreference=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
+for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
 assert(ok,result) return result
 
 

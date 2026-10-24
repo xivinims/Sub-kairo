@@ -137,7 +137,7 @@ function first(task){
 
 
 const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
-const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder',ISLAND_SERVER:'island-server',VOID:'void-client',AMBIENCE:'ambience-client'};
+const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder',ISLAND_SERVER:'island-server',VOID:'void-client',AMBIENCE:'ambience-client',SETTINGS:'settings-panel'};
 let install=read('jason-install');
 for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
@@ -146,6 +146,7 @@ console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const menuTest=read('menu-runtime-tests').replace('__MENU_TEST_SOURCE__',read('menu-client').replace('local v=camera.ViewportSize','local v=TEST_VIEWPORT'));
 const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
 const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
@@ -188,6 +189,9 @@ local function testAI()
 ${aiTest}
 end
 result.ai=testAI()
+result.menu=(function()
+${menuTest}
+end)()
 result.animations=(function()
 ${animationTest}
 end)()

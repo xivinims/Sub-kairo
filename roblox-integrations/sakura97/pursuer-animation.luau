@@ -116,13 +116,13 @@ end
 
 local function canDrive(d,state)
  local clip=state and d.clips[state]
- return clip and clip.length>0 and (clip.boundCount or 0)>=4
+ return clip and #clip.frames>0 and (clip.boundCount or 0)>=4
 end
 
 local function apply(d,state,dt,loop,absolute)
  if not state then return false end
  local clip=d.clips[state]
- if not clip or clip.length<=0 or (clip.boundCount or 0)<4 then return false end
+ if not clip or #clip.frames==0 or (clip.boundCount or 0)<4 then return false end
  if d.state~=state then
   for joint in pairs(d.joints) do
    if joint.Parent then joint.Transform=CFrame.identity end
@@ -132,7 +132,7 @@ local function apply(d,state,dt,loop,absolute)
  end
  d.time+=dt
  local t=absolute or d.time
- t=loop and t%clip.length or math.min(t,clip.length)
+ t=clip.length>0 and (loop and t%clip.length or math.min(t,clip.length)) or 0
  for joint,channel in pairs(clip.bound) do
   if joint.Parent then joint.Transform=sample(channel,t) end
  end

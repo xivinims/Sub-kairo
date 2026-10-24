@@ -12,15 +12,17 @@ jasonTheme.Looped=true
 jasonTheme.Parent=SoundService
 local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
+local Settings=require(net:WaitForChild("SettingsPanel"))
+Settings.initialize(player)
 local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
  local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(12,12,15) f.BackgroundTransparency=.22 f.BorderSizePixel=0 f.Parent=gui
  local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(0,16)
- local s=Instance.new("UIStroke",f) s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Color=Color3.fromRGB(142,142,150) s.Transparency=.78 s.Thickness=1
+ local s=Instance.new("UIStroke",f) s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Color=Color3.fromRGB(142,142,150) s.Transparency=.4 s.Thickness=2
  return f
 end
 local function text(parent,name,value,size,pos)
- local l=Instance.new("TextLabel") l.Name=name l.Text=value l.Size=size l.Position=pos l.BackgroundTransparency=1 l.Font=Enum.Font.GothamMedium l.TextSize=15 l.TextColor3=Color3.fromRGB(224,228,232) l.TextWrapped=true l.Parent=parent return l
+ local l=Instance.new("TextLabel") l.Name=name l.Text=value l.Size=size l.Position=pos l.BackgroundTransparency=1 l.Font=Enum.Font.GothamMedium l.TextSize=15 l.TextColor3=Color3.fromRGB(224,228,232) l.TextStrokeColor3=Color3.new(0,0,0) l.TextStrokeTransparency=.55 l.TextWrapped=true l.Parent=parent return l
 end
 local function button(parent,name,label,size,pos,callback)
  local b=Instance.new("TextButton") b.Name=name b.Text=label b.Size=size b.Position=pos b.BackgroundColor3=Color3.fromRGB(18,18,22) b.BackgroundTransparency=.12 b.TextColor3=Color3.fromRGB(239,239,242) b.Font=Enum.Font.GothamSemibold b.TextSize=14 b.BorderSizePixel=0 b.Parent=parent
@@ -92,11 +94,23 @@ end
 local function actionLayout()
  local cam=workspace.CurrentCamera if not cam then return end
  local scale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar)
- scale.Scale=math.clamp(cam.ViewportSize.Y/650,.78,1)
- bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.26,115,190))
+ scale.Scale=math.clamp(cam.ViewportSize.Y/650,.72,1)*(player:GetAttribute("ControlScale") or 100)/100
+ bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.23,105,170))
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","⌂",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,122),function() event:FireServer("leave") end)
+local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,18,0,136),function() event:FireServer("leave") end)
+local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
+local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
+local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-64,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27
+local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
+local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,22) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
+local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
+local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,1,0),UDim2.fromOffset(6,0)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
+local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
+local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
+local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=14 condition.TextColor3=Color3.fromRGB(144,223,111)
+local quickItems=panel("QuickItems",UDim2.fromOffset(200,34),UDim2.new(.5,-100,1,-54)) quickItems.BackgroundTransparency=.35
+local itemText=text(quickItems,"Items","",UDim2.fromScale(1,1),UDim2.new()) itemText.TextSize=11
 local musicPanel
 local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,178),function() musicPanel.Visible=not musicPanel.Visible end)
 musicButton.BackgroundTransparency=.18 musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
@@ -217,7 +231,7 @@ local function cancelCapture()
 end
 
 local function caughtAnimation(killer,killerCF)
- if captureActive then return end
+ if captureActive or player:GetAttribute("ReducedMotion") then return end
  captureToken+=1 local token=captureToken
  captureActive=true capture.Visible=true captureText.Text=tostring(killer or "")
  local camera=workspace.CurrentCamera
@@ -417,7 +431,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="roundResult" and type(a)=="table" then showResult(a) end
 end)
 UIS.InputBegan:Connect(function(input,processed)
- if processed or cinematicActive or not player:GetAttribute("InRound") then return end
+ if processed or settingsOverlay.Visible or result.Visible or cinematicActive or not player:GetAttribute("InRound") then return end
  if input.KeyCode==Enum.KeyCode.LeftShift then mode="run" event:FireServer("mode",mode)
  elseif input.KeyCode==Enum.KeyCode.C then mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode)
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
@@ -442,6 +456,7 @@ local jasonPresentationFov=70
 RunService.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera
  if not camera then return end
+ local baseFov=player:GetAttribute("CameraFOV") or 70
  local isJason=player:GetAttribute("IsJason")==true
  local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and not cinematicActive
  if active then
@@ -450,12 +465,12 @@ RunService.RenderStepped:Connect(function(dt)
   elseif jasonTheme.IsPlaying then jasonTheme:Stop() end
   local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
   local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
-  local targetFov=speed>4 and 84 or 78
+  local targetFov=player:GetAttribute("ReducedMotion") and baseFov or math.min(100,baseFov+(speed>4 and 14 or 8))
   jasonPresentationFov+=(targetFov-jasonPresentationFov)*math.min(1,dt*6)
   if camera.CameraType~=Enum.CameraType.Scriptable then camera.FieldOfView=jasonPresentationFov end
  else
   if jasonTheme.IsPlaying then jasonTheme:Stop() end
-  jasonPresentationFov+=(70-jasonPresentationFov)*math.min(1,dt*6)
+  jasonPresentationFov+=(baseFov-jasonPresentationFov)*math.min(1,dt*6)
   if player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and camera.CameraType~=Enum.CameraType.Scriptable then
    camera.FieldOfView=jasonPresentationFov
   end
@@ -467,9 +482,20 @@ RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true or cinematicActive
  if result.Visible and os.clock()>=resultUntil then hideResult() end
- musicButton.Visible=not hidden musicPanel.Visible=musicPanel.Visible and not hidden
- local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
+ musicButton.Visible=not hidden and not player:GetAttribute("InRound") musicPanel.Visible=musicPanel.Visible and not hidden and not player:GetAttribute("InRound")
+ settingsButton.Visible=not hidden settingsOverlay.Visible=settingsOverlay.Visible and not hidden
+ profileHUD.Visible=not hidden and not result.Visible
+ local controlsVisible=not settingsOverlay.Visible and not result.Visible and player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
+ healthHUD.Visible=not hidden and inRound and not result.Visible quickItems.Visible=healthHUD.Visible and not player:GetAttribute("IsJason")
+ condition.Text=down and "♥  CAÍDO" or player:GetAttribute("Injured") and "♥  FERIDO" or "♥  INTEIRO"
+ condition.TextColor3=down and Color3.fromRGB(231,101,107) or player:GetAttribute("Injured") and Color3.fromRGB(229,186,100) or Color3.fromRGB(144,223,111)
+ healthHUD.UIStroke.Color=condition.TextColor3
+ itemText.Text="↑ "..(player:GetAttribute("HasBoost") and "1 IMPULSO" or "USADO").."   •   + "..(player:GetAttribute("HasMedkit") and "1 KIT" or "USADO")
+ local stats=player:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local lv=stats and stats:FindFirstChild("Nível") local pts=stats and stats:FindFirstChild("Pontos")
+ local n=lv and lv.Value or 1 local total=xp and xp.Value or 0 local minimum=15*(n-1)^2+35*(n-1) local nextLevel=15*n^2+35*n
+ xpFill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((total-minimum)/(nextLevel-minimum),0,1),1)
+ levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text="◉  "..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  countdown.Visible=not hidden and phase=="Intervalo"

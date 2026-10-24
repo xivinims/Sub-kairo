@@ -14,7 +14,11 @@ local transition=ui:WaitForChild("FrameDeTransicion")
 local config=RS:WaitForChild("SweanMenuConfig")
 local returnButton=ui:WaitForChild("ReturnToMenu")
 local creditsButton=ui:WaitForChild("CreditsButton")
-local low=UIS.TouchEnabled
+local settingsModule=require(RS:WaitForChild("Survival"):WaitForChild("SettingsPanel"))
+settingsModule.initialize(player)
+local low=player:GetAttribute("LowGraphics")==true
+local shop=scenes:WaitForChild("MenuShop") local inventory=scenes:WaitForChild("MenuInventory") local updates=scenes:WaitForChild("MenuUpdates")
+local settingsControl
 local controls=nil
 local inMenu=true
 local busy=false
@@ -119,21 +123,6 @@ local function buildPrivateScene()
  end
 end
 
-local switches={
- {"NametagsToggle","ShowNametags","Nomes"},
- {"SoundToggle","MenuSounds","Sons"},
- {"MusicToggle","MusicEnabled","Música"},
- {"FriendsToggle","FriendAlerts","Amigos"}
-}
-for _,setting in ipairs(switches) do
- if player:GetAttribute(setting[2])==nil then player:SetAttribute(setting[2],true) end
- local b=settings.AjustesFrame.Controls:WaitForChild(setting[1])
- local function refresh() b.Text=setting[3].."  "..(player:GetAttribute(setting[2]) and "ON" or "OFF") end
- refresh()
- b.Activated:Connect(function() player:SetAttribute(setting[2],not player:GetAttribute(setting[2])) refresh() end)
-end
-
-local quality=settings.AjustesFrame.Controls:WaitForChild("QualityToggle")
 local effectDefaults=setmetatable({},{__mode="k"})
 local function qualityEffect(e)
  if e:IsA("PostEffect") then
@@ -144,12 +133,11 @@ end
 Lighting.ChildAdded:Connect(qualityEffect)
 local function setQuality()
  player:SetAttribute("LowGraphics",low)
- quality.Text="Gráficos  "..(low and "LEVE" or "COMPLETO")
  for _,e in ipairs(Lighting:GetChildren()) do
   qualityEffect(e)
  end
 end
-quality.Activated:Connect(function() low=not low setQuality() end)
+player:GetAttributeChangedSignal("LowGraphics"):Connect(function() low=player:GetAttribute("LowGraphics")==true setQuality() end)
 
 for _,b in ipairs(ui:GetDescendants()) do
  if b:IsA("TextButton") then
@@ -173,47 +161,33 @@ end
 local function layout()
  local camera=workspace.CurrentCamera if not camera then return end
  local v=camera.ViewportSize local w,h=v.X,v.Y
- local panelW=math.clamp(w*.32,220,360)
  local x=math.clamp(w*.035,14,42)
- local top=math.clamp(h*.07,18,48)
- local logoH=math.clamp(h*.18,60,132)
- local buttonH=math.clamp(h*.07,40,52)
-
- main.LeftPanel.Position=UDim2.fromOffset(x,top)
- main.LeftPanel.Size=UDim2.fromOffset(panelW,math.min(h-top-20,logoH+buttonH*3+74))
-
- main.Logo.Position=UDim2.fromOffset(x+18,top+12)
- main.Logo.Size=UDim2.fromOffset(panelW-36,logoH)
- main.GameName.Position=UDim2.fromOffset(x+18,top+logoH+1)
- main.GameName.Size=UDim2.fromOffset(panelW-36,30)
- main.GameName.TextSize=math.clamp(panelW*.075,18,26)
-
- local y=top+logoH+40
- for i,b in ipairs({main.Play,main.Ajustes}) do
-  b.Position=UDim2.fromOffset(x+18,y+(i-1)*(buttonH+10))
-  b.Size=UDim2.fromOffset(panelW-36,buttonH)
+ main.LeftPanel.Visible=false
+ main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.34) main.Logo.Size=UDim2.new(.52,0,.22,0)
+ main.GameName.AnchorPoint=Vector2.new(.5,0) main.GameName.Position=UDim2.fromScale(.5,.43) main.GameName.Size=UDim2.fromOffset(160,24) main.GameName.Text="[ALFA]" main.GameName.TextSize=14
+ local cardW=math.min(240,w*.235) local cardH=math.clamp(h*.20,75,132) local gap=10
+ for i,card in ipairs({main.Shop,main.Play,main.Inventory}) do
+  card.AnchorPoint=Vector2.new(.5,.5) card.Position=UDim2.new(.5,(i-2)*(cardW+gap),.62,0) card.Size=UDim2.fromOffset(cardW,cardH) card.TextSize=math.clamp(w*.018,12,19)
  end
-
- main.Guide.Position=UDim2.fromOffset(x+18,y+buttonH*2+26)
- main.Guide.Size=UDim2.fromOffset(panelW-36,24)
- main.Edition.Position=UDim2.fromOffset(x+18,math.max(y+buttonH*2+60,h-90)) main.Edition.Size=UDim2.fromOffset(math.max(230,panelW-36),18)
- main.QuickHelp.Position=UDim2.fromOffset(x+18,h-65) main.QuickHelp.Size=UDim2.fromOffset(panelW+40,48)
- main.QuickHelp.Visible=h>=520 main.Edition.Visible=h>=450
- creditsButton.Position=UDim2.new(1,-64,0,64) creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.Text="i" creditsButton.TextSize=24
- returnButton.Position=UDim2.new(1,-64,0,122)
- returnButton.Size=UDim2.fromOffset(46,46) returnButton.Text="⌂" returnButton.TextSize=23
-
- for _,scene in ipairs({settings,credits}) do
+ main.Play.Text="ENTRAR NO LOBBY"
+ main.Play.UIStroke.Color=Color3.fromRGB(142,180,105) main.Shop.UIStroke.Color=Color3.fromRGB(193,157,93) main.Inventory.UIStroke.Color=Color3.fromRGB(143,126,185)
+ main.Guide.Position=UDim2.new(.5,-math.min(280,w*.40),.62,cardH/2+8) main.Guide.Size=UDim2.fromOffset(math.min(560,w*.8),22) main.Guide.TextXAlignment=Enum.TextXAlignment.Center
+ main.Edition.Visible=false main.QuickHelp.Visible=false
+ main.Updates.AnchorPoint=Vector2.new(.5,1) main.Updates.Position=UDim2.new(.5,0,1,-24) main.Updates.Size=UDim2.fromOffset(math.min(260,w*.4),34) main.Updates.TextSize=12
+ main.Profile.Position=UDim2.new(0,x,0,math.clamp(h*.15,65,108)) main.Profile.Size=UDim2.fromOffset(math.min(300,w*.28),78)
+ main.Ajustes.Position=UDim2.new(1,-118,0,22) main.Ajustes.Size=UDim2.fromOffset(44,44)
+ creditsButton.Position=UDim2.new(1,-64,0,22) creditsButton.Size=UDim2.fromOffset(44,44) creditsButton.Text="i" creditsButton.TextSize=24
+ returnButton.Position=UDim2.new(1,-64,0,122) returnButton.Size=UDim2.fromOffset(46,46) returnButton.Text="⌂" returnButton.TextSize=23
+ for _,scene in ipairs({credits,shop,inventory,updates}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")
   local title=scene.Tittle
-  local pw=math.min(520,w-32) local ph=math.min(360,h-110)
+  local pw=math.min(600,w-44) local ph=math.min(390,h-120)
   body.Position=UDim2.new(.5,-pw/2,.5,-ph/2+18) body.Size=UDim2.fromOffset(pw,ph)
   title.Position=UDim2.new(.5,-pw/2,.5,-ph/2-28) title.Size=UDim2.fromOffset(pw-54,42)
   title.TittleText.Size=UDim2.fromScale(1,1)
   scene.Close.Position=UDim2.new(.5,pw/2-44,.5,-ph/2-28) scene.Close.Size=UDim2.fromOffset(44,42)
  end
- settings.AjustesFrame.Controls.Position=UDim2.fromOffset(18,18)
- settings.AjustesFrame.Controls.Size=UDim2.new(1,-36,1,-36)
+
  credits.CreditosFrame.TextCreditos.Size=UDim2.fromScale(1,1)
 end
 
@@ -221,10 +195,58 @@ local function show(name)
  main.Visible=name=="main"
  settings.Visible=name=="settings"
  credits.Visible=name=="credits"
+ shop.Visible=name=="shop" inventory.Visible=name=="inventory" updates.Visible=name=="updates"
  creditsButton.Visible=inMenu and name=="main"
  returnButton.Visible=not inMenu and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
 end
 
+settings.AjustesFrame.Visible=false settings.Tittle.Visible=false settings.Close.Visible=false
+settingsControl=settingsModule.build(settings,player,function() show("main") end)
+local function profileDisplay()
+ local stats=player:FindFirstChild("leaderstats")
+ local xp=stats and stats:FindFirstChild("XP") local level=stats and stats:FindFirstChild("Nível") local points=stats and stats:FindFirstChild("Pontos")
+ local n=level and level.Value or 1 local value=xp and xp.Value or 0
+ local floorXP=15*(n-1)^2+35*(n-1) local nextXP=15*n^2+35*n
+ main.Profile.XPBar.Fill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((value-floorXP)/(nextXP-floorXP),0,1),1)
+ main.Profile.XPBar.Value.Text="NÍVEL "..n.."  •  "..(n>=1000 and "MÁXIMO" or tostring(math.max(0,value-floorXP)).."/"..tostring(nextXP-floorXP))
+ main.Profile.Coins.Text="◉  "..tostring(points and points.Value or 0)
+ local purchase=shop.CreditosFrame.Purchase
+ purchase.Text=player:GetAttribute("Cantor") and "✓ MUSIC DESBLOQUEADO" or "DESBLOQUEAR MUSIC • 20 PONTOS"
+ purchase.Active=not player:GetAttribute("Cantor")
+end
+shop.CreditosFrame.Purchase.Activated:Connect(function()
+ if not player:GetAttribute("Cantor") then RS.Survival.Action:FireServer("musicBuy") end
+end)
+player:GetAttributeChangedSignal("Cantor"):Connect(profileDisplay)
+task.spawn(function()
+ local stats=player:WaitForChild("leaderstats",25)
+ if stats then for _,v in ipairs(stats:GetChildren()) do if v:IsA("IntValue") then v.Changed:Connect(profileDisplay) end end end
+ profileDisplay()
+end)
+local function cardPreview(card,model)
+ if not model then return end
+ local view=Instance.new("ViewportFrame",card) view.Name="Preview" view.BackgroundTransparency=1 view.Position=UDim2.fromOffset(6,6) view.Size=UDim2.new(1,-12,1,-12) view.ZIndex=1 view.Ambient=Color3.fromRGB(125,112,116) view.LightColor=Color3.fromRGB(255,216,198) view.LightDirection=Vector3.new(-1,-.6,-1)
+ local world=Instance.new("WorldModel",view)
+ for _,d in ipairs(model:GetDescendants()) do if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") then d:Destroy() elseif d:IsA("BasePart") then d.CanCollide=false d.CanTouch=false d.CanQuery=false d.Anchored=d.Name=="HumanoidRootPart" end end
+ model.Parent=world model:PivotTo(CFrame.identity)
+ local camera=Instance.new("Camera",view) camera.FieldOfView=35 view.CurrentCamera=camera
+ local cf,size=model:GetBoundingBox() local focus=cf.Position+Vector3.new(0,size.Y*.12,0)
+ local forward=model.PrimaryPart and model.PrimaryPart.CFrame.LookVector or Vector3.new(0,0,-1)
+ camera.CFrame=CFrame.lookAt(focus+forward*math.max(size.Y,size.X)*1.65,focus)
+ local caption=Instance.new("TextLabel",card) caption.Name="Caption" caption.Size=UDim2.new(1,-8,0,30) caption.Position=UDim2.new(0,4,1,-34) caption.BackgroundColor3=Color3.fromRGB(10,10,14) caption.BackgroundTransparency=.25 caption.BorderSizePixel=0 caption.Text=card.Text caption.TextColor3=Color3.fromRGB(245,244,245) caption.TextStrokeTransparency=.2 caption.Font=Enum.Font.GothamBold caption.TextScaled=true caption.ZIndex=3
+ local cap=Instance.new("UITextSizeConstraint",caption) cap.MaxTextSize=18 cap.MinTextSize=10
+ card.TextTransparency=1
+end
+local jason=RS.Survival:FindFirstChild("PresentationJason")
+if jason then local clone=jason:Clone() clone:SetAttribute("PresentationPursuer",true) cardPreview(main.Play,clone) end
+local function avatarPreview()
+ local old=main.Inventory:FindFirstChild("Preview") if old then old:Destroy() end
+ local caption=main.Inventory:FindFirstChild("Caption") if caption then caption:Destroy() end
+ if player.Character then local oldA=player.Character.Archivable player.Character.Archivable=true local clone=player.Character:Clone() player.Character.Archivable=oldA cardPreview(main.Inventory,clone) end
+end
+avatarPreview() player.CharacterAdded:Connect(avatarPreview)
+local musicIcon=Instance.new("TextLabel",main.Shop) musicIcon.BackgroundTransparency=1 musicIcon.Text="♫" musicIcon.TextColor3=Color3.fromRGB(215,185,124) musicIcon.TextSize=45 musicIcon.Size=UDim2.fromScale(1,.65) musicIcon.Position=UDim2.fromScale(0,0)
+main.Shop.TextYAlignment=Enum.TextYAlignment.Bottom
 local function bindCamera()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  RunService:BindToRenderStep("SurviversMenuCamera",Enum.RenderPriority.Camera.Value+2,function()
@@ -234,7 +256,7 @@ local function bindCamera()
   camera.FieldOfView=56
   if menuCameraCF then
    local t=os.clock()
-   camera.CFrame=low and menuCameraCF or menuCameraCF*CFrame.Angles(math.sin(t*.18)*.006,math.sin(t*.13)*.012,0)
+   camera.CFrame=(low or player:GetAttribute("ReducedMotion")) and menuCameraCF or menuCameraCF*CFrame.Angles(math.sin(t*.18)*.006,math.sin(t*.13)*.012,0)
   end
  end)
 end
@@ -277,6 +299,10 @@ end
 
 main.Play.Activated:Connect(function() navigate(close) end)
 main.Ajustes.Activated:Connect(function() navigate(function() show("settings") end) end)
+main.Shop.Activated:Connect(function() navigate(function() show("shop") end) end)
+main.Inventory.Activated:Connect(function() navigate(function() show("inventory") end) end)
+main.Updates.Activated:Connect(function() navigate(function() show("updates") end) end)
+for _,scene in ipairs({shop,inventory,updates}) do scene.Close.Activated:Connect(function() navigate(function() show("main") end) end) end
 creditsButton.Activated:Connect(function() navigate(function() show("credits") end) end)
 settings.Close.Activated:Connect(function() navigate(function() show("main") end) end)
 credits.Close.Activated:Connect(function() navigate(function() show("main") end) end)

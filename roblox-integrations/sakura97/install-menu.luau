@@ -22,9 +22,11 @@ local function label(parent,name,textValue)
 end
 local function button(parent,name,textValue)
  local b=Instance.new("TextButton") b.Name=name b.Text=textValue b.Active=true b.AutoButtonColor=false
- b.BackgroundColor3=Color3.fromRGB(26,16,18) b.BackgroundTransparency=.18
+ b.BackgroundColor3=Color3.fromRGB(26,23,28) b.BackgroundTransparency=.18
  b.TextColor3=Color3.fromRGB(242,242,245) b.Font=Enum.Font.GothamSemibold
- b.TextSize=16 b.BorderSizePixel=0 b.Parent=parent corner(b,14) stroke(b,.68) return b
+ b.TextSize=16 b.TextStrokeColor3=Color3.new(0,0,0) b.TextStrokeTransparency=.25 b.BorderSizePixel=0 b.Parent=parent corner(b,10) local outer=stroke(b,.25) outer.Thickness=2
+ local inset=Instance.new("Frame",b) inset.Name="Inset" inset.BackgroundTransparency=1 inset.Size=UDim2.new(1,-8,1,-8) inset.Position=UDim2.fromOffset(4,4) corner(inset,7) stroke(inset,.65)
+ return b
 end
 
 local ui=Instance.new("ScreenGui")
@@ -59,7 +61,17 @@ gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(231,225,2
 gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Color3.fromRGB(126,12,20) gameName.TextStrokeTransparency=.25 gameName.Visible=true
 
 local play=button(main,"Play","ENTRAR NO LOBBY")
-local settingsButton=button(main,"Ajustes","AJUSTES")
+local shopButton=button(main,"Shop","LOJA")
+local inventoryButton=button(main,"Inventory","INVENTÁRIO")
+local settingsButton=button(main,"Ajustes","⚙")
+settingsButton.TextSize=28
+local updatesButton=button(main,"Updates","NOVIDADES")
+local profile=Instance.new("Frame",main) profile.Name="Profile" profile.BackgroundTransparency=1
+local xpBar=Instance.new("Frame",profile) xpBar.Name="XPBar" xpBar.Size=UDim2.new(1,0,0,26) xpBar.BackgroundColor3=Color3.fromRGB(18,18,25) xpBar.BackgroundTransparency=.3 xpBar.BorderSizePixel=0 corner(xpBar,5)
+local fill=Instance.new("Frame",xpBar) fill.Name="Fill" fill.Size=UDim2.fromScale(0,1) fill.BackgroundColor3=Color3.fromRGB(94,116,204) fill.BorderSizePixel=0 corner(fill,5)
+local xp=label(xpBar,"Value","NÍVEL 1") xp.Size=UDim2.new(1,-14,1,0) xp.Position=UDim2.fromOffset(7,0) xp.TextSize=12 xp.Font=Enum.Font.GothamBold xp.TextXAlignment=Enum.TextXAlignment.Left
+local coins=label(profile,"Coins","◉  0") coins.Position=UDim2.fromOffset(0,32) coins.Size=UDim2.fromOffset(150,30) coins.TextSize=20 coins.TextColor3=Color3.fromRGB(164,214,114) coins.TextXAlignment=Enum.TextXAlignment.Left
+
 local creditsButton=button(ui,"CreditsButton","CRÉDITOS")
 
 local guide=label(main,"Guide","ATRAVESSE A PORTA PARA JOGAR")
@@ -84,6 +96,14 @@ end
 
 local settings,settingsTitle,settingsBody,settingsClose=modal("MenuAjustes","AJUSTES")
 local credits,creditsTitle,creditsBody,creditsClose=modal("MenuCreditos","CRÉDITOS")
+local shop,_,shopBody=modal("MenuShop","LOJA • MUSIC")
+local inventory,_,inventoryBody=modal("MenuInventory","EQUIPAMENTO")
+local updates,_,updatesBody=modal("MenuUpdates","NOVIDADES • ALFA 121")
+local shopInfo=label(shopBody,"Info","MUSIC\n\nDesbloqueie músicas por ID e receba o distintivo Cantor.\n\n20 PONTOS • pagamento com pontos do jogo") shopInfo.Size=UDim2.new(1,-36,1,-88) shopInfo.Position=UDim2.fromOffset(18,12) shopInfo.TextSize=17
+local purchase=button(shopBody,"Purchase","DESBLOQUEAR MUSIC • 20 PONTOS") purchase.Position=UDim2.new(.1,0,1,-64) purchase.Size=UDim2.new(.8,0,0,44)
+local inventoryText=label(inventoryBody,"Info","LANTERNA\nIlumine o caminho pelo botão da lanterna.\n\nIMPULSO • 1 POR RODADA\nAceleração temporária para escapar.\n\nKIT MÉDICO • 1 POR RODADA\nReviva você ou um aliado caído. Fique parado durante o uso.") inventoryText.Position=UDim2.fromOffset(20,12) inventoryText.Size=UDim2.new(1,-40,1,-24) inventoryText.TextSize=15 inventoryText.TextXAlignment=Enum.TextXAlignment.Left
+local news=label(updatesBody,"Info","TRÊS CENÁRIOS\nBosque do Silêncio • Base Abandonada • Fortaleza da Névoa\n\nJASON E SOBREVIVENTES\nCaçada revisada, proteção na entrada e animações corrigidas.\n\nINTERFACE E PROGRESSO\nNovo HUD, ajustes completos e salvamento de pontos e XP.") news.Position=UDim2.fromOffset(20,12) news.Size=UDim2.new(1,-40,1,-24) news.TextSize=15 news.TextXAlignment=Enum.TextXAlignment.Left
+
 
 local controls=Instance.new("ScrollingFrame") controls.Name="Controls" controls.BackgroundTransparency=1 controls.BorderSizePixel=0
 controls.AutomaticCanvasSize=Enum.AutomaticSize.Y controls.CanvasSize=UDim2.new() controls.ScrollBarThickness=3 controls.Parent=settingsBody
