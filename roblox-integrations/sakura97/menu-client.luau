@@ -187,11 +187,12 @@ local function layout()
  main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.19) main.Logo.Size=UDim2.new(.42,0,.17,0)
  main.GameName.Visible=false
  local navW=math.clamp(w*.23,168,224) local navH=math.clamp(h*.072,28,38)
- local nav={main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates,creditsButton}
- local labels={"ENTRAR NO LOBBY","LOJA","INVENTÁRIO","AJUSTES","NOVIDADES","CRÉDITOS"}
+ main.Shop.Visible=false main.Shop.Active=false main.Inventory.Visible=false main.Inventory.Active=false
+ local nav={main.Play,main.Ajustes,main.Updates,creditsButton}
+ local labels={"ENTRAR NO LOBBY","AJUSTES","NOVIDADES","CRÉDITOS"}
  for i,b in ipairs(nav) do
   b.AnchorPoint=Vector2.new(.5,.5)
-  b.Position=UDim2.new(.5,0,.44+(i-1)*.072,0)
+  b.Position=UDim2.new(.5,0,.47+(i-1)*.078,0)
   b.Size=UDim2.fromOffset(navW,navH)
   b.Text=labels[i]
   b.TextSize=math.clamp(w*.017,13,18)
@@ -483,8 +484,6 @@ end
 
 main.Play.Activated:Connect(function() navigate(close) end)
 main.Ajustes.Activated:Connect(function() navigate(function() show("settings") end) end)
-main.Shop.Activated:Connect(function() navigate(function() show("shop") end) end)
-main.Inventory.Activated:Connect(function() navigate(function() show("inventory") end) end)
 main.Updates.Activated:Connect(function() navigate(function() show("updates") end) end)
 for _,scene in ipairs({shop,inventory,updates}) do scene.Close.Activated:Connect(function() navigate(function() show("main") end) end) end
 creditsButton.Activated:Connect(function() navigate(function() show("credits") end) end)
