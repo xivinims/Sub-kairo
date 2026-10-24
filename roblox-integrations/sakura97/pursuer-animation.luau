@@ -82,7 +82,7 @@ local function prepare(model,folder)
  if not perModel then perModel={} cache[model]=perModel end
  if perModel[folder] then return perModel[folder] end
  if #folder:GetChildren()~=(folder:GetAttribute("ClipCount") or math.huge) then return nil end
- local d={joints={},lookup={},clips={},time=0,state="",active=false,folder=folder}
+ local d={joints={},lookup={},clips={},time=0,state="",active=false,folder=folder,blendFrom={},blendTime=0}
  local jointCount=0
  for _,j in ipairs(model:GetDescendants()) do
   local _,part1=jointParts(j)
@@ -184,18 +184,29 @@ local function apply(d,state,dt,loop,absolute)
  local clip=d.clips[state]
  if not clip or clip.frameCount==0 or (clip.boundCount or 0)<4 then return false end
  if d.state~=state then
+  table.clear(d.blendFrom)
   for joint in pairs(d.joints) do
-   if joint.Parent then joint.Transform=CFrame.identity end
+   if joint.Parent then d.blendFrom[joint]=joint.Transform end
   end
   d.state=state
   d.time=0
+  d.blendTime=0
  end
  d.time+=dt
+ d.blendTime=math.min(.14,(d.blendTime or 0)+dt)
+ local blendAlpha=math.clamp(d.blendTime/.14,0,1)
+ blendAlpha=TweenService:GetValue(blendAlpha,Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
  local t=absolute or d.time
  t=clip.length>0 and (loop and t%clip.length or math.min(t,clip.length)) or 0
- for joint,channel in pairs(clip.bound) do
-  if joint.Parent then joint.Transform=sample(channel,t) end
+ for joint in pairs(d.joints) do
+  if joint.Parent then
+   local channel=clip.bound[joint]
+   local target=channel and sample(channel,t) or CFrame.identity
+   local from=d.blendFrom[joint]
+   joint.Transform=(from and blendAlpha<1) and from:Lerp(target,blendAlpha) or target
+  end
  end
+ if blendAlpha>=1 then table.clear(d.blendFrom) end
  d.active=true
  return true
 end
@@ -238,13 +249,13 @@ local function resolveLocomotion(d,kind,injured)
   if kind=="move" then return matchName(d.clips,{{"injured","walk"}}) or matchName(d.clips,{{"injured","run"}}) end
   if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"injured","idle"},{"idle"}}) end
   if kind=="fall" then return matchName(d.clips,{{"fall"},{"freefall"},{"air"}}) or matchName(d.clips,{{"injured","idle"},{"idle"}}) end
-  return matchName(d.clips,{{"injured","idle"}}) or matchName(d.clips,{{"idle"}}) or next(d.clips)
+  return matchName(d.clips,{{"injured","idle"}}) or matchName(d.clips,{{"idle"}})
  end
  if kind=="jump" then return matchName(d.clips,{{"jump"},{"leap"}}) or matchName(d.clips,{{"idle"}}) end
  if kind=="fall" then return matchName(d.clips,{{"fall"},{"freefall"},{"air"}}) or matchName(d.clips,{{"jump"},{"idle"}}) end
  if kind=="run" then return matchName(d.clips,{{"run"},{"sprint"}}) or matchName(d.clips,{{"walk"},{"move"}}) end
  if kind=="move" then return matchName(d.clips,{{"walk"},{"move"}}) or matchName(d.clips,{{"run"},{"idle"}}) end
- return matchName(d.clips,{{"idle"},{"stand"}}) or next(d.clips)
+ return matchName(d.clips,{{"idle"},{"stand"}})
 end
 
 local function locomotionName(d,kind,injured)
@@ -331,7 +342,7 @@ Run.PreSimulation:Connect(function(dt)
    end
    if inRound and not isJason and downed then
     if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
-    if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
+    setDefaultAnimate(model,false)
     local joint=downedPoses[model]
     if joint and joint.Parent then joint.Transform=CFrame.new(0,-.92+math.sin(os.clock()*1.8)*.018,.08)*CFrame.Angles(math.rad(88),0,math.rad(4)+math.sin(os.clock()*1.3)*.01) end
    elseif inRound and not isJason then
@@ -353,7 +364,7 @@ Run.PreSimulation:Connect(function(dt)
      else kind="idle" end
      local state=locomotionName(d,kind,injured)
      local supported=canDrive(d,state)
-     if p==Players.LocalPlayer and supported then setDefaultAnimate(model,false) end
+     if supported then setDefaultAnimate(model,false) end
      if supported then
       local rate=1
       if kind=="run" then rate=math.clamp(speed/(injured and 14 or 18),.78,1.38)
@@ -361,14 +372,14 @@ Run.PreSimulation:Connect(function(dt)
       apply(d,state,dt*rate,kind~="jump" and kind~="fall")
      else
       resetData(d)
-      if p==Players.LocalPlayer then setDefaultAnimate(model,true) end
+      setDefaultAnimate(model,true)
      end
-    elseif p==Players.LocalPlayer then
+    else
      setDefaultAnimate(model,true)
     end
    else
     resetModel(model)
-    if p==Players.LocalPlayer then setDefaultAnimate(model,true) end
+    setDefaultAnimate(model,true)
    end
   end
  end
