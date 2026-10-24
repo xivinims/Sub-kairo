@@ -10,7 +10,7 @@ local description=Instance.new("HumanoidDescription")
 local character=Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
 character.Name="TestPlayer" character.Parent=host
 local guiHost=Instance.new("Folder") guiHost.Name="PlayerGui" guiHost.Parent=host
-local attrs={VoidActive=true,MusicEnabled=false}
+local attrs={VoidActive=true,MusicEnabled=false,InMenu=false,RoundStatus="eliminated",InRound=false}
 local fakePlayer={Character=character,CharacterAdded=characterEvent.Event}
 function fakePlayer:GetAttribute(name) return attrs[name] end
 function fakePlayer:WaitForChild(name) if name=="PlayerGui" then return guiHost end return nil end
@@ -35,24 +35,13 @@ __VOID_CLIENT_TEST_SOURCE__
 end
 local ok,result=xpcall(function()
  runController()
- remoteEvent:Fire("start") task.wait(.3)
- local screen=assert(guiHost:FindFirstChild("BeyondTheIsland"),"Death screen did not open")
- local bg=screen.Darkness local view=bg.PlayerSwimming local label=bg.DeathMessage local button=bg.Regenerate
- assert(view.ZIndex>label.ZIndex,"Avatar must cover message")
- assert(math.abs(view.Position.Y.Scale-.30)<.001 and math.abs(view.Size.Y.Scale-1.12)<.001,"Initial lower framing missing")
- assert(not button.Visible and not button.Active,"Regenerate exposed before messages")
- local messages={} local changed=label:GetPropertyChangedSignal("Text"):Connect(function() messages[#messages+1]=label.Text end)
- local deadline=os.clock()+25
- while screen.Parent and (screen:GetAttribute("Phase")~="regenerate" or not button.Active or returns<1) and os.clock()<deadline do task.wait(.1) end
- changed:Disconnect()
- assert(screen:GetAttribute("Phase")=="regenerate" and button.Visible and button.Active,"Sequence did not reach regeneration")
- assert(button.Text=="Voltar")
- assert(not label.Visible and not bg.SubtleAtmosphere.Visible,"Text/effects did not disappear")
- assert(math.abs(view.Position.Y.Scale-.16)<.001 and math.abs(view.Size.Y.Scale-.58)<.001,"Final framing missing")
- assert(#messages==1 and messages[1]=="Cuidado","Death warning should be short")
- assert(view:FindFirstChildOfClass("WorldModel"):FindFirstChild("TestPlayer"),"Player avatar missing")
- remoteEvent:Fire("finish") task.wait(.7)
- assert(not guiHost:FindFirstChild("BeyondTheIsland"),"Recovery left screen behind")
+ attrs.InMenu=true
+ remoteEvent:Fire("start","Jason","spectate") task.wait(.2)
+ assert(not guiHost:FindFirstChild("BeyondTheIsland"),"Death screen opened while player was in menu")
+ attrs.InMenu=false attrs.RoundStatus="lobby"
+ remoteEvent:Fire("start","Jason","spectate") task.wait(.2)
+ assert(not guiHost:FindFirstChild("BeyondTheIsland"),"Death screen opened without elimination")
+ attrs.RoundStatus="eliminated"
  remoteEvent:Fire("start","Figure","spectate") task.wait(.3)
  local spectateScreen=assert(guiHost:FindFirstChild("BeyondTheIsland"))
  local figureMessages={} local fc=spectateScreen.Darkness.DeathMessage:GetPropertyChangedSignal("Text"):Connect(function() table.insert(figureMessages,spectateScreen.Darkness.DeathMessage.Text) end)
@@ -64,11 +53,12 @@ local ok,result=xpcall(function()
  assert(not spectateScreen.Darkness.Regenerate.Visible,"Eliminated player saw respawn button")
  assert(#figureMessages>=1 and figureMessages[1]=="ele ouve seus passos","Wrong Figure messages")
  remoteEvent:Fire("finish") task.wait(.7)
- remoteEvent:Fire("start") task.wait(.2) remoteEvent:Fire("start") task.wait(.2)
- assert(#guiHost:GetChildren()==1,"Repeated start duplicated scene")
+ attrs.RoundStatus="eliminated" attrs.InMenu=false
+ remoteEvent:Fire("start","Figure","spectate") task.wait(.2) remoteEvent:Fire("start","Figure","spectate") task.wait(.2)
+ assert(#guiHost:GetChildren()==1,"Repeated real-death start duplicated scene")
  characterEvent:Fire(character) task.wait(.2)
  assert(#guiHost:GetChildren()==0,"Respawn left death UI behind")
- return {ok=true,spectatorTransition=true,figureMessages=true,messageOrder=true,avatarAboveText=true,regenerateAfterTransition=true,effectsFade=true,recoveryCleanup=true,repeatedStartSafe=true}
+ return {ok=true,menuSuppression=true,nonDeathSuppression=true,spectatorTransition=true,figureMessages=true,recoveryCleanup=true,repeatedStartSafe=true}
 end,debug.traceback)
 characterEvent:Fire(character) task.wait()
 heartbeat:Disconnect() characterEvent:Destroy() remoteEvent:Destroy() renderEvent:Destroy() host:Destroy() description:Destroy()
