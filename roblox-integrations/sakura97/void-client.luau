@@ -104,7 +104,7 @@ local function start(cause,mode)
     if ok then track=t track.Looped=true track.Priority=Enum.AnimationPriority.Action track:Play(.25,1,.55) end
    end
    local joints={}
-   for _,d in ipairs(clone:GetDescendants()) do if d:IsA("Motor6D") then joints[d]=d.Transform end end
+   for _,d in ipairs(clone:GetDescendants()) do if d:IsA("Motor6D") or d:IsA("AnimationConstraint") then joints[d]=d.Transform end end
    local t=0
    poseStep=function(dt)
     t+=dt if root then root.CFrame=CFrame.new(0,math.sin(t*1.4)*.18,0)*CFrame.Angles(math.rad(-7),0,0) end

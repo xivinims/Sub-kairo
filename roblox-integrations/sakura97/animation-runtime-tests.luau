@@ -23,7 +23,7 @@ __ANIMATION_TEST_SOURCE__
 end
 local function posed(model)
  local count=0
- for _,m in ipairs(model:GetDescendants()) do if m:IsA("Motor6D") and m.Transform~=CFrame.identity then count+=1 end end
+ for _,m in ipairs(model:GetDescendants()) do if (m:IsA("Motor6D") or m:IsA("AnimationConstraint")) and m.Transform~=CFrame.identity then count+=1 end end
  return count
 end
 local ok,err=xpcall(function()
@@ -40,10 +40,12 @@ local ok,err=xpcall(function()
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
+ p.attrs.Downed=true simulate(.2) assert(posed(p.Character)>=1 and animate.Disabled,"Downed pose conflicts with Animator")
+ p.attrs.Downed=false
  p.attrs.InRound=false simulate(.2)
  assert(not animate.Disabled,"Default Animate was not restored outside round")
  assert(posed(p.Character)==0,"Custom pose remained after round")
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,crouchPlayback=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true}
+return {ok=true,winningPortrait=true,crouchPlayback=true,upgradedAvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true}

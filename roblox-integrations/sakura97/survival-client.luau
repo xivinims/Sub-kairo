@@ -230,6 +230,13 @@ local function cancelCapture()
  if captureTween then captureTween:Cancel() captureTween=nil end
 end
 
+local function avatarRootJoint(char)
+ local root=char and char:FindFirstChild("HumanoidRootPart") if not root then return nil end
+ for _,joint in ipairs(char:GetDescendants()) do
+  if joint:IsA("Motor6D") and joint.Part0==root then return joint
+  elseif joint:IsA("AnimationConstraint") and joint.Attachment0 and joint.Attachment0.Parent==root then return joint end
+ end
+end
 local function caughtAnimation(killer,killerCF)
  if captureActive or player:GetAttribute("ReducedMotion") then return end
  captureToken+=1 local token=captureToken
@@ -241,7 +248,7 @@ local function caughtAnimation(killer,killerCF)
  local oldType=camera and camera.CameraType
  local oldCF=camera and camera.CFrame
  local oldFov=camera and camera.FieldOfView or 70
- local rootJoint=root and root:FindFirstChildWhichIsA("Motor6D")
+ local rootJoint=avatarRootJoint(char)
  local oldTransform=rootJoint and rootJoint.Transform
  if rootJoint then
   TweenService:Create(rootJoint,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Transform=CFrame.new(0,-.18,0)*CFrame.Angles(math.rad(22),0,math.rad(-8))}):Play()
@@ -427,7 +434,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
- elseif action=="caught" then task.spawn(caughtAnimation,a,b)
+ elseif action=="caught" or action=="executed" then task.spawn(caughtAnimation,a,b)
  elseif action=="roundResult" and type(a)=="table" then showResult(a) end
 end)
 UIS.InputBegan:Connect(function(input,processed)
@@ -553,13 +560,8 @@ RunService.RenderStepped:Connect(function(dt)
    local p=Players:GetPlayerByUserId(m:GetAttribute("TargetUserId")) highlight.Adornee=p and p.Character highlight.Enabled=p~=nil break
   end end
  end
- -- Downed pose is visual only; server owns movement and bleedout.
- for _,p in ipairs(Players:GetPlayers()) do
-  if p:GetAttribute("Downed") and p.Character then
-   local root=p.Character:FindFirstChild("HumanoidRootPart") local motor=root and root:FindFirstChildWhichIsA("Motor6D")
-   if motor then motor.Transform=CFrame.Angles(math.rad(75),0,0) end
-  end
- end
+ -- Downed poses are applied with locomotion in PreSimulation, after the Animator.
+
 end)
 -- Use only an input Roblox already created for this player. Never unmute or capture audio.
 task.spawn(function()

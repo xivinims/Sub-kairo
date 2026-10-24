@@ -10,6 +10,17 @@ local net=game.ReplicatedStorage:WaitForChild("Survival")
 local cache=setmetatable({},{__mode="k"})
 local activeFolder=setmetatable({},{__mode="k"})
 local animateState=setmetatable({},{__mode="k"})
+local watchedRigs=setmetatable({},{__mode="k"})
+local downedPoses=setmetatable({},{__mode="k"})
+local function jointParts(joint)
+ if joint:IsA("Motor6D") then return joint.Part0,joint.Part1 end
+ if joint:IsA("AnimationConstraint") then return joint.Attachment0 and joint.Attachment0.Parent,joint.Attachment1 and joint.Attachment1.Parent end
+ return nil,nil
+end
+local function rootJoint(model)
+ local root=model:FindFirstChild("HumanoidRootPart")
+ for _,joint in ipairs(model:GetDescendants()) do local part0,part1=jointParts(joint) if part0==root and part1 then return joint end end
+end
 
 local function decodePose(raw)
  if typeof(raw)=="table" and raw.c then
@@ -54,15 +65,22 @@ local function decodeClips(folder)
 end
 
 local function prepare(model,folder)
+ if not watchedRigs[model] then
+  watchedRigs[model]=true
+  local function changed(j) if j:IsA("Motor6D") or j:IsA("AnimationConstraint") then cache[model]=nil end end
+  model.DescendantAdded:Connect(changed) model.DescendantRemoving:Connect(changed)
+ end
  local perModel=cache[model]
  if not perModel then perModel={} cache[model]=perModel end
  if perModel[folder] then return perModel[folder] end
  if #folder:GetChildren()~=(folder:GetAttribute("ClipCount") or math.huge) then return nil end
  local d={joints={},lookup={},clips={},time=0,state="",active=false,folder=folder}
+ local jointCount=0
  for _,j in ipairs(model:GetDescendants()) do
-  if j:IsA("Motor6D") and j.Part1 then
-   d.joints[j]=true
-   d.lookup[normalized(j.Part1.Name)]=j
+  local _,part1=jointParts(j)
+  if part1 and part1:IsA("BasePart") then
+   jointCount+=1 d.joints[j]=true
+   d.lookup[normalized(part1.Name)]=j
    d.lookup[normalized(j.Name)]=j
   end
  end
@@ -91,7 +109,9 @@ local function prepare(model,folder)
   end
   d.clips[name]=clip
  end
- perModel[folder]=d
+ local hum=model:FindFirstChildOfClass("Humanoid")
+ local expected=hum and hum.RigType==Enum.HumanoidRigType.R15 and 15 or 6
+ if jointCount>=expected then perModel[folder]=d end
  return d
 end
 
@@ -267,7 +287,15 @@ Run.PreSimulation:Connect(function(dt)
    local isJason=p:GetAttribute("IsJason")
    local inRound=p:GetAttribute("InRound")
    local downed=p:GetAttribute("Downed")
-   if inRound and not isJason and not downed then
+   if downedPoses[model] and not downed then
+    local j=downedPoses[model] if j.Parent then j.Transform=CFrame.identity end downedPoses[model]=nil
+   end
+   if inRound and not isJason and downed then
+    if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
+    if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
+    local joint=downedPoses[model]
+    if joint and joint.Parent then joint.Transform=CFrame.new(0,-.7,0)*CFrame.Angles(math.rad(75),0,0) end
+   elseif inRound and not isJason then
     local crouched=p:GetAttribute("MoveMode")=="slow"
     local injured=p:GetAttribute("Injured")==true
     local folder=crouched and net.CrouchClips or net.SurvivorClips
