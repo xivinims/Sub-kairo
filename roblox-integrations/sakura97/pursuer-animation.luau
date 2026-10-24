@@ -279,7 +279,15 @@ Run.PreSimulation:Connect(function(dt)
     if ancestor:IsA("GuiObject") and not ancestor.Visible then visible=false break end
     ancestor=ancestor.Parent
    end
-   if d and visible then apply(d,"Winning Screen",dt,false) end
+   if d and visible then
+    local requested=model:GetAttribute("PresentationState") or "Winning Screen"
+    local elapsed=math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
+    if requested=="Execution" then
+     apply(d,executionName(d),dt,false,elapsed)
+    else
+     apply(d,requested,dt,false,elapsed)
+    end
+   end
   end
  end
  for _,model in ipairs(workspace:GetChildren()) do
