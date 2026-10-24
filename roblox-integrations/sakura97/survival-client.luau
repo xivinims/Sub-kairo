@@ -52,7 +52,7 @@ local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(224,52) topActions.Position=UDim2.new(1,-174,0,2)
+topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(112,52) topActions.Position=UDim2.new(1,-118,0,58)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
 bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(224,88) bar.Position=UDim2.new(1,-24,1,-92)
 local function cleanAction(parent,name,label,size,pos,callback)
@@ -62,9 +62,7 @@ local function cleanAction(parent,name,label,size,pos,callback)
  return b
 end
 local run=cleanAction(topActions,"Run","»",UDim2.fromOffset(52,52),UDim2.fromOffset(0,0),function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
-local boost=cleanAction(topActions,"Boost","↑",UDim2.fromOffset(52,52),UDim2.fromOffset(56,0),function() event:FireServer("boost") end)
-local flashlight=cleanAction(topActions,"Flashlight","",UDim2.fromOffset(52,52),UDim2.fromOffset(112,0),function() event:FireServer("flashlight") end)
-local kit=cleanAction(topActions,"Medkit","+",UDim2.fromOffset(52,52),UDim2.fromOffset(168,0),function() event:FireServer("kit") end)
+local flashlight=cleanAction(topActions,"Flashlight","",UDim2.fromOffset(52,52),UDim2.fromOffset(58,0),function() event:FireServer("flashlight") end)
 local slow=cleanAction(bar,"Slow","",UDim2.fromOffset(68,68),UDim2.fromOffset(0,16),function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
 local jump=cleanAction(bar,"Jump","↑",UDim2.fromOffset(72,72),UDim2.fromOffset(76,8),function()
  local char=player.Character local h=char and char:FindFirstChildOfClass("Humanoid")
@@ -73,6 +71,10 @@ end) jump.TextSize=34
 local attack=cleanAction(bar,"Attack","╱",UDim2.fromOffset(76,76),UDim2.fromOffset(148,0),function()
  if player:GetAttribute("IsJason") then event:FireServer("attack") end
 end) attack.TextSize=40
+local reviveNearby=cleanAction(bar,"ReviveNearby","+",UDim2.fromOffset(64,64),UDim2.fromOffset(-70,18),function()
+ event:FireServer("revive")
+end)
+reviveNearby.TextSize=38 reviveNearby.Visible=false
 local function segment(parent,a,b,width)
  local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(236,236,240)
  local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(1,0)
@@ -106,11 +108,9 @@ local function actionLayout()
  local bottomScale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar) bottomScale.Scale=scale
  local topScale=topActions:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",topActions) topScale.Scale=math.min(scale,.96)
  bar.Position=UDim2.new(1,-24,1,-math.clamp(cam.ViewportSize.Y*.12,76,105))
- topActions.Position=UDim2.new(1,-174,0,2)
+ topActions.Position=UDim2.new(1,-118,0,58)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,16,0,2),function() event:FireServer("leave") end)
-leave.BackgroundTransparency=1 leave.UIStroke.Enabled=false leave.TextSize=25
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
@@ -138,18 +138,15 @@ local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,1,0),UDim2.fromO
 local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=14 condition.TextColor3=Color3.fromRGB(144,223,111)
-local quickItems=panel("QuickItems",UDim2.fromOffset(200,34),UDim2.new(.5,-100,1,-54)) quickItems.BackgroundTransparency=.35
-local itemText=text(quickItems,"Items","",UDim2.fromScale(1,1),UDim2.new()) itemText.TextSize=11
-
 local roster=Instance.new("Frame",gui)
-roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(18,132) roster.Size=UDim2.fromOffset(246,390)
-local rosterList=Instance.new("UIListLayout",roster) rosterList.Padding=UDim.new(0,6) rosterList.SortOrder=Enum.SortOrder.LayoutOrder
+roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(14,128) roster.Size=UDim2.fromOffset(204,330)
+local rosterList=Instance.new("UIListLayout",roster) rosterList.Padding=UDim.new(0,4) rosterList.SortOrder=Enum.SortOrder.LayoutOrder
 local rosterRows={}
 local function rosterRow(p)
  local row=Instance.new("Frame",roster)
- row.Name="Player_"..p.UserId row.Size=UDim2.fromOffset(238,43) row.BorderSizePixel=0
+ row.Name="Player_"..p.UserId row.Size=UDim2.fromOffset(198,36) row.BorderSizePixel=0
  row.BackgroundColor3=Color3.fromRGB(58,59,64) row.BackgroundTransparency=.08 row.LayoutOrder=p.UserId
- local corner=Instance.new("UICorner",row) corner.CornerRadius=UDim.new(0,21)
+ local corner=Instance.new("UICorner",row) corner.CornerRadius=UDim.new(0,9)
  local gradient=Instance.new("UIGradient",row)
  gradient.Rotation=0
  gradient.Transparency=NumberSequence.new({
@@ -157,19 +154,19 @@ local function rosterRow(p)
   NumberSequenceKeypoint.new(.46,.38),
   NumberSequenceKeypoint.new(1,.04)
  })
- local name=text(row,"Name",p.DisplayName or p.Name,UDim2.new(1,-66,0,22),UDim2.fromOffset(12,2))
- name.Font=Enum.Font.GothamBold name.TextSize=13 name.TextXAlignment=Enum.TextXAlignment.Left name.TextTruncate=Enum.TextTruncate.AtEnd name.TextWrapped=false name.ZIndex=3
+ local name=text(row,"Name",p.DisplayName or p.Name,UDim2.new(1,-48,0,18),UDim2.fromOffset(42,2))
+ name.Font=Enum.Font.GothamBold name.TextSize=11 name.TextXAlignment=Enum.TextXAlignment.Left name.TextTruncate=Enum.TextTruncate.AtEnd name.TextWrapped=false name.ZIndex=3
  local track=Instance.new("Frame",row)
- track.Name="Health" track.Size=UDim2.new(1,-92,0,7) track.Position=UDim2.fromOffset(12,29)
+ track.Name="Health" track.Size=UDim2.new(1,-55,0,5) track.Position=UDim2.fromOffset(42,25)
  track.BackgroundColor3=Color3.fromRGB(50,51,54) track.BackgroundTransparency=.12 track.BorderSizePixel=0 track.ZIndex=3
  Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
  local fill=Instance.new("Frame",track)
  fill.Name="Fill" fill.Size=UDim2.fromScale(1,1) fill.BackgroundColor3=Color3.fromRGB(130,193,74) fill.BorderSizePixel=0 fill.ZIndex=4
  Instance.new("UICorner",fill).CornerRadius=UDim.new(1,0)
- local heart=text(row,"Heart","♥",UDim2.fromOffset(22,22),UDim2.new(1,-70,0,21))
- heart.TextSize=18 heart.TextColor3=Color3.fromRGB(228,91,91) heart.ZIndex=4
+ local heart=text(row,"Heart","♥",UDim2.fromOffset(16,16),UDim2.new(1,-18,0,18))
+ heart.TextSize=12 heart.TextColor3=Color3.fromRGB(228,91,91) heart.ZIndex=4
  local avatar=Instance.new("ImageLabel",row)
- avatar.Name="Avatar" avatar.AnchorPoint=Vector2.new(1,.5) avatar.Position=UDim2.new(1,-3,.5,0) avatar.Size=UDim2.fromOffset(38,38)
+ avatar.Name="Avatar" avatar.AnchorPoint=Vector2.new(0,.5) avatar.Position=UDim2.new(0,3,.5,0) avatar.Size=UDim2.fromOffset(30,30)
  avatar.BackgroundColor3=Color3.fromRGB(82,83,89) avatar.BackgroundTransparency=.02 avatar.BorderSizePixel=0 avatar.ZIndex=4
  Instance.new("UICorner",avatar).CornerRadius=UDim.new(1,0)
  task.spawn(function()
@@ -191,11 +188,10 @@ local function updateRoster()
   if not wanted[id] or not data.player.Parent then data.frame:Destroy() rosterRows[id]=nil
   else
    local p=data.player
-   local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
-   local ratio=h and h.MaxHealth>0 and math.clamp(h.Health/h.MaxHealth,0,1) or (p:GetAttribute("Downed") and .18 or 1)
+   local down=p:GetAttribute("Downed")==true or p:GetAttribute("RoundStatus")=="eliminated"
+   local ratio=down and .08 or p:GetAttribute("Injured") and .5 or 1
    data.fill.Size=UDim2.fromScale(ratio,1)
    data.name.Text=p.DisplayName or p.Name
-   local down=p:GetAttribute("Downed")==true or p:GetAttribute("RoundStatus")=="eliminated"
    data.fill.BackgroundColor3=down and Color3.fromRGB(190,77,77) or p:GetAttribute("Injured") and Color3.fromRGB(216,170,72) or Color3.fromRGB(130,193,74)
    data.heart.TextTransparency=down and .45 or 0
   end
@@ -563,47 +559,53 @@ local function avatarRootJoint(char)
   elseif joint:IsA("AnimationConstraint") and joint.Attachment0 and joint.Attachment0.Parent==root then return joint end
  end
 end
-local function caughtAnimation(killer,killerCF)
- if captureActive or player:GetAttribute("ReducedMotion") then return end
- captureToken+=1 local token=captureToken
- captureActive=true capture.Visible=true captureText.Text=tostring(killer or "")
- local camera=workspace.CurrentCamera
- local char=player.Character
- local root=char and char:FindFirstChild("HumanoidRootPart")
- local head=char and char:FindFirstChild("Head")
- local oldType=camera and camera.CameraType
- local oldCF=camera and camera.CFrame
- local oldFov=camera and camera.FieldOfView or 70
- local rootJoint=avatarRootJoint(char)
- local oldTransform=rootJoint and rootJoint.Transform
- if rootJoint then
-  TweenService:Create(rootJoint,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Transform=CFrame.new(0,-.18,0)*CFrame.Angles(math.rad(22),0,math.rad(-8))}):Play()
- end
- if camera and head and typeof(killerCF)=="CFrame" then
-  local killerPos=killerCF.Position
-  local dir=head.Position-killerPos
-  if dir.Magnitude<.1 then dir=Vector3.new(0,0,1) end
-  camera.CameraType=Enum.CameraType.Scriptable
-  local start=CFrame.lookAt(head.Position+dir.Unit*1.2+Vector3.new(0,.35,0),killerPos+Vector3.new(0,1.8,0))
-  local finish=CFrame.lookAt(head.Position+dir.Unit*.25+Vector3.new(0,.15,0),killerPos+Vector3.new(0,1.7,0))
-  camera.CFrame=start camera.FieldOfView=58
-  captureTween=TweenService:Create(camera,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{CFrame=finish,FieldOfView=72}) captureTween:Play()
- end
- TweenService:Create(capture,TweenInfo.new(.10),{BackgroundTransparency=.58}):Play()
- task.wait(.34)
- if token~=captureToken then return end
- TweenService:Create(capture,TweenInfo.new(.25),{BackgroundTransparency=1}):Play()
- task.wait(.28)
- if token~=captureToken then return end
- if rootJoint and oldTransform then rootJoint.Transform=oldTransform end
- if camera and player.Character==char and not cinematicActive and not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu") and not player:GetAttribute("Spectating") then
-  camera.CameraType=oldType or Enum.CameraType.Custom camera.FieldOfView=oldFov
-  if oldType==Enum.CameraType.Scriptable and oldCF then camera.CFrame=oldCF
-  else
-   local hum=char and char:FindFirstChildOfClass("Humanoid") if hum then camera.CameraSubject=hum end
+local shakeToken=0
+local function shakeCamera(duration,intensity)
+ shakeToken+=1 local token=shakeToken
+ task.spawn(function()
+  local char=player.Character
+  local hum=char and char:FindFirstChildOfClass("Humanoid")
+  if not hum then return end
+  local reduced=player:GetAttribute("ReducedMotion")==true
+  local strength=intensity*(reduced and .25 or 1)
+  local start=os.clock()
+  while token==shakeToken and hum.Parent and os.clock()-start<duration do
+   local t=(os.clock()-start)/duration
+   local fade=1-math.clamp(t,0,1)
+   hum.CameraOffset=Vector3.new(
+    math.sin(os.clock()*47)*strength*fade,
+    math.cos(os.clock()*61)*strength*.7*fade,
+    0
+   )
+   RunService.RenderStepped:Wait()
   end
+  if hum.Parent then hum.CameraOffset=Vector3.zero end
+ end)
+end
+
+local hitReactionToken=0
+local function caughtAnimation(killer,killerCF)
+ hitReactionToken+=1 local token=hitReactionToken
+ local char=player.Character
+ if not char then return end
+ local downed=player:GetAttribute("Downed")==true
+ shakeCamera(downed and .42 or .28,downed and .36 or .22)
+ if downed or player:GetAttribute("ReducedMotion") then return end
+ local joints={}
+ for _,joint in ipairs(char:GetDescendants()) do
+  if joint:IsA("Motor6D") then joints[joint.Name:lower()]=joint end
  end
- capture.Visible=false captureActive=false
+ local neck=joints.neck
+ local left=joints["left shoulder"] or joints.leftshoulder
+ local right=joints["right shoulder"] or joints.rightshoulder
+ local originals={}
+ for _,j in ipairs({neck,left,right}) do if j then originals[j]=j.Transform end end
+ if neck then TweenService:Create(neck,TweenInfo.new(.08),{Transform=originals[neck]*CFrame.Angles(math.rad(-7),0,math.rad(4))}):Play() end
+ if left then TweenService:Create(left,TweenInfo.new(.08),{Transform=originals[left]*CFrame.Angles(math.rad(10),0,math.rad(-12))}):Play() end
+ if right then TweenService:Create(right,TweenInfo.new(.08),{Transform=originals[right]*CFrame.Angles(math.rad(14),0,math.rad(12))}):Play() end
+ task.wait(.13)
+ if token~=hitReactionToken or player.Character~=char then return end
+ for joint,cf in pairs(originals) do if joint.Parent then TweenService:Create(joint,TweenInfo.new(.12),{Transform=cf}):Play() end end
 end
 
 local introTop=Instance.new("Frame",gui) introTop.Name="IntroTop" introTop.Size=UDim2.new(1,0,0,58) introTop.Position=UDim2.new() introTop.BackgroundColor3=Color3.new(0,0,0) introTop.BorderSizePixel=0 introTop.ZIndex=93 introTop.Visible=false
@@ -770,9 +772,7 @@ UIS.InputBegan:Connect(function(input,processed)
  if input.KeyCode==Enum.KeyCode.LeftShift then mode="run" event:FireServer("mode",mode)
  elseif input.KeyCode==Enum.KeyCode.C then mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode)
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
- elseif input.KeyCode==Enum.KeyCode.Q then event:FireServer("boost")
- elseif input.KeyCode==Enum.KeyCode.F then event:FireServer("flashlight")
- elseif input.KeyCode==Enum.KeyCode.E then event:FireServer("kit") end
+ elseif input.KeyCode==Enum.KeyCode.F then event:FireServer("flashlight") end
 end)
 UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end end)
 local highlight=Instance.new("Highlight") highlight.Name="PursuerTarget" highlight.FillColor=Color3.fromRGB(200,35,43) highlight.OutlineColor=Color3.fromRGB(242,80,85) highlight.FillTransparency=.8 highlight.DepthMode=Enum.HighlightDepthMode.Occluded highlight.Enabled=false highlight.Parent=gui
@@ -819,11 +819,10 @@ RunService.RenderStepped:Connect(function(dt)
  updateRoster()
  local controlsVisible=not settingsOverlay.Visible and not result.Visible and player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
- healthHUD.Visible=not hidden and inRound and not result.Visible quickItems.Visible=healthHUD.Visible and not player:GetAttribute("IsJason")
- condition.Text=down and "♥  CAÍDO" or player:GetAttribute("Injured") and "♥  FERIDO" or "♥  INTEIRO"
+ healthHUD.Visible=not hidden and inRound and not result.Visible
+ condition.Text=down and "♥  CAÍDO  0%" or player:GetAttribute("Injured") and "♥  FERIDO  50%" or "♥  100%"
  condition.TextColor3=down and Color3.fromRGB(231,101,107) or player:GetAttribute("Injured") and Color3.fromRGB(229,186,100) or Color3.fromRGB(144,223,111)
  healthHUD.UIStroke.Color=condition.TextColor3
- itemText.Text="↑ "..(player:GetAttribute("HasBoost") and "1 IMPULSO" or "USADO").."   •   + "..(player:GetAttribute("HasMedkit") and "1 KIT" or "USADO")
  local stats=player:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local lv=stats and stats:FindFirstChild("Nível") local pts=stats and stats:FindFirstChild("Pontos")
  local n=lv and lv.Value or 1 local total=xp and xp.Value or 0 local minimum=15*(n-1)^2+35*(n-1) local nextLevel=15*n^2+35*n
  xpFill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((total-minimum)/(nextLevel-minimum),0,1),1)
@@ -835,21 +834,34 @@ RunService.RenderStepped:Connect(function(dt)
  if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
- bar.Visible=controlsVisible and inRound topActions.Visible=controlsVisible and inRound leave.Visible=controlsVisible and inRound
+ bar.Visible=controlsVisible and inRound topActions.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and inRound and not down and not isJason and not player:GetAttribute("Injured")
  slow.Visible=controlsVisible and inRound and not down and not isJason
  jump.Visible=controlsVisible and inRound and not down
- boost.Visible=controlsVisible and inRound and not down and not isJason and not player:GetAttribute("Injured")
  flashlight.Visible=controlsVisible and inRound and not down and not isJason
- kit.Visible=controlsVisible and inRound and not isJason
  attack.Visible=controlsVisible and inRound and not down
  attack.Active=isJason attack.TextTransparency=isJason and 0 or .72
- boost.Text="↑" boost.TextTransparency=(inRound and player:GetAttribute("HasBoost")) and 0 or .45
- kit.Text=player:GetAttribute("HasMedkit") and "+" or "·"
  mode=player:GetAttribute("MoveMode") or "walk"
  run.TextTransparency=mode=="run" and 0 or .2
  jump.TextTransparency=0
  flashlight.TextTransparency=player:GetAttribute("FlashlightOn") and 0 or .18
+ local reviveTarget=nil local reviveDistance=8.5
+ if controlsVisible and inRound and not down and not isJason then
+  local myRoot=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+  if myRoot then
+   for _,other in ipairs(Players:GetPlayers()) do
+    if other~=player and other:GetAttribute("InRound") and other:GetAttribute("Downed") then
+     local rr=other.Character and other.Character:FindFirstChild("HumanoidRootPart")
+     if rr then
+      local distance=(rr.Position-myRoot.Position).Magnitude
+      if distance<reviveDistance then reviveDistance=distance reviveTarget=other end
+     end
+    end
+   end
+  end
+ end
+ reviveNearby.Visible=reviveTarget~=nil and (player:GetAttribute("ReviveAt") or 0)<=workspace:GetServerTimeNow()
+ reviveNearby.Active=reviveNearby.Visible
  timer.Text=string.format("%s • %d:%02d",phase,math.floor(left/60),left%60)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)
