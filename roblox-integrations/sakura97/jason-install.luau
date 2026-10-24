@@ -128,7 +128,7 @@ local oldGate=workspace:FindFirstChild("LobbyJoinPortal")
 if oldGate then oldGate:Destroy() end
 lobby:SetAttribute("AutomaticRoundAdmission",true)
 
-local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",123) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
+local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",124) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
 workspace.StreamingEnabled=false
 local storage=replace(SS,"SurvivalAssets","Folder")
@@ -311,7 +311,7 @@ local friendPresence=SP:FindFirstChild("FriendPresence")
 if not friendPresence then friendPresence=Instance.new("LocalScript") friendPresence.Name="FriendPresence" friendPresence.Parent=SP end
 friendPresence.Source=__FRIENDS_SOURCE__
 
-net:SetAttribute("Version",123) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
+net:SetAttribute("Version",124) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
 local light=game:GetService("Lighting")
 light.ClockTime=0
 light.Brightness=1.9
