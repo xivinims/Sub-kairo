@@ -37,8 +37,11 @@ local ok,err=xpcall(function()
  api=controller() task.wait()
  assert(ui.MenuPrincipal.Visible,"Main menu did not open")
  assert(not ui.MenuPrincipal.Play:FindFirstChild("Preview"),"Large menu preview must not cover the background")
- assert(not ui.MenuPrincipal.Shop.Visible and not ui.MenuPrincipal.Shop.Active,"Shop button must stay removed from main menu")
- assert(not ui.MenuPrincipal.Inventory.Visible and not ui.MenuPrincipal.Inventory.Active,"Inventory button must stay removed from main menu")
+ assert(not ui.MenuPrincipal:FindFirstChild("Shop"),"Shop button object returned")
+ assert(not ui.MenuPrincipal:FindFirstChild("Inventory"),"Inventory button object returned")
+ assert(not ui.Escenarios:FindFirstChild("MenuShop"),"Shop modal returned")
+ assert(not ui.Escenarios:FindFirstChild("MenuInventory"),"Inventory modal returned")
+ assert(not ui:FindFirstChild("ReturnToMenu"),"Obsolete return-to-menu object returned")
  assert(ui.MenuPrincipal.Play.Position.X.Scale==.5 and ui.MenuPrincipal.Ajustes.Position.X.Scale==.5 and ui.MenuPrincipal.Updates.Position.X.Scale==.5,"Main navigation is not centered vertically")
  assert(ui.MenuPrincipal.Play.BackgroundTransparency==1 and ui.MenuPrincipal.Play.UIStroke.Thickness<=1.5,"Main buttons are not clean reference-style outlines")
  assert(ui:GetAttribute("MenuIntroAnimated")==true,"Logo-to-top intro animation was not armed")
@@ -58,10 +61,9 @@ local ok,err=xpcall(function()
  api.show("settings") api.settings.select("audio")
  assert(not ui.Escenarios.MenuAjustes.ReferenceSettings.Heading:FindFirstChild("REDEFINIR"),"Reset settings button returned")
  local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
- assert(not rows:FindFirstChild("MusicVolume") and rows.BoomboxVolume.Slider and rows.EffectsVolume.Slider,"Audio settings still expose removed game music")
- api.settings.setValue("BoomboxVolume",25) task.wait()
- assert(p:GetAttribute("BoomboxVolume")==25,"Player music slider does not update preference")
- api.settings.select("visual") assert(rows.LowGraphics.Check and rows.MapShadows.Check,"Visual toggles missing")
+ assert(not rows:FindFirstChild("MusicVolume") and not rows:FindFirstChild("BoomboxVolume") and not rows:FindFirstChild("MusicEnabled"),"Audio settings still expose removed player music")
+ assert(rows.EffectsVolume.Slider and rows.MenuSounds.Check and rows.FriendAlerts.Check,"Current audio settings missing")
+ api.settings.select("visual") assert(rows.LowGraphics.Check and rows.MapShadows.Check and rows.Reflections.Check,"Visual toggles missing")
  api.settings.setValue("LowGraphics",true) task.wait()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
  api.settings.select("gameplay") assert(rows.CameraFOV.Slider and rows.ControlScale.Slider,"Gameplay settings missing")
@@ -79,4 +81,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryButtonsRemoved=true,noResetButton=true,requestedMenuSounds=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
