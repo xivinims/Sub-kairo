@@ -609,13 +609,13 @@ local function finish()
    net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
  end
- state.phase="Intervalo" roundClosing=false introUntil=0 roundJoinUntil=0 net:SetAttribute("IntroUntil",0) net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
+ state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end
  for _,p in ipairs(Players:GetPlayers()) do
   net.Update:FireClient(p,"reset")
   local e=entry(p) if e then if e.status=="alive" then points(p,20) end
-   -- Finish cinematic before cleaning arena; lobby position remains safe.
+   -- Finish any death presentation before cleaning the arena; lobby position remains safe.
    RS.SweanVoidEvent:FireClient(p,"finish") p:SetAttribute("Spectating",false) lobby(p)
   end
  end
