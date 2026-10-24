@@ -69,7 +69,8 @@ local heldRunInput=nil
 local function stopHeldRun(input)
  if heldRunInput and (not input or input==heldRunInput) then
   heldRunInput=nil
-  if mode=="run" then mode="walk" event:FireServer("mode","walk") end
+  mode="walk"
+  event:FireServer("mode","walk")
  end
 end
 run.InputBegan:Connect(function(input)
@@ -713,7 +714,11 @@ RunService.RenderStepped:Connect(function(dt)
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and inRound and not down and (isJason or not player:GetAttribute("Injured"))
- mode=player:GetAttribute("MoveMode") or "walk"
+ if heldRunInput and not isJason and not down and not player:GetAttribute("Injured") then
+  mode="run"
+ else
+  mode=player:GetAttribute("MoveMode") or "walk"
+ end
  run.Text=isJason and "ATACAR" or "CORRER"
  run.TextTransparency=(not isJason and mode=="run") and 0 or .12
  local reviveTarget=nil local reviveDistance=8.5
