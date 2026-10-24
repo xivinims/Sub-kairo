@@ -305,7 +305,7 @@ local function startHorrorBeat()
   end end
  end
  task.spawn(function()
-  task.wait(90)
+  task.wait(120)
   for _,delay in ipairs({.07,.12,.05,.16,.08,.10}) do
    if token~=horrorToken or not inMenu then return end
    lightsOn(false) task.wait(delay)
@@ -365,6 +365,13 @@ end
 local function open()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  inMenu=true player:SetAttribute("InMenu",true)
+ ui:SetAttribute("HorrorBlackout",false)
+ local vignette=main:FindFirstChild("Vignette")
+ if vignette then
+  vignette.BackgroundTransparency=1
+  local gradient=vignette:FindFirstChildOfClass("UIGradient")
+  if gradient then gradient.Enabled=true end
+ end
  if controls then controls:Disable() end
  local camera=workspace.CurrentCamera if camera then oldFov=camera.FieldOfView end
  avatarPreview() equipmentPreview()
