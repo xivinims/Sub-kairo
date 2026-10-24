@@ -4,7 +4,7 @@ local PF=game:GetService("PathfindingService")
 local specs={
  {name="DoomspireBrickbattle",id=109440846094241,label="Doomspire Brickbattle",scale=1},
  {name="JuggernautFightArena",id=137884561019081,label="Juggernaut Fight Arena",scale=1},
- {name="PirateBayIsland",id=127398591748883,label="Pirate Bay Island Cove",scale=1},
+ {name="PirateBayIsland",id=127398591748883,label="Pirate Bay Island Cove",scale=1,maxParts=5500},
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
 }
@@ -75,7 +75,9 @@ function Builder.build(load,sanitize,destination)
    elseif p:IsA("ParticleEmitter") then p.Rate=math.min(p.Rate,5)
    end
   end
-  assert(parts>30 and parts<=5000,"Map part budget exceeded: "..spec.name.." "..parts)
+  local partBudget=spec.maxParts or 5000
+  assert(parts>30 and parts<=partBudget,"Map part budget exceeded: "..spec.name.." "..parts.." / "..partBudget)
+  map:SetAttribute("PartBudget",partBudget)
   table.sort(floors,function(a,b) if a.y~=b.y then return a.y<b.y end return a.part.Size.X*a.part.Size.Z>b.part.Size.X*b.part.Size.Z end)
   local candidates={} local scans=0
   local directions={}
