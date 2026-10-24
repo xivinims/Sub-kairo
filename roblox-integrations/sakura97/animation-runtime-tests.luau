@@ -3,7 +3,7 @@ local host=Instance.new("Folder",workspace) host.Name="AnimationPlaybackTest"
 local pg=Instance.new("Folder",host)
 local world=Instance.new("WorldModel",pg)
 local portrait=RS.Survival.PresentationJason:Clone() portrait:SetAttribute("PresentationPursuer",true) portrait.Parent=world
-local p={attrs={InRound=true,MoveMode="slow"}}
+local p={attrs={InRound=true,MoveMode="run",Injured=false}}
 function p:WaitForChild(name) if name=="PlayerGui" then return pg end end
 function p:GetAttribute(name) return self.attrs[name] end
 p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
@@ -28,7 +28,7 @@ local function posed(model)
 end
 local ok,err=xpcall(function()
  local api=controller() assert(simulate)
- local d=api.prepare(p.Character,RS.Survival.CrouchClips)
+ local d=api.prepare(p.Character,RS.Survival.SurvivorClips)
  local diagnostics={}
  if d then for name,c in pairs(d.clips) do diagnostics[name]={bound=c.boundCount,frames=c.frameCount,length=c.length} end else diagnostics.prepare="nil" end
  diagnostics.motors={}
@@ -36,7 +36,7 @@ local ok,err=xpcall(function()
  local diagnosticText=game:GetService("HttpService"):JSONEncode(diagnostics)
  for i=1,6 do simulate(.2) end
  assert(posed(portrait)>=4,"Winning clip did not animate the original Jason portrait")
- assert(posed(p.Character)>=4,"Crouch clip did not animate R6 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
+ assert(posed(p.Character)>=4,"Run clip did not animate R6 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
@@ -48,4 +48,4 @@ local ok,err=xpcall(function()
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,crouchPlayback=true,r6AvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true}
+return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true,noCrouchRuntime=true}
