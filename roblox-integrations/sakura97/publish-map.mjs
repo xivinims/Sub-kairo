@@ -271,14 +271,19 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultView.Size=UDim2.fromScale(1,1)',1,true),"Full-screen killer result missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
-  assert(game.ReplicatedFirst.SweanLoadingController.Source:find('goodLuck.Name="GoodLuckBackdrop"',1,true) and game.ReplicatedFirst.SweanLoadingController.Source:find('avatarView.Name="LoadingAvatar"',1,true),"Animated initial loading screen missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GOOD LUCK"',1,true),"GOOD LUCK missing from map loading")
+  assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("blendFrom",1,true),"Smooth locomotion blend missing")
+  assert(game.ServerScriptService.SurvivalServer.Source:find("expectedReplacement",1,true),"R6 replacement false-death guard missing")
+  assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("b.AnchorPoint=Vector2.new(0,.5)",1,true),"Menu navigation is not left aligned")
+  assert(game.ReplicatedFirst.SweanLoadingController.Source:find('logo.Name="BrandTitle"',1,true),"Initial logo loading missing")
+  assert(not game.ReplicatedFirst.SweanLoadingController.Source:find("GOOD LUCK",1,true) and not game.ReplicatedFirst.SweanLoadingController.Source:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("EnvironmentSpecularScale",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversArenaBloom",1,true),"Adaptive arena graphics missing")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Shop") and not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Inventory"),"Removed menu buttons returned")
   assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Removed return-to-menu object returned")
   assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
-  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,animatedLoading=true,adaptiveGraphics=true,legacySystemsRemoved=true}
+  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,legacySystemsRemoved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
