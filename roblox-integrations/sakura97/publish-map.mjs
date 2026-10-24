@@ -278,12 +278,17 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedFirst.SweanLoadingController.Source:find('logo.Name="BrandTitle"',1,true),"Initial logo loading missing")
   assert(not game.ReplicatedFirst.SweanLoadingController.Source:find("GOOD LUCK",1,true) and not game.ReplicatedFirst.SweanLoadingController.Source:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("EnvironmentSpecularScale",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversArenaBloom",1,true),"Adaptive arena graphics missing")
+  local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
+  assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=48',1,true),"Reference FOV setting missing")
+  assert(settingsSource:find('key="VisualSaturation"',1,true) and settingsSource:find('default=-.65',1,true),"Reference saturation setting missing")
+  assert(settingsSource:find('key="VisualContrast"',1,true) and settingsSource:find('key="VisualExposure"',1,true) and settingsSource:find('key="VisualTime"',1,true),"Reference grading settings missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find('VisualSaturation',1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find('VisualTime',1,true),"Visual settings are not wired to ambience")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Shop") and not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Inventory"),"Removed menu buttons returned")
   assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Removed return-to-menu object returned")
   assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
-  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,legacySystemsRemoved=true}
+  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,legacySystemsRemoved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
