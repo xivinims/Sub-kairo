@@ -271,6 +271,7 @@ local assets=game.ServerStorage.SurvivalAssets
   for _,arena in ipairs(assets.Maps:GetChildren()) do
    assert(arena:FindFirstChild("InvisibleBounds") and #arena.InvisibleBounds:GetChildren()>=5,"Arena invisible bounds missing: "..arena.Name)
    assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=10,"Unsafe killer spawn persisted: "..arena.Name)
+   assert(arena:GetAttribute("KillerSpawnPathValidated")==true,"Disconnected pursuer spawn persisted: "..arena.Name)
   end
   assert(not game.ServerScriptService.SurvivalServer.Source:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro returned")
   assert(game.ServerScriptService.SurvivalServer.Source:find('CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)',1,true),"R6 appearance-preserving conversion missing")
