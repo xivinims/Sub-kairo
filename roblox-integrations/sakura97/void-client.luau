@@ -4,6 +4,7 @@ local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local player=Players.LocalPlayer
 local event=RS:WaitForChild("SweanVoidEvent")
+local media=RS:WaitForChild("XNMedia")
 local generation=0
 local gui,connection,track,music=nil,nil,nil,nil
 local controls=nil
@@ -140,15 +141,21 @@ local function start(cause,mode)
  back.Visible=false back.Active=false back.ZIndex=8 back.Parent=background
  local corner=Instance.new("UICorner") corner.CornerRadius=UDim.new(0,14) corner.Parent=back
  local border=Instance.new("UIStroke") border.Color=Color3.fromRGB(111,133,145) border.Transparency=1 border.Parent=back
- local click=media.MenuClick:Clone() click.Parent=back
+ local clickTemplate=media:FindFirstChild("MenuClick")
+ local click=clickTemplate and clickTemplate:Clone() or Instance.new("Sound")
+ if not clickTemplate then click.SoundId="rbxassetid://12221967" click.Volume=.3 end
+ click.Parent=back
  local requested=false
  back.Activated:Connect(function()
   if requested or not back.Active or token~=generation then return end requested=true
   if player:GetAttribute("MenuSounds")~=false then click:Play() end
   back.Text="Regenerando…"
-  local respawnSound=media.Regenerate:Clone() respawnSound.Name="RegenerationCue"
-  respawnSound.Parent=game:GetService("SoundService") respawnSound:Play()
-  game:GetService("Debris"):AddItem(respawnSound,20)
+  local respawnTemplate=media:FindFirstChild("Regenerate")
+  if respawnTemplate then
+   local respawnSound=respawnTemplate:Clone() respawnSound.Name="RegenerationCue"
+   respawnSound.Parent=game:GetService("SoundService") respawnSound:Play()
+   game:GetService("Debris"):AddItem(respawnSound,20)
+  end
   event:FireServer("return")
   task.delay(3,function() if token==generation then requested=false back.Text="Regenerar" end end)
  end)
