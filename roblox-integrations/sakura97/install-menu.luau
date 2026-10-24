@@ -61,8 +61,8 @@ gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(231,225,2
 gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Color3.fromRGB(126,12,20) gameName.TextStrokeTransparency=.25 gameName.Visible=true
 
 local play=button(main,"Play","ENTRAR NO LOBBY")
-local shopButton=button(main,"Shop","LOJA")
-local inventoryButton=button(main,"Inventory","INVENTÁRIO")
+local shopButton=button(main,"Shop","LOJA") shopButton.Visible=false shopButton.Active=false
+local inventoryButton=button(main,"Inventory","INVENTÁRIO") inventoryButton.Visible=false inventoryButton.Active=false
 local settingsButton=button(main,"Ajustes","AJUSTES")
 local updatesButton=button(main,"Updates","NOVIDADES")
 for _,b in ipairs({play,shopButton,inventoryButton,settingsButton,updatesButton}) do
@@ -82,11 +82,11 @@ local creditsButton=button(ui,"CreditsButton","CRÉDITOS")
 creditsButton.BackgroundTransparency=1 creditsButton.UICorner.CornerRadius=UDim.new(0,3) creditsButton.UIStroke.Thickness=1.4 creditsButton.UIStroke.Transparency=.68
 local creditsInset=creditsButton:FindFirstChild("Inset") if creditsInset then creditsInset.Visible=false end
 
-local guide=label(main,"Guide","ATRAVESSE A PORTA PARA JOGAR")
+local guide=label(main,"Guide","") guide.Visible=false
 guide.TextSize=11 guide.TextColor3=Color3.fromRGB(177,157,160) guide.TextXAlignment=Enum.TextXAlignment.Left
 local edition=label(main,"Edition","3 CENÁRIOS  •  ATÉ 8 JOGADORES")
 edition.Font=Enum.Font.GothamSemibold edition.TextSize=10 edition.TextColor3=Color3.fromRGB(178,118,125) edition.TextXAlignment=Enum.TextXAlignment.Left
-local help=label(main,"QuickHelp","Correr faz barulho. Agache para se esconder.\nUm kit pode salvar você ou um aliado caído.")
+local help=label(main,"QuickHelp","") help.Visible=false
 help.TextSize=12 help.TextColor3=Color3.fromRGB(190,182,188) help.TextXAlignment=Enum.TextXAlignment.Left
 local scenes=Instance.new("Frame") scenes.Name="Escenarios" scenes.Size=UDim2.fromScale(1,1)
 scenes.BackgroundTransparency=1 scenes.Parent=ui
