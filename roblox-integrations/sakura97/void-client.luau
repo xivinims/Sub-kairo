@@ -61,7 +61,7 @@ local function start(cause,mode)
  end
  local label=Instance.new("TextLabel") label.Name="DeathMessage" label.BackgroundTransparency=1
  label.TextColor3=Color3.fromRGB(185,214,223) label.TextTransparency=1 label.Font=Enum.Font.GothamMedium
- label.TextSize=28 label.TextScaled=true label.TextWrapped=true label.AnchorPoint=Vector2.new(.5,.5)
+ label.TextSize=24 label.TextScaled=true label.TextWrapped=true label.AnchorPoint=Vector2.new(.5,.5)
  label.Size=UDim2.fromScale(.88,.16) label.Position=UDim2.fromScale(.5,.46) label.Text="" label.ZIndex=5 label.Parent=background
  local limit=Instance.new("UITextSizeConstraint") limit.MinTextSize=16 limit.MaxTextSize=30 limit.Parent=label
  -- The viewport is ABOVE the text: opaque avatar pixels cover it, the rest stays transparent.
@@ -168,7 +168,7 @@ local function start(cause,mode)
  end
  task.spawn(function()
   task.wait(.7)
-  local messages={"cuidado","não pule mais no void","já pensou como é a vida pós morte?","Volte…"}
+  local messages={"Cuidado"}
   local causes={
    Figure={"ele ouve seus passos","ande devagar","não pule","ele não vê mas escuta."},
    Guerreiro={"ele ouviu você","fique parado","quebre a linha de visão","não faça barulho."},
@@ -177,7 +177,7 @@ local function start(cause,mode)
    Amanda={"ela prepara o salto","mude de direção","não fique perto","observe antes de correr."}
   }
   messages=causes[cause] or messages
-  for i,text in ipairs(messages) do if not show(text,i==#messages) then return end end
+  for i,text in ipairs(messages) do if not show(text,true) then return end end
   gui:SetAttribute("Phase","transition")
   tween(label,1.4,{TextTransparency=1,Position=UDim2.fromScale(.5,.42)})
   tween(fade,1.6,{Value=0})
@@ -188,10 +188,10 @@ local function start(cause,mode)
   atmosphere.Visible=false label.Visible=false
   if mode=="spectate" then gui:SetAttribute("Phase","spectate") event:FireServer("return") return end
   gui:SetAttribute("Phase","regenerate")
-  back.Visible=true
-  tween(back,.5,{BackgroundTransparency=.28,TextTransparency=0}) tween(border,.5,{Transparency=.7})
-  task.wait(.5)
-  if token==generation then back.Active=true end
+  back.Text="Voltar" back.Visible=true back.Active=true
+  tween(back,.35,{BackgroundTransparency=.28,TextTransparency=0}) tween(border,.35,{Transparency=.7})
+  task.wait(2.5)
+  if token==generation and not requested then requested=true event:FireServer("return") end
  end)
  task.delay(63,function() if token==generation then clean() end end)
  if controls then controls:Disable() end

@@ -23,6 +23,12 @@ local menuAvatar=nil
 local menuCameraCF=nil
 local oldFov=70
 local MENU_ORIGIN=config:GetAttribute("MenuOrigin") or Vector3.new(10000,2500,10000)
+local menuGrade=nil local menuGlow=nil
+local function enableMenuLook()
+ if not menuGrade then menuGrade=Instance.new("ColorCorrectionEffect") menuGrade.Name="SuviversMenuGrade" menuGrade.Brightness=.035 menuGrade.Contrast=.1 menuGrade.Saturation=-.12 menuGrade.TintColor=Color3.fromRGB(255,232,232) menuGrade.Parent=Lighting end
+ if not menuGlow then menuGlow=Instance.new("BloomEffect") menuGlow.Name="SuviversMenuBloom" menuGlow.Intensity=.18 menuGlow.Size=18 menuGlow.Threshold=1.2 menuGlow.Parent=Lighting end
+end
+local function disableMenuLook() if menuGrade then menuGrade:Destroy() menuGrade=nil end if menuGlow then menuGlow:Destroy() menuGlow=nil end end
 
 player:SetAttribute("InMenu",true)
 
@@ -165,19 +171,19 @@ local function layout()
 
  main.Logo.Position=UDim2.fromOffset(x+18,top+12)
  main.Logo.Size=UDim2.fromOffset(panelW-36,logoH)
- main.GameName.Position=UDim2.fromOffset(x+24,top+22)
- main.GameName.Size=UDim2.fromOffset(panelW-48,math.max(48,logoH-16))
- main.GameName.TextSize=math.clamp(panelW*.12,28,42)
+ main.GameName.Position=UDim2.fromOffset(x+18,top+logoH+1)
+ main.GameName.Size=UDim2.fromOffset(panelW-36,30)
+ main.GameName.TextSize=math.clamp(panelW*.075,18,26)
 
- local y=top+logoH+28
+ local y=top+logoH+40
  for i,b in ipairs({main.Play,main.Ajustes}) do
   b.Position=UDim2.fromOffset(x+18,y+(i-1)*(buttonH+10))
   b.Size=UDim2.fromOffset(panelW-36,buttonH)
  end
 
  creditsButton.Position=UDim2.new(1,-64,0,64) creditsButton.Size=UDim2.fromOffset(48,48) creditsButton.Text="i" creditsButton.TextSize=24
- returnButton.Position=UDim2.fromOffset(16,70)
- returnButton.Size=UDim2.fromOffset(40,40) returnButton.TextSize=23
+ returnButton.Position=UDim2.new(1,-64,0,122)
+ returnButton.Size=UDim2.fromOffset(46,46) returnButton.Text="⌂" returnButton.TextSize=23
 
  for _,scene in ipairs({settings,credits}) do
   local body=scene:FindFirstChild("AjustesFrame") or scene:FindFirstChild("CreditosFrame")
@@ -225,6 +231,7 @@ end
 
 local function close()
  inMenu=false player:SetAttribute("InMenu",false)
+ disableMenuLook()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  clearPrivateScene()
  local camera=workspace.CurrentCamera

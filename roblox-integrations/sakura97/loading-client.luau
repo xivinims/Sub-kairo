@@ -88,7 +88,7 @@ local function attempt()
   local survival=waitFor(RS,"Survival",25)
   local config=waitFor(RS,"SweanMenuConfig",25)
   local menuScene=waitFor(RS,"MenuSceneTemplate",25)
-  assert(config:GetAttribute("GameName")=="Survivers","Wrong game config")
+  assert(config:GetAttribute("GameName")=="Suvivers [ALFA]","Wrong game config")
 
   -- Preload only current Survivers content. Missing optional media never blocks entry.
   local preloadDone=false

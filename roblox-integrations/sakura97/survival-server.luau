@@ -3,6 +3,16 @@ local RS=game:GetService("ReplicatedStorage")
 local SS=game:GetService("ServerStorage")
 local SSS=game:GetService("ServerScriptService")
 local RunService=game:GetService("RunService")
+local profileStore=nil
+pcall(function() profileStore=game:GetService("DataStoreService"):GetDataStore("SuviversProfiles_v1") end)
+local musicObjects={} local MUSIC_PRICE=20
+local function levelForXP(xp) local level=1 while level<1000 and xp>=level*level*15+level*35 do level+=1 end return level end
+local function saveProfile(p)
+ if not profileStore then return end
+ local stats=p:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP")
+ if not xp then return end
+ pcall(function() profileStore:UpdateAsync(tostring(p.UserId),function(old) old=type(old)=="table" and old or {} old.xp=xp.Value old.singer=p:GetAttribute("Cantor")==true return old end) end)
+end
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
@@ -93,6 +103,8 @@ local function injure(p)
  if not vulnerable(p) then return false end
  local e=entry(p)
  if e.injured then return false end
+ e.hits=(e.hits or 0)+1
+ local stats=p:FindFirstChild("leaderstats") local hitCount=stats and stats:FindFirstChild("Atingido") if hitCount then hitCount.Value+=1 end
  e.injured=true e.channel=nil
  sync(p)
  net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
@@ -101,7 +113,7 @@ end
 local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
  clearFlashlight(p)
- local e=entry(p) e.injured=true e.channel=nil e.cause=killerName sync(p)
+ local e=entry(p) e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName sync(p)
  net.Update:FireClient(p,"notice","Você caiu. Use seu kit ou espere ajuda.")
 end
 local function executeDowned(p,attacker)
@@ -275,6 +287,20 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   local e=entry(p)
   if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
  elseif action=="kit" then if p~=jasonPlayer then channel(p) end
+ elseif action=="musicBuy" then
+  if p:GetAttribute("Cantor") then net.Update:FireClient(p,"notice","Você já liberou o distintivo Cantor.") return end
+  local stats=p:FindFirstChild("leaderstats") local currency=stats and stats:FindFirstChild("Pontos")
+  if not currency or currency.Value<MUSIC_PRICE then net.Update:FireClient(p,"notice","Music custa 20 Pontos.") return end
+  currency.Value-=MUSIC_PRICE p:SetAttribute("Cantor",true) saveProfile(p)
+  net.Update:FireClient(p,"notice","Music desbloqueado! Distintivo Cantor liberado.")
+ elseif action=="musicPlay" then
+  if not p:GetAttribute("Cantor") or type(value)~="string" or #value<1 or #value>20 or not value:match("^%d+$") then return end
+  local id=tonumber(value) if not id or id<1 then return end
+  if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
+  local r=root(p) if not r then return end
+  local sound=Instance.new("Sound") sound.Name="CantorMusic" sound.SoundId="rbxassetid://"..id sound.Volume=.16 sound.Looped=true sound.RollOffMaxDistance=45 sound.RollOffMinDistance=8 sound.Parent=r
+  musicObjects[p]=sound pcall(function() sound:Play() end)
+ elseif action=="musicStop" then if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
  elseif action=="voice" then
   local e=entry(p) local r=root(p) if brain and r and e and e.status=="alive" and type(value)=="number" and value==value and value>.015 and value<=1 then brain.noise(r.Position,config.Killers[killerName].hearing*.8) end
  elseif action=="leave" then
@@ -283,7 +309,10 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="spectateExit" then p:SetAttribute("Spectating",false) end
 end)
 local function hook(p)
- local stats=Instance.new("Folder",p) stats.Name="leaderstats" local v=Instance.new("IntValue",stats) v.Name="Pontos"
+ local stats=Instance.new("Folder",p) stats.Name="leaderstats"
+ local function makeStat(name,value) local v=Instance.new("IntValue",stats) v.Name=name v.Value=value or 0 return v end
+ makeStat("Pontos",0) local xp=makeStat("XP",0) makeStat("Nível",1) makeStat("Atingido",0) makeStat("Quedas",0)
+ if profileStore then task.spawn(function() local ok,data=pcall(function() return profileStore:GetAsync(tostring(p.UserId)) end) if ok and type(data)=="table" and p.Parent then xp.Value=math.max(0,tonumber(data.xp) or 0) stats["Nível"].Value=levelForXP(xp.Value) p:SetAttribute("Cantor",data.singer==true) end end) end
  sync(p)
  p.CharacterAdded:Connect(function(char)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
@@ -297,6 +326,7 @@ Players.PlayerAdded:Connect(hook)
 for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
  if p==jasonPlayer then jasonPlayer=nil endTime=now() end
+ saveProfile(p) if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
  portalInside[p]=nil morphing[p]=nil
  state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil end)
 local elapsed=0
@@ -319,6 +349,7 @@ RunService.Heartbeat:Connect(function(dt)
    portalInside[p]=inside
   end
   if e then
+   if e.status=="alive" or e.status=="downed" then e.survivalTime=(e.survivalTime or 0)+step end
    if e.status=="loading" and t>e.loadDeadline then if p==jasonPlayer then endTime=t end state.entries[p.UserId]=nil sync(p) net.Update:FireClient(p,"notice","Carregamento demorou. Tente entrar novamente.") end
    if e.status=="downed" and t>=e.deadline then eliminate(p,e.cause) end
    if e.channel then
@@ -373,6 +404,24 @@ RunService.Heartbeat:Connect(function(dt)
  end
 end)
 local function finish()
+ local participants={} local living=0
+ if state.phase=="Partida" then
+  for _,p in ipairs(Players:GetPlayers()) do
+   local e=entry(p)
+   if e then
+    if p~=jasonPlayer and (e.status=="alive" or e.status=="downed") then living+=1 end
+    local stats=p:FindFirstChild("leaderstats") local level=stats and stats:FindFirstChild("Nível")
+    table.insert(participants,{name=p.DisplayName,time=math.floor(e.survivalTime or 0),hits=e.hits or 0,falls=e.falls or 0,level=level and level.Value or 1})
+   end
+  end
+  table.sort(participants,function(x,y) if x.time~=y.time then return x.time>y.time elseif x.hits~=y.hits then return x.hits<y.hits else return x.falls<y.falls end end)
+  local jasonWon=living==0 and (jasonPlayer~=nil or (npc and npc.Parent and npc:FindFirstChildOfClass("Humanoid") and npc:FindFirstChildOfClass("Humanoid").Health>0))
+  for _,p in ipairs(Players:GetPlayers()) do
+   local e=entry(p) local stats=p:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local level=stats and stats:FindFirstChild("Nível")
+   if e and xp then xp.Value+=math.max(10,math.floor((e.survivalTime or 0)/4))+(jasonWon and p==jasonPlayer and 30 or 0) if level then level.Value=levelForXP(xp.Value) end saveProfile(p) end
+   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,board=participants,xp=e and math.max(10,math.floor((e.survivalTime or 0)/4)) or 0})
+  end
+ end
  state.phase="Intervalo" introUntil=0 net:SetAttribute("IntroUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end

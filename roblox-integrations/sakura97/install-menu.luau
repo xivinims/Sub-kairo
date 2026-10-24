@@ -54,9 +54,9 @@ assert(decal and decal.Texture~="","Exact logo texture unavailable")
 logo.Image=decal.Texture logo:SetAttribute("SourceAssetId",logoId) logoAsset:Destroy()
 logo.Parent=main
 
-local gameName=label(main,"GameName","SURVIVERS")
-gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(170,22,24)
-gameName.TextXAlignment=Enum.TextXAlignment.Left gameName.Visible=not logo.Visible
+local gameName=label(main,"GameName","SUVIVERS [ALFA]")
+gameName.Font=Enum.Font.GothamBlack gameName.TextColor3=Color3.fromRGB(231,225,226)
+gameName.TextXAlignment=Enum.TextXAlignment.Center gameName.TextStrokeColor3=Color3.fromRGB(126,12,20) gameName.TextStrokeTransparency=.25 gameName.Visible=true
 
 local play=button(main,"Play","JOGAR")
 local settingsButton=button(main,"Ajustes","AJUSTES")
@@ -109,7 +109,7 @@ config:SetAttribute("MainCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("SettingsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("CreditsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("Version",120)
-config:SetAttribute("GameName","Survivers")
+config:SetAttribute("GameName","Suvivers [ALFA]")
 config:SetAttribute("MenuSceneAssetId",13327565335)
 config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
@@ -120,5 +120,5 @@ ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
 runtime:SetAttribute("MenuVersion",120)
-runtime:SetAttribute("GameName","Survivers")
+runtime:SetAttribute("GameName","Suvivers [ALFA]")
 runtime:SetAttribute("SurviversLogoAssetId",logoId or 0)

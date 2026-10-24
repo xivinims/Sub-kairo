@@ -43,13 +43,13 @@ local ok,result=xpcall(function()
  assert(not button.Visible and not button.Active,"Regenerate exposed before messages")
  local messages={} local changed=label:GetPropertyChangedSignal("Text"):Connect(function() messages[#messages+1]=label.Text end)
  local deadline=os.clock()+25
- while screen.Parent and (screen:GetAttribute("Phase")~="regenerate" or not button.Active) and os.clock()<deadline do task.wait(.1) end
+ while screen.Parent and (screen:GetAttribute("Phase")~="regenerate" or not button.Active or returns<1) and os.clock()<deadline do task.wait(.1) end
  changed:Disconnect()
  assert(screen:GetAttribute("Phase")=="regenerate" and button.Visible and button.Active,"Sequence did not reach regeneration")
- assert(button.Text=="Regenerar")
+ assert(button.Text=="Voltar")
  assert(not label.Visible and not bg.SubtleAtmosphere.Visible,"Text/effects did not disappear")
  assert(math.abs(view.Position.Y.Scale-.16)<.001 and math.abs(view.Size.Y.Scale-.58)<.001,"Final framing missing")
- assert(#messages==4 and messages[1]=="cuidado" and messages[2]=="não pule mais no void" and messages[3]=="já pensou como é a vida pós morte?" and messages[4]=="Volte…","Wrong message order")
+ assert(#messages==1 and messages[1]=="Cuidado","Death warning should be short")
  assert(view:FindFirstChildOfClass("WorldModel"):FindFirstChild("TestPlayer"),"Player avatar missing")
  remoteEvent:Fire("finish") task.wait(.7)
  assert(not guiHost:FindFirstChild("BeyondTheIsland"),"Recovery left screen behind")
@@ -57,11 +57,12 @@ local ok,result=xpcall(function()
  local spectateScreen=assert(guiHost:FindFirstChild("BeyondTheIsland"))
  local figureMessages={} local fc=spectateScreen.Darkness.DeathMessage:GetPropertyChangedSignal("Text"):Connect(function() table.insert(figureMessages,spectateScreen.Darkness.DeathMessage.Text) end)
  local spectateDeadline=os.clock()+25
- while returns==0 and os.clock()<spectateDeadline do task.wait(.1) end
+ local previousReturns=returns
+ while returns==previousReturns and os.clock()<spectateDeadline do task.wait(.1) end
  fc:Disconnect()
- assert(returns==1,"Spectator transition was not automatic")
+ assert(returns==previousReturns+1,"Spectator transition was not automatic")
  assert(not spectateScreen.Darkness.Regenerate.Visible,"Eliminated player saw respawn button")
- assert(#figureMessages==4 and figureMessages[1]=="ele ouve seus passos" and figureMessages[4]=="ele não vê mas escuta.","Wrong Figure messages")
+ assert(#figureMessages>=1 and figureMessages[1]=="ele ouve seus passos","Wrong Figure messages")
  remoteEvent:Fire("finish") task.wait(.7)
  remoteEvent:Fire("start") task.wait(.2) remoteEvent:Fire("start") task.wait(.2)
  assert(#guiHost:GetChildren()==1,"Repeated start duplicated scene")

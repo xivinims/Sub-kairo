@@ -84,7 +84,41 @@ local function actionLayout()
  bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.26,115,190))
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","×",UDim2.fromOffset(40,40),UDim2.new(0,16,0,70),function() event:FireServer("leave") end)
+local leave=button(gui,"Leave","⌂",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,122),function() event:FireServer("leave") end)
+local musicPanel
+local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,178),function() musicPanel.Visible=not musicPanel.Visible end)
+musicButton.BackgroundTransparency=.18 musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
+musicPanel=panel("MusicPanel",UDim2.fromOffset(286,190),UDim2.new(1,-306,0,232)) musicPanel.Visible=false musicPanel.ZIndex=60
+local musicTitle=text(musicPanel,"Title","MUSIC  •  20 PONTOS",UDim2.new(1,-24,0,30),UDim2.fromOffset(12,8)) musicTitle.Font=Enum.Font.GothamBold musicTitle.ZIndex=61
+local musicId=Instance.new("TextBox") musicId.Name="AudioId" musicId.PlaceholderText="ID do áudio" musicId.Text="" musicId.ClearTextOnFocus=false musicId.Size=UDim2.new(1,-24,0,36) musicId.Position=UDim2.fromOffset(12,42) musicId.BackgroundColor3=Color3.fromRGB(32,30,35) musicId.TextColor3=Color3.fromRGB(238,238,240) musicId.PlaceholderColor3=Color3.fromRGB(160,160,166) musicId.Font=Enum.Font.Gotham musicId.TextSize=15 musicId.ZIndex=61 musicId.Parent=musicPanel Instance.new("UICorner",musicId).CornerRadius=UDim.new(0,9)
+local musicStatus=text(musicPanel,"Status","Desbloqueie o item Music para receber Cantor e inserir um ID.",UDim2.new(1,-24,0,38),UDim2.fromOffset(12,82)) musicStatus.TextSize=11 musicStatus.ZIndex=61
+local musicBuy=button(musicPanel,"BuyMusic","Desbloquear Music • 20 pts",UDim2.new(1,-24,0,32),UDim2.fromOffset(12,124),function() event:FireServer("musicBuy") end) musicBuy.ZIndex=62
+local musicPlay=button(musicPanel,"PlayMusic","Tocar",UDim2.fromOffset(124,28),UDim2.fromOffset(12,160),function() event:FireServer("musicPlay",musicId.Text) end) musicPlay.ZIndex=62
+local musicStop=button(musicPanel,"StopMusic","Parar",UDim2.fromOffset(124,28),UDim2.new(1,-136,0,160),function() event:FireServer("musicStop") end) musicStop.ZIndex=62
+local function updateSinger() local owned=player:GetAttribute("Cantor")==true musicId.TextEditable=owned musicStatus.Text=owned and "🎤 CANTOR • use um ID de áudio" or "Desbloqueie Music por 20 Pontos para receber o distintivo Cantor." musicBuy.Visible=not owned end
+updateSinger() player:GetAttributeChangedSignal("Cantor"):Connect(updateSinger)
+musicId.FocusLost:Connect(function(enter) if enter and player:GetAttribute("Cantor") then event:FireServer("musicPlay",musicId.Text) end end)
+local result=panel("RoundResult",UDim2.new(.9,0,.8,0),UDim2.fromScale(.5,.5)) result.AnchorPoint=Vector2.new(.5,.5) result.Visible=false result.ZIndex=70
+local resultHeader=text(result,"Header","FIM DA PARTIDA",UDim2.new(1,-24,0,42),UDim2.fromOffset(12,8)) resultHeader.Font=Enum.Font.GothamBlack resultHeader.TextSize=25 resultHeader.ZIndex=71
+local resultRows=Instance.new("Frame",result) resultRows.Name="Ranking" resultRows.BackgroundTransparency=1 resultRows.Position=UDim2.fromOffset(16,62) resultRows.Size=UDim2.new(.62,-18,1,-74) resultRows.ZIndex=71
+local resultList=Instance.new("UIListLayout",resultRows) resultList.Padding=UDim.new(0,4) resultList.SortOrder=Enum.SortOrder.LayoutOrder
+local resultSide=text(result,"WinnerIcon","",UDim2.new(.34,-20,.68,0),UDim2.new(.64,0,.18,0)) resultSide.Font=Enum.Font.GothamBlack resultSide.TextSize=34 resultSide.ZIndex=71
+local resultWinner=text(result,"Winner","",UDim2.new(.33,-20,.2,0),UDim2.new(.64,0,.77,0)) resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=15 resultWinner.ZIndex=71
+local resultUntil=0
+local function showResult(data)
+ for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("TextLabel") then old:Destroy() end end
+ resultHeader.Text=data.jasonWon and "JASON VENCEU" or "SOBREVIVENTES VENCERAM"
+ resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(215,67,70) or Color3.fromRGB(224,225,230)
+ resultSide.Text=data.jasonWon and "🔪\\nJASON" or "✦\\nSOBREVIVENTES"
+ resultWinner.Text=(data.killer or "Jason").."  •  +"..tostring(data.xp or 0).." XP"
+ for i,row in ipairs(data.board or {}) do if i>8 then break end
+  local line=string.format("%d. %s   %ds   •   %d hits   •   %d quedas   •   Nv. %d",i,row.name or "Jogador",row.time or 0,row.hits or 0,row.falls or 0,row.level or 1)
+  local label=text(resultRows,"Rank"..i,line,UDim2.new(1,0,0,32),UDim2.new()) label.LayoutOrder=i label.TextSize=11 label.TextXAlignment=Enum.TextXAlignment.Left label.ZIndex=72 label.BackgroundColor3=Color3.fromRGB(39,35,40) label.BackgroundTransparency=.42 Instance.new("UICorner",label).CornerRadius=UDim.new(0,7)
+ end
+ result.BackgroundTransparency=.75 result.Position=UDim2.fromScale(.5,.53) result.Visible=true resultUntil=os.clock()+10
+ TweenService:Create(result,TweenInfo.new(.42,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{BackgroundTransparency=.22,Position=UDim2.fromScale(.5,.5)}):Play()
+end
+
 local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
 local spectatorName=text(spectate,"Player","Assistindo",UDim2.new(1,0,0,34),UDim2.new())
 local index=1 local watching=false local watchedId=nil
@@ -320,7 +354,8 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="reset" then cancelJasonIntro(true) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
- elseif action=="caught" then task.spawn(caughtAnimation,a,b) end
+ elseif action=="caught" then task.spawn(caughtAnimation,a,b)
+ elseif action=="roundResult" and type(a)=="table" then showResult(a) end
 end)
 UIS.InputBegan:Connect(function(input,processed)
  if processed or cinematicActive or not player:GetAttribute("InRound") then return end
@@ -370,6 +405,8 @@ local dtSum=0
 RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true or cinematicActive
+ result.Visible=result.Visible and os.clock()<resultUntil
+ musicButton.Visible=not hidden musicPanel.Visible=musicPanel.Visible and not hidden
  local controlsVisible=player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  local phase=net:GetAttribute("Phase") or "Aguardando"
