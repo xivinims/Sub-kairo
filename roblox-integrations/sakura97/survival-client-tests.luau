@@ -38,6 +38,9 @@ local function step() render:Fire(.2) task.wait() end
 local ok,result=xpcall(function()
  controller() step()
  local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.Actions.Visible and not gui:FindFirstChild("Join"))
+ local mapLoading=assert(gui:FindFirstChild("ArenaLoading"),"Map loading screen missing")
+ assert(mapLoading:FindFirstChild("MapProgress") and mapLoading.MapProgress:FindFirstChild("Fill"),"Bottom map loading progress bar missing")
+ assert(mapLoading:FindFirstChild("GoodLuck") and mapLoading.GoodLuck.Text=="GOOD LUCK","Good Luck loading text missing")
  local introData={duration=4,runDuration=3.15,startCF=CFrame.new(0,1000,0),endCF=CFrame.new(0,1000,-18),cameraCF=CFrame.lookAt(Vector3.new(8,1005,-10),Vector3.new(0,1002,-10))}
  update:Fire("jasonIntro",introData,introJason) task.wait()
  assert(gui:GetAttribute("CinematicActive")==true,"Jason intro did not activate")
@@ -100,7 +103,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Portal admission must not display round controls")
  assert(not gui.Actions.Visible,"Round controls leaked outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,r6ClientRig=true,genshinActionLayout=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,genshinActionLayout=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
