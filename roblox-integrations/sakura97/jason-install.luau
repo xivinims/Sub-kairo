@@ -166,7 +166,9 @@ local function compact(folder,destination)
    local poses={}
    for _,p in ipairs(f:GetDescendants()) do
     if p:IsA("Pose") and p.Weight>0 then
-     poses[p.Name]={c={p.CFrame:GetComponents()},e=p.EasingStyle.Name,d=p.EasingDirection.Name,w=p.Weight}
+     local components={p.CFrame:GetComponents()}
+     for i,value in ipairs(components) do components[i]=math.round(value*100000)/100000 end
+     poses[p.Name]={c=components,e=p.EasingStyle.Name,d=p.EasingDirection.Name,w=p.Weight}
     end
    end
    table.insert(data.frames,{time=f.Time,poses=poses})
