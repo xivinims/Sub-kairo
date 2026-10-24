@@ -1,4 +1,4 @@
--- Jason perception/chase is server-owned.
+-- Pursuer perception/chase is server-owned.
 -- Direct LOS uses continuous predictive pursuit; pathfinding is only a fallback around obstacles.
 local PF=game:GetService("PathfindingService")
 local Run=game:GetService("RunService")
@@ -34,6 +34,19 @@ function AI.start(model,map,spec,ctx)
  params.FilterDescendantsInstances={model}
  local pts=map.SafePoints:GetChildren()
  table.sort(pts,function(a,b) return a.Name<b.Name end)
+ local function safePointNear(pos,radius)
+  local choices={}
+  for _,point in ipairs(pts) do
+   if point:IsA("Vector3Value") then
+    local distance=(point.Value-pos).Magnitude
+    if not radius or distance<=radius then table.insert(choices,{value=point.Value,distance=distance}) end
+   end
+  end
+  table.sort(choices,function(a,b) return a.distance<b.distance end)
+  if #choices==0 then return nil end
+  local top=math.min(#choices,4)
+  return choices[math.random(1,top)].value
+ end
 
  local function targetRoot(p)
   return p and p.Character and p.Character:FindFirstChild("HumanoidRootPart")
@@ -171,7 +184,7 @@ function AI.start(model,map,spec,ctx)
    state="Search"
    target=nil
    if not goal or (r.Position-goal).Magnitude<4 then
-    goal=lastSeen+Vector3.new(math.random(-10,10),0,math.random(-10,10))
+    goal=safePointNear(lastSeen,24) or lastSeen
    end
   else
    target=nil lastSeen=nil
@@ -232,10 +245,19 @@ function AI.start(model,map,spec,ctx)
    pathGoal=nil
    if state~="Chase" then clearPath() end
    h.Jump=true
-   -- Small recovery sidestep prevents getting pinned on doorframes/corners.
-   local side=r.CFrame.RightVector*((math.random(0,1)==0) and -3.5 or 3.5)
-   recoveryGoal=r.Position+side+r.CFrame.LookVector*2
-   recoveryUntil=clock+.45
+   -- Choose a clear recovery direction instead of blindly sidestepping into another wall.
+   local directions={
+    r.CFrame.RightVector*3.5+r.CFrame.LookVector*2,
+    -r.CFrame.RightVector*3.5+r.CFrame.LookVector*2,
+    -r.CFrame.LookVector*3,
+   }
+   recoveryGoal=nil
+   for _,delta in ipairs(directions) do
+    local origin=r.Position+Vector3.new(0,1.4,0)
+    if not workspace:Raycast(origin,delta,params) then recoveryGoal=r.Position+delta break end
+   end
+   recoveryGoal=recoveryGoal or safePointNear(r.Position,18) or r.Position+r.CFrame.LookVector*2
+   recoveryUntil=clock+.5
    h:MoveTo(recoveryGoal)
    stuck=0
   end
