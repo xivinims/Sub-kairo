@@ -407,8 +407,70 @@ loading.BackgroundColor3=Color3.fromRGB(4,4,6) loading.BackgroundTransparency=0 
 loading.UIStroke.Enabled=false loading.UICorner.CornerRadius=UDim.new()
 local loadingText=text(loading,"Status","CARREGANDO MAPA",UDim2.new(.8,0,0,32),UDim2.new(.1,0,.78,0))
 loadingText.ZIndex=82 loadingText.TextSize=11 loadingText.TextTransparency=.28 loadingText.Font=Enum.Font.GothamMedium
-local goodLuck=text(loading,"GoodLuck","GOOD LUCK",UDim2.new(.8,0,0,80),UDim2.new(.1,0,.5,-40))
-goodLuck.ZIndex=83 goodLuck.Font=Enum.Font.GothamBlack goodLuck.TextSize=30 goodLuck.TextTransparency=1 goodLuck.Visible=false
+local goodLuck=text(loading,"GoodLuck","GOOD LUCK",UDim2.new(.92,0,.18,0),UDim2.new(.04,0,.43,0))
+goodLuck.ZIndex=81 goodLuck.Font=Enum.Font.GothamBlack goodLuck.TextScaled=true goodLuck.TextTransparency=.68 goodLuck.Visible=false
+local goodLuckLimit=Instance.new("UITextSizeConstraint",goodLuck) goodLuckLimit.MinTextSize=28 goodLuckLimit.MaxTextSize=92
+
+local loadingAvatar=Instance.new("ViewportFrame",loading)
+loadingAvatar.Name="ArenaAvatar"
+loadingAvatar.BackgroundTransparency=1
+loadingAvatar.AnchorPoint=Vector2.new(.5,1)
+loadingAvatar.Position=UDim2.new(.5,0,1.14,0)
+loadingAvatar.Size=UDim2.new(.72,0,.88,0)
+loadingAvatar.Ambient=Color3.fromRGB(70,72,80)
+loadingAvatar.LightColor=Color3.fromRGB(224,219,222)
+loadingAvatar.LightDirection=Vector3.new(-.7,-.8,-.45)
+loadingAvatar.ZIndex=82
+local loadingAvatarWorld=Instance.new("WorldModel",loadingAvatar)
+local loadingAvatarCamera=Instance.new("Camera",loadingAvatar) loadingAvatarCamera.FieldOfView=34 loadingAvatar.CurrentCamera=loadingAvatarCamera
+local loadingAvatarClone=nil local loadingAvatarRoot=nil local loadingAvatarBase=nil local loadingAvatarConn=nil local loadingAvatarJoints={}
+
+local function clearArenaLoadingAvatar()
+ if loadingAvatarConn then loadingAvatarConn:Disconnect() loadingAvatarConn=nil end
+ if loadingAvatarClone then loadingAvatarClone:Destroy() loadingAvatarClone=nil end
+ loadingAvatarRoot=nil loadingAvatarBase=nil table.clear(loadingAvatarJoints)
+end
+
+local function buildArenaLoadingAvatar()
+ clearArenaLoadingAvatar()
+ local char=player.Character
+ if not char then return end
+ local archivable=char.Archivable char.Archivable=true
+ local ok,clone=pcall(function() return char:Clone() end)
+ char.Archivable=archivable
+ if not ok or not clone then return end
+ loadingAvatarClone=clone clone.Name="ArenaLoadingCharacter"
+ for _,d in ipairs(clone:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") or d:IsA("Tool") then d:Destroy()
+  elseif d:IsA("BasePart") then d.Anchored=false d.CanCollide=false d.CanTouch=false d.CanQuery=false d.CastShadow=false
+  elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") then d.Enabled=false end
+ end
+ local root=clone:FindFirstChild("HumanoidRootPart")
+ local hum=clone:FindFirstChildOfClass("Humanoid")
+ if not root then clone:Destroy() loadingAvatarClone=nil return end
+ if hum then hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.AutoRotate=false end
+ clone.PrimaryPart=root root.Anchored=true clone.Parent=loadingAvatarWorld clone:PivotTo(CFrame.new())
+ loadingAvatarRoot=root loadingAvatarBase=CFrame.new(0,-.4,0)*CFrame.Angles(0,math.rad(-6),0) root.CFrame=loadingAvatarBase
+ for _,j in ipairs(clone:GetDescendants()) do if j:IsA("Motor6D") then loadingAvatarJoints[j]=j.Transform end end
+ local head=clone:FindFirstChild("Head") local torso=clone:FindFirstChild("Torso") or clone:FindFirstChild("UpperTorso")
+ local focus=(head and head.Position or Vector3.new(0,2.6,0)):Lerp(torso and torso.Position or Vector3.new(0,1.6,0),.34)
+ local _,size=clone:GetBoundingBox()
+ loadingAvatarCamera.CFrame=CFrame.lookAt(focus+Vector3.new(.15,.08,math.max(5.2,size.Y*.82)),focus)
+ local started=os.clock()
+ loadingAvatarConn=RunService.RenderStepped:Connect(function()
+  if not loading.Visible or not loadingAvatarRoot or not loadingAvatarRoot.Parent then return end
+  local t=os.clock()-started
+  loadingAvatarRoot.CFrame=loadingAvatarBase*CFrame.new(math.sin(t*.55)*.025,math.sin(t*1.3)*.05,0)*CFrame.Angles(0,math.sin(t*.45)*.025,0)
+  for joint,base in pairs(loadingAvatarJoints) do if joint.Parent then
+   local name=joint.Name:lower()
+   if name:find("neck") then joint.Transform=base*CFrame.Angles(math.sin(t*.7)*.022,math.sin(t*.48)*.03,0)
+   elseif name:find("shoulder") then
+    local side=name:find("left") and -1 or 1
+    joint.Transform=base*CFrame.Angles(math.sin(t*1.1+side)*.022,0,side*.032)
+   end
+  end end
+ end)
+end
 local progressTrack=Instance.new("Frame",loading)
 progressTrack.Name="MapProgress" progressTrack.AnchorPoint=Vector2.new(0,1) progressTrack.Position=UDim2.new(0,0,1,0)
 progressTrack.Size=UDim2.new(1,0,0,7) progressTrack.BorderSizePixel=0 progressTrack.BackgroundColor3=Color3.fromRGB(21,21,25) progressTrack.ZIndex=84
@@ -448,8 +510,7 @@ local function playGoodLuckVoice(token)
  task.wait(.24)
  if token~=loadToken or not loading.Visible then return end
  goodLuck.Visible=true
- goodLuck.TextTransparency=1
- TweenService:Create(goodLuck,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=0}):Play()
+ TweenService:Create(goodLuck,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=.05}):Play()
  -- Layer Roblox TTS voices to create an original broken/interference-like delivery.
  task.spawn(function()
   local holder=Instance.new("Folder") holder.Name="GoodLuckTTS" holder.Parent=SoundService
@@ -477,7 +538,8 @@ end
 
 local function preload(roundId,map)
  loadToken+=1 local token=loadToken
- loading.Visible=true goodLuck.Visible=false goodLuck.TextTransparency=1
+ loading.Visible=true goodLuck.Visible=true goodLuck.TextTransparency=.68
+ buildArenaLoadingAvatar()
  progressFill.Size=UDim2.fromScale(0,1) loadingText.Text="CARREGANDO MAPA"
  setMapProgress(.04,.05)
  task.spawn(function()
@@ -496,7 +558,7 @@ local function preload(roundId,map)
   end
   if token~=loadToken then return end
   if not geometryReady then
-   loading.Visible=false event:FireServer("loadFailed",roundId)
+   loading.Visible=false clearArenaLoadingAvatar() event:FireServer("loadFailed",roundId)
    notice.Text="A conexão está lenta. A arena continua carregando." return
   end
   local done=false local mediaDeadline=os.clock()+8
@@ -517,6 +579,7 @@ local function preload(roundId,map)
   task.wait(.18)
   loading.Visible=false
   goodLuck.Visible=false
+  clearArenaLoadingAvatar()
   -- Geometry gates readiness; optional unavailable audio/decals must not eject a player.
   if map and map.Parent and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId) end
  end)
@@ -577,7 +640,7 @@ end)
 
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="reset" then
-  loadToken+=1 loading.Visible=false goodLuck.Visible=false progressFill.Size=UDim2.fromScale(0,1)
+  loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then
@@ -733,6 +796,6 @@ end)
 
 if player.GetAttributeChangedSignal then
  player:GetAttributeChangedSignal("VoidActive"):Connect(function()
-  if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false end
+  if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() end
  end)
 end
