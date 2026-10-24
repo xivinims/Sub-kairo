@@ -23,10 +23,8 @@ local function clean()
 end
 local function start(cause,mode)
  clean() local token=generation
- local media=RS:WaitForChild("XNMedia")
  if token~=generation then return end
- music=media.VoidMusic:Clone() music.Parent=game:GetService("SoundService")
- if player:GetAttribute("MusicEnabled")~=false then music:Play() end
+ -- No background music in death/spectator presentation.
  gui=Instance.new("ScreenGui") gui.Name="BeyondTheIsland" gui.IgnoreGuiInset=true gui.ResetOnSpawn=false
  gui.ZIndexBehavior=Enum.ZIndexBehavior.Global gui.DisplayOrder=2000 gui:SetAttribute("Phase","messages") gui.Parent=player:WaitForChild("PlayerGui")
  local background=Instance.new("Frame") background.Name="Darkness" background.BorderSizePixel=0
@@ -185,7 +183,7 @@ local function start(cause,mode)
   task.wait(2.5)
   if token==generation and not requested then requested=true event:FireServer("return") end
  end)
- task.delay(14,function() if token==generation then clean() end end)
+ task.delay(4.5,function() if token==generation then clean() end end)
  if controls then controls:Disable() end
 end
 local finishing=false
@@ -206,6 +204,12 @@ event.OnClientEvent:Connect(function(action,cause,mode)
  end
 end)
 player.CharacterAdded:Connect(function() clean() finishing=false end)
+player:GetAttributeChangedSignal("Spectating"):Connect(function()
+ if player:GetAttribute("Spectating") then clean() finishing=false end
+end)
+player:GetAttributeChangedSignal("InRound"):Connect(function()
+ if player:GetAttribute("InRound")~=true then clean() finishing=false end
+end)
 task.spawn(function()
  local ps=player:WaitForChild("PlayerScripts",10) local pm=ps and ps:WaitForChild("PlayerModule",10)
  if pm then local ok,m=pcall(require,pm) if ok then controls=m:GetControls() if player:GetAttribute("VoidActive") then controls:Disable() end end end
