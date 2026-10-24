@@ -160,7 +160,7 @@ ${menu}
 end
 local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.MilitaryBase and assets.Maps.AlpineFortress)
-assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason)
+assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
 assert(game.ReplicatedStorage.Survival.CrouchClips:GetAttribute("SourceAssetId")==134326820545987)
@@ -235,7 +235,7 @@ if(applied?.saved){
   local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
   assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902 and assets.Maps.MilitaryBase:GetAttribute("SourceAssetId")==13967333450 and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==8050959400)
-  assert(#assets.Killers:GetChildren()==1 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
+  assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==121)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
@@ -246,7 +246,7 @@ if(applied?.saved){
   assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
   assert(game.ServerScriptService.SurvivalServer.Source:find('LobbyJoinPortal',1,true))
-  return {ok=true,version=game.PlaceVersion,build=121,logo=true,mapCount=3,singleJason=true,lobbyPreserved=true}
+  return {ok=true,version=game.PlaceVersion,build=121,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }

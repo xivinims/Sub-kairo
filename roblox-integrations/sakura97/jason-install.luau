@@ -180,6 +180,47 @@ for _,p in ipairs(portrait:GetDescendants()) do
 end
 portrait.Parent=net
 
+-- Exact requested skins with explicit animation provenance and canonical playback slots.
+local johnAsset=load(103232099547025)
+local johnSource=assert(johnAsset:FindFirstChild("John",true),"John Doe rig missing")
+local donor=Instance.new("Folder")
+compact(johnSource,donor)
+if not donor:FindFirstChild("Idle") then donor:Destroy() donor=Instance.new("Folder") compact(johnAsset,donor) end
+local coolAsset=load(125287203669107)
+local cool=Instance.new("Folder") compact(coolAsset,cool) coolAsset:Destroy()
+local function slot(destination,name,source,original,id)
+ local clip=assert(source:FindFirstChild(original),"Missing animation "..original):Clone()
+ clip.Name=name clip:SetAttribute("OriginalClipName",original) clip:SetAttribute("SourceAssetId",id) clip.Parent=destination
+end
+for _,spec in ipairs({
+ {name="JohnDoe",id=103232099547025,root="John"},
+ {name="Chucky",id=95580261594507,root="Chucky",cool=true},
+ {name="Jeff",id=15578797832,root="Jeff The Killer"},
+ {name="Freddy",id=18663196733,root="FRDYClone",cool=true},
+}) do
+ local asset=spec.name=="JohnDoe" and johnAsset or load(spec.id)
+ local source=assert(asset:FindFirstChild(spec.root,true),"Missing "..spec.name)
+ local model=source:Clone() sanitize(model,false) model.Name=spec.name
+ for _,v in ipairs(model:GetDescendants()) do
+  if v:IsA("KeyframeSequence") or (v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")) then v:Destroy() end
+ end
+ local h=assert(model:FindFirstChildOfClass("Humanoid")) local root=assert(model:FindFirstChild("HumanoidRootPart"))
+ model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
+ h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+ model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
+ local motions=Instance.new("Folder",model) motions.Name="MotionClips"
+ for _,motion in ipairs({"Idle","Walk","Run"}) do
+  slot(motions,"Jason "..motion,spec.cool and cool or donor,spec.cool and "M4C00lkidd_"..motion or motion,spec.cool and 125287203669107 or 103232099547025)
+ end
+ slot(motions,"Jason Slash",donor,"Slash",103232099547025)
+ slot(motions,"Jason_Kill",donor,"Kill",103232099547025)
+ slot(motions,"Jason Intro",donor,"JohnDoe Intro",103232099547025)
+ slot(motions,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
+ motions:SetAttribute("ClipCount",#motions:GetChildren()) model.Parent=rigs
+ if asset~=johnAsset then asset:Destroy() end
+end
+johnAsset:Destroy() donor:Destroy() cool:Destroy()
+
 local flashlightAsset=load(4573262309)
 local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
 assert(flashlightSource,"LANTERNA asset 4573262309 contains no Tool")

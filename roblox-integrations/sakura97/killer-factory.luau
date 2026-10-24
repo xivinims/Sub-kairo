@@ -1,8 +1,8 @@
 local Factory={}
 function Factory.create(name)
- assert(name=="Jason","Only Jason is enabled")
- local rig=game.ServerStorage.SurvivalAssets.Killers.Jason:Clone()
- rig.Name="Jason" rig:SetAttribute("ActivePursuer",true)
+ local template=assert(game.ServerStorage.SurvivalAssets.Killers:FindFirstChild(name),"Unknown pursuer")
+ local rig=template:Clone()
+ rig.Name=name rig:SetAttribute("ActivePursuer",true)
  return rig
 end
 return Factory
