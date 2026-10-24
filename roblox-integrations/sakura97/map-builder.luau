@@ -121,14 +121,7 @@ function Builder.build(load,sanitize,destination)
    local ground=p-Vector3.new(0,3,0)
    if d>distance and d>=60 and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) then far=p distance=d end
   end
-  if not far then
-   killerClearance=7
-   for _,p in ipairs(selected) do
-    local d=(p-start).Magnitude local ground=p-Vector3.new(0,3,0)
-    if d>distance and d>=60 and radialClear(ground,killerClearance) then far=p distance=d end
-   end
-  end
-  assert(far and distance>=60,"No safe pursuer spawn away from walls in "..spec.name)
+  assert(far and distance>=60 and killerClearance>=10,"No 10-stud safe pursuer spawn away from walls in "..spec.name)
   local points=Instance.new("Folder",map) points.Name="SafePoints"
   for i,p in ipairs(selected) do addPoint(points,i,p) end
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
