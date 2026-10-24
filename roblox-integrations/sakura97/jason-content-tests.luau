@@ -193,9 +193,14 @@ end
 for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
  local k=assert(assets.Killers:FindFirstChild(name))
  assert(not k:FindFirstChild("MotionClips"),name.." still duplicates MotionClips")
- assert(k:GetAttribute("MotionLibrary")=="Default" or k:GetAttribute("MotionLibrary")=="Cool",name.." missing shared motion reference")
+ assert(shared:FindFirstChild(k:GetAttribute("MotionLibrary") or ""),name.." missing shared motion reference")
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
+assert(assets.Killers.Jeff:GetAttribute("MotionLibrary")=="Noli")
+assert(shared.Noli["Jason_Kill"]:GetAttribute("SourceAssetId")==140625681515398)
+assert(assets.Killers.Freddy:GetAttribute("MotionLibrary")=="Animatronic")
+assert(shared.Animatronic["Jason Walk"]:GetAttribute("SourceAssetId")==134168450460030)
 return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,victorySideFall=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
+
 
