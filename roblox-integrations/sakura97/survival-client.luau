@@ -809,7 +809,7 @@ RunService.RenderStepped:Connect(function(dt)
  countdown.Visible=false
  actionLayout()
  if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
- top.Visible=not hidden and phase=="Partida"
+ top.Visible=not hidden and phase=="Partida" and (inRound or player:GetAttribute("Spectating")==true)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
