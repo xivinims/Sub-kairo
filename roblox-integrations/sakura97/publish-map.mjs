@@ -254,7 +254,8 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredIdle"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredWalk"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))
-  assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
+  assert(typeof(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"))=="CFrame","Former door reference missing")
+  assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLibrary:FindFirstChild("OriginalLobbyDoor"),"Lobby door geometry/marker returned")
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
   assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Removed lobby join portal returned")
   assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Removed lobby join door visual returned")
@@ -277,7 +278,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Removed return-to-menu object returned")
   assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
-  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,animatedLoading=true,adaptiveGraphics=true,legacySystemsRemoved=true}
+  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,animatedLoading=true,adaptiveGraphics=true,legacySystemsRemoved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
