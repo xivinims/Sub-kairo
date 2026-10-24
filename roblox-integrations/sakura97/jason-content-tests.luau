@@ -102,6 +102,12 @@ local survivorCompatibility=animationCompatibility(survivor,{"Idle","Walk","Run"
 local crouchCompatibility=animationCompatibility(crouch,{"Crouch Idle","Crouch Walk"})
 assert(crouchCompatibility["Crouch Idle"]>=6 and crouchCompatibility["Crouch Walk"]>=6,"Crouch does not retarget across all six R6 motors")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6" and game.ReplicatedStorage.Survival:GetAttribute("SurvivorRig")=="R6","R6 survivor contract missing")
+local islandSource=assert(game.ServerScriptService:FindFirstChild("IslandServer"),"Island server missing").Source
+local voidSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("VoidSequence"),"Void client missing").Source
+assert(not islandSource:find('begin(player,"void")',1,true),"Lobby void still triggers death presentation")
+assert(islandSource:find('RoundStatus")~="eliminated"',1,true) or islandSource:find('RoundStatus")~=',1,true),"Server death presentation is not gated by elimination status")
+assert(voidSource:find('local realDeath=mode=="spectate"',1,true),"Client death screen lacks real-death guard")
+assert(voidSource:find('player:GetAttribute("InMenu")~=true',1,true),"Client death screen is not blocked in menu")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
@@ -123,5 +129,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 
