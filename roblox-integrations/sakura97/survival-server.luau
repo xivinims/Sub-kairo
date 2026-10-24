@@ -260,7 +260,7 @@ local function spawnPlayer(p)
   end end
  end
  if not best then return end
- e.status="alive" e.protectedUntil=now()+5 e.lastScore=now() e.lastNoise=0
+ e.status="alive" e.protectedUntil=now()+10 e.lastScore=now() e.lastNoise=0
  p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
  local entranceCF=arena.ArenaEntrance:GetAttribute("DoorCFrame")
  p.Character:PivotTo(CFrame.lookAt(best,best+entranceCF.LookVector))

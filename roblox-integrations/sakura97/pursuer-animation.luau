@@ -22,6 +22,37 @@ local function normalized(name)
  return tostring(name or ""):lower():gsub("[%s_%-%.]","")
 end
 
+local sharedClips=setmetatable({},{__mode="k"})
+local function decodeClips(folder)
+ if sharedClips[folder] then return sharedClips[folder] end
+ if #folder:GetChildren()~=(folder:GetAttribute("ClipCount") or math.huge) then return nil end
+ local clips={}
+ for _,v in ipairs(folder:GetChildren()) do
+  if v:IsA("Folder") then
+   local chunks=v:GetChildren()
+   if #chunks~=(v:GetAttribute("ChunkCount") or math.huge) then return nil end
+   table.sort(chunks,function(a,b) return a.Name<b.Name end)
+   local values={} for _,chunk in ipairs(chunks) do table.insert(values,chunk.Value) end
+   local ok,data=pcall(function()
+    local compressed=Encoding:Base64Decode(buffer.fromstring(table.concat(values)))
+    return Http:JSONDecode(buffer.tostring(Encoding:DecompressBuffer(compressed,Enum.CompressionAlgorithm.Zstd)))
+   end)
+   if not ok then return nil end
+   local clip={length=data.length,frameCount=#data.frames,channels={}}
+   for _,frame in ipairs(data.frames) do
+    for name,raw in pairs(frame.poses) do
+     local channel=clip.channels[name]
+     if not channel then channel={} clip.channels[name]=channel end
+     local pose=decodePose(raw) pose.time=frame.time table.insert(channel,pose)
+    end
+   end
+   for _,channel in pairs(clip.channels) do table.sort(channel,function(a,b) return a.time<b.time end) end
+   clips[v.Name]=clip
+  end
+ end
+ sharedClips[folder]=clips return clips
+end
+
 local function prepare(model,folder)
  local perModel=cache[model]
  if not perModel then perModel={} cache[model]=perModel end
@@ -50,33 +81,15 @@ local function prepare(model,folder)
   local joint=motors[normalized(motorName)]
   if joint then d.lookup[alias]=joint end
  end
- for _,v in ipairs(folder:GetChildren()) do
-  if v:IsA("Folder") then
-   local chunks=v:GetChildren()
-   if #chunks~=(v:GetAttribute("ChunkCount") or math.huge) then return nil end
-   table.sort(chunks,function(a,b) return a.Name<b.Name end)
-   local values={} for _,chunk in ipairs(chunks) do table.insert(values,chunk.Value) end
-   local ok,clip=pcall(function()
-    local compressed=Encoding:Base64Decode(buffer.fromstring(table.concat(values)))
-    return Http:JSONDecode(buffer.tostring(Encoding:DecompressBuffer(compressed,Enum.CompressionAlgorithm.Zstd)))
-   end)
-   if not ok then return nil end
-   clip.channels={}
-   for _,frame in ipairs(clip.frames) do
-    for name,raw in pairs(frame.poses) do
-     local channel=clip.channels[name]
-     if not channel then channel={} clip.channels[name]=channel end
-     local pose=decodePose(raw) pose.time=frame.time table.insert(channel,pose)
-    end
-   end
-   clip.bound={} clip.boundCount=0
-   for name,channel in pairs(clip.channels) do
-    table.sort(channel,function(a,b) return a.time<b.time end)
-    local joint=d.lookup[normalized(name)]
-    if joint and not clip.bound[joint] then clip.bound[joint]=channel clip.boundCount+=1 end
-   end
-   d.clips[v.Name]=clip
+ local clips=decodeClips(folder)
+ if not clips then return nil end
+ for name,source in pairs(clips) do
+  local clip={length=source.length,frameCount=source.frameCount,bound={},boundCount=0}
+  for pose,channel in pairs(source.channels) do
+   local joint=d.lookup[normalized(pose)]
+   if joint and not clip.bound[joint] then clip.bound[joint]=channel clip.boundCount+=1 end
   end
+  d.clips[name]=clip
  end
  perModel[folder]=d
  return d
@@ -116,13 +129,13 @@ end
 
 local function canDrive(d,state)
  local clip=state and d.clips[state]
- return clip and #clip.frames>0 and (clip.boundCount or 0)>=4
+ return clip and clip.frameCount>0 and (clip.boundCount or 0)>=4
 end
 
 local function apply(d,state,dt,loop,absolute)
  if not state then return false end
  local clip=d.clips[state]
- if not clip or #clip.frames==0 or (clip.boundCount or 0)<4 then return false end
+ if not clip or clip.frameCount==0 or (clip.boundCount or 0)<4 then return false end
  if d.state~=state then
   for joint in pairs(d.joints) do
    if joint.Parent then joint.Transform=CFrame.identity end
@@ -161,7 +174,7 @@ local function executionName(d)
  return matchName(d.clips,{{"behead"},{"gashing","wound"},{"kill"},{"execution"},{"execute"},{"finisher"},{"fatal"}}) or matchName(d.clips,{{"slash"},{"attack"}}) or "Jason Slash"
 end
 
-local function locomotionName(d,kind,crouched,injured)
+local function resolveLocomotion(d,kind,crouched,injured)
  if crouched then
   if kind=="jump" then return matchName(d.clips,{{"crouch","jump"},{"jump"}}) or matchName(d.clips,{{"crouch","walk"},{"walk"},{"idle"}}) end
   if kind=="fall" then return matchName(d.clips,{{"crouch","fall"},{"fall"}}) or matchName(d.clips,{{"crouch","idle"},{"idle"}}) end
@@ -180,6 +193,12 @@ local function locomotionName(d,kind,crouched,injured)
  return matchName(d.clips,{{"idle"},{"stand"}}) or next(d.clips)
 end
 
+local function locomotionName(d,kind,crouched,injured)
+ d.locomotion=d.locomotion or {}
+ local key=kind..tostring(crouched)..tostring(injured)
+ if d.locomotion[key]==nil then d.locomotion[key]=resolveLocomotion(d,kind,crouched,injured) or false end
+ return d.locomotion[key] or nil
+end
 local driven=setmetatable({},{__mode="k"})
 local function setDefaultAnimate(model,enabled)
  local a=model:FindFirstChild("Animate")
@@ -208,7 +227,12 @@ Run.PreSimulation:Connect(function(dt)
   if not model.Parent then presentationModels[model]=nil
   else
    local folder=model:FindFirstChild("MotionClips") local d=folder and prepare(model,folder)
-   if d then apply(d,"Winning Screen",dt,false) end
+   local visible=true local ancestor=model.Parent
+   while ancestor and ancestor~=pg do
+    if ancestor:IsA("GuiObject") and not ancestor.Visible then visible=false break end
+    ancestor=ancestor.Parent
+   end
+   if d and visible then apply(d,"Winning Screen",dt,false) end
   end
  end
  for _,model in ipairs(workspace:GetChildren()) do

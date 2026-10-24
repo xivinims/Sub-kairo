@@ -37,9 +37,13 @@ status.TextWrapped=true
 status.Font=Enum.Font.GothamMedium
 status.TextColor3=Color3.fromRGB(220,220,226)
 status.TextSize=16
-status.Text="Carregando Survivers…"
+status.Text="Carregando Suvivers…"
 status.Parent=frame
 
+local track=Instance.new("Frame",frame) track.Name="LoadingTrack" track.AnchorPoint=Vector2.new(.5,.5) track.Position=UDim2.fromScale(.5,.66) track.Size=UDim2.new(.45,0,0,5) track.BackgroundColor3=Color3.fromRGB(50,42,47) track.BorderSizePixel=0 Instance.new("UICorner",track).CornerRadius=UDim.new(0,3)
+local progress=Instance.new("Frame",track) progress.Name="Stage" progress.Size=UDim2.fromScale(.08,1) progress.BackgroundColor3=Color3.fromRGB(173,72,82) progress.BorderSizePixel=0 Instance.new("UICorner",progress).CornerRadius=UDim.new(0,3)
+local tip=Instance.new("TextLabel",frame) tip.AnchorPoint=Vector2.new(.5,.5) tip.Size=UDim2.new(.85,0,0,40) tip.Position=UDim2.fromScale(.5,.84) tip.BackgroundTransparency=1 tip.Text="Correr faz barulho. Agache, escute e use seu kit com cuidado." tip.Font=Enum.Font.Gotham tip.TextSize=12 tip.TextWrapped=true tip.TextColor3=Color3.fromRGB(159,151,160)
+local function stage(value) game:GetService("TweenService"):Create(progress,TweenInfo.new(.35),{Size=UDim2.fromScale(value,1)}):Play() end
 local retry=Instance.new("TextButton")
 retry.Text="Tentar novamente"
 retry.Font=Enum.Font.GothamMedium
@@ -71,7 +75,7 @@ local function attempt()
  if running then return end
  running=true
  retry.Visible=false
- status.Text="Carregando Survivers…"
+ status.Text="Carregando Suvivers…"
 
  local ok,err=pcall(function()
   local started=os.clock()
@@ -80,21 +84,22 @@ local function attempt()
    task.wait(.1)
   end
 
-  status.Text="Preparando lobby…"
+  status.Text="Preparando lobby…" stage(.3)
   local lobby=waitFor(workspace,"JediLibrary",25)
   waitFor(workspace,"IslandSpawn",25)
 
-  status.Text="Preparando partidas…"
+  status.Text="Preparando partidas…" stage(.55)
   local survival=waitFor(RS,"Survival",25)
   local config=waitFor(RS,"SweanMenuConfig",25)
   local menuScene=waitFor(RS,"MenuSceneTemplate",25)
   assert(config:GetAttribute("GameName")=="Suvivers [ALFA]","Wrong game config")
 
   -- Preload only current Survivers content. Missing optional media never blocks entry.
-  local preloadDone=false
+  stage(.72)
+  local loaded=0 local preloadDone=false
   local preloadThread=task.spawn(function()
    pcall(function()
-    ContentProvider:PreloadAsync({lobby,menuScene,survival,title})
+    ContentProvider:PreloadAsync({lobby,menuScene,survival,title},function() loaded+=1 if status.Parent then status.Text="Preparando recursos • "..loaded end end)
    end)
    preloadDone=true
   end)
@@ -106,7 +111,7 @@ local function attempt()
    pcall(task.cancel,preloadThread)
   end
 
-  status.Text="Pronto"
+  status.Text="Pronto" stage(1)
   task.wait(.15)
  end)
 
@@ -116,7 +121,7 @@ local function attempt()
   gui:Destroy()
  else
   warn("Survivers loading: "..tostring(err))
-  status.Text="Não foi possível carregar o Survivers. Tente novamente."
+  status.Text="Não foi possível carregar o Suvivers. Tente novamente."
   retry.Visible=true
  end
 end
@@ -126,4 +131,5 @@ retry.Activated:Connect(function()
 end)
 
 task.spawn(attempt)
+
 

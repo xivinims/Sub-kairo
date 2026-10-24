@@ -244,7 +244,25 @@ local function avatarPreview()
  local caption=main.Inventory:FindFirstChild("Caption") if caption then caption:Destroy() end
  if player.Character then local oldA=player.Character.Archivable player.Character.Archivable=true local clone=player.Character:Clone() player.Character.Archivable=oldA cardPreview(main.Inventory,clone) end
 end
-avatarPreview() player.CharacterAdded:Connect(avatarPreview)
+local function equipmentPreview()
+ local body=inventory.CreditosFrame body.Info.Visible=false
+ local old=body:FindFirstChild("Avatar") if old then old:Destroy() end
+ if not player.Character then return end
+ local a=player.Character.Archivable player.Character.Archivable=true local clone=player.Character:Clone() player.Character.Archivable=a
+ local holder=Instance.new("TextButton",body) holder.Name="Avatar" holder.Text="" holder.BackgroundTransparency=1 holder.Position=UDim2.fromScale(.3,.04) holder.Size=UDim2.fromScale(.4,.92) holder.Active=false
+ cardPreview(holder,clone)
+ local cap=holder:FindFirstChild("Caption") if cap then cap.Text="SEU AVATAR" cap.BackgroundTransparency=1 cap.TextSize=12 end
+end
+for i,item in ipairs({{"LANTERNA","☼","Ilumine o caminho",.03,.12},{"IMPULSO","↑","1 por rodada",.71,.12},{"KIT MÉDICO","+","1 por rodada",.71,.55}}) do
+ local slot=Instance.new("Frame",inventory.CreditosFrame) slot.Name="Equipment"..i slot.Position=UDim2.fromScale(item[4],item[5]) slot.Size=UDim2.fromScale(.26,.34) slot.BackgroundColor3=Color3.fromRGB(27,28,34) slot.BackgroundTransparency=.3 slot.BorderSizePixel=0
+ local corner=Instance.new("UICorner",slot) corner.CornerRadius=UDim.new(0,9)
+ local stroke=Instance.new("UIStroke",slot) stroke.Color=Color3.fromRGB(151,149,166) stroke.Thickness=2 stroke.Transparency=.4
+ local icon=Instance.new("TextLabel",slot) icon.Size=UDim2.fromScale(1,.6) icon.BackgroundTransparency=1 icon.Text=item[2] icon.TextColor3=Color3.fromRGB(218,216,227) icon.TextScaled=true icon.Font=Enum.Font.GothamBold
+ local title=Instance.new("TextLabel",slot) title.Size=UDim2.fromScale(1,.2) title.Position=UDim2.fromScale(0,.59) title.BackgroundTransparency=1 title.Text=item[1] title.TextColor3=Color3.new(1,1,1) title.TextScaled=true title.Font=Enum.Font.GothamBold local limit=Instance.new("UITextSizeConstraint",title) limit.MaxTextSize=13
+ local desc=Instance.new("TextLabel",slot) desc.Size=UDim2.fromScale(1,.18) desc.Position=UDim2.fromScale(0,.8) desc.BackgroundTransparency=1 desc.Text=item[3] desc.TextColor3=Color3.fromRGB(166,165,178) desc.TextScaled=true desc.Font=Enum.Font.Gotham local cap=Instance.new("UITextSizeConstraint",desc) cap.MaxTextSize=11
+end
+avatarPreview() equipmentPreview()
+player.CharacterAdded:Connect(function() if inMenu then avatarPreview() equipmentPreview() end end)
 local musicIcon=Instance.new("TextLabel",main.Shop) musicIcon.BackgroundTransparency=1 musicIcon.Text="♫" musicIcon.TextColor3=Color3.fromRGB(215,185,124) musicIcon.TextSize=45 musicIcon.Size=UDim2.fromScale(1,.65) musicIcon.Position=UDim2.fromScale(0,0)
 main.Shop.TextYAlignment=Enum.TextYAlignment.Bottom
 local function bindCamera()
@@ -266,6 +284,8 @@ local function open()
  inMenu=true player:SetAttribute("InMenu",true)
  if controls then controls:Disable() end
  local camera=workspace.CurrentCamera if camera then oldFov=camera.FieldOfView end
+ avatarPreview() equipmentPreview()
+ if not main.Play:FindFirstChild("Preview") and jason then local clone=jason:Clone() clone:SetAttribute("PresentationPursuer",true) cardPreview(main.Play,clone) end
  buildPrivateScene()
  enableMenuLook()
  bindCamera()
@@ -278,6 +298,10 @@ local function close()
  disableMenuLook()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  clearPrivateScene()
+ for _,card in ipairs({main.Play,main.Inventory}) do
+  for _,name in ipairs({"Preview","Caption"}) do local v=card:FindFirstChild(name) if v then v:Destroy() end end
+ end
+ local portrait=inventory.CreditosFrame:FindFirstChild("Avatar") if portrait then portrait:Destroy() end
  local camera=workspace.CurrentCamera
  if camera then
   camera.CameraType=Enum.CameraType.Custom camera.FieldOfView=oldFov

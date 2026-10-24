@@ -143,6 +143,10 @@ local ok,result=xpcall(function()
  end
  advance(4.2)
  assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player Jason movement was not restored after intro")
+ local before=net:GetAttribute("EndsAt")
+ send(killer,"loadFailed",1) advance(.3)
+ assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
+ advance(6)
  killer.Character:PivotTo(victim.Character:GetPivot()*CFrame.new(0,0,3))
  send(killer,"attack") advance(1)
  assert(victim:GetAttribute("Injured") and not victim:GetAttribute("Downed"),"First player-Jason hit did not injure victim")
@@ -158,7 +162,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true}
+ return {ok=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
 
 end,debug.traceback)
 dc:Disconnect()

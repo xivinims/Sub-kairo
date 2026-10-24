@@ -15,7 +15,7 @@ function p:GetAttributeChangedSignal(n) if not attributeEvents[n] then attribute
 function p:FindFirstChild(n) return n=="leaderstats" and stats or nil end
 function p:WaitForChild(n) if n=="PlayerGui" then return pg elseif n=="leaderstats" then return stats end return nil end
 local settingsModule=RS.Survival.SettingsPanel:Clone() settingsModule.Parent=host
-local net=setmetatable({WaitForChild=function(_,name) if name=="SettingsPanel" then return settingsModule end return RS.Survival:WaitForChild(name) end},{__index=function(_,n) return RS.Survival[n] end})
+local net=setmetatable({WaitForChild=function(_,name) if name=="SettingsPanel" then return settingsModule end return RS.Survival:WaitForChild(name) end},{__index=function(_,n) local v=RS.Survival[n] if type(v)=="function" then return function(_,...) return v(RS.Survival,...) end end return v end})
 local fakeRS=setmetatable({Survival=net,WaitForChild=function(_,n) if n=="Survival" then return net end return RS:WaitForChild(n) end},{__index=function(_,n) return RS[n] end})
 local bound={}
 local proxy={}

@@ -29,7 +29,7 @@ local ok,err=xpcall(function()
  controller() assert(simulate)
  for i=1,6 do simulate(.2) end
  assert(posed(portrait)>=4,"Winning clip did not animate the original Jason portrait")
- assert(posed(p.Character)>=4,"Crouch clip did not animate R15 character")
+ assert(posed(p.Character)>=4,"Crouch clip did not animate R15 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()))
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")

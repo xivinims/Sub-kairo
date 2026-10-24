@@ -523,7 +523,7 @@ RunService.RenderStepped:Connect(function(dt)
  local reviveLeft=(player:GetAttribute("ReviveAt") or 0)-workspace:GetServerTimeNow()
  local protected=(player:GetAttribute("ProtectedUntil") or 0)-workspace:GetServerTimeNow()
  if reviveLeft>0 then notice.Text=string.format("Reanimando • %.1fs • fique parado",reviveLeft)
- elseif protected>0 and inRound then notice.Text="Proteção de entrada • "..math.ceil(protected).."s"
+ elseif protected>0 and inRound then notice.Text="Protegido • "..math.ceil(protected).."s"
  elseif down then notice.Text="Caído • "..math.max(0,math.ceil((player:GetAttribute("BleedoutAt") or 0)-workspace:GetServerTimeNow())).."s para receber ajuda"
 
  elseif os.clock()>noticeUntil then notice.Text=inRound and config.Killers[killer] and config.Killers[killer].tip or "" end
