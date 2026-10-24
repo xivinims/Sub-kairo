@@ -6,10 +6,10 @@ local Settings={}
 local initialized=false
 local categories={
  {key="audio",label="ÁUDIO",color=Color3.fromRGB(99,145,212),title="AJUSTES DE ÁUDIO",rows={
-  {section="MÚSICA"},{key="MusicVolume",label="Música do jogo",description="Tema do Jason e cena de morte",min=0,max=100,default=75,suffix="%"},
-  {key="BoomboxVolume",label="Music dos jogadores",description="Volume das músicas por ID",min=0,max=100,default=65,suffix="%"},
+  {section="MÚSICAS DOS JOGADORES"},
+  {key="BoomboxVolume",label="Músicas dos jogadores",description="Volume das músicas tocadas por ID",min=0,max=100,default=65,suffix="%"},
+  {key="MusicEnabled",label="Permitir músicas",description="Liga ou silencia músicas tocadas pelos jogadores",default=true},
   {section="SONS"},{key="EffectsVolume",label="Efeitos e interface",description="Cliques, avisos e regeneração",min=0,max=100,default=80,suffix="%"},
-  {key="MusicEnabled",label="Ativar músicas",description="Liga ou silencia todas as músicas",default=true},
   {key="MenuSounds",label="Sons dos botões",description="Resposta sonora ao tocar",default=true},
   {key="FriendAlerts",label="Avisos de amizade",description="Som quando um amigo entra",default=true},
  }},
@@ -49,11 +49,11 @@ function Settings.initialize(player)
  end
  local function applyAudio()
   local enabled=player:GetAttribute("MusicEnabled")~=false
-  groups.Music.Volume=enabled and (player:GetAttribute("MusicVolume") or 75)/100 or 0
+  groups.Music.Volume=0
   groups.Boombox.Volume=enabled and (player:GetAttribute("BoomboxVolume") or 65)/100 or 0
   groups.Effects.Volume=(player:GetAttribute("EffectsVolume") or 80)/100
  end
- for _,key in ipairs({"MusicEnabled","MusicVolume","BoomboxVolume","EffectsVolume"}) do player:GetAttributeChangedSignal(key):Connect(applyAudio) end
+ for _,key in ipairs({"MusicEnabled","BoomboxVolume","EffectsVolume"}) do player:GetAttributeChangedSignal(key):Connect(applyAudio) end
  local function sound(sound)
   if not sound:IsA("Sound") then return end
   if sound.Name=="CantorMusic" then sound.SoundGroup=groups.Boombox
