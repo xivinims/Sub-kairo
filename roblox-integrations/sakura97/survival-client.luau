@@ -608,6 +608,10 @@ local function caughtAnimation(killer,killerCF)
  for joint,cf in pairs(originals) do if joint.Parent then TweenService:Create(joint,TweenInfo.new(.12),{Transform=cf}):Play() end end
 end
 
+player:GetAttributeChangedSignal("Downed"):Connect(function()
+ if player:GetAttribute("Downed")==true then shakeCamera(.42,.34) end
+end)
+
 local introTop=Instance.new("Frame",gui) introTop.Name="IntroTop" introTop.Size=UDim2.new(1,0,0,58) introTop.Position=UDim2.new() introTop.BackgroundColor3=Color3.new(0,0,0) introTop.BorderSizePixel=0 introTop.ZIndex=93 introTop.Visible=false
 local introBottom=Instance.new("Frame",gui) introBottom.Name="IntroBottom" introBottom.Size=UDim2.new(1,0,0,70) introBottom.AnchorPoint=Vector2.new(0,1) introBottom.Position=UDim2.new(0,0,1,0) introBottom.BackgroundColor3=Color3.new(0,0,0) introBottom.BorderSizePixel=0 introBottom.ZIndex=93 introBottom.Visible=false
 
