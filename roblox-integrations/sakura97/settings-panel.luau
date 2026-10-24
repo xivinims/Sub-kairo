@@ -10,16 +10,23 @@ local categories={
   {key="MenuSounds",label="Sons dos botões",description="Resposta sonora ao tocar",default=true},
   {key="FriendAlerts",label="Avisos de amizade",description="Som quando um amigo entra",default=true},
  }},
- {key="visual",label="VISUAL",color=Color3.fromRGB(160,126,202),title="AJUSTES VISUAIS",rows={
-  {section="GRÁFICOS"},{key="LowGraphics",label="Gráficos leves",description="Reduz pós-processamento e efeitos",default=UIS.TouchEnabled},
-  {key="MapShadows",label="Sombras do mapa",description="Sombras dinâmicas das luzes e cenários",default=not UIS.TouchEnabled},
+ {key="visual",label="VISUAL",color=Color3.fromRGB(160,126,202),title="SETTINGS",rows={
+  {section="IMAGEM"},
+  {key="CameraFOV",label="Camera FOV",description="Campo de visão da câmera",min=40,max=100,step=1,default=48},
+  {key="VisualSaturation",label="Saturation",description="Intensidade das cores",min=-1,max=1,step=.05,decimals=2,default=-.65},
+  {key="VisualContrast",label="Contrast",description="Diferença entre áreas claras e escuras",min=-1,max=1,step=.05,decimals=2,default=0},
+  {key="VisualExposure",label="Exposure",description="Exposição geral da imagem",min=-2,max=2,step=.1,decimals=1,default=1.5},
+  {key="VisualTime",label="Time",description="Horário visual do mapa",min=0,max=23.75,step=.25,format="time",default=8.25},
+  {key="MapShadows",label="Shadows",description="Ativa sombras dinâmicas",default=true},
+  {section="AVANÇADO"},
+  {key="LowGraphics",label="Gráficos leves",description="Reduz pós-processamento e efeitos",default=UIS.TouchEnabled},
   {key="Reflections",label="Reflexos",description="Água e superfícies recebem reflexos especulares leves",default=not UIS.TouchEnabled},
   {key="ReducedMotion",label="Menos movimento",description="Reduz movimentos da câmera e do menu",default=false},
   {section="JOGADORES"},{key="ShowNametags",label="Nomes dos jogadores",description="Mostra os nomes acima dos avatares",default=true},
  }},
  {key="gameplay",label="JOGO",color=Color3.fromRGB(118,166,112),title="AJUSTES DE JOGO",rows={
   {key="AFK",label="AFK",description="Fica fora das próximas partidas; a atual continua",default=false},
-  {section="CÂMERA E CONTROLES"},{key="CameraFOV",label="Campo de visão",description="Abertura da câmera durante o jogo",min=60,max=90,default=70,suffix="°"},
+  {section="CÂMERA E CONTROLES"},
   {key="ControlScale",label="Tamanho dos botões",description="Ajuste para o seu polegar",min=80,max=120,default=100,suffix="%"},
   {section="COMO SOBREVIVER"},{info="Correr e pular fazem barulho. Quebre a linha de visão e use obstáculos para despistar o perseguidor."},
   {info="Segure CORRER para acelerar e solte para voltar a andar. Jogadores feridos não conseguem correr."},
@@ -73,7 +80,12 @@ function Settings.build(parent,player,onClose)
  local list=Instance.new("UIListLayout",content) list.SortOrder=Enum.SortOrder.LayoutOrder list.Padding=UDim.new(0,2)
  local current=categories[1] local activeConnections={} local drag=nil local tabButtons={}
  local function setValue(row,value)
-  if row.min then value=math.clamp(math.floor(value+.5),row.min,row.max) end
+  if row.min then
+   value=math.clamp(value,row.min,row.max)
+   local step=row.step or 1
+   value=math.floor((value/step)+.5)*step
+   if row.decimals then value=tonumber(string.format("%."..row.decimals.."f",value)) end
+  end
   if row.key=="AFK" then game:GetService("ReplicatedStorage").Survival.Action:FireServer("afk",value) return end
   player:SetAttribute(row.key,value)
  end
@@ -100,8 +112,19 @@ function Settings.build(parent,player,onClose)
      local thumb=Instance.new("Frame",track) thumb.Name="Thumb" thumb.AnchorPoint=Vector2.new(.5,.5) thumb.Size=UDim2.fromOffset(26,26) thumb.BackgroundColor3=Color3.fromRGB(42,43,49) thumb.BorderSizePixel=0 thumb.ZIndex=baseZ+6 corner(thumb,13) stroke(thumb,Color3.fromRGB(163,161,172),2,.2)
      local value=label(cell,"",UDim2.new(.12,0,1,0),UDim2.new(.88,0,0,0)) value.TextXAlignment=Enum.TextXAlignment.Right value.TextSize=14
      local function refresh()
-      local n=player:GetAttribute(row.key) or row.default local ratio=(n-row.min)/(row.max-row.min)
-      fill.Size=UDim2.fromScale(ratio,1) thumb.Position=UDim2.fromScale(ratio,.5) value.Text=tostring(n)..(row.suffix or "")
+      local n=player:GetAttribute(row.key)
+      if n==nil then n=row.default end
+      local ratio=(n-row.min)/(row.max-row.min)
+      fill.Size=UDim2.fromScale(ratio,1) thumb.Position=UDim2.fromScale(ratio,.5)
+      if row.format=="time" then
+       local total=math.floor((n%24)*60+.5)
+       local hh=math.floor(total/60)%24 local mm=total%60
+       value.Text=string.format("%02d:%02d",hh,mm)
+      elseif row.decimals then
+       value.Text=string.format("%."..row.decimals.."f",n)..(row.suffix or "")
+      else
+       value.Text=tostring(math.floor(n+.5))..(row.suffix or "")
+      end
      end
      local function move(x) local width=math.max(1,track.AbsoluteSize.X) setValue(row,row.min+(row.max-row.min)*math.clamp((x-track.AbsolutePosition.X)/width,0,1)) end
      track.InputBegan:Connect(function(input)
