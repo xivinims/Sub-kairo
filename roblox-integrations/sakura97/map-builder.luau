@@ -140,11 +140,10 @@ function Builder.build(load,sanitize,destination)
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
   if toward.Magnitude<1 then toward=Vector3.new(far.X-start.X,0,far.Z-start.Z) end
   toward=toward.Unit
+  -- Gameplay entrance is only a marker now. No fake doorway is drawn in the middle of the arena.
   local entrance=Instance.new("Model",map) entrance.Name="ArenaEntrance"
   local doorCF=CFrame.lookAt(start-toward*5,start) entrance:SetAttribute("DoorCFrame",doorCF)
-  for _,part in ipairs({{"Left",Vector3.new(-3.5,1,0),Vector3.new(1,8,1)},{"Right",Vector3.new(3.5,1,0),Vector3.new(1,8,1)},{"Top",Vector3.new(0,5,0),Vector3.new(8,1,1)}}) do
-   local p=smallPart(entrance,part[1],part[3],doorCF*CFrame.new(part[2]),Color3.fromRGB(46,39,39)) p.Material=Enum.Material.Metal
-  end
+  entrance:SetAttribute("InvisibleMarker",true)
   local markers=Instance.new("Folder",map) markers.Name="RouteLanterns"
   for i=1,math.min(6,#selected) do
    local pos=selected[i]+Vector3.new(3,1,0)
@@ -152,8 +151,6 @@ function Builder.build(load,sanitize,destination)
    local lamp=smallPart(markers,"Glow"..i,Vector3.new(.6,.8,.6),CFrame.new(pos+.5*Vector3.yAxis),Color3.fromRGB(196,142,101)) lamp.Material=Enum.Material.Neon
    local light=Instance.new("PointLight",lamp) light.Color=lamp.Color light.Brightness=.7 light.Range=17 light.Shadows=false
   end
-  local sign=Instance.new("BillboardGui",entrance.Top) sign.Size=UDim2.fromOffset(240,42) sign.StudsOffset=Vector3.new(0,1,0) sign.MaxDistance=55
-  local text=Instance.new("TextLabel",sign) text.Size=UDim2.fromScale(1,1) text.BackgroundTransparency=1 text.Text=spec.label text.Font=Enum.Font.GothamMedium text.TextSize=16 text.TextColor3=Color3.fromRGB(231,212,205)
   local count=0 for _,v in ipairs(map:GetDescendants()) do if v:IsA("BasePart") then count+=1 end end
   map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance)
   map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("DisplayName",spec.label)
