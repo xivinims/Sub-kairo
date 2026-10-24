@@ -102,6 +102,23 @@ local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,18,0,13
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-64,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27
+local firstPerson=false
+local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-118,0,8),function()
+ firstPerson=not firstPerson
+end)
+cameraButton.TextSize=23
+RunService.RenderStepped:Connect(function()
+ local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
+ cameraButton.Visible=not blocked and not settingsOverlay.Visible
+ if blocked then return end
+ if firstPerson then
+  player.CameraMode=Enum.CameraMode.LockFirstPerson
+ else
+  player.CameraMode=Enum.CameraMode.Classic
+  player.CameraMinZoomDistance=10 player.CameraMaxZoomDistance=10
+ end
+ cameraButton.Text=firstPerson and "1ª" or "3ª"
+end)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,22) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
@@ -523,13 +540,13 @@ RunService.RenderStepped:Connect(function(dt)
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  countdown.Visible=not hidden and phase=="Intervalo"
  actionLayout()
- if left==0 and phase=="Intervalo" then countdownText.Text="Atravesse a porta" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
+ if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
  bar.Visible=controlsVisible and inRound leave.Visible=controlsVisible and inRound
- run.Visible=controlsVisible and not down and not isJason
+ run.Visible=controlsVisible and not down and not isJason and not player:GetAttribute("Injured")
  slow.Visible=controlsVisible and not down and not isJason
- boost.Visible=controlsVisible and not down and not isJason
+ boost.Visible=controlsVisible and not down and not isJason and not player:GetAttribute("Injured")
  flashlight.Visible=controlsVisible and not down and not isJason
  kit.Visible=controlsVisible and inRound and not isJason
  attack.Visible=controlsVisible and inRound and isJason and not down

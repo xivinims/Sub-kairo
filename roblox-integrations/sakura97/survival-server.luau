@@ -45,7 +45,7 @@ local function sync(p)
  if h then
   local introLocked=e and e.status=="alive" and now()<introUntil
   h.PlatformStand=false h.AutoRotate=true
-  h.WalkSpeed=introLocked and 0 or p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="slow" and 7 or p:GetAttribute("MoveMode")=="run" and 16 or 12)) or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
+  h.WalkSpeed=introLocked and 0 or p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="slow" and 7 or 12)) or (p:GetAttribute("MoveMode")=="slow" and 8 or p:GetAttribute("MoveMode")=="run" and 21 or 16)
   h.JumpPower=(introLocked or (e and e.status=="downed")) and 0 or 50
   h.JumpHeight=(introLocked or (e and e.status=="downed")) and 0 or 7.2
  end
@@ -114,7 +114,7 @@ local function injure(p)
  if e.injured then return false end
  e.hits=(e.hits or 0)+1
  local stats=p:FindFirstChild("leaderstats") local hitCount=stats and stats:FindFirstChild("Atingido") if hitCount then hitCount.Value+=1 end
- e.injured=true e.channel=nil
+ e.injured=true e.channel=nil e.boostUntil=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",now())
  sync(p)
  net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
  return true
@@ -183,7 +183,7 @@ local function catchPlayer(p)
  end)
 end
 local function join(p)
- if roundClosing or p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return false end
+ if roundClosing or p:GetAttribute("AFK") or p:GetAttribute("VoidActive") or not root(p) or not humanoid(p) or humanoid(p).Health<=0 then return false end
  if not Rules.join(state,p.UserId) then net.Update:FireClient(p,"notice","Partida cheia ou você já participou desta rodada.") return false end
  queued[p]=nil p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false) sync(p)
  local e=entry(p) e.loadDeadline=now()+50
@@ -285,6 +285,14 @@ end
 net.Action.OnServerEvent:Connect(function(p,action,value)
  if type(action)~="string" or #action>24 then return end
  rates[p]=rates[p] or {} local t=now() if t-(rates[p][action] or 0)<.18 then return end rates[p][action]=t
+ if action=="afk" then
+  if type(value)~="boolean" then return end
+  p:SetAttribute("AFK",value)
+  if value then queued[p]=nil end
+  sync(p)
+  net.Update:FireClient(p,"notice",value and "AFK ativado. Você não entra nas próximas partidas." or "AFK desativado. Você participa da próxima partida.")
+  return
+ end
  if t<introUntil and action~="leave" and action~="spectateExit" then return end
  if action=="join" then return -- Admission is exclusively server-observed portal crossing.
  elseif action=="attack" then
@@ -315,8 +323,9 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   end
  elseif action=="mode" then
   local e=entry(p)
+  if e and e.injured and value=="run" then value="walk" end
   if p~=jasonPlayer and (value=="walk" or value=="slow" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
- elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
+ elseif action=="boost" then if p==jasonPlayer then return end local e=entry(p) if e and e.status=="alive" and not e.injured and e.boost then e.boost=false e.boostUntil=t+4 sync(p) end
  elseif action=="flashlight" then
   local e=entry(p)
   if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
@@ -393,19 +402,13 @@ RunService.Heartbeat:Connect(function(dt)
  for _,p in ipairs(Players:GetPlayers()) do
   local e=entry(p) local r=root(p) local h=humanoid(p)
   if t>=(saveAt[p] or math.huge) then saveAt[p]=t+150+math.random(0,30) task.spawn(saveProfile,p) end
-  -- Spatial gate validation cannot be bypassed by firing a client join event.
-  if r and h and h.Health>0 and not p:GetAttribute("VoidActive") then
-   local pos=gate.CFrame:PointToObjectSpace(r.Position)
-   local inside=math.abs(pos.X)<=gate.Size.X/2 and math.abs(pos.Y)<=gate.Size.Y/2 and math.abs(pos.Z)<=gate.Size.Z/2
-   if inside and not portalInside[p] and not e then
-    net.Update:FireClient(p,"lobbyDoorGlow")
-    if state.phase=="Partida" then
-     if join(p) then spawnPlayer(p) end
-    else
-     queued[p]=true sync(p) net.Update:FireClient(p,"notice","Você está na próxima partida.")
-    end
-   end
-   portalInside[p]=inside
+  -- Admission is automatic between rounds; AFK never cancels an active death or round.
+  if not e then
+   local eligible=not p:GetAttribute("AFK") and not p:GetAttribute("InMenu") and not p:GetAttribute("VoidActive") and r and h and h.Health>0
+   if eligible and state.phase=="Partida" then
+    if Rules.count(state)<Rules.Capacity and not roundClosing then if join(p) then spawnPlayer(p) end end
+   elseif eligible and not queued[p] then queued[p]=true sync(p)
+   elseif not eligible and queued[p] then queued[p]=nil sync(p) end
   end
   if e then
    if e.status=="alive" or e.status=="downed" then e.survivalTime=(e.survivalTime or 0)+step end
@@ -526,7 +529,7 @@ task.spawn(function()
   end
 
   local function hasQueued()
-   for p in pairs(queued) do if p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then return true end end
+   for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then return true end end
    return false
   end
   while #Players:GetPlayers()>0 and not hasQueued() do
@@ -561,7 +564,7 @@ task.spawn(function()
     net:SetAttribute("IntroUntil",introUntil)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
     local eligible={}
-    for _,p in ipairs(Players:GetPlayers()) do if queued[p] and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
+    for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
     table.sort(eligible,function(a,b) return a.UserId<b.UserId end)
     if #eligible>=8 and math.random()<config.PlayerJasonChance then
      jasonPlayer=eligible[math.random(1,8)]
@@ -587,7 +590,7 @@ task.spawn(function()
     end
     for _,p in ipairs(Players:GetPlayers()) do
      if admitted>=Rules.Capacity then break end
-     if queued[p] and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
+     if queued[p] and not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
       if join(p) then spawnPlayer(p) admitted+=1 end
      end
     end

@@ -20,11 +20,12 @@ local categories={
   {section="JOGADORES"},{key="ShowNametags",label="Nomes dos jogadores",description="Mostra os nomes acima dos avatares",default=true},
  }},
  {key="gameplay",label="JOGO",color=Color3.fromRGB(118,166,112),title="AJUSTES DE JOGO",rows={
+  {key="AFK",label="AFK",description="Fica fora das próximas partidas; a atual continua",default=false},
   {section="CÂMERA E CONTROLES"},{key="CameraFOV",label="Campo de visão",description="Abertura da câmera durante o jogo",min=60,max=90,default=70,suffix="°"},
   {key="ControlScale",label="Tamanho dos botões",description="Ajuste para o seu polegar",min=80,max=120,default=100,suffix="%"},
   {section="COMO SOBREVIVER"},{info="Correr e pular fazem barulho. Agachar ajuda a passar despercebido."},
   {info="Você recebe um impulso e um kit em cada rodada. O kit revive você ou um aliado caído."},
-  {info="Atravesse a porta do lobby para entrar. Quem já morreu espera a próxima rodada."},
+  {info="As partidas começam automaticamente. Ative AFK para ficar no lobby."},
  }},
 }
 local function corner(o,r) local c=Instance.new("UICorner",o) c.CornerRadius=UDim.new(0,r or 9) end
@@ -82,6 +83,7 @@ function Settings.build(parent,player,onClose)
  local current=categories[1] local activeConnections={} local drag=nil local tabButtons={}
  local function setValue(row,value)
   if row.min then value=math.clamp(math.floor(value+.5),row.min,row.max) end
+  if row.key=="AFK" then game:GetService("ReplicatedStorage").Survival.Action:FireServer("afk",value) return end
   player:SetAttribute(row.key,value)
  end
  local function clearRows()

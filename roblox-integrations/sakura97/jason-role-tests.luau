@@ -119,6 +119,7 @@ local ok,result=xpcall(function()
   h.RequiresNeck=false h.MaxHealth=100 h.Health=100 h.BreakJointsOnDeath=false
   r.Anchored=true p.attrs.VoidActive=false
  end
+ send(players[9],"afk",true)
  for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
  for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") end

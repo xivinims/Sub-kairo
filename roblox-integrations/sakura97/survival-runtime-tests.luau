@@ -119,6 +119,7 @@ local ok,result=xpcall(function()
   h.RequiresNeck=false h.MaxHealth=100 h.Health=100 h.BreakJointsOnDeath=false
   r.Anchored=true p.attrs.VoidActive=false
  end
+ send(players[9],"afk",true)
  for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
  for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") end
@@ -153,7 +154,8 @@ local ok,result=xpcall(function()
  send(p,"mode","slow") assert(p.Character.Humanoid.WalkSpeed==8,"Slow speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  assert(aiContext,"AI context missing after round start")
  hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"First Jason hit must injure, not down")
- assert(p.Character.Humanoid.WalkSpeed<=16,"Injured survivor was not slowed")
+ send(p,"mode","run")
+ assert(p.Character.Humanoid.WalkSpeed<=12 and p:GetAttribute("MoveMode")~="run","Injured survivor could sprint")
  hit(p) assert(p:GetAttribute("Downed"),"Second Jason hit must down injured survivor")
  send(p,"kit") advance(3.2)
  assert(not p:GetAttribute("Downed") and not p:GetAttribute("HasMedkit"),"Self revive failed")
@@ -184,6 +186,7 @@ local ok,result=xpcall(function()
  assert(resetPlayer:GetAttribute("RoundStatus")=="eliminated" and not resetPlayer:GetAttribute("InRound"),"Manual character reset did not safely eliminate the active participant")
  SSS.SurvivalBridge.DeathFinished:Fire(resetPlayer) realTask.wait()
  assert(resetPlayer:GetAttribute("Spectating")==true,"Manual character reset did not enter spectator flow")
+ send(players[9],"afk",false)
  players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1)
  assert(messages[players[9]] and messages[players[9]].load,"Ninth player did not receive freed-slot preload")
  assert(players[9]:GetAttribute("InRound") and players[9]:GetAttribute("RoundStatus")=="alive","Ninth player was not teleported immediately into freed slot")
@@ -203,6 +206,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do
   assert(not pl:GetAttribute("InRound") and not pl:GetAttribute("Spectating"),"Player state did not reset after round: "..tostring(pl.UserId))
  end
+ for _,pl in ipairs(players) do send(pl,"afk",true) end
  advance(35)
  assert(net:GetAttribute("Phase")=="Intervalo" and not workspace:FindFirstChild("ActiveArena"),"An empty round loaded a map without queued players")
  return {ok=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
