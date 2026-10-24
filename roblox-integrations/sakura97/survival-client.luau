@@ -359,6 +359,7 @@ local function showResult(data)
 
   if victim then
    victim.Name="VictorySurvivor"
+   victim:SetAttribute("SourceUserId",victimId)
    victim.PrimaryPart=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
    for _,d in ipairs(victim:GetDescendants()) do
     if d:IsA("LuaSourceContainer") or d:IsA("Tool") or d:IsA("BillboardGui") then d:Destroy()
