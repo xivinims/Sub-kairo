@@ -329,7 +329,7 @@ Run.PreSimulation:Connect(function(dt)
     if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
     if p==Players.LocalPlayer then setDefaultAnimate(model,false) end
     local joint=downedPoses[model]
-    if joint and joint.Parent then joint.Transform=CFrame.new(0,-.7+math.sin(os.clock()*2)*.025,0)*CFrame.Angles(math.rad(75),0,math.sin(os.clock()*1.4)*.012) end
+    if joint and joint.Parent then joint.Transform=CFrame.new(0,-.92+math.sin(os.clock()*1.8)*.018,.08)*CFrame.Angles(math.rad(88),0,math.rad(4)+math.sin(os.clock()*1.3)*.01) end
    elseif inRound and not isJason then
     local crouched=p:GetAttribute("MoveMode")=="slow"
     local injured=p:GetAttribute("Injured")==true
