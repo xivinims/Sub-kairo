@@ -95,6 +95,26 @@ spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,spawn.Size.Y/2+.08,0),fa
 spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.CanTouch=false spawn.CanQuery=false spawn.Duration=0
 spawn.AllowTeamChangeOnTouch=false
 
+local oldLobbyBounds=lobby:FindFirstChild("InvisibleBounds")
+if oldLobbyBounds then oldLobbyBounds:Destroy() end
+local lobbyBounds=Instance.new("Folder") lobbyBounds.Name="InvisibleBounds" lobbyBounds.Parent=lobby
+local lobbyCF,lobbySize=lobby:GetBoundingBox()
+local lobbyBottom=lobbyCF.Position.Y-lobbySize.Y/2
+local function lobbyBarrier(name,size,localCF)
+ local p=Instance.new("Part") p.Name=name p.Size=size p.CFrame=lobbyCF*localCF
+ p.Anchored=true p.CanCollide=true p.CanTouch=false p.CanQuery=true p.Transparency=1 p.CastShadow=false
+ p:SetAttribute("InvisibleBoundary",true) p.Parent=lobbyBounds return p
+end
+local thick=6 local height=math.max(56,lobbySize.Y+24)
+local localY=(lobbyBottom-lobbyCF.Position.Y)+height/2-4
+lobbyBarrier("LeftWall",Vector3.new(thick,height,lobbySize.Z+thick*2),CFrame.new(-lobbySize.X/2-thick/2,localY,0))
+lobbyBarrier("RightWall",Vector3.new(thick,height,lobbySize.Z+thick*2),CFrame.new(lobbySize.X/2+thick/2,localY,0))
+lobbyBarrier("FrontWall",Vector3.new(lobbySize.X+thick*2,height,thick),CFrame.new(0,localY,-lobbySize.Z/2-thick/2))
+lobbyBarrier("BackWall",Vector3.new(lobbySize.X+thick*2,height,thick),CFrame.new(0,localY,lobbySize.Z/2+thick/2))
+local lobbySafety=lobbyBarrier("SafetyFloor",Vector3.new(lobbySize.X+thick*2,4,lobbySize.Z+thick*2),CFrame.new(0,(lobbyBottom-lobbyCF.Position.Y)-7,0))
+lobbySafety:SetAttribute("SafetyFloor",true)
+lobby:SetAttribute("InvisibleBoundsReady",true)
+
 -- Retire the old broken door geometry. It stays in the lobby hierarchy for preservation,
 -- but no old shutter/frame piece is allowed to block or visually fill the doorway.
 for _,v in ipairs(door:GetDescendants()) do
