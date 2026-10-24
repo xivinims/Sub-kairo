@@ -318,7 +318,12 @@ local function hook(p)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
   local e=entry(p)
   if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then
-   if state.phase=="Partida" then eliminate(p,"reset") else e.status="eliminated" end
+   if state.phase=="Partida" then
+    eliminate(p,"reset")
+    p:SetAttribute("Spectating",true)
+   else
+    e.status="eliminated"
+   end
   end
   sync(p)
   local h=char:WaitForChild("Humanoid",10)
