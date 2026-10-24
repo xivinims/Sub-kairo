@@ -49,20 +49,30 @@ rays.Enabled=false
 dof.Enabled=false
 
 local themes={
- ["Bosque do Silêncio"]={
-  ambient=Color3.fromRGB(54,62,74),outdoor=Color3.fromRGB(83,101,115),air=Color3.fromRGB(137,164,172),
-  decay=Color3.fromRGB(56,70,77),density=.27,haze=1.25,exposure=.02,brightness=1.75,clock=.35,
-  tint=Color3.fromRGB(215,229,224),contrast=.15,saturation=-.18,bloom=.15,rays=.018,
+ ["Doomspire Brickbattle"]={
+  ambient=Color3.fromRGB(67,73,82),outdoor=Color3.fromRGB(105,112,124),air=Color3.fromRGB(158,175,192),
+  decay=Color3.fromRGB(76,84,94),density=.13,haze=.42,exposure=.05,brightness=1.9,clock=8.25,
+  tint=Color3.fromRGB(224,231,239),contrast=.08,saturation=-.10,bloom=.10,rays=.02,
  },
- ["Base Abandonada"]={
-  ambient=Color3.fromRGB(67,63,61),outdoor=Color3.fromRGB(93,91,88),air=Color3.fromRGB(162,153,147),
-  decay=Color3.fromRGB(79,71,69),density=.18,haze=.65,exposure=.04,brightness=1.85,clock=23.65,
-  tint=Color3.fromRGB(231,218,211),contrast=.17,saturation=-.22,bloom=.11,rays=.008,
+ ["Juggernaut Fight Arena"]={
+  ambient=Color3.fromRGB(62,59,60),outdoor=Color3.fromRGB(94,90,91),air=Color3.fromRGB(150,144,144),
+  decay=Color3.fromRGB(73,68,68),density=.17,haze=.58,exposure=.02,brightness=1.8,clock=8.25,
+  tint=Color3.fromRGB(230,220,218),contrast=.13,saturation=-.16,bloom=.11,rays=.012,
  },
- ["Fortaleza da Névoa"]={
-  ambient=Color3.fromRGB(58,69,78),outdoor=Color3.fromRGB(86,104,117),air=Color3.fromRGB(154,185,200),
-  decay=Color3.fromRGB(72,87,98),density=.31,haze=1.55,exposure=.08,brightness=1.78,clock=.7,
-  tint=Color3.fromRGB(207,224,235),contrast=.13,saturation=-.20,bloom=.13,rays=.012,
+ ["Pirate Bay Island Cove"]={
+  ambient=Color3.fromRGB(64,75,79),outdoor=Color3.fromRGB(100,122,127),air=Color3.fromRGB(155,184,190),
+  decay=Color3.fromRGB(72,88,91),density=.16,haze=.7,exposure=.08,brightness=1.95,clock=8.25,
+  tint=Color3.fromRGB(217,233,232),contrast=.09,saturation=-.08,bloom=.12,rays=.025,
+ },
+ ["Natural Disaster Survival"]={
+  ambient=Color3.fromRGB(72,72,75),outdoor=Color3.fromRGB(113,112,113),air=Color3.fromRGB(166,166,171),
+  decay=Color3.fromRGB(81,81,84),density=.12,haze=.38,exposure=.06,brightness=1.95,clock=8.25,
+  tint=Color3.fromRGB(232,232,235),contrast=.07,saturation=-.12,bloom=.08,rays=.018,
+ },
+ ["RocketArena"]={
+  ambient=Color3.fromRGB(66,69,78),outdoor=Color3.fromRGB(101,108,123),air=Color3.fromRGB(154,169,188),
+  decay=Color3.fromRGB(74,81,94),density=.14,haze=.5,exposure=.04,brightness=1.9,clock=8.25,
+  tint=Color3.fromRGB(219,228,240),contrast=.11,saturation=-.13,bloom=.10,rays=.018,
  },
 }
 
