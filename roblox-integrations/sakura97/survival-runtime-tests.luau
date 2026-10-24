@@ -120,23 +120,21 @@ local ok,result=xpcall(function()
   r.Anchored=true p.attrs.VoidActive=false
  end
  send(players[9],"afk",true)
- for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
- for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
- send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote bypassed portal")
+ for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Automatic lobby admission did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
+ send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote join bypassed AFK/automatic admission rules")
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
   assert(status=="alive" and players[i]:GetAttribute("InRound"),"Player "..i.." was not teleported into round immediately; status="..tostring(status))
   assert(messages[players[i]] and messages[players[i]].load,"Player "..i.." did not receive advisory preload request")
-  assert(messages[players[i]] and messages[players[i]].jasonIntro,"Player "..i.." did not receive Jason intro cinematic")
-  assert(players[i].Character.Humanoid.WalkSpeed==0,"Player "..i.." was not frozen during Jason intro")
+  assert(not (messages[players[i]] and messages[players[i]].jasonIntro),"Removed killer intro cinematic was sent")
+  assert(players[i].Character.Humanoid.WalkSpeed>0,"Player was frozen by removed killer intro")
  end
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local count=0 for _,p in ipairs(players) do if p:GetAttribute("InRound") then count+=1 end end assert(count==8,"Expected 8 active players, got "..count)
- assert((net:GetAttribute("IntroUntil") or 0)>clock,"Intro lock was not scheduled")
- advance(4.2)
- assert((net:GetAttribute("IntroUntil") or 0)<=clock,"Intro lock did not expire")
+ assert((net:GetAttribute("IntroUntil") or 0)==0,"Removed intro lock was scheduled")
+ advance(.5)
  for i=1,8 do
   local c=players[i].Character c:PivotTo(CFrame.new(i*25,1000,0)) c.HumanoidRootPart.Anchored=true
  end
@@ -190,7 +188,7 @@ local ok,result=xpcall(function()
  SSS.SurvivalBridge.DeathFinished:Fire(resetPlayer) realTask.wait()
  assert(resetPlayer:GetAttribute("Spectating")==true,"Manual character reset did not enter spectator flow")
  send(players[9],"afk",false)
- players[9].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) advance(1)
+ advance(1)
  assert(not (messages[players[9]] and messages[players[9]].load),"Late lobby join bypassed the five-second admission window")
  assert(not players[9]:GetAttribute("InRound"),"Late lobby join entered an active round")
  local executionVictim=players[5]
@@ -212,7 +210,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do send(pl,"afk",true) end
  advance(35)
  assert(net:GetAttribute("Phase")=="Intervalo" and not workspace:FindFirstChild("ActiveArena"),"An empty round loaded a map without queued players")
- return {ok=true,survivorR6=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,teammateOnlyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,fiveSecondJoinWindow=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,survivorR6=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,noKillerIntro=true,noIntroMovementLock=true,flashlightToggle=true,teammateOnlyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,automaticLobbyAdmission=true,eightPlayerLimit=true,fiveSecondJoinWindow=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end
