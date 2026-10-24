@@ -143,7 +143,7 @@ config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
-local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("AnimatedAvatarLoading",true) loader:SetAttribute("GoodLuckBackdrop",true) loader.Parent=first
+local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("LogoOnlyInitialLoading",true) loader:SetAttribute("MapLoadingOwnsGoodLuck",true) loader.Parent=first
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
