@@ -57,18 +57,19 @@ if not lobby or lobby:GetAttribute("SourceAssetId")~=1043225187 then
  assert(ground,"Requested lobby has no verified clear spawn")
  if lobby then lobby:Destroy() end
  lobby=replacement lobby.Name="JediLibrary" lobby:SetAttribute("SourceAssetId",1043225187) lobby:SetAttribute("VerifiedSpawn",ground)
- local existing=lobby:FindFirstChild("Door") if existing then existing.Name="OriginalLobbyDoor" end
- local marker=Instance.new("Model",lobby) marker.Name="Door" marker:SetAttribute("OriginalCenter",ground+Vector3.new(12,8,0))
- marker:PivotTo(CFrame.new(ground+Vector3.new(12,8,0)))
+ local existing=lobby:FindFirstChild("Door")
+ local reference=existing and existing:GetPivot() or CFrame.new(ground+Vector3.new(12,8,0))
+ lobby:SetAttribute("FormerDoorCFrame",reference)
+ if existing then existing:Destroy() end
 end
-local door=assert(lobby:FindFirstChild("Door"))
-local original=door:GetAttribute("OriginalCenter")
-if not original then
- local cf=door:GetBoundingBox()
- original=cf.Position
- door:SetAttribute("OriginalCenter",original)
+local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
+if typeof(referenceCF)~="CFrame" then
+ local legacy=lobby:FindFirstChild("Door") or lobby:FindFirstChild("OriginalLobbyDoor")
+ referenceCF=legacy and legacy:GetPivot() or CFrame.new((lobby:GetAttribute("VerifiedSpawn") or Vector3.zero)+Vector3.new(12,8,0))
+ lobby:SetAttribute("FormerDoorCFrame",referenceCF)
 end
-local rotation=door:GetPivot().Rotation
+local original=referenceCF.Position
+local rotation=referenceCF.Rotation
 local lobbyParams=RaycastParams.new()
 lobbyParams.FilterType=Enum.RaycastFilterType.Include
 lobbyParams.FilterDescendantsInstances={lobby}
@@ -115,17 +116,11 @@ local lobbySafety=lobbyBarrier("SafetyFloor",Vector3.new(lobbySize.X+thick*2,4,l
 lobbySafety:SetAttribute("SafetyFloor",true)
 lobby:SetAttribute("InvisibleBoundsReady",true)
 
--- Retire the old broken door geometry. It stays in the lobby hierarchy for preservation,
--- but no old shutter/frame piece is allowed to block or visually fill the doorway.
-for _,v in ipairs(door:GetDescendants()) do
- if v:IsA("BasePart") then
-  v.CanCollide=false v.CanTouch=false v.CanQuery=false v.CastShadow=false v.Transparency=1
- elseif v:IsA("Decal") or v:IsA("Texture") then
-  v.Transparency=1
- end
+-- No lobby entry door remains. Keep only its old transform as metadata for spawn facing.
+for _,name in ipairs({"Door","OriginalLobbyDoor"}) do
+ local old=lobby:FindFirstChild(name)
+ if old then old:Destroy() end
 end
-door:SetAttribute("HeldOpen",true)
-door:SetAttribute("VisualReplaced",true)
 
 local oldVisual=workspace:FindFirstChild("SurviversLobbyDoorVisual")
 if oldVisual then oldVisual:Destroy() end
