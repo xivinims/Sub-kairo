@@ -72,7 +72,7 @@ for _,name in ipairs({"GameSettingsAvatar","AvatarJointUpgrade","LoadCharacterAp
  local ok,value=pcall(function() return sp[name] end)
  report.avatarSettings[name]={readable=ok,value=tostring(value)}
 end
-for _,id in ipairs({103232099547025,95580261594507,15578797832,18663196733,125287203669107,99824847238106,1043225187}) do
+for _,id in ipairs({135876330138383,140625681515398}) do
  local ok,m=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
  local rec={id=id,loaded=ok}
  if ok and m then
@@ -99,6 +99,8 @@ for _,id in ipairs({103232099547025,95580261594507,15578797832,18663196733,12528
  else rec.error=tostring(m) end
  table.insert(report.assets,rec)
 end
+local ok,details=pcall(function() return game:GetService("AssetService"):GetBundleDetailsAsync(251391123581565) end)
+report.bundle={ok=ok,details=ok and details or tostring(details)}
 return report
 `;
 console.log('EXPANSION_AUDIT',JSON.stringify(first(await execute(script))));
