@@ -165,9 +165,8 @@ assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap and assets.Maps.M
 assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
-assert(game.ReplicatedStorage.Survival.CrouchClips:GetAttribute("SourceAssetId")==134326820545987)
+assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
 assert((game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("ClipCount") or 0)>0)
-assert((game.ReplicatedStorage.Survival.CrouchClips:GetAttribute("ClipCount") or 0)>0)
 local ui=game.StarterGui.TomiaszMenu
 assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
 result.logoTexture=ui.MenuPrincipal.Logo.Image
@@ -245,7 +244,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
   assert(#assets.Maps:GetChildren()==3 and assets.Maps.HorrorMap:GetAttribute("SourceAssetId")==79671648850902 and assets.Maps.MilitaryBase:GetAttribute("SourceAssetId")==13967333450 and assets.Maps.AlpineFortress:GetAttribute("SourceAssetId")==8050959400)
   assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
-  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==122)
+  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==123)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Intro"))
@@ -270,7 +269,15 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerScriptService.SurvivalServer.Source:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Pose-safe flashlight visual missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultView.Size=UDim2.fromScale(1,1)',1,true),"Full-screen killer result missing")
-  return {ok=true,version=game.PlaceVersion,build=122,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true}
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
+  assert(game.ReplicatedFirst.SweanLoadingController.Source:find('goodLuck.Name="GoodLuckBackdrop"',1,true) and game.ReplicatedFirst.SweanLoadingController.Source:find('avatarView.Name="LoadingAvatar"',1,true),"Animated initial loading screen missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("EnvironmentSpecularScale",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversArenaBloom",1,true),"Adaptive arena graphics missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
+  assert(not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Shop") and not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Inventory"),"Removed menu buttons returned")
+  assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Removed return-to-menu object returned")
+  assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
+  assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
+  return {ok=true,version=game.PlaceVersion,build=123,logo=true,mapCount=3,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,animatedLoading=true,adaptiveGraphics=true,legacySystemsRemoved=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
