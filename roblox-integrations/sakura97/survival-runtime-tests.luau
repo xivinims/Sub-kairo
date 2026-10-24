@@ -143,13 +143,17 @@ local ok,result=xpcall(function()
   aiContext.catch(p) advance(1)
  end
  local p=players[1]
- send(p,"flashlight") assert(p:GetAttribute("FlashlightOn") and p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not equip")
+ send(p,"flashlight")
+ local equippedFlashlight=p.Character:FindFirstChild("EquippedFlashlight")
+ assert(p:GetAttribute("FlashlightOn") and equippedFlashlight and equippedFlashlight:IsA("Model"),"Flashlight visual did not equip as a pose-safe model")
+ assert(not p.Character:FindFirstChildOfClass("Tool"),"Flashlight reintroduced Tool hold animation")
  advance(.3)
  send(p,"flashlight") assert(not p:GetAttribute("FlashlightOn") and not p.Character:FindFirstChild("EquippedFlashlight"),"Flashlight did not unequip")
  send(p,"boost") assert(not p:GetAttribute("HasBoost"),"Boost item was not consumed")
  advance(1) assert(p.Character.Humanoid.WalkSpeed==27,"Boost speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  advance(5) assert(p.Character.Humanoid.WalkSpeed==16,"Boost did not expire")
- send(p,"mode","slow") assert(p.Character.Humanoid.WalkSpeed==8,"Slow speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
+ send(p,"mode","run") assert(p.Character.Humanoid.WalkSpeed==21,"Held run speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
+ send(p,"mode","walk") assert(p.Character.Humanoid.WalkSpeed==16,"Release-to-walk speed mismatch: "..tostring(p.Character.Humanoid.WalkSpeed))
  assert(aiContext,"AI context missing after round start")
  hit(p) assert(p:GetAttribute("Injured") and not p:GetAttribute("Downed"),"First Jason hit must injure, not down")
  send(p,"mode","run")
@@ -210,7 +214,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do send(pl,"afk",true) end
  advance(35)
  assert(net:GetAttribute("Phase")=="Intervalo" and not workspace:FindFirstChild("ActiveArena"),"An empty round loaded a map without queued players")
- return {ok=true,survivorR6=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,noKillerIntro=true,noIntroMovementLock=true,flashlightToggle=true,teammateOnlyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,automaticLobbyAdmission=true,eightPlayerLimit=true,fiveSecondJoinWindow=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,survivorR6=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,noKillerIntro=true,noIntroMovementLock=true,flashlightToggle=true,flashlightPoseSafe=true,heldRunReleaseWalk=true,teammateOnlyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,automaticLobbyAdmission=true,eightPlayerLimit=true,fiveSecondJoinWindow=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end
