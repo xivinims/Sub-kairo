@@ -286,8 +286,6 @@ for i,item in ipairs({{"LANTERNA","☼","Ilumine o caminho",.03,.12},{"IMPULSO",
 end
 avatarPreview() equipmentPreview()
 player.CharacterAdded:Connect(function() if inMenu then avatarPreview() equipmentPreview() end end)
-local musicIcon=Instance.new("TextLabel",main.Shop) musicIcon.BackgroundTransparency=1 musicIcon.Text="♫" musicIcon.TextColor3=Color3.fromRGB(215,185,124) musicIcon.TextSize=45 musicIcon.Size=UDim2.fromScale(1,.65) musicIcon.Position=UDim2.fromScale(0,0)
-main.Shop.TextYAlignment=Enum.TextYAlignment.Bottom
 local function revealMenuJason()
  if menuJason then menuJason:Destroy() menuJason=nil end
  local template=RS:WaitForChild("Survival"):FindFirstChild("PresentationJason")
@@ -396,7 +394,7 @@ local function animateMenuIntro()
  ui:SetAttribute("MenuIntroAnimated",true)
  local finalPos=main.Logo.Position local finalSize=main.Logo.Size
  main.Logo.Position=UDim2.fromScale(.5,.50) main.Logo.Size=UDim2.new(.68,0,.25,0)
- local nav={main.Play,main.Shop,main.Inventory,main.Ajustes,main.Updates,creditsButton}
+ local nav={main.Play,main.Ajustes,main.Updates,creditsButton}
  for _,b in ipairs(nav) do b.TextTransparency=1 b.UIStroke.Transparency=1 end
  TweenService:Create(main.Logo,TweenInfo.new(.7,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Position=finalPos,Size=finalSize}):Play()
  task.delay(.42,function()
