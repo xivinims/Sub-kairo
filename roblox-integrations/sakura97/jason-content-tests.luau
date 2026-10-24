@@ -1,4 +1,4 @@
--- Validate exact R6 survivor rig, lobby replacement and supplied animation sets.
+-- Validate the current R6 survivor, pursuers, bounded maps, UI cleanup and installed runtime sources.
 assert(not game.ServerStorage:FindFirstChild("NatureTemplates"),"Legacy NatureTemplates must not remain in Jason build")
 local assets=game.ServerStorage.SurvivalAssets local rig=assets.Killers.Jason local Http=game:GetService("HttpService")
 local sourceRoot=assert(rig:GetAttribute("SourceRootSize"),"Missing original Jason root size")
@@ -24,8 +24,8 @@ for _,folder in ipairs(rig.MotionClips:GetChildren()) do table.insert(jasonClipN
 end
 table.sort(jasonClipNames)
 assert(clips==17,"Missing exact Jason animation sequences")
-assert(rig.MotionClips:FindFirstChild("Jason Run"),"Jason Run clip missing for intro cinematic")
-assert(rig.MotionClips:FindFirstChild("Jason Intro"),"Jason Intro clip missing for intro cinematic")
+assert(rig.MotionClips:FindFirstChild("Jason Run"),"Jason Run clip missing")
+assert(rig.MotionClips:FindFirstChild("Jason Intro"),"Original Jason source clip set changed unexpectedly")
 local hasExecution=false
 for _,n in ipairs(jasonClipNames) do local l=n:lower() if l:find("kill",1,true) or l:find("execution",1,true) or l:find("execute",1,true) or l:find("finisher",1,true) or l:find("fatal",1,true) then hasExecution=true break end end
 local map=assets.Maps.HorrorMap
@@ -39,7 +39,7 @@ for _,arena in ipairs(assets.Maps:GetChildren()) do
  assert(arena:GetAttribute("PartCount")<=3015 and arena:GetAttribute("PartCount")>30,"Part budget")
  assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
  assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=60,"Separated spawns")
- assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=7,"Pursuer spawn has insufficient wall clearance")
+ assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=10,"Pursuer spawn has insufficient wall clearance")
  local bounds=assert(arena:FindFirstChild("InvisibleBounds"),"Invisible arena bounds missing")
  assert(#bounds:GetChildren()>=5 and bounds:FindFirstChild("SafetyFloor"),"Arena must have four invisible walls plus safety floor")
  for _,wall in ipairs(bounds:GetChildren()) do assert(wall:IsA("BasePart") and wall.Transparency==1 and wall.CanCollide,"Invalid invisible safety boundary") end
@@ -52,13 +52,10 @@ assert(flashlight:IsA("Tool") and flashlight:GetAttribute("SourceAssetId")==4573
 assert(flashlight:FindFirstChild("Handle"),"Flashlight handle missing")
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("JasonTheme"),"Automatic Jason theme must stay removed")
 local survivor=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorClips"),"Forsaken Survivor clips missing")
-local crouch=assert(game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Crouch clips missing")
 assert(survivor:GetAttribute("SourceAssetId")==127092032896760,"Wrong Forsaken survivor animation asset")
-assert(crouch:GetAttribute("SourceAssetId")==134326820545987,"Wrong crouch animation asset")
 assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken survivor package has no clips")
-assert((crouch:GetAttribute("ClipCount") or 0)>0,"Crouch package has no clips")
+assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
 local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Folder") then table.insert(survivorNames,v.Name) end end table.sort(survivorNames)
-local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
  local canonicalMotors={root=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true}
@@ -102,14 +99,16 @@ local function animationCompatibility(folder,names)
  return report
 end
 local survivorCompatibility=animationCompatibility(survivor,{"Idle","Walk","Run","InjuredIdle","InjuredWalk","InjuredRun"})
-local crouchCompatibility=animationCompatibility(crouch,{"Crouch Idle","Crouch Walk"})
-assert(crouchCompatibility["Crouch Idle"]>=6 and crouchCompatibility["Crouch Walk"]>=6,"Crouch does not retarget across all six R6 motors")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6" and game.ReplicatedStorage.Survival:GetAttribute("SurvivorRig")=="R6","R6 survivor contract missing")
 local islandSource=assert(game.ServerScriptService:FindFirstChild("IslandServer"),"Island server missing").Source
 local voidSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("VoidSequence"),"Void client missing").Source
 local survivalServerSource=assert(game.ServerScriptService:FindFirstChild("SurvivalServer"),"Survival server missing").Source
 local survivalClientSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SurvivalClient"),"Survival client missing").Source
 local pursuerAnimationSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("PursuerAnimation"),"Pursuer animation controller missing").Source
+local ambienceSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ArenaAmbience"),"Arena ambience missing").Source
+local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing").Source
+local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
+local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source
 assert(not islandSource:find('begin(player,"void")',1,true),"Lobby void still triggers death presentation")
 assert(islandSource:find('RoundStatus")~="eliminated"',1,true) or islandSource:find('RoundStatus")~=',1,true),"Server death presentation is not gated by elimination status")
 assert(voidSource:find('local realDeath=mode=="spectate"',1,true),"Client death screen lacks real-death guard")
@@ -121,11 +120,32 @@ assert(not survivalServerSource:find('FireClient(p,"jasonIntro"',1,true),"Remove
 assert(survivalServerSource:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Flashlight still uses Tool pose inside character")
 assert(pursuerAnimationSource:find("pursuerStateName",1,true),"Per-killer locomotion clip resolver missing")
 assert(pursuerAnimationSource:find('speed/(injured and 14 or 18)',1,true),"Survivor run animation is not velocity-synchronized")
+assert(not pursuerAnimationSource:find("CrouchClips",1,true) and not pursuerAnimationSource:find("CinematicPursuer",1,true),"Removed animation branches returned")
+assert(not survivalServerSource:find('action=="boost"',1,true),"Legacy boost server action returned")
+assert(not survivalServerSource:find('action=="musicPlay"',1,true) and not survivalServerSource:find('action=="musicBuy"',1,true),"Legacy music server actions returned")
+assert(not survivalServerSource:find('value=="slow"',1,true) and not survivalServerSource:find("introSceneData",1,true),"Legacy slow/intro server code returned")
+assert(not survivalServerSource:find("ArenaEntrance",1,true),"Removed arena entrance marker logic returned")
+assert(survivalServerSource:find("SurvivalCharacterHooked",1,true),"Character death-hook deduplication missing")
+assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
+assert(survivalClientSource:find('GoodLuck","GOOD LUCK"',1,true),"Map Good Luck backdrop missing")
+assert(not survivalClientSource:find("cancelJasonIntro",1,true) and not survivalClientSource:find("EntryFlash",1,true),"Dead killer intro/door client code returned")
+assert(loadingSource:find('goodLuck.Name="GoodLuckBackdrop"',1,true) and loadingSource:find('avatarView.Name="LoadingAvatar"',1,true),"Initial animated avatar loading missing")
+assert(loadingSource:find("local function stage",1,true) and loadingSource:find("TweenService:Create(fill",1,true),"Loading progress is decorative instead of functional")
+assert(ambienceSource:find("EnvironmentSpecularScale",1,true) and ambienceSource:find("WaterReflectance",1,true),"Reflection system missing")
+assert(ambienceSource:find("SuviversArenaBloom",1,true) and ambienceSource:find("SuviversArenaDOF",1,true),"Adaptive post processing missing")
+assert(voidSource:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death UI media reference can be nil")
+assert(not nametagSource:find("CantorBadge",1,true),"Obsolete Cantor badge returned")
+assert(friendSource:find('FindFirstChild("SweanNametag")',1,true),"ShowNametags does not control normal nametags")
 assert(not survivalClientSource:find('Name="MusicButton"',1,true),"Gameplay music icon returned")
 assert(survivalClientSource:find('PresentationState","Execution"',1,true),"Killer result does not start with execution animation")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
 assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Lobby join portal returned")
 assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Lobby join door visual returned")
+assert(not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Shop"),"Shop button object returned")
+assert(not game.StarterGui.TomiaszMenu.MenuPrincipal:FindFirstChild("Inventory"),"Inventory button object returned")
+assert(not game.StarterGui.TomiaszMenu.Escenarios:FindFirstChild("MenuShop"),"Shop modal returned")
+assert(not game.StarterGui.TomiaszMenu.Escenarios:FindFirstChild("MenuInventory"),"Inventory modal returned")
+assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Return-to-menu object returned")
 assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Lobby automatic admission contract missing")
 local lobbyBounds=assert(workspace.JediLibrary:FindFirstChild("InvisibleBounds"),"Lobby invisible bounds missing")
 assert(#lobbyBounds:GetChildren()>=5 and lobbyBounds:FindFirstChild("SafetyFloor"),"Lobby safety walls/floor missing")
@@ -142,5 +162,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,animatedLoading=true,adaptiveGraphics=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
