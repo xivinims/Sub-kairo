@@ -7,7 +7,7 @@ function Rules.count(s)
 end
 function Rules.join(s,id)
  if s.phase~="Partida" or s.entries[id] or Rules.count(s)>=Rules.Capacity then return false end
- s.entries[id]={status="loading",boost=true,points=0,hits=0,falls=0,survivalTime=0} return true
+ s.entries[id]={status="loading",points=0,hits=0,falls=0,survivalTime=0} return true
 end
 function Rules.down(s,id,now)
  local e=s.entries[id] if not e or e.status~="alive" then return false end
