@@ -65,17 +65,21 @@ local run=cleanAction(topActions,"Run","CORRER",UDim2.fromOffset(64,64),UDim2.fr
  if player:GetAttribute("IsJason") then event:FireServer("attack") end
 end)
 run.TextSize=11
+local heldRunInput=nil
+local function stopHeldRun(input)
+ if heldRunInput and (not input or input==heldRunInput) then
+  heldRunInput=nil
+  if mode=="run" then mode="walk" event:FireServer("mode","walk") end
+ end
+end
 run.InputBegan:Connect(function(input)
  if player:GetAttribute("IsJason") or player:GetAttribute("Downed") or player:GetAttribute("Injured") then return end
  if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-  mode="run" event:FireServer("mode","run")
+  heldRunInput=input
+  if mode~="run" then mode="run" event:FireServer("mode","run") end
  end
 end)
-run.InputEnded:Connect(function(input)
- if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-  if mode=="run" then mode="walk" event:FireServer("mode","walk") end
- end
-end)
+run.InputEnded:Connect(function(input) stopHeldRun(input) end)
 local reviveNearby=cleanAction(bar,"ReviveNearby","+",UDim2.fromOffset(66,66),UDim2.fromOffset(4,4),function()
  event:FireServer("revive")
 end)
@@ -590,7 +594,10 @@ UIS.InputBegan:Connect(function(input,processed)
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
  elseif input.KeyCode==Enum.KeyCode.F then event:FireServer("flashlight") end
 end)
-UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end end)
+UIS.InputEnded:Connect(function(input)
+ if input==heldRunInput then stopHeldRun(input) end
+ if input.KeyCode==Enum.KeyCode.LeftShift and mode=="run" then mode="walk" event:FireServer("mode",mode) end
+end)
 local highlight=Instance.new("Highlight") highlight.Name="PursuerTarget" highlight.FillColor=Color3.fromRGB(200,35,43) highlight.OutlineColor=Color3.fromRGB(242,80,85) highlight.FillTransparency=.8 highlight.DepthMode=Enum.HighlightDepthMode.Occluded highlight.Enabled=false highlight.Parent=gui
 
 local jasonPresentationFov=70
@@ -643,9 +650,9 @@ RunService.RenderStepped:Connect(function(dt)
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and inRound and not down and (isJason or not player:GetAttribute("Injured"))
+ mode=player:GetAttribute("MoveMode") or "walk"
  run.Text=isJason and "ATACAR" or "CORRER"
  run.TextTransparency=(not isJason and mode=="run") and 0 or .12
- mode=player:GetAttribute("MoveMode") or "walk"
  local reviveTarget=nil local reviveDistance=8.5
  if controlsVisible and inRound and not down and not isJason then
   local myRoot=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
