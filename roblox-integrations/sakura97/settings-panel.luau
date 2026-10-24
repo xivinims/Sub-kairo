@@ -24,7 +24,7 @@ local categories={
   {section="CÂMERA E CONTROLES"},{key="CameraFOV",label="Campo de visão",description="Abertura da câmera durante o jogo",min=60,max=90,default=70,suffix="°"},
   {key="ControlScale",label="Tamanho dos botões",description="Ajuste para o seu polegar",min=80,max=120,default=100,suffix="%"},
   {section="COMO SOBREVIVER"},{info="Correr e pular fazem barulho. Agachar ajuda a passar despercebido."},
-  {info="Você recebe um impulso e um kit em cada rodada. O kit revive você ou um aliado caído."},
+  {info="Se alguém cair, outro sobrevivente tem 30 segundos para chegar perto e usar o botão +."},
   {info="As partidas começam automaticamente. Ative AFK para ficar no lobby."},
  }},
 }
@@ -75,8 +75,7 @@ function Settings.build(parent,player,onClose)
  local tabs=Instance.new("Frame",frame) tabs.Name="Tabs" tabs.BackgroundTransparency=1 tabs.Size=UDim2.new(1,0,0,42) tabs.ZIndex=baseZ+1
  local heading=Instance.new("Frame",frame) heading.Name="Heading" heading.Position=UDim2.fromOffset(0,50) heading.Size=UDim2.new(1,0,0,44) heading.BorderSizePixel=0 heading.BackgroundTransparency=.25 heading.ZIndex=baseZ+1 corner(heading,10)
  local headingStroke=stroke(heading,Color3.new(1,1,1),2,.3)
- local title=label(heading,"",UDim2.new(1,-110,1,0),UDim2.fromOffset(14,0)) title.TextSize=18
- local reset=button(heading,"REDEFINIR",Color3.fromRGB(75,76,82)) reset.Size=UDim2.fromOffset(92,30) reset.Position=UDim2.new(1,-101,0,7) reset.TextSize=10
+ local title=label(heading,"",UDim2.new(1,-28,1,0),UDim2.fromOffset(14,0)) title.TextSize=18
  local content=Instance.new("ScrollingFrame",frame) content.Name="SettingsRows" content.Size=UDim2.new(1,0,1,-104) content.Position=UDim2.fromOffset(0,104) content.BackgroundColor3=Color3.fromRGB(11,12,15) content.BackgroundTransparency=.12 content.BorderSizePixel=0 content.ZIndex=baseZ+1 content.AutomaticCanvasSize=Enum.AutomaticSize.Y content.CanvasSize=UDim2.new() content.ScrollBarThickness=3 corner(content,10) stroke(content,Color3.fromRGB(119,117,126),2,.65)
  local pad=Instance.new("UIPadding",content) pad.PaddingLeft=UDim.new(0,14) pad.PaddingRight=UDim.new(0,14) pad.PaddingBottom=UDim.new(0,12)
  local list=Instance.new("UIListLayout",content) list.SortOrder=Enum.SortOrder.LayoutOrder list.Padding=UDim.new(0,2)
@@ -132,7 +131,6 @@ function Settings.build(parent,player,onClose)
   b.Activated:Connect(function() select(category) end)
  end
  local close=button(tabs,"FECHAR",Color3.fromRGB(195,79,86)) close.Name="Close" close.Size=UDim2.new(.19,-2,1,0) close.Position=UDim2.fromScale(.81,0) close.Activated:Connect(function() drag=nil onClose() end)
- reset.Activated:Connect(function() for _,row in ipairs(current.rows) do if row.key then setValue(row,row.default) end end end)
  UIS.InputChanged:Connect(function(input) if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseMovement) then drag.move(input.Position.X) end end)
  UIS.InputEnded:Connect(function(input) if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseButton1) then drag=nil end end)
  select(current)
