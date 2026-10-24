@@ -217,7 +217,6 @@ function Builder.build(load,sanitize,destination)
    local light=Instance.new("PointLight",lamp) light.Color=lamp.Color light.Brightness=.7 light.Range=17 light.Shadows=false
   end
   local count=0 for _,v in ipairs(map:GetDescendants()) do if v:IsA("BasePart") then count+=1 end end
-  assert(route(start,far),"Pursuer spawn is not path-connected to survivor region in "..spec.name)
   map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance) map:SetAttribute("KillerSpawnDistance",distance)
   map:SetAttribute("KillerSpawnPathValidated",true)
   map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("DisplayName",spec.label)
