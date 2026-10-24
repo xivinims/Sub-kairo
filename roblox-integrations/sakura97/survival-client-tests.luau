@@ -71,7 +71,7 @@ local ok,result=xpcall(function()
  assert(not gui.Actions:FindFirstChild("Slow") and not gui.Actions:FindFirstChild("Jump") and not gui.Actions:FindFirstChild("Attack"),"Old bottom action buttons returned")
  assert(gui.TopActions.Run.BackgroundTransparency<1 and gui.TopActions.Position.Y.Scale==1,"Run needs visible background and lower-screen placement")
  assert(gui.Round.BackgroundTransparency==1 and not gui.Round.Detail.Visible,"Round HUD must show only the top timer")
- assert(not gui.Countdown.Visible,"Intermission count must not clutter the screen")
+ assert(gui.Countdown.Visible==(fakeNet:GetAttribute("Phase")=="Intervalo"),"Timer visibility must follow phase")
  assert(gui.PlayerRoster and gui.PlayerRoster:FindFirstChild("Player_991") and gui.PlayerRoster:FindFirstChild("Player_992"),"Reference-style player roster missing")
  local rosterRow=gui.PlayerRoster.Player_991
  local rosterName=assert(rosterRow:FindFirstChild("Name"),"Roster name label missing")
