@@ -155,7 +155,7 @@ function Builder.build(load,sanitize,destination)
   barrier("BackWall",Vector3.new(size.X+wallThickness*2,wallHeight,wallThickness),CFrame.new(0,wallY,size.Z/2+wallThickness/2))
   local safety=barrier("SafetyFloor",Vector3.new(size.X+wallThickness*2,4,size.Z+wallThickness*2),CFrame.new(0,(lowest-cf.Position.Y)-7,0))
   safety:SetAttribute("SafetyFloor",true)
-  map:SetAttribute("RecoveryY",lowest-3)
+  map:SetAttribute("RecoveryY",lowest+1)
 
   local markers=Instance.new("Folder",map) markers.Name="RouteLanterns"
   for i=1,math.min(6,#selected) do
