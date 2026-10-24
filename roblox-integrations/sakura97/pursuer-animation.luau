@@ -362,7 +362,7 @@ Run.PreSimulation:Connect(function(dt)
      local kind
      if hs==Enum.HumanoidStateType.Jumping then kind="jump"
      elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
-     elseif speed>1 then kind=(not crouched and speed>(injured and 13 or 16)) and "run" or "move"
+     elseif speed>1 then kind=(not crouched and not injured and p:GetAttribute("MoveMode")=="run") and "run" or "move"
      else kind="idle" end
      local state=locomotionName(d,kind,crouched,injured)
      local supported=canDrive(d,state)
