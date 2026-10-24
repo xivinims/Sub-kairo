@@ -145,7 +145,7 @@ local function executeDowned(p,attacker)
  local targetCF=facing*CFrame.new(0,0,-2.15)
  p.Character:PivotTo(CFrame.lookAt(targetCF.Position,attacker.PrimaryPart.Position))
  rr.Anchored=true
- net.Update:FireClient(p,"executed","Jason",attacker.PrimaryPart.CFrame)
+ net.Update:FireClient(p,"executed",killerName,attacker.PrimaryPart.CFrame)
  task.delay(1.25,function()
   catching[p]=nil
   if rr and rr.Parent then rr.Anchored=false end
@@ -154,7 +154,7 @@ local function executeDowned(p,attacker)
    attacker:SetAttribute("ExecutionTargetUserId",0)
   end
   local current=entry(p)
-  if state.id==capturedRound and current==capturedEntry and p.Character==capturedCharacter and current.status=="downed" then eliminate(p,"Jason") end
+  if state.id==capturedRound and current==capturedEntry and p.Character==capturedCharacter and current.status=="downed" then eliminate(p,killerName) end
  end)
  return true
 end
@@ -177,7 +177,7 @@ local function catchPlayer(p)
   local param=RaycastParams.new() param.FilterType=Enum.RaycastFilterType.Exclude param.FilterDescendantsInstances={attacker}
   local hit=workspace:Raycast(attacker.PrimaryPart.Position,rr.Position-attacker.PrimaryPart.Position,param)
   if hit and not hit.Instance:IsDescendantOf(p.Character) then return end
-  net.Update:FireClient(p,"caught","Jason",attacker.PrimaryPart.CFrame)
+  net.Update:FireClient(p,"caught",killerName,attacker.PrimaryPart.CFrame)
   local current=entry(p)
   if current and current.injured then down(p) else injure(p) end
  end)
@@ -225,20 +225,22 @@ local function introSceneData()
    startPoint=nearest
   end
  end
- local offset=endPivot.Position-killerSpawn
- local endPos=endPivot.Position
- local startPos=(startPoint or (killerSpawn-npc.PrimaryPart.CFrame.LookVector*18))+offset
- local delta=endPos-startPos
- if delta.Magnitude<1 then delta=npc.PrimaryPart.CFrame.LookVector*18 startPos=endPos-delta end
- local forward=delta.Unit
+ -- Start at the real pursuer spawn and let the local clone walk straight through a low camera.
+ local startPos=endPivot.Position
+ local toward=startPoint and (startPoint-startPos) or npc.PrimaryPart.CFrame.LookVector*24
+ toward=Vector3.new(toward.X,0,toward.Z)
+ if toward.Magnitude<1 then toward=Vector3.new(npc.PrimaryPart.CFrame.LookVector.X,0,npc.PrimaryPart.CFrame.LookVector.Z) end
+ if toward.Magnitude<1 then toward=Vector3.new(0,0,-1) end
+ local forward=toward.Unit
+ local endPos=startPos+forward*22
  local startCF=CFrame.lookAt(startPos,startPos+forward)
  local endCF=CFrame.lookAt(endPos,endPos+forward)
  local right=forward:Cross(Vector3.yAxis)
  if right.Magnitude<.1 then right=Vector3.xAxis else right=right.Unit end
- local focus=startPos:Lerp(endPos,.68)+Vector3.new(0,1.8,0)
- local cameraPos=focus+right*7-forward*2.25+Vector3.new(0,2.4,0)
+ local cameraPos=startPos+forward*10+right*1.4+Vector3.new(0,.65,0)
+ local focus=cameraPos+forward*7+Vector3.new(0,1.35,0)
  local cameraCF=CFrame.lookAt(cameraPos,focus)
- return {duration=4,runDuration=3.15,startCF=startCF,endCF=endCF,cameraCF=cameraCF}
+ return {duration=4,runDuration=3.25,startCF=startCF,endCF=endCF,cameraCF=cameraCF,passThroughCamera=true}
 end
 
 local function spawnPlayer(p)
@@ -366,7 +368,9 @@ local function convertCharacterToR6(p,char)
  end
  local pivot=char:GetPivot()
  local animate=char:FindFirstChild("Animate")
- local okDesc,description=pcall(function() return h:GetAppliedDescription() end)
+ -- Use the player's actual Roblox avatar description, then force that appearance onto an R6 body.
+ local okDesc,description=pcall(function() return Players:GetHumanoidDescriptionFromUserIdAsync(p.UserId) end)
+ if not okDesc or not description then okDesc,description=pcall(function() return h:GetAppliedDescription() end) end
  if not okDesc or not description then return nil end
  description.UseAvatarSettings=false
  local ok,newChar=pcall(function()
@@ -548,8 +552,10 @@ local function finish()
     task.spawn(saveProfile,p)
    end
   end
+  local killerWasPlayer=jasonPlayer~=nil
+  local killerWinnerName=killerWasPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName
   for _,p in ipairs(Players:GetPlayers()) do
-   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
+   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
  end
  state.phase="Intervalo" roundClosing=false introUntil=0 net:SetAttribute("IntroUntil",0) if brain then brain.stop() brain=nil end
@@ -636,7 +642,7 @@ task.spawn(function()
      for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then pcall(function() d:SetNetworkOwner(jasonPlayer) end) end end
      net.Update:FireClient(jasonPlayer,"notice","Você é Jason. Persiga os sobreviventes e use o botão de ataque.")
     else
-     brain=AI.start(npc,arena,config.Killers.Jason,{players=players,vulnerable=targetable,catch=catchPlayer})
+     brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=targetable,catch=catchPlayer})
     end
     endTime=introUntil+Rules.Duration
     net:SetAttribute("Phase","Partida")
@@ -673,7 +679,7 @@ task.spawn(function()
       end
      end
      if entered>0 and survivors==0 and not roundClosing then
-      roundClosing=true endTime=math.min(endTime,now()+6) net:SetAttribute("EndsAt",endTime)
+      roundClosing=true endTime=math.min(endTime,now()+2.5) net:SetAttribute("EndsAt",endTime)
      end
      task.wait(1)
     end
