@@ -36,10 +36,22 @@ Players.PlayerRemoving:Connect(function(other)
  local record=watched[other] if record and record.connection then record.connection:Disconnect() end watched[other]=nil
 end)
 for _,other in ipairs(Players:GetPlayers()) do task.spawn(watch,other,false) end
-player:GetAttributeChangedSignal("ShowNametags"):Connect(function()
- for other in pairs(watched) do
+local function refreshNametags()
+ local enabled=player:GetAttribute("ShowNametags")~=false
+ for _,other in ipairs(Players:GetPlayers()) do
   local head=other.Character and other.Character:FindFirstChild("Head")
-  local tag=head and head:FindFirstChild("LocalFriendMarker")
-  if tag then tag.Enabled=player:GetAttribute("ShowNametags")~=false end
+  if head then
+   local friend=head:FindFirstChild("LocalFriendMarker")
+   local normal=head:FindFirstChild("SweanNametag")
+   if friend then friend.Enabled=enabled end
+   if normal then normal.Enabled=enabled end
+  end
+ end
+end
+player:GetAttributeChangedSignal("ShowNametags"):Connect(refreshNametags)
+workspace.DescendantAdded:Connect(function(obj)
+ if (obj.Name=="SweanNametag" or obj.Name=="LocalFriendMarker") and obj:IsA("BillboardGui") then
+  obj.Enabled=player:GetAttribute("ShowNametags")~=false
  end
 end)
+refreshNametags()
