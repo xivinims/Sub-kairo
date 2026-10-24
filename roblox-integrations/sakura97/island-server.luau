@@ -20,7 +20,12 @@ local function recover(player,record,cancelled)
  if player.Parent then event:FireClient(player,"finish") if not cancelled then bridge.DeathFinished:Fire(player) end end
 end
 local function begin(player,cause,mode)
+ -- Death presentation is reserved for a real elimination from an active round.
  if active[player] then return end
+ if mode~="spectate" or player:GetAttribute("RoundStatus")~="eliminated" or player:GetAttribute("InMenu")==true then
+  if player.Parent then player:SetAttribute("VoidActive",false) event:FireClient(player,"finish") end
+  return
+ end
  local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
  if not root or not hum then return end
  local record={started=os.clock(),char=char,anchored=false,autoRotate=true}
@@ -54,7 +59,12 @@ RunService.Heartbeat:Connect(function(dt)
  for _,player in ipairs(Players:GetPlayers()) do
   local char=player.Character local root=char and char:FindFirstChild("HumanoidRootPart") local hum=char and char:FindFirstChildOfClass("Humanoid")
   if root and hum and hum.Health>0 and root.Position.Y<threshold and not active[player] and not player:GetAttribute("InRound") then
-   begin(player,"void")
+   -- Lobby/menu out-of-bounds is not a death. Recover silently without death UI.
+   char:PivotTo(spawn.CFrame*CFrame.new(0,4,0))
+   root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+   root.Anchored=false hum.AutoRotate=true
+   player:SetAttribute("VoidActive",false)
+   event:FireClient(player,"finish")
   end
  end
 end)
