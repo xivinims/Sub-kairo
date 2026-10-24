@@ -4,12 +4,6 @@ local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
 local player=Players.LocalPlayer local net=RS:WaitForChild("Survival") local event=net.Action
-local SoundService=game:GetService("SoundService")
-local themeTemplate=net:WaitForChild("JasonTheme")
-local jasonTheme=themeTemplate:Clone()
-jasonTheme.Name="LocalJasonTheme"
-jasonTheme.Looped=true
-jasonTheme.Parent=SoundService
 local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
 local Settings=require(net:WaitForChild("SettingsPanel"))
@@ -56,7 +50,7 @@ local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(224,52) topActions.Position=UDim2.new(1,-174,0,8)
+topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(224,52) topActions.Position=UDim2.new(1,-174,0,2)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
 bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(224,88) bar.Position=UDim2.new(1,-24,1,-92)
 local function cleanAction(parent,name,label,size,pos,callback)
@@ -110,16 +104,16 @@ local function actionLayout()
  local bottomScale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar) bottomScale.Scale=scale
  local topScale=topActions:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",topActions) topScale.Scale=math.min(scale,.96)
  bar.Position=UDim2.new(1,-24,1,-math.clamp(cam.ViewportSize.Y*.12,76,105))
- topActions.Position=UDim2.new(1,-174,0,8)
+ topActions.Position=UDim2.new(1,-174,0,2)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,16,0,8),function() event:FireServer("leave") end)
+local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,16,0,2),function() event:FireServer("leave") end)
 leave.BackgroundTransparency=1 leave.UIStroke.Enabled=false leave.TextSize=25
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
-local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
 local firstPerson=false
-local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-102,0,8),function()
+local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-102,0,2),function()
  firstPerson=not firstPerson
 end)
 cameraButton.TextSize=23 cameraButton.BackgroundTransparency=1 cameraButton.UIStroke.Enabled=false
@@ -144,6 +138,67 @@ local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)
 local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=14 condition.TextColor3=Color3.fromRGB(144,223,111)
 local quickItems=panel("QuickItems",UDim2.fromOffset(200,34),UDim2.new(.5,-100,1,-54)) quickItems.BackgroundTransparency=.35
 local itemText=text(quickItems,"Items","",UDim2.fromScale(1,1),UDim2.new()) itemText.TextSize=11
+
+local roster=Instance.new("Frame",gui)
+roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(18,132) roster.Size=UDim2.fromOffset(246,390)
+local rosterList=Instance.new("UIListLayout",roster) rosterList.Padding=UDim.new(0,6) rosterList.SortOrder=Enum.SortOrder.LayoutOrder
+local rosterRows={}
+local function rosterRow(p)
+ local row=Instance.new("Frame",roster)
+ row.Name="Player_"..p.UserId row.Size=UDim2.fromOffset(238,43) row.BorderSizePixel=0
+ row.BackgroundColor3=Color3.fromRGB(58,59,64) row.BackgroundTransparency=.08 row.LayoutOrder=p.UserId
+ local corner=Instance.new("UICorner",row) corner.CornerRadius=UDim.new(0,21)
+ local gradient=Instance.new("UIGradient",row)
+ gradient.Rotation=0
+ gradient.Transparency=NumberSequence.new({
+  NumberSequenceKeypoint.new(0,.78),
+  NumberSequenceKeypoint.new(.46,.38),
+  NumberSequenceKeypoint.new(1,.04)
+ })
+ local name=text(row,"Name",p.DisplayName or p.Name,UDim2.new(1,-66,0,22),UDim2.fromOffset(12,2))
+ name.Font=Enum.Font.GothamBold name.TextSize=13 name.TextXAlignment=Enum.TextXAlignment.Left name.TextTruncate=Enum.TextTruncate.AtEnd name.TextWrapped=false name.ZIndex=3
+ local track=Instance.new("Frame",row)
+ track.Name="Health" track.Size=UDim2.new(1,-92,0,7) track.Position=UDim2.fromOffset(12,29)
+ track.BackgroundColor3=Color3.fromRGB(50,51,54) track.BackgroundTransparency=.12 track.BorderSizePixel=0 track.ZIndex=3
+ Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
+ local fill=Instance.new("Frame",track)
+ fill.Name="Fill" fill.Size=UDim2.fromScale(1,1) fill.BackgroundColor3=Color3.fromRGB(130,193,74) fill.BorderSizePixel=0 fill.ZIndex=4
+ Instance.new("UICorner",fill).CornerRadius=UDim.new(1,0)
+ local heart=text(row,"Heart","♥",UDim2.fromOffset(22,22),UDim2.new(1,-70,0,21))
+ heart.TextSize=18 heart.TextColor3=Color3.fromRGB(228,91,91) heart.ZIndex=4
+ local avatar=Instance.new("ImageLabel",row)
+ avatar.Name="Avatar" avatar.AnchorPoint=Vector2.new(1,.5) avatar.Position=UDim2.new(1,-3,.5,0) avatar.Size=UDim2.fromOffset(38,38)
+ avatar.BackgroundColor3=Color3.fromRGB(82,83,89) avatar.BackgroundTransparency=.02 avatar.BorderSizePixel=0 avatar.ZIndex=4
+ Instance.new("UICorner",avatar).CornerRadius=UDim.new(1,0)
+ task.spawn(function()
+  local ok,image=pcall(function() return Players:GetUserThumbnailAsync(p.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size100x100) end)
+  if ok and row.Parent then avatar.Image=image end
+ end)
+ rosterRows[p.UserId]={frame=row,player=p,fill=fill,name=name,heart=heart}
+ return row
+end
+local function updateRoster()
+ local wanted={}
+ for _,p in ipairs(Players:GetPlayers()) do
+  if p:GetAttribute("InRound")==true and p:GetAttribute("IsJason")~=true then
+   wanted[p.UserId]=true
+   if not rosterRows[p.UserId] then rosterRow(p) end
+  end
+ end
+ for id,data in pairs(rosterRows) do
+  if not wanted[id] or not data.player.Parent then data.frame:Destroy() rosterRows[id]=nil
+  else
+   local p=data.player
+   local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+   local ratio=h and h.MaxHealth>0 and math.clamp(h.Health/h.MaxHealth,0,1) or (p:GetAttribute("Downed") and .18 or 1)
+   data.fill.Size=UDim2.fromScale(ratio,1)
+   data.name.Text=p.DisplayName or p.Name
+   local down=p:GetAttribute("Downed")==true or p:GetAttribute("RoundStatus")=="eliminated"
+   data.fill.BackgroundColor3=down and Color3.fromRGB(190,77,77) or p:GetAttribute("Injured") and Color3.fromRGB(216,170,72) or Color3.fromRGB(130,193,74)
+   data.heart.TextTransparency=down and .45 or 0
+  end
+ end
+end
 local musicPanel
 local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-152,0,8),function() musicPanel.Visible=not musicPanel.Visible end)
 musicButton.BackgroundTransparency=1 musicButton.UIStroke.Enabled=false musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
@@ -178,25 +233,57 @@ local function showResult(data)
  local generation=resultGeneration
  for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("Frame") then old:Destroy() end end
  resultRows.CanvasPosition=Vector2.zero
- resultHeader.Text=data.jasonWon and "JASON VENCEU" or "SOBREVIVENTES VENCERAM"
+ resultHeader.Text=string.upper(data.winnerText or (data.jasonWon and ((data.killerWinnerName or data.killer or "PERSONAGEM").." venceu a partida") or "Sobreviventes venceram a partida"))
  resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(227,97,102) or Color3.fromRGB(224,225,230)
  resultSubtitle.Text=(data.map or "").."  •  SUA RECOMPENSA +"..tostring(data.xp or 0).." XP"
  resultSide.Visible=not data.jasonWon resultView.Visible=data.jasonWon==true
- resultWinner.Text=data.jasonWon and "JASON\nNINGUÉM ESCAPOU" or "SOBREVIVENTES\nA ESPERANÇA RESISTIU"
+ resultWinner.Text=data.jasonWon and ((data.killerWinnerName or data.killer or "Personagem").."\nVENCEU A PARTIDA") or "SOBREVIVENTES\nVENCERAM A PARTIDA"
  if data.jasonWon then
-  local template=net:FindFirstChild("PresentationJason")
+  local template=nil
+  for _,candidate in ipairs(workspace:GetChildren()) do
+   if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then template=candidate break end
+  end
+  template=template or net:FindFirstChild("PresentationJason")
+  local sceneTemplate=RS:FindFirstChild("MenuSceneTemplate")
+  local scene=sceneTemplate and sceneTemplate:Clone()
+  local base=Vector3.zero
+  local forward=Vector3.new(0,0,-1)
+  if scene then
+   scene.Name="VictoryDoorsScene"
+   for _,d in ipairs(scene:GetDescendants()) do
+    if d:IsA("LuaSourceContainer") then d:Destroy()
+    elseif d:IsA("Sound") then d.Playing=false
+    elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+   end
+   scene.Parent=resultWorld
+   local best,bestArea=nil,-1
+   for _,part in ipairs(scene:GetDescendants()) do
+    if part:IsA("BasePart") and part.Transparency<.98 and part.CFrame.UpVector.Y>.82 and part.Size.X>=7 and part.Size.Z>=7 then
+     local area=part.Size.X*part.Size.Z
+     if area>bestArea then best,bestArea=part,area end
+    end
+   end
+   if best then
+    base=best.CFrame:PointToWorldSpace(Vector3.new(0,best.Size.Y/2+.05,0))
+    forward=Vector3.new(best.CFrame.LookVector.X,0,best.CFrame.LookVector.Z)
+    if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+   end
+  end
   if template then
-   local model=template:Clone() model.Name="WinnerJason" model:SetAttribute("PresentationPursuer",true)
-   model.Parent=resultWorld model:PivotTo(CFrame.identity)
-   local cf,size=model:GetBoundingBox()
-   local focus=cf.Position+Vector3.new(0,size.Y*.08,0)
-   local distance=math.max(size.Y,size.X)*1.75
-   local forward=model.PrimaryPart and model.PrimaryPart.CFrame.LookVector or Vector3.new(0,0,-1)
-   resultCamera.CFrame=CFrame.lookAt(focus+forward*distance+Vector3.new(0,size.Y*.04,0),focus)
+   template.Archivable=true
+   local model=template:Clone() model.Name="WinnerPursuer" model:SetAttribute("PresentationPursuer",true) model:SetAttribute("ActivePursuer",nil)
+   for _,part in ipairs(model:GetDescendants()) do if part:IsA("BasePart") then part.Anchored=part==model.PrimaryPart part.CanCollide=false part.CanTouch=false part.CanQuery=false end end
+   model.Parent=resultWorld
+   local _,size=model:GetBoundingBox()
+   model:PivotTo(CFrame.lookAt(base+Vector3.new(0,size.Y*.5,0),base+forward*8+Vector3.new(0,size.Y*.45,0)))
+   local focus=base+Vector3.new(0,size.Y*.52,0)
+   resultCamera.CFrame=CFrame.lookAt(base-forward*10+Vector3.new(0,size.Y*.54,0),focus)
+   resultCamera.FieldOfView=48
   end
  end
  for i,row in ipairs(data.board or {}) do if i>8 then break end
-  local card=Instance.new("Frame",resultRows) card.Name="Rank"..i card.Size=UDim2.new(1,-6,0,62) card.LayoutOrder=i card.BorderSizePixel=0 card.ZIndex=72 card.BackgroundColor3=row.userId==player.UserId and Color3.fromRGB(79,35,40) or Color3.fromRGB(39,35,40) card.BackgroundTransparency=.28 Instance.new("UICorner",card).CornerRadius=UDim.new(0,10)
+  local card=Instance.new("Frame",resultRows) card.Name="Rank"..i card.Size=UDim2.new(1,-6,0,62) card.LayoutOrder=i card.BorderSizePixel=0 card.ZIndex=72 card.BackgroundColor3=row.userId==player.UserId and Color3.fromRGB(79,35,40) or Color3.fromRGB(39,35,40) card.BackgroundTransparency=.18 Instance.new("UICorner",card).CornerRadius=UDim.new(0,10)
+  local fade=Instance.new("UIGradient",card) fade.Rotation=0 fade.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.05),NumberSequenceKeypoint.new(1,.76)})
   local rank=text(card,"Position",string.format("%02d",i),UDim2.fromOffset(34,58),UDim2.fromOffset(2,0)) rank.TextSize=17 rank.ZIndex=73 rank.TextColor3=Color3.fromRGB(174,130,134)
   local name=text(card,"Name",row.name or "Jogador",UDim2.new(1,-48,0,26),UDim2.fromOffset(40,5)) name.Font=Enum.Font.GothamBold name.TextSize=13 name.TextXAlignment=Enum.TextXAlignment.Left name.ZIndex=73 name.TextTruncate=Enum.TextTruncate.AtEnd name.TextWrapped=false
   local seconds=math.max(0,row.time or 0)
@@ -210,13 +297,15 @@ local function showResult(data)
  resultRows.Visible=true resultSubtitle.Visible=true resultWinner.Visible=true
  if data.jasonWon then
   result.Size=UDim2.fromScale(1,1) resultLimit.MaxSize=Vector2.new(10000,10000)
-  resultView.Size=UDim2.fromScale(1,1) resultView.Position=UDim2.new()
-  resultRows.Visible=false resultSubtitle.Visible=false resultWinner.Visible=false
-  resultHeader.ZIndex=73
+  resultView.Size=UDim2.fromScale(1,1) resultView.Position=UDim2.new() resultView.ZIndex=71
+  resultRows.Visible=true resultRows.Position=UDim2.new(.025,0,.23,0) resultRows.Size=UDim2.new(.30,0,.58,0) resultRows.ZIndex=74
+  resultSubtitle.Visible=false resultWinner.Visible=false
+  resultHeader.ZIndex=75
   task.delay(4,function()
    if generation~=resultGeneration or not result.Visible then return end
    result.Size=UDim2.new(.92,0,.82,0) resultLimit.MaxSize=Vector2.new(1050,650)
-   resultView.Size=UDim2.new(.36,-14,.64,0) resultView.Position=UDim2.new(.64,0,.14,0)
+   resultView.Size=UDim2.new(.36,-14,.64,0) resultView.Position=UDim2.new(.64,0,.14,0) resultView.ZIndex=72
+   resultRows.Position=UDim2.fromOffset(16,80) resultRows.Size=UDim2.new(.64,-20,1,-100) resultRows.ZIndex=71
    resultRows.Visible=true resultSubtitle.Visible=true resultWinner.Visible=true
   end)
  end
@@ -467,20 +556,17 @@ local function pulseLobbyDoor()
  end)
 end
 
-local doorLeaf=nil local doorRound=nil local doorCF=nil
-local function clearDoor() if doorLeaf then doorLeaf:Destroy() doorLeaf=nil end doorRound=nil end
+local doorRound=nil local doorCF=nil
+local function clearDoor() doorRound=nil end
 local function closeDoor()
- if doorLeaf or not doorCF then return end
- doorLeaf=Instance.new("Part") doorLeaf.Name="PrivateEntranceDoor" doorLeaf.Size=Vector3.new(6,8,.6) doorLeaf.Anchored=true doorLeaf.CanCollide=true doorLeaf.Material=Enum.Material.WoodPlanks doorLeaf.Color=Color3.fromRGB(39,29,28)
- doorLeaf.CFrame=doorCF*CFrame.new(-3,1,0)*CFrame.Angles(0,-math.pi/2,0)*CFrame.new(3,0,0) doorLeaf.Parent=workspace
- TweenService:Create(doorLeaf,TweenInfo.new(.65,Enum.EasingStyle.Sine),{CFrame=doorCF*CFrame.new(0,1,0)}):Play()
+ -- The entrance remains an invisible gameplay marker; no physical/visual door is created.
 end
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="lobbyDoorGlow" then pulseLobbyDoor()
  elseif action=="jasonIntro" then playJasonIntro(a,b)
  elseif action=="entrance" then clearDoor() doorRound=a doorCF=b
  elseif action=="closeEntrance" and a==doorRound then closeDoor()
- elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false if jasonTheme.IsPlaying then jasonTheme:Stop() end
+ elseif action=="reset" then cancelCapture() cancelJasonIntro(not player:GetAttribute("VoidActive") and not player:GetAttribute("InMenu")) clearDoor() doorCF=nil loadToken+=1 loading.Visible=false
  elseif action=="notice" then notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then preload(a,b)
  elseif action=="caught" or action=="executed" then task.spawn(caughtAnimation,a,b)
@@ -516,16 +602,12 @@ RunService.RenderStepped:Connect(function(dt)
  local isJason=player:GetAttribute("IsJason")==true
  local active=isJason and player:GetAttribute("InRound")==true and player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and not cinematicActive
  if active then
-  if player:GetAttribute("MusicEnabled")~=false then
-   if not jasonTheme.IsPlaying then jasonTheme:Play() end
-  elseif jasonTheme.IsPlaying then jasonTheme:Stop() end
   local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
   local speed=root and (root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
   local targetFov=player:GetAttribute("ReducedMotion") and baseFov or math.min(100,baseFov+(speed>4 and 14 or 8))
   jasonPresentationFov+=(targetFov-jasonPresentationFov)*math.min(1,dt*6)
   if camera.CameraType~=Enum.CameraType.Scriptable then camera.FieldOfView=jasonPresentationFov end
  else
-  if jasonTheme.IsPlaying then jasonTheme:Stop() end
   jasonPresentationFov+=(baseFov-jasonPresentationFov)*math.min(1,dt*6)
   if player:GetAttribute("InMenu")~=true and player:GetAttribute("Spectating")~=true and not captureActive and camera.CameraType~=Enum.CameraType.Scriptable then
    camera.FieldOfView=jasonPresentationFov
@@ -541,6 +623,8 @@ RunService.RenderStepped:Connect(function(dt)
  musicButton.Visible=not hidden and not result.Visible and not settingsOverlay.Visible and not player:GetAttribute("InRound") musicPanel.Visible=musicPanel.Visible and not hidden and not player:GetAttribute("InRound")
  settingsButton.Visible=not hidden and not result.Visible settingsOverlay.Visible=settingsOverlay.Visible and not hidden
  profileHUD.Visible=not hidden and not result.Visible
+ roster.Visible=not hidden and not result.Visible and player:GetAttribute("InRound")==true and player:GetAttribute("IsJason")~=true and player:GetAttribute("Spectating")~=true
+ updateRoster()
  local controlsVisible=not settingsOverlay.Visible and not result.Visible and player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  healthHUD.Visible=not hidden and inRound and not result.Visible quickItems.Visible=healthHUD.Visible and not player:GetAttribute("IsJason")
@@ -601,8 +685,11 @@ RunService.RenderStepped:Connect(function(dt)
    camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=p.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70
    spectatorName.Text=p.DisplayName watching=true
   else
-   watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-   spectatorName.Text="Nenhum sobrevivente disponível" watching=true
+   watchedId=nil
+   spectate.Visible=false
+   spectatorName.Text=""
+   if not watching then camera.CameraType=Enum.CameraType.Scriptable end
+   watching=true
   end
  elseif watching and not hidden and camera then watching=false watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=70 end
  highlight.Enabled=false
