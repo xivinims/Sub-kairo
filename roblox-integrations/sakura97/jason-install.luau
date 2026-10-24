@@ -73,12 +73,27 @@ local lobbyParams=RaycastParams.new()
 lobbyParams.FilterType=Enum.RaycastFilterType.Include
 lobbyParams.FilterDescendantsInstances={lobby}
 lobbyParams.RespectCanCollide=true
-local inside=original-Vector3.new(12,0,0)
-local floor=assert(workspace:Raycast(inside,Vector3.new(0,-30,0),lobbyParams),"Lobby entry floor missing")
-assert(floor.Normal.Y>.8,"Lobby spawn slope")
+local verified=lobby:GetAttribute("VerifiedSpawn")
+local floor
+if typeof(verified)=="Vector3" then
+ floor=workspace:Raycast(verified+Vector3.new(0,10,0),Vector3.new(0,-24,0),lobbyParams)
+end
+if not floor then
+ local forward=Vector3.new(rotation.LookVector.X,0,rotation.LookVector.Z)
+ if forward.Magnitude<.1 then forward=Vector3.new(1,0,0) else forward=forward.Unit end
+ for _,candidate in ipairs({original-forward*12,original+forward*12,original-rotation.RightVector*10,original+rotation.RightVector*10}) do
+  local hit=workspace:Raycast(candidate+Vector3.new(0,8,0),Vector3.new(0,-24,0),lobbyParams)
+  if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then floor=hit break end
+ end
+end
+assert(floor and floor.Normal.Y>.85,"Lobby safe spawn floor missing")
+lobby:SetAttribute("VerifiedSpawn",floor.Position)
 local spawn=assert(workspace:FindFirstChild("IslandSpawn"))
-spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,.2,0),Vector3.new(original.X,floor.Position.Y+.2,original.Z))
-spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.Duration=0
+spawn.Size=Vector3.new(6,1,6)
+local face=Vector3.new(original.X,floor.Position.Y,original.Z)
+spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,spawn.Size.Y/2+.08,0),face)
+spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.CanTouch=false spawn.CanQuery=false spawn.Duration=0
+spawn.AllowTeamChangeOnTouch=false
 
 -- Retire the old broken door geometry. It stays in the lobby hierarchy for preservation,
 -- but no old shutter/frame piece is allowed to block or visually fill the doorway.
