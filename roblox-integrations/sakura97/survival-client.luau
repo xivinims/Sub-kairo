@@ -96,7 +96,7 @@ local musicBuy=button(musicPanel,"BuyMusic","Desbloquear Music • 20 pts",UDim2
 local musicPlay=button(musicPanel,"PlayMusic","Tocar",UDim2.fromOffset(124,28),UDim2.fromOffset(12,160),function() event:FireServer("musicPlay",musicId.Text) end) musicPlay.ZIndex=62
 local musicStop=button(musicPanel,"StopMusic","Parar",UDim2.fromOffset(124,28),UDim2.new(1,-136,0,160),function() event:FireServer("musicStop") end) musicStop.ZIndex=62
 local function updateSinger() local owned=player:GetAttribute("Cantor")==true musicId.TextEditable=owned musicStatus.Text=owned and "🎤 CANTOR • use um ID de áudio" or "Desbloqueie Music por 20 Pontos para receber o distintivo Cantor." musicBuy.Visible=not owned end
-updateSinger() player:GetAttributeChangedSignal("Cantor"):Connect(updateSinger)
+updateSinger() if player.GetAttributeChangedSignal then player:GetAttributeChangedSignal("Cantor"):Connect(updateSinger) end
 musicId.FocusLost:Connect(function(enter) if enter and player:GetAttribute("Cantor") then event:FireServer("musicPlay",musicId.Text) end end)
 local result=panel("RoundResult",UDim2.new(.9,0,.8,0),UDim2.fromScale(.5,.5)) result.AnchorPoint=Vector2.new(.5,.5) result.Visible=false result.ZIndex=70
 local resultHeader=text(result,"Header","FIM DA PARTIDA",UDim2.new(1,-24,0,42),UDim2.fromOffset(12,8)) resultHeader.Font=Enum.Font.GothamBlack resultHeader.TextSize=25 resultHeader.ZIndex=71
