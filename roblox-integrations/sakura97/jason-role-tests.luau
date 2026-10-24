@@ -120,10 +120,9 @@ local ok,result=xpcall(function()
   r.Anchored=true p.attrs.VoidActive=false
  end
  send(players[9],"afk",true)
- for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
- for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
- send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote bypassed portal")
+ for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Automatic lobby admission did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
+ send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote join bypassed AFK admission")
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
@@ -135,15 +134,15 @@ local ok,result=xpcall(function()
  for _,p in ipairs(players) do if p:GetAttribute("IsJason") then killer=p killers+=1 end end
  assert(killers==1 and killer,"Exactly one player must become Jason")
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
- assert(messages[killer] and messages[killer].jasonIntro,"Player Jason did not receive intro cinematic")
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==0,"Player Jason was not frozen during intro")
+ assert(not (messages[killer] and messages[killer].jasonIntro),"Removed killer intro cinematic was sent")
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player killer movement must be available immediately")
  local victim=nil
  for i,p in ipairs(players) do
   p.Character:PivotTo(CFrame.new(i*30,1000,0)) p.Character.HumanoidRootPart.Anchored=true
   if i<=8 and p~=killer then victim=p end
  end
- advance(4.2)
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player Jason movement was not restored after intro")
+ advance(.5)
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player killer movement changed unexpectedly")
  local before=net:GetAttribute("EndsAt")
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
@@ -163,7 +162,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,survivorR6=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
+ return {ok=true,survivorR6=true,eightParticipantPlayerJason=true,noKillerIntro=true,immediateKillerMovement=true,automaticLobbyAdmission=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
 
 end,debug.traceback)
 dc:Disconnect()
