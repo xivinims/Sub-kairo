@@ -107,64 +107,11 @@ end
 door:SetAttribute("HeldOpen",true)
 door:SetAttribute("VisualReplaced",true)
 
-local visual=replace(workspace,"SurviversLobbyDoorVisual","Model")
-visual:SetAttribute("Open",true)
-visual:SetAttribute("OpenAngle",78)
-visual:SetAttribute("OriginalDoorCenter",original)
-
-local centerCF=CFrame.new(original.X,floor.Position.Y+4.6,original.Z)*rotation
-local function visualPart(name,size,cf,color,material,transparency)
- local p=Instance.new("Part")
- p.Name=name p.Size=size p.CFrame=cf p.Anchored=true p.CanCollide=false p.CanTouch=false p.CanQuery=false
- p.Color=color p.Material=material or Enum.Material.WoodPlanks p.Transparency=transparency or 0
- p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth
- p.Parent=visual
- return p
-end
-
--- Dark frame, leaving a real empty opening.
-local frameColor=Color3.fromRGB(36,30,32)
-visualPart("FrameLeft",Vector3.new(.75,9.2,.75),centerCF*CFrame.new(0,0,-4.25),frameColor,Enum.Material.Metal)
-visualPart("FrameRight",Vector3.new(.75,9.2,.75),centerCF*CFrame.new(0,0,4.25),frameColor,Enum.Material.Metal)
-visualPart("FrameTop",Vector3.new(.75,.75,9.25),centerCF*CFrame.new(0,4.25,0),frameColor,Enum.Material.Metal)
-
--- Two actual door leaves, already swung open around their hinges.
-local leafColor=Color3.fromRGB(67,35,36)
-local angle=math.rad(78)
-local left=visualPart("LeftLeaf",Vector3.new(.42,8.1,3.55),
- centerCF*CFrame.new(0,-.3,-3.9)*CFrame.Angles(0,angle,0)*CFrame.new(0,0,1.775),
- leafColor,Enum.Material.WoodPlanks)
-local right=visualPart("RightLeaf",Vector3.new(.42,8.1,3.55),
- centerCF*CFrame.new(0,-.3,3.9)*CFrame.Angles(0,-angle,0)*CFrame.new(0,0,-1.775),
- leafColor,Enum.Material.WoodPlanks)
-left:SetAttribute("OpenLeaf",true) right:SetAttribute("OpenLeaf",true)
-
--- Thin luminous trim for the entry pulse.
-local glowColor=Color3.fromRGB(174,42,45)
-for _,spec in ipairs({
- {"GlowLeft",Vector3.new(.16,8.1,.16),CFrame.new(0,-.25,-3.78)},
- {"GlowRight",Vector3.new(.16,8.1,.16),CFrame.new(0,-.25,3.78)},
- {"GlowTop",Vector3.new(.16,.16,7.7),CFrame.new(0,3.78,0)},
-}) do
- local p=visualPart(spec[1],spec[2],centerCF*spec[3],glowColor,Enum.Material.Neon,.52)
- p:SetAttribute("LobbyGlowPart",true)
-end
-local glowCore=visualPart("GlowCore",Vector3.new(.2,.2,.2),centerCF*CFrame.new(0,1.2,0),glowColor,Enum.Material.Neon,1)
-glowCore:SetAttribute("LobbyGlowPart",true)
-local light=Instance.new("PointLight")
-light.Name="EntryGlow" light.Color=glowColor light.Range=14 light.Brightness=.35 light.Shadows=false light.Parent=glowCore
-
-local gate=replace(workspace,"LobbyJoinPortal","Part")
-gate.Size=Vector3.new(14,12,14)
-gate.CFrame=CFrame.new(original.X,floor.Position.Y+gate.Size.Y/2,original.Z)*rotation
-gate.Anchored=true gate.CanCollide=false gate.CanTouch=false gate.CanQuery=false gate.Transparency=1
-gate:SetAttribute("DoorAdmission",true)
-gate:SetAttribute("VisualDoor","SurviversLobbyDoorVisual")
-local sign=Instance.new("BillboardGui",gate)
-sign.Name="EntrySign" sign.Size=UDim2.fromOffset(220,42) sign.StudsOffset=Vector3.new(0,5,0) sign.MaxDistance=55
-local label=Instance.new("TextLabel",sign)
-label.Size=UDim2.fromScale(1,1) label.BackgroundTransparency=1 label.Text="ENTRE PARA JOGAR"
-label.TextColor3=Color3.fromRGB(225,208,208) label.Font=Enum.Font.GothamMedium label.TextSize=18
+local oldVisual=workspace:FindFirstChild("SurviversLobbyDoorVisual")
+if oldVisual then oldVisual:Destroy() end
+local oldGate=workspace:FindFirstChild("LobbyJoinPortal")
+if oldGate then oldGate:Destroy() end
+lobby:SetAttribute("AutomaticRoundAdmission",true)
 
 local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",122) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
