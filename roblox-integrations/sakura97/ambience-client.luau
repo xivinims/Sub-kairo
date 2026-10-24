@@ -150,7 +150,18 @@ local function refresh(force)
  local theme=inArena and themes[name] or nil
  local low=player:GetAttribute("LowGraphics")==true
  local reflect=reflectionEnabled()
- local key=table.concat({theme and name or "Lobby",tostring(low),tostring(reflect),tostring(player:GetAttribute("MapShadows"))},"|")
+ local userSaturation=player:GetAttribute("VisualSaturation")
+ local userContrast=player:GetAttribute("VisualContrast")
+ local userExposure=player:GetAttribute("VisualExposure")
+ local userTime=player:GetAttribute("VisualTime")
+ if userSaturation==nil then userSaturation=-.65 end
+ if userContrast==nil then userContrast=0 end
+ if userExposure==nil then userExposure=1.5 end
+ if userTime==nil then userTime=8.25 end
+ local key=table.concat({
+  theme and name or "Lobby",tostring(low),tostring(reflect),tostring(player:GetAttribute("MapShadows")),
+  tostring(userSaturation),tostring(userContrast),tostring(userExposure),tostring(userTime)
+ },"|")
  if key==lastKey and not force then return end
  lastKey=key
 
@@ -162,8 +173,8 @@ local function refresh(force)
   local target={
    Ambient=theme.ambient,
    OutdoorAmbient=theme.outdoor,
-   ExposureCompensation=low and theme.exposure-.04 or theme.exposure,
-   ClockTime=theme.clock,
+   ExposureCompensation=userExposure,
+   ClockTime=userTime,
    Brightness=low and math.min(theme.brightness,1.65) or theme.brightness,
    ShadowSoftness=low and .65 or .38,
    EnvironmentDiffuseScale=low and .22 or .42,
@@ -182,8 +193,8 @@ local function refresh(force)
 
   grade.Enabled=true
   gradeTween=TweenService:Create(grade,TweenInfo.new(.8),{
-   TintColor=theme.tint,Contrast=low and theme.contrast*.65 or theme.contrast,
-   Saturation=low and theme.saturation*.55 or theme.saturation,Brightness=0,
+   TintColor=theme.tint,Contrast=userContrast,
+   Saturation=userSaturation,Brightness=0,
   })
   gradeTween:Play()
 
