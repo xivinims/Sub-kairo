@@ -133,7 +133,7 @@ local oldGate=workspace:FindFirstChild("LobbyJoinPortal")
 if oldGate then oldGate:Destroy() end
 lobby:SetAttribute("AutomaticRoundAdmission",true)
 
-local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",122) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
+local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",123) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
 workspace.StreamingEnabled=false
 local storage=replace(SS,"SurvivalAssets","Folder")
@@ -289,11 +289,6 @@ local survivorSaves=survivorAsset:FindFirstChild("AnimSaves",true) or survivorAs
 compact(survivorSaves,survivor) survivorAsset:Destroy()
 assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken Survivor Animations contains no KeyframeSequence")
 
-local crouchAsset=load(134326820545987)
-local crouch=Instance.new("Folder",net) crouch.Name="CrouchClips" crouch:SetAttribute("SourceAssetId",134326820545987)
-local crouchSaves=crouchAsset:FindFirstChild("AnimSaves",true) or crouchAsset
-compact(crouchSaves,crouch) crouchAsset:Destroy()
-assert((crouch:GetAttribute("ClipCount") or 0)>0,"R15 Crouch Animation contains no KeyframeSequence")
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
 scriptAt(SSS,"IslandServer","Script",__ISLAND_SERVER_SOURCE__)
 scriptAt(SP,"VoidSequence","LocalScript",__VOID_SOURCE__)
@@ -305,10 +300,22 @@ scriptAt(SSS,"KillerFactory","ModuleScript",__KILLER_FACTORY_SOURCE__)
 scriptAt(SSS,"SurvivalServer","Script",__SURVIVAL_SERVER_SOURCE__)
 scriptAt(SP,"SurvivalClient","LocalScript",__SURVIVAL_CLIENT_SOURCE__)
 scriptAt(SP,"PursuerAnimation","LocalScript",__ANIMATION_SOURCE__)
-net:SetAttribute("Version",122) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
-local light=game:GetService("Lighting") light.ClockTime=0 light.Brightness=2 light.Ambient=Color3.fromRGB(65,63,72) light.OutdoorAmbient=Color3.fromRGB(82,84,96) light.ExposureCompensation=.1
-local grade=replace(light,"SurviversGrade","ColorCorrectionEffect") grade.Contrast=.12 grade.Saturation=-.18 grade.TintColor=Color3.fromRGB(236,231,241)
--- Avoid expensive blur and depth-of-field on mobile.
-for _,v in ipairs(light:GetChildren()) do if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end end
+net:SetAttribute("Version",123) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
+local light=game:GetService("Lighting")
+light.ClockTime=0
+light.Brightness=1.9
+light.Ambient=Color3.fromRGB(62,62,70)
+light.OutdoorAmbient=Color3.fromRGB(80,84,94)
+light.ExposureCompensation=.04
+light.GlobalShadows=true
+light.ShadowSoftness=.42
+light.EnvironmentDiffuseScale=.34
+light.EnvironmentSpecularScale=.72
+local oldGrade=light:FindFirstChild("SurviversGrade")
+if oldGrade then oldGrade:Destroy() end
+-- ArenaAmbience creates adaptive post effects locally; no heavy global blur is baked into the place.
+for _,v in ipairs(light:GetChildren()) do
+ if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end
+end
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true}
 
