@@ -2,7 +2,7 @@ local originalSounds={} for _,v in ipairs(game:GetService("SoundService"):GetChi
 local realGame=game local RS=game:GetService("ReplicatedStorage")
 local host=Instance.new("Folder",workspace) host.Name="SurvivalClientTest"
 local render=Instance.new("BindableEvent",host) local input=Instance.new("BindableEvent",host) local ended=Instance.new("BindableEvent",host) local update=Instance.new("BindableEvent",host)
-local attrs={InRound=true,SweanLoadingDone=true,HasMedkit=true,HasBoost=true,RoundStatus="alive"}
+local attrs={InRound=true,SweanLoadingDone=true,RoundStatus="alive"}
 local p={attrs=attrs,Character=nil,UserId=991,DisplayName="Tester",Parent=host}
 local description=Instance.new("HumanoidDescription")
 local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) char.Parent=host p.Character=char
@@ -42,13 +42,14 @@ local ok,result=xpcall(function()
  local mapLoading=assert(gui:FindFirstChild("ArenaLoading"),"Map loading screen missing")
  assert(mapLoading:FindFirstChild("MapProgress") and mapLoading.MapProgress:FindFirstChild("Fill"),"Bottom map loading progress bar missing")
  assert(mapLoading:FindFirstChild("GoodLuck") and mapLoading.GoodLuck.Text=="GOOD LUCK","Good Luck loading text missing")
+ assert(mapLoading:FindFirstChild("ArenaAvatar") and mapLoading.ArenaAvatar:IsA("ViewportFrame"),"Animated arena loading avatar viewport missing")
  update:Fire("jasonIntro",{duration=4},introJason) task.wait()
  assert(gui:GetAttribute("CinematicActive")~=true and not workspace:FindFirstChild("LocalJasonIntro"),"Removed killer intro cinematic returned")
  update:Fire("caught","Jason",CFrame.new(0,0,-3)) task.wait()
  update:Fire("reset") task.wait()
  attrs.VoidActive=true camera.CameraType=Enum.CameraType.Scriptable
  task.wait(.7)
- assert(camera.CameraType==Enum.CameraType.Scriptable and not gui.Capture.Visible,"Hit reaction must never steal the death/menu camera")
+ assert(camera.CameraType==Enum.CameraType.Scriptable and not gui:FindFirstChild("Capture"),"Hit reaction must never restore removed capture UI or steal death/menu camera")
  attrs.VoidActive=false
  update:Fire("roundResult",{jasonWon=true,killer="JohnDoe",killerPlayer=false,killerWinnerName="JohnDoe",winnerText="JohnDoe venceu a partida",lastVictimUserId=992,lastVictimName="Sobrevivente",map="Base Abandonada",xp=50,board={{name="Tester",userId=991,time=125,hits=2,falls=1,level=4},{name="Sobrevivente",userId=992,time=111,hits=3,falls=2,level=2}}}) task.wait()
  assert(gui.RoundResult.Ranking:IsA("ScrollingFrame") and gui.RoundResult.Ranking.Rank1,"Scrollable result ranking missing")
@@ -83,7 +84,7 @@ local ok,result=xpcall(function()
  local beforeRemovedHotkeys=#requests
  input:Fire({KeyCode=Enum.KeyCode.E},false) input:Fire({KeyCode=Enum.KeyCode.Q},false) task.wait()
  assert(#requests==beforeRemovedHotkeys,"Removed boost/kit hotkeys still fire actions")
- attrs.MusicEnabled=false attrs.IsJason=true step()
+ attrs.IsJason=true step()
  assert(not game:GetService("SoundService"):FindFirstChild("LocalJasonTheme"),"Automatic Jason theme was recreated")
  attrs.IsJason=false
  attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+30 step()
@@ -112,7 +113,7 @@ local ok,result=xpcall(function()
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
+ return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,animatedLoadingAvatar=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
