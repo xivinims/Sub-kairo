@@ -1,6 +1,6 @@
 -- Exact animation playback for Jason and survivors.
 -- Survivor default = Forsaken Survivor Animations (127092032896760).
--- Crouching = full-body R15 Crouch Animation set (134326820545987).
+-- Survivors are R6. Crouching retargets the supplied R15 crouch set (134326820545987) onto the six R6 motors.
 local Run=game:GetService("RunService")
 local Players=game:GetService("Players")
 local Http=game:GetService("HttpService")
@@ -84,33 +84,52 @@ local function prepare(model,folder)
    d.lookup[normalized(j.Name)]=j
   end
  end
+ local hum=model:FindFirstChildOfClass("Humanoid")
+ local rigType=hum and hum.RigType or Enum.HumanoidRigType.R6
  local motors={}
  for joint in pairs(d.joints) do motors[normalized(joint.Name)]=joint end
- -- Forsaken survivor clips are authored on an R6 hierarchy.
- -- Retarget R6 body poses directly to the equivalent R15 Motor6D joints.
- local aliasTargets={
-  humanoidrootpart="root",rootpart="root",torso="root",
-  uppertorso="waist",
-  head="neck",
-  leftarm="leftshoulder",rightarm="rightshoulder",
-  leftleg="lefthip",rightleg="righthip",
- }
+ local aliasTargets
+ if rigType==Enum.HumanoidRigType.R6 then
+  aliasTargets={
+   humanoidrootpart="root",rootpart="root",lowertorso="root",uppertorso="root",torso="root",
+   head="neck",
+   leftarm="leftshoulder",leftupperarm="leftshoulder",leftlowerarm="leftshoulder",lefthand="leftshoulder",
+   rightarm="rightshoulder",rightupperarm="rightshoulder",rightlowerarm="rightshoulder",righthand="rightshoulder",
+   leftleg="lefthip",leftupperleg="lefthip",leftlowerleg="lefthip",leftfoot="lefthip",
+   rightleg="righthip",rightupperleg="righthip",rightlowerleg="righthip",rightfoot="righthip",
+  }
+ else
+  aliasTargets={
+   humanoidrootpart="root",rootpart="root",torso="root",uppertorso="waist",head="neck",
+   leftarm="leftshoulder",rightarm="rightshoulder",leftleg="lefthip",rightleg="righthip",
+  }
+ end
  for alias,motorName in pairs(aliasTargets) do
   local joint=motors[normalized(motorName)]
   if joint then d.lookup[alias]=joint end
  end
  local clips=decodeClips(folder)
  if not clips then return nil end
+ local r6Priority={
+  torso=100,head=100,leftarm=100,rightarm=100,leftleg=100,rightleg=100,
+  lowertorso=90,uppertorso=80,leftupperarm=90,rightupperarm=90,leftupperleg=90,rightupperleg=90,
+  leftlowerarm=60,rightlowerarm=60,leftlowerleg=60,rightlowerleg=60,lefthand=40,righthand=40,leftfoot=40,rightfoot=40,
+  humanoidrootpart=30,rootpart=30,
+ }
  for name,source in pairs(clips) do
-  local clip={length=source.length,frameCount=source.frameCount,bound={},boundCount=0}
+  local clip={length=source.length,frameCount=source.frameCount,bound={},boundScore={},boundCount=0}
   for pose,channel in pairs(source.channels) do
-   local joint=d.lookup[normalized(pose)]
-   if joint and not clip.bound[joint] then clip.bound[joint]=channel clip.boundCount+=1 end
+   local key=normalized(pose)
+   local joint=d.lookup[key]
+   local score=rigType==Enum.HumanoidRigType.R6 and (r6Priority[key] or 50) or 50
+   if joint and (not clip.bound[joint] or score>(clip.boundScore[joint] or -1)) then
+    if not clip.bound[joint] then clip.boundCount+=1 end
+    clip.bound[joint]=channel clip.boundScore[joint]=score
+   end
   end
   d.clips[name]=clip
  end
- local hum=model:FindFirstChildOfClass("Humanoid")
- local expected=hum and hum.RigType==Enum.HumanoidRigType.R15 and 15 or 6
+ local expected=rigType==Enum.HumanoidRigType.R15 and 15 or 6
  if jointCount>=expected then perModel[folder]=d end
  return d
 end

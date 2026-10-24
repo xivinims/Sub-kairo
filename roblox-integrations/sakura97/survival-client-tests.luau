@@ -5,7 +5,7 @@ local render=Instance.new("BindableEvent",host) local input=Instance.new("Bindab
 local attrs={InRound=true,SweanLoadingDone=true,HasMedkit=true,HasBoost=true,RoundStatus="alive"}
 local p={attrs=attrs,Character=nil,UserId=991,DisplayName="Tester"}
 local description=Instance.new("HumanoidDescription")
-local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15) char.Parent=host p.Character=char
+local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) char.Parent=host p.Character=char
 local introJason=game.ServerStorage.SurvivalAssets.Killers.Jason:Clone() introJason.Name="IntroJasonTest" introJason.Parent=host
 local guiHost=Instance.new("Folder",host) guiHost.Name="PlayerGui"
 function p:GetAttribute(n) return attrs[n] end
@@ -62,16 +62,18 @@ local ok,result=xpcall(function()
  local before=flash:GetAttribute("PulseCount") or 0
  update:Fire("lobbyDoorGlow") task.wait()
  assert((flash:GetAttribute("PulseCount") or 0)==before+1,"Lobby door glow event did not pulse")
- assert(gui.Actions.Run.UICorner.CornerRadius.Scale==1 and gui.Actions.Run.Size.X.Offset==gui.Actions.Run.Size.Y.Offset,"Sprint must be circular")
- assert(gui.Actions.Run.InnerRing and gui.Round.BackgroundTransparency==1 and gui.Countdown.BackgroundTransparency==1,"Circular rings and transparent timer")
- assert(gui.Actions:FindFirstChild("Flashlight") and gui.Actions.Flashlight.UICorner.CornerRadius.Scale==1,"Circular flashlight button missing")
+ assert(gui.TopActions and gui.TopActions:FindFirstChild("Run") and gui.TopActions:FindFirstChild("Boost") and gui.TopActions:FindFirstChild("Flashlight") and gui.TopActions:FindFirstChild("Medkit"),"Top utility actions missing")
+ assert(gui.Actions:FindFirstChild("Slow") and gui.Actions:FindFirstChild("Jump") and gui.Actions:FindFirstChild("Attack"),"Bottom actions must be crouch/jump/attack")
+ assert(not gui.Actions:FindFirstChild("Run") and not gui.Actions:FindFirstChild("Boost") and not gui.Actions:FindFirstChild("Flashlight") and not gui.Actions:FindFirstChild("Medkit"),"Utility actions leaked into bottom bar")
+ assert(gui.TopActions.Run.BackgroundTransparency==1 and gui.Actions.Jump.BackgroundTransparency==1 and gui.Actions.Attack.BackgroundTransparency==1,"Action button backgrounds must be transparent")
+ assert(gui.Round.BackgroundTransparency==1 and gui.Countdown.BackgroundTransparency==1,"Timer must remain transparent")
  input:Fire({KeyCode=Enum.KeyCode.F},false) task.wait() assert(requests[#requests]=="flashlight")
  input:Fire({KeyCode=Enum.KeyCode.E},false) task.wait() assert(requests[#requests]=="kit")
  attrs.MusicEnabled=false attrs.IsJason=true step()
  assert(not game:GetService("SoundService").LocalJasonTheme.IsPlaying,"Music toggle ignored by Jason theme")
  attrs.IsJason=false
  attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+25 step()
- assert(not gui.Actions.Run.Visible and not gui.Actions.Slow.Visible and gui.Actions.Medkit.Text=="+")
+ assert(not gui.TopActions.Run.Visible and not gui.Actions.Slow.Visible and gui.TopActions.Medkit.Text=="+")
  attrs.ReviveAt=workspace:GetServerTimeNow()+3 step()
  assert(gui.Notice.Text:find("Reanimando",1,true),"Self-revive progress hidden by downed message")
  attrs.ReviveAt=0
@@ -81,7 +83,7 @@ local ok,result=xpcall(function()
  survivor.GetAttribute=function() return false end step()
  assert(gui.Spectate.Player.Text=="Nenhum sobrevivente disponível","Stale spectator target")
  attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
- assert(gui.Actions.Attack.Visible and not gui.Actions.Run.Visible,"Player Jason attack controls")
+ assert(gui.Actions.Attack.Visible and not gui.TopActions.Run.Visible and gui.Actions.Jump.Visible,"Player Jason bottom controls")
  assert(camera.FieldOfView>70,"Jason FOV boost did not activate")
  attrs.IsJason=false attrs.InRound=false attrs.Spectating=true
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
@@ -94,7 +96,7 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible,"Portal admission must not display round controls")
  assert(not gui.Actions.Visible,"Round controls leaked outside round")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,scrollableResults=true,winningPortrait=true,musicPreference=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
+ return {ok=true,r6ClientRig=true,genshinActionLayout=true,transparentActionButtons=true,scrollableResults=true,winningPortrait=true,musicPreference=true,selfReviveProgress=true,staleCameraCallbackCancelled=true,jasonIntroCinematic=true,smoothCameraReturn=true,flashlightButton=true,persistentMovementControls=true,lobbyDoorGlow=true,jasonFovBoost=true,selfReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,keyboardMedkit=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end

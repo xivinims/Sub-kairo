@@ -20,7 +20,7 @@ local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local Killer
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
 local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local introUntil=0
-local jasonPlayer=nil local morphing={} local portalInside={} local lastAttack=0
+local jasonPlayer=nil local morphing={} local rigRetries={} local portalInside={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local gate=workspace:WaitForChild("LobbyJoinPortal")
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
@@ -352,6 +352,48 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   local e=entry(p) if e then e.status="eliminated" e.channel=nil end p:SetAttribute("ReviveAt",0) queued[p]=nil p:SetAttribute("Spectating",false) lobby(p) sync(p)
  elseif action=="spectateExit" then p:SetAttribute("Spectating",false) end
 end)
+local function isR6Character(char)
+ local h=char and char:FindFirstChildOfClass("Humanoid")
+ return h and h.RigType==Enum.HumanoidRigType.R6 and char:FindFirstChild("Torso")~=nil and char:FindFirstChild("Left Arm")~=nil and char:FindFirstChild("Right Arm")~=nil
+end
+
+local function convertCharacterToR6(p,char)
+ local h=char and char:FindFirstChildOfClass("Humanoid")
+ if not h or h.RigType==Enum.HumanoidRigType.R6 then
+  if char then char:SetAttribute("SurvivorR6",true) char:SetAttribute("AppearanceUserId",p.UserId) end
+  p:SetAttribute("SurvivorRig","R6")
+  return char
+ end
+ local pivot=char:GetPivot()
+ local animate=char:FindFirstChild("Animate")
+ local okDesc,description=pcall(function() return h:GetAppliedDescription() end)
+ if not okDesc or not description then return nil end
+ description.UseAvatarSettings=false
+ local ok,newChar=pcall(function()
+  return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
+ end)
+ if not ok or not newChar then return nil end
+ newChar.Name=p.Name
+ newChar:SetAttribute("SurvivorR6",true)
+ newChar:SetAttribute("AppearanceUserId",p.UserId)
+ newChar:SetAttribute("AppearancePreserved",true)
+ local nh=assert(newChar:FindFirstChildOfClass("Humanoid"),"R6 avatar missing Humanoid")
+ nh.RequiresNeck=false nh.BreakJointsOnDeath=false
+ pcall(function() nh.DisplayName=p.DisplayName end)
+ if animate and not newChar:FindFirstChild("Animate") then
+  local clone=animate:Clone() clone.Disabled=false clone.Parent=newChar
+ end
+ newChar.Parent=workspace
+ newChar:PivotTo(pivot)
+ for _,part in ipairs(newChar:GetDescendants()) do
+  if part:IsA("BasePart") then pcall(function() part:SetNetworkOwner(p) end) end
+ end
+ p.Character=newChar
+ char:Destroy()
+ p:SetAttribute("SurvivorRig","R6")
+ return newChar
+end
+
 local function hook(p)
  local stats=Instance.new("Folder",p) stats.Name="leaderstats"
  local function makeStat(name,value) local v=Instance.new("IntValue",stats) v.Name=name v.Value=value or 0 return v end
@@ -359,8 +401,27 @@ local function hook(p)
  profiles:attach(p) saveAt[p]=now()+150+math.random(0,30)
  task.spawn(function() if not profiles:load(p) and p.Parent then net.Update:FireClient(p,"notice","O progresso está temporariamente indisponível. Sua compra fica protegida.") end end)
  sync(p)
- local function onCharacter(char)
+ local onCharacter
+ onCharacter=function(char)
   if morphing[p] or (p==jasonPlayer and char:GetAttribute("ActivePursuer")) then return end
+  local h=char:WaitForChild("Humanoid",10)
+  if h and h.RigType~=Enum.HumanoidRigType.R6 and p~=jasonPlayer then
+   morphing[p]=true
+   local converted=convertCharacterToR6(p,char)
+   morphing[p]=nil
+   if converted and converted~=char then
+    rigRetries[p]=nil
+    onCharacter(converted)
+    return
+   end
+   rigRetries[p]=(rigRetries[p] or 0)+1
+   if rigRetries[p]<3 then task.delay(1.5,function() if p.Parent and p.Character==char then onCharacter(char) end end) end
+  elseif h and p~=jasonPlayer then
+   rigRetries[p]=nil
+   char:SetAttribute("SurvivorR6",true)
+   char:SetAttribute("AppearanceUserId",p.UserId)
+   p:SetAttribute("SurvivorRig","R6")
+  end
   local e=entry(p)
   if e and (e.status=="alive" or e.status=="downed" or e.status=="loading") then
    if state.phase=="Partida" then
@@ -371,7 +432,7 @@ local function hook(p)
    end
   end
   sync(p)
-  local h=char:WaitForChild("Humanoid",10)
+  h=char:FindFirstChildOfClass("Humanoid")
   if h then h.Died:Connect(function()
    if p.Character~=char then return end
    if p==jasonPlayer then endTime=now() return end
@@ -386,7 +447,7 @@ for _,p in ipairs(Players:GetPlayers()) do hook(p) end
 Players.PlayerRemoving:Connect(function(p)
  if p==jasonPlayer then jasonPlayer=nil endTime=now() end
  saveAt[p]=nil if musicObjects[p] then musicObjects[p]:Destroy() musicObjects[p]=nil end
- portalInside[p]=nil morphing[p]=nil
+ portalInside[p]=nil morphing[p]=nil rigRetries[p]=nil
  state.entries[p.UserId]=nil queued[p]=nil rates[p]=nil motions[p]=nil catching[p]=nil
  saveProfile(p,true) profiles.records[p]=nil
 end)

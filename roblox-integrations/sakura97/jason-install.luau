@@ -151,7 +151,7 @@ local label=Instance.new("TextLabel",sign)
 label.Size=UDim2.fromScale(1,1) label.BackgroundTransparency=1 label.Text="ENTRE PARA JOGAR"
 label.TextColor3=Color3.fromRGB(225,208,208) label.Font=Enum.Font.GothamMedium label.TextSize=18
 
-local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",121) runtime:SetAttribute("PreservedLobby",true)
+local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",122) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
 workspace.StreamingEnabled=false
 local storage=replace(SS,"SurvivalAssets","Folder")
@@ -308,7 +308,7 @@ scriptAt(SSS,"KillerFactory","ModuleScript",__KILLER_FACTORY_SOURCE__)
 scriptAt(SSS,"SurvivalServer","Script",__SURVIVAL_SERVER_SOURCE__)
 scriptAt(SP,"SurvivalClient","LocalScript",__SURVIVAL_CLIENT_SOURCE__)
 scriptAt(SP,"PursuerAnimation","LocalScript",__ANIMATION_SOURCE__)
-net:SetAttribute("Version",121) net:SetAttribute("MaxParticipants",8)
+net:SetAttribute("Version",122) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
 local light=game:GetService("Lighting") light.ClockTime=0 light.Brightness=2 light.Ambient=Color3.fromRGB(65,63,72) light.OutdoorAmbient=Color3.fromRGB(82,84,96) light.ExposureCompensation=.1
 local grade=replace(light,"SurviversGrade","ColorCorrectionEffect") grade.Contrast=.12 grade.Saturation=-.18 grade.TintColor=Color3.fromRGB(236,231,241)
 -- Avoid expensive blur and depth-of-field on mobile.

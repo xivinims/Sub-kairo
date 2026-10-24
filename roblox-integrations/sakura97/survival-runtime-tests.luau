@@ -6,7 +6,7 @@ local events={} local function signal() local e=Instance.new("BindableEvent",hos
 local heartbeat=signal() local added=signal() local removed=signal()
 local serverActionHandler=nil
 local players={} local messages={} local characterAdded={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
-local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
+local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
 local templateHum=character:FindFirstChildOfClass("Humanoid")
 if not templateHum then templateHum=Instance.new("Humanoid",character) end
 templateHum.MaxHealth=100 templateHum.Health=100 templateHum.RequiresNeck=false
@@ -122,7 +122,7 @@ local ok,result=xpcall(function()
  send(players[9],"afk",true)
  for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
- for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") end
+ for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
  send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote bypassed portal")
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
@@ -209,7 +209,7 @@ local ok,result=xpcall(function()
  for _,pl in ipairs(players) do send(pl,"afk",true) end
  advance(35)
  assert(net:GetAttribute("Phase")=="Intervalo" and not workspace:FindFirstChild("ActiveArena"),"An empty round loaded a map without queued players")
- return {ok=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
+ return {ok=true,survivorR6=true,noEmptyRounds=true,executionWallCheck=true,executionReviveLock=true,hitAccounting=true,jasonIntroCinematic=true,introMovementLock=true,flashlightToggle=true,selfAndAllyRevive=true,injuredFirstHit=true,injuredSlow=true,jasonExecution=true,doorOnlyAdmission=true,instantDoorTeleport=true,eightPlayerLimit=true,midRoundJoin=true,eliminationCannotRejoin=true,manualResetEliminatesSafely=true,spectatorFlowCoveredByClientTest=true,boostExpires=true,roundCleanup=true}
 end,debug.traceback)
 dc:Disconnect()
 for _,e in ipairs(events) do e:Destroy() end

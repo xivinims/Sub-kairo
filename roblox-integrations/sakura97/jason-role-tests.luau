@@ -6,7 +6,7 @@ local events={} local function signal() local e=Instance.new("BindableEvent",hos
 local heartbeat=signal() local added=signal() local removed=signal()
 local serverActionHandler=nil
 local players={} local messages={} local clock=1000 local scheduled={} local aiStopped=0 local noiseCalls=0 local roundErrors={}
-local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
+local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
 local templateHum=character:FindFirstChildOfClass("Humanoid")
 if not templateHum then templateHum=Instance.new("Humanoid",character) end
 templateHum.MaxHealth=100 templateHum.Health=100 templateHum.RequiresNeck=false
@@ -122,7 +122,7 @@ local ok,result=xpcall(function()
  send(players[9],"afk",true)
  for i=1,8 do players[i].Character:PivotTo(workspace.LobbyJoinPortal.CFrame) end
  advance(1)
- for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") end
+ for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Door did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
  send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote bypassed portal")
  advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
@@ -163,7 +163,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
+ return {ok=true,survivorR6=true,eightParticipantPlayerJason=true,jasonIntroCinematic=true,introMovementLock=true,instantDoorTeleport=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
 
 end,debug.traceback)
 dc:Disconnect()

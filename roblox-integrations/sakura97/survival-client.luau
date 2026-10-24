@@ -55,58 +55,73 @@ top.BackgroundTransparency=1 top.UIStroke.Enabled=false
 local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local mode="walk"
+local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
+topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(224,52) topActions.Position=UDim2.new(1,-174,0,8)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
-bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(230,146) bar.Position=UDim2.new(1,-20,1,-175)
-local function circle(name,label,x,y,callback)
- local b=button(bar,name,label,UDim2.fromOffset(62,62),UDim2.fromOffset(x,y),callback)
- b.BackgroundColor3=Color3.fromRGB(90,90,90) b.BackgroundTransparency=.58 b.TextSize=14
- b.UICorner.CornerRadius=UDim.new(1,0) b.UIStroke.Thickness=3 b.UIStroke.Transparency=.35
- local inner=Instance.new("Frame",b) inner.Name="InnerRing" inner.Size=UDim2.new(1,-12,1,-12) inner.Position=UDim2.fromOffset(6,6) inner.BackgroundTransparency=1 inner.Active=false
- local corner=Instance.new("UICorner",inner) corner.CornerRadius=UDim.new(1,0)
- local ring=Instance.new("UIStroke",inner) ring.Thickness=1.5 ring.Color=Color3.fromRGB(180,180,180) ring.Transparency=.4
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(224,88) bar.Position=UDim2.new(1,-24,1,-92)
+local function cleanAction(parent,name,label,size,pos,callback)
+ local b=button(parent,name,label,size,pos,callback)
+ b.BackgroundTransparency=1 b.TextSize=24 b.TextStrokeTransparency=.38
+ b.UIStroke.Enabled=false b.UICorner.CornerRadius=UDim.new(1,0)
  return b
 end
-local run=circle("Run","",168,0,function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
-local slow=circle("Slow","",84,0,function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
-local boost=circle("Boost","↑",0,0,function() event:FireServer("boost") end)
-local kit=circle("Medkit","+",84,84,function() event:FireServer("kit") end)
-local attack=circle("Attack","╱",168,84,function() event:FireServer("attack") end) attack.TextSize=36
-local flashlight=circle("Flashlight","",0,84,function() event:FireServer("flashlight") end)
--- Scalable gray silhouettes within the double-ring controls.
+local run=cleanAction(topActions,"Run","»",UDim2.fromOffset(52,52),UDim2.fromOffset(0,0),function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
+local boost=cleanAction(topActions,"Boost","↑",UDim2.fromOffset(52,52),UDim2.fromOffset(56,0),function() event:FireServer("boost") end)
+local flashlight=cleanAction(topActions,"Flashlight","",UDim2.fromOffset(52,52),UDim2.fromOffset(112,0),function() event:FireServer("flashlight") end)
+local kit=cleanAction(topActions,"Medkit","+",UDim2.fromOffset(52,52),UDim2.fromOffset(168,0),function() event:FireServer("kit") end)
+local slow=cleanAction(bar,"Slow","",UDim2.fromOffset(68,68),UDim2.fromOffset(0,16),function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
+local jump=cleanAction(bar,"Jump","↑",UDim2.fromOffset(72,72),UDim2.fromOffset(76,8),function()
+ local char=player.Character local h=char and char:FindFirstChildOfClass("Humanoid")
+ if h and player:GetAttribute("InRound") and not player:GetAttribute("Downed") and not cinematicActive then h.Jump=true end
+end) jump.TextSize=34
+local attack=cleanAction(bar,"Attack","╱",UDim2.fromOffset(76,76),UDim2.fromOffset(148,0),function()
+ if player:GetAttribute("IsJason") then event:FireServer("attack") end
+end) attack.TextSize=40
 local function segment(parent,a,b,width)
- local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(195,195,195)
+ local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(236,236,240)
  local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(1,0)
 end
-local function figure(button,crouch)
- local head=Instance.new("Frame",button) head.Size=UDim2.fromOffset(9,9) head.Position=UDim2.fromOffset(crouch and 35 or 33,crouch and 17 or 13) head.BackgroundColor3=Color3.fromRGB(195,195,195) head.BorderSizePixel=0
+local function crouchFigure(button)
+ local head=Instance.new("Frame",button) head.Size=UDim2.fromOffset(9,9) head.Position=UDim2.fromOffset(39,18) head.BackgroundColor3=Color3.fromRGB(236,236,240) head.BorderSizePixel=0
  local c=Instance.new("UICorner",head) c.CornerRadius=UDim.new(1,0)
- local lines=crouch and {{37,29,27,35},{27,35,39,40},{39,40,39,48},{29,35,19,43},{19,43,27,48},{35,28,23,26},{23,26,16,30}} or {{35,25,28,35},{28,35,38,40},{38,40,43,47},{28,35,21,43},{21,43,14,43},{33,27,42,30},{28,28,22,23},{22,23,17,30}}
- for _,v in ipairs(lines) do segment(button,Vector2.new(v[1],v[2]),Vector2.new(v[3],v[4]),4) end
+ for _,v in ipairs({{41,30,29,37},{29,37,43,43},{43,43,43,53},{31,37,21,46},{21,46,29,52},{39,29,26,27},{26,27,18,32}}) do segment(button,Vector2.new(v[1],v[2]),Vector2.new(v[3],v[4]),4) end
 end
-figure(run,false) figure(slow,true)
+crouchFigure(slow)
 do
- local body=Instance.new("Frame",flashlight) body.Size=UDim2.fromOffset(23,11) body.Position=UDim2.fromOffset(20,27) body.Rotation=-18 body.BackgroundColor3=Color3.fromRGB(205,205,205) body.BorderSizePixel=0
+ local body=Instance.new("Frame",flashlight) body.Size=UDim2.fromOffset(20,9) body.Position=UDim2.fromOffset(16,23) body.Rotation=-18 body.BackgroundColor3=Color3.fromRGB(236,236,240) body.BorderSizePixel=0
  local c=Instance.new("UICorner",body) c.CornerRadius=UDim.new(0,4)
- segment(flashlight,Vector2.new(38,26),Vector2.new(47,20),3)
- segment(flashlight,Vector2.new(39,31),Vector2.new(50,31),2)
- segment(flashlight,Vector2.new(38,36),Vector2.new(47,42),3)
+ segment(flashlight,Vector2.new(31,22),Vector2.new(40,17),3)
+ segment(flashlight,Vector2.new(32,27),Vector2.new(43,27),2)
+ segment(flashlight,Vector2.new(31,32),Vector2.new(40,38),3)
 end
+local function hideDefaultJump()
+ local pg=player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui")
+ for _,d in ipairs(pg:GetDescendants()) do
+  if d.Name=="JumpButton" and d:IsA("GuiButton") and not d:IsDescendantOf(gui) then d.Visible=false end
+ end
+end
+hideDefaultJump()
+player:WaitForChild("PlayerGui").DescendantAdded:Connect(function(d)
+ if d.Name=="JumpButton" and d:IsA("GuiButton") and not d:IsDescendantOf(gui) then d.Visible=false end
+end)
 local function actionLayout()
  local cam=workspace.CurrentCamera if not cam then return end
- local scale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar)
- scale.Scale=math.clamp(cam.ViewportSize.Y/650,.72,.9)*math.clamp((player:GetAttribute("ControlScale") or 100)/100,.8,1.2)
- bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.23,105,170))
+ local scale=math.clamp(cam.ViewportSize.Y/650,.76,1)*math.clamp((player:GetAttribute("ControlScale") or 100)/100,.8,1.2)
+ local bottomScale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar) bottomScale.Scale=scale
+ local topScale=topActions:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",topActions) topScale.Scale=math.min(scale,.96)
+ bar.Position=UDim2.new(1,-24,1,-math.clamp(cam.ViewportSize.Y*.12,76,105))
+ topActions.Position=UDim2.new(1,-174,0,8)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
 local leave=button(gui,"Leave","⌂",UDim2.fromOffset(42,42),UDim2.new(0,18,0,136),function() event:FireServer("leave") end)
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
-local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-64,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27
+local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,8),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
 local firstPerson=false
-local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-118,0,8),function()
+local cameraButton=button(gui,"CameraMode","◉",UDim2.fromOffset(44,44),UDim2.new(1,-102,0,8),function()
  firstPerson=not firstPerson
 end)
-cameraButton.TextSize=23
+cameraButton.TextSize=23 cameraButton.BackgroundTransparency=1 cameraButton.UIStroke.Enabled=false
 RunService.RenderStepped:Connect(function()
  local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
  cameraButton.Visible=not blocked and not settingsOverlay.Visible
@@ -129,8 +144,8 @@ local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2
 local quickItems=panel("QuickItems",UDim2.fromOffset(200,34),UDim2.new(.5,-100,1,-54)) quickItems.BackgroundTransparency=.35
 local itemText=text(quickItems,"Items","",UDim2.fromScale(1,1),UDim2.new()) itemText.TextSize=11
 local musicPanel
-local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,70),function() musicPanel.Visible=not musicPanel.Visible end)
-musicButton.BackgroundTransparency=.18 musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
+local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-152,0,8),function() musicPanel.Visible=not musicPanel.Visible end)
+musicButton.BackgroundTransparency=1 musicButton.UIStroke.Enabled=false musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
 musicPanel=panel("MusicPanel",UDim2.fromOffset(286,190),UDim2.new(1,-306,0,232)) musicPanel.Visible=false musicPanel.ZIndex=60
 local musicTitle=text(musicPanel,"Title","MUSIC  •  20 PONTOS",UDim2.new(1,-24,0,30),UDim2.fromOffset(12,8)) musicTitle.Font=Enum.Font.GothamBold musicTitle.ZIndex=61
 local musicId=Instance.new("TextBox") musicId.Name="AudioId" musicId.PlaceholderText="ID do áudio" musicId.Text="" musicId.ClearTextOnFocus=false musicId.Size=UDim2.new(1,-24,0,36) musicId.Position=UDim2.fromOffset(12,42) musicId.BackgroundColor3=Color3.fromRGB(32,30,35) musicId.TextColor3=Color3.fromRGB(238,238,240) musicId.PlaceholderColor3=Color3.fromRGB(160,160,166) musicId.Font=Enum.Font.Gotham musicId.TextSize=15 musicId.ZIndex=61 musicId.Parent=musicPanel Instance.new("UICorner",musicId).CornerRadius=UDim.new(0,9)
@@ -543,19 +558,21 @@ RunService.RenderStepped:Connect(function(dt)
  if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
- bar.Visible=controlsVisible and inRound leave.Visible=controlsVisible and inRound
- run.Visible=controlsVisible and not down and not isJason and not player:GetAttribute("Injured")
- slow.Visible=controlsVisible and not down and not isJason
- boost.Visible=controlsVisible and not down and not isJason and not player:GetAttribute("Injured")
- flashlight.Visible=controlsVisible and not down and not isJason
+ bar.Visible=controlsVisible and inRound topActions.Visible=controlsVisible and inRound leave.Visible=controlsVisible and inRound
+ run.Visible=controlsVisible and inRound and not down and not isJason and not player:GetAttribute("Injured")
+ slow.Visible=controlsVisible and inRound and not down and not isJason
+ jump.Visible=controlsVisible and inRound and not down
+ boost.Visible=controlsVisible and inRound and not down and not isJason and not player:GetAttribute("Injured")
+ flashlight.Visible=controlsVisible and inRound and not down and not isJason
  kit.Visible=controlsVisible and inRound and not isJason
- attack.Visible=controlsVisible and inRound and isJason and not down
- boost.Text="↑" boost.TextTransparency=(inRound and player:GetAttribute("HasBoost")) and 0 or .38
+ attack.Visible=controlsVisible and inRound and not down
+ attack.Active=isJason attack.TextTransparency=isJason and 0 or .72
+ boost.Text="↑" boost.TextTransparency=(inRound and player:GetAttribute("HasBoost")) and 0 or .45
  kit.Text=player:GetAttribute("HasMedkit") and "+" or "·"
  mode=player:GetAttribute("MoveMode") or "walk"
- run.UIStroke.Transparency=mode=="run" and .05 or .4
- slow.UIStroke.Transparency=mode=="slow" and .05 or .4
- flashlight.UIStroke.Transparency=player:GetAttribute("FlashlightOn") and .05 or .4
+ run.TextTransparency=mode=="run" and 0 or .2
+ jump.TextTransparency=0
+ flashlight.TextTransparency=player:GetAttribute("FlashlightOn") and 0 or .18
  timer.Text=string.format("%s • %d:%02d",phase,math.floor(left/60),left%60)
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=string.format("%s • %s • %d/8 • %d pontos",net:GetAttribute("Map") or "Lobby",killer or "",net:GetAttribute("Count") or 0,score and score.Value or 0)

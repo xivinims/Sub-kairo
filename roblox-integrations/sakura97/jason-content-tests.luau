@@ -1,4 +1,4 @@
--- Validation retry: flashlight + R15 compatibility
+-- Validate exact R6 survivor rig, lobby replacement and supplied animation sets.
 assert(not game.ServerStorage:FindFirstChild("NatureTemplates"),"Legacy NatureTemplates must not remain in Jason build")
 local assets=game.ServerStorage.SurvivalAssets local rig=assets.Killers.Jason local Http=game:GetService("HttpService")
 local sourceRoot=assert(rig:GetAttribute("SourceRootSize"),"Missing original Jason root size")
@@ -59,20 +59,14 @@ local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Fo
 local crouchNames={} for _,v in ipairs(crouch:GetChildren()) do if v:IsA("Folder") then table.insert(crouchNames,v.Name) end end table.sort(crouchNames)
 local function animationCompatibility(folder,names)
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
- local canonicalMotors={
-  root=true,waist=true,neck=true,
-  leftshoulder=true,leftelbow=true,leftwrist=true,
-  rightshoulder=true,rightelbow=true,rightwrist=true,
-  lefthip=true,leftknee=true,leftankle=true,
-  righthip=true,rightknee=true,rightankle=true
- }
+ local canonicalMotors={root=true,neck=true,leftshoulder=true,rightshoulder=true,lefthip=true,righthip=true}
  local poseToMotor={
-  humanoidrootpart="root",rootpart="root",lowertorso="root",torso="root",
-  uppertorso="waist",head="neck",
-  leftarm="leftshoulder",leftupperarm="leftshoulder",leftlowerarm="leftelbow",lefthand="leftwrist",
-  rightarm="rightshoulder",rightupperarm="rightshoulder",rightlowerarm="rightelbow",righthand="rightwrist",
-  leftleg="lefthip",leftupperleg="lefthip",leftlowerleg="leftknee",leftfoot="leftankle",
-  rightleg="righthip",rightupperleg="righthip",rightlowerleg="rightknee",rightfoot="rightankle"
+  humanoidrootpart="root",rootpart="root",lowertorso="root",uppertorso="root",torso="root",
+  head="neck",
+  leftarm="leftshoulder",leftupperarm="leftshoulder",leftlowerarm="leftshoulder",lefthand="leftshoulder",
+  rightarm="rightshoulder",rightupperarm="rightshoulder",rightlowerarm="rightshoulder",righthand="rightshoulder",
+  leftleg="lefthip",leftupperleg="lefthip",leftlowerleg="lefthip",leftfoot="lefthip",
+  rightleg="righthip",rightupperleg="righthip",rightlowerleg="righthip",rightfoot="righthip"
  }
  local report={}
  for _,clipName in ipairs(names) do
@@ -97,9 +91,9 @@ local function animationCompatibility(folder,names)
   end
   local count=0 for _ in pairs(motors) do count+=1 end
   table.sort(poseNames)
-  assert(count>=4 and moving,clipName.." cannot retarget to R15 motors; matched="..count.." poses="..table.concat(poseNames,","))
+  assert(count>=4 and moving,clipName.." cannot drive/retarget to R6 motors; matched="..count.." poses="..table.concat(poseNames,","))
   if clipName=="Idle" then
-   assert(motors.root and motors.neck and motors.leftshoulder and motors.rightshoulder,"Idle misses core R15 motors")
+   assert(motors.root and motors.neck and motors.leftshoulder and motors.rightshoulder and motors.lefthip and motors.righthip,"Idle misses R6 motors")
   end
   report[clipName]=count
  end
@@ -107,6 +101,9 @@ local function animationCompatibility(folder,names)
 end
 local survivorCompatibility=animationCompatibility(survivor,{"Idle","Walk","Run","InjuredIdle","InjuredWalk","InjuredRun"})
 local crouchCompatibility=animationCompatibility(crouch,{"Crouch Idle","Crouch Walk"})
+assert(crouchCompatibility["Crouch Idle"]>=6 and crouchCompatibility["Crouch Walk"]>=6,"Crouch does not retarget across all six R6 motors")
+assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6" and game.ReplicatedStorage.Survival:GetAttribute("SurvivorRig")=="R6","R6 survivor contract missing")
+assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("LobbySourceAssetId")==1043225187,"Wrong lobby source contract")
 local portal=assert(workspace:FindFirstChild("LobbyJoinPortal"))
 assert(portal:GetAttribute("DoorAdmission") and portal.Size.X>=14 and portal.Size.Z>=14,"Lobby admission volume is too small")
 local oldDoor=workspace.JediLibrary.Door
@@ -119,5 +116,5 @@ assert(visualDoor:FindFirstChild("RightLeaf") and visualDoor.RightLeaf:GetAttrib
 assert(visualDoor:FindFirstChild("GlowLeft") and visualDoor.GlowLeft:GetAttribute("LobbyGlowPart"),"Door glow trim missing")
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
+return {ok=true,survivorR6=true,crouchR6Retarget=true,exactLobby1043225187=true,maps=mapReport,jasonIntroClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,crouchCompatibility=crouchCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,jasonTheme=true,openLobbyDoor=true,lobbyDoorGlow=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,broadDoorAdmission=true,forsakenSurvivor=true,injuredAnimations=true,crouchFullSet=true,survivorClipNames=survivorNames,crouchClipNames=crouchNames}
 

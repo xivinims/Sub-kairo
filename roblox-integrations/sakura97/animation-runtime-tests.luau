@@ -6,7 +6,7 @@ local portrait=RS.Survival.PresentationJason:Clone() portrait:SetAttribute("Pres
 local p={attrs={InRound=true,MoveMode="slow"}}
 function p:WaitForChild(name) if name=="PlayerGui" then return pg end end
 function p:GetAttribute(name) return self.attrs[name] end
-p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15)
+p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
 p.Character.Parent=host
 local animate=p.Character:FindFirstChild("Animate") or Instance.new("LocalScript",p.Character) animate.Name="Animate" animate.Enabled=true
 local simulate
@@ -36,7 +36,7 @@ local ok,err=xpcall(function()
  local diagnosticText=game:GetService("HttpService"):JSONEncode(diagnostics)
  for i=1,6 do simulate(.2) end
  assert(posed(portrait)>=4,"Winning clip did not animate the original Jason portrait")
- assert(posed(p.Character)>=4,"Crouch clip did not animate R15 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
+ assert(posed(p.Character)>=4,"Crouch clip did not animate R6 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
@@ -48,4 +48,4 @@ local ok,err=xpcall(function()
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,crouchPlayback=true,upgradedAvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true}
+return {ok=true,winningPortrait=true,crouchPlayback=true,r6AvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true}
