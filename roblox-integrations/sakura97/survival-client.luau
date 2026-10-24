@@ -228,22 +228,24 @@ local function resultVictimReaction(victim,generation)
  local rightShoulder=joints["right shoulder"] or joints.rightshoulder
  local leftHip=joints["left hip"] or joints.lefthip
  local rightHip=joints["right hip"] or joints.righthip
- task.delay(.72,function()
+ task.delay(.56,function()
   if generation~=resultGeneration or not victim.Parent then return end
   local base=root.CFrame
+  local fallen=base*CFrame.new(1.25,-1.45,-.55)*CFrame.Angles(math.rad(74),0,math.rad(-48))
   local alpha=Instance.new("NumberValue") alpha.Value=0 alpha.Parent=resultView
   local conn=alpha:GetPropertyChangedSignal("Value"):Connect(function()
    if not victim.Parent then return end
    local a=alpha.Value
-   root.CFrame=base*CFrame.new(0,-1.05*a,.34*a)
-   if rootJoint and rootJoint.Parent then rootJoint.Transform=CFrame.new(0,-.18*a,0)*CFrame.Angles(math.rad(18*a),0,0) end
-   if neck and neck.Parent then neck.Transform=CFrame.Angles(math.rad(-12*a),0,math.rad(5*a)) end
-   if leftShoulder and leftShoulder.Parent then leftShoulder.Transform=CFrame.Angles(math.rad(28*a),0,math.rad(-22*a)) end
-   if rightShoulder and rightShoulder.Parent then rightShoulder.Transform=CFrame.Angles(math.rad(34*a),0,math.rad(24*a)) end
-   if leftHip and leftHip.Parent then leftHip.Transform=CFrame.Angles(math.rad(-34*a),0,math.rad(-8*a)) end
-   if rightHip and rightHip.Parent then rightHip.Transform=CFrame.Angles(math.rad(-42*a),0,math.rad(8*a)) end
+   local eased=TweenService:GetValue(a,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
+   root.CFrame=base:Lerp(fallen,eased)
+   if rootJoint and rootJoint.Parent then rootJoint.Transform=CFrame.Angles(math.rad(10*a),0,math.rad(-8*a)) end
+   if neck and neck.Parent then neck.Transform=CFrame.Angles(math.rad(-10*a),0,math.rad(8*a)) end
+   if leftShoulder and leftShoulder.Parent then leftShoulder.Transform=CFrame.Angles(math.rad(24*a),0,math.rad(-18*a)) end
+   if rightShoulder and rightShoulder.Parent then rightShoulder.Transform=CFrame.Angles(math.rad(18*a),0,math.rad(22*a)) end
+   if leftHip and leftHip.Parent then leftHip.Transform=CFrame.Angles(math.rad(-14*a),0,math.rad(-6*a)) end
+   if rightHip and rightHip.Parent then rightHip.Transform=CFrame.Angles(math.rad(-18*a),0,math.rad(8*a)) end
   end)
-  local tween=TweenService:Create(alpha,TweenInfo.new(.58,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Value=1})
+  local tween=TweenService:Create(alpha,TweenInfo.new(.62,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Value=1})
   tween:Play()
   tween.Completed:Connect(function() conn:Disconnect() alpha:Destroy() end)
  end)
@@ -329,8 +331,8 @@ local function showResult(data)
 
   local killerSize=Vector3.new(4,6,2)
   if killerModel then local _,size=killerModel:GetBoundingBox() killerSize=size end
-  local killerPos=base+forward*.8+Vector3.new(0,killerSize.Y*.5,0)
-  local victimPos=base+forward*4.1
+  local killerPos=base+forward*.55-right*.25+Vector3.new(0,killerSize.Y*.5,0)
+  local victimPos=base+forward*4.9+right*1.15
 
   if killerModel and killerModel.PrimaryPart then
    killerModel:PivotTo(CFrame.lookAt(killerPos,victimPos+Vector3.new(0,2.5,0)))
@@ -347,12 +349,12 @@ local function showResult(data)
    victim.Parent=resultWorld
    local _,vsize=victim:GetBoundingBox()
    local vpos=victimPos+Vector3.new(0,vsize.Y*.5,0)
-   victim:PivotTo(CFrame.lookAt(vpos,killerPos))
+   victim:PivotTo(CFrame.lookAt(vpos,vpos+forward))
    resultVictimReaction(victim,generation)
   end
 
-  local focus=base+forward*2.35+Vector3.new(0,math.max(2.5,killerSize.Y*.48),0)
-  local cameraPos=base-forward*9.6+right*2.8+Vector3.new(0,math.max(3.2,killerSize.Y*.56),0)
+  local focus=base+forward*2.65+right*.45+Vector3.new(0,math.max(2.5,killerSize.Y*.48),0)
+  local cameraPos=base-forward*8.4-right*3.6+Vector3.new(0,math.max(3.3,killerSize.Y*.58),0)
   resultCamera.CFrame=CFrame.lookAt(cameraPos,focus)
   resultCamera.FieldOfView=50
 
