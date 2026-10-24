@@ -31,8 +31,10 @@ for _,n in ipairs(jasonClipNames) do local l=n:lower() if l:find("kill",1,true) 
 local map=assets.Maps.HorrorMap
 assert(map:GetAttribute("SourceAssetId")==79671648850902 and rig:GetAttribute("SourceAssetId")==125165599816440)
 assert((map:GetAttribute("EntranceSpawn")-map:GetAttribute("KillerSpawn")).Magnitude>45)
-assert(workspace.JediLibrary.Door:GetAttribute("HeldOpen"))
-assert(workspace.IslandSpawn.Position.Y<workspace.JediLibrary.Door:GetAttribute("OriginalCenter").Y,"Lobby spawn still above door")
+local formerDoorCF=assert(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"),"Former door reference missing")
+assert(typeof(formerDoorCF)=="CFrame","Former door reference must be a CFrame")
+assert(workspace.IslandSpawn.Position.Y<formerDoorCF.Position.Y,"Lobby spawn still above old doorway reference")
+assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLibrary:FindFirstChild("OriginalLobbyDoor"),"Lobby door geometry/marker returned")
 assert(not workspace.StreamingEnabled)
 local mapReport={}
 for _,arena in ipairs(assets.Maps:GetChildren()) do
@@ -149,9 +151,6 @@ assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Return-to
 assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Lobby automatic admission contract missing")
 local lobbyBounds=assert(workspace.JediLibrary:FindFirstChild("InvisibleBounds"),"Lobby invisible bounds missing")
 assert(#lobbyBounds:GetChildren()>=5 and lobbyBounds:FindFirstChild("SafetyFloor"),"Lobby safety walls/floor missing")
-local oldDoor=workspace.JediLibrary.Door
-assert(oldDoor:GetAttribute("VisualReplaced") and oldDoor:GetAttribute("HeldOpen"),"Old lobby door was not retired")
-for _,p in ipairs(oldDoor:GetDescendants()) do if p:IsA("BasePart") then assert(p.Transparency==1 and not p.CanCollide,"Old stone/block door still visible or collidable") end end
 local shared=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerMotionLibraries"),"Shared pursuer motion libraries missing")
 assert(shared:FindFirstChild("Default") and shared.Default:GetAttribute("ClipCount")==7,"Default shared motion library invalid")
 assert(shared:FindFirstChild("Cool") and shared.Cool:GetAttribute("ClipCount")==7,"Cool shared motion library invalid")
@@ -162,5 +161,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,animatedLoading=true,adaptiveGraphics=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
+return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,animatedLoading=true,adaptiveGraphics=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
