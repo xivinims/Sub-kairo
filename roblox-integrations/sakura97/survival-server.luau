@@ -42,7 +42,8 @@ local function sync(p)
  local h=humanoid(p)
  if h then
   h.PlatformStand=false h.AutoRotate=true
-  h.WalkSpeed=p==jasonPlayer and 22 or (e and e.status=="downed") and 0 or (e and e.injured and (p:GetAttribute("MoveMode")=="run" and 16 or 12)) or (p:GetAttribute("MoveMode")=="run" and 21 or 16)
+  local pursuerSpec=config.Killers[killerName]
+  h.WalkSpeed=p==jasonPlayer and (pursuerSpec and pursuerSpec.speed or 22) or (e and e.status=="downed") and 0 or (e and e.injured and 12) or (p:GetAttribute("MoveMode")=="run" and 21 or 16)
   h.JumpPower=(e and e.status=="downed") and 0 or 50
   h.JumpHeight=(e and e.status=="downed") and 0 or 7.2
  end
@@ -360,7 +361,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   lastAttack=t
   local rr=root(p) if not rr then return end
   npc:SetAttribute("AttackAt",t) npc:SetAttribute("AttackUntil",t+.75)
-  local best=nil local distance=6
+  local best=nil local pursuerSpec=config.Killers[killerName] local distance=(pursuerSpec and pursuerSpec.range or 5.5)+.5
   for _,other in ipairs(Players:GetPlayers()) do
    if other~=p then
     local oe=entry(other) local pr=root(other)
@@ -553,7 +554,7 @@ RunService.Heartbeat:Connect(function(dt)
      local displacement=r.Position-m.position m.speed=Vector3.new(displacement.X,0,displacement.Z).Magnitude/step m.position=r.Position motions[p]=m
      if e.status=="alive" then
       h.JumpPower=50 h.JumpHeight=7.2
-      if p==jasonPlayer then h.WalkSpeed=22
+      if p==jasonPlayer then local pursuerSpec=config.Killers[killerName] h.WalkSpeed=pursuerSpec and pursuerSpec.speed or 22
       elseif e.injured then h.WalkSpeed=12
       else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or 16 end
       local grounded=h.FloorMaterial~=Enum.Material.Air
@@ -686,7 +687,7 @@ task.spawn(function()
      npc.Name=jasonPlayer.Name jasonPlayer.Character=npc
      morphing[jasonPlayer]=nil if old then old:Destroy() end
      for _,d in ipairs(npc:GetDescendants()) do if d:IsA("BasePart") then pcall(function() d:SetNetworkOwner(jasonPlayer) end) end end
-     net.Update:FireClient(jasonPlayer,"notice","Você é Jason. Persiga os sobreviventes e use o botão de ataque.")
+     net.Update:FireClient(jasonPlayer,"notice","Você é "..killerName..". Persiga os sobreviventes e use o botão de ataque.")
     else
      brain=AI.start(npc,arena,config.Killers[killerName],{players=players,vulnerable=targetable,catch=catchPlayer})
     end
