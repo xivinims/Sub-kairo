@@ -56,7 +56,7 @@ local timer=text(top,"Timer","Partida • 0:00",UDim2.new(1,0,0,30),UDim2.new())
 local detail=text(top,"Detail","",UDim2.new(1,-16,0,38),UDim2.fromOffset(8,30)) detail.TextSize=12
 local mode="walk"
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
-bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(146,226) bar.Position=UDim2.new(1,-20,1,-175)
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(230,146) bar.Position=UDim2.new(1,-20,1,-175)
 local function circle(name,label,x,y,callback)
  local b=button(bar,name,label,UDim2.fromOffset(62,62),UDim2.fromOffset(x,y),callback)
  b.BackgroundColor3=Color3.fromRGB(90,90,90) b.BackgroundTransparency=.58 b.TextSize=14
@@ -66,12 +66,12 @@ local function circle(name,label,x,y,callback)
  local ring=Instance.new("UIStroke",inner) ring.Thickness=1.5 ring.Color=Color3.fromRGB(180,180,180) ring.Transparency=.4
  return b
 end
-local run=circle("Run","",78,0,function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
-local slow=circle("Slow","",0,76,function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
+local run=circle("Run","",168,0,function() mode=mode=="run" and "walk" or "run" event:FireServer("mode",mode) end)
+local slow=circle("Slow","",84,0,function() mode=mode=="slow" and "walk" or "slow" event:FireServer("mode",mode) end)
 local boost=circle("Boost","↑",0,0,function() event:FireServer("boost") end)
-local kit=circle("Medkit","+",78,76,function() event:FireServer("kit") end)
-local attack=circle("Attack","╱",78,76,function() event:FireServer("attack") end) attack.TextSize=36
-local flashlight=circle("Flashlight","",0,152,function() event:FireServer("flashlight") end)
+local kit=circle("Medkit","+",84,84,function() event:FireServer("kit") end)
+local attack=circle("Attack","╱",168,84,function() event:FireServer("attack") end) attack.TextSize=36
+local flashlight=circle("Flashlight","",0,84,function() event:FireServer("flashlight") end)
 -- Scalable gray silhouettes within the double-ring controls.
 local function segment(parent,a,b,width)
  local d=b-a local f=Instance.new("Frame",parent) f.AnchorPoint=Vector2.new(.5,.5) f.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) f.Size=UDim2.fromOffset(d.Magnitude,width) f.Rotation=math.deg(math.atan2(d.Y,d.X)) f.BorderSizePixel=0 f.BackgroundColor3=Color3.fromRGB(195,195,195)
@@ -94,7 +94,7 @@ end
 local function actionLayout()
  local cam=workspace.CurrentCamera if not cam then return end
  local scale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar)
- scale.Scale=math.clamp(cam.ViewportSize.Y/650,.72,1)*(player:GetAttribute("ControlScale") or 100)/100
+ scale.Scale=math.clamp(cam.ViewportSize.Y/650,.72,.9)*math.clamp((player:GetAttribute("ControlScale") or 100)/100,.8,1.2)
  bar.Position=UDim2.new(1,-18,1,-math.clamp(cam.ViewportSize.Y*.23,105,170))
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
@@ -112,7 +112,7 @@ local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2
 local quickItems=panel("QuickItems",UDim2.fromOffset(200,34),UDim2.new(.5,-100,1,-54)) quickItems.BackgroundTransparency=.35
 local itemText=text(quickItems,"Items","",UDim2.fromScale(1,1),UDim2.new()) itemText.TextSize=11
 local musicPanel
-local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,178),function() musicPanel.Visible=not musicPanel.Visible end)
+local musicButton=button(gui,"MusicButton","♫",UDim2.fromOffset(46,46),UDim2.new(1,-64,0,70),function() musicPanel.Visible=not musicPanel.Visible end)
 musicButton.BackgroundTransparency=.18 musicButton.TextSize=22 musicButton.UICorner.CornerRadius=UDim.new(1,0)
 musicPanel=panel("MusicPanel",UDim2.fromOffset(286,190),UDim2.new(1,-306,0,232)) musicPanel.Visible=false musicPanel.ZIndex=60
 local musicTitle=text(musicPanel,"Title","MUSIC  •  20 PONTOS",UDim2.new(1,-24,0,30),UDim2.fromOffset(12,8)) musicTitle.Font=Enum.Font.GothamBold musicTitle.ZIndex=61
@@ -170,6 +170,22 @@ local function showResult(data)
   local level=math.clamp(row.level or 1,1,1000) local symbol=level>=100 and "✦" or level>=25 and "◆" or "◇"
   local stats=string.format("%d:%02d  •  %d golpes  •  %d quedas  •  %s %d",math.floor(seconds/60),seconds%60,row.hits or 0,row.falls or 0,symbol,level)
   local metrics=text(card,"Stats",stats,UDim2.new(1,-48,0,26),UDim2.fromOffset(40,30)) metrics.TextSize=11 metrics.TextXAlignment=Enum.TextXAlignment.Left metrics.ZIndex=73 metrics.TextColor3=Color3.fromRGB(183,178,186)
+ end
+ -- Show the original winning performance full-screen before the ranking.
+ result.Size=UDim2.new(.92,0,.82,0) resultLimit.MaxSize=Vector2.new(1050,650)
+ resultView.Size=UDim2.new(.36,-14,.64,0) resultView.Position=UDim2.new(.64,0,.14,0)
+ resultRows.Visible=true resultSubtitle.Visible=true resultWinner.Visible=true
+ if data.jasonWon then
+  result.Size=UDim2.fromScale(1,1) resultLimit.MaxSize=Vector2.new(10000,10000)
+  resultView.Size=UDim2.fromScale(1,1) resultView.Position=UDim2.new()
+  resultRows.Visible=false resultSubtitle.Visible=false resultWinner.Visible=false
+  resultHeader.ZIndex=73
+  task.delay(4,function()
+   if generation~=resultGeneration or not result.Visible then return end
+   result.Size=UDim2.new(.92,0,.82,0) resultLimit.MaxSize=Vector2.new(1050,650)
+   resultView.Size=UDim2.new(.36,-14,.64,0) resultView.Position=UDim2.new(.64,0,.14,0)
+   resultRows.Visible=true resultSubtitle.Visible=true resultWinner.Visible=true
+  end)
  end
  result.BackgroundTransparency=.75 result.Position=UDim2.fromScale(.5,.53) result.Visible=true resultUntil=os.clock()+12
  TweenService:Create(result,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=.08,Position=UDim2.fromScale(.5,.5)}):Play()
@@ -489,8 +505,8 @@ RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true or cinematicActive
  if result.Visible and os.clock()>=resultUntil then hideResult() end
- musicButton.Visible=not hidden and not player:GetAttribute("InRound") musicPanel.Visible=musicPanel.Visible and not hidden and not player:GetAttribute("InRound")
- settingsButton.Visible=not hidden settingsOverlay.Visible=settingsOverlay.Visible and not hidden
+ musicButton.Visible=not hidden and not result.Visible and not settingsOverlay.Visible and not player:GetAttribute("InRound") musicPanel.Visible=musicPanel.Visible and not hidden and not player:GetAttribute("InRound")
+ settingsButton.Visible=not hidden and not result.Visible settingsOverlay.Visible=settingsOverlay.Visible and not hidden
  profileHUD.Visible=not hidden and not result.Visible
  local controlsVisible=not settingsOverlay.Visible and not result.Visible and player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true and not cinematicActive
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
@@ -510,7 +526,7 @@ RunService.RenderStepped:Connect(function(dt)
  if left==0 and phase=="Intervalo" then countdownText.Text="Atravesse a porta" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida"
  local isJason=player:GetAttribute("IsJason")
- bar.Visible=controlsVisible leave.Visible=not hidden and inRound
+ bar.Visible=controlsVisible and inRound leave.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and not down and not isJason
  slow.Visible=controlsVisible and not down and not isJason
  boost.Visible=controlsVisible and not down and not isJason
