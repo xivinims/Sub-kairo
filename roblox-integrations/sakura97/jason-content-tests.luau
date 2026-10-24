@@ -128,11 +128,18 @@ assert(not survivalServerSource:find('action=="musicPlay"',1,true) and not survi
 assert(not survivalServerSource:find('value=="slow"',1,true) and not survivalServerSource:find("introSceneData",1,true),"Legacy slow/intro server code returned")
 assert(not survivalServerSource:find("ArenaEntrance",1,true),"Removed arena entrance marker logic returned")
 assert(survivalServerSource:find("hookedCharacters=setmetatable",1,true),"Character death-hook deduplication missing")
+assert(survivalServerSource:find("expectedCharacters",1,true) and survivalServerSource:find("expectedReplacement",1,true),"Expected R6 replacement can still be misread as a death/reset")
+assert(pursuerAnimationSource:find("blendFrom",1,true) and pursuerAnimationSource:find("blendTime",1,true),"Run/walk/idle transitions are still hard-cut")
+assert(pursuerAnimationSource:find("setDefaultAnimate(model,false)",1,true),"Custom and default survivor animations can still overlap")
+assert(survivalClientSource:find('victim:PivotTo(CFrame.lookAt(vpos,vpos+forward))',1,true),"Victory victim still faces the pursuer at close range")
+assert(survivalClientSource:find('fallen=base*CFrame.new(1.25,-1.45,-.55)',1,true),"Victory victim side-fall pose missing")
 assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
 assert(survivalClientSource:find('GoodLuck","GOOD LUCK"',1,true),"Map Good Luck backdrop missing")
 assert(not survivalClientSource:find("cancelJasonIntro",1,true) and not survivalClientSource:find("EntryFlash",1,true),"Dead killer intro/door client code returned")
-assert(loadingSource:find('goodLuck.Name="GoodLuckBackdrop"',1,true) and loadingSource:find('avatarView.Name="LoadingAvatar"',1,true),"Initial animated avatar loading missing")
-assert(loadingSource:find("local function stage",1,true) and loadingSource:find("TweenService:Create(fill",1,true),"Loading progress is decorative instead of functional")
+assert(loadingSource:find('logo.Name="BrandTitle"',1,true),"Initial logo loading missing")
+assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"GOOD LUCK/avatar leaked into initial game loading")
+assert(not loadingSource:find('Name="Progress"',1,true),"Map-style progress UI leaked into initial game loading")
+assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true) and survivalClientSource:find('"GOOD LUCK"',1,true),"Map loading lost avatar/GOOD LUCK presentation")
 assert(ambienceSource:find("EnvironmentSpecularScale",1,true) and ambienceSource:find("WaterReflectance",1,true),"Reflection system missing")
 assert(ambienceSource:find("SuviversArenaBloom",1,true) and ambienceSource:find("SuviversArenaDOF",1,true),"Adaptive post processing missing")
 assert(voidSource:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death UI media reference can be nil")
@@ -161,5 +168,5 @@ for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
 end
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,animatedLoading=true,adaptiveGraphics=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
+return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,noCrouchPayload=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,automaticGameMusicRemoved=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,victorySideFall=true,adaptiveGraphics=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
