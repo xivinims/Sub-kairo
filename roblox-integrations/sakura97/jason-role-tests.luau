@@ -135,14 +135,16 @@ local ok,result=xpcall(function()
  assert(killers==1 and killer,"Exactly one player must become Jason")
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
  assert(not (messages[killer] and messages[killer].jasonIntro),"Removed killer intro cinematic was sent")
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player killer movement must be available immediately")
+ local killerSpec=require(net.Config).Killers[net:GetAttribute("Killer")]
+ local expectedKillerSpeed=assert(killerSpec and killerSpec.speed,"Selected killer config missing")
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==expectedKillerSpeed,"Player killer did not use its configured speed")
  local victim=nil
  for i,p in ipairs(players) do
   p.Character:PivotTo(CFrame.new(i*30,1000,0)) p.Character.HumanoidRootPart.Anchored=true
   if i<=8 and p~=killer then victim=p end
  end
  advance(.5)
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==22,"Player killer movement changed unexpectedly")
+ assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==expectedKillerSpeed,"Player killer movement changed unexpectedly")
  local before=net:GetAttribute("EndsAt")
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
@@ -164,7 +166,7 @@ local ok,result=xpcall(function()
  assert(net:GetAttribute("Phase")=="Intervalo","Leaving player Jason must end round safely")
  assert(not killer:GetAttribute("IsJason") and not killer:GetAttribute("InRound"),"Jason role leaked into lobby")
  assert(killer.Character~=killerModel,"Original avatar was not restored")
- return {ok=true,survivorR6=true,eightParticipantPlayerJason=true,noKillerIntro=true,immediateKillerMovement=true,automaticLobbyAdmission=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
+ return {ok=true,survivorR6=true,eightParticipantPlayerJason=true,noKillerIntro=true,configuredKillerSpeed=true,automaticLobbyAdmission=true,oneController=true,injure=true,down=true,execution=true,attack=true,restoreAvatar=true,advisoryLoadFailureSafe=true}
 
 end,debug.traceback)
 dc:Disconnect()
