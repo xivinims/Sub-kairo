@@ -185,22 +185,21 @@ local function layout()
  main.LeftPanel.Visible=false
  main.Logo.AnchorPoint=Vector2.new(.5,.5) main.Logo.Position=UDim2.fromScale(.5,.19) main.Logo.Size=UDim2.new(.42,0,.17,0)
  main.GameName.Visible=false
- local navW=math.clamp(w*.23,168,224) local navH=math.clamp(h*.072,28,38)
+ local navW=math.clamp(w*.22,164,220) local navH=math.clamp(h*.068,28,36)
+ local navX=math.clamp(w*.045,18,52)
  local nav={main.Play,main.Ajustes,main.Updates,creditsButton}
  local labels={"ENTRAR NO LOBBY","AJUSTES","NOVIDADES","CRÉDITOS"}
  for i,b in ipairs(nav) do
-  b.AnchorPoint=Vector2.new(.5,.5)
-  b.Position=UDim2.new(.5,0,.47+(i-1)*.078,0)
+  b.AnchorPoint=Vector2.new(0,.5)
+  b.Position=UDim2.new(0,navX,.45+(i-1)*.078,0)
   b.Size=UDim2.fromOffset(navW,navH)
   b.Text=labels[i]
-  b.TextSize=math.clamp(w*.017,13,18)
+  b.TextSize=math.clamp(w*.016,13,17)
   b.Font=Enum.Font.GothamMedium
+  b.TextXAlignment=Enum.TextXAlignment.Left
   b.BackgroundTransparency=1
   b.TextTransparency=0
-  b.UIStroke.Enabled=true
-  b.UIStroke.Color=Color3.fromRGB(235,235,239)
-  b.UIStroke.Thickness=1.2
-  b.UIStroke.Transparency=i==1 and .22 or .82
+  b.UIStroke.Enabled=false
   local inset=b:FindFirstChild("Inset") if inset then inset.Visible=false end
  end
  main.Guide.AnchorPoint=Vector2.new(.5,0) main.Guide.Position=UDim2.new(.5,0,.90,0) main.Guide.Size=UDim2.fromOffset(math.min(480,w*.72),20) main.Guide.TextXAlignment=Enum.TextXAlignment.Center
@@ -358,7 +357,6 @@ local function animateMenuIntro()
   for i,b in ipairs(nav) do task.delay((i-1)*.055,function()
    if not inMenu then return end
    TweenService:Create(b,TweenInfo.new(.22,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=0}):Play()
-   TweenService:Create(b.UIStroke,TweenInfo.new(.22),{Transparency=i==1 and .22 or .82}):Play()
   end) end
  end)
 end
