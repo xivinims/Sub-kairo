@@ -197,7 +197,7 @@ event.OnClientEvent:Connect(function(action,cause,mode)
  if action=="start" then
   local realDeath=mode=="spectate" and player:GetAttribute("RoundStatus")=="eliminated" and player:GetAttribute("InMenu")~=true
   if not realDeath then clean() finishing=false return end
-  finishing=false start(cause,mode)
+  clean() finishing=false event:FireServer("return")
  elseif action=="finish" and not finishing then
   finishing=true local token=generation
   if gui then
@@ -225,6 +225,7 @@ task.spawn(function()
  local ps=player:WaitForChild("PlayerScripts",10) local pm=ps and ps:WaitForChild("PlayerModule",10)
  if pm then local ok,m=pcall(require,pm) if ok then controls=m:GetControls() if player:GetAttribute("VoidActive") then controls:Disable() end end end
 end)
+
 
 
 

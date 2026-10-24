@@ -10,7 +10,7 @@ local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
 local Settings=require(net:WaitForChild("SettingsPanel"))
 Settings.initialize(player)
-local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
+local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.IgnoreGuiInset=true gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
  local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(12,12,15) f.BackgroundTransparency=.22 f.BorderSizePixel=0 f.Parent=gui
  local c=Instance.new("UICorner",f) c.CornerRadius=UDim.new(0,16)
@@ -52,7 +52,7 @@ local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,0) topActions.Size=UDim2.fromOffset(64,64) topActions.Position=UDim2.new(1,-78,0,58)
+topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(64,64) topActions.Position=UDim2.new(1,-165,1,-115)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
 bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(74,74) bar.Position=UDim2.new(1,-84,1,-86)
 local function cleanAction(parent,name,label,size,pos,callback)
@@ -64,7 +64,7 @@ end
 local run=cleanAction(topActions,"Run","CORRER",UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
  if player:GetAttribute("IsJason") then event:FireServer("attack") end
 end)
-run.TextSize=11
+run.TextSize=11 run.BackgroundTransparency=.35 run.BackgroundColor3=Color3.fromRGB(25,26,30)
 local heldRunInput=nil
 local function stopHeldRun(input)
  if heldRunInput and (not input or input==heldRunInput) then
@@ -101,7 +101,7 @@ local function actionLayout()
  local scale=math.clamp(cam.ViewportSize.Y/650,.76,1)*math.clamp((player:GetAttribute("ControlScale") or 100)/100,.8,1.2)
  local bottomScale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar) bottomScale.Scale=scale
  local topScale=topActions:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",topActions) topScale.Scale=math.min(scale,.96)
- topActions.Position=UDim2.new(1,-78,0,58)
+ topActions.Position=UDim2.new(1,-165,1,-115)
  bar.Position=UDim2.new(1,-84,1,-86)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
@@ -469,7 +469,7 @@ local function buildArenaLoadingAvatar()
    if name:find("neck") then joint.Transform=base*CFrame.Angles(math.sin(t*.7)*.022,math.sin(t*.48)*.03,0)
    elseif name:find("shoulder") then
     local side=name:find("left") and -1 or 1
-    joint.Transform=base*CFrame.Angles(math.sin(t*1.1+side)*.022,0,side*.032)
+    joint.Transform=base*CFrame.Angles(math.rad(-22)+math.sin(t*1.1+side)*.16,0,side*(.3+math.sin(t*.8)*.08))
    end
   end end
  end)
@@ -541,7 +541,7 @@ end
 
 local function preload(roundId,map)
  loadToken+=1 local token=loadToken
- loading.Visible=true goodLuck.Visible=true goodLuck.TextTransparency=.68
+ loading.Visible=true goodLuck.Visible=false goodLuck.TextTransparency=.68
  buildArenaLoadingAvatar()
  progressFill.Size=UDim2.fromScale(0,1) loadingText.Text="CARREGANDO MAPA"
  setMapProgress(.04,.05)
@@ -575,7 +575,7 @@ local function preload(roundId,map)
   if token~=loadToken then return end
   setMapProgress(.96,.22)
   loadingText.Text=""
-  playGoodLuckVoice(token)
+  goodLuck.Visible=false
   task.wait(1.35)
   if token~=loadToken then return end
   setMapProgress(1,.15)
@@ -708,7 +708,7 @@ RunService.RenderStepped:Connect(function(dt)
  levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text="◉  "..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- countdown.Visible=false
+ countdown.Visible=not hidden and phase=="Intervalo"
  actionLayout()
  if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida" and (inRound or player:GetAttribute("Spectating")==true)
@@ -806,3 +806,4 @@ if player.GetAttributeChangedSignal then
   if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() end
  end)
 end
+

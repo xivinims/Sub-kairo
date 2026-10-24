@@ -255,8 +255,8 @@ local function revealMenuJason()
  end
  local _,jasonSize=menuJason:GetBoundingBox()
  if jasonSize.Y>0 then
-  local targetHeight=5.7
-  local factor=math.clamp(targetHeight/jasonSize.Y,.42,1.35)
+  local targetHeight=4.4
+  local factor=math.clamp(targetHeight/jasonSize.Y,.15,1)
   pcall(function() menuJason:ScaleTo(menuJason:GetScale()*factor) end)
   _,jasonSize=menuJason:GetBoundingBox()
  end
@@ -367,7 +367,7 @@ local function bindCamera()
   if not inMenu or player:GetAttribute("VoidActive") then return end
   local camera=workspace.CurrentCamera if not camera then return end
   camera.CameraType=Enum.CameraType.Scriptable
-  camera.FieldOfView=56
+  camera.FieldOfView=player:GetAttribute("CameraFOV") or 70
   if menuCameraCF then
    local t=os.clock()
    camera.CFrame=(low or player:GetAttribute("ReducedMotion")) and menuCameraCF or menuCameraCF*CFrame.Angles(math.sin(t*.18)*.006,math.sin(t*.13)*.012,0)
@@ -461,5 +461,6 @@ end)
 
 while not player:GetAttribute("SweanLoadingDone") do task.wait(.1) end
 open()
+
 
 
