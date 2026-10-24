@@ -54,6 +54,7 @@ local ok,err=xpcall(function()
  assert(ui.MenuPrincipal.Play.Size.X.Offset>=168 and ui.MenuPrincipal.Play.Size.Y.Offset>=28,"Centered phone menu target too small")
  assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Shop.Position.Y.Scale and ui.MenuPrincipal.Shop.Position.Y.Scale<ui.MenuPrincipal.Inventory.Position.Y.Scale,"Main menu is not a vertical stack")
  api.show("settings") api.settings.select("audio")
+ assert(not ui.Escenarios.MenuAjustes.ReferenceSettings.Heading:FindFirstChild("REDEFINIR"),"Reset settings button returned")
  local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
  assert(not rows:FindFirstChild("MusicVolume") and rows.BoomboxVolume.Slider and rows.EffectsVolume.Slider,"Audio settings still expose removed game music")
  api.settings.setValue("BoomboxVolume",25) task.wait()
@@ -63,7 +64,11 @@ local ok,err=xpcall(function()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
  api.settings.select("gameplay") assert(rows.CameraFOV.Slider and rows.ControlScale.Slider,"Gameplay settings missing")
  api.settings.setValue("CameraFOV",500) assert(p:GetAttribute("CameraFOV")==90,"FOV bounds failed")
- api.show("shop") assert(ui.Escenarios.MenuShop.Visible and ui.Escenarios.MenuShop.CreditosFrame.Purchase,"Music shop missing")
+ api.show("shop")
+ assert(ui.Escenarios.MenuShop.Visible and ui.Escenarios.MenuShop.CreditosFrame.Info.Text:find("EM BREVE",1,true),"Shop must be a clean coming-soon screen")
+ assert(not ui.Escenarios.MenuShop.CreditosFrame:FindFirstChild("Purchase"),"Old shop purchase button returned")
+ assert(ui.Sonidos.PlayClick.SoundId=="rbxassetid://87437544236708","Requested play click sound missing")
+ assert(ui.Sonidos.LightFlicker.SoundId=="rbxassetid://137413271824429","Requested light flicker sound missing")
  api.close() assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
  assert(not game.Lighting:FindFirstChild("SuviversMenuGrade"),"Menu grade leaked into gameplay")
 end,debug.traceback)
@@ -75,4 +80,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true}
+return {ok=true,centeredReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,avatarPreview=true,levelProgress=true,playerMusicOnly=true,audioSliders=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopComingSoon=true,noResetButton=true,requestedMenuSounds=true}
