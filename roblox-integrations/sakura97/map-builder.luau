@@ -133,10 +133,8 @@ function Builder.build(load,sanitize,destination)
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
   if toward.Magnitude<1 then toward=Vector3.new(far.X-start.X,0,far.Z-start.Z) end
   toward=toward.Unit
-  -- Gameplay entrance is only a marker now. No fake doorway is drawn in the middle of the arena.
-  local entrance=Instance.new("Model",map) entrance.Name="ArenaEntrance"
-  local doorCF=CFrame.lookAt(start-toward*5,start) entrance:SetAttribute("DoorCFrame",doorCF)
-  entrance:SetAttribute("InvisibleMarker",true)
+  -- Spawn facing is data only. There is no entrance/door object in the arena.
+  map:SetAttribute("SpawnFacing",toward)
   local bounds=Instance.new("Folder",map) bounds.Name="InvisibleBounds"
   local function barrier(name,partSize,localCF)
    local wall=Instance.new("Part")
