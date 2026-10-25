@@ -143,6 +143,41 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const lobbySurfaceDiagnostic=first(await execute(`
+ local lobby=assert(workspace:FindFirstChild("JediLibrary"))
+ local origin=lobby:GetAttribute("VerifiedSpawn") or lobby:GetPivot().Position
+ if typeof(origin)=="CFrame" then origin=origin.Position end
+ local door=lobby:GetAttribute("FormerDoorCFrame")
+ local entrance=typeof(door)=="CFrame" and door.Position or origin
+ local rows={}
+ for _,part in ipairs(lobby:GetDescendants()) do
+  if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.88 then
+   local top=part.Position.Y+part.Size.Y/2
+   local h=top-origin.Y
+   local d=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
+   local de=(Vector3.new(part.Position.X,entrance.Y,part.Position.Z)-entrance).Magnitude
+   local area=part.Size.X*part.Size.Z
+   if d<=70 and h>=1.5 and h<=6.5 and area>=3 then
+    table.insert(rows,{
+     path=part:GetFullName(),name=part.Name,
+     x=math.floor(part.Position.X*100+.5)/100,y=math.floor(part.Position.Y*100+.5)/100,z=math.floor(part.Position.Z*100+.5)/100,
+     sx=math.floor(part.Size.X*100+.5)/100,sy=math.floor(part.Size.Y*100+.5)/100,sz=math.floor(part.Size.Z*100+.5)/100,
+     top=math.floor(top*100+.5)/100,height=math.floor(h*100+.5)/100,
+     fromSpawn=math.floor(d*100+.5)/100,fromEntrance=math.floor(de*100+.5)/100,
+     area=math.floor(area*100+.5)/100,material=tostring(part.Material),color=tostring(part.Color)
+    })
+   end
+  end
+ end
+ table.sort(rows,function(a,b)
+  local sa=math.abs(a.height-3.2)*10+a.fromEntrance*.25-a.area*.04
+  local sb=math.abs(b.height-3.2)*10+b.fromEntrance*.25-b.area*.04
+  return sa<sb
+ end)
+ while #rows>80 do table.remove(rows) end
+ return {origin=tostring(origin),entrance=tostring(entrance),rows=rows}
+`));
+console.log('LOBBY_SURFACES_DIAGNOSTIC',JSON.stringify(lobbySurfaceDiagnostic));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
