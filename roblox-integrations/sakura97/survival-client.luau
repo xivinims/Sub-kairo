@@ -189,14 +189,15 @@ local function ownedKillers()
 end
 local killerOrder={"Jason","JohnDoe","Chucky","Jeff","Freddy","Piggy","Krampus"}
 for i,name in ipairs(killerOrder) do
- local spec=config.Killers[name]
+ local killerName=name
+ local spec=config.Killers[killerName]
  if spec then
-  local row=Instance.new("Frame",shopList) row.Name=name row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,58) row.BackgroundColor3=Color3.fromRGB(14,14,17) row.BackgroundTransparency=.12 row.BorderSizePixel=0 row.ZIndex=117
+  local row=Instance.new("Frame",shopList) row.Name=killerName row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,58) row.BackgroundColor3=Color3.fromRGB(14,14,17) row.BackgroundTransparency=.12 row.BorderSizePixel=0 row.ZIndex=117
   Instance.new("UICorner",row).CornerRadius=UDim.new(0,4)
-  local n=text(row,"Name",name,UDim2.new(.46,0,0,24),UDim2.fromOffset(12,7)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
+  local n=text(row,"Name",killerName,UDim2.new(.46,0,0,24),UDim2.fromOffset(12,7)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
   local hint=text(row,"Hint",spec.tip or "",UDim2.new(.56,0,0,18),UDim2.fromOffset(12,31)) hint.TextSize=9 hint.TextColor3=Color3.fromRGB(148,148,156) hint.TextXAlignment=Enum.TextXAlignment.Left hint.ZIndex=118
-  local buy=button(row,"Buy","",UDim2.fromOffset(126,34),UDim2.new(1,-138,.5,-17),function() event:FireServer("buyKiller",name) end) buy.ZIndex=119 buy.TextSize=10
-  shopButtons[name]=buy
+  local buy=button(row,"Buy","",UDim2.fromOffset(126,34),UDim2.new(1,-138,.5,-17),function() event:FireServer("buyKiller",killerName) end) buy.ZIndex=119 buy.TextSize=10
+  shopButtons[killerName]=buy
  end
 end
 local function refreshShop()
@@ -1057,10 +1058,11 @@ text(killerPanel,"Title","VOCÊ É O PERSEGUIDOR • ESCOLHA",UDim2.new(1,0,0,44
 local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
 local killerChoiceButtons={}
 for i,name in ipairs(names) do
- local b=button(killerPanel,name,name,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function()
-  if ownedKillers()[name] then event:FireServer("chooseKiller",name) else notice.Text="Compre "..name.." na LOJA primeiro." noticeUntil=os.clock()+4 end
+ local killerName=name
+ local b=button(killerPanel,killerName,killerName,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function()
+  if ownedKillers()[killerName] then event:FireServer("chooseKiller",killerName) else notice.Text="Compre "..killerName.." na LOJA primeiro." noticeUntil=os.clock()+4 end
  end)
- killerChoiceButtons[name]=b
+ killerChoiceButtons[killerName]=b
 end
 local function refreshKillerChoices()
  local owned=ownedKillers()
