@@ -636,7 +636,9 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerScriptService.SurvivalServer.Source:find('CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)',1,true),"R6 appearance-preserving conversion missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Pose-safe flashlight visual missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("buildResultScene",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultScene.Name="LocalWinnerScene"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GANHADOR"',1,true),"Winner scene does not reuse the old menu background")
+  local winnerTemplate=game.ReplicatedStorage:FindFirstChild("MenuSceneTemplate")
+  assert(winnerTemplate and winnerTemplate:GetAttribute("SourceAssetId")==13327565335 and winnerTemplate:GetAttribute("WinnerSceneOnly")==true,"Old menu background template missing from winner scene")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("buildResultScene",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("WinnerPursuer",1,true),"Winner scene pursuer runtime missing")
   local survivalClientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
   assert(survivalClientSource:find('roundMusic.Name="SuviversMatchMusic"',1,true),"Match soundtrack missing")
   assert(survivalClientSource:find('roundMusic.SoundId="rbxassetid://108879410219148"',1,true),"Wrong match soundtrack asset")
