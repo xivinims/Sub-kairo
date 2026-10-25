@@ -820,21 +820,60 @@ end)
 local votePanel=panel("MapVoting",UDim2.new(.92,0,.46,0),UDim2.new(.04,0,.27,0))
 votePanel.BackgroundColor3=Color3.fromRGB(7,7,10) votePanel.BackgroundTransparency=.08 votePanel.Visible=false votePanel.ZIndex=60
 local voteTitle=text(votePanel,"Title","ESCOLHA O PRÓXIMO MAPA",UDim2.new(1,-24,0,40),UDim2.fromOffset(12,8)) voteTitle.Font=Enum.Font.GothamBlack voteTitle.TextSize=20 voteTitle.TextXAlignment=Enum.TextXAlignment.Left voteTitle.ZIndex=62
-local voteHint=text(votePanel,"Hint","A votação abre somente depois do intervalo",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
+local voteHint=text(votePanel,"Hint","4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
 local voteTimer=text(votePanel,"Timer","6",UDim2.fromOffset(54,48),UDim2.new(1,-68,0,8)) voteTimer.Font=Enum.Font.GothamBlack voteTimer.TextSize=28 voteTimer.ZIndex=63
-local mapButtons={}
-local mapNames={DoomspireBrickbattle="DOOMSPIRE",JuggernautFightArena="JUGGERNAUT",PirateBayIsland="PIRATE BAY",NaturalDisasterSurvival="NATURAL DISASTER",RocketArena="ROCKET ARENA"}
-for i,map in ipairs(config.Maps) do
+local mapNames={
+ DoomspireBrickbattle="DOOMSPIRE",
+ JuggernautFightArena="JUGGERNAUT",
+ PirateBayIsland="PIRATE BAY",
+ NaturalDisasterSurvival="NATURAL DISASTER",
+ RocketArena="ROCKET ARENA",
+ PiggySewers="PIGGY SEWERS",
+ PiggyMappleDonut="MAPPLE DONUT",
+ RANDOM="RANDOM",
+}
+local mapByName={}
+for _,map in ipairs(config.Maps) do mapByName[map.name]=map end
+local voteCards={}
+for i=1,5 do
  local width=.188
  local x=.018+(i-1)*.196
- local b=button(votePanel,map.name,"",UDim2.new(width,0,.70,0),UDim2.new(x,0,.20,0),function() event:FireServer("voteMap",map.name) end)
+ local b=button(votePanel,"VoteCard"..i,"",UDim2.new(width,0,.70,0),UDim2.new(x,0,.20,0),function()
+  local value=b:GetAttribute("VoteValue")
+  if value then event:FireServer("voteMap",value) end
+ end)
  b.Text="" b.BackgroundColor3=Color3.fromRGB(16,16,21) b.BackgroundTransparency=.06 b.ZIndex=62
- local preview=Instance.new("ImageLabel",b) preview.Name="Preview" preview.Size=UDim2.new(1,-6,.72,-4) preview.Position=UDim2.fromOffset(3,3) preview.BackgroundTransparency=1 preview.Image="rbxthumb://type=Asset&id="..map.id.."&w=420&h=420" preview.ScaleType=Enum.ScaleType.Crop preview.ZIndex=63
+ local preview=Instance.new("ImageLabel",b) preview.Name="Preview" preview.Size=UDim2.new(1,-6,.72,-4) preview.Position=UDim2.fromOffset(3,3) preview.BackgroundTransparency=1 preview.ScaleType=Enum.ScaleType.Crop preview.ZIndex=63
  Instance.new("UICorner",preview).CornerRadius=UDim.new(0,9)
  local shade=Instance.new("UIGradient",preview) shade.Rotation=90 shade.Color=ColorSequence.new(Color3.fromRGB(210,210,215),Color3.fromRGB(90,90,100))
- local caption=text(b,"Caption",mapNames[map.name] or map.name,UDim2.new(1,-8,0,28),UDim2.new(0,4,.73,0)) caption.TextSize=10 caption.Font=Enum.Font.GothamBlack caption.ZIndex=64 caption.TextStrokeTransparency=.35
+ local randomMark=text(b,"RandomMark","?",UDim2.new(1,-6,.72,-4),UDim2.fromOffset(3,3)) randomMark.TextSize=46 randomMark.Font=Enum.Font.GothamBlack randomMark.TextColor3=Color3.fromRGB(205,208,220) randomMark.TextStrokeTransparency=.2 randomMark.Visible=false randomMark.ZIndex=64
+ local caption=text(b,"Caption","",UDim2.new(1,-8,0,28),UDim2.new(0,4,.73,0)) caption.TextSize=10 caption.Font=Enum.Font.GothamBlack caption.ZIndex=64 caption.TextStrokeTransparency=.35
  local votes=text(b,"Votes","0 VOTOS",UDim2.new(1,-8,0,20),UDim2.new(0,4,.86,0)) votes.TextSize=9 votes.Font=Enum.Font.GothamBold votes.TextColor3=Color3.fromRGB(170,170,180) votes.ZIndex=64
- mapButtons[map.name]=b
+ voteCards[i]=b
+end
+local function refreshVoteCards()
+ local okOptions,options=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVoteOptions") or "[]") end)
+ if not okOptions or type(options)~="table" then options={} end
+ local values={options[1],options[2],options[3],options[4],"RANDOM"}
+ local okCounts,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
+ if not okCounts or type(counts)~="table" then counts={} end
+ for i,b in ipairs(voteCards) do
+  local value=values[i]
+  b.Visible=value~=nil
+  b:SetAttribute("VoteValue",value)
+  if value then
+   local spec=mapByName[value]
+   b.Caption.Text=mapNames[value] or value
+   b.Votes.Text=tostring(counts[value] or 0).." VOTOS"
+   b.RandomMark.Visible=value=="RANDOM"
+   b.Preview.Visible=value~="RANDOM"
+   b.Preview.Image=spec and ("rbxthumb://type=Asset&id="..spec.id.."&w=420&h=420") or ""
+   local selected=player:GetAttribute("MapVote")==value
+   b.BackgroundColor3=selected and Color3.fromRGB(58,72,105) or Color3.fromRGB(16,16,21)
+   b.UIStroke.Color=selected and Color3.fromRGB(190,205,255) or Color3.fromRGB(150,150,158)
+   b.UIStroke.Transparency=selected and .12 or .72
+  end
+ end
 end
 local killerPanel=panel("KillerSelection",UDim2.new(.66,0,.45,0),UDim2.fromScale(.17,.25))
 killerPanel.Visible=false
@@ -851,14 +890,7 @@ RunService.RenderStepped:Connect(function(dt)
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  voteTimer.Text=tostring(seconds)
- local ok,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
- for name,b in pairs(mapButtons) do
-  b.Votes.Text=tostring(ok and counts[name] or 0).." VOTOS"
-  local selected=player:GetAttribute("MapVote")==name
-  b.BackgroundColor3=selected and Color3.fromRGB(58,72,105) or Color3.fromRGB(16,16,21)
-  b.UIStroke.Color=selected and Color3.fromRGB(190,205,255) or Color3.fromRGB(150,150,158)
-  b.UIStroke.Transparency=selected and .12 or .72
- end
+ refreshVoteCards()
 end)
 
 local dtSum=0
