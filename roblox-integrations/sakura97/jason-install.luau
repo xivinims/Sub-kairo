@@ -689,11 +689,42 @@ local function fallbackActionClip(targetName,wantInjured)
 end
 if not importedActions.CrouchWalk then fallbackActionClip("CrouchWalk",false) end
 if not importedActions.InjuredCrouchWalk then fallbackActionClip("InjuredCrouchWalk",true) end
+
+local function fallbackStaticActionClip(targetName,wantInjured)
+ local candidates={}
+ for _,clip in ipairs(survivor:GetChildren()) do
+  if clip:IsA("Folder") then
+   local low=string.lower(clip.Name)
+   local score=0
+   if string.find(low,"idle",1,true) or string.find(low,"stand",1,true) then score+=120 end
+   if string.find(low,"injur",1,true) or string.find(low,"hurt",1,true) then
+    if wantInjured then score+=80 else score-=20 end
+   elseif wantInjured then
+    score-=10
+   end
+   if string.find(low,"walk",1,true) then score+=20 end
+   if string.find(low,"run",1,true) then score+=5 end
+   table.insert(candidates,{clip=clip,score=score})
+  end
+ end
+ table.sort(candidates,function(a,b) return a.score>b.score end)
+ local picked=candidates[1] and candidates[1].clip
+ assert(picked,"No survivor clip exists for static action fallback")
+ local clone=picked:Clone()
+ clone.Name=targetName
+ clone.Parent=actionClips
+ actionClips:SetAttribute(targetName.."Fallback",true)
+ actionClips:SetAttribute(targetName.."FallbackSource",picked.Name)
+ actionClips:SetAttribute(targetName.."AssetId",survivor:GetAttribute("SourceAssetId"))
+ importedActions[targetName]=true
+end
+
+if not importedActions.Stun then fallbackStaticActionClip("Stun",true) end
 actionClips:SetAttribute("ClipCount",#actionClips:GetChildren())
 actionClips:SetAttribute("RequestedClipCount",6)
-actionClips:SetAttribute("RequiredClipCount",2)
-assert(importedActions.CrouchWalk and importedActions.InjuredCrouchWalk,"Required crouch fallbacks are missing")
-assert((actionClips:GetAttribute("ClipCount") or 0)>=2,"Required survivor crouch action clips are missing")
+actionClips:SetAttribute("RequiredClipCount",3)
+assert(importedActions.CrouchWalk and importedActions.InjuredCrouchWalk and importedActions.Stun,"Required survivor action fallbacks are missing")
+assert((actionClips:GetAttribute("ClipCount") or 0)>=3,"Required survivor action clips are missing")
 
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
 scriptAt(SSS,"IslandServer","Script",__ISLAND_SERVER_SOURCE__)
