@@ -669,7 +669,11 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="leave" then
   if p==jasonPlayer then endTime=now() end
   local e=entry(p) if e then e.status="eliminated" e.channel=nil end p:SetAttribute("ReviveAt",0) queued[p]=nil p:SetAttribute("Spectating",false) lobby(p) sync(p)
- elseif action=="spectateExit" then p:SetAttribute("Spectating",false) end
+ elseif action=="spectateExit" then
+  p:SetAttribute("Spectating",false)
+  local e=entry(p)
+  if e and e.status=="eliminated" then lobby(p) end
+ end
 end)
 local function isR6Character(char)
  local h=char and char:FindFirstChildOfClass("Humanoid")
@@ -810,6 +814,11 @@ RunService.Heartbeat:Connect(function(dt)
    elseif not eligible and queued[p] then queued[p]=nil sync(p) end
   end
   if e then
+   if (e.carryingUserId or 0)>0 and (e.status~="alive" or not r) then dropCarry(p) end
+   if (e.carriedBy or 0)>0 and e.status~="downed" then
+    local carrier=Players:GetPlayerByUserId(e.carriedBy)
+    if carrier then dropCarry(carrier) else e.carriedBy=0 end
+   end
    if e.status=="alive" or e.status=="downed" then e.survivalTime=(e.survivalTime or 0)+step end
    if e.status=="loading" and t>e.loadDeadline then if p==jasonPlayer then endTime=t end state.entries[p.UserId]=nil sync(p) net.Update:FireClient(p,"notice","Carregamento demorou. Tente entrar novamente.") end
    if e.status=="downed" and t>=e.deadline then eliminate(p,e.cause) end
