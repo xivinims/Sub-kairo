@@ -246,8 +246,41 @@ local resultList=Instance.new("UIListLayout",resultRows) resultList.Padding=UDim
 local resultWinner=text(result,"Winner","",UDim2.new(.92,0,0,32),UDim2.new(.025,0,.82,0))
 resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=13 resultWinner.TextXAlignment=Enum.TextXAlignment.Left resultWinner.ZIndex=76
 local resultUntil=0 local resultGeneration=0
+local resultCameraState=nil
+local function captureResultCamera()
+ local camera=workspace.CurrentCamera
+ if not camera or resultCameraState then return end
+ resultCameraState={
+  camera=camera,
+  cameraType=camera.CameraType,
+  cameraSubject=camera.CameraSubject,
+  cframe=camera.CFrame,
+  fieldOfView=camera.FieldOfView,
+ }
+ camera.CameraType=Enum.CameraType.Scriptable
+end
+local function restoreResultCamera()
+ local state=resultCameraState
+ resultCameraState=nil
+ if not state then return end
+ local camera=workspace.CurrentCamera or state.camera
+ if not camera then return end
+ local subject=state.cameraSubject
+ if not subject or not subject.Parent then
+  subject=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+ end
+ if subject then
+  camera.CameraSubject=subject
+  camera.CameraType=subject==state.cameraSubject and state.cameraType or Enum.CameraType.Custom
+ else
+  camera.CameraType=Enum.CameraType.Custom
+ end
+ camera.FieldOfView=player:GetAttribute("CameraFOV") or state.fieldOfView or 48
+ if camera.CameraType==Enum.CameraType.Scriptable and state.cframe then camera.CFrame=state.cframe end
+end
 local function hideResult()
  result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren()
+ restoreResultCamera()
 end
 local resultClose=button(result,"Close","×",UDim2.fromOffset(42,42),UDim2.new(1,-54,0,10),hideResult)
 resultClose.ZIndex=77 resultClose.TextSize=26 resultClose.BackgroundTransparency=1 resultClose.UIStroke.Enabled=false
@@ -291,6 +324,7 @@ end
 
 local function showResult(data)
  hideResult()
+ captureResultCamera()
  local generation=resultGeneration
  for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("Frame") then old:Destroy() end end
  resultRows.CanvasPosition=Vector2.zero
@@ -382,8 +416,11 @@ local function showResult(data)
    victim.PrimaryPart=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
    for _,d in ipairs(victim:GetDescendants()) do
     if d:IsA("LuaSourceContainer") or d:IsA("Tool") or d:IsA("BillboardGui") then d:Destroy()
-    elseif d:IsA("BasePart") then d.Anchored=d==victim.PrimaryPart d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+    elseif d:IsA("BasePart") then d.Anchored=d==victim.PrimaryPart d.CanCollide=false d.CanTouch=false d.CanQuery=false
+    elseif d:IsA("Motor6D") then d.Transform=CFrame.identity end
    end
+   local victimHumanoid=victim:FindFirstChildOfClass("Humanoid")
+   if victimHumanoid then victimHumanoid.AutoRotate=false victimHumanoid.PlatformStand=false end
    victim.Parent=resultWorld
    local _,vsize=victim:GetBoundingBox()
    local vpos=victimPos+Vector3.new(0,vsize.Y*.5,0)
@@ -825,7 +862,7 @@ RunService.RenderStepped:Connect(function(dt)
  elseif protected>0 and inRound then notice.Text=""
  elseif os.clock()>noticeUntil then notice.Text="" end
  notice.Visible=not hidden and notice.Text~=""
- local spec=player:GetAttribute("Spectating") and not hidden
+ local spec=player:GetAttribute("Spectating") and not hidden and not result.Visible
  spectate.Visible=spec or false
  local camera=workspace.CurrentCamera
  if spec and camera then
