@@ -7,8 +7,8 @@ local specs={
  {name="PirateBayIsland",id=127398591748883,label="Pirate Bay Island Cove",scale=1,maxParts=5500},
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
- {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=6500},
- {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=6500},
+ {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true},
+ {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true},
 }
 local function route(a,b)
  local path=PF:CreatePath({AgentRadius=2.2,AgentHeight=5,AgentCanJump=true,AgentCanClimb=true,WaypointSpacing=5})
@@ -67,7 +67,11 @@ function Builder.build(load,sanitize,destination)
   for _,p in ipairs(map:GetDescendants()) do
    if p:IsA("BasePart") then
     parts+=1 p.CanTouch=false
-    if p.Size.Magnitude<5 then p.CastShadow=false end
+    if p.Size.Magnitude<5 or spec.heavy then p.CastShadow=false end
+    if spec.heavy and p:IsA("MeshPart") then
+     p.RenderFidelity=Enum.RenderFidelity.Performance
+     p.CollisionFidelity=Enum.CollisionFidelity.Box
+    end
     if p.CanCollide and p.Transparency<.98 and p.Size.X>=8 and p.Size.Z>=8 and p.CFrame.UpVector.Y>.95 and p.Size.Y<=math.max(12,math.min(p.Size.X,p.Size.Z)*.4) then
      local top=p.CFrame:PointToWorldSpace(Vector3.new(0,p.Size.Y/2,0))
      table.insert(floors,{part=p,y=top.Y}) lowest=math.min(lowest,top.Y)
