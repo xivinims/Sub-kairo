@@ -164,15 +164,30 @@ lobbyParams.FilterDescendantsInstances={lobby}
 lobbyParams.RespectCanCollide=true
 local verified=lobby:GetAttribute("VerifiedSpawn")
 local floor
-if typeof(verified)=="Vector3" then
+local doorForward=Vector3.new(rotation.LookVector.X,0,rotation.LookVector.Z)
+if doorForward.Magnitude<.1 then doorForward=Vector3.new(1,0,0) else doorForward=doorForward.Unit end
+
+-- Always prefer a safe point just INSIDE the authored doorway. FormerDoorCFrame points
+-- from the door toward the previously verified interior floor, so its LookVector is the
+-- inward direction. This is recalculated every publish instead of trusting an old spawn.
+for _,distance in ipairs({4.5,6,7.5,9}) do
+ local candidate=original+doorForward*distance
+ local hit=workspace:Raycast(candidate+Vector3.new(0,9,0),Vector3.new(0,-22,0),lobbyParams)
+ if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then
+  floor=hit
+  lobby:SetAttribute("LobbySpawnMode","InsideDoor")
+  lobby:SetAttribute("LobbySpawnDoorDistance",(Vector3.new(hit.Position.X,original.Y,hit.Position.Z)-original).Magnitude)
+  break
+ end
+end
+if not floor and typeof(verified)=="Vector3" then
  floor=workspace:Raycast(verified+Vector3.new(0,10,0),Vector3.new(0,-24,0),lobbyParams)
+ lobby:SetAttribute("LobbySpawnMode","VerifiedFallback")
 end
 if not floor then
- local forward=Vector3.new(rotation.LookVector.X,0,rotation.LookVector.Z)
- if forward.Magnitude<.1 then forward=Vector3.new(1,0,0) else forward=forward.Unit end
- for _,candidate in ipairs({original-forward*12,original+forward*12,original-rotation.RightVector*10,original+rotation.RightVector*10}) do
+ for _,candidate in ipairs({original-doorForward*12,original+doorForward*12,original-rotation.RightVector*10,original+rotation.RightVector*10}) do
   local hit=workspace:Raycast(candidate+Vector3.new(0,8,0),Vector3.new(0,-24,0),lobbyParams)
-  if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then floor=hit break end
+  if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then floor=hit lobby:SetAttribute("LobbySpawnMode","EmergencyFallback") break end
  end
 end
 assert(floor and floor.Normal.Y>.85,"Lobby safe spawn floor missing")
