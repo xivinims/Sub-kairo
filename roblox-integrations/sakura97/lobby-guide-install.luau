@@ -86,8 +86,7 @@ local origin=typeof(spawn)=="CFrame" and spawn.Position or spawn
 assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 
 -- The authored reception in JediLibrary is an L-shaped set of thin brown wooden
--- counter pieces far across the lobby from the spawn. Detect the cluster by its
--- real geometry/material rather than by unreliable imported object names ("Part").
+-- counter pieces. Find its real tabletop, then seat Fill ON TOP of it.
 local receptionPieces={}
 for _,part in ipairs(lobby:GetDescendants()) do
  if part:IsA("BasePart") and part.Transparency<.98 and part.Material==Enum.Material.Wood and math.abs(part.CFrame.UpVector.Y)>.88 then
@@ -103,47 +102,30 @@ for _,part in ipairs(lobby:GetDescendants()) do
 end
 assert(#receptionPieces>=2,"Real lobby reception counter was not found")
 
-local weighted=Vector3.zero
-local weightTotal=0
+-- The actual customer-facing counter is the highest valid wooden top in the cluster.
 local receptionTop=nil
-local bestArea=-1
+local bestTop=-math.huge
 for _,part in ipairs(receptionPieces) do
- local area=part.Size.X*part.Size.Z
- weighted+=part.Position*area
- weightTotal+=area
- if area>bestArea then bestArea=area receptionTop=part end
+ local topY=part.Position.Y+part.Size.Y/2
+ if topY>bestTop then bestTop=topY receptionTop=part end
 end
-local deskCenter=weighted/math.max(weightTotal,.001)
-local towardVisitors=Vector3.new(origin.X-deskCenter.X,0,origin.Z-deskCenter.Z)
+assert(receptionTop,"Reception tabletop missing")
+
+-- Face the lobby and move slightly toward the front edge so the authored seated legs
+-- hang naturally over the counter instead of intersecting the desk.
+local towardVisitors=Vector3.new(origin.X-receptionTop.Position.X,0,origin.Z-receptionTop.Position.Z)
 if towardVisitors.Magnitude<.1 then towardVisitors=Vector3.new(1,0,0) else towardVisitors=towardVisitors.Unit end
-local behind=-towardVisitors
-local side=Vector3.new(-behind.Z,0,behind.X)
-
--- Put Fill behind the actual reception, on its floor, facing the player approach.
--- Search several offsets so imported counter geometry can never trap him inside the desk.
-local ray=RaycastParams.new()
-ray.FilterType=Enum.RaycastFilterType.Include
-ray.FilterDescendantsInstances={lobby}
-ray.RespectCanCollide=true
-local floorHit=nil
-local standPosition=nil
-for _,distance in ipairs({4.5,5.5,6.5,7.5,8.5}) do
- for _,sideOffset in ipairs({0,-2.5,2.5,-4,4}) do
-  local flat=deskCenter+behind*distance+side*sideOffset
-  local probe=Vector3.new(flat.X,origin.Y+1.6,flat.Z)
-  local hit=workspace:Raycast(probe,Vector3.new(0,-5,0),ray)
-  if hit and hit.Normal.Y>.82 and math.abs(hit.Position.Y-origin.Y)<1.25 then
-   floorHit=hit
-   standPosition=hit.Position
-   break
-  end
- end
- if standPosition then break end
+local localFront=receptionTop.CFrame:VectorToObjectSpace(towardVisitors)
+local seatLocal=Vector3.zero
+if math.abs(localFront.X)>math.abs(localFront.Z) then
+ seatLocal=Vector3.new(math.sign(localFront.X)*(receptionTop.Size.X/2-.7),0,0)
+else
+ seatLocal=Vector3.new(0,0,math.sign(localFront.Z)*(receptionTop.Size.Z/2-.7))
 end
-assert(standPosition and floorHit,"No safe floor position behind the real reception counter")
+local seatWorld=receptionTop.CFrame:PointToWorldSpace(Vector3.new(seatLocal.X,receptionTop.Size.Y/2,seatLocal.Z))
+local facePoint=seatWorld+towardVisitors*8
 
-local facePoint=Vector3.new(origin.X,standPosition.Y,origin.Z)
-npc:PivotTo(CFrame.lookAt(standPosition,facePoint))
+npc:PivotTo(CFrame.lookAt(seatWorld,facePoint))
 for _=1,3 do
  for _,motor in ipairs(npc:GetDescendants()) do
   if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
@@ -151,31 +133,33 @@ for _=1,3 do
   end
  end
 end
-local bounds,dimensions=npc:GetBoundingBox()
-local bottom=bounds.Position.Y-dimensions.Y/2
-npc:PivotTo(npc:GetPivot()+Vector3.new(
- standPosition.X-bounds.Position.X,
- standPosition.Y-bottom+.02,
- standPosition.Z-bounds.Position.Z
-))
+
+-- A seated R6 pose is aligned by the hip line (bottom of Torso), NOT by the model's
+-- bounding-box bottom. This keeps the legs hanging below the tabletop and prevents Fill
+-- from floating above it.
+local torso=assert(npc:FindFirstChild("Torso"),"Fill R6 torso missing")
+local hipLine=torso.Position.Y-torso.Size.Y/2
+local topY=receptionTop.Position.Y+receptionTop.Size.Y/2
+local shift=Vector3.new(seatWorld.X-torso.Position.X,topY+.025-hipLine,seatWorld.Z-torso.Position.Z)
+npc:PivotTo(npc:GetPivot()+shift)
 
 npc.Name="LobbyGuide"
 npc:SetAttribute("DisplayName","Fill")
-npc:SetAttribute("Placement","ReceptionDesk")
+npc:SetAttribute("Placement","ReceptionTabletopSeated")
 npc:SetAttribute("ReceptionSurface",receptionTop:GetFullName())
-npc:SetAttribute("ReceptionPosition",standPosition)
+npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
+npc:SetAttribute("SeatedOnReception",true)
 local tableReference=Instance.new("ObjectValue")
 tableReference.Name="Tabletop"
 tableReference.Value=receptionTop
 tableReference.Parent=npc
 
-local placedBounds,placedSize=npc:GetBoundingBox()
-local floorGap=placedBounds.Position.Y-placedSize.Y/2-standPosition.Y
-assert(math.abs(floorGap-.02)<.1,"Fill is not grounded behind the reception")
+local seatedGap=(torso.Position.Y-torso.Size.Y/2)-topY
+assert(math.abs(seatedGap-.025)<.08,"Fill is floating or clipping instead of sitting on reception tabletop")
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc
 assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headless/R6 validation failed")
 local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
 posePackage:Destroy() dialoguePackage:Destroy()
-return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,receptionFloorGap=floorGap,receptionPosition=tostring(standPosition),tablePosition=tostring(receptionTop.Position),localGaze=true}
+return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,seatedGap=seatedGap,receptionPosition=tostring(torso.Position),tablePosition=tostring(receptionTop.Position),localGaze=true}
