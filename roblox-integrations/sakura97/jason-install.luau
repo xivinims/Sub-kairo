@@ -424,8 +424,10 @@ local function storeObjectiveAsset(id,name)
  sanitize(asset,true)
  local source=nil
  if asset:IsA("Model") and asset:FindFirstChildWhichIsA("BasePart",true) then source=asset end
- if not source then for _,obj in ipairs(asset:GetDescendants()) do
-  if obj:IsA("Model") and (obj:FindFirstChildWhichIsA("BasePart",true) or obj:FindFirstChildWhichIsA("MeshPart",true)) then source=obj break end
+ if not source then
+  for _,obj in ipairs(asset:GetDescendants()) do
+   if obj:IsA("Model") and (obj:FindFirstChildWhichIsA("BasePart",true) or obj:FindFirstChildWhichIsA("MeshPart",true)) then source=obj break end
+  end
  end
  if not source then
   local tool=asset:FindFirstChildWhichIsA("Tool",true)
