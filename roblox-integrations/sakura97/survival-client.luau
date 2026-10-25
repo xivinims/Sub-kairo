@@ -152,7 +152,7 @@ RunService.RenderStepped:Connect(function()
  player.CameraMaxZoomDistance=player:GetAttribute("InRound") and 10 or 24
  player.CameraMinZoomDistance=player:GetAttribute("InRound") and 10 or 4
 end)
-local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
+local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,82)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
 local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
