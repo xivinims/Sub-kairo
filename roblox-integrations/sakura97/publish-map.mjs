@@ -136,16 +136,17 @@ function first(task){
 }
 
 
+const FILL_VOICE_REVISION='2026-10-25-v3-exact-mp3';
 const FILL_VOICE_SPECS=[
  {index:1,files:['voice1.part00.b64','voice1.part01.b64'],bytes:179104,sha256:'f266844a662d530fadb4e1c46ba495621dbb3edee58330cbafedee5250021821'},
  {index:2,files:['voice2.part00.b64','voice2.part01.b64','voice2.part02.b64'],bytes:304491,sha256:'fbb4e78da0a6c79a629407807d6e092f9043f92ce1eb59dd2a17f2c55f17e4e7'},
  {index:3,files:['voice3.part00.b64','voice3.part01.b64','voice3.part02.b64'],bytes:270219,sha256:'7d19bf9c429959aac67680f9045e912ede6903d38bdfcffd7d5dc8f8c8227605'},
- {index:4,files:['voice4.s00.b64','voice4.s01.b64','voice4.s02.b64','voice4.s03.b64','voice4.s04.b64','voice4.s05a.txt','voice4.s05b.txt'],bytes:222571,sha256:'8093407c37c4869f89ae57d0171b788ffdec78501105f71f9d8a9189ff0fb1c3'},
- {index:5,files:['voice5.part00.txt','voice5.part01.txt','voice5.part02.txt'],bytes:225497,sha256:'77251274508e7943bfd6be336d9e0d872c21f7e9e7a5b55017f81f86653380ac'},
- {index:6,files:['voice6.part00.txt'],bytes:99691,sha256:'aef4863727523fd6022d2fbb739ff48478933d06b0636634384ace6c0c1d5cda'},
+ {index:4,files:['voice4.part00.b64','voice4.part01.b64','voice4.part02.b64'],bytes:222571,sha256:'8093407c37c4869f89ae57d0171b788ffdec78501105f71f9d8a9189ff0fb1c3'},
+ {index:5,files:['voice5.part00.b64','voice5.part01.b64','voice5.part02.b64'],bytes:225497,sha256:'77251274508e7943bfd6be336d9e0d872c21f7e9e7a5b55017f81f86653380ac'},
+ {index:6,files:['voice6.part00.b64'],bytes:99691,sha256:'aef4863727523fd6022d2fbb739ff48478933d06b0636634384ace6c0c1d5cda'},
 ];
 function readFillVoice(spec){
- const dir='roblox-integrations/sakura97/fill-voices-v2';
+ const dir='roblox-integrations/sakura97/fill-voices-v3';
  const pieces=spec.files.map(name=>fs.readFileSync(`${dir}/${name}`,'utf8').replace(/[^A-Za-z0-9+/=]/g,''));
  const bytes=Buffer.from(pieces.join(''),'base64');
  const sha=createHash('sha256').update(bytes).digest('hex');
@@ -192,17 +193,18 @@ async function createFillAudioAsset(spec,bytes){
  if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio ${spec.index} operation returned no assetId: ${JSON.stringify(operation)}`);
  return id;
 }
-async function readPersistedFillVoiceIds(){
+async function readPersistedFillVoiceState(){
  const result=first(await execute(`
   local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
   local ids={}
   for i=1,6 do ids[i]=net and (net:GetAttribute("FillVoice"..i) or 0) or 0 end
-  return ids
+  return {ids=ids,revision=net and (net:GetAttribute("FillVoiceRevision") or "") or ""}
  `));
- return Array.isArray(result)?result.map(Number):[];
+ return {ids:Array.isArray(result?.ids)?result.ids.map(Number):[],revision:String(result?.revision||"")};
 }
 async function ensureFillVoiceAssets(){
- const existing=await readPersistedFillVoiceIds();
+ const state=await readPersistedFillVoiceState();
+ const existing=state.revision===FILL_VOICE_REVISION?state.ids:[];
  const ids=[];
  let created=false;
  for(const spec of FILL_VOICE_SPECS){
@@ -220,6 +222,8 @@ async function ensureFillVoiceAssets(){
    local net=assert(game:GetService("ReplicatedStorage"):FindFirstChild("Survival"),"Survival runtime missing")
    local ids={${ids.join(',')}}
    for i,id in ipairs(ids) do net:SetAttribute("FillVoice"..i,id) end
+  net:SetAttribute("FillVoiceRevision","2026-10-25-v3-exact-mp3")
+   net:SetAttribute("FillVoiceRevision","2026-10-25-v3-exact-mp3")
    local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
    assert(ok,"Could not persist Fill audio asset IDs: "..tostring(err))
    return {ok=true,ids=ids,version=game.PlaceVersion}
