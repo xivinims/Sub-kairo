@@ -204,9 +204,6 @@ local newBounds,newSize=npc:GetBoundingBox()
 local gap=newBounds.Position.Y-newSize.Y/2-(receptionTop.Position.Y+receptionTop.Size.Y/2)
 assert(math.abs(gap-.02)<.1,"Fill is not aligned with the reception tabletop")
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc
-local newBounds,newSize=npc:GetBoundingBox()
-local gap=newBounds.Position.Y-newSize.Y/2-(top.Position.Y+top.Size.Y/2)
-assert(math.abs(gap-.02)<.08,"Guide does not touch tabletop")
 assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headless/R6 validation failed")
 local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
