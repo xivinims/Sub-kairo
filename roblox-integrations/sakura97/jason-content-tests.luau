@@ -172,7 +172,7 @@ assert(not survivalServerSource:find('value=="slow"',1,true) and not survivalSer
 assert(not survivalServerSource:find("ArenaEntrance",1,true),"Removed arena entrance marker logic returned")
 assert(survivalServerSource:find("hookedCharacters=setmetatable",1,true),"Character death-hook deduplication missing")
 assert(survivalServerSource:find("expectedCharacters",1,true) and survivalServerSource:find("expectedReplacement",1,true),"Expected R6 replacement can still be misread as a death/reset")
-assert(survivalServerSource:find("local executionDuration=1.85",1,true),"Execution duration synchronization missing")
+assert(survivalServerSource:find('local executionDuration=attacker:GetAttribute("ExecutionLength") or 2.5',1,true),"Execution duration synchronization missing")
 assert(survivalServerSource:find('p:SetAttribute("ExecutionDuration",executionDuration)',1,true),"Victim execution duration is not replicated")
 assert(pursuerAnimationSource:find('p:GetAttribute("BeingExecuted")==true',1,true),"Execution pose does not override downed pose")
 assert(pursuerAnimationSource:find('model:GetAttribute("ExecutionDuration")',1,true),"Pursuer execution clip is not synchronized to server duration")
