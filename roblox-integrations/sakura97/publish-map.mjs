@@ -137,17 +137,17 @@ function first(task){
 
 
 const FILL_VOICE_SPECS=[
- {index:1,parts:5,bytes:60882,sha256:'cb260c5dfb58dcefe60490d32d7dec10b2741a2afaea9c7ebcbc0fc33d560a67'},
- {index:2,parts:8,bytes:107902,sha256:'b6d9db1651895b6bb1df61e77229bf89939450ab7135cd0738fddae65a6e4400'},
- {index:3,parts:7,bytes:95050,sha256:'a5784cb06cbad57fbc385769f626b923efcd84303a6cf713eeaa7e70efc3e893'},
- {index:4,parts:6,bytes:77182,sha256:'3e63c7e51ccc0c6c0a310651fd4b8183eaeac204d5de486c1282b6f890501579'},
- {index:5,parts:6,bytes:78280,sha256:'4a10c5e1607fa1a2e9621568b4f59f3a18c075af47b9f6b568f0870f8730e888'},
- {index:6,parts:3,bytes:31102,sha256:'1ee596701561d12d5230db044986ca9984df945467660e5da588a5937e02babc'},
+ {index:1,parts:3,bytes:37378,sha256:'ac9400e94fd2bc08db35606bb4b62a0226652b2bfb034ff7fa50d0e38cab1fbb'},
+ {index:2,parts:5,bytes:71741,sha256:'8295bdabf5b261df4bd8039bc15fa2b1487dadcf4fbac390a1232ef3ca7a81dc'},
+ {index:3,parts:5,bytes:63389,sha256:'ec949a3e137f4bbe3779e21e7d098431e42279370d798d10154ace4b6cbb52a5'},
+ {index:4,parts:4,bytes:50183,sha256:'909b69c45e836039e281d793bfebdbe7963e93908ed70da341f344af0b8d3759'},
+ {index:5,parts:4,bytes:51804,sha256:'89f9526c9440887b5cca5d52b0258b297161d2c2db6d634b57cb08b558bbf0c5'},
+ {index:6,parts:2,bytes:19532,sha256:'cabe385b8b1df69ef2aeaf168ef8b0eeb85fb9339260bcfa3aa33eff1c2bbd24'},
 ];
 function readFillVoice(spec){
  const pieces=[];
  for(let i=1;i<=spec.parts;i++){
-  const name=`roblox-integrations/sakura97/fill-voices/voice${spec.index}.part${String(i).padStart(2,'0')}.b64`;
+  const name=`roblox-integrations/sakura97/fill-voices/voice${spec.index}.part${String(i-1).padStart(2,'0')}.b64`;
   pieces.push(fs.readFileSync(name,'utf8').trim());
  }
  const bytes=Buffer.from(pieces.join(''),'base64');
@@ -167,7 +167,7 @@ async function createFillAudioAsset(spec,bytes){
  };
  const form=new FormData();
  form.append('request',JSON.stringify(request));
- form.append('fileContent',new Blob([bytes],{type:'audio/mpeg'}),`fill-voice-${spec.index}.mp3`);
+ form.append('fileContent',new Blob([bytes],{type:'audio/ogg'}),`fill-voice-${spec.index}.ogg`);
  const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
   method:'POST',
   headers:{'x-api-key':key},
