@@ -8,7 +8,7 @@ local specs={
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
  {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true,killerClearance=5.8,minKillerDistance=28},
- {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true},
+ {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true,minKillerDistance=28},
 }
 local function route(a,b)
  local path=PF:CreatePath({AgentRadius=2.2,AgentHeight=5,AgentCanJump=true,AgentCanClimb=true,WaypointSpacing=5})
@@ -171,7 +171,7 @@ function Builder.build(load,sanitize,destination)
   local arrivalsChosen={}
   local available={}
   for _,point in ipairs(candidates) do
-   if (point-far).Magnitude>=math.max(24,minimumKillerDistance*.65) and route(start,point) then table.insert(available,point) end
+   if (point-far).Magnitude>=math.max(18,math.min(36,distance*.45)) and route(start,point) then table.insert(available,point) end
    if #available>=24 then break end
   end
   while #arrivalsChosen<8 do
@@ -184,7 +184,7 @@ function Builder.build(load,sanitize,destination)
    if not best or bestDistance<8 then break end
    table.insert(arrivalsChosen,best) addPoint(arrivals,#arrivalsChosen,best)
   end
-  assert(#arrivalsChosen>=7,"Need seven separated survivor spawns in "..spec.name)
+  assert(#arrivalsChosen>=7,"Need seven separated survivor spawns in "..spec.name.." candidates="..#candidates.." connected="..#selected.." available="..#available.." picked="..#arrivalsChosen.." killerDistance="..distance)
   local objectiveSites=Instance.new("Folder",map) objectiveSites.Name="ObjectiveSites"
   local chosenSites={}
   local possible={}

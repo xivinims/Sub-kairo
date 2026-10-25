@@ -26,6 +26,7 @@ function Profile.open(viewer,target,onClose)
   level.Text="NÍVEL "..tostring(l and l.Value or 1) xp.Text=tostring(x and x.Value or 0).." XP"
  end
  refresh()
+ task.spawn(function() while not dead and gui.Parent do refresh() task.wait(.5) end end)
  local stats=target:FindFirstChild("leaderstats")
  if stats then for _,n in ipairs({"Nível","XP"}) do local v=stats:FindFirstChild(n) if v then table.insert(connections,v.Changed:Connect(refresh)) end end end
  table.insert(connections,close.Activated:Connect(destroy))

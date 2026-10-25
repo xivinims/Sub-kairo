@@ -974,13 +974,9 @@ RunService.Heartbeat:Connect(function(dt)
       end
       local grounded=h.FloorMaterial~=Enum.Material.Air
       local jump=m.grounded and not grounded and r.AssemblyLinearVelocity.Y>5
-      if p~=jasonPlayer and brain and t-(e.lastNoise or 0)>(mode=="run" and .7 or 1.15) then
-       local factor=mode=="crouch" and .08 or mode=="run" and 1 or m.speed>7 and .34 or .12
-       if jump then factor=.85 end
-       if factor>.1 then
-        brain.noise(r.Position,config.Killers[killerName].hearing*factor)
-        if jasonPlayer then net.Update:FireClient(jasonPlayer,"noisePing",r.Position,mode) end
-       end
+      if grounded and m.speed>2 and mode~="crouch" and t-(e.lastNoise or 0)>(mode=="run" and .38 or .65) then
+       local template=net:FindFirstChild("FootstepSound")
+       if template then local sound=template:Clone() sound.Volume=mode=="run" and .42 or .16 sound.RollOffMinDistance=4 sound.RollOffMaxDistance=mode=="run" and 48 or 18 sound.Parent=r sound:Play() game:GetService("Debris"):AddItem(sound,3) end
        e.lastNoise=t
       end
       m.grounded=grounded

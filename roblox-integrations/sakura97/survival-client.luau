@@ -294,7 +294,7 @@ local function hackEvent(action,a,b)
  if action=="hackStart" then hackingPc=a hackPanel.Visible=true hackFill.Size=UDim2.fromScale(b or 0,1) hackLabel.Text="HACKEANDO • FIQUE PERTO DO COMPUTADOR" skillButton.Text="AGUARDE"
  elseif action=="hackEnd" then hackingPc=nil hackPanel.Visible=false checkId=nil
  elseif action=="hackProgress" then hackFill.Size=UDim2.fromScale(a,1) hackLabel.Text="HACKEANDO • "..math.floor(a*100).."%"
- elseif action=="hackCheck" then checkId=a checkAt=b cursor.Visible=true targetZone.Visible=true skillButton.Text="CLIQUE NA ÁREA VERDE • ESPAÇO"
+ elseif action=="hackCheck" then checkId=a checkAt=b cursor.Visible=true targetZone.Visible=true skillButton.Text="CLIQUE NA ÁREA VERDE • Q"
  elseif action=="hackCheckResult" then checkId=nil cursor.Visible=false targetZone.Visible=false skillButton.Text=a and "ACERTOU" or "ERRO • TENTE O PRÓXIMO"
  elseif action=="pcComplete" and player:GetAttribute("IsJason") and typeof(a)=="Instance" then
   local h=Instance.new("Highlight") h.Name="CompletedComputer" h.Adornee=a h.FillColor=Color3.fromRGB(65,230,115) h.OutlineColor=Color3.new(1,1,1) h.FillTransparency=.45 h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop h.Parent=a Debris:AddItem(h,10)
@@ -305,7 +305,7 @@ RunService.RenderStepped:Connect(function()
  if hackPanel.Visible and (not hackingPc or not hackingPc.Parent or not player:GetAttribute("InRound") or player:GetAttribute("Downed")) then event:FireServer("hackCancel") hackPanel.Visible=false end
 end)
 UIS.InputBegan:Connect(function(input,processed)
- if not processed and input.KeyCode==Enum.KeyCode.Space and hackPanel.Visible then clickHack() end
+ if not processed and input.KeyCode==Enum.KeyCode.Q and hackPanel.Visible then clickHack() end
 end)
 
 -- Detection is local to the killer: forward cone + raycast, never through walls.
@@ -1068,23 +1068,6 @@ RunService.RenderStepped:Connect(function(dt)
   for _,m in ipairs(workspace:GetChildren()) do if m:GetAttribute("ActivePursuer") and (m:GetAttribute("TargetUserId") or 0)>0 then
    local p=Players:GetPlayerByUserId(m:GetAttribute("TargetUserId")) highlight.Adornee=p and p.Character highlight.Enabled=p~=nil break
   end end
- end
- -- Local footstep audio uses the requested walking asset when that package exposes a Sound.
- if inRound and not down and not hidden then
-  local rr=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-  local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-  local speed=rr and (rr.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
-  local stepDelay=mode=="run" and .38 or mode=="crouch" and .95 or .62
-  if hum and hum.FloorMaterial~=Enum.Material.Air and speed>2 then
-   gui:SetAttribute("NextFootstep",gui:GetAttribute("NextFootstep") or 0)
-   if os.clock()>gui:GetAttribute("NextFootstep") then
-    gui:SetAttribute("NextFootstep",os.clock()+stepDelay)
-    local template=net:FindFirstChild("FootstepSound")
-    if template and rr then
-     local sound=template:Clone() sound.Volume=mode=="crouch" and .08 or mode=="run" and .32 or .18 sound.Parent=rr sound:Play() Debris:AddItem(sound,3)
-    end
-   end
-  end
  end
  -- Downed poses are applied with locomotion in PreSimulation, after the Animator.
 
