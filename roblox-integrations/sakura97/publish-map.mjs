@@ -143,9 +143,9 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
-const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
-const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
+const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const menuTest=read('menu-runtime-tests').replace('__MENU_TEST_SOURCE__',read('menu-client').replace('local v=camera.ViewportSize','local v=TEST_VIEWPORT'));
 const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
 const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT').replace('voice:LoadAsync()','voice:SetAttribute("TestLoadRequested",true)').replace('voice:Play()','voice:SetAttribute("TestPlayRequested",true)').replace('output.Player=player','output.Name="TestOutput"'));
@@ -296,19 +296,19 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerScriptService.SurvivalServer.Source:find('CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)',1,true),"R6 appearance-preserving conversion missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Pose-safe flashlight visual missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultView.Size=UDim2.fromScale(1,1)',1,true),"Full-screen killer result missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('result.BackgroundTransparency=1',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("startResultCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('resultView.Visible=false',1,true),"Real full-screen winner camera missing")
   local survivalClientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
   assert(survivalClientSource:find('roundMusic.Name="SuviversMatchMusic"',1,true),"Match soundtrack missing")
   assert(survivalClientSource:find('roundMusic.SoundId="rbxassetid://108879410219148"',1,true),"Wrong match soundtrack asset")
   assert(survivalClientSource:find('roundMusic.Volume=.35',1,true),"Match soundtrack must stay below half volume")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('loadingAvatar.Name="ArenaAvatar"',1,true),"Animated map loading avatar missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("captureLoadingCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("restoreLoadingCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("loadingAvatar.Visible=false",1,true),"Real full-screen map loading camera missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GOOD LUCK"',1,true),"GOOD LUCK missing from map loading")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("blendFrom",1,true),"Smooth locomotion blend missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("expectedReplacement",1,true),"R6 replacement false-death guard missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("local executionDuration=1.85",1,true),"Synchronized execution duration missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('p:GetAttribute("BeingExecuted")==true',1,true),"Execution pose does not override downed pose")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('model:GetAttribute("ExecutionDuration")',1,true),"Pursuer execution animation duration is not synchronized")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("restoreResultCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("captureResultCamera",1,true),"Result camera restoration missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("restoreResultCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("captureResultCamera",1,true),"Result camera restoration missing")\n  assert(game.ServerScriptService.SurvivalServer.Source:find("local RESULT_PRESENTATION_SECONDS=9",1,true) and game.ServerScriptService.SurvivalServer.Source:find('state.phase="Resultados"',1,true),"Server does not preserve the real arena for the full-screen result camera")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('d:IsA("Motor6D") then d.Transform=CFrame.identity',1,true),"Victory victim stale pose reset missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("b.AnchorPoint=Vector2.new(0,.5)",1,true),"Menu navigation is not left aligned")
   assert(game.ReplicatedFirst.SweanLoadingController.Source:find('logo.Name="BrandTitle"',1,true),"Initial logo loading missing")
@@ -330,7 +330,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="TabletopOnly","Guide seated/table pose was not preserved")
   assert(workspace.LobbyGuide.GuideInteraction.Source:find('VoiceId="1001"',1,true) and workspace.LobbyGuide.GuideInteraction.Source:find('voice.Pitch=.88',1,true),"Guide deeper Portuguese male voice missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
-  assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=3.25",1,true),"Menu killer was not reduced")
+  assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=2.55",1,true) and game.StarterGui.TomiaszMenu.MenuController.Source:find("menuCameraCF.LookVector*13.8",1,true),"Menu killer is still too large or too close")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
   assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("124873348702500",1,true),"Requested profile design not persisted")
   assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
