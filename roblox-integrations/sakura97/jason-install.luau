@@ -612,6 +612,49 @@ local survivorSaves=survivorAsset:FindFirstChild("AnimSaves",true) or survivorAs
 compact(survivorSaves,survivor) survivorAsset:Destroy()
 assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken Survivor Animations contains no KeyframeSequence")
 
+-- Extra survivor action animations supplied by the user.
+-- These are compacted into the same custom playback format, so R6 retargeting and
+-- blend logic stay consistent with the existing Forsaken survivor locomotion.
+local actionIds={
+ Parry=127096285501517,
+ BreakPallet=112166042383605,
+ CrouchWalk=126965695851149,
+ InjuredCrouchWalk=135084204086504,
+ Stun=123047897844134,
+ Vault=83873880822918,
+}
+local actionClips=Instance.new("Folder",net) actionClips.Name="SurvivorActionClips"
+local kfsp=game:GetService("KeyframeSequenceProvider")
+local function importActionClip(name,id)
+ local sequence=nil
+ local ok,seq=pcall(function() return kfsp:GetKeyframeSequenceAsync("rbxassetid://"..id) end)
+ if ok and seq then sequence=seq end
+ if not sequence then
+  local asset=load(id)
+  local direct=asset:FindFirstChildWhichIsA("KeyframeSequence",true)
+  if direct then sequence=direct:Clone() end
+  if not sequence then
+   local anim=asset:FindFirstChildWhichIsA("Animation",true)
+   if anim and anim.AnimationId~="" then
+    local ok2,seq2=pcall(function() return kfsp:GetKeyframeSequenceAsync(anim.AnimationId) end)
+    if ok2 and seq2 then sequence=seq2 end
+   end
+  end
+  asset:Destroy()
+ end
+ assert(sequence,"Could not import survivor action animation "..name.." ("..id..")")
+ sequence.Name=name
+ local holder=Instance.new("Folder")
+ sequence.Parent=holder
+ compact(holder,actionClips)
+ holder:Destroy()
+ actionClips:SetAttribute(name.."AssetId",id)
+end
+for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","Stun","Vault"}) do
+ importActionClip(name,actionIds[name])
+end
+assert((actionClips:GetAttribute("ClipCount") or 0)==6,"Survivor action clip package is incomplete")
+
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
 scriptAt(SSS,"IslandServer","Script",__ISLAND_SERVER_SOURCE__)
 scriptAt(SP,"VoidSequence","LocalScript",__VOID_SOURCE__)
