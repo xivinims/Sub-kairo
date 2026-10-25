@@ -1055,13 +1055,28 @@ local killerPanel=panel("KillerSelection",UDim2.new(.66,0,.45,0),UDim2.fromScale
 killerPanel.Visible=false
 text(killerPanel,"Title","VOCÊ É O PERSEGUIDOR • ESCOLHA",UDim2.new(1,0,0,44),UDim2.new())
 local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
+local killerChoiceButtons={}
 for i,name in ipairs(names) do
- button(killerPanel,name,name,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function() event:FireServer("chooseKiller",name) end)
+ local b=button(killerPanel,name,name,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function()
+  if ownedKillers()[name] then event:FireServer("chooseKiller",name) else notice.Text="Compre "..name.." na LOJA primeiro." noticeUntil=os.clock()+4 end
+ end)
+ killerChoiceButtons[name]=b
 end
+local function refreshKillerChoices()
+ local owned=ownedKillers()
+ for name,b in pairs(killerChoiceButtons) do
+  b.Text=owned[name] and name or (name.."\nBLOQUEADO")
+  b.TextTransparency=owned[name] and 0 or .38
+  b.BackgroundTransparency=owned[name] and .18 or .58
+ end
+end
+player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshKillerChoices)
+refreshKillerChoices()
 local voteElapsed=0
 RunService.RenderStepped:Connect(function(dt)
  voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
  killerPanel.Visible=net:GetAttribute("Phase")=="Escolha" and player:GetAttribute("ChoosingKiller")==true and not player:GetAttribute("InMenu") and not loading.Visible
+ if killerPanel.Visible then refreshKillerChoices() end
  votePanel.Visible=net:GetAttribute("Phase")=="Votação" and player:GetAttribute("MapVote")==nil and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
@@ -1074,7 +1089,10 @@ RunService.RenderStepped:Connect(function(dt)
  dtSum+=dt if dtSum<.1 then return end dtSum=0
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
  if result.Visible and os.clock()>=resultUntil then hideResult() end
- settingsButton.Visible=not hidden and not result.Visible settingsOverlay.Visible=settingsOverlay.Visible and not hidden
+ settingsButton.Visible=not hidden and not result.Visible
+ shopButton.Visible=not hidden and not result.Visible and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
+ settingsOverlay.Visible=settingsOverlay.Visible and not hidden
+ if hidden or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then shopOverlay.Visible=false end
  profileHUD.Visible=not hidden and not result.Visible
  roster.Visible=not hidden and not result.Visible and player:GetAttribute("InRound")==true and player:GetAttribute("IsJason")~=true and player:GetAttribute("Spectating")~=true
  updateRoster()
