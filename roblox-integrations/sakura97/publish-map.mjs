@@ -137,19 +137,19 @@ function first(task){
 
 
 const FILL_VOICE_SPECS=[
- {index:1,parts:3,bytes:37378,sha256:'ac9400e94fd2bc08db35606bb4b62a0226652b2bfb034ff7fa50d0e38cab1fbb'},
- {index:2,parts:5,bytes:71741,sha256:'8295bdabf5b261df4bd8039bc15fa2b1487dadcf4fbac390a1232ef3ca7a81dc'},
- {index:3,parts:5,bytes:63389,sha256:'ec949a3e137f4bbe3779e21e7d098431e42279370d798d10154ace4b6cbb52a5'},
- {index:4,parts:4,bytes:50183,sha256:'909b69c45e836039e281d793bfebdbe7963e93908ed70da341f344af0b8d3759'},
- {index:5,parts:4,bytes:51804,sha256:'89f9526c9440887b5cca5d52b0258b297161d2c2db6d634b57cb08b558bbf0c5'},
- {index:6,parts:2,bytes:19532,sha256:'cabe385b8b1df69ef2aeaf168ef8b0eeb85fb9339260bcfa3aa33eff1c2bbd24'},
+ {index:1,bytes:37399,sha256:'c364c1d5c1433b41c690e2aa9f0bc57394126e26e70a834474cf83f893115996'},
+ {index:2,bytes:71896,sha256:'b2ca42bcef20edff5200e011780064ba6b97cdc02aa791fc226b83b16a76d420'},
+ {index:3,bytes:63424,sha256:'22159c0f1c5bfbfe8bda7150472f7109b7b8b5982ed8f91e5776e442260f0836'},
+ {index:4,bytes:50262,sha256:'1c024dddde2bf0469d0e59e397d33f8194ac294b47fd59c27bcd7575b0ae1f0e'},
+ {index:5,bytes:51844,sha256:'720d3fc607f45cc6b5f96e07045623978a2745d5aba5d1efafdd0e76d9b411de'},
+ {index:6,bytes:19588,sha256:'3987ea6f75d323c52d7220f6d80e944a78e7b1033d69fe73cf4323c8a4dd7d97'},
 ];
 function readFillVoice(spec){
- const pieces=[];
- for(let i=1;i<=spec.parts;i++){
-  const name=`roblox-integrations/sakura97/fill-voices/voice${spec.index}.part${String(i-1).padStart(2,'0')}.b64`;
-  pieces.push(fs.readFileSync(name,'utf8').trim());
- }
+ const dir='roblox-integrations/sakura97/fill-voices';
+ const prefix=`voice${spec.index}.`;
+ const names=fs.readdirSync(dir).filter(name=>name.startsWith(prefix)&&name.endsWith('.b64')).sort();
+ if(!names.length) throw new Error(`Missing Fill voice ${spec.index} packets`);
+ const pieces=names.map(name=>fs.readFileSync(`${dir}/${name}`,'utf8').trim());
  const bytes=Buffer.from(pieces.join(''),'base64');
  const sha=createHash('sha256').update(bytes).digest('hex');
  if(bytes.length!==spec.bytes) throw new Error(`Fill voice ${spec.index} size mismatch: ${bytes.length} != ${spec.bytes}`);
