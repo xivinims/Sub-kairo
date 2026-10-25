@@ -54,6 +54,12 @@ local ok,err=xpcall(function()
  while ui:GetAttribute("MenuJasonVisible")~=true and os.clock()<revealDeadline do task.wait(.05) end
  local horrorJason=workspace:FindFirstChild("LocalMenuJason")
  assert(horrorJason and horrorJason:GetAttribute("MenuHorrorJason")==true,"Jason was not revealed after menu flicker")
+ local _,horrorSize=horrorJason:GetBoundingBox()
+ assert(horrorSize.Y<=3.5,"Menu killer is still too large: "..tostring(horrorSize.Y))
+ local menuMusic=assert(game:GetService("SoundService"):FindFirstChild("SuviversMenuMusic"),"Menu ambience music missing")
+ assert(menuMusic.SoundId=="rbxassetid://97293342453669","Wrong menu ambience asset")
+ assert(menuMusic.Looped and menuMusic:GetAttribute("MenuOnly")==true,"Menu ambience must loop only in menu")
+ assert(menuMusic.Volume<=.3,"Menu ambience is too loud")
  assert(ui:GetAttribute("HorrorJasonReveal")==true and ui:GetAttribute("MenuJasonVisible")==true,"Jason reveal state missing")
  assert(closeAvatar:GetAttribute("HorrorVisible")==false,"Player avatar did not disappear before Jason reveal")
  assert(game.Lighting:FindFirstChild("SuviversMenuHorrorDark"),"Menu background did not darken during horror beat")
@@ -83,7 +89,9 @@ local ok,err=xpcall(function()
  api.settings.select("gameplay") assert(rows.ControlScale.Slider and not rows:FindFirstChild("CameraFOV"),"Camera FOV must live only in visual settings")
  assert(ui.Sonidos.PlayClick.SoundId=="rbxassetid://87437544236708","Requested play click sound missing")
  assert(ui.Sonidos.LightFlicker.SoundId=="rbxassetid://137413271824429","Requested light flicker sound missing")
- api.close() assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
+ api.close() task.wait(.3)
+ assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
+ assert(menuMusic.Volume==0 and not menuMusic.IsPlaying,"Menu ambience leaked outside menu")
  assert(not game.Lighting:FindFirstChild("SuviversMenuGrade"),"Menu grade leaked into gameplay")
 end,debug.traceback)
 if api then api.close() end
@@ -94,4 +102,4 @@ for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not origi
 for effect,enabled in pairs(originalEffects) do if effect.Parent then effect.Enabled=enabled end end
 game.Lighting.GlobalShadows=originalShadows
 assert(ok,err)
-return {ok=true,leftReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,referenceVisualControls=true,decimalVisualSliders=true,time0815=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true}
+return {ok=true,leftReferenceMenu=true,logoIntro=true,horrorAvatarCloseup=true,jasonAfterFlicker=true,twelveSecondHorrorBeat=true,phoneLayout=true,levelProgress=true,effectsOnlyAudio=true,referenceVisualControls=true,decimalVisualSliders=true,time0815=true,reflectionToggle=true,visualToggles=true,gameplaySettings=true,menuCleanup=true,shopInventoryObjectsRemoved=true,noReturnToMenuObject=true,noResetButton=true,requestedMenuSounds=true,horrorMenuMusic=true,smallerMenuKiller=true,restoredCompactSettings=true}
