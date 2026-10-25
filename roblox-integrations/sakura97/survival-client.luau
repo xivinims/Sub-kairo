@@ -5,6 +5,7 @@ local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
 local SoundService=game:GetService("SoundService")
 local Debris=game:GetService("Debris")
+local HttpService=game:GetService("HttpService")
 local player=Players.LocalPlayer local net=RS:WaitForChild("Survival") local event=net.Action
 local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
@@ -171,6 +172,55 @@ local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132))
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local shopOverlay=Instance.new("Frame",gui) shopOverlay.Name="KillerShop" shopOverlay.Size=UDim2.fromScale(1,1) shopOverlay.BackgroundColor3=Color3.new(0,0,0) shopOverlay.BackgroundTransparency=.32 shopOverlay.ZIndex=115 shopOverlay.Visible=false
+local shopPanel=panel("ShopPanel",UDim2.new(.86,0,.72,0),UDim2.new(.07,0,.14,0)) shopPanel.Parent=shopOverlay shopPanel.ZIndex=116 shopPanel.BackgroundTransparency=.08
+local shopLimit=Instance.new("UISizeConstraint",shopPanel) shopLimit.MaxSize=Vector2.new(760,520)
+local shopTitle=text(shopPanel,"Title","LOJA DE PERSEGUIDORES",UDim2.new(1,-110,0,42),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=19 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
+local shopBalance=text(shopPanel,"Balance","0 PONTOS",UDim2.fromOffset(160,30),UDim2.new(1,-180,0,14)) shopBalance.TextSize=12 shopBalance.Font=Enum.Font.GothamBold shopBalance.ZIndex=117 shopBalance.TextXAlignment=Enum.TextXAlignment.Right
+local shopClose=button(shopPanel,"Close","SAÍDA",UDim2.fromOffset(82,32),UDim2.new(1,-96,1,-46),function() shopOverlay.Visible=false end) shopClose.ZIndex=118 shopClose.TextSize=10
+local shopList=Instance.new("ScrollingFrame",shopPanel) shopList.Name="Items" shopList.Position=UDim2.fromOffset(14,58) shopList.Size=UDim2.new(1,-28,1,-116) shopList.BackgroundTransparency=1 shopList.BorderSizePixel=0 shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y shopList.CanvasSize=UDim2.new() shopList.ScrollBarThickness=2 shopList.ZIndex=117
+local shopLayout=Instance.new("UIListLayout",shopList) shopLayout.Padding=UDim.new(0,7) shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
+local shopButtons={}
+local function ownedKillers()
+ local raw=player:GetAttribute("OwnedKillersJson")
+ if type(raw)~="string" or raw=="" then return {Jason=true} end
+ local ok,data=pcall(function() return HttpService:JSONDecode(raw) end)
+ return ok and type(data)=="table" and data or {Jason=true}
+end
+local killerOrder={"Jason","JohnDoe","Chucky","Jeff","Freddy","Piggy","Krampus"}
+for i,name in ipairs(killerOrder) do
+ local spec=config.Killers[name]
+ if spec then
+  local row=Instance.new("Frame",shopList) row.Name=name row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,58) row.BackgroundColor3=Color3.fromRGB(14,14,17) row.BackgroundTransparency=.12 row.BorderSizePixel=0 row.ZIndex=117
+  Instance.new("UICorner",row).CornerRadius=UDim.new(0,4)
+  local n=text(row,"Name",name,UDim2.new(.46,0,0,24),UDim2.fromOffset(12,7)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
+  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.56,0,0,18),UDim2.fromOffset(12,31)) hint.TextSize=9 hint.TextColor3=Color3.fromRGB(148,148,156) hint.TextXAlignment=Enum.TextXAlignment.Left hint.ZIndex=118
+  local buy=button(row,"Buy","",UDim2.fromOffset(126,34),UDim2.new(1,-138,.5,-17),function() event:FireServer("buyKiller",name) end) buy.ZIndex=119 buy.TextSize=10
+  shopButtons[name]=buy
+ end
+end
+local function refreshShop()
+ local owned=ownedKillers()
+ local stats=player:FindFirstChild("leaderstats") local pts=stats and stats:FindFirstChild("Pontos")
+ shopBalance.Text=tostring(pts and pts.Value or 0).." PONTOS"
+ for name,b in pairs(shopButtons) do
+  local spec=config.Killers[name]
+  if owned[name] then b.Text=name=="Jason" and "PADRÃO" or "COMPRADO" b.Active=false b.AutoButtonColor=false b.BackgroundTransparency=.55
+  else b.Text="COMPRAR  "..tostring(spec and spec.cost or 0) b.Active=true b.AutoButtonColor=true b.BackgroundTransparency=.12 end
+ end
+end
+local shopButton=button(gui,"ShopButton","LOJA",UDim2.fromOffset(74,36),UDim2.new(1,-136,0,6),function()
+ if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
+ refreshShop() shopOverlay.Visible=not shopOverlay.Visible
+end) shopButton.TextSize=10 shopButton.BackgroundTransparency=.18
+player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshShop)
+task.spawn(function()
+ local stats=player:WaitForChild("leaderstats",20)
+ local pts=stats and stats:FindFirstChild("Pontos")
+ if pts then pts.Changed:Connect(refreshShop) end
+ refreshShop()
+end)
+
 RunService.RenderStepped:Connect(function()
  local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
  if blocked then return end
@@ -189,11 +239,6 @@ if coinTemplate then
  local model=coinTemplate:Clone() model.Parent=coinView
  local cf,size=model:GetBoundingBox()
  local cam=Instance.new("Camera",coinView) cam.FieldOfView=35 cam.CFrame=CFrame.lookAt(cf.Position+Vector3.new(0,size.Magnitude*.18,size.Magnitude*1.7),cf.Position) coinView.CurrentCamera=cam
-end
-local adminButton=nil
-if player.UserId==8344738123 then
- adminButton=button(gui,"AdminReset","TESTE • REINICIAR RODADA",UDim2.fromOffset(184,30),UDim2.new(1,-202,0,76),function() event:FireServer("adminReset") end)
- adminButton.TextSize=10
 end
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  100",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=22 condition.TextColor3=Color3.fromRGB(144,223,111)
@@ -818,6 +863,9 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
   loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
+ elseif action=="shopResult" then
+  refreshShop()
+  notice.Text=tostring(b or (a and "Compra concluída." or "Compra não concluída.")) noticeUntil=os.clock()+5
  elseif action=="mission" then
   announceMission(a)
  elseif action=="objectiveDone" then
