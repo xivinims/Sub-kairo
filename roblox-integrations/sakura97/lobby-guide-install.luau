@@ -116,31 +116,67 @@ lobby:SetAttribute("ReceptionSearchOrigin",spawn)
 local origin=typeof(spawn)=="CFrame" and spawn.Position or spawn
 assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 
--- The authored reception in JediLibrary is an L-shaped set of thin brown wooden
--- counter pieces. Find its real tabletop, then seat Fill ON TOP of it.
+-- Find a real authored counter/desk/table in whichever fixed lobby is installed.
+-- Prefer names from the source asset itself ("Counter top", "Counter", "Desk",
+-- "Reception") and never create replacement furniture.
 local receptionPieces={}
+local receptionTop=nil
+local bestScore=-math.huge
+
+local function ancestryText(part)
+ local names={string.lower(part.Name)}
+ local p=part.Parent
+ for _=1,5 do
+  if not p or p==lobby then break end
+  table.insert(names,string.lower(p.Name))
+  p=p.Parent
+ end
+ return table.concat(names," ")
+end
+
 for _,part in ipairs(lobby:GetDescendants()) do
- if part:IsA("BasePart") and part.Transparency<.98 and part.Material==Enum.Material.Wood and math.abs(part.CFrame.UpVector.Y)>.88 then
+ if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.84 then
   local area=part.Size.X*part.Size.Z
   local topY=part.Position.Y+part.Size.Y/2
   local relativeHeight=topY-origin.Y
   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-  local brown=math.abs(part.Color.R-105/255)<.08 and math.abs(part.Color.G-64/255)<.08 and math.abs(part.Color.B-40/255)<.08
-  if brown and part.Size.Y<=.35 and area>=14 and relativeHeight>=1.8 and relativeHeight<=3.1 and flatDistance>=50 and flatDistance<=76 then
-   table.insert(receptionPieces,part)
+  if area>=4 and part.Size.Y<=5 and relativeHeight>=1.4 and relativeHeight<=5.6 and flatDistance<=220 then
+   local text=ancestryText(part)
+   local score=0
+   if string.find(text,"reception",1,true) then score+=260 end
+   if string.find(text,"counter top",1,true) or string.find(text,"countertop",1,true) then score+=220 end
+   if string.find(text,"counter",1,true) then score+=170 end
+   if string.find(text,"front desk",1,true) or string.find(text,"frontdesk",1,true) then score+=200 end
+   if string.find(text,"desk",1,true) then score+=120 end
+   if string.find(text,"table",1,true) then score+=55 end
+   if score>0 then
+    score+=math.min(area,80)*.25
+    score-=flatDistance*.13
+    table.insert(receptionPieces,part)
+    if score>bestScore then bestScore=score receptionTop=part end
+   end
   end
  end
 end
-assert(#receptionPieces>=2,"Real lobby reception counter was not found")
 
--- The actual customer-facing counter is the highest valid wooden top in the cluster.
-local receptionTop=nil
-local bestTop=-math.huge
-for _,part in ipairs(receptionPieces) do
- local topY=part.Position.Y+part.Size.Y/2
- if topY>bestTop then bestTop=topY receptionTop=part end
+-- Fallback for imported meshes with generic names. It still uses an existing authored
+-- horizontal surface and never generates a fake desk.
+if not receptionTop then
+ for _,part in ipairs(lobby:GetDescendants()) do
+  if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.92 then
+   local area=part.Size.X*part.Size.Z
+   local topY=part.Position.Y+part.Size.Y/2
+   local relativeHeight=topY-origin.Y
+   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
+   if area>=8 and area<=180 and part.Size.Y<=3.5 and relativeHeight>=1.8 and relativeHeight<=4.8 and flatDistance>=6 and flatDistance<=120 then
+    local score=80-math.abs(relativeHeight-3)*10-flatDistance*.18+math.min(area,60)*.1
+    table.insert(receptionPieces,part)
+    if score>bestScore then bestScore=score receptionTop=part end
+   end
+  end
+ end
 end
-assert(receptionTop,"Reception tabletop missing")
+assert(receptionTop,"No authored reception/counter/table surface found in fixed lobby")
 
 -- Face the lobby and move slightly toward the front edge so the authored seated legs
 -- hang naturally over the counter instead of intersecting the desk.
