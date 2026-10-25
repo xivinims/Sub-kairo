@@ -95,7 +95,7 @@ for _,part in ipairs(lobby:GetDescendants()) do
   local topY=part.Position.Y+part.Size.Y/2
   local relativeHeight=topY-origin.Y
   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-  local brown=(part.Color-Color3.fromRGB(105,64,40)).Magnitude<.12
+  local brown=math.abs(part.Color.R-105/255)<.08 and math.abs(part.Color.G-64/255)<.08 and math.abs(part.Color.B-40/255)<.08
   if brown and part.Size.Y<=.35 and area>=14 and relativeHeight>=1.8 and relativeHeight<=3.1 and flatDistance>=50 and flatDistance<=76 then
    table.insert(receptionPieces,part)
   end
