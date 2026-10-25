@@ -317,10 +317,18 @@ result:GetPropertyChangedSignal("Visible"):Connect(function()
  if not result.Visible then restoreResultCamera() end
 end)
 
-local function resultVictimReaction(victim,generation)
+local function resultVictimReaction(victim,generation,pursuer)
  local root=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
  if not root then return end
  victim.PrimaryPart=root
+ -- The downed/execution controller may leave Transform offsets on the real character.
+ -- Clear them before the winner presentation so the victim never starts twisted.
+ for _,d in ipairs(victim:GetDescendants()) do if d:IsA("Motor6D") then d.Transform=CFrame.identity end end
+ local vpos=root.Position
+ local pursuerRoot=pursuer and (pursuer.PrimaryPart or pursuer:FindFirstChild("HumanoidRootPart"))
+ local forward=pursuerRoot and Vector3.new(pursuerRoot.Position.X-vpos.X,0,pursuerRoot.Position.Z-vpos.Z) or Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+ if forward.Magnitude<.05 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+ victim:PivotTo(CFrame.lookAt(vpos,vpos+forward))
  local joints={}
  for _,j in ipairs(victim:GetDescendants()) do
   if j:IsA("Motor6D") then joints[j.Name:lower()]=j end
@@ -383,6 +391,7 @@ local function showResult(data)
   if target then
    target:SetAttribute("PresentationState","Winning Screen")
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   if victimCharacter then resultVictimReaction(victimCharacter,generation,target) end
    startResultCamera(target,victimCharacter)
   else
    local own=player.Character
