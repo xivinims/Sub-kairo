@@ -211,13 +211,13 @@ local ok,result=xpcall(function()
  local key=workspace.ActiveArena.RoundObjectives.ObjectiveKey_1
  local keyPrompt=workspace.ActiveArena.RoundObjectives.Key1PromptAnchor:FindFirstChildOfClass("ProximityPrompt")
  local keyPosition=api.positions()[4]
- victim.Character:PivotTo(oldPivot)
+ victimRoot.CFrame=oldRootCF
  api.giveKey(victim,key,keyPrompt,keyPosition)
  assert(not victim:GetAttribute("HasKey"),"Key pickup accepted from far away")
  victim.Character:PivotTo(CFrame.new(keyPosition+Vector3.new(0,3,0)))
  api.giveKey(victim,key,keyPrompt,keyPosition)
  assert(victim:GetAttribute("HasKey") and not key.Parent and not keyPrompt.Enabled,"Key pickup did not consume world item once")
- victim.Character:PivotTo(oldPivot)
+ victimRoot.CFrame=oldRootCF
 
 
  send(killer,"loadFailed",1) advance(.3)
