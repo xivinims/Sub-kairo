@@ -282,12 +282,12 @@ local function revealMenuJason()
  end
  local _,jasonSize=menuJason:GetBoundingBox()
  if jasonSize.Y>0 then
-  local targetHeight=3.25
+  local targetHeight=2.55
   local factor=math.clamp(targetHeight/jasonSize.Y,.15,1)
   pcall(function() menuJason:ScaleTo(menuJason:GetScale()*factor) end)
   _,jasonSize=menuJason:GetBoundingBox()
  end
- local desired=menuCameraCF.Position+menuCameraCF.LookVector*12.4+menuCameraCF.RightVector*1.7
+ local desired=menuCameraCF.Position+menuCameraCF.LookVector*13.8+menuCameraCF.RightVector*1.7
  local params=RaycastParams.new()
  params.FilterType=Enum.RaycastFilterType.Include
  params.FilterDescendantsInstances={menuScene}
