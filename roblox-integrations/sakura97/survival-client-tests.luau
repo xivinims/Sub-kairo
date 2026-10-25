@@ -86,6 +86,10 @@ local ok,result=xpcall(function()
  assert(#requests==beforeRemovedHotkeys,"Removed boost/kit hotkeys still fire actions")
  attrs.IsJason=true step()
  assert(not game:GetService("SoundService"):FindFirstChild("LocalJasonTheme"),"Automatic Jason theme was recreated")
+ local roundMusic=assert(game:GetService("SoundService"):FindFirstChild("SuviversMatchMusic"),"Match soundtrack missing")
+ assert(roundMusic.SoundId=="rbxassetid://108879410219148","Wrong match soundtrack asset")
+ assert(roundMusic.Volume<.5 and math.abs(roundMusic.Volume-.35)<.001,"Match soundtrack must stay below half volume")
+ assert(roundMusic.Looped,"Match soundtrack must loop")
  attrs.IsJason=false
  attrs.Downed=true attrs.BleedoutAt=workspace:GetServerTimeNow()+30 step()
  assert(not gui.TopActions.Run.Visible and not gui.Actions.ReviveNearby.Visible,"Downed player must not see run/self-revive buttons")
@@ -113,7 +117,7 @@ local ok,result=xpcall(function()
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,animatedLoadingAvatar=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
+ return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,animatedLoadingAvatar=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
