@@ -41,7 +41,11 @@ local ok,err=xpcall(function()
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
  p.attrs.Downed=true simulate(.2) assert(posed(p.Character)>=1 and animate.Disabled,"Downed pose conflicts with Animator")
- local root=rootJoint(p.Character)
+ local rootPart=p.Character:FindFirstChild("HumanoidRootPart")
+ local root=nil
+ for _,joint in ipairs(p.Character:GetDescendants()) do
+  if joint:IsA("Motor6D") and joint.Part0==rootPart then root=joint break end
+ end
  local downedTransform=root and root.Transform or CFrame.identity
  p.attrs.BeingExecuted=true p.attrs.ExecutionAt=workspace:GetServerTimeNow() p.attrs.ExecutionDuration=1.85
  simulate(.2)
