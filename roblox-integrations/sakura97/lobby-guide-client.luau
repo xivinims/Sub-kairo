@@ -3,6 +3,8 @@ local Players=game:GetService("Players")
 local Run=game:GetService("RunService")
 local RS=game:GetService("ReplicatedStorage")
 local UIS=game:GetService("UserInputService")
+local SoundService=game:GetService("SoundService")
+local ContentProvider=game:GetService("ContentProvider")
 local player=Players.LocalPlayer
 local npc=script.Parent
 local root=npc:WaitForChild("HumanoidRootPart")
@@ -26,6 +28,31 @@ local template=responses:WaitForChild("template")
 template.Visible=false
 local bubble=head:WaitForChild("gui")
 local label=bubble:WaitForChild("dialog")
+-- Keep the overhead dialogue compact. The original asset was huge on phones.
+bubble.Size=UDim2.fromOffset(250,92)
+bubble.StudsOffset=Vector3.new(0,2.45,0)
+bubble.AlwaysOnTop=true
+bubble.MaxDistance=22
+bubble.LightInfluence=0
+if bubble:IsA("BillboardGui") then bubble.ClipsDescendants=false end
+local nameLabel=bubble:FindFirstChild("name")
+if nameLabel and nameLabel:IsA("TextLabel") then
+ nameLabel.TextSize=12
+ nameLabel.TextScaled=false
+ nameLabel.TextWrapped=false
+ nameLabel.Size=UDim2.new(1,-18,0,22)
+ nameLabel.Position=UDim2.fromOffset(9,4)
+end
+if label:IsA("TextLabel") then
+ label.TextSize=11
+ label.TextScaled=false
+ label.TextWrapped=true
+ label.TextXAlignment=Enum.TextXAlignment.Left
+ label.TextYAlignment=Enum.TextYAlignment.Center
+ label.AutomaticSize=Enum.AutomaticSize.None
+ label.Size=UDim2.new(1,-20,0,58)
+ label.Position=UDim2.fromOffset(10,26)
+end
 label.Visible=false
 
 local greeting="Ah... hello. How are you? My name is Fill. I'm your guide around here. If you have a question, go ahead and ask. So... what do you want to know?"
@@ -49,11 +76,15 @@ local active=false
 local choosing=false
 local connections={}
 local buttons={}
+local oldVoice=SoundService:FindFirstChild("FillVoice")
+if oldVoice then oldVoice:Destroy() end
 local voice=Instance.new("Sound")
 voice.Name="FillVoice"
-voice.Volume=.58
+voice.Volume=.78
 voice.Looped=false
-voice.Parent=ui
+voice.PlaybackSpeed=1
+voice.RollOffMode=Enum.RollOffMode.InverseTapered
+voice.Parent=SoundService
 
 local voiceConnection=nil
 local function stopVoice()
@@ -69,6 +100,7 @@ local function speak(index,token,done)
  stopVoice()
  local id=voiceId(index)
  if not id then
+  warn("Fill voice id missing for line "..tostring(index))
   task.defer(function() if token==generation and active then done() end end)
   return
  end
@@ -81,11 +113,31 @@ local function speak(index,token,done)
   if token==generation and active then done() end
  end
  voiceConnection=voice.Ended:Connect(finish)
- local ok,err=pcall(function() voice:Play() end)
+
+ -- Roblox may need a moment to resolve a newly-uploaded audio asset. Preloading from
+ -- SoundService is much more reliable than calling :Play() from a ScreenGui.
+ local preloadOk,preloadErr=pcall(function()
+  ContentProvider:PreloadAsync({voice})
+ end)
+ if not preloadOk then warn("Fill voice preload failed for "..id..": "..tostring(preloadErr)) end
+
+ local ok,err=pcall(function()
+  voice.TimePosition=0
+  voice:Play()
+ end)
  if not ok then
-  warn("Fill voice unavailable: "..tostring(err))
+  warn("Fill voice play failed for "..id..": "..tostring(err))
   finish()
+  return
  end
+
+ task.delay(1.25,function()
+  if finished or token~=generation or not active then return end
+  if not voice.IsPlaying and voice.TimeLength<=0 then
+   warn("Fill voice asset did not become playable: "..tostring(id))
+   finish()
+  end
+ end)
 end
 
 local function hideChoices()
@@ -195,6 +247,7 @@ connection=Run.RenderStepped:Connect(function(dt)
   connection:Disconnect()
   for _,c in ipairs(connections) do c:Disconnect() end
   stopVoice()
+  voice:Destroy()
   ui:Destroy()
   return
  end
