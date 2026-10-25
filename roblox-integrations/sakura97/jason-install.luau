@@ -799,19 +799,24 @@ friendPresence.Source=__FRIENDS_SOURCE__
 net:SetAttribute("Version",126) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
 net:SetAttribute("MissionStage","Waiting") net:SetAttribute("ComputersDone",0) net:SetAttribute("ComputersRequired",3)
 local light=game:GetService("Lighting")
-light.ClockTime=0
-light.Brightness=1.9
-light.Ambient=Color3.fromRGB(62,62,70)
-light.OutdoorAmbient=Color3.fromRGB(80,84,94)
-light.ExposureCompensation=.04
+-- Fixed environment copied from the supplied Violence_District.rbxlx.
+light.ClockTime=5
+light.Brightness=3
+light.Ambient=Color3.fromRGB(78,102,108)
+light.OutdoorAmbient=Color3.fromRGB(93,104,124)
+light.ColorShift_Top=Color3.fromRGB(62,78,81)
+light.ExposureCompensation=0
 light.GlobalShadows=true
-light.ShadowSoftness=.42
-light.EnvironmentDiffuseScale=.34
-light.EnvironmentSpecularScale=.72
-local oldGrade=light:FindFirstChild("SurviversGrade")
-if oldGrade then oldGrade:Destroy() end
--- ArenaAmbience creates adaptive post effects locally; no heavy global blur is baked into the place.
+light.ShadowSoftness=.2
+light.EnvironmentDiffuseScale=.222
+light.EnvironmentSpecularScale=1
+light.FogColor=Color3.fromRGB(192,192,192)
+light.FogStart=0
+light.FogEnd=100000
+pcall(function() light.Technology=Enum.Technology.Future end)
 for _,v in ipairs(light:GetChildren()) do
- if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end
+ if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") or v:IsA("Atmosphere") then v:Destroy() end
 end
+local bloom=light:FindFirstChild("ViolenceDistrictBloom") or Instance.new("BloomEffect")
+bloom.Name="ViolenceDistrictBloom" bloom.Intensity=1 bloom.Threshold=2 bloom.Size=24 bloom.Enabled=true bloom.Parent=light
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
