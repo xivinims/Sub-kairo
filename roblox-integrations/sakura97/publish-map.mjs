@@ -118,8 +118,8 @@ async function patchCloud(path,body){
 }
 
 async function execute(script){
-  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'180s',script});
-  const deadline=Date.now()+360000;
+  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'300s',script});
+  const deadline=Date.now()+480000;
   while(['QUEUED','PENDING','PROCESSING'].includes(task.state)){
     if(Date.now()>deadline) throw new Error('Luau timeout');
     await sleep(1500);
