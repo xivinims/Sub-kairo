@@ -149,15 +149,16 @@ RunService.RenderStepped:Connect(function()
  local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
  if blocked then return end
  player.CameraMode=Enum.CameraMode.Classic
- player.CameraMinZoomDistance=10 player.CameraMaxZoomDistance=10
+ player.CameraMaxZoomDistance=player:GetAttribute("InRound") and 10 or 24
+ player.CameraMinZoomDistance=player:GetAttribute("InRound") and 10 or 4
 end)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,66)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
-local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,1,0),UDim2.fromOffset(6,-18)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
+local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
 local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
-local condition=text(healthHUD,"Value","♥  INTEIRO",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=14 condition.TextColor3=Color3.fromRGB(144,223,111)
+local condition=text(healthHUD,"Value","♥  100",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=22 condition.TextColor3=Color3.fromRGB(144,223,111)
 local roster=Instance.new("Frame",gui)
 roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(12,112) roster.Size=UDim2.fromOffset(190,306)
 local rosterList=Instance.new("UIListLayout",roster) rosterList.Padding=UDim.new(0,5) rosterList.SortOrder=Enum.SortOrder.LayoutOrder
@@ -740,11 +741,13 @@ local names={} for name in pairs(config.Killers) do table.insert(names,name) end
 for i,name in ipairs(names) do
  local b=button(killerBar,name,name,UDim2.new(1/#names,-6,1,0),UDim2.new((i-1)/#names,0,0,0),function() event:FireServer("chooseKiller",name) end) b.TextSize=11
 end
-RunService.RenderStepped:Connect(function()
+local voteElapsed=0
+RunService.RenderStepped:Connect(function(dt)
+ voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
  votePanel.Visible=net:GetAttribute("Phase")=="Intervalo" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- voteTitle.Text="VOTAR UM MAPA • "..seconds.."s"
+ voteTitle.Text=seconds>0 and ("VOTAR UM MAPA • "..seconds.."s") or "AGUARDANDO 2 JOGADORES"
  local ok,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
  for name,b in pairs(mapButtons) do b.Text=name.." • "..tostring(ok and counts[name] or 0).." votos" b.BackgroundColor3=player:GetAttribute("MapVote")==name and Color3.fromRGB(42,90,46) or Color3.fromRGB(18,18,22) end
 end)

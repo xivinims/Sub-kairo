@@ -72,13 +72,13 @@ for _,name in ipairs({"GameSettingsAvatar","AvatarJointUpgrade","LoadCharacterAp
  local ok,value=pcall(function() return sp[name] end)
  report.avatarSettings[name]={readable=ok,value=tostring(value)}
 end
-for _,id in ipairs({135876330138383,140625681515398}) do
+for _,id in ipairs({92697245643515,80608769509945}) do
  local ok,m=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
  local rec={id=id,loaded=ok}
  if ok and m then
   local scripts=0 local count=0 local meshes=0 local large={} local sequences={} local animations={} local models={}
   for _,v in ipairs(m:GetDescendants()) do
-   if v:IsA("LuaSourceContainer") then scripts+=1
+   if v:IsA("LuaSourceContainer") then scripts+=1 rec.scriptSources=rec.scriptSources or {} table.insert(rec.scriptSources,{path=v:GetFullName(),source=string.sub(v.Source,1,16000)})
    elseif v:IsA("Animation") then table.insert(animations,{name=v.Name,id=v.AnimationId,path=v:GetFullName()})
    elseif v:IsA("KeyframeSequence") then
     local frames=v:GetKeyframes() local poses={} local seen={} local last=0
