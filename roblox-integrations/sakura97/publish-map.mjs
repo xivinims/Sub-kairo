@@ -441,13 +441,18 @@ assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
 assert((game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("ClipCount") or 0)>0)
 local survivorActions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips missing")
-assert((survivorActions:GetAttribute("ClipCount") or 0)>=2,"Required survivor action clips missing")
-assert(survivorActions:GetAttribute("RequestedClipCount")==6 and survivorActions:GetAttribute("RequiredClipCount")==2,"Survivor action request metadata missing")
+assert((survivorActions:GetAttribute("ClipCount") or 0)>=3,"Required survivor action clips missing")
+assert(survivorActions:GetAttribute("RequestedClipCount")==6 and survivorActions:GetAttribute("RequiredClipCount")==3,"Survivor action request metadata missing")
 assert(
  (survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 or (survivorActions:GetAttribute("CrouchWalkFallback")==true and survivorActions:GetAttribute("CrouchWalkAssetId")==127092032896760))
  and
  (survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504 or (survivorActions:GetAttribute("InjuredCrouchWalkFallback")==true and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==127092032896760)),
  "Crouch action assets/fallbacks missing"
+)
+assert(
+ survivorActions:GetAttribute("StunAssetId")==123047897844134
+ or (survivorActions:GetAttribute("StunFallback")==true and survivorActions:GetAttribute("StunAssetId")==127092032896760),
+ "Stun action asset/fallback missing"
 )
 local ui=game.StarterGui.TomiaszMenu
 assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
@@ -549,13 +554,14 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredWalk"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))
   local survivorActions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips did not persist")
-  assert((survivorActions:GetAttribute("ClipCount") or 0)>=2,"Required survivor action clips incomplete after publish")
-  assert(survivorActions:GetAttribute("RequestedClipCount")==6 and survivorActions:GetAttribute("RequiredClipCount")==2)
+  assert((survivorActions:GetAttribute("ClipCount") or 0)>=3,"Required survivor action clips incomplete after publish")
+  assert(survivorActions:GetAttribute("RequestedClipCount")==6 and survivorActions:GetAttribute("RequiredClipCount")==3)
   assert(survivorActions:GetAttribute("ParryRequestedAssetId")==127096285501517)
   assert(survivorActions:GetAttribute("BreakPalletRequestedAssetId")==112166042383605)
   assert(survivorActions:GetAttribute("CrouchWalkRequestedAssetId")==126965695851149)
   assert(survivorActions:GetAttribute("InjuredCrouchWalkRequestedAssetId")==135084204086504)
   assert(survivorActions:GetAttribute("StunRequestedAssetId")==123047897844134)
+  assert(survivorActions:GetAttribute("StunAssetId")==123047897844134 or (survivorActions:GetAttribute("StunFallback")==true and survivorActions:GetAttribute("StunAssetId")==127092032896760))
   assert(survivorActions:GetAttribute("VaultRequestedAssetId")==83873880822918)
   assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 or (survivorActions:GetAttribute("CrouchWalkFallback")==true and survivorActions:GetAttribute("CrouchWalkAssetId")==127092032896760))
   assert(survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504 or (survivorActions:GetAttribute("InjuredCrouchWalkFallback")==true and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==127092032896760))
@@ -584,6 +590,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GOOD LUCK"',1,true),"GOOD LUCK missing from map loading")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("blendFrom",1,true),"Smooth locomotion blend missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("SurvivorActionClips",1,true) and game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('"CrouchWalk"',1,true) and game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('"InjuredCrouchWalk"',1,true),"Dedicated crouch action animation runtime missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('"Stun"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("StunnedUntil",1,true),"Survivor stun action runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("expectedReplacement",1,true),"R6 replacement false-death guard missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('local executionDuration=attacker:GetAttribute("ExecutionLength")',1,true),"Synchronized execution duration missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('p:GetAttribute("BeingExecuted")==true',1,true),"Execution pose does not override downed pose")
