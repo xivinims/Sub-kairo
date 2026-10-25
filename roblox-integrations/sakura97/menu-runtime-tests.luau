@@ -5,7 +5,7 @@ local host=Instance.new("Folder",workspace) host.Name="MenuInterfaceTest"
 local pg=Instance.new("Folder",host)
 local ui=game.StarterGui.TomiaszMenu:Clone() ui:SetAttribute("HorrorDelaySeconds",.05) ui.Parent=pg
 local added=Instance.new("BindableEvent",host) local attributeEvents={}
-local p={UserId=991,Name="Tester",DisplayName="Tester",attrs={SweanLoadingDone=true},CharacterAdded=added.Event}
+local p={attrs={SweanLoadingDone=true},CharacterAdded=added.Event}
 p.Character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R15) p.Character.Parent=host
 local stats=Instance.new("Folder",host) stats.Name="leaderstats"
 for _,name in ipairs({"XP","Nível","Pontos"}) do local v=Instance.new("IntValue",stats) v.Name=name v.Value=name=="Nível" and 2 or name=="XP" and 65 or 27 end
@@ -61,10 +61,12 @@ local ok,err=xpcall(function()
  assert(ui.MenuPrincipal.Play.Size.X.Offset>=168 and ui.MenuPrincipal.Play.Size.Y.Offset>=28,"Centered phone menu target too small")
  assert(ui.MenuPrincipal.Play.Position.Y.Scale<ui.MenuPrincipal.Ajustes.Position.Y.Scale and ui.MenuPrincipal.Ajustes.Position.Y.Scale<ui.MenuPrincipal.Updates.Position.Y.Scale,"Main menu is not a clean vertical stack")
  api.show("settings") api.settings.select("audio")
- assert(api.settings.frame:GetAttribute("SourceAssetId")==93583640955196,"Exact settings asset missing")
- assert(api.settings.frame:FindFirstChild("EffectsVolume",true),"Functional audio slider missing")
+ assert(not ui.Escenarios.MenuAjustes.ReferenceSettings.Heading:FindFirstChild("REDEFINIR"),"Reset settings button returned")
+ local rows=ui.Escenarios.MenuAjustes.ReferenceSettings.SettingsRows
+ assert(not rows:FindFirstChild("MusicVolume") and not rows:FindFirstChild("BoomboxVolume") and not rows:FindFirstChild("MusicEnabled"),"Audio settings still expose removed player music")
+ assert(rows.EffectsVolume.Slider and rows.MenuSounds.Check and rows.FriendAlerts.Check,"Current audio settings missing")
  api.settings.select("visual")
- assert(api.settings.frame:FindFirstChild("CameraFOV",true) and api.settings.frame:FindFirstChild("MapShadows",true),"Functional visual controls missing")
+ assert(rows.CameraFOV.Slider and rows.VisualSaturation.Slider and rows.VisualContrast.Slider and rows.VisualExposure.Slider and rows.VisualTime.Slider and rows.MapShadows.Check,"Reference visual settings missing")
  assert(p:GetAttribute("CameraFOV")==48,"Camera FOV default must match reference")
  assert(p:GetAttribute("VisualSaturation")==-.65,"Saturation default must match reference")
  assert(p:GetAttribute("VisualContrast")==0,"Contrast default must match reference")
@@ -78,7 +80,7 @@ local ok,err=xpcall(function()
  api.settings.setValue("CameraFOV",500) assert(p:GetAttribute("CameraFOV")==100,"FOV bounds failed")
  api.settings.setValue("LowGraphics",true) task.wait()
  assert(not game.Lighting.SuviversMenuBloom.Enabled,"Lightweight mode failed to disable menu bloom")
- api.settings.select("gameplay") assert(api.settings.frame:FindFirstChild("ControlScale",true) and api.settings.frame:FindFirstChild("AFK",true),"Gameplay settings missing")
+ api.settings.select("gameplay") assert(rows.ControlScale.Slider and not rows:FindFirstChild("CameraFOV"),"Camera FOV must live only in visual settings")
  assert(ui.Sonidos.PlayClick.SoundId=="rbxassetid://87437544236708","Requested play click sound missing")
  assert(ui.Sonidos.LightFlicker.SoundId=="rbxassetid://137413271824429","Requested light flicker sound missing")
  api.close() assert(not p:GetAttribute("InMenu") and not workspace:FindFirstChild("LocalMenuScene"),"Menu did not release private scene")
