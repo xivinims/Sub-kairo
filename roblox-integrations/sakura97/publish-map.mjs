@@ -290,7 +290,7 @@ async function readPersistedFixedLobbyState(){
   ' id=net and (net:GetAttribute("FixedLobbyAssetId") or 0) or 0,',
   ' revision=net and (net:GetAttribute("FixedLobbyRevision") or "") or ""',
   '}'
- ].join('\\n');
+ ].join('\n');
  const result=first(await execute(luau));
  return {id:Number(result?.id)||0,revision:String(result?.revision||'')};
 }
@@ -339,7 +339,7 @@ async function ensureFixedLobbyAsset(){
    'local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId='+PLACE_ID+',SaveWithoutPublish=false}) end)',
    'assert(ok,"Could not persist fixed lobby asset ID: "..tostring(err))',
    'return {ok=true,id='+id+',version=game.PlaceVersion}'
-  ].join('\\n');
+  ].join('\n');
   const persisted=first(await execute(luau));
   console.log('FIXED_LOBBY_ID_PERSISTED',JSON.stringify(persisted));
  }
