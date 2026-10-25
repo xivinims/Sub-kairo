@@ -174,6 +174,14 @@ config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
 local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("LogoOnlyInitialLoading",true) loader:SetAttribute("MapLoadingOwnsGoodLuck",true) loader.Parent=first
+
+-- The old menu no longer exists in gameplay. Keep only its disabled controller stub;
+-- MenuSceneTemplate above is retained exclusively for the winner presentation.
+for _,child in ipairs(ui:GetChildren()) do
+ if child~=controller then child:Destroy() end
+end
+ui:SetAttribute("LegacyMenuWidgetsPurged",true)
+ui:SetAttribute("WinnerSceneOnly",true)
 ui.Parent=starter
 
 runtime:SetAttribute("MenuAssetId",0)
