@@ -202,6 +202,30 @@ async function readPersistedFillVoiceState(){
  `));
  return {ids:Array.isArray(result?.ids)?result.ids.map(Number):[],revision:String(result?.revision||"")};
 }
+async function grantFillVoiceUniversePermission(ids){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const response=await fetch('https://apis.roblox.com/asset-permissions-api/v1/assets/permissions',{
+  method:'PATCH',
+  headers:{'x-api-key':key,'content-type':'application/json'},
+  body:JSON.stringify({
+   subjectType:'Universe',
+   subjectId:'9419478735',
+   action:'Use',
+   requests:ids.map(assetId=>({assetId:Number(assetId),grantToDependencies:false}))
+  }),
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let payload; try{payload=JSON.parse(raw)}catch{payload={raw}}
+ if(!response.ok) throw new Error(`Fill audio permission grant HTTP ${response.status}: ${JSON.stringify(payload)}`);
+ const success=new Set((payload.successAssetIds||[]).map(Number));
+ const failed=(payload.errors||[]).filter(Boolean);
+ if(failed.length) throw new Error('Fill audio permission grant errors: '+JSON.stringify(failed));
+ for(const id of ids) if(!success.has(Number(id))) throw new Error('Fill audio permission grant missing asset '+id);
+ console.log('FILL_VOICE_PERMISSION_GRANTED',JSON.stringify({universeId:9419478735,assetIds:ids}));
+ return payload;
+}
 async function ensureFillVoiceAssets(){
  const state=await readPersistedFillVoiceState();
  const existing=state.revision===FILL_VOICE_REVISION?state.ids:[];
@@ -217,12 +241,12 @@ async function ensureFillVoiceAssets(){
   console.log('FILL_VOICE_UPLOADED',JSON.stringify({index:spec.index,assetId:id,bytes:bytes.length,sha256:spec.sha256}));
  }
  if(ids.some(id=>!Number.isFinite(id)||id<=0)) throw new Error('Not all six Fill voice assets are available');
+ await grantFillVoiceUniversePermission(ids);
  if(created){
   const persisted=first(await execute(`
    local net=assert(game:GetService("ReplicatedStorage"):FindFirstChild("Survival"),"Survival runtime missing")
    local ids={${ids.join(',')}}
    for i,id in ipairs(ids) do net:SetAttribute("FillVoice"..i,id) end
-  net:SetAttribute("FillVoiceRevision","2026-10-25-v3-exact-mp3")
    net:SetAttribute("FillVoiceRevision","2026-10-25-v3-exact-mp3")
    local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
    assert(ok,"Could not persist Fill audio asset IDs: "..tostring(err))
