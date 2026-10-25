@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { inflateSync, deflateSync } from 'node:zlib';
+import { inflateSync, deflateSync, gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 
 function crc32(buf){
@@ -226,6 +226,126 @@ async function grantFillVoiceUniversePermission(ids){
  console.log('FILL_VOICE_PERMISSION_GRANTED',JSON.stringify({universeId:9419478735,assetIds:ids}));
  return payload;
 }
+const FIXED_LOBBY_REVISION='violence-district-lobby-v1';
+const FIXED_LOBBY_GZIP_SHA256='c2fa2bcccc7830b19a319db73b87736439284c1968f70101b1d831dc357e0687';
+const FIXED_LOBBY_RBXMX_SHA256='ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2';
+const FIXED_LOBBY_RBXMX_BYTES=5944482;
+
+function readFixedLobbyRbxmx(){
+ const encoded=fs.readFileSync('roblox-integrations/sakura97/lobby-fixed/Violence_District_Lobby.rbxmx.gz.b64','utf8').replace(/[^A-Za-z0-9+/=]/g,'');
+ const gz=Buffer.from(encoded,'base64');
+ const gzSha=createHash('sha256').update(gz).digest('hex');
+ if(gzSha!==FIXED_LOBBY_GZIP_SHA256) throw new Error('Fixed lobby gzip SHA-256 mismatch: '+gzSha);
+ const bytes=gunzipSync(gz);
+ const sha=createHash('sha256').update(bytes).digest('hex');
+ if(bytes.length!==FIXED_LOBBY_RBXMX_BYTES) throw new Error('Fixed lobby size mismatch: '+bytes.length+' != '+FIXED_LOBBY_RBXMX_BYTES);
+ if(sha!==FIXED_LOBBY_RBXMX_SHA256) throw new Error('Fixed lobby RBXMX SHA-256 mismatch: '+sha);
+ return bytes;
+}
+
+async function createFixedLobbyAsset(bytes){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const request={
+  assetType:'Model',
+  displayName:'Suvivers Fixed Violence District Lobby',
+  description:'Fixed lobby snapshot imported from the supplied Violence_District.rbxlx. Embedded scripts removed.',
+  creationContext:{creator:{userId:'8344738123'}}
+ };
+ const form=new FormData();
+ form.append('request',JSON.stringify(request));
+ form.append('fileContent',new Blob([bytes],{type:'model/x-rbxm'}),'Violence_District_Lobby.rbxmx');
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
+  method:'POST',
+  headers:{'x-api-key':key},
+  body:form,
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
+ if(!response.ok) throw new Error('Fixed lobby upload HTTP '+response.status+': '+JSON.stringify(operation));
+ if(!operation.path) throw new Error('Fixed lobby upload returned no operation path: '+JSON.stringify(operation));
+ const deadline=Date.now()+300000;
+ while(!operation.done){
+  if(Date.now()>deadline) throw new Error('Fixed lobby upload operation timed out');
+  await sleep(1800);
+  const opResponse=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{
+   headers:{'x-api-key':key},
+   signal:AbortSignal.timeout(60000)
+  });
+  const opRaw=await opResponse.text();
+  try{operation=JSON.parse(opRaw)}catch{operation={raw:opRaw}}
+  if(!opResponse.ok) throw new Error('Fixed lobby operation HTTP '+opResponse.status+': '+JSON.stringify(operation));
+ }
+ if(operation.error) throw new Error('Fixed lobby operation failed: '+JSON.stringify(operation.error));
+ const id=Number(operation?.response?.assetId);
+ if(!Number.isFinite(id)||id<=0) throw new Error('Fixed lobby operation returned no assetId: '+JSON.stringify(operation));
+ return id;
+}
+
+async function readPersistedFixedLobbyState(){
+ const luau=[
+  'local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")',
+  'return {',
+  ' id=net and (net:GetAttribute("FixedLobbyAssetId") or 0) or 0,',
+  ' revision=net and (net:GetAttribute("FixedLobbyRevision") or "") or ""',
+  '}'
+ ].join('\\n');
+ const result=first(await execute(luau));
+ return {id:Number(result?.id)||0,revision:String(result?.revision||'')};
+}
+
+async function grantFixedLobbyUniversePermission(id){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const response=await fetch('https://apis.roblox.com/asset-permissions-api/v1/assets/permissions',{
+  method:'PATCH',
+  headers:{'x-api-key':key,'content-type':'application/json'},
+  body:JSON.stringify({
+   subjectType:'Universe',
+   subjectId:UNIVERSE_ID,
+   action:'Use',
+   requests:[{assetId:Number(id),grantToDependencies:true}]
+  }),
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let payload; try{payload=JSON.parse(raw)}catch{payload={raw}}
+ if(!response.ok) throw new Error('Fixed lobby permission grant HTTP '+response.status+': '+JSON.stringify(payload));
+ const success=new Set((payload.successAssetIds||[]).map(Number));
+ const failed=(payload.errors||[]).filter(Boolean);
+ if(failed.length) throw new Error('Fixed lobby permission grant errors: '+JSON.stringify(failed));
+ if(!success.has(Number(id))) throw new Error('Fixed lobby permission grant missing asset '+id);
+ console.log('FIXED_LOBBY_PERMISSION_GRANTED',JSON.stringify({universeId:Number(UNIVERSE_ID),assetId:id}));
+}
+
+async function ensureFixedLobbyAsset(){
+ const state=await readPersistedFixedLobbyState();
+ let id=state.revision===FIXED_LOBBY_REVISION?state.id:0;
+ let created=false;
+ if(!(id>0)){
+  const bytes=readFixedLobbyRbxmx();
+  id=await createFixedLobbyAsset(bytes);
+  created=true;
+  console.log('FIXED_LOBBY_UPLOADED',JSON.stringify({assetId:id,bytes:bytes.length,sha256:FIXED_LOBBY_RBXMX_SHA256}));
+ }
+ await grantFixedLobbyUniversePermission(id);
+ if(created){
+  const luau=[
+   'local net=assert(game:GetService("ReplicatedStorage"):FindFirstChild("Survival"),"Survival runtime missing")',
+   'net:SetAttribute("FixedLobbyAssetId",'+id+')',
+   'net:SetAttribute("FixedLobbyRevision","violence-district-lobby-v1")',
+   'net:SetAttribute("FixedLobbySHA256","ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2")',
+   'local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId='+PLACE_ID+',SaveWithoutPublish=false}) end)',
+   'assert(ok,"Could not persist fixed lobby asset ID: "..tostring(err))',
+   'return {ok=true,id='+id+',version=game.PlaceVersion}'
+  ].join('\\n');
+  const persisted=first(await execute(luau));
+  console.log('FIXED_LOBBY_ID_PERSISTED',JSON.stringify(persisted));
+ }
+ return id;
+}
+
 async function ensureFillVoiceAssets(){
  const state=await readPersistedFillVoiceState();
  const existing=state.revision===FILL_VOICE_REVISION?state.ids:[];
@@ -267,6 +387,9 @@ const syntax=Object.values(sources).concat(['menu-client','loading-client','lobb
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const fillVoiceIds=await ensureFillVoiceAssets();
 console.log('FILL_VOICE_IDS',JSON.stringify(fillVoiceIds));
+const fixedLobbyAssetId=await ensureFixedLobbyAsset();
+console.log('FIXED_LOBBY_ASSET_ID',fixedLobbyAssetId);
+install=install.replace('__FIXED_LOBBY_ASSET_ID__',String(fixedLobbyAssetId));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
