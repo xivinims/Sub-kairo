@@ -572,7 +572,8 @@ local function cancelHack(p)
  if p.Parent then p:SetAttribute("Hacking",false) net.Update:FireClient(p,"hackEnd") end
 end
 local function startHack(p,pc,pos)
- if not canInteract(p,pos,10) or pc:GetAttribute("Hacked") or pc:GetAttribute("HackerUserId") then return end
+ local hackerUserId=tonumber(pc:GetAttribute("HackerUserId")) or 0
+ if not canInteract(p,pos,10) or pc:GetAttribute("Hacked") or hackerUserId>0 then return end
  cancelHack(p)
  local progress=pc:GetAttribute("HackProgress") or 0
  local s={pc=pc,pos=pos,progress=progress,nextCheck=math.floor(progress*30/6+1)*6,round=state.id}
@@ -659,7 +660,7 @@ local function setupObjectives()
  for i=1,Rules.ComputersRequired do
   local pos=positions[i]
   local pc=alignObjective(items.ComputerTemplate:Clone(),pos)
-  pc.Name="HackComputer_"..i pc:SetAttribute("ObjectiveType","Computer") pc:SetAttribute("Hacked",false) pc:SetAttribute("HackProgress",0)
+  pc.Name="HackComputer_"..i pc:SetAttribute("ObjectiveType","Computer") pc:SetAttribute("Hacked",false) pc:SetAttribute("HackProgress",0) pc:SetAttribute("HackerUserId",nil)
   pc.PrimaryPart=pc.PrimaryPart or pc:FindFirstChildWhichIsA("BasePart",true)
   local cf,size=pc:GetBoundingBox()
   local display=Instance.new("Part") display.Name="HackStatusScreen" display.Size=Vector3.new(1.8,1.05,.08)
