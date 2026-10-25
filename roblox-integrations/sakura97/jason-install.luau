@@ -24,43 +24,88 @@ local function sanitize(m,anchored)
  end
  for _,v in ipairs(m:GetDescendants()) do if v:IsA("SpawnLocation") then v.Enabled=false v.Transparency=1 v.CanCollide=false v.CanQuery=false end end
 end
--- User-requested exact replacement, performed once; later releases preserve this lobby.
+-- Fixed lobby snapshot supplied by the user as Violence_District.rbxlx.
+-- The publisher uploads the script-free Lobby subtree as a private Model and injects
+-- its immutable asset id here. Later releases preserve this exact visual snapshot.
+local FIXED_LOBBY_ASSET_ID=__FIXED_LOBBY_ASSET_ID__
+assert(type(FIXED_LOBBY_ASSET_ID)=="number" and FIXED_LOBBY_ASSET_ID>0,"Fixed lobby asset id missing")
 local lobby=workspace:FindFirstChild("JediLibrary")
-if not lobby or lobby:GetAttribute("SourceAssetId")~=1043225187 then
- local asset=load(1043225187)
- local replacement=assert(asset:FindFirstChild("Map [New]",true),"Requested Map-Lobby root missing")
- replacement.Parent=nil asset:Destroy() sanitize(replacement,true)
- local cf,size=replacement:GetBoundingBox()
- replacement:PivotTo(replacement:GetPivot()+Vector3.new(-cf.X,40-(cf.Y-size.Y/2),-cf.Z))
- replacement.Name="RequestedLobbyCandidate" replacement.Parent=workspace
- local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include params.FilterDescendantsInstances={replacement} params.RespectCanCollide=true
- local surfaces={}
- for _,part in ipairs(replacement:GetDescendants()) do
-  if part:IsA("BasePart") and part.CanCollide and part.Transparency<.9 and part.CFrame.UpVector.Y>.98 and part.Size.X>=16 and part.Size.Z>=16 and part.Size.Y<=12 then table.insert(surfaces,part) end
+local needsFixedLobby=not lobby
+ or lobby:GetAttribute("SourceAssetId")~=FIXED_LOBBY_ASSET_ID
+ or lobby:GetAttribute("FixedLobbyRevision")~="violence-district-lobby-v1"
+
+if needsFixedLobby then
+ local asset=load(FIXED_LOBBY_ASSET_ID)
+ local source=asset:FindFirstChild("Lobby",true)
+ if not source and asset.Name=="Lobby" then source=asset end
+ assert(source,"Fixed Violence District Lobby root missing from uploaded snapshot")
+
+ local replacement=Instance.new("Model")
+ replacement.Name="RequestedLobbyCandidate"
+ for _,child in ipairs(source:GetChildren()) do child.Parent=replacement end
+ asset:Destroy()
+ sanitize(replacement,true)
+
+ -- Preserve every internal transform from the supplied lobby. Only translate the
+ -- entire snapshot as one rigid unit so it fits the Suvivers world near origin.
+ replacement.Parent=workspace
+ local beforeCF,beforeSize=replacement:GetBoundingBox()
+ local shift=Vector3.new(-beforeCF.X,40-(beforeCF.Y-beforeSize.Y/2),-beforeCF.Z)
+ replacement:PivotTo(replacement:GetPivot()+shift)
+
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={replacement}
+ params.RespectCanCollide=true
+
+ -- Original Workspace SpawnLocation from Violence_District.rbxlx, translated by the
+ -- exact same rigid shift as the lobby snapshot.
+ local snapshotSpawn=Vector3.new(1970.8416748046875,734.043212890625,3812.6513671875)+shift
+ local groundHit=workspace:Raycast(snapshotSpawn+Vector3.new(0,14,0),Vector3.new(0,-40,0),params)
+ local ground=nil
+ if groundHit and groundHit.Normal.Y>.82 and not workspace:Raycast(groundHit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),params) then
+  ground=groundHit.Position
  end
- table.sort(surfaces,function(x,y) return x.Size.X*x.Size.Z>y.Size.X*y.Size.Z end)
- local ground
- for _,part in ipairs(surfaces) do
-  for _,offset in ipairs({Vector3.zero,Vector3.new(6,0,0),Vector3.new(-6,0,0),Vector3.new(0,0,6)}) do
-   local point=part.CFrame:PointToWorldSpace(Vector3.new(0,part.Size.Y/2,0)+offset)
-   local hit=workspace:Raycast(point+Vector3.new(0,1,0),Vector3.new(0,-3,0),params)
-   if hit and hit.Normal.Y>.95 and not workspace:Raycast(hit.Position+Vector3.new(0,.2,0),Vector3.new(0,8,0),params) then
-    local clear=true
-    for _,direction in ipairs({Vector3.new(4,0,0),Vector3.new(-4,0,0),Vector3.new(0,0,4),Vector3.new(0,0,-4)}) do
-     if workspace:Raycast(hit.Position+Vector3.new(0,2.5,0),direction,params) then clear=false end
-    end
-    if clear then ground=hit.Position break end
+
+ -- Fallback only if the original spawn point is obstructed after Roblox imports the
+ -- model. This never modifies the lobby itself.
+ if not ground then
+  local surfaces={}
+  for _,part in ipairs(replacement:GetDescendants()) do
+   if part:IsA("BasePart") and part.CanCollide and part.Transparency<.9 and part.CFrame.UpVector.Y>.94 and part.Size.X>=10 and part.Size.Z>=10 and part.Size.Y<=14 then
+    table.insert(surfaces,part)
    end
   end
-  if ground then break end
+  table.sort(surfaces,function(x,y)
+   local xd=(x.Position-snapshotSpawn).Magnitude
+   local yd=(y.Position-snapshotSpawn).Magnitude
+   return xd<yd
+  end)
+  for _,part in ipairs(surfaces) do
+   local point=part.CFrame:PointToWorldSpace(Vector3.new(0,part.Size.Y/2,0))
+   local hit=workspace:Raycast(point+Vector3.new(0,2,0),Vector3.new(0,-5,0),params)
+   if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),params) then
+    ground=hit.Position
+    break
+   end
+  end
  end
- assert(ground,"Requested lobby has no verified clear spawn")
+ assert(ground,"Fixed Violence District lobby has no safe spawn floor after import")
+
  if lobby then lobby:Destroy() end
- lobby=replacement lobby.Name="JediLibrary" lobby:SetAttribute("SourceAssetId",1043225187) lobby:SetAttribute("VerifiedSpawn",ground)
- local existing=lobby:FindFirstChild("Door")
- local reference=existing and existing:GetPivot() or CFrame.new(ground+Vector3.new(12,8,0))
- lobby:SetAttribute("FormerDoorCFrame",reference)
- if existing then existing:Destroy() end
+ lobby=replacement
+ lobby.Name="JediLibrary"
+ lobby:SetAttribute("SourceAssetId",FIXED_LOBBY_ASSET_ID)
+ lobby:SetAttribute("FixedLobbyRevision","violence-district-lobby-v1")
+ lobby:SetAttribute("FixedLobbySHA256","ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2")
+ lobby:SetAttribute("FixedLobbySourceFile","Violence_District.rbxlx")
+ lobby:SetAttribute("FixedLobbyScriptsRemoved",1)
+ lobby:SetAttribute("VerifiedSpawn",ground)
+ lobby:SetAttribute("SnapshotSpawn",snapshotSpawn)
+
+ -- The original SpawnLocation faces -X. Keep this as metadata used by the existing
+ -- spawn-facing and guide placement code; no visible door geometry is added.
+ lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(ground+Vector3.new(-12,0,0),ground))
 end
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
 if typeof(referenceCF)~="CFrame" then
