@@ -164,11 +164,23 @@ RunService.RenderStepped:Connect(function()
  player.CameraMaxZoomDistance=player:GetAttribute("InRound") and 10 or 24
  player.CameraMinZoomDistance=player:GetAttribute("InRound") and 10 or 4
 end)
-local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,112)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
+local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,132)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
 local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
-local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
+local pointsText=text(profileHUD,"Points","0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.Position=UDim2.fromOffset(34,26) pointsText.TextColor3=Color3.fromRGB(231,209,155) pointsText.TextXAlignment=Enum.TextXAlignment.Left
+local coinView=Instance.new("ViewportFrame",profileHUD) coinView.Name="Coin" coinView.Size=UDim2.fromOffset(28,28) coinView.Position=UDim2.fromOffset(0,26) coinView.BackgroundTransparency=1 coinView.Ambient=Color3.fromRGB(200,200,200)
+local coinTemplate=net:FindFirstChild("CoinDisplay")
+if coinTemplate then
+ local model=coinTemplate:Clone() model.Parent=coinView
+ local cf,size=model:GetBoundingBox()
+ local cam=Instance.new("Camera",coinView) cam.FieldOfView=35 cam.CFrame=CFrame.lookAt(cf.Position+Vector3.new(0,size.Magnitude*.18,size.Magnitude*1.7),cf.Position) coinView.CurrentCamera=cam
+end
+local adminButton=nil
+if player.UserId==8344738123 then
+ adminButton=button(gui,"AdminReset","TESTE • REINICIAR RODADA",UDim2.fromOffset(184,30),UDim2.new(1,-202,0,76),function() event:FireServer("adminReset") end)
+ adminButton.TextSize=10
+end
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  100",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=22 condition.TextColor3=Color3.fromRGB(144,223,111)
 local staminaTrack=Instance.new("Frame",gui) staminaTrack.Name="Stamina" staminaTrack.Size=UDim2.fromOffset(148,7) staminaTrack.Position=UDim2.new(0,18,1,-64)
@@ -262,6 +274,84 @@ local function updateRoster()
   end
  end
 end
+local function createObjectiveUI()
+local hackPanel=panel("HackPanel",UDim2.new(.54,0,0,94),UDim2.new(.23,0,1,-132))
+hackPanel.BackgroundColor3=Color3.new(0,0,0) hackPanel.BackgroundTransparency=.18 hackPanel.Visible=false hackPanel.ZIndex=90
+local hackLabel=text(hackPanel,"Label","HACKEANDO",UDim2.new(1,-54,0,24),UDim2.fromOffset(12,5)) hackLabel.TextSize=11 hackLabel.ZIndex=91
+local hackRail=Instance.new("Frame",hackPanel) hackRail.Name="Progress" hackRail.Size=UDim2.new(1,-24,0,5) hackRail.Position=UDim2.fromOffset(12,34) hackRail.BackgroundColor3=Color3.fromRGB(45,45,45) hackRail.BorderSizePixel=0 hackRail.ZIndex=91
+local hackFill=Instance.new("Frame",hackRail) hackFill.Size=UDim2.fromScale(0,1) hackFill.BackgroundColor3=Color3.fromRGB(215,215,215) hackFill.BorderSizePixel=0 hackFill.ZIndex=92
+local skillButton=button(hackPanel,"SkillCheck","AGUARDE",UDim2.new(1,-24,0,36),UDim2.fromOffset(12,48),function() end) skillButton.ZIndex=92
+local targetZone=Instance.new("Frame",skillButton) targetZone.Name="Target" targetZone.Position=UDim2.fromScale(.32,0) targetZone.Size=UDim2.fromScale(.46,1) targetZone.BackgroundColor3=Color3.fromRGB(80,145,95) targetZone.BackgroundTransparency=.48 targetZone.BorderSizePixel=0 targetZone.ZIndex=93 targetZone.Visible=false
+local cursor=Instance.new("Frame",skillButton) cursor.Name="Cursor" cursor.Size=UDim2.new(0,3,1,0) cursor.BackgroundColor3=Color3.new(1,1,1) cursor.BorderSizePixel=0 cursor.ZIndex=94 cursor.Visible=false
+local checkId=nil local checkAt=0
+local function clickHack()
+ if hackPanel.Visible and checkId then event:FireServer("hackTap",checkId) checkId=nil cursor.Visible=false targetZone.Visible=false end
+end
+skillButton.Activated:Connect(clickHack)
+local cancel=button(hackPanel,"Cancel","SAIR",UDim2.fromOffset(48,24),UDim2.new(1,-52,0,4),function() event:FireServer("hackCancel") end) cancel.ZIndex=94 cancel.TextSize=10
+local hackingPc=nil
+local function hackEvent(action,a,b)
+ if action=="hackStart" then hackingPc=a hackPanel.Visible=true hackFill.Size=UDim2.fromScale(b or 0,1) hackLabel.Text="HACKEANDO • FIQUE PERTO DO COMPUTADOR" skillButton.Text="AGUARDE"
+ elseif action=="hackEnd" then hackingPc=nil hackPanel.Visible=false checkId=nil
+ elseif action=="hackProgress" then hackFill.Size=UDim2.fromScale(a,1) hackLabel.Text="HACKEANDO • "..math.floor(a*100).."%"
+ elseif action=="hackCheck" then checkId=a checkAt=b cursor.Visible=true targetZone.Visible=true skillButton.Text="CLIQUE NA ÁREA VERDE • ESPAÇO"
+ elseif action=="hackCheckResult" then checkId=nil cursor.Visible=false targetZone.Visible=false skillButton.Text=a and "ACERTOU" or "ERRO • TENTE O PRÓXIMO"
+ elseif action=="pcComplete" and player:GetAttribute("IsJason") and typeof(a)=="Instance" then
+  local h=Instance.new("Highlight") h.Name="CompletedComputer" h.Adornee=a h.FillColor=Color3.fromRGB(65,230,115) h.OutlineColor=Color3.new(1,1,1) h.FillTransparency=.45 h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop h.Parent=a Debris:AddItem(h,10)
+ end
+end
+RunService.RenderStepped:Connect(function()
+ if checkId then cursor.Position=UDim2.fromScale(math.clamp((workspace:GetServerTimeNow()-checkAt)/1.6,0,1),0) end
+ if hackPanel.Visible and (not hackingPc or not hackingPc.Parent or not player:GetAttribute("InRound") or player:GetAttribute("Downed")) then event:FireServer("hackCancel") hackPanel.Visible=false end
+end)
+UIS.InputBegan:Connect(function(input,processed)
+ if not processed and input.KeyCode==Enum.KeyCode.Space and hackPanel.Visible then clickHack() end
+end)
+
+-- Detection is local to the killer: forward cone + raycast, never through walls.
+local spotted={} local detectionElapsed=0
+local chase=Instance.new("Sound") chase.Name="LocalChasePulse" chase.SoundId="rbxassetid://135029802046345" chase.Volume=0 chase.Parent=game:GetService("SoundService")
+local nextPulse=0
+RunService.RenderStepped:Connect(function(dt)
+ detectionElapsed+=dt if detectionElapsed<.12 then return end detectionElapsed=0
+ local me=player.Character local myRoot=me and me:FindFirstChild("HumanoidRootPart")
+ local killer=nil
+ for _,p in ipairs(Players:GetPlayers()) do if p:GetAttribute("IsJason") and p:GetAttribute("InRound") then killer=p break end end
+ local kr=killer and killer.Character and killer.Character:FindFirstChild("HumanoidRootPart")
+ local wanted={}
+ if killer==player and kr then
+  for _,p in ipairs(Players:GetPlayers()) do
+   local char=p.Character local r=char and char:FindFirstChild("HumanoidRootPart")
+   if p~=player and r and p:GetAttribute("InRound") then
+    local delta=r.Position-kr.Position
+    if delta.Magnitude<70 and delta.Magnitude>.01 and kr.CFrame.LookVector:Dot(delta.Unit)>.45 then
+     local param=RaycastParams.new() param.FilterType=Enum.RaycastFilterType.Exclude param.FilterDescendantsInstances={me} param.RespectCanCollide=true
+     local hit=workspace:Raycast(kr.Position,delta,param)
+     if not hit or hit.Instance:IsDescendantOf(char) then
+      wanted[p.UserId]=true
+      local h=spotted[p.UserId]
+      if not h then h=Instance.new("Highlight") h.Name="VisibleSurvivor" h.FillColor=Color3.fromRGB(220,45,45) h.OutlineColor=h.FillColor h.FillTransparency=.65 h.DepthMode=Enum.HighlightDepthMode.Occluded h.Parent=workspace spotted[p.UserId]=h end
+      h.Adornee=char
+     end
+    end
+   end
+  end
+ end
+ for id,h in pairs(spotted) do if not wanted[id] then h:Destroy() spotted[id]=nil end end
+ if killer and killer~=player and kr and myRoot and player:GetAttribute("InRound") and not player:GetAttribute("VoidActive") then
+  local distance=(kr.Position-myRoot.Position).Magnitude
+  if distance<35 and os.clock()>nextPulse then
+   local danger=1-math.clamp(distance/35,0,1)
+   chase.Volume=(.08+danger*.22)*(player:GetAttribute("EffectsVolume") or 80)/100
+   chase.PlaybackSpeed=.6 chase.TimePosition=0 chase:Play() nextPulse=os.clock()+1.2-danger*.65
+  end
+ else chase:Stop() end
+end)
+
+return hackEvent
+end
+local hackEvent=createObjectiveUI()
+
 local result=Instance.new("Frame",gui)
 result.Name="RoundResult" result.Size=UDim2.fromScale(1,1) result.Position=UDim2.new()
 result.BackgroundColor3=Color3.new(0,0,0) result.BackgroundTransparency=1 result.BorderSizePixel=0
@@ -361,7 +451,7 @@ local function hideResult()
  end
  restoreResultCamera()
 end
-local resultClose=button(result,"Close","SAÍDA",UDim2.fromOffset(88,36),UDim2.new(1,-100,0,14),hideResult)
+local resultClose=button(result,"Close","SAÍDA",UDim2.fromOffset(88,36),UDim2.new(.025,0,.77,0),hideResult)
 resultClose.ZIndex=77 resultClose.TextSize=12 resultClose.BackgroundTransparency=.18 resultClose.UIStroke.Enabled=false
 result:GetPropertyChangedSignal("Visible"):Connect(function()
  if not result.Visible then restoreResultCamera() end
@@ -394,11 +484,17 @@ local function showResult(data)
   local victimPlayer=victimId>0 and Players:GetPlayerByUserId(victimId) or nil
   local victimCharacter=victimPlayer and victimPlayer.Character or nil
   if target then
-   target:SetAttribute("PresentationState","Jason Idle")
+   target:SetAttribute("PresentationState","Execution")
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   target:SetAttribute("PresentationFrozen",true)
+   target:SetAttribute("PresentationFrozen",false)
    target:SetAttribute("PresentationFreezeTime",.35)
-   startResultCamera(target,nil)
+   local arena=workspace:FindFirstChild("ActiveArena")
+   local replay=arena and arena:FindFirstChild("ResultVictim")
+   startResultCamera(target,replay or victimCharacter)
+   task.delay(target:GetAttribute("ExecutionLength") or 2.5,function()
+    if generation~=resultGeneration or not target.Parent then return end
+    target:SetAttribute("PresentationState","Winning Screen") target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   end)
   else
    local own=player.Character
    if own then startResultCamera(own,nil) end
@@ -411,7 +507,7 @@ local function showResult(data)
   if target then
    target:SetAttribute("PresentationState","Jason Slash")
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   target:SetAttribute("PresentationFrozen",true)
+   target:SetAttribute("PresentationFrozen",false)
    target:SetAttribute("PresentationFreezeTime",.28)
    startResultCamera(target,nil)
   else
@@ -593,7 +689,7 @@ local function setMapProgress(value,duration)
  TweenService:Create(progressFill,TweenInfo.new(duration or .16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.fromScale(value,1)}):Play()
 end
 
-local function glitchLeadIn()
+local function -- No spoken Good Luck or stacked voices.
  local media=RS:FindFirstChild("XNMedia")
  local template=media and media:FindFirstChild("MenuClick")
  if not template then return end
@@ -613,34 +709,12 @@ end
 
 local function playGoodLuckVoice(token)
  if token~=loadToken or not loading.Visible then return end
- glitchLeadIn()
+ -- No spoken Good Luck or stacked voices.
  task.wait(.24)
  if token~=loadToken or not loading.Visible then return end
  goodLuck.Visible=true
  TweenService:Create(goodLuck,TweenInfo.new(.18,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextTransparency=.05}):Play()
- -- Layer Roblox TTS voices to create an original broken/interference-like delivery.
- task.spawn(function()
-  local holder=Instance.new("Folder") holder.Name="GoodLuckTTS" holder.Parent=SoundService
-  local ok=pcall(function()
-   local output=Instance.new("AudioDeviceOutput") output.Name="GoodLuckOutput" output.Player=player output.Parent=holder
-   for i,voice in ipairs({
-    {id="9",pitch=.86,speed=.90,volume=.38,delay=0},
-    {id="10",pitch=1.08,speed=1.02,volume=.30,delay=.045},
-    {id="11",pitch=.96,speed=.96,volume=.20,delay=.09},
-   }) do
-    local speech=Instance.new("AudioTextToSpeech")
-    speech.Name="GoodLuckVoice"..i speech.Text="Good Luck" speech.AutoLocalize=false
-    speech.VoiceId=voice.id speech.Pitch=voice.pitch speech.PlaybackSpeed=voice.speed speech.Volume=voice.volume speech.Parent=holder
-    local wire=Instance.new("Wire") wire.Name="VoiceWire"..i wire.SourceInstance=speech wire.TargetInstance=output wire.Parent=holder
-    task.spawn(function()
-     pcall(function() speech:LoadAsync() end)
-     task.wait(voice.delay)
-     if token==loadToken and loading.Visible then pcall(function() speech:Play() end) end
-    end)
-   end
-  end)
-  task.delay(3,function() if holder.Parent then holder:Destroy() end end)
- end)
+
 end
 
 local function preload(roundId,map)
@@ -748,7 +822,9 @@ player:GetAttributeChangedSignal("Downed"):Connect(function()
 end)
 
 net.Update.OnClientEvent:Connect(function(action,a,b)
+ hackEvent(action,a,b)
  if action=="reset" then
+  hackEvent("hackEnd") hideResult()
   loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
@@ -768,9 +844,6 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
   local strength=tonumber(a) or .45
   hitFlash.BackgroundTransparency=math.clamp(.78-strength*.35,.42,.82)
   TweenService:Create(hitFlash,TweenInfo.new(.55,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=1}):Play()
- elseif action=="noisePing" and typeof(a)=="Vector3" then
-  local marker=Instance.new("Part") marker.Name="NoisePing" marker.Shape=Enum.PartType.Ball marker.Size=Vector3.new(1.2,1.2,1.2) marker.Material=Enum.Material.Neon marker.Color=Color3.fromRGB(235,86,89) marker.Transparency=.25 marker.Anchored=true marker.CanCollide=false marker.CanTouch=false marker.Position=a+Vector3.new(0,.7,0) marker.Parent=workspace
-  TweenService:Create(marker,TweenInfo.new(1.6),{Size=Vector3.new(5,5,5),Transparency=1}):Play() Debris:AddItem(marker,1.8)
  elseif action=="load" then
   preload(a,b)
  elseif action=="caught" or action=="executed" then
@@ -888,7 +961,7 @@ local voteElapsed=0
 RunService.RenderStepped:Connect(function(dt)
  voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
  killerPanel.Visible=net:GetAttribute("Phase")=="Escolha" and player:GetAttribute("ChoosingKiller")==true and not player:GetAttribute("InMenu") and not loading.Visible
- votePanel.Visible=net:GetAttribute("Phase")=="Votação" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
+ votePanel.Visible=net:GetAttribute("Phase")=="Votação" and player:GetAttribute("MapVote")==nil and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  voteTimer.Text=tostring(seconds)
@@ -914,7 +987,7 @@ RunService.RenderStepped:Connect(function(dt)
  local stats=player:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local lv=stats and stats:FindFirstChild("Nível") local pts=stats and stats:FindFirstChild("Pontos")
  local n=lv and lv.Value or 1 local total=xp and xp.Value or 0 local minimum=15*(n-1)^2+35*(n-1) local nextLevel=15*n^2+35*n
  xpFill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((total-minimum)/(nextLevel-minimum),0,1),1)
- levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text="◉  "..(pts and pts.Value or 0)
+ levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text=""..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  countdown.Visible=not hidden and (phase=="Intervalo" or phase=="Escolha")
@@ -956,7 +1029,7 @@ RunService.RenderStepped:Connect(function(dt)
  carryNearby.Text=(player:GetAttribute("CarryingUserId") or 0)>0 and "SOLTAR" or "CARREGAR"
  bar.Visible=controlsVisible and inRound and (isJason or reviveNearby.Visible or carryNearby.Visible)
  timer.Text=string.format("%d:%02d",math.floor(left/60),left%60)
- local stage=net:GetAttribute("MissionStage") or "Waiting"
+ local stage=net:GetAttribute("ExitUnlocked") and "Exit" or player:GetAttribute("HasKey") and "Key" or net:GetAttribute("MissionStage") or "Waiting"
  mission.Visible=not hidden and phase=="Partida" and not isJason and (inRound or player:GetAttribute("Spectating"))
  missionText.Text=missionCopy(stage)
  inventory.Visible=not hidden and inRound and not isJason
@@ -1058,4 +1131,10 @@ if player.GetAttributeChangedSignal then
  end)
 end
 
-
+local function squareHud(obj)
+ if obj:IsA("UICorner") then obj.CornerRadius=UDim.new(0,0)
+ elseif obj:IsA("TextButton") then obj.BackgroundColor3=Color3.new(0,0,0)
+ elseif obj:IsA("Frame") and (obj.Name=="SettingsOverlay" or obj.Name=="Mission" or obj.Name=="Card") then obj.BackgroundColor3=Color3.new(0,0,0) end
+end
+for _,obj in ipairs(gui:GetDescendants()) do squareHud(obj) end
+gui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareHud(obj) end end) end)

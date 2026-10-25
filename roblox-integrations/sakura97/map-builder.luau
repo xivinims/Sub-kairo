@@ -167,29 +167,46 @@ function Builder.build(load,sanitize,destination)
   assert(far and distance>=math.min(24,minimumKillerDistance) and killerClearance>=5.8,"No safe pursuer spawn away from walls in "..spec.name)
   local points=Instance.new("Folder",map) points.Name="SafePoints"
   for i,p in ipairs(selected) do addPoint(points,i,p) end
-  local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
-  for _,p in ipairs(candidates) do
-   if #arrivals:GetChildren()>=8 then break end
-   if (p-start).Magnitude>=8 and (p-start).Magnitude<=math.max(48,minimumKillerDistance*.9) and (p-far).Magnitude>math.max(28,minimumKillerDistance*.72) and route(start,p) then
-    addPoint(arrivals,#arrivals:GetChildren()+1,p)
-   end
+  local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns"
+  local arrivalsChosen={}
+  local available={}
+  for _,point in ipairs(candidates) do
+   if (point-far).Magnitude>=math.max(24,minimumKillerDistance*.65) and route(start,point) then table.insert(available,point) end
+   if #available>=24 then break end
   end
-  if #arrivals:GetChildren()<2 then
-   local fallback={}
-   for _,p in ipairs(selected) do
-    local fromStart=(p-start).Magnitude
-    local fromKiller=(p-far).Magnitude
-    if fromStart>=5 and fromKiller>=math.min(18,minimumKillerDistance*.45) then
-     table.insert(fallback,{p=p,d=fromStart})
-    end
+  while #arrivalsChosen<8 do
+   local best,bestDistance=nil,-1
+   for _,point in ipairs(available) do
+    local nearest=(point-far).Magnitude
+    for _,used in ipairs(arrivalsChosen) do nearest=math.min(nearest,(point-used).Magnitude) end
+    if nearest>bestDistance then best=point bestDistance=nearest end
    end
-   table.sort(fallback,function(a,b) return a.d<b.d end)
-   for _,entry in ipairs(fallback) do
-    if #arrivals:GetChildren()>=math.min(4,#selected) then break end
-    addPoint(arrivals,#arrivals:GetChildren()+1,entry.p)
-   end
+   if not best or bestDistance<8 then break end
+   table.insert(arrivalsChosen,best) addPoint(arrivals,#arrivalsChosen,best)
   end
-  assert(#arrivals:GetChildren()>=2,"Arrival area too cramped in "..spec.name)
+  assert(#arrivalsChosen>=7,"Need seven separated survivor spawns in "..spec.name)
+  local objectiveSites=Instance.new("Folder",map) objectiveSites.Name="ObjectiveSites"
+  local chosenSites={}
+  local possible={}
+  for _,point in ipairs(candidates) do
+   local nearest=(point-far).Magnitude
+   for _,used in ipairs(arrivalsChosen) do nearest=math.min(nearest,(point-used).Magnitude) end
+   if nearest>=6 and route(start,point) then table.insert(possible,point) end
+   if #possible>=20 then break end
+  end
+  while #chosenSites<11 do
+   local best,bestDistance=nil,-1
+   for _,point in ipairs(possible) do
+    local nearest=(point-start).Magnitude
+    for _,used in ipairs(chosenSites) do nearest=math.min(nearest,(point-used).Magnitude) end
+    if nearest>bestDistance then best=point bestDistance=nearest end
+   end
+   if not best or bestDistance<8 then break end
+   table.insert(chosenSites,best) addPoint(objectiveSites,#chosenSites,best-Vector3.new(0,3,0))
+  end
+  assert(#chosenSites>=9,"Need nine reachable objective sites in "..spec.name)
+  map:SetAttribute("ObjectiveSitesValidated",true)
+  map:SetAttribute("SpawnLayoutVersion",2)
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
   if toward.Magnitude<1 then toward=Vector3.new(far.X-start.X,0,far.Z-start.Z) end
   toward=toward.Unit
@@ -229,7 +246,7 @@ function Builder.build(load,sanitize,destination)
   map:SetAttribute("FloorY",lowest) map:SetAttribute("VoidY",lowest-35) map:SetAttribute("PartCount",count)
   map:SetAttribute("Footprint",Vector3.new(size.X,0,size.Z)) map:SetAttribute("ValidatedPaths",#selected-1)
   map.Parent=destination
-  table.insert(reports,{name=spec.name,label=spec.label,id=spec.id,scale=spec.scale,parts=count,connected=#selected,arrivals=#arrivals:GetChildren(),killerClearance=killerClearance,killerDistance=distance,invisibleBounds=#bounds:GetChildren(),width=size.X,depth=size.Z})
+  table.insert(reports,{name=spec.name,label=spec.label,id=spec.id,scale=spec.scale,parts=count,objectiveSites=#chosenSites,connected=#selected,arrivals=#arrivals:GetChildren(),killerClearance=killerClearance,killerDistance=distance,invisibleBounds=#bounds:GetChildren(),width=size.X,depth=size.Z})
  end
  return reports
 end

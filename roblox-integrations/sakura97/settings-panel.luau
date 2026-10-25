@@ -34,13 +34,13 @@ local categories={
   {info="As partidas começam automaticamente. Ative AFK para ficar no lobby."},
  }},
 }
-local function corner(o,r) local c=Instance.new("UICorner",o) c.CornerRadius=UDim.new(0,r or 9) end
+local function corner(o,r) local c=Instance.new("UICorner",o) c.CornerRadius=UDim.new(0,0) end
 local function stroke(o,color,width,alpha) local s=Instance.new("UIStroke",o) s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border s.Color=color s.Thickness=width or 1 s.Transparency=alpha or .4 return s end
 local function label(parent,value,size,pos,font)
  local t=Instance.new("TextLabel",parent) t.BackgroundTransparency=1 t.Text=value t.Size=size t.Position=pos or UDim2.new() t.TextColor3=Color3.fromRGB(235,234,239) t.TextSize=15 t.Font=font or Enum.Font.GothamBold t.TextXAlignment=Enum.TextXAlignment.Left t.TextWrapped=true t.ZIndex=parent.ZIndex+1 return t
 end
 local function button(parent,value,color)
- local b=Instance.new("TextButton",parent) b.Text=value b.BackgroundColor3=color b.BackgroundTransparency=.35 b.BorderSizePixel=0 b.TextColor3=Color3.fromRGB(243,241,244) b.TextStrokeTransparency=.55 b.TextStrokeColor3=Color3.new(0,0,0) b.Font=Enum.Font.GothamBold b.TextSize=14 b.ZIndex=parent.ZIndex+2 b.AutoButtonColor=true corner(b,9) stroke(b,color,2,.15)
+ local b=Instance.new("TextButton",parent) b.Text=value b.BackgroundColor3=Color3.new(0,0,0) b.BackgroundTransparency=.35 b.BorderSizePixel=0 b.TextColor3=Color3.fromRGB(243,241,244) b.TextStrokeTransparency=.55 b.TextStrokeColor3=Color3.new(0,0,0) b.Font=Enum.Font.GothamBold b.TextSize=14 b.ZIndex=parent.ZIndex+2 b.AutoButtonColor=true corner(b,9) stroke(b,color,2,.15)
  local inner=Instance.new("Frame",b) inner.Name="Inset" inner.BackgroundTransparency=1 inner.Size=UDim2.new(1,-8,1,-8) inner.Position=UDim2.fromOffset(4,4) inner.ZIndex=b.ZIndex corner(inner,6) stroke(inner,Color3.fromRGB(220,218,226),1,.8)
  return b
 end
@@ -70,7 +70,7 @@ function Settings.build(parent,player,onClose)
  local frame=Instance.new("Frame",parent) frame.Name="ReferenceSettings" frame.BackgroundTransparency=1 frame.AnchorPoint=Vector2.new(.5,.5) frame.Position=UDim2.fromScale(.5,.53) frame.Size=UDim2.new(.86,0,.80,0) frame.ZIndex=50
  local baseZ=parent.ZIndex+1
  frame.ZIndex=baseZ
- local limit=Instance.new("UISizeConstraint",frame) limit.MaxSize=Vector2.new(960,620)
+ local limit=Instance.new("UISizeConstraint",frame) limit.MaxSize=Vector2.new(680,470)
  local tabs=Instance.new("Frame",frame) tabs.Name="Tabs" tabs.BackgroundTransparency=1 tabs.Size=UDim2.new(1,0,0,42) tabs.ZIndex=baseZ+1
  local heading=Instance.new("Frame",frame) heading.Name="Heading" heading.Position=UDim2.fromOffset(0,50) heading.Size=UDim2.new(1,0,0,44) heading.BorderSizePixel=0 heading.BackgroundTransparency=.25 heading.ZIndex=baseZ+1 corner(heading,10)
  local headingStroke=stroke(heading,Color3.new(1,1,1),2,.3)

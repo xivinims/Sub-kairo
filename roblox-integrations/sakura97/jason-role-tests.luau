@@ -74,6 +74,7 @@ local stubFactory={create=function(name)
  model.PrimaryPart=root killerModel=model
  return model
 end}
+local api=nil
 local function run()
  local game=proxyGame local workspace=realWorkspace local task=proxyTask local Instance=proxyInstance
  local TEST_NOW=function() return clock end
@@ -85,6 +86,7 @@ local function run()
  return realRequire(module)
 end
 __SURVIVAL_SERVER_TEST_SOURCE__
+ api={startHack=startHack,canInteract=canInteract,sessions=hackSessions,positions=objectivePositions}
 end
 local function advance(seconds)
  local target=clock+seconds
@@ -135,6 +137,7 @@ local ok,result=xpcall(function()
  assert(players[1]:GetAttribute("MapVote")==mapName,"Invalid map overwrote vote")
  send(players[2],"voteMap","RANDOM")
  assert(players[2]:GetAttribute("MapVote")=="RANDOM","Random voting option was rejected")
+ advance(.3) send(players[3],"voteMap",mapName)
  advance(6)
  assert(net:GetAttribute("Phase")=="Escolha","Killer selection did not follow six-second map vote")
  local chooser=nil local choices=0
@@ -168,6 +171,21 @@ local ok,result=xpcall(function()
  advance(.5)
  assert(math.abs(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed-expectedKillerSpeed)<.01,"Player killer stamina-aware walk speed changed unexpectedly")
  local before=net:GetAttribute("EndsAt")
+ send(victim,"adminReset") assert(net:GetAttribute("EndsAt")==before,"Non-admin reset the round")
+ local pc=workspace.ActiveArena.RoundObjectives:FindFirstChild("HackComputer_1")
+ assert(pc and #api.positions()>=9,"Per-map objective layout missing")
+ local position=api.positions()[1]
+ assert(not api.canInteract(victim,position,10),"Remote key/PC interaction passed at unlimited distance")
+ local oldPivot=victim.Character:GetPivot()
+ victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,3)))
+ api.startHack(victim,pc,position)
+ assert(api.sessions[victim] and victim:GetAttribute("Hacking"),"Valid player could not start hacking")
+ advance(1)
+ assert((pc:GetAttribute("HackProgress") or 0)>0 and not pc:GetAttribute("Hacked"),"PC skipped timed progress")
+ send(victim,"hackTap",999) assert(not pc:GetAttribute("Hacked"),"Forged check completed PC")
+ victim.Character:PivotTo(oldPivot) advance(1)
+ assert(not api.sessions[victim] and not victim:GetAttribute("Hacking"),"Moving away did not cancel hack")
+
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
  advance(6)
@@ -181,7 +199,7 @@ local ok,result=xpcall(function()
  assert(victim:GetAttribute("Downed"),"Second player-Jason hit did not down victim")
  killer.Character:PivotTo(victim.Character:GetPivot()*CFrame.new(0,0,3))
  advance(1)
- send(killer,"attack") advance(2)
+ send(killer,"attack") advance(3)
  assert(victim:GetAttribute("RoundStatus")=="eliminated","Jason execution did not eliminate downed victim")
  assert(not killer:GetAttribute("Downed"),"Jason downed himself")
  send(killer,"leave") advance(2)
@@ -197,5 +215,3 @@ for _,m in ipairs(workspace:GetChildren()) do if m.Name=="ActiveArena" or m:GetA
 host:Destroy() table.clear(scheduled)
 assert(ok,result)
 return result
-
-

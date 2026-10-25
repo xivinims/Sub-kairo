@@ -111,7 +111,8 @@ end
 local legacyGuideTable=lobby:FindFirstChild("GuideTable")
 if legacyGuideTable then legacyGuideTable:Destroy() end
 
-local spawn=lobby:GetAttribute("VerifiedSpawn")
+local spawn=lobby:GetAttribute("ReceptionSearchOrigin") or lobby:GetAttribute("VerifiedSpawn")
+lobby:SetAttribute("ReceptionSearchOrigin",spawn)
 local origin=typeof(spawn)=="CFrame" and spawn.Position or spawn
 assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 
@@ -185,6 +186,26 @@ tableReference.Name="Tabletop"
 tableReference.Value=receptionTop
 tableReference.Parent=npc
 
+-- Spawn inside reception, on verified floor close to Fill, clear of the counter.
+local floorParams=RaycastParams.new() floorParams.FilterType=Enum.RaycastFilterType.Include floorParams.FilterDescendantsInstances={lobby} floorParams.RespectCanCollide=true
+local indoorSpawn=nil
+for _,distance in ipairs({8,11,14}) do
+ for _,side in ipairs({0,4,-4,8,-8}) do
+  local candidate=seatWorld+towardVisitors*distance+Vector3.new(-towardVisitors.Z,0,towardVisitors.X)*side
+  local hit=workspace:Raycast(candidate+Vector3.new(0,3,0),Vector3.new(0,-10,0),floorParams)
+  if hit and hit.Normal.Y>.92 and not hit.Instance:GetAttribute("InvisibleBoundary") and not workspace:Raycast(hit.Position+Vector3.new(0,.2,0),Vector3.new(0,7,0),floorParams) then
+   local clear=true
+   for _,offset in ipairs({Vector3.new(2.5,0,0),Vector3.new(-2.5,0,0),Vector3.new(0,0,2.5),Vector3.new(0,0,-2.5)}) do if workspace:Raycast(hit.Position+Vector3.new(0,2.5,0),offset,floorParams) then clear=false end end
+   if clear then indoorSpawn=hit.Position break end
+  end
+ end
+ if indoorSpawn then break end
+end
+assert(indoorSpawn,"No clear interior spawn near Fill reception")
+lobby:SetAttribute("VerifiedSpawn",indoorSpawn)
+local playerSpawn=assert(workspace:FindFirstChild("IslandSpawn"))
+playerSpawn.CFrame=CFrame.lookAt(indoorSpawn+Vector3.new(0,.58,0),Vector3.new(seatWorld.X,indoorSpawn.Y+.58,seatWorld.Z))
+npc:SetAttribute("LobbySpawnDistance",(indoorSpawn-seatWorld).Magnitude)
 local seatedGap=(torso.Position.Y-torso.Size.Y/2)-topY
 assert(math.abs(seatedGap-.025)<.08,"Fill is floating or clipping instead of sitting on reception tabletop")
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc

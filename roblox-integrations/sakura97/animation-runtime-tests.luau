@@ -19,7 +19,7 @@ end
 local function controller()
  local game=proxy
 __ANIMATION_TEST_SOURCE__
- return {prepare=prepare,resolve=locomotionName}
+ return {prepare=prepare,resolve=locomotionName,apply=apply}
 end
 local function posed(model)
  local count=0
@@ -51,6 +51,14 @@ local ok,err=xpcall(function()
  simulate(.2)
  assert(root and root.Transform~=downedTransform,"Execution pose does not override downed pose")
  assert(math.abs(root.Transform.Position.Y)<.6,"Execution victim incorrectly remains in horizontal downed pose")
+ for _,folder in ipairs(RS.Survival.VictimMotionLibraries:GetChildren()) do
+  local victim=api.prepare(p.Character,folder) assert(victim and victim.clips.VictimExecution and victim.clips.VictimExecution.boundCount>=4,"Missing victim joints: "..folder.Name)
+  local length=victim.clips.VictimExecution.length
+  api.apply(victim,"VictimExecution",.2,false,length*.35)
+  local before=root.Transform
+  api.apply(victim,"VictimExecution",.2,false,length*.85)
+  assert(posed(p.Character)>=4 and root.Transform~=before,"Victim execution is frozen: "..folder.Name)
+ end
  p.attrs.BeingExecuted=false p.attrs.Downed=false
  simulate(.2)
  p.attrs.InRound=false simulate(.2)

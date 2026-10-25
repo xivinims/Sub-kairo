@@ -22,10 +22,12 @@ local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local
 local jasonPlayer=nil local morphing={} local rigRetries={} local hookedCharacters=setmetatable({},{__mode="k"}) local expectedCharacters={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
+local lastVictimReplay=nil local lastExecutionCF=nil
 local objectiveFolder=nil
 local carryWelds=setmetatable({},{__mode="k"})
 local objectiveConnections={}
 local escapedThisRound=0
+local adminResetRequested=false local lastAdminReset=-math.huge
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
 local function entry(p) return state.entries[p.UserId] end
@@ -152,6 +154,7 @@ local function eliminate(p,cause)
   lastKilledName=p.DisplayName or p.Name
  end
  e.status="eliminated" e.channel=nil p:SetAttribute("ReviveAt",0) sync(p)
+
  bridge.DeathRequest:Fire(p,actualCause,"spectate")
 end
 bridge.RoundEliminate.Event:Connect(function(p,cause) eliminate(p,cause) end)
@@ -189,7 +192,7 @@ local function down(p)
 end
 local function executeDowned(p,attacker)
  local e=entry(p)
- if not e or e.status~="downed" or catching[p] or not attacker or not attacker.PrimaryPart then return false end
+ if not e or e.status~="downed" or catching[p] or not attacker or not attacker.PrimaryPart or (attacker:GetAttribute("ExecutionTargetUserId") or 0)>0 then return false end
  local rr=root(p)
  if not rr or (rr.Position-attacker.PrimaryPart.Position).Magnitude>7 then return false end
  local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude params.FilterDescendantsInstances={attacker}
@@ -197,9 +200,14 @@ local function executeDowned(p,attacker)
  if obstruction and not obstruction.Instance:IsDescendantOf(p.Character) then return false end
  local capturedEntry=e local capturedCharacter=p.Character local capturedRound=state.id
  e.channel=nil p:SetAttribute("ReviveAt",0)
+ if lastVictimReplay then lastVictimReplay:Destroy() end
+ local archivable=capturedCharacter.Archivable capturedCharacter.Archivable=true
+ lastVictimReplay=capturedCharacter:Clone() capturedCharacter.Archivable=archivable
+ lastExecutionCF=attacker:GetPivot()
+ for _,obj in ipairs(lastVictimReplay:GetDescendants()) do if obj:IsA("LuaSourceContainer") or obj:IsA("Tool") or obj:IsA("BillboardGui") then obj:Destroy() end end sync(p)
  catching[p]=true
  local t=now()
- local executionDuration=1.85
+ local executionDuration=attacker:GetAttribute("ExecutionLength") or 2.5
  local attackerRoot=attacker.PrimaryPart
  local attackerWasAnchored=attackerRoot.Anchored
  local victimWasAnchored=rr.Anchored
@@ -207,11 +215,13 @@ local function executeDowned(p,attacker)
  attacker:SetAttribute("ExecutionDuration",executionDuration)
  attacker:SetAttribute("ExecutionTargetUserId",p.UserId)
  attacker:SetAttribute("AttackUntil",t+executionDuration)
+ p:SetAttribute("ExecutionKiller",killerName)
  p:SetAttribute("BeingExecuted",true)
  p:SetAttribute("ExecutionAt",t)
  p:SetAttribute("ExecutionDuration",executionDuration)
  local facing=attackerRoot.CFrame
- local targetPos=(facing*CFrame.new(.45,0,-3.05)).Position
+ local rawTarget=(facing*CFrame.new(.45,0,-3.05)).Position
+ local targetPos=Vector3.new(rawTarget.X,rr.Position.Y,rawTarget.Z)
  local faceDirection=Vector3.new(facing.LookVector.X,0,facing.LookVector.Z)
  if faceDirection.Magnitude<.1 then faceDirection=Vector3.new(0,0,-1) else faceDirection=faceDirection.Unit end
  p.Character:PivotTo(CFrame.lookAt(targetPos,targetPos+faceDirection))
@@ -261,6 +271,7 @@ local function catchPlayer(p)
   local hit=workspace:Raycast(attacker.PrimaryPart.Position,rr.Position-attacker.PrimaryPart.Position,param)
   if hit and not hit.Instance:IsDescendantOf(p.Character) then return end
   net.Update:FireClient(p,"caught",killerName,attacker.PrimaryPart.CFrame)
+  local hitSound=Instance.new("Sound",rr) hitSound.SoundId="rbxassetid://135029802046345" hitSound.Volume=.6 hitSound.RollOffMaxDistance=40 hitSound:Play() game:GetService("Debris"):AddItem(hitSound,5)
   local current=entry(p)
   if current and current.injured then
    down(p)
@@ -467,21 +478,10 @@ local function toggleCarry(carrier)
 end
 
 local function objectivePositions()
- local list={}
- local function collect(folder)
-  if not folder then return end
-  for _,v in ipairs(folder:GetChildren()) do if v:IsA("Vector3Value") then table.insert(list,v.Value) end end
- end
- collect(arena and arena:FindFirstChild("SafePoints"))
- collect(arena and arena:FindFirstChild("ArrivalSpawns"))
- if #list==0 and arena then
-  local p=arena:GetAttribute("EntranceSpawn")
-  if typeof(p)=="Vector3" then
-   for i=1,8 do table.insert(list,p+Vector3.new(math.cos(i)*18,0,math.sin(i)*18)) end
-  end
- end
- table.sort(list,function(a,b) return (a.X*31+a.Z*17)<(b.X*31+b.Z*17) end)
- return list
+ local folder=arena and arena:FindFirstChild("ObjectiveSites")
+ assert(folder,"Map objective sites must be verified during publishing")
+ local values=folder:GetChildren() table.sort(values,function(a,b) return tonumber(a.Name)<tonumber(b.Name) end)
+ local list={} for _,v in ipairs(values) do table.insert(list,v.Value) end return list
 end
 
 local function alignObjective(model,pos)
@@ -523,7 +523,7 @@ end
 
 local function escapePlayer(p)
  local e=entry(p)
- if not e or e.status~="alive" or p==jasonPlayer or not e.hasKey then return end
+ if not e or e.status~="alive" or p==jasonPlayer or not net:GetAttribute("ExitUnlocked") then return end
  if (net:GetAttribute("ComputersDone") or 0)<(net:GetAttribute("ComputersRequired") or Rules.ComputersRequired) then return end
  dropCarry(p)
  e.hasKey=false e.status="escaped" e.escapes=(e.escapes or 0)+1 escapedThisRound+=1
@@ -539,61 +539,153 @@ local function escapePlayer(p)
  if activeSurvivors()==0 then endTime=math.min(endTime,now()+1) end
 end
 
+local hackSessions={} local computers={} local hackedCount=0 local exitDoor=nil
+local function canInteract(p,pos,range)
+ local e=entry(p) local rr=root(p)
+ if state.phase~="Partida" or not e or e.status~="alive" or p==jasonPlayer or not rr or p:GetAttribute("BeingExecuted") or (e.carriedBy or 0)>0 then return false end
+ if (rr.Position-pos).Magnitude>(range or 10) then return false end
+ local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
+ params.FilterDescendantsInstances={p.Character,objectiveFolder} params.RespectCanCollide=true
+ return workspace:Raycast(rr.Position,pos+Vector3.new(0,1.5,0)-rr.Position,params)==nil
+end
+local function spatialSound(parent,id,volume)
+ local sound=Instance.new("Sound") sound.SoundId="rbxassetid://"..id sound.Volume=volume or .6
+ sound.RollOffMinDistance=5 sound.RollOffMaxDistance=65 sound.Parent=parent sound:Play()
+ game:GetService("Debris"):AddItem(sound,12)
+end
+local function cancelHack(p)
+ local s=hackSessions[p]
+ if s and s.pc and s.pc.Parent then s.pc:SetAttribute("HackerUserId",nil) end
+ hackSessions[p]=nil
+ if p.Parent then p:SetAttribute("Hacking",false) net.Update:FireClient(p,"hackEnd") end
+end
+local function startHack(p,pc,pos)
+ if not canInteract(p,pos,10) or pc:GetAttribute("Hacked") or pc:GetAttribute("HackerUserId") then return end
+ cancelHack(p)
+ local progress=pc:GetAttribute("HackProgress") or 0
+ local s={pc=pc,pos=pos,progress=progress,nextCheck=math.floor(progress*30/6+1)*6,round=state.id}
+ hackSessions[p]=s pc:SetAttribute("HackerUserId",p.UserId)
+ p:SetAttribute("Hacking",true) p:SetAttribute("MoveMode","walk")
+ net.Update:FireClient(p,"hackStart",pc,progress)
+end
+local function hackTap(p,id)
+ local s=hackSessions[p]
+ if not s or type(id)~="number" or id~=s.challenge or not s.checkAt or not canInteract(p,s.pos,10) then return end
+ local fraction=(now()-s.checkAt)/1.6
+ if fraction<0 then return end
+ s.checkAt=nil
+ local success=fraction>=.32 and fraction<=.78
+ if not success then s.progress=math.max(0,s.progress-.08) spatialSound(s.pc.PrimaryPart or s.pc:FindFirstChildWhichIsA("BasePart",true),135029802046345,.35) end
+ s.pc:SetAttribute("HackProgress",s.progress)
+ net.Update:FireClient(p,"hackCheckResult",success)
+end
+local function giveKey(p,key,prompt,pos)
+ if not key.Parent or not canInteract(p,pos,10) then return end
+ local e=entry(p) if e.hasKey then return end
+ e.hasKey=true e.keys=(e.keys or 0)+1 reward(p,20,16)
+ p:SetAttribute("HasKey",true) key:Destroy() prompt.Enabled=false
+ sync(p) net.Update:FireClient(p,"mission","Exit")
+end
 local function spawnKeysAndExit(positions)
  setMission("Key")
- local start=math.max(Rules.ComputersRequired+1,1)
- for i=1,math.min(4,#positions) do
-  local pos=positions[((start+i-2)%#positions)+1]
+ for i=1,4 do
+  local pos=positions[Rules.ComputersRequired+i]
   local key=alignObjective(items.KeyTemplate:Clone(),pos)
   key.Name="ObjectiveKey_"..i key:SetAttribute("ObjectiveType","Key")
-  local prompt=promptAt("Key"..i,pos,"PEGAR","Chave",.15)
-  table.insert(objectiveConnections,prompt.Triggered:Connect(function(p)
-   local e=entry(p)
-   if not e or e.status~="alive" or p==jasonPlayer or e.hasKey or not key.Parent then return end
-   e.hasKey=true e.keys=(e.keys or 0)+1 reward(p,20,16)
-   p:SetAttribute("HasKey",true) key:Destroy() prompt.Enabled=false
-   sync(p) net.Update:FireClient(p,"mission","Exit")
-  end))
+  local prompt=promptAt("Key"..i,pos,"PEGAR","Chave da saída",.15)
+  local chest=objectiveFolder:FindFirstChild("KeyChest_"..i)
+  if chest and not chest:GetAttribute("Opened") then
+   key.Parent=chest
+   for _,part in ipairs(key:GetDescendants()) do if part:IsA("BasePart") then part:SetAttribute("VisibleTransparency",part.Transparency) part.Transparency=1 part.CanCollide=false end end
+   prompt.Enabled=false
+   table.insert(objectiveConnections,chest:GetAttributeChangedSignal("Opened"):Connect(function()
+    if chest:GetAttribute("Opened") then
+     for _,part in ipairs(key:GetDescendants()) do if part:IsA("BasePart") then part.Transparency=part:GetAttribute("VisibleTransparency") or 0 end end
+     prompt.Enabled=true
+    end
+   end))
+  end
+  table.insert(objectiveConnections,prompt.Triggered:Connect(function(p) if prompt.Enabled then giveKey(p,key,prompt,pos) end end))
  end
 end
-
+local function updateHacks(step)
+ for p,s in pairs(hackSessions) do
+  local e=entry(p)
+  if not p.Parent or state.id~=s.round or not s.pc.Parent or not canInteract(p,s.pos,10) or not e or e.injured and p:GetAttribute("BeingExecuted") then cancelHack(p)
+  elseif s.checkAt then
+   if now()>s.checkAt+1.6 then hackTap(p,s.challenge) end
+  else
+   s.progress=math.min(1,s.progress+step/30)
+   s.pc:SetAttribute("HackProgress",s.progress)
+   net.Update:FireClient(p,"hackProgress",s.progress)
+   if s.progress>=1 then
+    local pc=s.pc pc:SetAttribute("Hacked",true) hackedCount+=1
+    for _,part in ipairs(pc:GetDescendants()) do if part:IsA("BasePart") and (part.Name:lower():find("screen") or part.Name:lower():find("monitor") or part:GetAttribute("HackScreen")) then part.Color=Color3.fromRGB(65,210,116) part.Material=Enum.Material.Neon end end
+    local screen=pc:FindFirstChild("HackStatusScreen") if screen then screen.Color=Color3.fromRGB(65,210,116) end
+    local prompt=objectiveFolder:FindFirstChild(pc.Name.."PromptAnchor")
+    if prompt then local pp=prompt:FindFirstChildOfClass("ProximityPrompt") if pp then pp.Enabled=false end end
+    spatialSound(pc.PrimaryPart or pc:FindFirstChildWhichIsA("BasePart",true),987728667,.65)
+    e.hacks=(e.hacks or 0)+1 reward(p,40,28) cancelHack(p)
+    net:SetAttribute("ComputersDone",hackedCount)
+    if jasonPlayer and jasonPlayer.Parent then net.Update:FireClient(jasonPlayer,"pcComplete",pc,10) end
+    net.Update:FireAllClients("objectiveDone","Computer",p.DisplayName or p.Name,hackedCount,Rules.ComputersRequired)
+    if hackedCount>=Rules.ComputersRequired then spawnKeysAndExit(objectivePositions()) else setMission("Hack") end
+   elseif s.progress*30>=s.nextCheck then
+    s.nextCheck+=6 s.challenge=(s.challenge or 0)+1 s.checkAt=now()+.35
+    net.Update:FireClient(p,"hackCheck",s.challenge,s.checkAt)
+   end
+  end
+ end
+end
 local function setupObjectives()
- disconnectObjectives()
- escapedThisRound=0
+ for p in pairs(hackSessions) do cancelHack(p) end
+ disconnectObjectives() table.clear(computers) hackedCount=0 escapedThisRound=0
  objectiveFolder=Instance.new("Folder") objectiveFolder.Name="RoundObjectives" objectiveFolder.Parent=arena
  local positions=objectivePositions()
- assert(#positions>0,"Arena has no objective positions")
- net:SetAttribute("ComputersRequired",Rules.ComputersRequired)
- net:SetAttribute("ComputersDone",0)
- local done=0
+ assert(#positions>=Rules.ComputersRequired+6,"Arena needs separate verified sites for PCs, keys, chests and exit")
+ net:SetAttribute("ComputersRequired",Rules.ComputersRequired) net:SetAttribute("ComputersDone",0) net:SetAttribute("ExitUnlocked",false)
  for i=1,Rules.ComputersRequired do
-  local pos=positions[((i-1)%#positions)+1]
+  local pos=positions[i]
   local pc=alignObjective(items.ComputerTemplate:Clone(),pos)
-  pc.Name="HackComputer_"..i pc:SetAttribute("ObjectiveType","Computer") pc:SetAttribute("Hacked",false)
-  local prompt=promptAt("Computer"..i,pos,"HACKEAR","Computador",3.5)
+  pc.Name="HackComputer_"..i pc:SetAttribute("ObjectiveType","Computer") pc:SetAttribute("Hacked",false) pc:SetAttribute("HackProgress",0)
+  pc.PrimaryPart=pc.PrimaryPart or pc:FindFirstChildWhichIsA("BasePart",true)
+  local cf,size=pc:GetBoundingBox()
+  local display=Instance.new("Part") display.Name="HackStatusScreen" display.Size=Vector3.new(1.8,1.05,.08)
+  display.CFrame=CFrame.new(cf.Position+Vector3.new(0,math.min(size.Y*.15,.5),-size.Z*.5-.05))
+  display.Anchored=true display.CanCollide=false display.CanTouch=false display.CanQuery=false display.Material=Enum.Material.Neon display.Color=Color3.fromRGB(50,101,170) display.Parent=pc
+  local prompt=promptAt(pc.Name,pos,"HACKEAR","Computador",.2)
+  table.insert(objectiveConnections,prompt.Triggered:Connect(function(p) startHack(p,pc,pos) end))
+  table.insert(computers,pc)
+ end
+ -- Two guaranteed key chests and one noisy empty chest, shuffled between verified sites.
+ local chestIndices={Rules.ComputersRequired+3,Rules.ComputersRequired+4,Rules.ComputersRequired+5}
+ for order,index in ipairs(chestIndices) do
+  local pos=positions[index] local chest=Instance.new("Model") chest.Name=order<=2 and ("KeyChest_"..(order+2)) or "NoiseChest" chest:SetAttribute("Opened",false) chest.Parent=objectiveFolder
+  local box=Instance.new("Part") box.Name="Chest" box.Size=Vector3.new(3,1.5,2) box.Position=pos+Vector3.new(0,.75,0) box.Color=Color3.fromRGB(65,42,24) box.Material=Enum.Material.Wood box.Anchored=true box.Parent=chest chest.PrimaryPart=box
+  local lid=Instance.new("Part") lid.Name="Lid" lid.Size=Vector3.new(3.2,.22,2.2) lid.Position=pos+Vector3.new(0,1.6,0) lid.Color=Color3.fromRGB(35,29,25) lid.Material=Enum.Material.Metal lid.Anchored=true lid.Parent=chest
+  local prompt=promptAt(chest.Name,pos,"ABRIR","Baú",.5)
   table.insert(objectiveConnections,prompt.Triggered:Connect(function(p)
-   local e=entry(p)
-   if not e or e.status~="alive" or p==jasonPlayer or pc:GetAttribute("Hacked") then return end
-   local rr=root(p) if not rr or (rr.Position-pos).Magnitude>11 then return end
-   pc:SetAttribute("Hacked",true) prompt.Enabled=false done+=1
-   e.hacks=(e.hacks or 0)+1 reward(p,40,28)
-   net:SetAttribute("ComputersDone",done)
-   net.Update:FireAllClients("objectiveDone","Computer",p.DisplayName or p.Name,done,Rules.ComputersRequired)
-   if done>=Rules.ComputersRequired then spawnKeysAndExit(positions) else setMission("Hack") end
+   if chest:GetAttribute("Opened") or not canInteract(p,pos,10) then return end
+   chest:SetAttribute("Opened",true) prompt.Enabled=false
+   game:GetService("TweenService"):Create(lid,TweenInfo.new(.45),{CFrame=lid.CFrame*CFrame.new(0,.65,.85)*CFrame.Angles(math.rad(95),0,0)}):Play()
+   if order==3 then spatialSound(box,135029802046345,.85) net.Update:FireClient(p,"notice","A batida do baú pode ter sido ouvida por perto.") end
   end))
  end
  local exitPos=positions[#positions]
  local exitModel=Instance.new("Model") exitModel.Name="EscapeExit" exitModel:SetAttribute("ObjectiveType","Exit") exitModel.Parent=objectiveFolder
- local isPortal=arena.Name=="PirateBayIsland"
- local door=Instance.new("Part") door.Name=isPortal and "Portal" or "Door"
- door.Size=isPortal and Vector3.new(6,8,.6) or Vector3.new(6,9,1.2)
- door.Material=isPortal and Enum.Material.Neon or Enum.Material.Metal
- door.Color=isPortal and Color3.fromRGB(105,150,255) or Color3.fromRGB(42,43,48)
- door.Transparency=isPortal and .42 or .08 door.Anchored=true door.CanCollide=false door.Position=exitPos+Vector3.new(0,door.Size.Y/2,0) door.Parent=exitModel
- exitModel.PrimaryPart=door
- local exitPrompt=Instance.new("ProximityPrompt") exitPrompt.Name="ExitPrompt" exitPrompt.ActionText="ABRIR" exitPrompt.ObjectText=isPortal and "Portal de saída" or "Saída"
- exitPrompt.MaxActivationDistance=10 exitPrompt.RequiresLineOfSight=false exitPrompt.Enabled=true exitPrompt.Parent=door
- table.insert(objectiveConnections,exitPrompt.Triggered:Connect(function(p) escapePlayer(p) end))
+ local door=Instance.new("Part") door.Name="Door" door.Size=Vector3.new(5,8,.5) door.CFrame=CFrame.new(exitPos+Vector3.new(0,4,0)) door.Color=Color3.fromRGB(28,29,32) door.Material=Enum.Material.Metal door.Anchored=true door.Parent=exitModel exitModel.PrimaryPart=door exitDoor=door
+ for _,x in ipairs({-2.8,2.8}) do local frame=door:Clone() frame.Name="Frame" frame.Size=Vector3.new(.6,8.6,1) frame.Position=exitPos+Vector3.new(x,4.3,0) frame.Parent=exitModel end
+ local prompt=Instance.new("ProximityPrompt") prompt.Name="ExitPrompt" prompt.ActionText="DESTRANCAR / SAIR" prompt.ObjectText="Saída" prompt.MaxActivationDistance=9 prompt.RequiresLineOfSight=true prompt.Parent=door
+ table.insert(objectiveConnections,prompt.Triggered:Connect(function(p)
+  if not canInteract(p,exitPos,10) then return end
+  local e=entry(p)
+  if not net:GetAttribute("ExitUnlocked") then
+   if not e.hasKey or hackedCount<Rules.ComputersRequired then net.Update:FireClient(p,"notice","Conclua os computadores e encontre uma chave.") return end
+   e.hasKey=false p:SetAttribute("HasKey",false) net:SetAttribute("ExitUnlocked",true) setMission("Exit")
+   door.CanCollide=false game:GetService("TweenService"):Create(door,TweenInfo.new(.7),{CFrame=door.CFrame*CFrame.new(-2.5,0,0)*CFrame.Angles(0,math.rad(95),0)*CFrame.new(2.5,0,0)}):Play()
+  end
+  escapePlayer(p)
+ end))
  setMission("Hack")
 end
 
@@ -622,6 +714,13 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  rates[p]=rates[p] or {} local t=now()
  if action~="mode" and t-(rates[p][action] or -math.huge)<.18 then return end
  rates[p][action]=t
+ if action=="adminReset" then
+  if p.UserId~=8344738123 or t-lastAdminReset<10 then return end
+  lastAdminReset=t adminResetRequested=true endTime=t
+  net.Update:FireAllClients("notice","Rodada reiniciada pelo administrador.")
+  return
+ elseif action=="hackTap" then hackTap(p,value) return
+ elseif action=="hackCancel" then cancelHack(p) return end
  if action=="voteMap" then
   if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 then return end
   if value~="RANDOM" and not table.find(voteOptions,value) then return end
@@ -639,7 +738,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   return
  end
  if action=="attack" then
-  if p~=jasonPlayer then return end
+  if p~=jasonPlayer or not npc or (npc:GetAttribute("ExecutionTargetUserId") or 0)>0 then return end
   local e=entry(p) if not e or e.status~="alive" or t-lastAttack<1.8 then return end
   lastAttack=t
   local rr=root(p) if not rr then return end
@@ -669,6 +768,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   if value~="walk" and value~="run" and value~="crouch" then return end
   if e and e.status=="downed" and value=="run" then value="walk" end
   if e and e.status=="alive" then
+   if e.injured and value=="run" then value="walk" end
    if value=="run" and (e.stamina or 0)<=1 then value="walk" end
    p:SetAttribute("MoveMode",value) sync(p)
   end
@@ -816,6 +916,7 @@ end) end
 local elapsed=0
 RunService.Heartbeat:Connect(function(dt)
  elapsed+=dt if elapsed<.2 then return end local step=elapsed elapsed=0 local t=now()
+ updateHacks(step)
  for _,p in ipairs(Players:GetPlayers()) do
   local e=entry(p) local r=root(p) local h=humanoid(p)
   if t>=(saveAt[p] or math.huge) then saveAt[p]=t+150+math.random(0,30) task.spawn(saveProfile,p) end
@@ -835,7 +936,7 @@ RunService.Heartbeat:Connect(function(dt)
    end
    if e.status=="alive" or e.status=="downed" then e.survivalTime=(e.survivalTime or 0)+step end
    if e.status=="loading" and t>e.loadDeadline then if p==jasonPlayer then endTime=t end state.entries[p.UserId]=nil sync(p) net.Update:FireClient(p,"notice","Carregamento demorou. Tente entrar novamente.") end
-   if e.status=="downed" and t>=e.deadline then eliminate(p,e.cause) end
+   if e.status=="downed" and not p:GetAttribute("BeingExecuted") and t>=e.deadline then eliminate(p,e.cause) end
    if e.channel then
     local c=e.channel local tr=root(c.target) local te=entry(c.target)
     local valid=not p:GetAttribute("BeingExecuted") and not c.target:GetAttribute("BeingExecuted") and r and tr and te and te.status=="downed" and e.status==c.status and (r.Position-c.position).Magnitude<2 and (r.Position-tr.Position).Magnitude<9
@@ -906,8 +1007,9 @@ end)
 local RESULT_PRESENTATION_SECONDS=9
 
 local function finish()
+ for p in pairs(hackSessions) do cancelHack(p) end
  local participants={} local living=0 local escaped=0
- if state.phase=="Partida" then
+ if state.phase=="Partida" and not adminResetRequested then
   for _,p in ipairs(Players:GetPlayers()) do
    local e=entry(p)
    if e then
@@ -931,6 +1033,21 @@ local function finish()
     task.spawn(saveProfile,p)
    end
   end
+  if jasonWon and npc and npc.PrimaryPart and lastVictimReplay then
+   if lastExecutionCF then npc:PivotTo(lastExecutionCF) end
+   npc.PrimaryPart.Anchored=true
+   local replay=lastVictimReplay:Clone() replay.Name="ResultVictim"
+   replay.PrimaryPart=replay:FindFirstChild("HumanoidRootPart")
+   for _,part in ipairs(replay:GetDescendants()) do if part:IsA("BasePart") then part.Anchored=part==replay.PrimaryPart part.CanCollide=false part.CanTouch=false part.CanQuery=false end end
+   replay:SetAttribute("PresentationVictim",true) replay:SetAttribute("ExecutionKiller",killerName)
+   replay:SetAttribute("ExecutionAt",now()) replay:SetAttribute("ExecutionDuration",npc:GetAttribute("ExecutionLength") or 2.5)
+   replay.Parent=arena
+   if replay.PrimaryPart then
+    local target=(npc.PrimaryPart.CFrame*CFrame.new(.45,0,-3.05)).Position
+    target=Vector3.new(target.X,replay.PrimaryPart.Position.Y,target.Z)
+    replay:PivotTo(CFrame.lookAt(target,target+npc.PrimaryPart.CFrame.LookVector))
+   end
+  end
   local killerWasPlayer=jasonPlayer~=nil
   local killerWinnerName=killerWasPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName
   for _,p in ipairs(Players:GetPlayers()) do
@@ -950,9 +1067,12 @@ local function finish()
   net.Update:FireClient(p,"reset")
   local e=entry(p) if e then
    -- Finish any death presentation before cleaning the arena; lobby position remains safe.
-   RS.SweanVoidEvent:FireClient(p,"finish") p:SetAttribute("Spectating",false) lobby(p)
+   RS.SweanVoidEvent:FireClient(p,"finish") p:SetAttribute("Spectating",false)
+   local rr=root(p) if rr then rr.Anchored=false end p:SetAttribute("BeingExecuted",false) lobby(p)
   end
  end
+ if lastVictimReplay then lastVictimReplay:Destroy() lastVictimReplay=nil end
+ adminResetRequested=false
  table.clear(state.entries) for _,p in ipairs(Players:GetPlayers()) do sync(p) end
  disconnectObjectives()
  if npc then npc:Destroy() npc=nil end if arena then arena:Destroy() arena=nil end
@@ -973,7 +1093,7 @@ task.spawn(function()
   table.clear(mapVotes) voteCounts()
   for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
   endTime=now()+Rules.Intermission
-  while now()<endTime and #Players:GetPlayers()>0 do
+  while now()<endTime and #Players:GetPlayers()>0 and not adminResetRequested do
    net:SetAttribute("Phase","Intervalo")
    net:SetAttribute("EndsAt",endTime)
    net:SetAttribute("Count",0)
@@ -988,24 +1108,24 @@ task.spawn(function()
    for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then count+=1 end end
    return count>=2
   end
-  while #Players:GetPlayers()>0 and not hasQueued() do
+  while #Players:GetPlayers()>0 and not hasQueued() and not adminResetRequested do
    net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",0) net:SetAttribute("Waiting",0) task.wait(.5)
   end
 
-  if #Players:GetPlayers()>0 then
+  if #Players:GetPlayers()>0 and not adminResetRequested then
    table.clear(mapVotes)
    chooseVoteOptions()
    voteCounts()
    for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
    state.phase="Votação"
    local voteEnd=now()+Rules.VoteDuration
-   while now()<voteEnd and hasQueued() do
+   while now()<voteEnd and hasQueued() and not adminResetRequested do
     net:SetAttribute("Phase","Votação")
     net:SetAttribute("EndsAt",voteEnd)
     task.wait(.15)
    end
   end
-  if #Players:GetPlayers()>0 then
+  if #Players:GetPlayers()>0 and not adminResetRequested then
    local ok,err=xpcall(function()
     roundClosing=false lastKilledUserId=0 lastKilledName=nil
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
@@ -1042,9 +1162,9 @@ task.spawn(function()
     net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+Rules.KillerChoiceDuration)
     selectionPlayer:SetAttribute("ChoosingKiller",true)
     local deadline=now()+Rules.KillerChoiceDuration
-    while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
+    while now()<deadline and not adminResetRequested and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
     selectionPlayer:SetAttribute("ChoosingKiller",false)
-    if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
+    if adminResetRequested or not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
     jasonPlayer=selectionPlayer selectionPlayer=nil
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
@@ -1113,6 +1233,3 @@ task.spawn(function()
   end
  end
 end)
-
-
-

@@ -148,6 +148,17 @@ local a
 a=load(125165599816440)
 local source=assert(a:FindFirstChild("Jason",true),"Jason rig not found")
 assert(source:IsA("Model") and source:FindFirstChildOfClass("Humanoid"),"Invalid Jason rig")
+local victimRaw=Instance.new("Folder")
+local function collectVictim(package,killerRoot,name)
+ local holder=Instance.new("Folder") holder.Name=name holder.Parent=victimRaw
+ for _,seq in ipairs(package:GetDescendants()) do
+  if seq:IsA("KeyframeSequence") and not seq:IsDescendantOf(killerRoot) then
+   local low=seq.Name:lower()
+   if low:find("kill") or low:find("victim") or low:find("death") then seq:Clone().Parent=holder end
+  end
+ end
+end
+collectVictim(a,source,"Jason")
 local rig=source:Clone() rig.Parent=nil a:Destroy() sanitize(rig,false)
 rig.Name="Jason" rig:SetAttribute("SourceAssetId",125165599816440)
 local root=assert(rig:FindFirstChild("HumanoidRootPart")) rig.PrimaryPart=root
@@ -176,7 +187,7 @@ local function compact(folder,destination)
   local json=game:GetService("HttpService"):JSONEncode(data)
   local encoder=game:GetService("EncodingService")
   local packed=buffer.tostring(encoder:Base64Encode(encoder:CompressBuffer(buffer.fromstring(json),Enum.CompressionAlgorithm.Zstd,19)))
-  local clip=Instance.new("Folder",destination) clip.Name=seq.Name clip:SetAttribute("ChunkCount",math.ceil(#packed/100000))
+  local clip=Instance.new("Folder",destination) clip.Name=seq.Name clip:SetAttribute("Length",data.length) clip:SetAttribute("ChunkCount",math.ceil(#packed/100000))
   for offset=1,#packed,100000 do local value=Instance.new("StringValue",clip) value.Name=string.format("%04d",math.floor((offset-1)/100000)+1) value.Value=packed:sub(offset,offset+99999) end
  end end
  destination:SetAttribute("ClipCount",#destination:GetChildren())
@@ -225,6 +236,7 @@ slot(coolMotion,"Winning Screen",donor,"JohnDoe Outro",103232099547025)
 coolMotion:SetAttribute("ClipCount",#coolMotion:GetChildren())
 
 local noliAsset=load(140625681515398)
+collectVictim(noliAsset,assert(noliAsset:FindFirstChild("Noli",true)),"Jeff")
 local noliClips=Instance.new("Folder") compact(assert(noliAsset:FindFirstChild("Noli",true)),noliClips)
 local noliMotion=Instance.new("Folder",motionLibraries) noliMotion.Name="Noli"
 for _,pair in ipairs({{"Jason Idle","Idle"},{"Jason Walk","Walk"},{"Jason Run","Run"},{"Jason Slash","m1"},{"Jason_Kill","Noli Kill"},{"Jason Intro","Noli Intro"},{"Winning Screen","Noli Outro"}}) do
@@ -390,6 +402,7 @@ for _,spec in ipairs({
 }) do
  local asset=spec.name=="JohnDoe" and johnAsset or load(spec.id)
  local source=findPursuerRig(asset,spec.root)
+ if source then collectVictim(asset,source,spec.name) end
  local libraryName=nil
  if spec.authored then libraryName=authoredMotionLibrary(asset,spec.name,spec.id) end
  local model=source and source:Clone() or fallbackPursuerRig(spec.name)
@@ -404,6 +417,44 @@ for _,spec in ipairs({
  if asset~=johnAsset then asset:Destroy() end
 end
 johnAsset:Destroy() donor:Destroy() cool:Destroy()
+-- Original victim tracks when present; authored paired reactions for packs without a victim rig.
+local victimLibraries=Instance.new("Folder",net) victimLibraries.Name="VictimMotionLibraries"
+local reactions={Jason={impact=.40,twist=-18,fall=82},JohnDoe={impact=.47,twist=25,fall=88},Chucky={impact=.32,twist=-30,fall=92},Jeff={impact=.51,twist=12,fall=80},Freddy={impact=.58,twist=-8,fall=89},Krampus={impact=.62,twist=28,fall=93},Piggy={impact=.43,twist=-25,fall=86}}
+for _,killer in ipairs(rigs:GetChildren()) do
+ local motion=killer:FindFirstChild("MotionClips") or motionLibraries:FindFirstChild(killer:GetAttribute("MotionLibrary") or "Default")
+ local execution=motion and (motion:FindFirstChild("Jason_Kill") or motion:FindFirstChild("Kill"))
+ local duration=math.clamp(execution and execution:GetAttribute("Length") or 2.5,1.5,7)
+ killer:SetAttribute("ExecutionLength",duration)
+ killer:SetAttribute("KillerKind",killer.Name)
+ local folder=Instance.new("Folder",victimLibraries) folder.Name=killer.Name
+ local authored=victimRaw:FindFirstChild(killer.Name)
+ if authored and #authored:GetChildren()>0 then
+  local seq=authored:GetChildren()[1] seq.Name="VictimExecution"
+  local only=Instance.new("Folder") seq.Parent=only compact(only,folder) only:Destroy()
+  folder:SetAttribute("Provenance","Asset victim track")
+ else
+  local spec=reactions[killer.Name] or reactions.Jason
+  local sequence=Instance.new("KeyframeSequence") sequence.Name="VictimExecution"
+  for _,key in ipairs({{0,0,0},{.16,.2,0},{spec.impact-.06,.5,0},{spec.impact,1,0},{spec.impact+.10,.7,.08},{.88,.3,.9},{1,0,1}}) do
+   local t,pulse,fall=key[1],key[2],key[3]
+   local frame=Instance.new("Keyframe") frame.Time=t*duration frame.Parent=sequence
+   local poses={
+    Torso=CFrame.new(0,-1.5*fall,.25*fall)*CFrame.Angles(math.rad(6+spec.fall*fall+8*pulse),0,math.rad(spec.twist*pulse)),
+    Head=CFrame.Angles(math.rad(-14*pulse+12*fall),0,math.rad(-spec.twist*pulse*.5)),
+    ["Left Arm"]=CFrame.Angles(math.rad(35*pulse-15*fall),math.rad(-12*pulse),math.rad(-24*pulse-9*fall)),
+    ["Right Arm"]=CFrame.Angles(math.rad(55*pulse-8*fall),math.rad(8*pulse),math.rad(30*pulse+18*fall)),
+    ["Left Leg"]=CFrame.Angles(math.rad(-18*pulse+12*fall),0,math.rad(-10*fall)),
+    ["Right Leg"]=CFrame.Angles(math.rad(12*pulse-16*fall),0,math.rad(12*fall)),
+   }
+   for name,cf in pairs(poses) do local pose=Instance.new("Pose") pose.Name=name pose.CFrame=cf pose.Weight=1 pose.EasingStyle=Enum.PoseEasingStyle.Sine pose.EasingDirection=Enum.PoseEasingDirection.InOut pose.Parent=frame end
+  end
+  local only=Instance.new("Folder") sequence.Parent=only compact(only,folder) only:Destroy()
+  folder:SetAttribute("Provenance","Authored paired R6 reaction")
+ end
+ folder:SetAttribute("Killer",killer.Name)
+end
+victimRaw:Destroy()
+
 
 local flashlightAsset=load(4573262309)
 local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
@@ -467,6 +518,9 @@ local function storeObjectiveAsset(id,name)
 end
 local computerTemplate=storeObjectiveAsset(4845271739,"ComputerTemplate")
 local keyTemplate=storeObjectiveAsset(11471202845,"KeyTemplate")
+local coin=storeObjectiveAsset(10737243803,"CoinDisplay") coin.Parent=net
+local _,coinSize=coin:GetBoundingBox() if coinSize.Magnitude>5 then coin:ScaleTo(coin:GetScale()*3/coinSize.Magnitude) end
+
 local inventoryAsset=load(73852738603629)
 local inventoryGui=inventoryAsset:FindFirstChildWhichIsA("ScreenGui",true)
 if inventoryGui then
@@ -540,7 +594,7 @@ local friendPresence=SP:FindFirstChild("FriendPresence")
 if not friendPresence then friendPresence=Instance.new("LocalScript") friendPresence.Name="FriendPresence" friendPresence.Parent=SP end
 friendPresence.Source=__FRIENDS_SOURCE__
 
-net:SetAttribute("Version",125) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
+net:SetAttribute("Version",126) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
 net:SetAttribute("MissionStage","Waiting") net:SetAttribute("ComputersDone",0) net:SetAttribute("ComputersRequired",3)
 local light=game:GetService("Lighting")
 light.ClockTime=0
@@ -559,5 +613,3 @@ for _,v in ipairs(light:GetChildren()) do
  if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end
 end
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
-
-

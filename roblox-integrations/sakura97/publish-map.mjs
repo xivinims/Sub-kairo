@@ -401,7 +401,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(assets.Maps.RocketArena:GetAttribute("RequestedScale")==2,"RocketArena did not persist at 2x scale")
   assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old maps persisted")
   assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897)
-  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==125)
+  assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==126)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Intro"))
@@ -420,7 +420,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.JediLibrary:FindFirstChild("InvisibleBounds") and #workspace.JediLibrary.InvisibleBounds:GetChildren()>=5,"Lobby invisible bounds missing")
   for _,arena in ipairs(assets.Maps:GetChildren()) do
    assert(arena:FindFirstChild("InvisibleBounds") and #arena.InvisibleBounds:GetChildren()>=5,"Arena invisible bounds missing: "..arena.Name)
-   assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=10,"Unsafe killer spawn persisted: "..arena.Name)
+   assert((arena:GetAttribute("KillerSpawnClearance") or 0)>= (arena:GetAttribute("RequiredKillerClearance") or 10),"Unsafe killer spawn persisted: "..arena.Name)
    assert(arena:GetAttribute("KillerSpawnPathValidated")==true,"Disconnected pursuer spawn persisted: "..arena.Name)
   end
   assert(not game.ServerScriptService.SurvivalServer.Source:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro returned")
@@ -436,7 +436,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GOOD LUCK"',1,true),"GOOD LUCK missing from map loading")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("blendFrom",1,true),"Smooth locomotion blend missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("expectedReplacement",1,true),"R6 replacement false-death guard missing")
-  assert(game.ServerScriptService.SurvivalServer.Source:find("local executionDuration=1.85",1,true),"Synchronized execution duration missing")
+  assert(game.ServerScriptService.SurvivalServer.Source:find('local executionDuration=attacker:GetAttribute("ExecutionLength")',1,true),"Synchronized execution duration missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('p:GetAttribute("BeingExecuted")==true',1,true),"Execution pose does not override downed pose")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('model:GetAttribute("ExecutionDuration")',1,true),"Pursuer execution animation duration is not synchronized")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("restoreResultCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("captureResultCamera",1,true),"Result camera restoration missing")\n  assert(game.ServerScriptService.SurvivalServer.Source:find("local RESULT_PRESENTATION_SECONDS=9",1,true) and game.ServerScriptService.SurvivalServer.Source:find('state.phase="Resultados"',1,true),"Server does not preserve the real arena for the full-screen result camera")
@@ -464,7 +464,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
   assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the real reception desk")
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
-  assert(not fillSource:find("AudioTextToSpeech",1,true) and not fillSource:find("PortugueseVoice",1,true),"Portuguese/TTS Fill voice returned")
+  assert(fillSource:find("portugueseGreeting",1,true) and fillSource:find("englishGreeting",1,true),"Bilingual guide missing")
   assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill English uploaded-audio dialogue missing")
   assert(fillSource:find('SoundService',1,true) and fillSource:find('ContentProvider:PreloadAsync',1,true),"Fill voice is not preloaded from SoundService")
   assert(fillSource:find('bubble.Size=UDim2.fromOffset(250,92)',1,true) and fillSource:find('label.TextSize=11',1,true) and fillSource:find('nameLabel.TextSize=12',1,true),"Fill overhead dialogue is not compact")
@@ -473,9 +473,9 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=2.55",1,true) and game.StarterGui.TomiaszMenu.MenuController.Source:find("menuCameraCF.LookVector*13.8",1,true),"Menu killer is still too large or too close")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
-  assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("124873348702500",1,true),"Requested profile design not persisted")
+  assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("CompactProfile",1,true),"Compact private profile not persisted")
   assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,112)',1,true),"XP/level HUD was not lowered enough")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,132)',1,true),"XP/level HUD was not lowered enough")
   assert(game.ServerScriptService.RoundRules.Source:find("Duration=660",1,true) and game.ServerScriptService.RoundRules.Source:find("VoteDuration=6",1,true),"11-minute round or six-second voting rules missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('state.phase="Votação"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("setupObjectives",1,true) and game.ServerScriptService.SurvivalServer.Source:find("toggleCarry",1,true),"Objective gameplay runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("MapVoteOptions",1,true) and game.ServerScriptService.SurvivalServer.Source:find('RANDOM=0',1,true),"Four-map plus random voting runtime missing")
@@ -486,7 +486,11 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('PresentationFrozen',1,true),"Frozen result pose runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('net:GetAttribute("Phase")=="Votação"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('voteTimer.Text=tostring(seconds)',1,true),"Full six-second voting overlay missing")
-  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,fullVotingWindow=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,frozenResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=125,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  assert(game.ReplicatedStorage.Survival.CoinDisplay:GetAttribute("SourceAssetId")==10737243803,"Exact coin missing")
+  assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==7,"Missing victim pairs")
+  for _,map in ipairs(assets.Maps:GetChildren()) do assert(#map.ObjectiveSites:GetChildren()>=9 and #map.ArrivalSpawns:GetChildren()>=7,"Map layout missing: "..map.Name) end
+  assert(game.ServerScriptService.SurvivalServer.Source:find('p.UserId~=8344738123',1,true),"Admin authority missing")
+  return {objectiveChecks=true,sevenVictimAnimations=true,adminOnlyReset=true,coinAsset=10737243803,restoredCompactSettings=true,compactProfile=true,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,animatedResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=126,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
@@ -494,4 +498,3 @@ local assets=game.ServerStorage.SurvivalAssets
 if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
  throw new Error('Suvivers build was not published; inspect saveError above');
 }
-

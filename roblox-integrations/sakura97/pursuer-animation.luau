@@ -284,15 +284,19 @@ end
 local presentationModels=setmetatable({},{__mode="k"})
 local pg=Players.LocalPlayer:WaitForChild("PlayerGui")
 local function presentation(instance)
- if instance:IsA("Model") and instance:GetAttribute("PresentationPursuer") then presentationModels[instance]=true end
+ if instance:IsA("Model") and (instance:GetAttribute("PresentationPursuer") or instance:GetAttribute("PresentationVictim")) then presentationModels[instance]=true end
 end
+workspace.DescendantAdded:Connect(presentation)
+for _,d in ipairs(workspace:GetDescendants()) do presentation(d) end
 pg.DescendantAdded:Connect(presentation)
 for _,d in ipairs(pg:GetDescendants()) do presentation(d) end
 Run.PreSimulation:Connect(function(dt)
  for model in pairs(presentationModels) do
   if not model.Parent then presentationModels[model]=nil
   else
-   local folder=motionFolder(model) local d=folder and prepare(model,folder)
+   local victim=model:GetAttribute("PresentationVictim")
+   local libraries=net:FindFirstChild("VictimMotionLibraries")
+   local folder=victim and libraries and libraries:FindFirstChild(model:GetAttribute("ExecutionKiller") or "Jason") or motionFolder(model) local d=folder and prepare(model,folder)
    local visible=true local ancestor=model.Parent
    while ancestor and ancestor~=pg do
     if ancestor:IsA("GuiObject") and not ancestor.Visible then visible=false break end
@@ -301,7 +305,11 @@ Run.PreSimulation:Connect(function(dt)
    if d and visible then
     local requested=model:GetAttribute("PresentationState") or "Winning Screen"
     local elapsed=model:GetAttribute("PresentationFrozen") and (model:GetAttribute("PresentationFreezeTime") or .3) or math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
-    if requested=="Execution" then
+    if victim then
+     local elapsed=math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("ExecutionAt") or workspace:GetServerTimeNow()))
+     local clip=d.clips.VictimExecution local duration=model:GetAttribute("ExecutionDuration") or 2.5
+     apply(d,"VictimExecution",dt,false,math.clamp(elapsed/duration,0,1)*(clip and clip.length or duration))
+    elseif requested=="Execution" then
      apply(d,executionName(d),dt,false,elapsed)
     else
      apply(d,requested,dt,false,elapsed)
@@ -324,14 +332,15 @@ Run.PreSimulation:Connect(function(dt)
     local attacking=not executing and since>=0 and since<.75
     local frozen=model:GetAttribute("PresentationFrozen")==true
     local requested=model:GetAttribute("PresentationState")
-    local state=frozen and (requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or requested) or (executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle"))
+    local presenting=requested~=nil
+    local state=presenting and (requested=="Execution" and executionName(d) or requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or (d and d.clips[requested] and requested) or pursuerStateName(d,"idle")) or frozen and (requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or requested) or (executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle"))
     local scale=1
     if not frozen and not executing and not attacking then
      if speed>15 then scale=math.clamp(speed/18,.82,1.42)
      elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
     end
-    local fixed=frozen and (model:GetAttribute("PresentationFreezeTime") or .3) or (executing and execSince or (attacking and since or nil))
-    if d then apply(d,state,dt*scale,not frozen and not executing and not attacking,fixed) end
+    local fixed=presenting and not frozen and math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow())) or frozen and (model:GetAttribute("PresentationFreezeTime") or .3) or (executing and execSince or (attacking and since or nil))
+    if d then apply(d,state,dt*scale,not presenting and not frozen and not executing and not attacking,fixed) end
    end
   end
  end
@@ -351,33 +360,17 @@ Run.PreSimulation:Connect(function(dt)
     executionVictimPoses[model]=nil
    end
    if inRound and not isJason and beingExecuted then
-    if not executionVictimPoses[model] then
-     resetModel(model)
-     local joints={}
-     for _,joint in ipairs(model:GetDescendants()) do
-      if joint:IsA("Motor6D") then joints[normalized(joint.Name)]=joint end
-     end
-     executionVictimPoses[model]={
-      root=rootJoint(model),
-      neck=joints.neck,
-      leftShoulder=joints.leftshoulder,
-      rightShoulder=joints.rightshoulder,
-      leftHip=joints.lefthip,
-      rightHip=joints.righthip,
-     }
-    end
     setDefaultAnimate(model,false)
-    local pose=executionVictimPoses[model]
-    local started=p:GetAttribute("ExecutionAt") or workspace:GetServerTimeNow()
-    local duration=math.max(.1,p:GetAttribute("ExecutionDuration") or 1.85)
-    local alpha=math.clamp((workspace:GetServerTimeNow()-started)/duration,0,1)
-    local pulse=math.sin(alpha*math.pi)
-    if pose.root and pose.root.Parent then pose.root.Transform=CFrame.new(0,-.08-.12*alpha,.02)*CFrame.Angles(math.rad(7+13*pulse),0,math.rad(-5*pulse)) end
-    if pose.neck and pose.neck.Parent then pose.neck.Transform=CFrame.Angles(math.rad(-5-10*pulse),0,math.rad(5*pulse)) end
-    if pose.leftShoulder and pose.leftShoulder.Parent then pose.leftShoulder.Transform=CFrame.Angles(math.rad(22+16*pulse),0,math.rad(-18)) end
-    if pose.rightShoulder and pose.rightShoulder.Parent then pose.rightShoulder.Transform=CFrame.Angles(math.rad(18+13*pulse),0,math.rad(20)) end
-    if pose.leftHip and pose.leftHip.Parent then pose.leftHip.Transform=CFrame.Angles(math.rad(-8*alpha),0,math.rad(-4)) end
-    if pose.rightHip and pose.rightHip.Parent then pose.rightHip.Transform=CFrame.Angles(math.rad(-10*alpha),0,math.rad(4)) end
+    local libraries=net:FindFirstChild("VictimMotionLibraries")
+    local folder=libraries and libraries:FindFirstChild(p:GetAttribute("ExecutionKiller") or "Jason")
+    if folder and activeFolder[model]~=folder then resetModel(model) activeFolder[model]=folder end
+    local d=folder and prepare(model,folder)
+    if d then
+     local clip=d.clips.VictimExecution
+     local duration=math.max(.1,p:GetAttribute("ExecutionDuration") or 2.5)
+     local elapsed=math.max(0,workspace:GetServerTimeNow()-(p:GetAttribute("ExecutionAt") or workspace:GetServerTimeNow()))
+     apply(d,"VictimExecution",dt,false,math.clamp(elapsed/duration,0,1)*(clip and clip.length or duration))
+    end
    elseif inRound and not isJason and downed then
     if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
     setDefaultAnimate(model,false)

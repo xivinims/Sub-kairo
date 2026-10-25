@@ -71,6 +71,24 @@ local replies={
  "Alright. Enjoy the lobby. When you change your mind... you know where to find me.",
 }
 
+local englishGreeting=greeting local englishChoices=choices local englishReplies=replies
+local portugueseGreeting="Ah... olá. Tudo bem? Eu sou Fill, seu guia por aqui. Se tiver alguma dúvida, pode perguntar. O que você quer saber?"
+local portugueseChoices={"Como o jogo funciona?","E se eu for o perseguidor?","O que posso fazer aqui?","Quem é você?","Nada por enquanto."}
+local portugueseReplies={
+ "Um jogador será o perseguidor. Os sobreviventes precisam hackear os computadores, encontrar uma chave e abrir a saída. Fique atento aos caminhos e ajude quem cair.",
+ "Se você for escolhido, poderá selecionar seu personagem antes da partida. Procure os sobreviventes. Você vê as marcações apenas quando eles estão à sua frente, sem paredes bloqueando.",
+ "Este é o lobby. Você pode explorar, abrir as configurações ou ativar AFK para descansar sem entrar na próxima partida.",
+ "Fill. Esse é meu nome. Eu fico aqui para orientar os novos jogadores e observar o que acontece. Digamos que conheço bem este lugar.",
+ "Tudo bem. Aproveite o lobby. Quando mudar de ideia... você sabe onde me encontrar."
+}
+local language="en" local portugueseVoice=nil
+local function setLanguage(value)
+ language=value
+ greeting=value=="pt" and portugueseGreeting or englishGreeting
+ choices=value=="pt" and portugueseChoices or englishChoices
+ replies=value=="pt" and portugueseReplies or englishReplies
+end
+if tostring(player.LocaleId or "en"):sub(1,2)=="pt" then setLanguage("pt") end
 local generation=0
 local active=false
 local choosing=false
@@ -88,6 +106,7 @@ voice.Parent=SoundService
 
 local voiceConnection=nil
 local function stopVoice()
+ if portugueseVoice then pcall(function() portugueseVoice:Pause() portugueseVoice.TimePosition=0 end) end
  if voiceConnection then voiceConnection:Disconnect() voiceConnection=nil end
  if voice.IsPlaying then voice:Stop() end
  voice.TimePosition=0
@@ -98,6 +117,25 @@ local function voiceId(index)
 end
 local function speak(index,token,done)
  stopVoice()
+ if language=="pt" then
+  task.spawn(function()
+   local ok,err=pcall(function()
+    if not portugueseVoice then
+     portugueseVoice=Instance.new("AudioTextToSpeech") portugueseVoice.Name="FillPortuguese" portugueseVoice.VoiceId="1001" portugueseVoice.AutoLocalize=false portugueseVoice.Speed=.94 portugueseVoice.Volume=.65 portugueseVoice.Parent=ui
+     local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=ui
+     local wire=Instance.new("Wire") wire.SourceInstance=portugueseVoice wire.TargetInstance=output wire.Parent=ui
+    end
+    portugueseVoice.Text=index==1 and portugueseGreeting or portugueseReplies[index-1]
+    portugueseVoice:LoadAsync()
+    if token~=generation or not active then return end
+    portugueseVoice:Play()
+   end)
+   if not ok then warn("Fill Portuguese voice: "..tostring(err)) end
+   -- Text remains usable if platform speech is temporarily unavailable.
+   task.delay(12,function() if token==generation and active then done() end end)
+  end)
+  return
+ end
  local id=voiceId(index)
  if not id then
   warn("Fill voice id missing for line "..tostring(index))
@@ -210,6 +248,11 @@ for i,title in ipairs(choices) do
  table.insert(buttons,b)
  table.insert(connections,b.Activated:Connect(function() choose(i) end))
 end
+local languageButton=Instance.new("TextButton",ui) languageButton.Name="Language" languageButton.Size=UDim2.fromOffset(100,28) languageButton.Position=UDim2.new(.5,90,1,-310) languageButton.BackgroundColor3=Color3.new(0,0,0) languageButton.BackgroundTransparency=.15 languageButton.BorderSizePixel=0 languageButton.TextColor3=Color3.new(1,1,1) languageButton.Text="EN / PT-BR" languageButton.TextSize=12
+languageButton.Activated:Connect(function()
+ close() setLanguage(language=="en" and "pt" or "en")
+ for i,b in ipairs(buttons) do b.text.Text=choices[i] end
+end)
 responses.AnchorPoint=Vector2.new(.5,1)
 responses.Position=UDim2.new(.5,0,1,-24)
 responses.Size=UDim2.new(.82,0,0,226)
@@ -254,6 +297,7 @@ connection=Run.RenderStepped:Connect(function(dt)
  local character=player.Character
  local target=character and character:FindFirstChild("Head")
  local yaw,pitch,lean=0,0,0
+ languageButton.Visible=active
  local allowed=not player:GetAttribute("InRound") and not player:GetAttribute("InMenu")
  local distance=target and (target.Position-head.Position).Magnitude or math.huge
  local closeEnough=target and distance<16 and allowed
@@ -268,6 +312,6 @@ connection=Run.RenderStepped:Connect(function(dt)
  end
  local alpha=1-math.exp(-dt*5)
  if neck then neck.C0=neck.C0:Lerp(neckBase*CFrame.Angles(pitch,0,yaw),alpha) end
- if joint then joint.C0=joint.C0:Lerp(jointBase*CFrame.Angles(lean,0,yaw*.12),alpha) end
+ if joint then joint.C0=joint.C0:Lerp(jointBase*CFrame.Angles(lean+math.sin(os.clock()*1.3)*.004,0,yaw*.12),alpha) end
  if active and (not allowed or distance>12 or not target) then close() end
 end)
