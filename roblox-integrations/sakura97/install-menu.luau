@@ -140,6 +140,35 @@ config:SetAttribute("CreditsCamera",CFrame.new(10000,2505,10010))
 config:SetAttribute("Version",123)
 config:SetAttribute("GameName","Suvivers [ALFA]")
 config:SetAttribute("MenuSceneAssetId",13327565335)
+do
+ local oldTemplate=RS:FindFirstChild("MenuSceneTemplate")
+ if oldTemplate then oldTemplate:Destroy() end
+ local ok,asset=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(13327565335) end)
+ if ok and asset then
+  local best=nil local bestParts=-1
+  for _,obj in ipairs(asset:GetDescendants()) do
+   if obj:IsA("Model") then
+    local n=0 for _,d in ipairs(obj:GetDescendants()) do if d:IsA("BasePart") then n+=1 end end
+    if n>bestParts then bestParts=n best=obj end
+   end
+  end
+  local source=best or asset
+  local template=Instance.new("Model") template.Name="MenuSceneTemplate"
+  if source:IsA("Model") then
+   for _,child in ipairs(source:GetChildren()) do child:Clone().Parent=template end
+  else
+   for _,child in ipairs(asset:GetChildren()) do child:Clone().Parent=template end
+  end
+  for _,d in ipairs(template:GetDescendants()) do
+   if d:IsA("LuaSourceContainer") or d:IsA("ProximityPrompt") or d:IsA("ClickDetector") then d:Destroy()
+   elseif d:IsA("BasePart") then d.CanTouch=false end
+  end
+  template:SetAttribute("SourceAssetId",13327565335)
+  template:SetAttribute("WinnerSceneOnly",true)
+  template.Parent=RS
+  asset:Destroy()
+ end
+end
 config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
