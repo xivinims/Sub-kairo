@@ -429,7 +429,9 @@ end)()
 result.guideClient=(function()
 ${guideTest}
 end)()
-assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
+assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==fixedLobbyAssetId,"Wrong fixed lobby asset")
+assert(workspace.JediLibrary:GetAttribute("FixedLobbyRevision")=="violence-district-lobby-v1","Fixed lobby revision missing")
+assert(workspace.JediLibrary:GetAttribute("FixedLobbySHA256")=="ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2","Fixed lobby hash missing")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
 local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==7 and assets.Maps.DoomspireBrickbattle and assets.Maps.JuggernautFightArena and assets.Maps.PirateBayIsland and assets.Maps.NaturalDisasterSurvival and assets.Maps.RocketArena and assets.Maps.PiggySewers and assets.Maps.PiggyMappleDonut)
@@ -510,7 +512,10 @@ const applied=first(await execute(script));
 console.log('JASON_VALIDATED_BUILD',JSON.stringify(applied));
 if(applied?.saved){
  const persisted=first(await execute(`
-  assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
+  assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==${fixedLobbyAssetId},"Wrong fixed lobby asset")
+  assert(workspace.JediLibrary:GetAttribute("FixedLobbyRevision")=="violence-district-lobby-v1","Fixed lobby revision missing")
+  assert(workspace.JediLibrary:GetAttribute("FixedLobbySHA256")=="ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2","Fixed lobby hash missing")
+  assert(workspace.JediLibrary:GetAttribute("FixedLobbySourceFile")=="Violence_District.rbxlx","Fixed lobby source file metadata missing")
 local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
   assert(#assets.Maps:GetChildren()==7,"Expected seven requested maps")
