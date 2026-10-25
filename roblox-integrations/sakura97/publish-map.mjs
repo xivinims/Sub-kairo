@@ -136,6 +136,103 @@ function first(task){
 }
 
 
+const FILL_VOICE_SPECS=[
+ {index:1,parts:5,bytes:60882,sha256:'cb260c5dfb58dcefe60490d32d7dec10b2741a2afaea9c7ebcbc0fc33d560a67'},
+ {index:2,parts:8,bytes:107902,sha256:'b6d9db1651895b6bb1df61e77229bf89939450ab7135cd0738fddae65a6e4400'},
+ {index:3,parts:7,bytes:95050,sha256:'a5784cb06cbad57fbc385769f626b923efcd84303a6cf713eeaa7e70efc3e893'},
+ {index:4,parts:6,bytes:77182,sha256:'3e63c7e51ccc0c6c0a310651fd4b8183eaeac204d5de486c1282b6f890501579'},
+ {index:5,parts:6,bytes:78280,sha256:'4a10c5e1607fa1a2e9621568b4f59f3a18c075af47b9f6b568f0870f8730e888'},
+ {index:6,parts:3,bytes:31102,sha256:'1ee596701561d12d5230db044986ca9984df945467660e5da588a5937e02babc'},
+];
+function readFillVoice(spec){
+ const pieces=[];
+ for(let i=1;i<=spec.parts;i++){
+  const name=`roblox-integrations/sakura97/fill-voices/voice${spec.index}.part${String(i).padStart(2,'0')}.b64`;
+  pieces.push(fs.readFileSync(name,'utf8').trim());
+ }
+ const bytes=Buffer.from(pieces.join(''),'base64');
+ const sha=createHash('sha256').update(bytes).digest('hex');
+ if(bytes.length!==spec.bytes) throw new Error(`Fill voice ${spec.index} size mismatch: ${bytes.length} != ${spec.bytes}`);
+ if(sha!==spec.sha256) throw new Error(`Fill voice ${spec.index} SHA-256 mismatch: ${sha}`);
+ return bytes;
+}
+async function createFillAudioAsset(spec,bytes){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const request={
+  assetType:'Audio',
+  displayName:`Suvivers Fill English Voice ${spec.index}`,
+  description:'English dialogue recording for the Fill lobby guide in Suvivers.',
+  creationContext:{creator:{userId:'8344738123'}}
+ };
+ const form=new FormData();
+ form.append('request',JSON.stringify(request));
+ form.append('fileContent',new Blob([bytes],{type:'audio/mpeg'}),`fill-voice-${spec.index}.mp3`);
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
+  method:'POST',
+  headers:{'x-api-key':key},
+  body:form,
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
+ if(!response.ok) throw new Error(`Fill audio ${spec.index} upload HTTP ${response.status}: ${JSON.stringify(operation)}`);
+ if(!operation.path) throw new Error(`Fill audio ${spec.index} upload returned no operation path: ${JSON.stringify(operation)}`);
+ const deadline=Date.now()+240000;
+ while(!operation.done){
+  if(Date.now()>deadline) throw new Error(`Fill audio ${spec.index} moderation/upload operation timed out`);
+  await sleep(1500);
+  const opResponse=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{
+   headers:{'x-api-key':key},
+   signal:AbortSignal.timeout(60000)
+  });
+  const opRaw=await opResponse.text();
+  try{operation=JSON.parse(opRaw)}catch{operation={raw:opRaw}}
+  if(!opResponse.ok) throw new Error(`Fill audio ${spec.index} operation HTTP ${opResponse.status}: ${JSON.stringify(operation)}`);
+ }
+ if(operation.error) throw new Error(`Fill audio ${spec.index} operation failed: ${JSON.stringify(operation.error)}`);
+ const id=Number(operation?.response?.assetId);
+ if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio ${spec.index} operation returned no assetId: ${JSON.stringify(operation)}`);
+ return id;
+}
+async function readPersistedFillVoiceIds(){
+ const result=first(await execute(`
+  local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
+  local ids={}
+  for i=1,6 do ids[i]=net and (net:GetAttribute("FillVoice"..i) or 0) or 0 end
+  return ids
+ `));
+ return Array.isArray(result)?result.map(Number):[];
+}
+async function ensureFillVoiceAssets(){
+ const existing=await readPersistedFillVoiceIds();
+ const ids=[];
+ let created=false;
+ for(const spec of FILL_VOICE_SPECS){
+  const prior=Number(existing[spec.index-1])||0;
+  if(prior>0){ids[spec.index-1]=prior; continue;}
+  const bytes=readFillVoice(spec);
+  const id=await createFillAudioAsset(spec,bytes);
+  ids[spec.index-1]=id;
+  created=true;
+  console.log('FILL_VOICE_UPLOADED',JSON.stringify({index:spec.index,assetId:id,bytes:bytes.length,sha256:spec.sha256}));
+ }
+ if(ids.some(id=>!Number.isFinite(id)||id<=0)) throw new Error('Not all six Fill voice assets are available');
+ if(created){
+  const persisted=first(await execute(`
+   local net=assert(game:GetService("ReplicatedStorage"):FindFirstChild("Survival"),"Survival runtime missing")
+   local ids={${ids.join(',')}}
+   for i,id in ipairs(ids) do net:SetAttribute("FillVoice"..i,id) end
+   local ok,err=pcall(function() game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false}) end)
+   assert(ok,"Could not persist Fill audio asset IDs: "..tostring(err))
+   return {ok=true,ids=ids,version=game.PlaceVersion}
+  `));
+  console.log('FILL_VOICE_IDS_PERSISTED',JSON.stringify(persisted));
+ }
+ return ids;
+}
+
+
 const read=n=>fs.readFileSync('roblox-integrations/sakura97/'+n+'.luau','utf8');
 const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILLER_FACTORY:'killer-factory',SURVIVAL_SERVER:'survival-server',SURVIVAL_CLIENT:'survival-client',ANIMATION:'pursuer-animation',PROFILE:'profile-service',MAP_BUILDER:'map-builder',ISLAND_SERVER:'island-server',VOID:'void-client',AMBIENCE:'ambience-client',SETTINGS:'settings-panel',NAMETAG:'nametag-server',FRIENDS:'friends-client'};
 let install=read('jason-install');
@@ -143,12 +240,14 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const fillVoiceIds=await ensureFillVoiceAssets();
+console.log('FILL_VOICE_IDS',JSON.stringify(fillVoiceIds));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const menuTest=read('menu-runtime-tests').replace('__MENU_TEST_SOURCE__',read('menu-client').replace('local v=camera.ViewportSize','local v=TEST_VIEWPORT'));
 const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
-const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT').replace('voice:LoadAsync()','voice:SetAttribute("TestLoadRequested",true)').replace('voice:Play()','voice:SetAttribute("TestPlayRequested",true)').replace('output.Player=player','output.Name="TestOutput"'));
+const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT'));
 const profileTest=read('profile-ui-tests').replace('__PROFILE_CLIENT_TEST_SOURCE__',read('profile-client'));
 const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
@@ -157,6 +256,11 @@ local function install()
 ${install}
 end
 local result=install()
+do
+ local ids={${fillVoiceIds.join(',')}}
+ local net=assert(game.ReplicatedStorage:FindFirstChild("Survival"),"Survival runtime missing after install")
+ for i,id in ipairs(ids) do net:SetAttribute("FillVoice"..i,id) end
+end
 do
  local net=game.ReplicatedStorage.Survival
  local old=net:FindFirstChild("PlayerProfile") if old then old:Destroy() end
@@ -329,8 +433,12 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not workspace.JediLibrary:FindFirstChild("GuideTable"),"Legacy generated GuideTable returned")
   assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=2,"Fill real reception geometry metadata missing")
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
-  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionDesk","Fill is not placed behind the real reception desk")
-  assert(workspace.LobbyGuide.GuideInteraction.Source:find('VoiceId="1001"',1,true) and workspace.LobbyGuide.GuideInteraction.Source:find('voice.Pitch=.88',1,true),"Guide deeper Portuguese male voice missing")
+  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the real reception desk")
+  local fillSource=workspace.LobbyGuide.GuideInteraction.Source
+  assert(not fillSource:find("AudioTextToSpeech",1,true) and not fillSource:find("PortugueseVoice",1,true),"Portuguese/TTS Fill voice returned")
+  assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill English uploaded-audio dialogue missing")
+  assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="Talk","Fill English language metadata/prompt missing")
+  for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill voice asset "..i.." missing") end
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=2.55",1,true) and game.StarterGui.TomiaszMenu.MenuController.Source:find("menuCameraCF.LookVector*13.8",1,true),"Menu killer is still too large or too close")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
@@ -339,7 +447,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,82)',1,true),"XP/level HUD was not lowered")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('player:GetAttribute("MapVote")==nil',1,true),"Vote dismissal missing")
-  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideDeepMaleVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
