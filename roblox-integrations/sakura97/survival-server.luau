@@ -1054,7 +1054,8 @@ local function finish()
   roundClosing=true
   net:SetAttribute("Phase","Resultados")
   net:SetAttribute("EndsAt",now()+RESULT_PRESENTATION_SECONDS)
-  task.wait(RESULT_PRESENTATION_SECONDS)
+  local resultEnd=now()+RESULT_PRESENTATION_SECONDS
+  while now()<resultEnd and not adminResetRequested do task.wait(.2) end
  end
  state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil

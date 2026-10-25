@@ -59,13 +59,17 @@ for _,arena in ipairs(assets.Maps:GetChildren()) do
  local requiredClearance=arena:GetAttribute("RequiredKillerClearance") or 10
  assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=requiredClearance,"Pursuer spawn has insufficient wall clearance")
  assert(arena:GetAttribute("KillerSpawnPathValidated")==true,"Pursuer spawn is not path-connected")
+ assert(#arena.ArrivalSpawns:GetChildren()>=7 and #arena.ObjectiveSites:GetChildren()>=9,"Per-map sites missing")
+ for i,a in ipairs(arena.ArrivalSpawns:GetChildren()) do
+  for j,b in ipairs(arena.ArrivalSpawns:GetChildren()) do if i~=j then assert((a.Value-b.Value).Magnitude>=7.9,"Overlapping arrivals: "..arena.Name) end end
+ end
  local bounds=assert(arena:FindFirstChild("InvisibleBounds"),"Invisible arena bounds missing")
  assert(#bounds:GetChildren()>=5 and bounds:FindFirstChild("SafetyFloor"),"Arena must have four invisible walls plus safety floor")
  for _,wall in ipairs(bounds:GetChildren()) do assert(wall:IsA("BasePart") and wall.Transparency==1 and wall.CanCollide,"Invalid invisible safety boundary") end
  for _,obj in ipairs(arena:GetDescendants()) do assert(not obj:IsA("LuaSourceContainer"),"Imported script survived sanitization") end
- table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths"),bounds=#bounds:GetChildren()})
+ table.insert(mapReport,{name=arena.Name,parts=arena:GetAttribute("PartCount"),paths=arena:GetAttribute("ValidatedPaths"),objectives=#arena.ObjectiveSites:GetChildren(),arrivals=#arena.ArrivalSpawns:GetChildren(),bounds=#bounds:GetChildren()})
 end
-assert(#mapReport==5,"Expected five requested arena templates")
+assert(#mapReport==7,"Expected seven requested arena templates")
 local flashlight=assert(assets:FindFirstChild("Items") and assets.Items:FindFirstChild("Flashlight"),"Flashlight template missing")
 assert(flashlight:IsA("Tool") and flashlight:GetAttribute("SourceAssetId")==4573262309,"Wrong flashlight asset")
 assert(flashlight:FindFirstChild("Handle"),"Flashlight handle missing")
@@ -213,5 +217,3 @@ assert(shared.Noli["Jason_Kill"]:GetAttribute("SourceAssetId")==140625681515398)
 assert(assets.Killers.Freddy:GetAttribute("MotionLibrary")=="Animatronic")
 assert(shared.Animatronic["Jason Walk"]:GetAttribute("SourceAssetId")==134168450460030)
 return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,frozenResultPoses=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
-
-

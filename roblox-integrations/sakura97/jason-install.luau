@@ -446,7 +446,7 @@ for _,killer in ipairs(rigs:GetChildren()) do
     ["Left Leg"]=CFrame.Angles(math.rad(-18*pulse+12*fall),0,math.rad(-10*fall)),
     ["Right Leg"]=CFrame.Angles(math.rad(12*pulse-16*fall),0,math.rad(12*fall)),
    }
-   for name,cf in pairs(poses) do local pose=Instance.new("Pose") pose.Name=name pose.CFrame=cf pose.Weight=1 pose.EasingStyle=Enum.PoseEasingStyle.Sine pose.EasingDirection=Enum.PoseEasingDirection.InOut pose.Parent=frame end
+   for name,cf in pairs(poses) do local pose=Instance.new("Pose") pose.Name=name pose.CFrame=cf pose.Weight=1 pose.EasingStyle=Enum.PoseEasingStyle.Cubic pose.EasingDirection=Enum.PoseEasingDirection.InOut pose.Parent=frame end
   end
   local only=Instance.new("Folder") sequence.Parent=only compact(only,folder) only:Destroy()
   folder:SetAttribute("Provenance","Authored paired R6 reaction")

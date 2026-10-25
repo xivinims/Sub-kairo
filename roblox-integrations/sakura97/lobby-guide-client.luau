@@ -81,7 +81,7 @@ local portugueseReplies={
  "Fill. Esse é meu nome. Eu fico aqui para orientar os novos jogadores e observar o que acontece. Digamos que conheço bem este lugar.",
  "Tudo bem. Aproveite o lobby. Quando mudar de ideia... você sabe onde me encontrar."
 }
-local language="en" local portugueseVoice=nil
+local language="en" local portugueseVoice=nil local portugueseAudio=nil
 local function setLanguage(value)
  language=value
  greeting=value=="pt" and portugueseGreeting or englishGreeting
@@ -121,18 +121,20 @@ local function speak(index,token,done)
   task.spawn(function()
    local ok,err=pcall(function()
     if not portugueseVoice then
-     portugueseVoice=Instance.new("AudioTextToSpeech") portugueseVoice.Name="FillPortuguese" portugueseVoice.VoiceId="1001" portugueseVoice.AutoLocalize=false portugueseVoice.Speed=.94 portugueseVoice.Volume=.65 portugueseVoice.Parent=ui
-     local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=ui
-     local wire=Instance.new("Wire") wire.SourceInstance=portugueseVoice wire.TargetInstance=output wire.Parent=ui
+     portugueseAudio=Instance.new("Folder",SoundService) portugueseAudio.Name="FillPortugueseAudio"
+     portugueseVoice=Instance.new("AudioTextToSpeech") portugueseVoice.Name="FillPortuguese" portugueseVoice.VoiceId="1001" portugueseVoice.AutoLocalize=false portugueseVoice.Speed=.94 portugueseVoice.Volume=.65 portugueseVoice.Parent=portugueseAudio
+     local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=portugueseAudio
+     local wire=Instance.new("Wire") wire.SourceInstance=portugueseVoice wire.TargetInstance=output wire.Parent=portugueseAudio
     end
     portugueseVoice.Text=index==1 and portugueseGreeting or portugueseReplies[index-1]
     portugueseVoice:LoadAsync()
     if token~=generation or not active then return end
+    voiceConnection=portugueseVoice.Ended:Connect(function() if token==generation and active then done() end end)
     portugueseVoice:Play()
    end)
    if not ok then warn("Fill Portuguese voice: "..tostring(err)) end
    -- Text remains usable if platform speech is temporarily unavailable.
-   task.delay(12,function() if token==generation and active then done() end end)
+   task.delay(40,function() if token==generation and active then done() end end)
   end)
   return
  end
@@ -290,7 +292,7 @@ connection=Run.RenderStepped:Connect(function(dt)
   connection:Disconnect()
   for _,c in ipairs(connections) do c:Disconnect() end
   stopVoice()
-  voice:Destroy()
+  voice:Destroy() if portugueseAudio then portugueseAudio:Destroy() end
   ui:Destroy()
   return
  end

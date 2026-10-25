@@ -7,6 +7,12 @@ local SoundService=game:GetService("SoundService")
 local UIS=game:GetService("UserInputService")
 local player=Players.LocalPlayer
 local ui=script.Parent
+local function squareMenu(obj)
+ if obj:IsA("UICorner") then obj.CornerRadius=UDim.new(0,0)
+ elseif obj:IsA("TextButton") or obj:IsA("ImageButton") then obj.BackgroundColor3=Color3.new(0,0,0) end
+end
+for _,obj in ipairs(ui:GetDescendants()) do squareMenu(obj) end
+ui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareMenu(obj) end end) end)
 local main=ui:WaitForChild("MenuPrincipal")
 local scenes=ui:WaitForChild("Escenarios")
 local credits=scenes:WaitForChild("MenuCreditos")
@@ -490,6 +496,3 @@ end)
 
 while not player:GetAttribute("SweanLoadingDone") do task.wait(.1) end
 open()
-
-
-

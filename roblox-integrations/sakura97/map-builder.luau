@@ -8,7 +8,7 @@ local specs={
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
  {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true,killerClearance=5.8,minKillerDistance=28},
- {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true,minKillerDistance=28},
+ {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1.25,maxParts=9000,heavy=true,minKillerDistance=28},
 }
 local function route(a,b)
  local path=PF:CreatePath({AgentRadius=2.2,AgentHeight=5,AgentCanJump=true,AgentCanClimb=true,WaypointSpacing=5})
@@ -113,15 +113,15 @@ function Builder.build(load,sanitize,destination)
    if workspace:Raycast(g+Vector3.new(0,.25,0),Vector3.new(0,7.4,0),params) then return end
    if not radialClear(g,5.8) then return end
    local p=g+Vector3.new(0,3,0)
-   for _,other in ipairs(candidates) do if (other-p).Magnitude<10 then return end end
+   for _,other in ipairs(candidates) do if (other-p).Magnitude<(spec.heavy and 7 or 10) then return end end
    table.insert(candidates,p)
   end
   for _,surface in ipairs(floors) do
    if surface.y<=lowest+32 and scans<1800 and #candidates<240 then
     local p=surface.part
     candidate(p.CFrame:PointToWorldSpace(Vector3.new(0,p.Size.Y/2,0)))
-    for x=-p.Size.X/2+4,p.Size.X/2-4,14 do
-     for z=-p.Size.Z/2+4,p.Size.Z/2-4,14 do
+    for x=-p.Size.X/2+4,p.Size.X/2-4,(spec.heavy and 8 or 14) do
+     for z=-p.Size.Z/2+4,p.Size.Z/2-4,(spec.heavy and 8 or 14) do
       if scans<1800 and #candidates<240 then candidate(p.CFrame:PointToWorldSpace(Vector3.new(x,p.Size.Y/2,z))) end
      end
     end
