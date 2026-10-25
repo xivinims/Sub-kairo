@@ -22,6 +22,10 @@ local arena,npc,brain=nil,nil,nil local killerName="Jason" local endTime=0 local
 local jasonPlayer=nil local morphing={} local rigRetries={} local hookedCharacters=setmetatable({},{__mode="k"}) local expectedCharacters={} local lastAttack=0
 local roundClosing=false local previousMap=nil local saveAt={}
 local lastKilledUserId=0 local lastKilledName=nil
+local objectiveFolder=nil
+local carryWelds=setmetatable({},{__mode="k"})
+local objectiveConnections={}
+local escapedThisRound=0
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
 local function entry(p) return state.entries[p.UserId] end
@@ -39,17 +43,47 @@ local function sync(p)
  p:SetAttribute("ProtectedUntil",e and e.protectedUntil or 0)
  p:SetAttribute("RoundStatus",e and e.status or "lobby")
  p:SetAttribute("Queued",queued[p] or false)
+ p:SetAttribute("HasKey",e and e.hasKey==true or false)
+ p:SetAttribute("Stamina",e and math.floor((e.stamina or 0)*10+.5)/10 or 0)
+ p:SetAttribute("MaxStamina",p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina)
+ p:SetAttribute("CarryingUserId",e and e.carryingUserId or 0)
+ p:SetAttribute("CarriedBy",e and e.carriedBy or 0)
  local h=humanoid(p)
  if h then
-  h.PlatformStand=false h.AutoRotate=true
+  h.PlatformStand=false h.AutoRotate=not (e and e.status=="downed")
   local pursuerSpec=config.Killers[killerName]
-  h.WalkSpeed=p==jasonPlayer and (pursuerSpec and pursuerSpec.speed or 22) or (e and e.status=="downed") and 0 or (e and e.injured and 12) or (p:GetAttribute("MoveMode")=="run" and 21 or 16)
-  h.JumpPower=(e and e.status=="downed") and 0 or 50
-  h.JumpHeight=(e and e.status=="downed") and 0 or 7.2
+  local mode=p:GetAttribute("MoveMode") or "walk"
+  local stamina=e and (e.stamina or 0) or 0
+  local carrying=e and (e.carryingUserId or 0)>0
+  if p==jasonPlayer then
+   local chase=(pursuerSpec and pursuerSpec.speed or 20)
+   h.WalkSpeed=(mode=="run" and stamina>0) and chase+2.2 or math.max(15,chase-1.8)
+  elseif e and e.status=="downed" then
+   h.WalkSpeed=0
+  elseif e and e.injured then
+   h.WalkSpeed=mode=="crouch" and 7 or 11.5
+  elseif mode=="crouch" then
+   h.WalkSpeed=Rules.SurvivorCrouch
+  elseif mode=="run" and stamina>0 then
+   h.WalkSpeed=carrying and 13 or Rules.SurvivorRun
+  else
+   h.WalkSpeed=carrying and 10.5 or Rules.SurvivorWalk
+  end
+  h.JumpPower=(e and e.status=="downed") and 0 or (mode=="crouch" and 0 or 50)
+  h.JumpHeight=(e and e.status=="downed") and 0 or (mode=="crouch" and 0 or 7.2)
  end
 end
 local function points(p,n)
  profiles:points(p,n)
+end
+local function reward(p,pointAmount,xpAmount)
+ if not p or not p.Parent then return end
+ local e=entry(p)
+ if pointAmount and pointAmount~=0 then points(p,pointAmount) end
+ if e then
+  e.roundXP=(e.roundXP or 0)+(xpAmount or 0)
+  e.actionPoints=(e.actionPoints or 0)+(pointAmount or 0)
+ end
 end
 local function clearFlashlight(p)
  local char=p.Character
@@ -138,15 +172,20 @@ local function injure(p)
  e.hits=(e.hits or 0)+1
  local stats=p:FindFirstChild("leaderstats") local hitCount=stats and stats:FindFirstChild("Atingido") if hitCount then hitCount.Value+=1 end
  e.injured=true e.channel=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",now())
+ local h=humanoid(p) if h then h.Health=math.max(1,h.MaxHealth*.55) end
  sync(p)
+ net.Update:FireClient(p,"hitFlash",.45)
  net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
  return true
 end
 local function down(p)
  if not vulnerable(p) or not Rules.down(state,p.UserId,now()) then return end
  clearFlashlight(p)
- local e=entry(p) e.downedAt=now() e.hits=(e.hits or 0)+1 local hitStats=p:FindFirstChild("leaderstats") if hitStats and hitStats:FindFirstChild("Atingido") then hitStats.Atingido.Value+=1 end e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName sync(p)
- net.Update:FireClient(p,"notice","Você caiu. Outro sobrevivente tem 30 segundos para ajudar.")
+ local e=entry(p) e.downedAt=now() e.hits=(e.hits or 0)+1 local hitStats=p:FindFirstChild("leaderstats") if hitStats and hitStats:FindFirstChild("Atingido") then hitStats.Atingido.Value+=1 end e.falls=(e.falls or 0)+1 local stats=p:FindFirstChild("leaderstats") local falls=stats and stats:FindFirstChild("Quedas") if falls then falls.Value+=1 end e.injured=true e.channel=nil e.cause=killerName
+ local h=humanoid(p) if h then h.Health=math.max(1,h.MaxHealth*.14) end
+ sync(p)
+ net.Update:FireClient(p,"hitFlash",.72)
+ net.Update:FireClient(p,"notice","Você caiu. Outro sobrevivente pode reanimar ou carregar você.")
 end
 local function executeDowned(p,attacker)
  local e=entry(p)
@@ -195,7 +234,10 @@ local function executeDowned(p,attacker)
    attacker:SetAttribute("ExecutionDuration",0)
   end
   local current=entry(p)
-  if state.id==capturedRound and current==capturedEntry and p.Character==capturedCharacter and current.status=="downed" then eliminate(p,killerName) end
+  if state.id==capturedRound and current==capturedEntry and p.Character==capturedCharacter and current.status=="downed" then
+    reward(jasonPlayer,60,32)
+    eliminate(p,killerName)
+   end
  end)
  return true
 end
@@ -220,7 +262,12 @@ local function catchPlayer(p)
   if hit and not hit.Instance:IsDescendantOf(p.Character) then return end
   net.Update:FireClient(p,"caught",killerName,attacker.PrimaryPart.CFrame)
   local current=entry(p)
-  if current and current.injured then down(p) else injure(p) end
+  if current and current.injured then
+   down(p)
+   reward(jasonPlayer,25,14)
+  elseif injure(p) then
+   reward(jasonPlayer,15,8)
+  end
  end)
 end
 local function join(p)
@@ -322,7 +369,9 @@ local function spawnPlayer(p)
  e.status="alive" e.spawnRecovery=nil e.spawnGraceUntil=now()+12
  e.protectedUntil=math.max(e.protectedUntil or 0,now()+10)
  e.channel=nil e.deadline=nil e.downedAt=nil
- e.lastScore=now() e.lastNoise=0
+ e.lastScore=now() e.lastNoise=0 e.lastStepSound=0 e.lastStaminaSync=0
+ e.hasKey=false e.carryingUserId=0 e.carriedBy=0
+ e.stamina=p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina
  clearFlashlight(p)
  p:SetAttribute("BeingExecuted",false) p:SetAttribute("ReviveAt",0)
  p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
@@ -363,6 +412,191 @@ local function channelRevive(p)
  h.channel={target=target,started=now(),position=r.Position,status=h.status}
  p:SetAttribute("ReviveAt",now()+Rules.ReviveTime)
 end
+
+local function disconnectObjectives()
+ for _,c in ipairs(objectiveConnections) do pcall(function() c:Disconnect() end) end
+ table.clear(objectiveConnections)
+ if objectiveFolder then objectiveFolder:Destroy() objectiveFolder=nil end
+ net:SetAttribute("MissionStage","Waiting")
+ net:SetAttribute("ComputersDone",0)
+ net:SetAttribute("ComputersRequired",Rules.ComputersRequired)
+end
+
+local function dropCarry(carrier)
+ local e=carrier and entry(carrier)
+ if not e then return end
+ local targetId=e.carryingUserId or 0
+ local weld=carryWelds[carrier]
+ if weld then weld:Destroy() carryWelds[carrier]=nil end
+ e.carryingUserId=0
+ local target=targetId>0 and Players:GetPlayerByUserId(targetId) or nil
+ if target then
+  local te=entry(target)
+  if te then te.carriedBy=0 end
+  local rr=root(target)
+  if rr then rr.Massless=false rr.CanCollide=false end
+  local th=humanoid(target) if th then th.AutoRotate=false end
+  sync(target)
+ end
+ sync(carrier)
+end
+
+local function toggleCarry(carrier)
+ local e=entry(carrier) local cr=root(carrier)
+ if not e or e.status~="alive" or carrier==jasonPlayer or not cr then return end
+ if (e.carryingUserId or 0)>0 then dropCarry(carrier) return end
+ local target=nil local distance=7
+ for _,other in ipairs(Players:GetPlayers()) do
+  local te=entry(other) local rr=root(other)
+  if other~=carrier and te and te.status=="downed" and (te.carriedBy or 0)==0 and rr and not other:GetAttribute("BeingExecuted") then
+   local d=(rr.Position-cr.Position).Magnitude
+   if d<distance then target=other distance=d end
+  end
+ end
+ if not target then return end
+ local te=entry(target) local rr=root(target)
+ local shoulder=carrier.Character and (carrier.Character:FindFirstChild("Torso") or carrier.Character:FindFirstChild("UpperTorso"))
+ if not te or not rr or not shoulder then return end
+ rr.CFrame=shoulder.CFrame*CFrame.new(1.15,.35,.35)*CFrame.Angles(0,0,math.rad(82))
+ rr.AssemblyLinearVelocity=Vector3.zero rr.AssemblyAngularVelocity=Vector3.zero
+ rr.Massless=true rr.CanCollide=false
+ local weld=Instance.new("WeldConstraint") weld.Name="CarryWeld" weld.Part0=shoulder weld.Part1=rr weld.Parent=shoulder
+ carryWelds[carrier]=weld e.carryingUserId=target.UserId te.carriedBy=carrier.UserId
+ sync(carrier) sync(target)
+ net.Update:FireClient(carrier,"notice","Você está carregando "..(target.DisplayName or target.Name)..". Sua velocidade foi reduzida.")
+end
+
+local function objectivePositions()
+ local list={}
+ local function collect(folder)
+  if not folder then return end
+  for _,v in ipairs(folder:GetChildren()) do if v:IsA("Vector3Value") then table.insert(list,v.Value) end end
+ end
+ collect(arena and arena:FindFirstChild("SafePoints"))
+ collect(arena and arena:FindFirstChild("ArrivalSpawns"))
+ if #list==0 and arena then
+  local p=arena:GetAttribute("EntranceSpawn")
+  if typeof(p)=="Vector3" then
+   for i=1,8 do table.insert(list,p+Vector3.new(math.cos(i)*18,0,math.sin(i)*18)) end
+  end
+ end
+ table.sort(list,function(a,b) return (a.X*31+a.Z*17)<(b.X*31+b.Z*17) end)
+ return list
+end
+
+local function alignObjective(model,pos)
+ model.Parent=objectiveFolder
+ model:PivotTo(CFrame.new(pos))
+ local cf,size=model:GetBoundingBox()
+ model:PivotTo(model:GetPivot()+Vector3.new(pos.X-cf.Position.X,pos.Y+size.Y/2-cf.Position.Y,pos.Z-cf.Position.Z))
+ for _,d in ipairs(model:GetDescendants()) do
+  if d:IsA("BasePart") then d.Anchored=true d.CanTouch=false end
+ end
+ return model
+end
+
+local function promptAt(name,pos,action,objectText,hold)
+ local anchor=Instance.new("Part")
+ anchor.Name=name.."PromptAnchor" anchor.Size=Vector3.new(.6,.6,.6) anchor.Transparency=1
+ anchor.Anchored=true anchor.CanCollide=false anchor.CanTouch=false anchor.CanQuery=false
+ anchor.Position=pos+Vector3.new(0,2.3,0) anchor.Parent=objectiveFolder
+ local prompt=Instance.new("ProximityPrompt")
+ prompt.Name=name.."Prompt" prompt.ActionText=action prompt.ObjectText=objectText
+ prompt.HoldDuration=hold or 0 prompt.MaxActivationDistance=9 prompt.RequiresLineOfSight=false prompt.Parent=anchor
+ return prompt,anchor
+end
+
+local function setMission(stage)
+ net:SetAttribute("MissionStage",stage)
+ net.Update:FireAllClients("mission",stage,net:GetAttribute("ComputersDone") or 0,net:GetAttribute("ComputersRequired") or Rules.ComputersRequired)
+end
+
+local function activeSurvivors()
+ local n=0
+ for id,e in pairs(state.entries) do
+  if not jasonPlayer or id~=jasonPlayer.UserId then
+   if e.status=="alive" or e.status=="downed" or e.status=="loading" then n+=1 end
+  end
+ end
+ return n
+end
+
+local function escapePlayer(p)
+ local e=entry(p)
+ if not e or e.status~="alive" or p==jasonPlayer or not e.hasKey then return end
+ if (net:GetAttribute("ComputersDone") or 0)<(net:GetAttribute("ComputersRequired") or Rules.ComputersRequired) then return end
+ dropCarry(p)
+ e.hasKey=false e.status="escaped" e.escapes=(e.escapes or 0)+1 escapedThisRound+=1
+ reward(p,100,80)
+ p:SetAttribute("HasKey",false)
+ sync(p)
+ net.Update:FireAllClients("escape",p.DisplayName or p.Name)
+ net.Update:FireClient(p,"achievement","FIRST ESCAPE","Você concluiu uma partida e escapou.")
+ local badgeId=tonumber(config.FirstWinBadgeId) or 0
+ if badgeId>0 then task.spawn(function() pcall(function() game:GetService("BadgeService"):AwardBadgeAsync(p.UserId,badgeId) end) end) end
+ lobby(p)
+ task.spawn(saveProfile,p)
+ if activeSurvivors()==0 then endTime=math.min(endTime,now()+1) end
+end
+
+local function spawnKeysAndExit(positions)
+ setMission("Key")
+ local start=math.max(Rules.ComputersRequired+1,1)
+ for i=1,math.min(4,#positions) do
+  local pos=positions[((start+i-2)%#positions)+1]
+  local key=alignObjective(items.KeyTemplate:Clone(),pos)
+  key.Name="ObjectiveKey_"..i key:SetAttribute("ObjectiveType","Key")
+  local prompt=promptAt("Key"..i,pos,"PEGAR","Chave",.15)
+  table.insert(objectiveConnections,prompt.Triggered:Connect(function(p)
+   local e=entry(p)
+   if not e or e.status~="alive" or p==jasonPlayer or e.hasKey or not key.Parent then return end
+   e.hasKey=true e.keys=(e.keys or 0)+1 reward(p,20,16)
+   p:SetAttribute("HasKey",true) key:Destroy() prompt.Enabled=false
+   sync(p) net.Update:FireClient(p,"mission","Exit")
+  end))
+ end
+end
+
+local function setupObjectives()
+ disconnectObjectives()
+ escapedThisRound=0
+ objectiveFolder=Instance.new("Folder") objectiveFolder.Name="RoundObjectives" objectiveFolder.Parent=arena
+ local positions=objectivePositions()
+ assert(#positions>0,"Arena has no objective positions")
+ net:SetAttribute("ComputersRequired",Rules.ComputersRequired)
+ net:SetAttribute("ComputersDone",0)
+ local done=0
+ for i=1,Rules.ComputersRequired do
+  local pos=positions[((i-1)%#positions)+1]
+  local pc=alignObjective(items.ComputerTemplate:Clone(),pos)
+  pc.Name="HackComputer_"..i pc:SetAttribute("ObjectiveType","Computer") pc:SetAttribute("Hacked",false)
+  local prompt=promptAt("Computer"..i,pos,"HACKEAR","Computador",3.5)
+  table.insert(objectiveConnections,prompt.Triggered:Connect(function(p)
+   local e=entry(p)
+   if not e or e.status~="alive" or p==jasonPlayer or pc:GetAttribute("Hacked") then return end
+   local rr=root(p) if not rr or (rr.Position-pos).Magnitude>11 then return end
+   pc:SetAttribute("Hacked",true) prompt.Enabled=false done+=1
+   e.hacks=(e.hacks or 0)+1 reward(p,40,28)
+   net:SetAttribute("ComputersDone",done)
+   net.Update:FireAllClients("objectiveDone","Computer",p.DisplayName or p.Name,done,Rules.ComputersRequired)
+   if done>=Rules.ComputersRequired then spawnKeysAndExit(positions) else setMission("Hack") end
+  end))
+ end
+ local exitPos=positions[#positions]
+ local exitModel=Instance.new("Model") exitModel.Name="EscapeExit" exitModel:SetAttribute("ObjectiveType","Exit") exitModel.Parent=objectiveFolder
+ local isPortal=arena.Name=="PirateBayIsland"
+ local door=Instance.new("Part") door.Name=isPortal and "Portal" or "Door"
+ door.Size=isPortal and Vector3.new(6,8,.6) or Vector3.new(6,9,1.2)
+ door.Material=isPortal and Enum.Material.Neon or Enum.Material.Metal
+ door.Color=isPortal and Color3.fromRGB(105,150,255) or Color3.fromRGB(42,43,48)
+ door.Transparency=isPortal and .42 or .08 door.Anchored=true door.CanCollide=false door.Position=exitPos+Vector3.new(0,door.Size.Y/2,0) door.Parent=exitModel
+ exitModel.PrimaryPart=door
+ local exitPrompt=Instance.new("ProximityPrompt") exitPrompt.Name="ExitPrompt" exitPrompt.ActionText="ABRIR" exitPrompt.ObjectText=isPortal and "Portal de saída" or "Saída"
+ exitPrompt.MaxActivationDistance=10 exitPrompt.RequiresLineOfSight=false exitPrompt.Enabled=true exitPrompt.Parent=door
+ table.insert(objectiveConnections,exitPrompt.Triggered:Connect(function(p) escapePlayer(p) end))
+ setMission("Hack")
+end
+
 local mapVotes=setmetatable({},{__mode="k"}) local selectionPlayer=nil local selectedKiller=nil
 local function voteCounts()
  local counts={} for _,map in ipairs(assets.Maps:GetChildren()) do counts[map.Name]=0 end
@@ -376,7 +610,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  if action~="mode" and t-(rates[p][action] or -math.huge)<.18 then return end
  rates[p][action]=t
  if action=="voteMap" then
-  if state.phase~="Intervalo" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 or not assets.Maps:FindFirstChild(value) then return end
+  if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 or not assets.Maps:FindFirstChild(value) then return end
   mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
  elseif action=="chooseKiller" then
   if state.phase~="Escolha" or p~=selectionPlayer or selectedKiller or p:GetAttribute("AFK") or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
@@ -418,8 +652,14 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   end
  elseif action=="mode" then
   local e=entry(p)
-  if e and e.injured and value=="run" then value="walk" end
-  if p~=jasonPlayer and (value=="walk" or value=="run") and (not e or e.status=="alive") then p:SetAttribute("MoveMode",value) sync(p) end
+  if value~="walk" and value~="run" and value~="crouch" then return end
+  if e and (e.injured or e.status=="downed") and value=="run" then value="walk" end
+  if e and e.status=="alive" then
+   if value=="run" and (e.stamina or 0)<=1 then value="walk" end
+   p:SetAttribute("MoveMode",value) sync(p)
+  end
+ elseif action=="carry" then
+  toggleCarry(p)
  elseif action=="flashlight" then
   local e=entry(p)
   if p~=jasonPlayer and not p:GetAttribute("Downed") and (not e or e.status=="alive") then setFlashlight(p,not p:GetAttribute("FlashlightOn")) end
@@ -583,7 +823,12 @@ RunService.Heartbeat:Connect(function(dt)
     if not valid then e.channel=nil p:SetAttribute("ReviveAt",0)
     elseif t-c.started>=Rules.ReviveTime then
      if Rules.revive(state,p.UserId,c.target.UserId,t) then
-      te.injured=true te.protectedUntil=t+4 sync(c.target) sync(p) if c.target~=p then points(p,10) end
+      te.injured=true te.protectedUntil=t+4
+      if te.carriedBy and te.carriedBy>0 then
+       local carrier=Players:GetPlayerByUserId(te.carriedBy) if carrier then dropCarry(carrier) end
+      end
+      sync(c.target) sync(p)
+      if c.target~=p then reward(p,30,18) end
      end e.channel=nil p:SetAttribute("ReviveAt",0)
     end
    end
@@ -594,16 +839,28 @@ RunService.Heartbeat:Connect(function(dt)
      local m=motions[p] or {position=r.Position,speed=0,grounded=true}
      local displacement=r.Position-m.position m.speed=Vector3.new(displacement.X,0,displacement.Z).Magnitude/step m.position=r.Position motions[p]=m
      if e.status=="alive" then
-      h.JumpPower=50 h.JumpHeight=7.2
-      if p==jasonPlayer then local pursuerSpec=config.Killers[killerName] h.WalkSpeed=pursuerSpec and pursuerSpec.speed or 22
-      elseif e.injured then h.WalkSpeed=12
-      else h.WalkSpeed=p:GetAttribute("MoveMode")=="run" and 21 or 16 end
+      local mode=p:GetAttribute("MoveMode") or "walk"
+      local maxStamina=p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina
+      local running=mode=="run" and m.speed>2 and not (p~=jasonPlayer and e.injured)
+      if running then
+       e.stamina=math.max(0,(e.stamina or maxStamina)-(p==jasonPlayer and Rules.KillerDrain or Rules.SurvivorDrain)*step)
+       if e.stamina<=.1 then p:SetAttribute("MoveMode","walk") mode="walk" end
+      else
+       e.stamina=math.min(maxStamina,(e.stamina or maxStamina)+(p==jasonPlayer and Rules.KillerRegen or Rules.SurvivorRegen)*step)
+      end
       local grounded=h.FloorMaterial~=Enum.Material.Air
       local jump=m.grounded and not grounded and r.AssemblyLinearVelocity.Y>5
-      if p~=jasonPlayer and brain and (jump or m.speed>10) and t-(e.lastNoise or 0)>.45 then
-       brain.noise(r.Position,config.Killers[killerName].hearing*(jump and 1 or m.speed>18 and 1 or .55)) e.lastNoise=t
-      end m.grounded=grounded
-      if t-(e.lastScore or t)>=10 then e.lastScore=t points(p,1) end
+      if p~=jasonPlayer and brain and t-(e.lastNoise or 0)>(mode=="run" and .7 or 1.15) then
+       local factor=mode=="crouch" and .08 or mode=="run" and 1 or m.speed>7 and .34 or .12
+       if jump then factor=.85 end
+       if factor>.1 then
+        brain.noise(r.Position,config.Killers[killerName].hearing*factor)
+        if jasonPlayer then net.Update:FireClient(jasonPlayer,"noisePing",r.Position,mode) end
+       end
+       e.lastNoise=t
+      end
+      m.grounded=grounded
+      if t-(e.lastStaminaSync or 0)>.35 then e.lastStaminaSync=t sync(p) end
      end
     end
    end
@@ -626,23 +883,27 @@ end)
 local RESULT_PRESENTATION_SECONDS=9
 
 local function finish()
- local participants={} local living=0
+ local participants={} local living=0 local escaped=0
  if state.phase=="Partida" then
   for _,p in ipairs(Players:GetPlayers()) do
    local e=entry(p)
    if e then
-    if p~=jasonPlayer and (e.status=="alive" or e.status=="downed") then living+=1 end
+    if p~=jasonPlayer and (e.status=="alive" or e.status=="downed" or e.status=="loading") then living+=1 end
+    if p~=jasonPlayer and e.status=="escaped" then escaped+=1 end
     if p~=jasonPlayer then table.insert(participants,{name=p.DisplayName or p.Name,userId=p.UserId,time=math.floor(e.survivalTime or 0),hits=e.hits or 0,falls=e.falls or 0,level=1}) end
    end
   end
   table.sort(participants,function(x,y) if x.time~=y.time then return x.time>y.time elseif x.hits~=y.hits then return x.hits<y.hits else return x.falls<y.falls end end)
-  local jasonWon=living==0 and (jasonPlayer~=nil or (npc and npc.Parent and npc:FindFirstChildOfClass("Humanoid") and npc:FindFirstChildOfClass("Humanoid").Health>0))
+  local jasonWon=escaped==0 and (jasonPlayer~=nil or (npc and npc.Parent and npc:FindFirstChildOfClass("Humanoid") and npc:FindFirstChildOfClass("Humanoid").Health>0))
   local earned={}
   for _,p in ipairs(Players:GetPlayers()) do
    local e=entry(p)
    if e then
-    local reward=math.max(10,math.floor((e.survivalTime or 0)/4))+(jasonWon and p==jasonPlayer and 30 or 0)
-    earned[p]=reward profiles:awardXP(p,reward)
+    local timeXP=math.floor((e.survivalTime or 0)/45)*2
+    local reward=math.max(0,(e.roundXP or 0)+timeXP)
+    if p==jasonPlayer and jasonWon then reward+=25 end
+    earned[p]=reward
+    if reward>0 then profiles:awardXP(p,reward) end
     for _,row in ipairs(participants) do if row.userId==p.UserId then row.level=Profiles.level(p:FindFirstChild("leaderstats") and p:FindFirstChild("leaderstats").XP.Value or 0) end end
     task.spawn(saveProfile,p)
    end
@@ -650,7 +911,7 @@ local function finish()
   local killerWasPlayer=jasonPlayer~=nil
   local killerWinnerName=killerWasPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName
   for _,p in ipairs(Players:GetPlayers()) do
-   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
+   net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or (tostring(escaped).." sobrevivente(s) escaparam"),lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
   -- Keep the real arena and real winner alive while every client owns a full-screen cinematic camera.
   state.phase="Resultados"
@@ -664,12 +925,13 @@ local function finish()
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end
  for _,p in ipairs(Players:GetPlayers()) do
   net.Update:FireClient(p,"reset")
-  local e=entry(p) if e then if e.status=="alive" then points(p,20) end
+  local e=entry(p) if e then
    -- Finish any death presentation before cleaning the arena; lobby position remains safe.
    RS.SweanVoidEvent:FireClient(p,"finish") p:SetAttribute("Spectating",false) lobby(p)
   end
  end
  table.clear(state.entries) for _,p in ipairs(Players:GetPlayers()) do sync(p) end
+ disconnectObjectives()
  if npc then npc:Destroy() npc=nil end if arena then arena:Destroy() arena=nil end
 end
 task.spawn(function()
@@ -706,6 +968,18 @@ task.spawn(function()
   while #Players:GetPlayers()>0 and not hasQueued() do
    net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",0) net:SetAttribute("Waiting",0) task.wait(.5)
   end
+
+  if #Players:GetPlayers()>0 then
+   table.clear(mapVotes) voteCounts()
+   for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
+   state.phase="Votação"
+   local voteEnd=now()+Rules.VoteDuration
+   while now()<voteEnd and hasQueued() do
+    net:SetAttribute("Phase","Votação")
+    net:SetAttribute("EndsAt",voteEnd)
+    task.wait(.15)
+   end
+  end
   if #Players:GetPlayers()>0 then
    local ok,err=xpcall(function()
     roundClosing=false lastKilledUserId=0 lastKilledName=nil
@@ -723,15 +997,16 @@ task.spawn(function()
     assert(#eligible>=2,"Two participants required for player-controlled killer")
     selectionPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
     selectedKiller=nil state.phase="Escolha"
-    net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+12)
+    net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+Rules.KillerChoiceDuration)
     selectionPlayer:SetAttribute("ChoosingKiller",true)
-    local deadline=now()+12
+    local deadline=now()+Rules.KillerChoiceDuration
     while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
     selectionPlayer:SetAttribute("ChoosingKiller",false)
     if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
     jasonPlayer=selectionPlayer selectionPlayer=nil
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
+    setupObjectives()
     local chosen=assets.Killers:FindFirstChild(selectedKiller or "Jason") or rigList[1]
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
