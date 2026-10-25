@@ -44,9 +44,13 @@ for name,id in pairs(expectedMaps) do
 end
 assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old arena templates returned")
 assert(assets.Maps.RocketArena:GetAttribute("RequestedScale")==2,"RocketArena must be scaled 2x")
-local formerDoorCF=assert(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"),"Former door reference missing")
-assert(typeof(formerDoorCF)=="CFrame","Former door reference must be a CFrame")
-assert(workspace.IslandSpawn.Position.Y<formerDoorCF.Position.Y,"Lobby spawn still above old doorway reference")
+local formerDoorCF=assert(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"),"Lobby facing reference missing")
+assert(typeof(formerDoorCF)=="CFrame","Lobby facing reference must be a CFrame")
+local verifiedSpawn=assert(workspace.JediLibrary:GetAttribute("VerifiedSpawn"),"Fixed lobby verified spawn missing")
+assert(typeof(verifiedSpawn)=="Vector3","Fixed lobby verified spawn must be a Vector3")
+local spawnPos=workspace.IslandSpawn.Position
+assert((Vector3.new(spawnPos.X,verifiedSpawn.Y,spawnPos.Z)-verifiedSpawn).Magnitude<2.5,"Lobby spawn drifted away from fixed snapshot spawn")
+assert(math.abs((spawnPos.Y-workspace.IslandSpawn.Size.Y/2)-verifiedSpawn.Y)<1,"Lobby spawn is not grounded on fixed snapshot floor")
 assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLibrary:FindFirstChild("OriginalLobbyDoor"),"Lobby door geometry/marker returned")
 assert(not workspace.StreamingEnabled)
 local mapReport={}
