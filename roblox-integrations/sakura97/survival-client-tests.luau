@@ -51,7 +51,10 @@ local ok,result=xpcall(function()
  task.wait(.7)
  assert(camera.CameraType==Enum.CameraType.Scriptable and not gui:FindFirstChild("Capture"),"Hit reaction must never restore removed capture UI or steal death/menu camera")
  attrs.VoidActive=false
+ local beforeResultType=camera.CameraType
+ local beforeResultSubject=camera.CameraSubject
  update:Fire("roundResult",{jasonWon=true,killer="JohnDoe",killerPlayer=false,killerWinnerName="JohnDoe",winnerText="JohnDoe venceu a partida",lastVictimUserId=992,lastVictimName="Sobrevivente",map="Base Abandonada",xp=50,board={{name="Tester",userId=991,time=125,hits=2,falls=1,level=4},{name="Sobrevivente",userId=992,time=111,hits=3,falls=2,level=2}}}) task.wait()
+ assert(camera.CameraType==Enum.CameraType.Scriptable,"Fullscreen result did not own the gameplay camera")
  assert(gui.RoundResult.Ranking:IsA("ScrollingFrame") and gui.RoundResult.Ranking.Rank1,"Scrollable result ranking missing")
  local winnerWorld=gui.RoundResult.WinnerPortrait:FindFirstChildOfClass("WorldModel")
  local winnerPursuer=assert(winnerWorld:FindFirstChild("WinnerPursuer"),"Winning pursuer portrait missing")
@@ -63,7 +66,9 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("MusicButton") and not gui:FindFirstChild("MusicPanel"),"Music icon/panel returned to gameplay HUD")
  assert(gui.RoundResult.Subtitle.Text:find("50 XP",1,true),"Earned XP not shown")
  assert(not gui.RoundResult.Winner.Text:find("\\n",1,true),"Result contains literal newline escape")
- gui.RoundResult.Visible=false
+ gui.RoundResult.Visible=false task.wait()
+ assert(camera.CameraType==beforeResultType,"Gameplay camera type was not restored after result closed")
+ if beforeResultSubject then assert(camera.CameraSubject==beforeResultSubject,"Gameplay camera subject was not restored after result closed") end
  assert(gui.TopActions and gui.TopActions:FindFirstChild("Run"),"Hold-to-run control missing")
  assert(not gui.TopActions:FindFirstChild("Flashlight") and not gui.TopActions:FindFirstChild("Boost") and not gui.TopActions:FindFirstChild("Medkit"),"Extra persistent top buttons returned")
  assert(not gui:FindFirstChild("Leave"),"Return-to-menu button returned to gameplay")
@@ -134,7 +139,7 @@ local ok,result=xpcall(function()
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,fullScreenKillResult=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,animatedLoadingAvatar=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
+ return {ok=true,fullScreenKillResult=true,resultCameraRestored=true,resetVictoryVictimPose=true,exactLastVictim=true,dynamicKillerWinnerName=true,musicHudRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,animatedLoadingAvatar=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winningPursuerScene=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,flashlightKeyboardOnly=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
