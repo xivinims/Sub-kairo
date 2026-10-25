@@ -89,7 +89,7 @@ assert((survivor:GetAttribute("ClipCount") or 0)>0,"Forsaken survivor package ha
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
 local actions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips missing")
 assert((actions:GetAttribute("ClipCount") or 0)>=2,"Required survivor action clips missing")
-assert(actions:GetAttribute("RequestedClipCount")==6 and actions:GetAttribute("RequiredClipCount")==2,"Survivor action request metadata mismatch")
+assert(actions:GetAttribute("RequestedClipCount")==6 and actions:GetAttribute("RequiredClipCount")==3,"Survivor action request metadata mismatch")
 assert(actions:GetAttribute("ParryRequestedAssetId")==127096285501517,"Parry requested animation id mismatch")
 assert(actions:GetAttribute("BreakPalletRequestedAssetId")==112166042383605,"Break pallet requested animation id mismatch")
 assert(actions:GetAttribute("CrouchWalkRequestedAssetId")==126965695851149,"Crouch requested animation id mismatch")
