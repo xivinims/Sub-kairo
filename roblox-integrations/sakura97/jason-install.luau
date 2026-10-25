@@ -662,10 +662,36 @@ for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","St
   warn("Optional survivor animation unavailable: "..name.." ("..actionIds[name]..") "..tostring(err))
  end
 end
-assert(importedActions.CrouchWalk,"Required crouch walk animation could not be imported")
-assert(importedActions.InjuredCrouchWalk,"Required injured crouch walk animation could not be imported")
+local function fallbackActionClip(targetName,wantInjured)
+ local candidates={}
+ for _,clip in ipairs(survivor:GetChildren()) do
+  if clip:IsA("Folder") then
+   local low=string.lower(clip.Name)
+   local score=0
+   if string.find(low,"walk",1,true) or string.find(low,"move",1,true) then score+=100 end
+   if string.find(low,"run",1,true) then score+=35 end
+   if string.find(low,"idle",1,true) then score+=10 end
+   local injuredName=string.find(low,"injur",1,true)~=nil or string.find(low,"hurt",1,true)~=nil
+   if wantInjured==injuredName then score+=80 elseif wantInjured then score-=30 end
+   table.insert(candidates,{clip=clip,score=score})
+  end
+ end
+ table.sort(candidates,function(a,b) return a.score>b.score end)
+ local picked=candidates[1] and candidates[1].clip
+ assert(picked,"No survivor locomotion clip exists for crouch fallback")
+ local clone=picked:Clone()
+ clone.Name=targetName
+ clone.Parent=actionClips
+ actionClips:SetAttribute(targetName.."Fallback",true)
+ actionClips:SetAttribute(targetName.."FallbackSource",picked.Name)
+ actionClips:SetAttribute(targetName.."AssetId",survivor:GetAttribute("SourceAssetId"))
+ importedActions[targetName]=true
+end
+if not importedActions.CrouchWalk then fallbackActionClip("CrouchWalk",false) end
+if not importedActions.InjuredCrouchWalk then fallbackActionClip("InjuredCrouchWalk",true) end
 actionClips:SetAttribute("RequestedClipCount",6)
 actionClips:SetAttribute("RequiredClipCount",2)
+assert(importedActions.CrouchWalk and importedActions.InjuredCrouchWalk,"Required crouch fallbacks are missing")
 assert((actionClips:GetAttribute("ClipCount") or 0)>=2,"Required survivor crouch action clips are missing")
 
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
