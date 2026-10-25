@@ -689,6 +689,7 @@ local function fallbackActionClip(targetName,wantInjured)
 end
 if not importedActions.CrouchWalk then fallbackActionClip("CrouchWalk",false) end
 if not importedActions.InjuredCrouchWalk then fallbackActionClip("InjuredCrouchWalk",true) end
+actionClips:SetAttribute("ClipCount",#actionClips:GetChildren())
 actionClips:SetAttribute("RequestedClipCount",6)
 actionClips:SetAttribute("RequiredClipCount",2)
 assert(importedActions.CrouchWalk and importedActions.InjuredCrouchWalk,"Required crouch fallbacks are missing")
