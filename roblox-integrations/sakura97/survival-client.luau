@@ -689,24 +689,6 @@ local function setMapProgress(value,duration)
  TweenService:Create(progressFill,TweenInfo.new(duration or .16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.fromScale(value,1)}):Play()
 end
 
-local function -- No spoken Good Luck or stacked voices.
- local media=RS:FindFirstChild("XNMedia")
- local template=media and media:FindFirstChild("MenuClick")
- if not template then return end
- for i,speed in ipairs({.34,.51,.27,.68}) do
-  task.delay((i-1)*.075,function()
-   if not loading.Visible then return end
-   local sound=template:Clone()
-   sound.Name="MapLoadGlitch" sound.Volume=.12+(i%2)*.04 sound.PlaybackSpeed=speed
-   local ok=pcall(function()
-    local distortion=Instance.new("DistortionSoundEffect") distortion.Level=.35+(i*.08) distortion.Parent=sound
-    local pitch=Instance.new("PitchShiftSoundEffect") pitch.Octave=.72+(i*.05) pitch.Parent=sound
-   end)
-   sound.Parent=SoundService sound:Play() Debris:AddItem(sound,3)
-  end)
- end
-end
-
 local function playGoodLuckVoice(token)
  if token~=loadToken or not loading.Visible then return end
  -- No spoken Good Luck or stacked voices.
