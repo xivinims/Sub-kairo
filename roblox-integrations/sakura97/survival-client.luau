@@ -10,6 +10,43 @@ local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
 local Settings=require(net:WaitForChild("SettingsPanel"))
 Settings.initialize(player)
+
+local roundMusic=SoundService:FindFirstChild("SuviversMatchMusic")
+if not roundMusic then
+ roundMusic=Instance.new("Sound")
+ roundMusic.Name="SuviversMatchMusic"
+ roundMusic.SoundId="rbxassetid://108879410219148"
+ roundMusic.Volume=.35
+ roundMusic.Looped=true
+ roundMusic.Parent=SoundService
+end
+roundMusic.SoundId="rbxassetid://108879410219148"
+roundMusic.Volume=.35
+roundMusic.Looped=true
+local roundMusicActive=false
+local function updateRoundMusic(forceStop)
+ local shouldPlay=not forceStop
+  and player:GetAttribute("InRound")==true
+  and player:GetAttribute("InMenu")~=true
+  and player:GetAttribute("VoidActive")~=true
+  and player:GetAttribute("Spectating")~=true
+  and player:GetAttribute("RoundStatus")~="eliminated"
+  and player:GetAttribute("SweanLoadingDone")==true
+ if shouldPlay then
+  if not roundMusicActive then
+   roundMusicActive=true
+   if not roundMusic.IsPlaying then roundMusic:Play() end
+  end
+ elseif roundMusicActive or forceStop or roundMusic.IsPlaying then
+  roundMusicActive=false
+  roundMusic:Stop()
+  roundMusic.TimePosition=0
+ end
+end
+for _,attr in ipairs({"InRound","InMenu","VoidActive","Spectating","RoundStatus","SweanLoadingDone"}) do
+ player:GetAttributeChangedSignal(attr):Connect(function() updateRoundMusic(false) end)
+end
+
 local gui=Instance.new("ScreenGui") gui.Name="SurvivalHUD" gui.ResetOnSpawn=false gui.IgnoreGuiInset=true gui.DisplayOrder=30 gui.Parent=player:WaitForChild("PlayerGui")
 local function panel(name,size,pos)
  local f=Instance.new("Frame") f.Name=name f.Size=size f.Position=pos f.BackgroundColor3=Color3.fromRGB(12,12,15) f.BackgroundTransparency=.22 f.BorderSizePixel=0 f.Parent=gui
@@ -651,6 +688,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="caught" or action=="executed" then
   task.spawn(caughtAnimation,a,b)
  elseif action=="roundResult" and type(a)=="table" then
+  updateRoundMusic(true)
   showResult(a)
  end
 end)
@@ -667,6 +705,7 @@ end)
 local highlight=Instance.new("Highlight") highlight.Name="PursuerTarget" highlight.FillColor=Color3.fromRGB(200,35,43) highlight.OutlineColor=Color3.fromRGB(242,80,85) highlight.FillTransparency=.8 highlight.DepthMode=Enum.HighlightDepthMode.Occluded highlight.Enabled=false highlight.Parent=gui
 
 local jasonPresentationFov=70
+updateRoundMusic(false)
 RunService.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera
  if not camera then return end
