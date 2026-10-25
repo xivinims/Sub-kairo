@@ -160,21 +160,39 @@ local function executeDowned(p,attacker)
  e.channel=nil p:SetAttribute("ReviveAt",0)
  catching[p]=true
  local t=now()
+ local executionDuration=1.85
+ local attackerRoot=attacker.PrimaryPart
+ local attackerWasAnchored=attackerRoot.Anchored
+ local victimWasAnchored=rr.Anchored
  attacker:SetAttribute("ExecutionAt",t)
+ attacker:SetAttribute("ExecutionDuration",executionDuration)
  attacker:SetAttribute("ExecutionTargetUserId",p.UserId)
- attacker:SetAttribute("AttackUntil",t+1.65)
+ attacker:SetAttribute("AttackUntil",t+executionDuration)
  p:SetAttribute("BeingExecuted",true)
- local facing=attacker.PrimaryPart.CFrame
- local targetCF=facing*CFrame.new(0,0,-2.15)
- p.Character:PivotTo(CFrame.lookAt(targetCF.Position,attacker.PrimaryPart.Position))
+ p:SetAttribute("ExecutionAt",t)
+ p:SetAttribute("ExecutionDuration",executionDuration)
+ local facing=attackerRoot.CFrame
+ local targetPos=(facing*CFrame.new(.45,0,-3.05)).Position
+ local faceDirection=Vector3.new(facing.LookVector.X,0,facing.LookVector.Z)
+ if faceDirection.Magnitude<.1 then faceDirection=Vector3.new(0,0,-1) else faceDirection=faceDirection.Unit end
+ p.Character:PivotTo(CFrame.lookAt(targetPos,targetPos+faceDirection))
+ attackerRoot.Anchored=true
  rr.Anchored=true
- net.Update:FireClient(p,"executed",killerName,attacker.PrimaryPart.CFrame)
- task.delay(1.25,function()
+ attackerRoot.AssemblyLinearVelocity=Vector3.zero attackerRoot.AssemblyAngularVelocity=Vector3.zero
+ rr.AssemblyLinearVelocity=Vector3.zero rr.AssemblyAngularVelocity=Vector3.zero
+ net.Update:FireClient(p,"executed",killerName,attackerRoot.CFrame,executionDuration)
+ task.delay(executionDuration,function()
   catching[p]=nil
-  if rr and rr.Parent then rr.Anchored=false end
-  if p.Parent then p:SetAttribute("BeingExecuted",false) end
+  if rr and rr.Parent then rr.Anchored=victimWasAnchored end
+  if attackerRoot and attackerRoot.Parent then attackerRoot.Anchored=attackerWasAnchored end
+  if p.Parent then
+   p:SetAttribute("BeingExecuted",false)
+   p:SetAttribute("ExecutionAt",0)
+   p:SetAttribute("ExecutionDuration",0)
+  end
   if attacker and attacker.Parent then
    attacker:SetAttribute("ExecutionTargetUserId",0)
+   attacker:SetAttribute("ExecutionDuration",0)
   end
   local current=entry(p)
   if state.id==capturedRound and current==capturedEntry and p.Character==capturedCharacter and current.status=="downed" then eliminate(p,killerName) end
