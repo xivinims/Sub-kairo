@@ -389,10 +389,16 @@ local function showResult(data)
   local victimPlayer=victimId>0 and Players:GetPlayerByUserId(victimId) or nil
   local victimCharacter=victimPlayer and victimPlayer.Character or nil
   if target then
-   target:SetAttribute("PresentationState","Winning Screen")
-   target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   local presentationAt=workspace:GetServerTimeNow()
+   target:SetAttribute("PresentationState","Execution")
+   target:SetAttribute("PresentationAt",presentationAt)
    if victimCharacter then resultVictimReaction(victimCharacter,generation,target) end
    startResultCamera(target,victimCharacter)
+   task.delay(1.85,function()
+    if generation~=resultGeneration or not result.Visible or not target.Parent then return end
+    target:SetAttribute("PresentationState","Winning Screen")
+    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   end)
   else
    local own=player.Character
    if own then startResultCamera(own,nil) end
