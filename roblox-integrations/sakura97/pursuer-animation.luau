@@ -12,6 +12,7 @@ local activeFolder=setmetatable({},{__mode="k"})
 local animateState=setmetatable({},{__mode="k"})
 local watchedRigs=setmetatable({},{__mode="k"})
 local downedPoses=setmetatable({},{__mode="k"})
+local executionVictimPoses=setmetatable({},{__mode="k"})
 local function jointParts(joint)
  if joint:IsA("Motor6D") then return joint.Part0,joint.Part1 end
  if joint:IsA("AnimationConstraint") then return joint.Attachment0 and joint.Attachment0.Parent,joint.Attachment1 and joint.Attachment1.Parent end
@@ -338,10 +339,43 @@ Run.PreSimulation:Connect(function(dt)
    local isJason=p:GetAttribute("IsJason")
    local inRound=p:GetAttribute("InRound")
    local downed=p:GetAttribute("Downed")
-   if downedPoses[model] and not downed then
+   local beingExecuted=p:GetAttribute("BeingExecuted")==true
+   if downedPoses[model] and (not downed or beingExecuted) then
     local j=downedPoses[model] if j.Parent then j.Transform=CFrame.identity end downedPoses[model]=nil
    end
-   if inRound and not isJason and downed then
+   if executionVictimPoses[model] and not beingExecuted then
+    for _,joint in pairs(executionVictimPoses[model]) do if joint and joint.Parent then joint.Transform=CFrame.identity end end
+    executionVictimPoses[model]=nil
+   end
+   if inRound and not isJason and beingExecuted then
+    if not executionVictimPoses[model] then
+     resetModel(model)
+     local joints={}
+     for _,joint in ipairs(model:GetDescendants()) do
+      if joint:IsA("Motor6D") then joints[normalized(joint.Name)]=joint end
+     end
+     executionVictimPoses[model]={
+      root=rootJoint(model),
+      neck=joints.neck,
+      leftShoulder=joints.leftshoulder,
+      rightShoulder=joints.rightshoulder,
+      leftHip=joints.lefthip,
+      rightHip=joints.righthip,
+     }
+    end
+    setDefaultAnimate(model,false)
+    local pose=executionVictimPoses[model]
+    local started=p:GetAttribute("ExecutionAt") or workspace:GetServerTimeNow()
+    local duration=math.max(.1,p:GetAttribute("ExecutionDuration") or 1.85)
+    local alpha=math.clamp((workspace:GetServerTimeNow()-started)/duration,0,1)
+    local pulse=math.sin(alpha*math.pi)
+    if pose.root and pose.root.Parent then pose.root.Transform=CFrame.new(0,-.08-.12*alpha,.02)*CFrame.Angles(math.rad(7+13*pulse),0,math.rad(-5*pulse)) end
+    if pose.neck and pose.neck.Parent then pose.neck.Transform=CFrame.Angles(math.rad(-5-10*pulse),0,math.rad(5*pulse)) end
+    if pose.leftShoulder and pose.leftShoulder.Parent then pose.leftShoulder.Transform=CFrame.Angles(math.rad(22+16*pulse),0,math.rad(-18)) end
+    if pose.rightShoulder and pose.rightShoulder.Parent then pose.rightShoulder.Transform=CFrame.Angles(math.rad(18+13*pulse),0,math.rad(20)) end
+    if pose.leftHip and pose.leftHip.Parent then pose.leftHip.Transform=CFrame.Angles(math.rad(-8*alpha),0,math.rad(-4)) end
+    if pose.rightHip and pose.rightHip.Parent then pose.rightHip.Transform=CFrame.Angles(math.rad(-10*alpha),0,math.rad(4)) end
+   elseif inRound and not isJason and downed then
     if not downedPoses[model] then resetModel(model) downedPoses[model]=rootJoint(model) end
     setDefaultAnimate(model,false)
     local joint=downedPoses[model]
@@ -379,6 +413,10 @@ Run.PreSimulation:Connect(function(dt)
      setDefaultAnimate(model,true)
     end
    else
+    if executionVictimPoses[model] then
+     for _,joint in pairs(executionVictimPoses[model]) do if joint and joint.Parent then joint.Transform=CFrame.identity end end
+     executionVictimPoses[model]=nil
+    end
     resetModel(model)
     setDefaultAnimate(model,true)
    end
