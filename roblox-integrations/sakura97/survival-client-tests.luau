@@ -119,6 +119,8 @@ local ok,result=xpcall(function()
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
  fakeNet:SetAttribute("Phase","Votação") fakeNet:SetAttribute("EndsAt",workspace:GetServerTimeNow()+6)
+ fakeNet:SetAttribute("MapVoteOptions",'["DoomspireBrickbattle","RocketArena","PiggySewers","PiggyMappleDonut"]')
+ fakeNet:SetAttribute("MapVotes",'{"DoomspireBrickbattle":1,"RocketArena":0,"PiggySewers":0,"PiggyMappleDonut":0,"RANDOM":0}')
  fakeNet:SetAttribute("Waiting",1) fakeNet:SetAttribute("MaxPlayers",8) step()
  assert(not gui.Countdown.Visible and gui.MapVoting.Visible and not gui.Round.Visible and not gui.Actions.Visible,"Dedicated voting overlay must replace intermission countdown during voting")
  camera.CameraType=Enum.CameraType.Scriptable camera.CameraSubject=nil
@@ -136,7 +138,17 @@ local ok,result=xpcall(function()
  attrs.ChoosingKiller=true step()
  assert(gui.KillerSelection.Visible,"Chosen player did not see killer selection")
  attrs.ChoosingKiller=false fakeNet:SetAttribute("Phase","Votação") step()
- for _,map in ipairs(require(RS.Survival.Config).Maps) do assert(gui.MapVoting[map.name].Preview.Image:find(tostring(map.id),1,true),"Map thumbnail uses wrong asset") end
+ local expected={"DoomspireBrickbattle","RocketArena","PiggySewers","PiggyMappleDonut","RANDOM"}
+ for i,value in ipairs(expected) do
+  local card=assert(gui.MapVoting:FindFirstChild("VoteCard"..i),"Voting card "..i.." missing")
+  assert(card:GetAttribute("VoteValue")==value,"Voting card value mismatch")
+  if value=="RANDOM" then assert(card.RandomMark.Visible and not card.Preview.Visible,"Random voting card is wrong")
+  else
+   local id=nil for _,map in ipairs(require(RS.Survival.Config).Maps) do if map.name==value then id=map.id break end end
+   assert(id and card.Preview.Image:find(tostring(id),1,true),"Map thumbnail uses wrong asset")
+  end
+ end
+ assert(gui.MapVoting.Hint.Text:find("7 MAPAS TOTAIS",1,true),"Seven-map voting hint missing")
  char.Humanoid.Health=100
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
