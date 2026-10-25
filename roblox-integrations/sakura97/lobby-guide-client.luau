@@ -33,7 +33,7 @@ local replies={
 }
 local generation=0 local active=false local choosing=false
 local connections={} local buttons={}
-local voice=Instance.new("AudioTextToSpeech") voice.Name="PortugueseVoice" voice.VoiceId="1001" voice.AutoLocalize=false voice.Volume=.3 voice.Speed=.92 voice.Pitch=.96 voice.Parent=ui
+local voice=Instance.new("AudioTextToSpeech") voice.Name="PortugueseVoice" voice.VoiceId="1001" voice.AutoLocalize=false voice.Volume=.34 voice.Speed=.90 voice.Pitch=.88 voice.Parent=ui
 local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=ui
 local wire=Instance.new("Wire") wire.SourceInstance=voice wire.TargetInstance=output wire.Parent=ui
 local function stopVoice() voice:Pause() voice.TimePosition=0 end
