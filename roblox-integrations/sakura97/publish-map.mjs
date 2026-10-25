@@ -143,41 +143,6 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
-const lobbySurfaceDiagnostic=first(await execute(`
- local lobby=assert(workspace:FindFirstChild("JediLibrary"))
- local origin=lobby:GetAttribute("VerifiedSpawn") or lobby:GetPivot().Position
- if typeof(origin)=="CFrame" then origin=origin.Position end
- local door=lobby:GetAttribute("FormerDoorCFrame")
- local entrance=typeof(door)=="CFrame" and door.Position or origin
- local rows={}
- for _,part in ipairs(lobby:GetDescendants()) do
-  if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.88 then
-   local top=part.Position.Y+part.Size.Y/2
-   local h=top-origin.Y
-   local d=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-   local de=(Vector3.new(part.Position.X,entrance.Y,part.Position.Z)-entrance).Magnitude
-   local area=part.Size.X*part.Size.Z
-   if d<=70 and h>=1.5 and h<=6.5 and area>=3 then
-    table.insert(rows,{
-     path=part:GetFullName(),name=part.Name,
-     x=math.floor(part.Position.X*100+.5)/100,y=math.floor(part.Position.Y*100+.5)/100,z=math.floor(part.Position.Z*100+.5)/100,
-     sx=math.floor(part.Size.X*100+.5)/100,sy=math.floor(part.Size.Y*100+.5)/100,sz=math.floor(part.Size.Z*100+.5)/100,
-     top=math.floor(top*100+.5)/100,height=math.floor(h*100+.5)/100,
-     fromSpawn=math.floor(d*100+.5)/100,fromEntrance=math.floor(de*100+.5)/100,
-     area=math.floor(area*100+.5)/100,material=tostring(part.Material),color=tostring(part.Color)
-    })
-   end
-  end
- end
- table.sort(rows,function(a,b)
-  local sa=math.abs(a.height-3.2)*10+a.fromEntrance*.25-a.area*.04
-  local sb=math.abs(b.height-3.2)*10+b.fromEntrance*.25-b.area*.04
-  return sa<sb
- end)
- while #rows>80 do table.remove(rows) end
- return {origin=tostring(origin),entrance=tostring(entrance),rows=rows}
-`));
-console.log('LOBBY_SURFACES_DIAGNOSTIC',JSON.stringify(lobbySurfaceDiagnostic));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end').replace('local RESULT_PRESENTATION_SECONDS=9','local RESULT_PRESENTATION_SECONDS=.05'));
@@ -361,14 +326,17 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
   assert(workspace.LobbyGuide:GetAttribute("OutfitUserId")==8344738123 and workspace.LobbyGuide.Head.Transparency==1,"Guide outfit/headless missing")
   assert(workspace.LobbyGuide.Tabletop.Value and workspace.LobbyGuide.Tabletop.Value:IsDescendantOf(workspace.JediLibrary),"Fill is not attached to the lobby reception surface")
+  assert(not workspace.JediLibrary:FindFirstChild("GuideTable"),"Legacy generated GuideTable returned")
+  assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=2,"Fill real reception geometry metadata missing")
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
-  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletop","Fill reception pose was not preserved")
+  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionDesk","Fill is not placed behind the real reception desk")
   assert(workspace.LobbyGuide.GuideInteraction.Source:find('VoiceId="1001"',1,true) and workspace.LobbyGuide.GuideInteraction.Source:find('voice.Pitch=.88',1,true),"Guide deeper Portuguese male voice missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=2.55",1,true) and game.StarterGui.TomiaszMenu.MenuController.Source:find("menuCameraCF.LookVector*13.8",1,true),"Menu killer is still too large or too close")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
   assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("124873348702500",1,true),"Requested profile design not persisted")
   assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,82)',1,true),"XP/level HUD was not lowered")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('player:GetAttribute("MapVote")==nil',1,true),"Vote dismissal missing")
   return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideDeepMaleVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
