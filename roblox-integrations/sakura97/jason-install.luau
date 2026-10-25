@@ -298,13 +298,20 @@ local function findPursuerRig(asset,rootName)
   local exact=asset:FindFirstChild(rootName,true)
   if usable(exact) then return exact end
  end
- if usable(asset) then return asset end
- local best=nil local bestParts=-1
- for _,obj in ipairs(asset:GetDescendants()) do
-  if usable(obj) then
-   local parts=0 for _,d in ipairs(obj:GetDescendants()) do if d:IsA("BasePart") then parts+=1 end end
-   if parts>bestParts then best=obj bestParts=parts end
-  end
+ local best=nil local bestScore=-math.huge
+ local candidates={}
+ if usable(asset) then table.insert(candidates,asset) end
+ for _,obj in ipairs(asset:GetDescendants()) do if usable(obj) then table.insert(candidates,obj) end end
+ for _,obj in ipairs(candidates) do
+  local parts=0
+  for _,d in ipairs(obj:GetDescendants()) do if d:IsA("BasePart") then parts+=1 end end
+  local score=parts
+  if obj:FindFirstChildOfClass("Humanoid") then score+=200 end
+  if obj:FindFirstChildOfClass("AnimationController") then score+=120 end
+  if obj:FindFirstChild("HumanoidRootPart",true) then score+=80 end
+  local n=string.lower(obj.Name)
+  if string.find(n,"krampus",1,true) or string.find(n,"piggy",1,true) or string.find(n,"figure",1,true) then score+=60 end
+  if score>bestScore then best=obj bestScore=score end
  end
  return best
 end
@@ -343,7 +350,7 @@ for _,spec in ipairs({
  if spec.authored then libraryName=authoredMotionLibrary(asset,spec.name,spec.id) end
  local model=source:Clone() sanitize(model,false) model.Name=spec.name
  for _,v in ipairs(model:GetDescendants()) do
-  if v:IsA("KeyframeSequence") or (v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")) then v:Destroy() end
+  if v:IsA("KeyframeSequence") then v:Destroy() end
  end
  local h,root=ensurePursuerHumanoid(model)
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
