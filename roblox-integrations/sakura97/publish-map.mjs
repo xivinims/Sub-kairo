@@ -440,6 +440,9 @@ assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
 assert((game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("ClipCount") or 0)>0)
+local survivorActions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips missing")
+assert((survivorActions:GetAttribute("ClipCount") or 0)==6,"Survivor action clip count mismatch")
+assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504,"Crouch action assets missing")
 local ui=game.StarterGui.TomiaszMenu
 assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
 result.logoTexture=ui.MenuPrincipal.Logo.Image
@@ -539,6 +542,14 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredIdle"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredWalk"))
   assert(game.ReplicatedStorage.Survival.SurvivorClips:FindFirstChild("InjuredRun"))
+  local survivorActions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips did not persist")
+  assert((survivorActions:GetAttribute("ClipCount") or 0)==6,"Survivor action clips incomplete after publish")
+  assert(survivorActions:GetAttribute("ParryAssetId")==127096285501517)
+  assert(survivorActions:GetAttribute("BreakPalletAssetId")==112166042383605)
+  assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149)
+  assert(survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504)
+  assert(survivorActions:GetAttribute("StunAssetId")==123047897844134)
+  assert(survivorActions:GetAttribute("VaultAssetId")==83873880822918)
   assert(typeof(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"))=="CFrame","Former door reference missing")
   assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLibrary:FindFirstChild("OriginalLobbyDoor"),"Lobby door geometry/marker returned")
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
@@ -563,6 +574,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("captureLoadingCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("restoreLoadingCamera",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("loadingAvatar.Visible=false",1,true),"Real full-screen map loading camera missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('"GOOD LUCK"',1,true),"GOOD LUCK missing from map loading")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("blendFrom",1,true),"Smooth locomotion blend missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find("SurvivorActionClips",1,true) and game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('"CrouchWalk"',1,true) and game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('"InjuredCrouchWalk"',1,true),"Dedicated crouch action animation runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("expectedReplacement",1,true),"R6 replacement false-death guard missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('local executionDuration=attacker:GetAttribute("ExecutionLength")',1,true),"Synchronized execution duration missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('p:GetAttribute("BeingExecuted")==true',1,true),"Execution pose does not override downed pose")
@@ -618,7 +630,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==7,"Missing victim pairs")
   for _,map in ipairs(assets.Maps:GetChildren()) do assert(#map.ObjectiveSites:GetChildren()>=9 and #map.ArrivalSpawns:GetChildren()>=7,"Map layout missing: "..map.Name) end
   assert(game.ServerScriptService.SurvivalServer.Source:find('p.UserId~=8344738123',1,true),"Admin authority missing")
-  return {objectiveChecks=true,sevenVictimAnimations=true,adminOnlyReset=true,coinAsset=10737243803,restoredCompactSettings=true,compactProfile=true,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,animatedResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=126,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,sevenVictimAnimations=true,adminOnlyReset=true,coinAsset=10737243803,restoredCompactSettings=true,compactProfile=true,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,animatedResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=126,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
