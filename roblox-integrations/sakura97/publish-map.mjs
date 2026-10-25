@@ -429,7 +429,7 @@ end)()
 result.guideClient=(function()
 ${guideTest}
 end)()
-assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==fixedLobbyAssetId,"Wrong fixed lobby asset")
+assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==${fixedLobbyAssetId},"Wrong fixed lobby asset")
 assert(workspace.JediLibrary:GetAttribute("FixedLobbyRevision")=="violence-district-lobby-v1","Fixed lobby revision missing")
 assert(workspace.JediLibrary:GetAttribute("FixedLobbySHA256")=="ec6fb99dec82f22eb24d23b885d1b980467cb91f20e2234a1a0fad3f7f4e43c2","Fixed lobby hash missing")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
