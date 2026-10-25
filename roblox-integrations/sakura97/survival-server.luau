@@ -597,10 +597,23 @@ local function setupObjectives()
  setMission("Hack")
 end
 
-local mapVotes=setmetatable({},{__mode="k"}) local selectionPlayer=nil local selectedKiller=nil
+local mapVotes=setmetatable({},{__mode="k"}) local voteOptions={} local selectionPlayer=nil local selectedKiller=nil
+local function chooseVoteOptions()
+ local pool=assets.Maps:GetChildren()
+ table.sort(pool,function(a,b) return a.Name<b.Name end)
+ local shuffled=table.clone(pool)
+ for i=#shuffled,2,-1 do
+  local j=math.random(i)
+  shuffled[i],shuffled[j]=shuffled[j],shuffled[i]
+ end
+ table.clear(voteOptions)
+ for i=1,math.min(4,#shuffled) do table.insert(voteOptions,shuffled[i].Name) end
+ net:SetAttribute("MapVoteOptions",game:GetService("HttpService"):JSONEncode(voteOptions))
+end
 local function voteCounts()
- local counts={} for _,map in ipairs(assets.Maps:GetChildren()) do counts[map.Name]=0 end
- for p,name in pairs(mapVotes) do if p.Parent and not p:GetAttribute("AFK") and counts[name] then counts[name]+=1 end end
+ local counts={RANDOM=0}
+ for _,name in ipairs(voteOptions) do counts[name]=0 end
+ for p,name in pairs(mapVotes) do if p.Parent and not p:GetAttribute("AFK") and counts[name]~=nil then counts[name]+=1 end end
  net:SetAttribute("MapVotes",game:GetService("HttpService"):JSONEncode(counts))
  return counts
 end
@@ -610,7 +623,8 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  if action~="mode" and t-(rates[p][action] or -math.huge)<.18 then return end
  rates[p][action]=t
  if action=="voteMap" then
-  if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 or not assets.Maps:FindFirstChild(value) then return end
+  if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 then return end
+  if value~="RANDOM" and not table.find(voteOptions,value) then return end
   mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
  elseif action=="chooseKiller" then
   if state.phase~="Escolha" or p~=selectionPlayer or selectedKiller or p:GetAttribute("AFK") or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
@@ -979,7 +993,9 @@ task.spawn(function()
   end
 
   if #Players:GetPlayers()>0 then
-   table.clear(mapVotes) voteCounts()
+   table.clear(mapVotes)
+   chooseVoteOptions()
+   voteCounts()
    for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
    state.phase="Votação"
    local voteEnd=now()+Rules.VoteDuration
@@ -994,13 +1010,30 @@ task.spawn(function()
     roundClosing=false lastKilledUserId=0 lastKilledName=nil
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     table.sort(mapList,function(a,b) return a.Name<b.Name end)
-    local choices={} for _,candidate in ipairs(mapList) do if candidate.Name~=previousMap or #mapList==1 then table.insert(choices,candidate) end end
-    local counts=voteCounts() local winners={} local highest=0
-    for _,map in ipairs(mapList) do
-     local count=counts[map.Name] or 0
-     if count>highest then highest=count winners={map} elseif count==highest and count>0 then table.insert(winners,map) end
+    local counts=voteCounts() local winnerTokens={} local highest=0
+    for _,token in ipairs(voteOptions) do
+     local count=counts[token] or 0
+     if count>highest then highest=count winnerTokens={token}
+     elseif count==highest and count>0 then table.insert(winnerTokens,token) end
     end
-    local selected=highest>0 and winners[math.random(#winners)] or mapList[math.random(#mapList)] previousMap=selected.Name
+    do
+     local randomCount=counts.RANDOM or 0
+     if randomCount>highest then highest=randomCount winnerTokens={"RANDOM"}
+     elseif randomCount==highest and randomCount>0 then table.insert(winnerTokens,"RANDOM") end
+    end
+    local token=highest>0 and winnerTokens[math.random(#winnerTokens)] or "RANDOM"
+    local selected=nil
+    if token=="RANDOM" then
+     local randomPool={}
+     for _,candidate in ipairs(mapList) do
+      if candidate.Name~=previousMap or #mapList==1 then table.insert(randomPool,candidate) end
+     end
+     selected=randomPool[math.random(#randomPool)]
+    else
+     selected=assets.Maps:FindFirstChild(token)
+    end
+    assert(selected,"Selected voting map missing")
+    previousMap=selected.Name
     local eligible={}
     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
     assert(#eligible>=2,"Two participants required for player-controlled killer")
