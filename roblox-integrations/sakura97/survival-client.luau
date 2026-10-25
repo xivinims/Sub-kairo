@@ -838,8 +838,10 @@ local voteCards={}
 for i=1,5 do
  local width=.188
  local x=.018+(i-1)*.196
+ local cardIndex=i
  local b=button(votePanel,"VoteCard"..i,"",UDim2.new(width,0,.70,0),UDim2.new(x,0,.20,0),function()
-  local value=b:GetAttribute("VoteValue")
+  local card=voteCards[cardIndex]
+  local value=card and card:GetAttribute("VoteValue")
   if value then event:FireServer("voteMap",value) end
  end)
  b.Text="" b.BackgroundColor3=Color3.fromRGB(16,16,21) b.BackgroundTransparency=.06 b.ZIndex=62
