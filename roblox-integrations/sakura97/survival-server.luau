@@ -852,6 +852,8 @@ end
 
 local function hook(p)
  p:SetAttribute("SessionJoinedAt",now())
+ p:SetAttribute("InMenu",false)
+ p:SetAttribute("MenuIntroPending",false)
  local stats=Instance.new("Folder",p) stats.Name="leaderstats"
  local function makeStat(name,value) local v=Instance.new("IntValue",stats) v.Name=name v.Value=value or 0 return v end
  makeStat("Pontos",0) local xp=makeStat("XP",0) makeStat("Nível",1) makeStat("Atingido",0) makeStat("Quedas",0)
