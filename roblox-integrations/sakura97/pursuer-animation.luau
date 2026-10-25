@@ -395,7 +395,7 @@ Run.PreSimulation:Connect(function(dt)
       local parryAt=p:GetAttribute("ParryAt") or -100
       local palletAt=p:GetAttribute("BreakPalletAt") or -100
       if stunUntil>now then
-       actionState="Stun" actionAbsolute=math.max(0,(p:GetAttribute("StunAt") or now)-now)
+       actionState="Stun" actionAbsolute=math.max(0,now-(p:GetAttribute("StunAt") or now))
       elseif now-vaultAt>=0 and now-vaultAt<1.15 then
        actionState="Vault" actionAbsolute=now-vaultAt
       elseif now-parryAt>=0 and now-parryAt<.9 then
