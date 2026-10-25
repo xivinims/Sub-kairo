@@ -92,9 +92,23 @@ local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActio
 topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(136,64) topActions.Position=UDim2.new(1,-165,1,-115)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
 bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(150,74) bar.Position=UDim2.new(1,-84,1,-86)
+local actionRects={Run={373,78,253,258},RunActive={658,71,258,263},Crouch={952,77,258,262},Attack={42,62,294,294},ReviveNearby={642,386,257,257},CarryNearby={1289,720,217,215}}
+local function setActionArt(b,key)
+ local art=b:FindFirstChild("ReferenceActionArt") if not art then return end
+ local r=actionRects[key] if not r then return end
+ art.ImageRectOffset=Vector2.new(r[1],r[2]) art.ImageRectSize=Vector2.new(r[3],r[4])
+ b.Text=""
+end
 local function cleanAction(parent,name,label,size,pos,callback)
  local b=button(parent,name,label,size,pos,callback)
+ b:SetAttribute("ReferenceActionButton",true)
  b.BackgroundTransparency=1 b.TextSize=24 b.TextStrokeTransparency=.38
+ local texture=net:GetAttribute("ActionAtlasTexture")
+ if texture and texture~="" and actionRects[name] then
+  local art=Instance.new("ImageLabel") art.Name="ReferenceActionArt" art.BackgroundTransparency=1 art.Size=UDim2.fromScale(1,1) art.Image=texture art.Active=false
+  local corner=Instance.new("UICorner",art) corner.CornerRadius=UDim.new(1,0)
+  art.Parent=b setActionArt(b,name)
+ end
  b.UIStroke.Enabled=false b.UICorner.CornerRadius=UDim.new(1,0)
  return b
 end
@@ -978,9 +992,9 @@ RunService.RenderStepped:Connect(function(dt)
  crouch.Visible=controlsVisible and inRound and not down and not isJason
  attackButton.Visible=controlsVisible and inRound and not down and isJason
  if heldRunInput and not down then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
- run.Text="CORRER"
+ if run:FindFirstChild("ReferenceActionArt") then setActionArt(run,mode=="run" and "RunActive" or "Run") else run.Text="CORRER" end
  run.TextTransparency=mode=="run" and 0 or .12
- crouch.Text=mode=="crouch" and "LEVANTAR" or "AGACHAR"
+ if crouch:FindFirstChild("ReferenceActionArt") then crouch.Text="" crouch.ReferenceActionArt.ImageColor3=mode=="crouch" and Color3.fromRGB(255,197,125) or Color3.new(1,1,1) else crouch.Text=mode=="crouch" and "LEVANTAR" or "AGACHAR" end
  local stamina=player:GetAttribute("Stamina") or 0 local maxStamina=math.max(1,player:GetAttribute("MaxStamina") or 100)
  staminaFill.Size=UDim2.fromScale(math.clamp(stamina/maxStamina,0,1),1)
  staminaTrack.Visible=not hidden and inRound and not down
@@ -1091,6 +1105,7 @@ if player.GetAttributeChangedSignal then
 end
 
 local function squareHud(obj)
+ if obj.Name=="ReferenceActionArt" or (obj.Parent and (obj.Parent.Name=="ReferenceActionArt" or obj.Parent:GetAttribute("ReferenceActionButton"))) then return end
  if obj:IsA("UICorner") then obj.CornerRadius=UDim.new(0,0)
  elseif obj:IsA("TextButton") then obj.BackgroundColor3=Color3.new(0,0,0)
  elseif obj:IsA("Frame") and (obj.Name=="SettingsOverlay" or obj.Name=="Mission" or obj.Name=="Card") then obj.BackgroundColor3=Color3.new(0,0,0) end

@@ -154,6 +154,45 @@ function readFillVoice(spec){
  if(sha!==spec.sha256) throw new Error(`Fill voice ${spec.index} SHA-256 mismatch: ${sha}`);
  return bytes;
 }
+async function createActionAtlas(bytes){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const request={
+  assetType:'Decal',
+  displayName:'Suvivers reference action controls',
+  description:'Action controls artwork supplied by the game owner.',
+  creationContext:{creator:{userId:'8344738123'}}
+ };
+ const form=new FormData();
+ form.append('request',JSON.stringify(request));
+ form.append('fileContent',new Blob([bytes],{type:'image/jpeg'}),'action-controls.jpg');
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
+  method:'POST',
+  headers:{'x-api-key':key},
+  body:form,
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
+ if(!response.ok) throw new Error(`Fill audio atlas upload HTTP ${response.status}: ${JSON.stringify(operation)}`);
+ if(!operation.path) throw new Error(`Fill audio atlas upload returned no operation path: ${JSON.stringify(operation)}`);
+ const deadline=Date.now()+240000;
+ while(!operation.done){
+  if(Date.now()>deadline) throw new Error(`Fill audio atlas moderation/upload operation timed out`);
+  await sleep(1500);
+  const opResponse=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{
+   headers:{'x-api-key':key},
+   signal:AbortSignal.timeout(60000)
+  });
+  const opRaw=await opResponse.text();
+  try{operation=JSON.parse(opRaw)}catch{operation={raw:opRaw}}
+  if(!opResponse.ok) throw new Error(`Fill audio atlas operation HTTP ${opResponse.status}: ${JSON.stringify(operation)}`);
+ }
+ if(operation.error) throw new Error(`Fill audio atlas operation failed: ${JSON.stringify(operation.error)}`);
+ const id=Number(operation?.response?.assetId);
+ if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio atlas operation returned no assetId: ${JSON.stringify(operation)}`);
+ return id;
+}
 async function createFillAudioAsset(spec,bytes){
  const key=process.env.ROBLOX_API_KEY;
  if(!key) throw new Error('Missing ROBLOX_API_KEY');
@@ -385,6 +424,9 @@ for(const [key,name] of Object.entries(sources)) install=install.replace(`__${ke
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
 const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
+const atlasManifest=JSON.parse(fs.readFileSync('roblox-integrations/sakura97/action-atlas.json','utf8'));
+const actionAtlasId=atlasManifest.assetId || await createActionAtlas(Buffer.from(fs.readFileSync('roblox-integrations/sakura97/action-atlas.b64','utf8'),'base64'));
+console.log('ACTION_ATLAS_ASSET_ID',actionAtlasId);
 const fillVoiceIds=await ensureFillVoiceAssets();
 console.log('FILL_VOICE_IDS',JSON.stringify(fillVoiceIds));
 const fixedLobbyAssetId=await ensureFixedLobbyAsset();
@@ -404,6 +446,14 @@ local function install()
 ${install}
 end
 local result=install()
+do
+ local asset=game:GetService("InsertService"):LoadAsset(${actionAtlasId})
+ local decal=assert(asset:FindFirstChildWhichIsA("Decal",true),"Action atlas decal missing")
+ assert(decal.Texture~="","Action atlas texture missing")
+ game.ReplicatedStorage.Survival:SetAttribute("ActionAtlasTexture",decal.Texture)
+ game.ReplicatedStorage.Survival:SetAttribute("ActionAtlasAssetId",${actionAtlasId})
+ asset:Destroy()
+end
 do
  local ids={${fillVoiceIds.join(',')}}
  local net=assert(game.ReplicatedStorage:FindFirstChild("Survival"),"Survival runtime missing after install")
