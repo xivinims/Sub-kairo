@@ -149,6 +149,7 @@ const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__
 const menuTest=read('menu-runtime-tests').replace('__MENU_TEST_SOURCE__',read('menu-client').replace('local v=camera.ViewportSize','local v=TEST_VIEWPORT'));
 const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
 const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT').replace('voice:LoadAsync()','voice:SetAttribute("TestLoadRequested",true)').replace('voice:Play()','voice:SetAttribute("TestPlayRequested",true)').replace('output.Player=player','output.Name="TestOutput"'));
+const profileTest=read('profile-ui-tests').replace('__PROFILE_CLIENT_TEST_SOURCE__',read('profile-client'));
 const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
 local sourceVersion=game.PlaceVersion
@@ -169,6 +170,9 @@ ${menu}
 end
 result.lobbyGuide=(function()
 ${read('lobby-guide-install').replace('__GUIDE_CLIENT_SOURCE__',JSON.stringify(read('lobby-guide-client')))}
+end)()
+result.playerProfile=(function()
+${profileTest}
 end)()
 result.guideClient=(function()
 ${guideTest}

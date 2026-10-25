@@ -60,12 +60,13 @@ local ACCENT_DARK = Color3.fromRGB(18, 80, 92)
 -- CLICK SOUND SYSTEM
 --========================================================
 local clickSound = Instance.new("Sound")
-clickSound.Name = "DevPanels_Click"
+clickSound.Name = "MenuClick"
 clickSound.SoundId = CLICK_SOUND_ID
 clickSound.Volume = CLICK_VOLUME
 clickSound.Parent = gui
 
 local function playClick()
+ if viewer:GetAttribute("MenuSounds")==false then return end
 	clickSound.TimePosition = 0
 	clickSound:Play()
 end
@@ -156,7 +157,7 @@ end
 -- ROOT: dim + panel
 --========================================================
 local dim = Instance.new("Frame")
-dim.Name = "Dim"
+dim.Name = "Dim" dim.Active=true
 dim.Size = UDim2.fromScale(1,1)
 dim.BackgroundColor3 = BLACK
 dim.BackgroundTransparency = 1
@@ -298,7 +299,7 @@ nameRow.Font = Enum.Font.GothamBlack
 nameRow.TextSize = 22
 nameRow.TextColor3 = TEXT
 nameRow.TextXAlignment = Enum.TextXAlignment.Left
-nameRow.Text = plr.DisplayName.." (@"..plr.Name..")
+nameRow.Text = plr.DisplayName.." (@"..plr.Name..")"
 nameRow.Parent = leftCard
 outlineText(nameRow)
 
