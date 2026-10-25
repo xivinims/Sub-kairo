@@ -176,19 +176,22 @@ local ok,result=xpcall(function()
  assert(pc and #api.positions()>=9,"Per-map objective layout missing")
  local position=api.positions()[1]
  assert(not api.canInteract(victim,position,10),"Remote key/PC interaction passed at unlimited distance")
- local oldPivot=victim.Character:GetPivot()
- victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,0)))
+ local victimRoot=victim.Character.HumanoidRootPart
+ local oldRootCF=victimRoot.CFrame
+ victimRoot.CFrame=CFrame.new(position+Vector3.new(0,3,0))
+ assert(api.canInteract(victim,position,10),"Test survivor root did not reach computer interaction range")
  api.startHack(victim,pc,position)
  assert(api.sessions[victim] and victim:GetAttribute("Hacking"),"Valid player could not start hacking")
  advance(1)
  assert((pc:GetAttribute("HackProgress") or 0)>0 and not pc:GetAttribute("Hacked"),"PC skipped timed progress")
  send(victim,"hackTap",999) assert(not pc:GetAttribute("Hacked"),"Forged check completed PC")
- victim.Character:PivotTo(oldPivot) advance(1)
+ victimRoot.CFrame=oldRootCF advance(1)
  assert(not api.sessions[victim] and not victim:GetAttribute("Hacking"),"Moving away did not cancel hack")
  for number=1,3 do
   local computer=workspace.ActiveArena.RoundObjectives["HackComputer_"..number]
   local position=api.positions()[number]
-  victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,0)))
+  victimRoot.CFrame=CFrame.new(position+Vector3.new(0,3,0))
+  assert(api.canInteract(victim,position,10),"Test survivor root did not reach hacking range")
   api.startHack(victim,computer,position)
   for _=1,65 do
    if computer:GetAttribute("Hacked") then break end
