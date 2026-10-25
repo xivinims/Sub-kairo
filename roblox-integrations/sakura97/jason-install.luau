@@ -335,6 +335,50 @@ local function ensurePursuerHumanoid(model)
  return h,root
 end
 
+local function fallbackPursuerRig(name)
+ local model=Instance.new("Model") model.Name=name
+ local function part(n,size,color,cf,shape)
+  local p=Instance.new("Part") p.Name=n p.Size=size p.Color=color p.Material=Enum.Material.SmoothPlastic
+  if shape then p.Shape=shape end
+  p.CFrame=cf p.CanCollide=false p.Massless=n~="HumanoidRootPart" p.Parent=model
+  return p
+ end
+ local root=part("HumanoidRootPart",Vector3.new(2,2,1),Color3.new(),CFrame.new()) root.Transparency=1 root.Massless=false
+ local pig=name=="Piggy"
+ local skin=pig and Color3.fromRGB(244,166,176) or Color3.fromRGB(92,53,47)
+ local torso=part("Torso",Vector3.new(2,2,1),pig and Color3.fromRGB(168,48,53) or Color3.fromRGB(55,43,39),CFrame.new(0,0,0))
+ local head=part("Head",Vector3.new(2,1,1),skin,CFrame.new(0,1.5,0),Enum.PartType.Ball)
+ local la=part("Left Arm",Vector3.new(1,2,1),skin,CFrame.new(-1.5,0,0))
+ local ra=part("Right Arm",Vector3.new(1,2,1),skin,CFrame.new(1.5,0,0))
+ local ll=part("Left Leg",Vector3.new(1,2,1),pig and Color3.fromRGB(34,34,37) or Color3.fromRGB(43,38,35),CFrame.new(-.5,-2,0))
+ local rl=part("Right Leg",Vector3.new(1,2,1),pig and Color3.fromRGB(34,34,37) or Color3.fromRGB(43,38,35),CFrame.new(.5,-2,0))
+ local function motor(n,p0,p1,c0,c1)
+  local m=Instance.new("Motor6D") m.Name=n m.Part0=p0 m.Part1=p1 m.C0=c0 or CFrame.identity m.C1=c1 or CFrame.identity m.Parent=p0
+ end
+ motor("RootJoint",root,torso)
+ motor("Neck",torso,head,CFrame.new(0,1,0),CFrame.new(0,-.5,0))
+ motor("Left Shoulder",torso,la,CFrame.new(-1,0,0),CFrame.new(.5,0,0))
+ motor("Right Shoulder",torso,ra,CFrame.new(1,0,0),CFrame.new(-.5,0,0))
+ motor("Left Hip",torso,ll,CFrame.new(-.5,-1,0),CFrame.new(0,1,0))
+ motor("Right Hip",torso,rl,CFrame.new(.5,-1,0),CFrame.new(0,1,0))
+ if pig then
+  local snout=part("Snout",Vector3.new(.72,.42,.45),Color3.fromRGB(231,137,151),head.CFrame*CFrame.new(0,-.05,-.72))
+  local weld=Instance.new("WeldConstraint") weld.Part0=head weld.Part1=snout weld.Parent=snout
+  for _,x in ipairs({-.55,.55}) do
+   local ear=part("Ear",Vector3.new(.38,.55,.25),skin,head.CFrame*CFrame.new(x,.65,-.05))
+   local ew=Instance.new("WeldConstraint") ew.Part0=head ew.Part1=ear ew.Parent=ear
+  end
+ else
+  for _,x in ipairs({-.55,.55}) do
+   local horn=part("Horn",Vector3.new(.25,.9,.25),Color3.fromRGB(45,37,31),head.CFrame*CFrame.new(x,.85,0))
+   local hw=Instance.new("WeldConstraint") hw.Part0=head hw.Part1=horn hw.Parent=horn
+  end
+ end
+ local h=Instance.new("Humanoid") h.RigType=Enum.HumanoidRigType.R6 h.RequiresNeck=false h.BreakJointsOnDeath=false h.Parent=model
+ model.PrimaryPart=root
+ return model
+end
+
 for _,spec in ipairs({
  {name="JohnDoe",id=103232099547025,root="John"},
 
@@ -345,10 +389,11 @@ for _,spec in ipairs({
  {name="Piggy",id=8762062897,authored=true},
 }) do
  local asset=spec.name=="JohnDoe" and johnAsset or load(spec.id)
- local source=assert(findPursuerRig(asset,spec.root),"Missing usable rig for "..spec.name)
+ local source=findPursuerRig(asset,spec.root)
  local libraryName=nil
  if spec.authored then libraryName=authoredMotionLibrary(asset,spec.name,spec.id) end
- local model=source:Clone() sanitize(model,false) model.Name=spec.name
+ local model=source and source:Clone() or fallbackPursuerRig(spec.name)
+ sanitize(model,false) model.Name=spec.name
  for _,v in ipairs(model:GetDescendants()) do
   if v:IsA("KeyframeSequence") then v:Destroy() end
  end
