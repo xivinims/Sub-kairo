@@ -395,7 +395,7 @@ local function storeObjectiveAsset(id,name)
   end
  end
  assert(source,"Objective asset "..id.." has no usable world model")
- local template=source.Parent==nil and source or source:Clone()
+ local template=source:Clone()
  template.Name=name
  sanitize(template,true)
  local primary=template.PrimaryPart or template:FindFirstChild("Handle",true) or template:FindFirstChildWhichIsA("BasePart",true)
