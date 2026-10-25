@@ -56,7 +56,8 @@ for _,arena in ipairs(assets.Maps:GetChildren()) do
  assert(#arena.SafePoints:GetChildren()>=9 and #arena.ArrivalSpawns:GetChildren()>=2,"Map navigation validation")
  assert((arena:GetAttribute("EntranceSpawn")-arena:GetAttribute("KillerSpawn")).Magnitude>=30,"Separated spawns")
  assert((arena:GetAttribute("KillerSpawnDistance") or 0)>=30,"Killer spawn distance metadata missing")
- assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=10,"Pursuer spawn has insufficient wall clearance")
+ local requiredClearance=arena:GetAttribute("RequiredKillerClearance") or 10
+ assert((arena:GetAttribute("KillerSpawnClearance") or 0)>=requiredClearance,"Pursuer spawn has insufficient wall clearance")
  assert(arena:GetAttribute("KillerSpawnPathValidated")==true,"Pursuer spawn is not path-connected")
  local bounds=assert(arena:FindFirstChild("InvisibleBounds"),"Invisible arena bounds missing")
  assert(#bounds:GetChildren()>=5 and bounds:FindFirstChild("SafetyFloor"),"Arena must have four invisible walls plus safety floor")
