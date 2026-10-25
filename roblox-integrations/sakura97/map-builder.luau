@@ -7,7 +7,7 @@ local specs={
  {name="PirateBayIsland",id=127398591748883,label="Pirate Bay Island Cove",scale=1,maxParts=5500},
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
- {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true},
+ {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true,killerClearance=5.8,minKillerDistance=28},
  {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true},
 }
 local function route(a,b)
@@ -150,8 +150,8 @@ function Builder.build(load,sanitize,destination)
    if #selected>=12 then break end
   end
   assert(#selected>=9,"No connected playable region for "..spec.name)
-  local start=selected[1] local far=nil local distance=0 local killerClearance=10
-  local minimumKillerDistance=math.clamp(math.min(size.X,size.Z)*.34,36,70)
+  local start=selected[1] local far=nil local distance=0 local killerClearance=spec.killerClearance or 10
+  local minimumKillerDistance=spec.minKillerDistance or math.clamp(math.min(size.X,size.Z)*.34,36,70)
   for _,p in ipairs(selected) do
    local d=(p-start).Magnitude
    local ground=p-Vector3.new(0,3,0)
@@ -164,7 +164,7 @@ function Builder.build(load,sanitize,destination)
     if d>distance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and route(start,p) then far=p distance=d end
    end
   end
-  assert(far and distance>=math.min(30,minimumKillerDistance) and killerClearance>=10,"No safe pursuer spawn away from walls in "..spec.name)
+  assert(far and distance>=math.min(24,minimumKillerDistance) and killerClearance>=5.8,"No safe pursuer spawn away from walls in "..spec.name)
   local points=Instance.new("Folder",map) points.Name="SafePoints"
   for i,p in ipairs(selected) do addPoint(points,i,p) end
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns" addPoint(arrivals,1,start)
@@ -223,7 +223,7 @@ function Builder.build(load,sanitize,destination)
    local light=Instance.new("PointLight",lamp) light.Color=lamp.Color light.Brightness=.7 light.Range=17 light.Shadows=false
   end
   local count=0 for _,v in ipairs(map:GetDescendants()) do if v:IsA("BasePart") then count+=1 end end
-  map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance) map:SetAttribute("KillerSpawnDistance",distance)
+  map:SetAttribute("KillerSpawn",far) map:SetAttribute("EntranceSpawn",start) map:SetAttribute("KillerSpawnClearance",killerClearance) map:SetAttribute("RequiredKillerClearance",killerClearance) map:SetAttribute("KillerSpawnDistance",distance)
   map:SetAttribute("KillerSpawnPathValidated",true)
   map:SetAttribute("SourceAssetId",spec.id) map:SetAttribute("DisplayName",spec.label)
   map:SetAttribute("FloorY",lowest) map:SetAttribute("VoidY",lowest-35) map:SetAttribute("PartCount",count)
