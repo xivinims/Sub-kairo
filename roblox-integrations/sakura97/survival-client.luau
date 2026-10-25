@@ -441,6 +441,8 @@ resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=13 resultWinner.Tex
 local resultUntil=0 local resultGeneration=0
 local resultCameraState=nil
 local resultCameraConn=nil
+local resultScene=nil
+local resultActor=nil
 local function stopResultCamera()
  if resultCameraConn then resultCameraConn:Disconnect() resultCameraConn=nil end
 end
@@ -455,6 +457,65 @@ local function captureResultCamera()
   fieldOfView=camera.FieldOfView,
  }
  camera.CameraType=Enum.CameraType.Scriptable
+end
+local function clearResultScene()
+ if resultActor then resultActor:Destroy() resultActor=nil end
+ if resultScene then resultScene:Destroy() resultScene=nil end
+end
+local function resultFloor(scene)
+ local cf,size=scene:GetBoundingBox()
+ local best,bestScore=nil,-math.huge
+ for _,p in ipairs(scene:GetDescendants()) do
+  if p:IsA("BasePart") and p.Transparency<.98 and p.CanCollide and p.CFrame.UpVector.Y>.82 and p.Size.X>=6 and p.Size.Z>=6 then
+   local top=p.CFrame:PointToWorldSpace(Vector3.new(0,p.Size.Y/2,0))
+   local score=p.Size.X*p.Size.Z-(top.Y-(cf.Position.Y-size.Y/2))*2
+   if score>bestScore then bestScore=score best=p end
+  end
+ end
+ return best,cf,size
+end
+local function buildResultScene(source,pose)
+ clearResultScene()
+ local template=RS:FindFirstChild("MenuSceneTemplate") or workspace:FindFirstChild("JediLibrary")
+ if not template or not source then return source end
+ local oldArch=template.Archivable template.Archivable=true
+ resultScene=template:Clone()
+ template.Archivable=oldArch
+ resultScene.Name="LocalWinnerScene"
+ for _,d in ipairs(resultScene:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") or d:IsA("ProximityPrompt") or d:IsA("ClickDetector") then d:Destroy()
+  elseif d:IsA("BasePart") then d.Anchored=true d.CanTouch=false d.CanQuery=false end
+ end
+ resultScene.Parent=workspace
+ local sceneCF,sceneSize=resultScene:GetBoundingBox()
+ resultScene:PivotTo(resultScene:GetPivot()+Vector3.new(12000-sceneCF.X,2600-(sceneCF.Y-sceneSize.Y/2),12000-sceneCF.Z))
+ local floor=select(1,resultFloor(resultScene))
+ local base
+ if floor then base=floor.CFrame:PointToWorldSpace(Vector3.new(0,floor.Size.Y/2+.06,0))
+ else
+  local cf,size=resultScene:GetBoundingBox() base=Vector3.new(cf.X,cf.Y-size.Y/2+.1,cf.Z)
+ end
+
+ local was=source.Archivable source.Archivable=true
+ resultActor=source:Clone()
+ source.Archivable=was
+ resultActor.Name="WinnerPursuer"
+ for _,d in ipairs(resultActor:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") or d:IsA("Tool") then d:Destroy()
+  elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+ end
+ resultActor.Parent=workspace
+ resultActor:SetAttribute("ActivePursuer",true)
+ resultActor:SetAttribute("PresentationState",pose)
+ resultActor:SetAttribute("PresentationFrozen",true)
+ resultActor:SetAttribute("PresentationFreezeTime",pose=="Jason Slash" and .28 or .35)
+ resultActor:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+ local _,size=resultActor:GetBoundingBox()
+ if size.Y>8 then pcall(function() resultActor:ScaleTo(resultActor:GetScale()*8/size.Y) end) _,size=resultActor:GetBoundingBox() end
+ local position=base+Vector3.new(2.8,size.Y/2,3.6)
+ local look=base+Vector3.new(-2.2,size.Y*.35,-3)
+ resultActor:PivotTo(CFrame.lookAt(position,look))
+ return resultActor
 end
 local function startResultCamera(primary,secondary)
  stopResultCamera()
@@ -501,7 +562,7 @@ local function restoreResultCamera()
  if camera.CameraType==Enum.CameraType.Scriptable and state.cframe then camera.CFrame=state.cframe end
 end
 local function hideResult()
- result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren()
+ result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren() clearResultScene()
  for _,candidate in ipairs(workspace:GetChildren()) do
   if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then
    candidate:SetAttribute("PresentationFrozen",false)
@@ -523,10 +584,10 @@ local function showResult(data)
  for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("Frame") then old:Destroy() end end
  resultRows.CanvasPosition=Vector2.zero
  local winnerName=data.killerWinnerName or data.killer or "Perseguidor"
- resultHeader.Text=string.upper(data.jasonWon and (winnerName.." venceu a partida") or "Sobreviventes venceram a partida")
+ resultHeader.Text=string.upper(data.jasonWon and (winnerName.." • GANHADOR") or "SOBREVIVENTES • GANHADORES")
  resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(225,104,109) or Color3.fromRGB(235,235,239)
  resultSubtitle.Text=(data.map or "").."  •  +"..tostring(data.xp or 0).." XP"
- resultWinner.Text=data.jasonWon and ("VENCEDOR  •  "..winnerName) or (data.winnerText or "SOBREVIVENTES ESCAPARAM")
+ resultWinner.Text=data.jasonWon and ("GANHADOR  •  "..winnerName.."  •  "..string.upper(data.killer or "PERSEGUIDOR")) or (data.winnerText or "SOBREVIVENTES ESCAPARAM")
  resultView.Visible=false
  resultShade.BackgroundTransparency=data.jasonWon and .58 or .46
 
@@ -547,7 +608,8 @@ local function showResult(data)
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
    target:SetAttribute("PresentationFrozen",true)
    target:SetAttribute("PresentationFreezeTime",.35)
-   startResultCamera(target,nil)
+   local cinematic=buildResultScene(target,"Jason Idle")
+   startResultCamera(cinematic,nil)
   else
    local own=player.Character
    if own then startResultCamera(own,nil) end
@@ -562,7 +624,8 @@ local function showResult(data)
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
    target:SetAttribute("PresentationFrozen",true)
    target:SetAttribute("PresentationFreezeTime",.28)
-   startResultCamera(target,nil)
+   local cinematic=buildResultScene(target,"Jason Slash")
+   startResultCamera(cinematic,nil)
   else
    target=player.Character
    if target then startResultCamera(target,nil) end
