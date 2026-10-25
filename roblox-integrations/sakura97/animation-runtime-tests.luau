@@ -41,11 +41,18 @@ local ok,err=xpcall(function()
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
  p.attrs.Downed=true simulate(.2) assert(posed(p.Character)>=1 and animate.Disabled,"Downed pose conflicts with Animator")
- p.attrs.Downed=false
+ local root=rootJoint(p.Character)
+ local downedTransform=root and root.Transform or CFrame.identity
+ p.attrs.BeingExecuted=true p.attrs.ExecutionAt=workspace:GetServerTimeNow() p.attrs.ExecutionDuration=1.85
+ simulate(.2)
+ assert(root and root.Transform~=downedTransform,"Execution pose does not override downed pose")
+ assert(math.abs(root.Transform.Position.Y)<.6,"Execution victim incorrectly remains in horizontal downed pose")
+ p.attrs.BeingExecuted=false p.attrs.Downed=false
+ simulate(.2)
  p.attrs.InRound=false simulate(.2)
  assert(not animate.Disabled,"Default Animate was not restored outside round")
  assert(posed(p.Character)==0,"Custom pose remained after round")
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true,noCrouchRuntime=true}
+return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true,noCrouchRuntime=true}
