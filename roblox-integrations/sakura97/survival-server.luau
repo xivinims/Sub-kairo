@@ -623,6 +623,8 @@ RunService.Heartbeat:Connect(function(dt)
   end
  end
 end)
+local RESULT_PRESENTATION_SECONDS=9
+
 local function finish()
  local participants={} local living=0
  if state.phase=="Partida" then
@@ -650,6 +652,12 @@ local function finish()
   for _,p in ipairs(Players:GetPlayers()) do
    net.Update:FireClient(p,"roundResult",{jasonWon=jasonWon,killer=killerName,killerPlayer=killerWasPlayer,killerWinnerName=killerWinnerName,winnerText=jasonWon and (killerWinnerName.." venceu a partida") or "Sobreviventes venceram a partida",lastVictimUserId=lastKilledUserId,lastVictimName=lastKilledName,board=participants,xp=earned[p] or 0,map=arena and arena:GetAttribute("DisplayName") or ""})
   end
+  -- Keep the real arena and real winner alive while every client owns a full-screen cinematic camera.
+  state.phase="Resultados"
+  roundClosing=true
+  net:SetAttribute("Phase","Resultados")
+  net:SetAttribute("EndsAt",now()+RESULT_PRESENTATION_SECONDS)
+  task.wait(RESULT_PRESENTATION_SECONDS)
  end
  state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
