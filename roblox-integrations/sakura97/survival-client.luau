@@ -367,51 +367,6 @@ result:GetPropertyChangedSignal("Visible"):Connect(function()
  if not result.Visible then restoreResultCamera() end
 end)
 
-local function resultVictimReaction(victim,generation,pursuer)
- local root=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
- if not root then return end
- victim.PrimaryPart=root
- -- The downed/execution controller may leave Transform offsets on the real character.
- -- Clear them before the winner presentation so the victim never starts twisted.
- for _,d in ipairs(victim:GetDescendants()) do if d:IsA("Motor6D") then d.Transform=CFrame.identity end end
- local vpos=root.Position
- local pursuerRoot=pursuer and (pursuer.PrimaryPart or pursuer:FindFirstChild("HumanoidRootPart"))
- local forward=pursuerRoot and Vector3.new(pursuerRoot.Position.X-vpos.X,0,pursuerRoot.Position.Z-vpos.Z) or Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
- if forward.Magnitude<.05 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
- victim:PivotTo(CFrame.lookAt(vpos,vpos+forward))
- local joints={}
- for _,j in ipairs(victim:GetDescendants()) do
-  if j:IsA("Motor6D") then joints[j.Name:lower()]=j end
- end
- local rootJoint=joints.rootjoint or joints.root
- local neck=joints.neck
- local leftShoulder=joints["left shoulder"] or joints.leftshoulder
- local rightShoulder=joints["right shoulder"] or joints.rightshoulder
- local leftHip=joints["left hip"] or joints.lefthip
- local rightHip=joints["right hip"] or joints.righthip
- task.delay(.56,function()
-  if generation~=resultGeneration or not victim.Parent then return end
-  local base=root.CFrame
-  local fallen=base*CFrame.new(1.25,-1.45,-.55)*CFrame.Angles(math.rad(74),0,math.rad(-48))
-  local alpha=Instance.new("NumberValue") alpha.Value=0 alpha.Parent=resultView
-  local conn=alpha:GetPropertyChangedSignal("Value"):Connect(function()
-   if not victim.Parent then return end
-   local a=alpha.Value
-   local eased=TweenService:GetValue(a,Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-   root.CFrame=base:Lerp(fallen,eased)
-   if rootJoint and rootJoint.Parent then rootJoint.Transform=CFrame.Angles(math.rad(10*a),0,math.rad(-8*a)) end
-   if neck and neck.Parent then neck.Transform=CFrame.Angles(math.rad(-10*a),0,math.rad(8*a)) end
-   if leftShoulder and leftShoulder.Parent then leftShoulder.Transform=CFrame.Angles(math.rad(24*a),0,math.rad(-18*a)) end
-   if rightShoulder and rightShoulder.Parent then rightShoulder.Transform=CFrame.Angles(math.rad(18*a),0,math.rad(22*a)) end
-   if leftHip and leftHip.Parent then leftHip.Transform=CFrame.Angles(math.rad(-14*a),0,math.rad(-6*a)) end
-   if rightHip and rightHip.Parent then rightHip.Transform=CFrame.Angles(math.rad(-18*a),0,math.rad(8*a)) end
-  end)
-  local tween=TweenService:Create(alpha,TweenInfo.new(.62,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Value=1})
-  tween:Play()
-  tween.Completed:Connect(function() conn:Disconnect() alpha:Destroy() end)
- end)
-end
-
 local function showResult(data)
  hideResult()
  captureResultCamera()
@@ -422,7 +377,7 @@ local function showResult(data)
  resultHeader.Text=string.upper(data.jasonWon and (winnerName.." venceu a partida") or "Sobreviventes venceram a partida")
  resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(225,104,109) or Color3.fromRGB(235,235,239)
  resultSubtitle.Text=(data.map or "").."  •  +"..tostring(data.xp or 0).." XP"
- resultWinner.Text=data.jasonWon and ("VENCEDOR  •  "..winnerName) or "A EQUIPE DE SOBREVIVENTES RESISTIU"
+ resultWinner.Text=data.jasonWon and ("VENCEDOR  •  "..winnerName) or (data.winnerText or "SOBREVIVENTES ESCAPARAM")
  resultView.Visible=false
  resultShade.BackgroundTransparency=data.jasonWon and .58 or .46
 
