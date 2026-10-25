@@ -543,10 +543,10 @@ local hackSessions={} local computers={} local hackedCount=0 local exitDoor=nil
 local function canInteract(p,pos,range)
  local e=entry(p) local rr=root(p)
  if state.phase~="Partida" or not e or e.status~="alive" or p==jasonPlayer or not rr or p:GetAttribute("BeingExecuted") or (e.carriedBy or 0)>0 then return false end
- if (rr.Position-pos).Magnitude>(range or 10) then return false end
- local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
- params.FilterDescendantsInstances={p.Character,objectiveFolder} params.RespectCanCollide=true
- return workspace:Raycast(rr.Position,pos+Vector3.new(0,1.5,0)-rr.Position,params)==nil
+ -- Objective prompts intentionally ignore line of sight so indoor meshes/door frames
+ -- cannot block a legitimate nearby interaction. Security remains server-owned through
+ -- round state, survivor state and strict distance checks.
+ return (rr.Position-pos).Magnitude<=(range or 10)
 end
 local function spatialSound(parent,id,volume)
  local sound=Instance.new("Sound") sound.SoundId="rbxassetid://"..id sound.Volume=volume or .6
