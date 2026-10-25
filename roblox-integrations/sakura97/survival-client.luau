@@ -484,17 +484,11 @@ local function showResult(data)
   local victimPlayer=victimId>0 and Players:GetPlayerByUserId(victimId) or nil
   local victimCharacter=victimPlayer and victimPlayer.Character or nil
   if target then
-   target:SetAttribute("PresentationState","Execution")
+   target:SetAttribute("PresentationState","Jason Idle")
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   target:SetAttribute("PresentationFrozen",false)
+   target:SetAttribute("PresentationFrozen",true)
    target:SetAttribute("PresentationFreezeTime",.35)
-   local arena=workspace:FindFirstChild("ActiveArena")
-   local replay=arena and arena:FindFirstChild("ResultVictim")
-   startResultCamera(target,replay or victimCharacter)
-   task.delay(target:GetAttribute("ExecutionLength") or 2.5,function()
-    if generation~=resultGeneration or not target.Parent then return end
-    target:SetAttribute("PresentationState","Winning Screen") target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   end)
+   startResultCamera(target,nil)
   else
    local own=player.Character
    if own then startResultCamera(own,nil) end
@@ -507,7 +501,7 @@ local function showResult(data)
   if target then
    target:SetAttribute("PresentationState","Jason Slash")
    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   target:SetAttribute("PresentationFrozen",false)
+   target:SetAttribute("PresentationFrozen",true)
    target:SetAttribute("PresentationFreezeTime",.28)
    startResultCamera(target,nil)
   else
