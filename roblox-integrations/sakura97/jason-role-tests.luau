@@ -86,7 +86,7 @@ local function run()
  return realRequire(module)
 end
 __SURVIVAL_SERVER_TEST_SOURCE__
- api={startHack=startHack,canInteract=canInteract,sessions=hackSessions,positions=objectivePositions}
+ api={startHack=startHack,canInteract=canInteract,sessions=hackSessions,positions=objectivePositions,giveKey=giveKey}
 end
 local function advance(seconds)
  local target=clock+seconds
@@ -185,6 +185,37 @@ local ok,result=xpcall(function()
  send(victim,"hackTap",999) assert(not pc:GetAttribute("Hacked"),"Forged check completed PC")
  victim.Character:PivotTo(oldPivot) advance(1)
  assert(not api.sessions[victim] and not victim:GetAttribute("Hacking"),"Moving away did not cancel hack")
+ for number=1,3 do
+  local computer=workspace.ActiveArena.RoundObjectives["HackComputer_"..number]
+  local position=api.positions()[number]
+  victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,3)))
+  api.startHack(victim,computer,position)
+  for _=1,65 do
+   if computer:GetAttribute("Hacked") then break end
+   local session=api.sessions[victim]
+   assert(session,"Valid hacking session disappeared")
+   if session.checkAt then
+    local waitFor=math.max(0,session.checkAt+.8-clock)
+    if waitFor>0 then advance(waitFor) end
+    send(victim,"hackTap",session.challenge)
+   else advance(1) end
+  end
+  assert(computer:GetAttribute("Hacked"),"PC did not finish through valid checks")
+ end
+ assert(net:GetAttribute("ComputersDone")==3 and net:GetAttribute("MissionStage")=="Key","Hack completion did not advance mission")
+ assert(messages[killer].pcComplete and messages[killer].pcComplete[2]==10,"Killer PC reveal must last ten seconds")
+ assert(not messages[victim].pcComplete,"Computer reveal leaked to survivor")
+ local key=workspace.ActiveArena.RoundObjectives.ObjectiveKey_1
+ local keyPrompt=workspace.ActiveArena.RoundObjectives.Key1PromptAnchor:FindFirstChildOfClass("ProximityPrompt")
+ local keyPosition=api.positions()[4]
+ victim.Character:PivotTo(oldPivot)
+ api.giveKey(victim,key,keyPrompt,keyPosition)
+ assert(not victim:GetAttribute("HasKey"),"Key pickup accepted from far away")
+ victim.Character:PivotTo(CFrame.new(keyPosition+Vector3.new(0,3,2)))
+ api.giveKey(victim,key,keyPrompt,keyPosition)
+ assert(victim:GetAttribute("HasKey") and not key.Parent and not keyPrompt.Enabled,"Key pickup did not consume world item once")
+ victim.Character:PivotTo(oldPivot)
+
 
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
