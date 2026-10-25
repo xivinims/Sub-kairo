@@ -62,6 +62,8 @@ local function sync(p)
    h.WalkSpeed=(mode=="run" and stamina>0) and chase+2.2 or math.max(15,chase-1.8)
   elseif e and e.status=="downed" then
    h.WalkSpeed=0
+  elseif (p:GetAttribute("StunnedUntil") or 0)>now() then
+   h.WalkSpeed=0
   elseif e and e.injured then
    h.WalkSpeed=mode=="crouch" and 7 or 11.5
   elseif mode=="crouch" then
@@ -71,8 +73,9 @@ local function sync(p)
   else
    h.WalkSpeed=carrying and 10.5 or Rules.SurvivorWalk
   end
-  h.JumpPower=(e and e.status=="downed") and 0 or (mode=="crouch" and 0 or 50)
-  h.JumpHeight=(e and e.status=="downed") and 0 or (mode=="crouch" and 0 or 7.2)
+  local stunned=(p:GetAttribute("StunnedUntil") or 0)>now()
+  h.JumpPower=(e and e.status=="downed") and 0 or (stunned and 0 or (mode=="crouch" and 0 or 50))
+  h.JumpHeight=(e and e.status=="downed") and 0 or (stunned and 0 or (mode=="crouch" and 0 or 7.2))
  end
 end
 local function points(p,n)
@@ -145,6 +148,8 @@ local function lobby(p)
  end
  if h then h.Health=h.MaxHealth h.PlatformStand=false h.AutoRotate=true h.WalkSpeed=16 h.JumpPower=50 h.JumpHeight=7.2 end
  p:SetAttribute("MoveMode","walk") p:SetAttribute("InRound",false) p:SetAttribute("Downed",false) p:SetAttribute("Injured",false)
+ p:SetAttribute("StunAt",0) p:SetAttribute("StunnedUntil",0)
+ p:SetAttribute("VaultAt",0) p:SetAttribute("ParryAt",0) p:SetAttribute("BreakPalletAt",0)
 end
 local function eliminate(p,cause)
  local e=entry(p) if not e or (e.status~="alive" and e.status~="downed") then return end
@@ -174,9 +179,14 @@ local function injure(p)
  if e.injured then return false end
  e.hits=(e.hits or 0)+1
  local stats=p:FindFirstChild("leaderstats") local hitCount=stats and stats:FindFirstChild("Atingido") if hitCount then hitCount.Value+=1 end
- e.injured=true e.channel=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",now())
+ local hitTime=now()
+ e.injured=true e.channel=nil p:SetAttribute("MoveMode","walk") p:SetAttribute("HitAt",hitTime)
+ p:SetAttribute("StunAt",hitTime) p:SetAttribute("StunnedUntil",hitTime+.52)
  local h=humanoid(p) if h then h.Health=math.max(1,h.MaxHealth*.55) end
  sync(p)
+ task.delay(.54,function()
+  if p.Parent and entry(p)==e and (p:GetAttribute("StunnedUntil") or 0)<=now() then sync(p) end
+ end)
  net.Update:FireClient(p,"hitFlash",.45)
  net.Update:FireClient(p,"notice","Você está ferido. Seus movimentos ficaram mais lentos.")
  return true
@@ -378,6 +388,8 @@ local function spawnPlayer(p)
  end
 
  e.status="alive" e.spawnRecovery=nil e.spawnGraceUntil=now()+12
+ p:SetAttribute("StunAt",0) p:SetAttribute("StunnedUntil",0)
+ p:SetAttribute("VaultAt",0) p:SetAttribute("ParryAt",0) p:SetAttribute("BreakPalletAt",0)
  e.protectedUntil=math.max(e.protectedUntil or 0,now()+10)
  e.channel=nil e.deadline=nil e.downedAt=nil
  e.lastScore=now() e.lastNoise=0 e.lastStepSound=0 e.lastStaminaSync=0
