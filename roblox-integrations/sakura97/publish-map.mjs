@@ -437,6 +437,8 @@ local assets=game.ServerStorage.SurvivalAssets
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
   assert(not fillSource:find("AudioTextToSpeech",1,true) and not fillSource:find("PortugueseVoice",1,true),"Portuguese/TTS Fill voice returned")
   assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill English uploaded-audio dialogue missing")
+  assert(fillSource:find('SoundService',1,true) and fillSource:find('ContentProvider:PreloadAsync',1,true),"Fill voice is not preloaded from SoundService")
+  assert(fillSource:find('bubble.Size=UDim2.fromOffset(250,92)',1,true) and fillSource:find('label.TextSize=11',1,true) and fillSource:find('nameLabel.TextSize=12',1,true),"Fill overhead dialogue is not compact")
   assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="Talk","Fill English language metadata/prompt missing")
   for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill voice asset "..i.." missing") end
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
