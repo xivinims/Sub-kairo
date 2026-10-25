@@ -30,7 +30,8 @@ local function button(parent,name,textValue)
 end
 
 local ui=Instance.new("ScreenGui")
-ui.Name="TomiaszMenu" ui.ResetOnSpawn=false ui.IgnoreGuiInset=true ui.DisplayOrder=20
+ui.Name="TomiaszMenu" ui.ResetOnSpawn=false ui.IgnoreGuiInset=true ui.DisplayOrder=20 ui.Enabled=false
+ui:SetAttribute("MenuRemoved",true)
 ui:SetAttribute("SourceAssetId",0)
 
 local main=Instance.new("Frame") main.Name="MenuPrincipal" main.Size=UDim2.fromScale(1,1)
