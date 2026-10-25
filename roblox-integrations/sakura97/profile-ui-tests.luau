@@ -1,4 +1,6 @@
 local realGame=game
+local oldCamera=workspace.CurrentCamera
+local testCamera=Instance.new("Camera",workspace) workspace.CurrentCamera=testCamera
 local host=Instance.new("Folder",workspace) host.Name="ProfileUITest"
 local gui=Instance.new("Folder",host) gui.Name="PlayerGui"
 local attrs={SweanLoadingDone=true}
@@ -42,5 +44,6 @@ local ok,result=xpcall(function()
  return {ok=true,lobbyTap=true,exactAsset=true,selectedIdentity=true,whiteOutline=true,closeCleanup=true,processedTouchIgnored=true,departureCleanup=true}
 end,debug.traceback)
 host:Destroy()
+workspace.CurrentCamera=oldCamera testCamera:Destroy()
 assert(ok,result)
 return result
