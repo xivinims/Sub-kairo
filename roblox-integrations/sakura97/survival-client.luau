@@ -731,10 +731,14 @@ local votePanel=panel("MapVoting",UDim2.new(.66,0,.68,0),UDim2.fromScale(.17,.15
 votePanel.BackgroundTransparency=.18 votePanel.Visible=false
 local voteTitle=text(votePanel,"Title","VOTAR UM MAPA",UDim2.new(1,0,0,34),UDim2.new()) voteTitle.Font=Enum.Font.GothamBold
 local mapButtons={}
+local mapNames={DoomspireBrickbattle="Doomspire Brickbattle",JuggernautFightArena="Juggernaut Fight Arena",PirateBayIsland="Pirate Bay",NaturalDisasterSurvival="Natural Disaster Survival",RocketArena="Rocket Arena"}
 for i,map in ipairs(config.Maps) do
  local col=(i-1)%2 local row=math.floor((i-1)/2)
  local b=button(votePanel,map.name,map.name,UDim2.new(.48,0,.19,0),UDim2.new(.01+col*.50,0,.12+row*.21,0),function() event:FireServer("voteMap",map.name) end)
- b.TextSize=11 b.TextWrapped=true mapButtons[map.name]=b
+ b.TextSize=12 b.TextWrapped=true mapButtons[map.name]=b
+ local preview=Instance.new("ImageLabel",b) preview.Name="Preview" preview.Size=UDim2.fromScale(1,1) preview.BackgroundTransparency=1 preview.Image="rbxthumb://type=Asset&id="..map.id.."&w=420&h=420" preview.ImageTransparency=.3 preview.ScaleType=Enum.ScaleType.Crop preview.ZIndex=b.ZIndex b.Text=""
+ Instance.new("UICorner",preview).CornerRadius=UDim.new(0,10)
+ local caption=text(b,"Caption",mapNames[map.name] or map.name,UDim2.new(1,-8,0,24),UDim2.new(0,4,1,-26)) caption.TextSize=12 caption.Font=Enum.Font.GothamBold caption.ZIndex=b.ZIndex+1 caption.TextStrokeTransparency=.2
 end
 local killerBar=Instance.new("Frame",votePanel) killerBar.BackgroundTransparency=1 killerBar.Size=UDim2.new(1,-12,0,44) killerBar.Position=UDim2.new(0,6,1,-48)
 local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
@@ -749,7 +753,7 @@ RunService.RenderStepped:Connect(function(dt)
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  voteTitle.Text=seconds>0 and ("VOTAR UM MAPA • "..seconds.."s") or "AGUARDANDO 2 JOGADORES"
  local ok,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
- for name,b in pairs(mapButtons) do b.Text=name.." • "..tostring(ok and counts[name] or 0).." votos" b.BackgroundColor3=player:GetAttribute("MapVote")==name and Color3.fromRGB(42,90,46) or Color3.fromRGB(18,18,22) end
+ for name,b in pairs(mapButtons) do b.Caption.Text=(mapNames[name] or name).." • "..tostring(ok and counts[name] or 0).." votos" b.BackgroundColor3=player:GetAttribute("MapVote")==name and Color3.fromRGB(42,90,46) or Color3.fromRGB(18,18,22) end
 end)
 
 local dtSum=0
@@ -764,7 +768,8 @@ RunService.RenderStepped:Connect(function(dt)
  local controlsVisible=not settingsOverlay.Visible and not result.Visible and player:GetAttribute("InMenu")~=true and player:GetAttribute("VoidActive")~=true and player:GetAttribute("SweanLoadingDone")==true and player:GetAttribute("Spectating")~=true
  local inRound=player:GetAttribute("InRound") local down=player:GetAttribute("Downed") local status=player:GetAttribute("RoundStatus")
  healthHUD.Visible=not hidden and inRound and not result.Visible
- condition.Text=down and "♥  CAÍDO  0%" or player:GetAttribute("Injured") and "♥  FERIDO  50%" or "♥  100%"
+ local healthHumanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+ condition.Text="♥  "..tostring(math.floor(healthHumanoid and healthHumanoid.Health or 0))
  condition.TextColor3=down and Color3.fromRGB(231,101,107) or player:GetAttribute("Injured") and Color3.fromRGB(229,186,100) or Color3.fromRGB(144,223,111)
  healthHUD.UIStroke.Color=condition.TextColor3
  local stats=player:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local lv=stats and stats:FindFirstChild("Nível") local pts=stats and stats:FindFirstChild("Pontos")

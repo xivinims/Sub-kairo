@@ -345,7 +345,7 @@ local function channelRevive(p)
  h.channel={target=target,started=now(),position=r.Position,status=h.status}
  p:SetAttribute("ReviveAt",now()+Rules.ReviveTime)
 end
-local mapVotes={} local killerChoices={}
+local mapVotes=setmetatable({},{__mode="k"}) local killerChoices=setmetatable({},{__mode="k"})
 local function voteCounts()
  local counts={} for _,map in ipairs(assets.Maps:GetChildren()) do counts[map.Name]=0 end
  for p,name in pairs(mapVotes) do if p.Parent and not p:GetAttribute("AFK") and counts[name] then counts[name]+=1 end end
@@ -354,16 +354,16 @@ local function voteCounts()
 end
 net.Action.OnServerEvent:Connect(function(p,action,value)
  if type(action)~="string" or #action>24 then return end
+ rates[p]=rates[p] or {} local t=now()
+ if action~="mode" and t-(rates[p][action] or -math.huge)<.18 then return end
+ rates[p][action]=t
  if action=="voteMap" then
-  if state.phase~="Intervalo" or p:GetAttribute("AFK") or type(value)~="string" or not assets.Maps:FindFirstChild(value) then return end
+  if state.phase~="Intervalo" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 or not assets.Maps:FindFirstChild(value) then return end
   mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
  elseif action=="chooseKiller" then
-  if state.phase~="Intervalo" or type(value)~="string" or not assets.Killers:FindFirstChild(value) then return end
+  if state.phase~="Intervalo" or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
   killerChoices[p]=value p:SetAttribute("KillerChoice",value) return
  end
- rates[p]=rates[p] or {} local t=now()
- if action~="mode" and t-(rates[p][action] or 0)<.18 then return end
- rates[p][action]=t
  if action=="afk" then
   if type(value)~="boolean" then return end
   p:SetAttribute("AFK",value)
