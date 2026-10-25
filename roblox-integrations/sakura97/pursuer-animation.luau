@@ -380,31 +380,60 @@ Run.PreSimulation:Connect(function(dt)
     if joint and joint.Parent then joint.Transform=CFrame.new(0,-.92+math.sin(os.clock()*1.8)*.018,.08)*CFrame.Angles(math.rad(88),0,math.rad(4)+math.sin(os.clock()*1.3)*.01) end
    elseif inRound and not isJason then
     local injured=p:GetAttribute("Injured")==true
-    local folder=net.SurvivorClips
-    if activeFolder[model]~=folder then
-     resetModel(model) activeFolder[model]=folder
-    end
-    local d=prepare(model,folder)
     local hum=model:FindFirstChildOfClass("Humanoid")
     local root=model:FindFirstChild("HumanoidRootPart")
-    if d and hum and root then
+    if hum and root then
      local speed=(root.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
-     local hs=hum:GetState()
-     local kind
-     if hs==Enum.HumanoidStateType.Jumping then kind="jump"
-     elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
-     elseif speed>1 then kind=(not injured and p:GetAttribute("MoveMode")=="run") and "run" or "move"
-     else kind="idle" end
-     local state=locomotionName(d,kind,injured)
-     local supported=canDrive(d,state)
-     if supported then setDefaultAnimate(model,false) end
-     if supported then
-      local rate=1
-      if kind=="run" then rate=math.clamp(speed/(injured and 14 or 18),.78,1.38)
-      elseif kind=="move" then rate=math.clamp(speed/(injured and 9 or 11),.78,1.28) end
-      apply(d,state,dt*rate,kind~="jump" and kind~="fall")
+     local now=workspace:GetServerTimeNow()
+     local actionFolder=net:FindFirstChild("SurvivorActionClips")
+     local actionState=nil
+     local actionAbsolute=nil
+     local actionLoop=false
+     if actionFolder then
+      local stunUntil=p:GetAttribute("StunnedUntil") or 0
+      local vaultAt=p:GetAttribute("VaultAt") or -100
+      local parryAt=p:GetAttribute("ParryAt") or -100
+      local palletAt=p:GetAttribute("BreakPalletAt") or -100
+      if stunUntil>now then
+       actionState="Stun" actionAbsolute=math.max(0,(p:GetAttribute("StunAt") or now)-now)
+      elseif now-vaultAt>=0 and now-vaultAt<1.15 then
+       actionState="Vault" actionAbsolute=now-vaultAt
+      elseif now-parryAt>=0 and now-parryAt<.9 then
+       actionState="Parry" actionAbsolute=now-parryAt
+      elseif now-palletAt>=0 and now-palletAt<1.4 then
+       actionState="BreakPallet" actionAbsolute=now-palletAt
+      elseif p:GetAttribute("MoveMode")=="crouch" and speed>1 then
+       actionState=injured and "InjuredCrouchWalk" or "CrouchWalk"
+       actionLoop=true
+      end
+     end
+     local folder=actionState and actionFolder or net.SurvivorClips
+     if activeFolder[model]~=folder then resetModel(model) activeFolder[model]=folder end
+     local d=folder and prepare(model,folder)
+     if d then
+      local state=actionState
+      local kind=nil
+      if not state then
+       local hs=hum:GetState()
+       if hs==Enum.HumanoidStateType.Jumping then kind="jump"
+       elseif hs==Enum.HumanoidStateType.Freefall or hs==Enum.HumanoidStateType.FallingDown then kind="fall"
+       elseif speed>1 then kind=(not injured and p:GetAttribute("MoveMode")=="run") and "run" or "move"
+       else kind="idle" end
+       state=locomotionName(d,kind,injured)
+      end
+      local supported=canDrive(d,state)
+      if supported then setDefaultAnimate(model,false) end
+      if supported then
+       local rate=1
+       if actionState=="CrouchWalk" or actionState=="InjuredCrouchWalk" then rate=math.clamp(speed/(injured and 6.8 or 8.5),.72,1.25)
+       elseif kind=="run" then rate=math.clamp(speed/(injured and 14 or 18),.78,1.38)
+       elseif kind=="move" then rate=math.clamp(speed/(injured and 9 or 11),.78,1.28) end
+       apply(d,state,dt*rate,actionState and actionLoop or (kind~="jump" and kind~="fall"),actionAbsolute)
+      else
+       resetData(d)
+       setDefaultAnimate(model,true)
+      end
      else
-      resetData(d)
       setDefaultAnimate(model,true)
      end
     else
