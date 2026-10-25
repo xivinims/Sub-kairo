@@ -4,7 +4,7 @@ local Run=game:GetService("RunService")
 local player=Players.LocalPlayer
 local Profile=require(game:GetService("ReplicatedStorage"):WaitForChild("Survival"):WaitForChild("PlayerProfile"))
 local selected=nil local card=nil
-local outline=Instance.new("Highlight") outline.Name="SelectedPlayerOutline" outline.FillTransparency=1 outline.OutlineColor=Color3.new(1,1,1) outline.OutlineTransparency=0 outline.DepthMode=Enum.HighlightDepthMode.Occluded outline.Enabled=false outline.Parent=player:WaitForChild("PlayerGui")
+local outline=Instance.new("Highlight") outline.Name="SelectedPlayerOutline" outline.FillTransparency=1 outline.OutlineColor=Color3.new(1,1,1) outline.OutlineTransparency=0 outline.DepthMode=Enum.HighlightDepthMode.Occluded outline.Enabled=false outline.Parent=game:GetService("Workspace")
 local function close()
  local old=card card=nil selected=nil outline.Enabled=false outline.Adornee=nil
  player:SetAttribute("ProfileOpen",false)
