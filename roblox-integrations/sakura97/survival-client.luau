@@ -220,11 +220,11 @@ local function updateRoster()
 end
 local result=Instance.new("Frame",gui)
 result.Name="RoundResult" result.Size=UDim2.fromScale(1,1) result.Position=UDim2.new()
-result.BackgroundColor3=Color3.new(0,0,0) result.BackgroundTransparency=0 result.BorderSizePixel=0
+result.BackgroundColor3=Color3.new(0,0,0) result.BackgroundTransparency=1 result.BorderSizePixel=0
 result.Visible=false result.ZIndex=70 result.ClipsDescendants=true
 local resultView=Instance.new("ViewportFrame",result)
 resultView.Name="WinnerPortrait" resultView.BackgroundColor3=Color3.new(0,0,0) resultView.BackgroundTransparency=0
-resultView.Size=UDim2.fromScale(1,1) resultView.Position=UDim2.new() resultView.ZIndex=71
+resultView.Size=UDim2.fromScale(1,1) resultView.Position=UDim2.new() resultView.ZIndex=71 resultView.Visible=false
 resultView.Ambient=Color3.fromRGB(92,77,82) resultView.LightColor=Color3.fromRGB(222,173,162) resultView.LightDirection=Vector3.new(-1,-.35,-1)
 local resultWorld=Instance.new("WorldModel",resultView)
 local resultCamera=Instance.new("Camera",resultView) resultCamera.FieldOfView=50 resultView.CurrentCamera=resultCamera
@@ -247,6 +247,10 @@ local resultWinner=text(result,"Winner","",UDim2.new(.92,0,0,32),UDim2.new(.025,
 resultWinner.Font=Enum.Font.GothamBold resultWinner.TextSize=13 resultWinner.TextXAlignment=Enum.TextXAlignment.Left resultWinner.ZIndex=76
 local resultUntil=0 local resultGeneration=0
 local resultCameraState=nil
+local resultCameraConn=nil
+local function stopResultCamera()
+ if resultCameraConn then resultCameraConn:Disconnect() resultCameraConn=nil end
+end
 local function captureResultCamera()
  local camera=workspace.CurrentCamera
  if not camera or resultCameraState then return end
@@ -259,7 +263,32 @@ local function captureResultCamera()
  }
  camera.CameraType=Enum.CameraType.Scriptable
 end
+local function startResultCamera(primary,secondary)
+ stopResultCamera()
+ local started=os.clock()
+ resultCameraConn=RunService.RenderStepped:Connect(function()
+  if not result.Visible then return end
+  local camera=workspace.CurrentCamera
+  if not camera or not primary or not primary.Parent then return end
+  local cf,size=primary:GetBoundingBox()
+  local center=cf.Position+Vector3.new(0,math.clamp(size.Y*.10,.5,2.4),0)
+  if secondary and secondary.Parent then
+   local secondaryRoot=secondary:FindFirstChild("HumanoidRootPart") or secondary.PrimaryPart
+   if secondaryRoot then center=center:Lerp(secondaryRoot.Position+Vector3.new(0,1.7,0),.22) end
+  end
+  local forward=Vector3.new(cf.LookVector.X,0,cf.LookVector.Z)
+  if forward.Magnitude<.05 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+  local right=Vector3.new(-forward.Z,0,forward.X)
+  local distance=math.clamp(math.max(size.Y*1.45,size.Z*2.6),10,20)
+  local sway=math.sin((os.clock()-started)*.32)*1.05
+  local cameraPos=center+forward*distance+right*(2.8+sway)+Vector3.new(0,math.max(2.8,size.Y*.30),0)
+  camera.CameraType=Enum.CameraType.Scriptable
+  camera.CFrame=CFrame.lookAt(cameraPos,center)
+  camera.FieldOfView=52
+ end)
+end
 local function restoreResultCamera()
+ stopResultCamera()
  local state=resultCameraState
  resultCameraState=nil
  if not state then return end
@@ -282,8 +311,8 @@ local function hideResult()
  result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren()
  restoreResultCamera()
 end
-local resultClose=button(result,"Close","×",UDim2.fromOffset(42,42),UDim2.new(1,-54,0,10),hideResult)
-resultClose.ZIndex=77 resultClose.TextSize=26 resultClose.BackgroundTransparency=1 resultClose.UIStroke.Enabled=false
+local resultClose=button(result,"Close","SAÍDA",UDim2.fromOffset(88,36),UDim2.new(1,-100,0,14),hideResult)
+resultClose.ZIndex=77 resultClose.TextSize=12 resultClose.BackgroundTransparency=.18 resultClose.UIStroke.Enabled=false
 result:GetPropertyChangedSignal("Visible"):Connect(function()
  if not result.Visible then restoreResultCamera() end
 end)
@@ -336,113 +365,39 @@ local function showResult(data)
  resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(225,104,109) or Color3.fromRGB(235,235,239)
  resultSubtitle.Text=(data.map or "").."  •  +"..tostring(data.xp or 0).." XP"
  resultWinner.Text=data.jasonWon and ("VENCEDOR  •  "..winnerName) or "A EQUIPE DE SOBREVIVENTES RESISTIU"
- resultView.Visible=data.jasonWon==true
- resultShade.BackgroundTransparency=data.jasonWon and .64 or .22
+ resultView.Visible=false
+ resultShade.BackgroundTransparency=data.jasonWon and .58 or .46
 
  if data.jasonWon then
-  local template=nil
+  local target=nil
   for _,candidate in ipairs(workspace:GetChildren()) do
-   if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then template=candidate break end
+   if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then target=candidate break end
   end
-  template=template or net:FindFirstChild("PresentationJason")
-
-  local sceneTemplate=RS:FindFirstChild("MenuSceneTemplate")
-  local scene=sceneTemplate and sceneTemplate:Clone()
-  local base=Vector3.zero
-  local forward=Vector3.new(0,0,-1)
-  if scene then
-   scene.Name="VictoryDoorsScene"
-   for _,d in ipairs(scene:GetDescendants()) do
-    if d:IsA("LuaSourceContainer") then d:Destroy()
-    elseif d:IsA("Sound") then d.Playing=false
-    elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
-   end
-   scene.Parent=resultWorld
-   local best,bestArea=nil,-1
-   for _,part in ipairs(scene:GetDescendants()) do
-    if part:IsA("BasePart") and part.Transparency<.98 and part.CFrame.UpVector.Y>.82 and part.Size.X>=7 and part.Size.Z>=7 then
-     local area=part.Size.X*part.Size.Z
-     if area>bestArea then best,bestArea=part,area end
-    end
-   end
-   if best then
-    base=best.CFrame:PointToWorldSpace(Vector3.new(0,best.Size.Y/2+.05,0))
-    forward=Vector3.new(best.CFrame.LookVector.X,0,best.CFrame.LookVector.Z)
-    if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
-   end
-  end
-
-  local right=forward:Cross(Vector3.yAxis)
-  if right.Magnitude<.1 then right=Vector3.xAxis else right=right.Unit end
-  local killerModel=nil
-  if template then
-   template.Archivable=true
-   killerModel=template:Clone()
-   killerModel.Name="WinnerPursuer" killerModel:SetAttribute("PresentationPursuer",true)
-   killerModel:SetAttribute("PresentationState","Execution")
-   killerModel:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   killerModel:SetAttribute("ActivePursuer",nil)
-   killerModel.PrimaryPart=killerModel.PrimaryPart or killerModel:FindFirstChild("HumanoidRootPart")
-   for _,part in ipairs(killerModel:GetDescendants()) do
-    if part:IsA("BasePart") then part.Anchored=part==killerModel.PrimaryPart part.CanCollide=false part.CanTouch=false part.CanQuery=false end
-   end
-   killerModel.Parent=resultWorld
-  end
-
   local victimId=tonumber(data.lastVictimUserId) or 0
   if victimId<=0 then
    local fallback=(data.board or {})[1]
    victimId=fallback and fallback.userId or 0
   end
   local victimPlayer=victimId>0 and Players:GetPlayerByUserId(victimId) or nil
-  local victimCharacter=victimPlayer and victimPlayer.Character
-  local victim=nil
-  if victimCharacter then
-   local oldArchivable=victimCharacter.Archivable victimCharacter.Archivable=true
-   local ok,clone=pcall(function() return victimCharacter:Clone() end)
-   victimCharacter.Archivable=oldArchivable
-   if ok then victim=clone end
+  local victimCharacter=victimPlayer and victimPlayer.Character or nil
+  if target then
+   target:SetAttribute("PresentationState","Winning Screen")
+   target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   startResultCamera(target,victimCharacter)
+  else
+   local own=player.Character
+   if own then startResultCamera(own,nil) end
   end
-
-  local killerSize=Vector3.new(4,6,2)
-  if killerModel then local _,size=killerModel:GetBoundingBox() killerSize=size end
-  local killerPos=base+forward*.55-right*.25+Vector3.new(0,killerSize.Y*.5,0)
-  local victimPos=base+forward*4.9+right*1.15
-
-  if killerModel and killerModel.PrimaryPart then
-   killerModel:PivotTo(CFrame.lookAt(killerPos,victimPos+Vector3.new(0,2.5,0)))
+ else
+  local target=nil
+  for _,row in ipairs(data.board or {}) do
+   local survivor=Players:GetPlayerByUserId(tonumber(row.userId) or 0)
+   local char=survivor and survivor.Character
+   local hum=char and char:FindFirstChildOfClass("Humanoid")
+   if char and hum and hum.Health>0 then target=char break end
   end
-
-  if victim then
-   victim.Name="VictorySurvivor"
-   victim:SetAttribute("SourceUserId",victimId)
-   victim.PrimaryPart=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
-   for _,d in ipairs(victim:GetDescendants()) do
-    if d:IsA("LuaSourceContainer") or d:IsA("Tool") or d:IsA("BillboardGui") then d:Destroy()
-    elseif d:IsA("BasePart") then d.Anchored=d==victim.PrimaryPart d.CanCollide=false d.CanTouch=false d.CanQuery=false
-    elseif d:IsA("Motor6D") then d.Transform=CFrame.identity end
-   end
-   local victimHumanoid=victim:FindFirstChildOfClass("Humanoid")
-   if victimHumanoid then victimHumanoid.AutoRotate=false victimHumanoid.PlatformStand=false end
-   victim.Parent=resultWorld
-   local _,vsize=victim:GetBoundingBox()
-   local vpos=victimPos+Vector3.new(0,vsize.Y*.5,0)
-   victim:PivotTo(CFrame.lookAt(vpos,vpos+forward))
-   resultVictimReaction(victim,generation)
-  end
-
-  local focus=base+forward*2.65+right*.45+Vector3.new(0,math.max(2.5,killerSize.Y*.48),0)
-  local cameraPos=base-forward*8.4-right*3.6+Vector3.new(0,math.max(3.3,killerSize.Y*.58),0)
-  resultCamera.CFrame=CFrame.lookAt(cameraPos,focus)
-  resultCamera.FieldOfView=50
-
-  if killerModel then
-   task.delay(1.6,function()
-    if generation~=resultGeneration or not killerModel.Parent then return end
-    killerModel:SetAttribute("PresentationState","Winning Screen")
-    killerModel:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   end)
-  end
+  target=target or player.Character
+  if target then startResultCamera(target,nil) end
  end
 
  for i,row in ipairs(data.board or {}) do if i>8 then break end
@@ -473,8 +428,8 @@ local function showResult(data)
  result.Size=UDim2.fromScale(1,1)
  resultView.Position=UDim2.new() resultView.Size=UDim2.fromScale(1,1)
  resultRows.Position=UDim2.new(.025,0,.18,0) resultRows.Size=UDim2.new(.34,0,.58,0)
- result.Visible=true resultUntil=os.clock()+11
- task.delay(11,function() if generation==resultGeneration then hideResult() end end)
+ result.Visible=true resultUntil=os.clock()+8.8
+ task.delay(8.8,function() if generation==resultGeneration then hideResult() end end)
 end
 
 local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
@@ -484,7 +439,7 @@ button(spectate,"Previous","‹",UDim2.fromOffset(50,38),UDim2.fromOffset(8,42),
 button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),function() index+=1 watchedId=nil end)
 button(spectate,"Exit","Sair da câmera",UDim2.fromOffset(170,38),UDim2.fromOffset(65,42),function() event:FireServer("spectateExit") end)
 local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new())
-loading.BackgroundColor3=Color3.fromRGB(4,4,6) loading.BackgroundTransparency=0 loading.ZIndex=80 loading.Visible=false loading.ClipsDescendants=true
+loading.BackgroundColor3=Color3.fromRGB(4,4,6) loading.BackgroundTransparency=.28 loading.ZIndex=80 loading.Visible=false loading.ClipsDescendants=true
 loading.UIStroke.Enabled=false loading.UICorner.CornerRadius=UDim.new()
 local loadingText=text(loading,"Status","CARREGANDO MAPA",UDim2.new(.8,0,0,32),UDim2.new(.1,0,.78,0))
 loadingText.ZIndex=82 loadingText.TextSize=11 loadingText.TextTransparency=.28 loadingText.Font=Enum.Font.GothamMedium
@@ -501,7 +456,7 @@ loadingAvatar.Size=UDim2.new(.72,0,.88,0)
 loadingAvatar.Ambient=Color3.fromRGB(70,72,80)
 loadingAvatar.LightColor=Color3.fromRGB(224,219,222)
 loadingAvatar.LightDirection=Vector3.new(-.7,-.8,-.45)
-loadingAvatar.ZIndex=82
+loadingAvatar.ZIndex=82 loadingAvatar.Visible=false
 local loadingAvatarWorld=Instance.new("WorldModel",loadingAvatar)
 local loadingAvatarCamera=Instance.new("Camera",loadingAvatar) loadingAvatarCamera.FieldOfView=34 loadingAvatar.CurrentCamera=loadingAvatarCamera
 local loadingAvatarClone=nil local loadingAvatarRoot=nil local loadingAvatarBase=nil local loadingAvatarConn=nil local loadingAvatarJoints={}
@@ -561,6 +516,56 @@ local progressGlow=Instance.new("Frame",progressFill)
 progressGlow.Name="Tip" progressGlow.AnchorPoint=Vector2.new(1,.5) progressGlow.Position=UDim2.new(1,0,.5,0) progressGlow.Size=UDim2.fromOffset(18,16)
 progressGlow.BackgroundColor3=Color3.fromRGB(245,245,248) progressGlow.BackgroundTransparency=.35 progressGlow.BorderSizePixel=0 progressGlow.ZIndex=86
 local loadToken=0
+local loadingCameraState=nil
+local loadingCameraConn=nil
+local function restoreLoadingCamera()
+ if loadingCameraConn then loadingCameraConn:Disconnect() loadingCameraConn=nil end
+ local state=loadingCameraState
+ loadingCameraState=nil
+ if not state then return end
+ local camera=workspace.CurrentCamera or state.camera
+ if not camera then return end
+ local subject=state.cameraSubject
+ if not subject or not subject.Parent then subject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") end
+ if subject then
+  camera.CameraSubject=subject
+  camera.CameraType=Enum.CameraType.Custom
+ else
+  camera.CameraType=state.cameraType or Enum.CameraType.Custom
+  if camera.CameraType==Enum.CameraType.Scriptable and state.cframe then camera.CFrame=state.cframe end
+ end
+ camera.FieldOfView=player:GetAttribute("CameraFOV") or state.fieldOfView or 48
+end
+local function captureLoadingCamera(map,token)
+ restoreLoadingCamera()
+ local camera=workspace.CurrentCamera
+ if not camera then return end
+ loadingCameraState={camera=camera,cameraType=camera.CameraType,cameraSubject=camera.CameraSubject,cframe=camera.CFrame,fieldOfView=camera.FieldOfView}
+ camera.CameraType=Enum.CameraType.Scriptable
+ local started=os.clock()
+ local cachedCenter=nil local cachedSize=nil local nextMeasure=0
+ loadingCameraConn=RunService.RenderStepped:Connect(function()
+  if token~=loadToken or not loading.Visible then return end
+  local current=workspace.CurrentCamera
+  local arena=map and map.Parent and map or workspace:FindFirstChild("ActiveArena")
+  if not current or not arena then return end
+  local t=os.clock()
+  if not cachedCenter or t>=nextMeasure then
+   local cf,size=arena:GetBoundingBox()
+   cachedCenter=cf.Position+Vector3.new(0,math.clamp(size.Y*.08,1,6),0)
+   cachedSize=size
+   nextMeasure=t+.45
+  end
+  local size=cachedSize or Vector3.new(40,15,40)
+  local radius=math.clamp(math.max(size.X,size.Z)*.22,24,60)
+  local angle=(t-started)*.11
+  local height=math.clamp(size.Y*.32+10,14,30)
+  local pos=cachedCenter+Vector3.new(math.cos(angle)*radius,height,math.sin(angle)*radius)
+  current.CameraType=Enum.CameraType.Scriptable
+  current.CFrame=CFrame.lookAt(pos,cachedCenter)
+  current.FieldOfView=60
+ end)
+end
 
 local function setMapProgress(value,duration)
  value=math.clamp(value,0,1)
@@ -620,7 +625,8 @@ end
 local function preload(roundId,map)
  loadToken+=1 local token=loadToken
  loading.Visible=true goodLuck.Visible=false goodLuck.TextTransparency=.68
- buildArenaLoadingAvatar()
+ loadingAvatar.Visible=false
+ captureLoadingCamera(map,token)
  progressFill.Size=UDim2.fromScale(0,1) loadingText.Text="CARREGANDO MAPA"
  setMapProgress(.04,.05)
  task.spawn(function()
@@ -639,7 +645,7 @@ local function preload(roundId,map)
   end
   if token~=loadToken then return end
   if not geometryReady then
-   loading.Visible=false clearArenaLoadingAvatar() event:FireServer("loadFailed",roundId)
+   loading.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() event:FireServer("loadFailed",roundId)
    notice.Text="A conexão está lenta. A arena continua carregando." return
   end
   local done=false local mediaDeadline=os.clock()+8
@@ -661,6 +667,7 @@ local function preload(roundId,map)
   loading.Visible=false
   goodLuck.Visible=false
   clearArenaLoadingAvatar()
+  restoreLoadingCamera()
   -- Geometry gates readiness; optional unavailable audio/decals must not eject a player.
   if map and map.Parent and map:GetAttribute("RoundId")==roundId then event:FireServer("ready",roundId) end
  end)
@@ -721,7 +728,7 @@ end)
 
 net.Update.OnClientEvent:Connect(function(action,a,b)
  if action=="reset" then
-  loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() progressFill.Size=UDim2.fromScale(0,1)
+  loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
  elseif action=="load" then
@@ -924,7 +931,7 @@ end)
 
 if player.GetAttributeChangedSignal then
  player:GetAttributeChangedSignal("VoidActive"):Connect(function()
-  if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() end
+  if player:GetAttribute("VoidActive") then loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() end
  end)
 end
 
