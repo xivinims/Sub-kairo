@@ -152,15 +152,16 @@ local ok,result=xpcall(function()
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
  assert(not (messages[killer] and messages[killer].jasonIntro),"Removed killer intro cinematic was sent")
  local killerSpec=require(net.Config).Killers[net:GetAttribute("Killer")]
- local expectedKillerSpeed=assert(killerSpec and killerSpec.speed,"Selected killer config missing")
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==expectedKillerSpeed,"Player killer did not use its configured speed")
+ local configuredKillerSpeed=assert(killerSpec and killerSpec.speed,"Selected killer config missing")
+ local expectedKillerSpeed=math.max(15,configuredKillerSpeed-1.8)
+ assert(math.abs(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed-expectedKillerSpeed)<.01,"Player killer did not use stamina-aware walk speed")
  local victim=nil
  for i,p in ipairs(players) do
   p.Character:PivotTo(CFrame.new(i*30,1000,0)) p.Character.HumanoidRootPart.Anchored=true
   if i<=8 and p~=killer then victim=p end
  end
  advance(.5)
- assert(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed==expectedKillerSpeed,"Player killer movement changed unexpectedly")
+ assert(math.abs(killer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed-expectedKillerSpeed)<.01,"Player killer stamina-aware walk speed changed unexpectedly")
  local before=net:GetAttribute("EndsAt")
  send(killer,"loadFailed",1) advance(.3)
  assert(net:GetAttribute("Phase")=="Partida" and net:GetAttribute("EndsAt")==before,"Advisory preload error ended a running player-Jason round")
