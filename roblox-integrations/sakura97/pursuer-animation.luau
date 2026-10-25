@@ -318,7 +318,8 @@ Run.PreSimulation:Connect(function(dt)
     local attack=model:GetAttribute("AttackAt") or -100
     local execSince=workspace:GetServerTimeNow()-execution
     local since=workspace:GetServerTimeNow()-attack
-    local executing=execSince>=0 and execSince<1.65
+    local executionDuration=math.max(.1,model:GetAttribute("ExecutionDuration") or 1.85)
+    local executing=execSince>=0 and execSince<executionDuration
     local attacking=not executing and since>=0 and since<.75
     local state=executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle")
     local scale=1
