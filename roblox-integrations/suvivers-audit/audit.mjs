@@ -66,41 +66,31 @@ function first(task){
 
 
 const script=`
-local report={version=game.PlaceVersion,assets={},avatarSettings={}}
-local sp=game:GetService("StarterPlayer")
-for _,name in ipairs({"GameSettingsAvatar","AvatarJointUpgrade","LoadCharacterAppearance"}) do
- local ok,value=pcall(function() return sp[name] end)
- report.avatarSettings[name]={readable=ok,value=tostring(value)}
+local Players=game:GetService("Players")
+local id=Players:GetUserIdFromNameAsync("ch_ckz2n")
+local description=Players:GetHumanoidDescriptionFromUserIdAsync(id)
+local report={userId=id,shirt=description.Shirt,pants=description.Pants,accessories=description:GetAccessories(true),tables={}}
+local npc=game:GetService("AssetService"):LoadAssetAsync(92697245643515)
+report.joints={}
+for _,v in ipairs(npc:GetDescendants()) do if v:IsA("Motor6D") then table.insert(report.joints,{name=v.Name,part0=v.Part0 and v.Part0.Name,part1=v.Part1 and v.Part1.Name,c0={v.C0:GetComponents()},transform={v.Transform:GetComponents()}}) end end
+local ok,seq=pcall(function() return game:GetService("KeyframeSequenceProvider"):GetKeyframeSequenceAsync("rbxassetid://10353447633") end)
+report.pose={ok=ok}
+if ok then
+ local frames=seq:GetKeyframes() table.sort(frames,function(a,b) return a.Time<b.Time end)
+ report.pose.frames=#frames report.pose.length=frames[#frames].Time report.pose.first={}
+ for _,p in ipairs(frames[1]:GetDescendants()) do if p:IsA("Pose") then table.insert(report.pose.first,{name=p.Name,weight=p.Weight,cf={p.CFrame:GetComponents()}}) end end
+else report.pose.error=tostring(seq) end
+local lobby=workspace:FindFirstChild("JediLibrary")
+local spawn=lobby and lobby:GetAttribute("VerifiedSpawn")
+report.spawn=tostring(spawn)
+local origin=typeof(spawn)=="CFrame" and spawn.Position or typeof(spawn)=="Vector3" and spawn or Vector3.zero
+for _,v in ipairs(lobby:GetDescendants()) do
+ if v:IsA("BasePart") and v.Anchored and v.CanCollide and v.Size.X>=4 and v.Size.Z>=3 and v.Size.Y<=2 and v.CFrame.UpVector.Y>.98 then
+ table.insert(report.tables,{path=v:GetFullName(),pos=tostring(v.Position),size=tostring(v.Size),distance=(v.Position-origin).Magnitude,name=v.Name,parent=v.Parent.Name})
+ end
 end
-for _,id in ipairs({92697245643515,80608769509945}) do
- local ok,m=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
- local rec={id=id,loaded=ok}
- if ok and m then
-  local scripts=0 local count=0 local meshes=0 local large={} local sequences={} local animations={} local models={}
-  for _,v in ipairs(m:GetDescendants()) do
-   if v:IsA("LuaSourceContainer") then scripts+=1 rec.scriptSources=rec.scriptSources or {} table.insert(rec.scriptSources,{path=v:GetFullName(),source=string.sub(v.Source,1,16000)})
-   elseif v:IsA("Animation") then table.insert(animations,{name=v.Name,id=v.AnimationId,path=v:GetFullName()})
-   elseif v:IsA("KeyframeSequence") then
-    local frames=v:GetKeyframes() local poses={} local seen={} local last=0
-    for _,f in ipairs(frames) do last=math.max(last,f.Time) for _,pose in ipairs(f:GetDescendants()) do if pose:IsA("Pose") and pose.Weight>0 and not seen[pose.Name] then seen[pose.Name]=true table.insert(poses,pose.Name) end end end
-    table.sort(poses) table.insert(sequences,{name=v.Name,path=v:GetFullName(),frames=#frames,length=last,poses=poses})
-   elseif v:IsA("Model") and v:FindFirstChildOfClass("Humanoid") then table.insert(models,{name=v.Name,rig=tostring(v:FindFirstChildOfClass("Humanoid").RigType)})
-   elseif v:IsA("BasePart") then
-    count+=1 if v:IsA("MeshPart") then meshes+=1 end
-    if v.Size.X>12 and v.Size.Z>12 and v.CFrame.UpVector.Y>.8 then table.insert(large,{name=v:GetFullName(),size=tostring(v.Size),pos=tostring(v.Position),collide=v.CanCollide,transparent=v.Transparency}) end
-   end
-  end
-  table.sort(large,function(a,b) return a.name<b.name end)
-  while #large>25 do table.remove(large) end
-  local cf,size=m:GetBoundingBox()
-  rec.parts=count rec.scripts=scripts rec.meshes=meshes rec.size=tostring(size) rec.center=tostring(cf.Position) rec.ground=large rec.children={} rec.sequences=sequences rec.animations=animations rec.models=models
-  for _,v in ipairs(m:GetChildren()) do table.insert(rec.children,{name=v.Name,class=v.ClassName}) end
-  m:Destroy()
- else rec.error=tostring(m) end
- table.insert(report.assets,rec)
-end
-local ok,details=pcall(function() return game:GetService("AssetService"):GetBundleDetailsAsync(251391123581565) end)
-report.bundle={ok=ok,details=ok and details or tostring(details)}
+table.sort(report.tables,function(a,b) return a.distance<b.distance end)
+while #report.tables>35 do table.remove(report.tables) end
 return report
 `;
-console.log('EXPANSION_AUDIT',JSON.stringify(first(await execute(script))));
+console.log('NPC_AVATAR_AUDIT',JSON.stringify(first(await execute(script))));
