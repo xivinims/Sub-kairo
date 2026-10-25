@@ -284,6 +284,9 @@ local function hideResult()
 end
 local resultClose=button(result,"Close","×",UDim2.fromOffset(42,42),UDim2.new(1,-54,0,10),hideResult)
 resultClose.ZIndex=77 resultClose.TextSize=26 resultClose.BackgroundTransparency=1 resultClose.UIStroke.Enabled=false
+result:GetPropertyChangedSignal("Visible"):Connect(function()
+ if not result.Visible then restoreResultCamera() end
+end)
 
 local function resultVictimReaction(victim,generation)
  local root=victim.PrimaryPart or victim:FindFirstChild("HumanoidRootPart")
