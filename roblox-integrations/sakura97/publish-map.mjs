@@ -309,7 +309,7 @@ end)()
 assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
 local assets=game.ServerStorage.SurvivalAssets
-assert(#assets.Maps:GetChildren()==5 and assets.Maps.DoomspireBrickbattle and assets.Maps.JuggernautFightArena and assets.Maps.PirateBayIsland and assets.Maps.NaturalDisasterSurvival and assets.Maps.RocketArena)
+assert(#assets.Maps:GetChildren()==7 and assets.Maps.DoomspireBrickbattle and assets.Maps.JuggernautFightArena and assets.Maps.PirateBayIsland and assets.Maps.NaturalDisasterSurvival and assets.Maps.RocketArena and assets.Maps.PiggySewers and assets.Maps.PiggyMappleDonut)
 assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason and assets.Killers.Krampus and assets.Killers.Piggy)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
@@ -390,12 +390,14 @@ if(applied?.saved){
   assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
 local assets=game.ServerStorage.SurvivalAssets
   assert(game.PlaceVersion>${applied.sourceVersion},"Published version did not advance")
-  assert(#assets.Maps:GetChildren()==5,"Expected five requested maps")
+  assert(#assets.Maps:GetChildren()==7,"Expected seven requested maps")
   assert(assets.Maps.DoomspireBrickbattle:GetAttribute("SourceAssetId")==109440846094241)
   assert(assets.Maps.JuggernautFightArena:GetAttribute("SourceAssetId")==137884561019081)
   assert(assets.Maps.PirateBayIsland:GetAttribute("SourceAssetId")==127398591748883)
   assert(assets.Maps.NaturalDisasterSurvival:GetAttribute("SourceAssetId")==92220535332787)
   assert(assets.Maps.RocketArena:GetAttribute("SourceAssetId")==112232657511704)
+  assert(assets.Maps.PiggySewers:GetAttribute("SourceAssetId")==7757562864)
+  assert(assets.Maps.PiggyMappleDonut:GetAttribute("SourceAssetId")==16440225099)
   assert(assets.Maps.RocketArena:GetAttribute("RequestedScale")==2,"RocketArena did not persist at 2x scale")
   assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old maps persisted")
   assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897)
@@ -476,13 +478,15 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,112)',1,true),"XP/level HUD was not lowered enough")
   assert(game.ServerScriptService.RoundRules.Source:find("Duration=660",1,true) and game.ServerScriptService.RoundRules.Source:find("VoteDuration=6",1,true),"11-minute round or six-second voting rules missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('state.phase="Votação"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("setupObjectives",1,true) and game.ServerScriptService.SurvivalServer.Source:find("toggleCarry",1,true),"Objective gameplay runtime missing")
+  assert(game.ServerScriptService.SurvivalServer.Source:find("MapVoteOptions",1,true) and game.ServerScriptService.SurvivalServer.Source:find('RANDOM=0',1,true),"Four-map plus random voting runtime missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("4 NA VOTAÇÃO",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("7 MAPAS TOTAIS",1,true),"Four-map plus random voting UI missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('Crouch","AGACHAR"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("ObjectiveInventory",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("MissionBanner",1,true),"Objective HUD/stamina/crouch UI missing")
   assert(game.ServerStorage.SurvivalAssets.Items.ComputerTemplate:GetAttribute("SourceAssetId")==4845271739 and game.ServerStorage.SurvivalAssets.Items.KeyTemplate:GetAttribute("SourceAssetId")==11471202845,"PC/key objective assets missing")
   assert(game.ReplicatedStorage.Survival:GetAttribute("InventoryAssetId")==73852738603629 and game.ReplicatedStorage.Survival:GetAttribute("FootstepAssetId")==137365042825200,"Inventory/footstep assets missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('PresentationFrozen',1,true),"Frozen result pose runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('net:GetAttribute("Phase")=="Votação"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('voteTimer.Text=tostring(seconds)',1,true),"Full six-second voting overlay missing")
-  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,fullVotingWindow=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,frozenResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=125,logo=true,mapCount=5,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,fullVotingWindow=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,frozenResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=125,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
