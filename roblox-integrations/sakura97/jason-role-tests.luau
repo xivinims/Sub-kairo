@@ -144,7 +144,7 @@ local ok,result=xpcall(function()
  for _,p in ipairs(players) do if p:GetAttribute("ChoosingKiller") then chooser=p choices+=1 end end
  assert(choices==1,"Selection must be private to exactly one participant")
  for _,p in ipairs(players) do if p~=chooser then send(p,"chooseKiller","Chucky") assert(not p:GetAttribute("ChoosingKiller"),"Non-selected player got selection UI") end end
- send(chooser,"chooseKiller","Jeff") advance(1)
+ send(chooser,"chooseKiller","Jason") advance(1)
  assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
@@ -154,7 +154,7 @@ local ok,result=xpcall(function()
  assert(players[9]:GetAttribute("RoundStatus")=="lobby","Ninth participant admitted")
  local killer=nil local killers=0
  for _,p in ipairs(players) do if p:GetAttribute("IsJason") then killer=p killers+=1 end end
- assert(net:GetAttribute("Killer")=="Jeff","Chosen killer was ignored")
+ assert(net:GetAttribute("Killer")=="Jason","Default owned killer choice was ignored")
  assert(workspace.ActiveArena:GetAttribute("DisplayName")==game.ServerStorage.SurvivalAssets.Maps[mapName]:GetAttribute("DisplayName"),"Winning map vote ignored")
  assert(killers==1 and killer,"Exactly one player must become Jason")
  assert(killer.Character==killerModel and not aiContext,"AI and player cannot control Jason together")
