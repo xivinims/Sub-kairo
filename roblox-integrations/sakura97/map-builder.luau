@@ -7,11 +7,11 @@ local specs={
  {name="PirateBayIsland",id=127398591748883,label="Pirate Bay Island Cove",scale=1,maxParts=5500},
  {name="NaturalDisasterSurvival",id=92220535332787,label="Natural Disaster Survival",scale=1},
  {name="RocketArena",id=112232657511704,label="RocketArena",scale=2},
- {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true,killerClearance=5.8,minKillerDistance=28},
- {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true,minKillerDistance=28},
+ {name="PiggySewers",id=7757562864,label="Piggy Sewers",scale=1,maxParts=12500,heavy=true,killerClearance=5.8,minKillerDistance=28,agentRadius=1.6,openDoors=true,spawnSpacing=6,objectiveSpacing=6},
+ {name="PiggyMappleDonut",id=16440225099,label="Piggy Book 2 - Mapple Donut",scale=1,maxParts=9000,heavy=true,killerClearance=5.8,minKillerDistance=24,agentRadius=1.35,openDoors=true,spawnSpacing=5.5,objectiveSpacing=5.5},
 }
-local function route(a,b)
- local path=PF:CreatePath({AgentRadius=2.2,AgentHeight=5,AgentCanJump=true,AgentCanClimb=true,WaypointSpacing=5})
+local function route(a,b,agentRadius)
+ local path=PF:CreatePath({AgentRadius=agentRadius or 2.2,AgentHeight=5,AgentCanJump=true,AgentCanClimb=true,WaypointSpacing=4})
  local ok=pcall(function() path:ComputeAsync(a,b) end)
  local success=ok and path.Status==Enum.PathStatus.Success
  path:Destroy() return success
@@ -63,10 +63,30 @@ function Builder.build(load,sanitize,destination)
   cf,size=map:GetBoundingBox()
   local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Include
   params.FilterDescendantsInstances={map} params.RespectCanCollide=true
+  local function pathOk(a,b)
+   return route(a,b,spec.agentRadius)
+  end
   local floors={} local lowest=math.huge local parts=0 local lightCount=0
+  local function ancestryText(obj)
+   local names={string.lower(obj.Name)}
+   local parent=obj.Parent
+   for _=1,4 do
+    if not parent or parent==map then break end
+    table.insert(names,string.lower(parent.Name))
+    parent=parent.Parent
+   end
+   return table.concat(names," ")
+  end
   for _,p in ipairs(map:GetDescendants()) do
    if p:IsA("BasePart") then
     parts+=1 p.CanTouch=false
+    if spec.openDoors then
+     local text=ancestryText(p)
+     if (string.find(text,"door",1,true) or string.find(text,"gate",1,true)) and not string.find(text,"floor",1,true) then
+      p.CanCollide=false
+      p:SetAttribute("GameplayPassThrough",true)
+     end
+    end
     if p.Size.Magnitude<5 or spec.heavy then p.CastShadow=false end
     if spec.heavy and p:IsA("MeshPart") then
      p.RenderFidelity=Enum.RenderFidelity.Performance
@@ -150,24 +170,26 @@ function Builder.build(load,sanitize,destination)
    if not chosen then break end used[chosen]=true table.insert(probes,candidates[chosen])
   end
   local selected={}
-  for attempt=1,3 do
+  local connectedRequired=spec.heavy and 7 or 9
+  local anchorAttempts=spec.heavy and math.min(12,#candidates) or math.min(3,#candidates)
+  for attempt=1,anchorAttempts do
    local anchor=candidates[attempt] selected={anchor}
-   for _,p in ipairs(probes) do if (p-anchor).Magnitude>4 and route(anchor,p) then table.insert(selected,p) end end
-   if #selected>=12 then break end
+   for _,p in ipairs(probes) do if (p-anchor).Magnitude>3 and pathOk(anchor,p) then table.insert(selected,p) end end
+   if #selected>=math.max(connectedRequired,12) then break end
   end
-  assert(#selected>=9,"No connected playable region for "..spec.name)
+  assert(#selected>=connectedRequired,"No connected playable region for "..spec.name.." connected="..#selected.." candidates="..#candidates)
   local start=selected[1] local far=nil local distance=0 local killerClearance=spec.killerClearance or 10
   local minimumKillerDistance=spec.minKillerDistance or math.clamp(math.min(size.X,size.Z)*.34,36,70)
   for _,p in ipairs(selected) do
    local d=(p-start).Magnitude
    local ground=p-Vector3.new(0,3,0)
-   if d>distance and d>=minimumKillerDistance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and route(start,p) then far=p distance=d end
+   if d>distance and d>=minimumKillerDistance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and pathOk(start,p) then far=p distance=d end
   end
   if not far then
    for _,p in ipairs(selected) do
     local d=(p-start).Magnitude
     local ground=p-Vector3.new(0,3,0)
-    if d>distance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and route(start,p) then far=p distance=d end
+    if d>distance and insideFootprint(ground,footprintMargin+2) and radialClear(ground,killerClearance) and pathOk(start,p) then far=p distance=d end
    end
   end
   assert(far and distance>=math.min(24,minimumKillerDistance) and killerClearance>=5.8,"No safe pursuer spawn away from walls in "..spec.name)
@@ -177,7 +199,7 @@ function Builder.build(load,sanitize,destination)
   local arrivalsChosen={}
   local available={}
   for _,point in ipairs(candidates) do
-   if (point-far).Magnitude>=math.max(18,math.min(36,distance*.45)) and route(start,point) then table.insert(available,point) end
+   if (point-far).Magnitude>=math.max(18,math.min(36,distance*.45)) and pathOk(start,point) then table.insert(available,point) end
    if #available>=24 then break end
   end
   while #arrivalsChosen<8 do
@@ -187,7 +209,7 @@ function Builder.build(load,sanitize,destination)
     for _,used in ipairs(arrivalsChosen) do nearest=math.min(nearest,(point-used).Magnitude) end
     if nearest>bestDistance then best=point bestDistance=nearest end
    end
-   if not best or bestDistance<8 then break end
+   if not best or bestDistance<(spec.spawnSpacing or 8) then break end
    table.insert(arrivalsChosen,best) addPoint(arrivals,#arrivalsChosen,best)
   end
   assert(#arrivalsChosen>=7,"Need seven separated survivor spawns in "..spec.name.." candidates="..#candidates.." connected="..#selected.." available="..#available.." picked="..#arrivalsChosen.." killerDistance="..distance)
@@ -197,7 +219,7 @@ function Builder.build(load,sanitize,destination)
   for _,point in ipairs(candidates) do
    local nearest=(point-far).Magnitude
    for _,used in ipairs(arrivalsChosen) do nearest=math.min(nearest,(point-used).Magnitude) end
-   if nearest>=6 and route(start,point) then table.insert(possible,point) end
+   if nearest>=6 and pathOk(start,point) then table.insert(possible,point) end
    if #possible>=20 then break end
   end
   while #chosenSites<11 do
@@ -207,7 +229,7 @@ function Builder.build(load,sanitize,destination)
     for _,used in ipairs(chosenSites) do nearest=math.min(nearest,(point-used).Magnitude) end
     if nearest>bestDistance then best=point bestDistance=nearest end
    end
-   if not best or bestDistance<8 then break end
+   if not best or bestDistance<(spec.objectiveSpacing or 8) then break end
    table.insert(chosenSites,best) addPoint(objectiveSites,#chosenSites,best-Vector3.new(0,3,0))
   end
   assert(#chosenSites>=9,"Need nine reachable objective sites in "..spec.name)
