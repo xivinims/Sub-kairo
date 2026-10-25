@@ -353,10 +353,45 @@ flashlightAsset:Destroy()
 local function storeObjectiveAsset(id,name)
  local asset=load(id)
  sanitize(asset,true)
- asset.Name=name
- asset:SetAttribute("SourceAssetId",id)
- asset.Parent=items
- return asset
+ local source=nil
+ for _,obj in ipairs(asset:GetDescendants()) do
+  if obj:IsA("Model") and (obj:FindFirstChildWhichIsA("BasePart",true) or obj:FindFirstChildWhichIsA("MeshPart",true)) then source=obj break end
+ end
+ if not source then
+  local tool=asset:FindFirstChildWhichIsA("Tool",true)
+  if tool then
+   local model=Instance.new("Model")
+   model.Name=name
+   for _,child in ipairs(tool:GetChildren()) do
+    if not child:IsA("LuaSourceContainer") then child:Clone().Parent=model end
+   end
+   source=model
+  end
+ end
+ if not source then
+  local part=asset:FindFirstChildWhichIsA("BasePart",true)
+  if part then
+   local model=Instance.new("Model")
+   local copy=part:Clone() copy.Parent=model model.PrimaryPart=copy
+   source=model
+  end
+ end
+ assert(source,"Objective asset "..id.." has no usable world model")
+ local template=source.Parent==nil and source or source:Clone()
+ template.Name=name
+ sanitize(template,true)
+ local primary=template.PrimaryPart or template:FindFirstChild("Handle",true) or template:FindFirstChildWhichIsA("BasePart",true)
+ assert(primary and primary:IsA("BasePart"),"Objective asset "..id.." has no BasePart")
+ template.PrimaryPart=primary
+ for _,part in ipairs(template:GetDescendants()) do
+  if part:IsA("BasePart") then
+   part.Anchored=true part.CanCollide=false part.CanTouch=false part.CanQuery=true
+  end
+ end
+ template:SetAttribute("SourceAssetId",id)
+ template.Parent=items
+ asset:Destroy()
+ return template
 end
 local computerTemplate=storeObjectiveAsset(4845271739,"ComputerTemplate")
 local keyTemplate=storeObjectiveAsset(11471202845,"KeyTemplate")
