@@ -245,14 +245,77 @@ end
 freddyMotion:SetAttribute("ClipCount",#freddyMotion:GetChildren())
 freddyMotion:SetAttribute("BundleId",251391123581565)
 
+local function authoredMotionLibrary(asset,name,assetId)
+ local library=Instance.new("Folder")
+ library.Name=name
+ local aliases={}
+ local function canonical(raw)
+  local n=string.lower(raw or "")
+  if string.find(n,"idle",1,true) then return "Jason Idle" end
+  if string.find(n,"walk",1,true) then return "Jason Walk" end
+  if string.find(n,"run",1,true) or string.find(n,"sprint",1,true) then return "Jason Run" end
+  if string.find(n,"strike",1,true) or string.find(n,"attack",1,true) or string.find(n,"slash",1,true) or string.find(n,"swing",1,true) then return "Jason Slash" end
+  if string.find(n,"kill",1,true) or string.find(n,"execute",1,true) then return "Jason_Kill" end
+  return nil
+ end
+ for _,obj in ipairs(asset:GetDescendants()) do
+  if obj:IsA("KeyframeSequence") then
+   local wanted=canonical(obj.Name)
+   if wanted and not aliases[wanted] then
+    local holder=Instance.new("Folder") local seq=obj:Clone() seq.Name=wanted seq.Parent=holder
+    compact(holder,library) holder:Destroy()
+    aliases[wanted]=true
+   end
+  elseif obj:IsA("Animation") and obj.AnimationId~="" then
+   local wanted=canonical(obj.Name)
+   if wanted and not aliases[wanted] then
+    local ok,seq=pcall(function() return game:GetService("KeyframeSequenceProvider"):GetKeyframeSequenceAsync(obj.AnimationId) end)
+    if ok and seq then
+     local holder=Instance.new("Folder") seq.Name=wanted seq.Parent=holder
+     compact(holder,library) holder:Destroy()
+     aliases[wanted]=true
+    end
+   end
+  end
+ end
+ for _,wanted in ipairs({"Jason Idle","Jason Walk","Jason Run","Jason Slash","Jason_Kill"}) do
+  if not library:FindFirstChild(wanted) then
+   local fallback=defaultMotion:FindFirstChild(wanted) or defaultMotion:FindFirstChild(wanted=="Jason_Kill" and "Jason Slash" or wanted)
+   if fallback then fallback:Clone().Parent=library end
+  end
+ end
+ library:SetAttribute("ClipCount",#library:GetChildren())
+ library:SetAttribute("SourceAssetId",assetId)
+ library.Parent=motionLibraries
+ return library.Name
+end
+
+local function findPursuerRig(asset,rootName)
+ if rootName then
+  local exact=asset:FindFirstChild(rootName,true)
+  if exact and exact:IsA("Model") and exact:FindFirstChildOfClass("Humanoid") then return exact end
+ end
+ for _,obj in ipairs(asset:GetDescendants()) do
+  if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and (obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj:FindFirstChild("LowerTorso")) then
+   return obj
+  end
+ end
+ return nil
+end
+
 for _,spec in ipairs({
  {name="JohnDoe",id=103232099547025,root="John"},
+
  {name="Chucky",id=95580261594507,root="Chucky",cool=true},
  {name="Jeff",id=15578797832,root="Jeff The Killer"},
  {name="Freddy",id=18663196733,root="FRDYClone",cool=true},
+ {name="Krampus",id=92081889778550,authored=true},
+ {name="Piggy",id=8762062897,authored=true},
 }) do
  local asset=spec.name=="JohnDoe" and johnAsset or load(spec.id)
- local source=assert(asset:FindFirstChild(spec.root,true),"Missing "..spec.name)
+ local source=assert(findPursuerRig(asset,spec.root),"Missing usable rig for "..spec.name)
+ local libraryName=nil
+ if spec.authored then libraryName=authoredMotionLibrary(asset,spec.name,spec.id) end
  local model=source:Clone() sanitize(model,false) model.Name=spec.name
  for _,v in ipairs(model:GetDescendants()) do
   if v:IsA("KeyframeSequence") or (v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")) then v:Destroy() end
@@ -267,7 +330,7 @@ for _,spec in ipairs({
  model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
  h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
- model:SetAttribute("MotionLibrary",spec.name=="Jeff" and "Noli" or spec.name=="Freddy" and "Animatronic" or spec.cool and "Cool" or "Default")
+ model:SetAttribute("MotionLibrary",libraryName or (spec.name=="Jeff" and "Noli" or spec.name=="Freddy" and "Animatronic" or spec.cool and "Cool" or "Default"))
  model.Parent=rigs
  if asset~=johnAsset then asset:Destroy() end
 end
@@ -286,6 +349,42 @@ for _,p in ipairs(flashlight:GetDescendants()) do
 end
 flashlight.Parent=items
 flashlightAsset:Destroy()
+
+local function storeObjectiveAsset(id,name)
+ local asset=load(id)
+ sanitize(asset,true)
+ asset.Name=name
+ asset:SetAttribute("SourceAssetId",id)
+ asset.Parent=items
+ return asset
+end
+local computerTemplate=storeObjectiveAsset(4845271739,"ComputerTemplate")
+local keyTemplate=storeObjectiveAsset(11471202845,"KeyTemplate")
+local inventoryAsset=load(73852738603629)
+local inventoryGui=inventoryAsset:FindFirstChildWhichIsA("ScreenGui",true)
+if inventoryGui then
+ local copy=inventoryGui:Clone()
+ for _,obj in ipairs(copy:GetDescendants()) do if obj:IsA("LuaSourceContainer") then obj:Destroy() end end
+ copy.Name="InventoryTemplate"
+ copy:SetAttribute("SourceAssetId",73852738603629)
+ copy.Parent=net
+else
+ net:SetAttribute("InventoryAssetId",73852738603629)
+end
+inventoryAsset:Destroy()
+local walkingAsset=load(137365042825200)
+local walkingSound=walkingAsset:FindFirstChildWhichIsA("Sound",true)
+if walkingSound then
+ local copy=walkingSound:Clone()
+ copy.Name="FootstepSound"
+ copy:SetAttribute("SourceAssetId",137365042825200)
+ copy.Parent=net
+end
+walkingAsset:Destroy()
+net:SetAttribute("ComputerAssetId",4845271739)
+net:SetAttribute("KeyAssetId",11471202845)
+net:SetAttribute("InventoryAssetId",73852738603629)
+net:SetAttribute("FootstepAssetId",137365042825200)
 
 -- No automatic game music. Keep only explicit player-triggered audio and interface/SFX.
 local media=RS:FindFirstChild("XNMedia")
@@ -334,7 +433,8 @@ local friendPresence=SP:FindFirstChild("FriendPresence")
 if not friendPresence then friendPresence=Instance.new("LocalScript") friendPresence.Name="FriendPresence" friendPresence.Parent=SP end
 friendPresence.Source=__FRIENDS_SOURCE__
 
-net:SetAttribute("Version",124) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
+net:SetAttribute("Version",125) net:SetAttribute("MaxParticipants",8) net:SetAttribute("SurvivorRig","R6")
+net:SetAttribute("MissionStage","Waiting") net:SetAttribute("ComputersDone",0) net:SetAttribute("ComputersRequired",3)
 local light=game:GetService("Lighting")
 light.ClockTime=0
 light.Brightness=1.9
@@ -351,6 +451,6 @@ if oldGrade then oldGrade:Destroy() end
 for _,v in ipairs(light:GetChildren()) do
  if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then v:Destroy() end
 end
-return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true}
+return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
 
 
