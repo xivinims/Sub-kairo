@@ -126,10 +126,15 @@ local ok,result=xpcall(function()
  for i=1,8 do send(players[i],"chooseKiller","Jeff") end
  advance(29)
  assert(net:GetAttribute("Phase")=="Votação","Six-second voting phase did not begin after intermission")
- local mapName=game.ServerStorage.SurvivalAssets.Maps:GetChildren()[1].Name
+ local options=game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVoteOptions") or "[]")
+ assert(#options==4,"Voting phase must expose exactly four maps")
+ local mapName=options[1]
+ assert(game.ServerStorage.SurvivalAssets.Maps:FindFirstChild(mapName),"Voting option is not from the seven-map pool")
  send(players[1],"voteMap",mapName)
  send(players[1],"voteMap","invalid-map")
  assert(players[1]:GetAttribute("MapVote")==mapName,"Invalid map overwrote vote")
+ send(players[2],"voteMap","RANDOM")
+ assert(players[2]:GetAttribute("MapVote")=="RANDOM","Random voting option was rejected")
  advance(6)
  assert(net:GetAttribute("Phase")=="Escolha","Killer selection did not follow six-second map vote")
  local chooser=nil local choices=0
