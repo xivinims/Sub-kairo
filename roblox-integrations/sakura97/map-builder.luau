@@ -235,6 +235,12 @@ function Builder.build(load,sanitize,destination)
   assert(#chosenSites>=9,"Need nine reachable objective sites in "..spec.name)
   map:SetAttribute("ObjectiveSitesValidated",true)
   map:SetAttribute("SpawnLayoutVersion",2)
+  map:SetAttribute("RequiredSafePoints",connectedRequired)
+  map:SetAttribute("RequiredArrivalCount",7)
+  map:SetAttribute("RequiredObjectiveSites",9)
+  map:SetAttribute("RequiredArrivalSpacing",spec.spawnSpacing or 8)
+  map:SetAttribute("RequiredObjectiveSpacing",spec.objectiveSpacing or 8)
+  map:SetAttribute("RequiredKillerDistance",spec.heavy and 24 or 30)
   local toward=Vector3.new(cf.X-start.X,0,cf.Z-start.Z)
   if toward.Magnitude<1 then toward=Vector3.new(far.X-start.X,0,far.Z-start.Z) end
   toward=toward.Unit
