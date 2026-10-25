@@ -1,252 +1,33 @@
--- Local arena grading. Visual upgrades stay client-side so low-end devices can opt out.
-local Players=game:GetService("Players")
 local Lighting=game:GetService("Lighting")
-local TweenService=game:GetService("TweenService")
-local RS=game:GetService("ReplicatedStorage")
 local Terrain=workspace.Terrain
+-- Fixed Violence District look. No user-facing environment/visual sliders.
+Lighting.ClockTime=5
+Lighting.Brightness=3
+Lighting.Ambient=Color3.fromRGB(78,102,108)
+Lighting.OutdoorAmbient=Color3.fromRGB(93,104,124)
+Lighting.ColorShift_Top=Color3.fromRGB(62,78,81)
+Lighting.ExposureCompensation=0
+Lighting.GlobalShadows=true
+Lighting.ShadowSoftness=.2
+Lighting.EnvironmentDiffuseScale=.222
+Lighting.EnvironmentSpecularScale=1
+Lighting.FogColor=Color3.fromRGB(192,192,192)
+Lighting.FogStart=0
+Lighting.FogEnd=100000
+pcall(function() Lighting.Technology=Enum.Technology.Future end)
 
-local player=Players.LocalPlayer
-local net=RS:WaitForChild("Survival")
-
-local original={
- Ambient=Lighting.Ambient,
- OutdoorAmbient=Lighting.OutdoorAmbient,
- ExposureCompensation=Lighting.ExposureCompensation,
- ClockTime=Lighting.ClockTime,
- Brightness=Lighting.Brightness,
- ShadowSoftness=Lighting.ShadowSoftness,
- EnvironmentDiffuseScale=Lighting.EnvironmentDiffuseScale,
- EnvironmentSpecularScale=Lighting.EnvironmentSpecularScale,
- WaterReflectance=Terrain.WaterReflectance,
- WaterTransparency=Terrain.WaterTransparency,
- WaterWaveSize=Terrain.WaterWaveSize,
- WaterWaveSpeed=Terrain.WaterWaveSpeed,
-}
-
-local atmosphere=Lighting:FindFirstChild("SuviversAtmosphere") or Lighting:FindFirstChildOfClass("Atmosphere")
-if not atmosphere then atmosphere=Instance.new("Atmosphere") atmosphere.Name="SuviversAtmosphere" atmosphere.Parent=Lighting end
-local originalAir={
- Color=atmosphere.Color,Decay=atmosphere.Decay,Density=atmosphere.Density,
- Haze=atmosphere.Haze,Glare=atmosphere.Glare,Offset=atmosphere.Offset,
-}
-
-local function effect(class,name)
- local old=Lighting:FindFirstChild(name)
- if old and old.ClassName~=class then old:Destroy() old=nil end
- local obj=old or Instance.new(class)
- obj.Name=name obj.Parent=Lighting
- return obj
+for _,name in ipairs({"SuviversArenaGrade","SuviversArenaRays","SuviversArenaDOF","SuviversAtmosphere"}) do
+ local old=Lighting:FindFirstChild(name) if old then old:Destroy() end
 end
-
-local grade=effect("ColorCorrectionEffect","SuviversArenaGrade")
-local bloom=effect("BloomEffect","SuviversArenaBloom")
-local rays=effect("SunRaysEffect","SuviversArenaRays")
-local dof=effect("DepthOfFieldEffect","SuviversArenaDOF")
-
-grade.Enabled=false
-bloom.Enabled=false
-rays.Enabled=false
-dof.Enabled=false
-
-local themes={
- ["Doomspire Brickbattle"]={
-  ambient=Color3.fromRGB(64,68,78),outdoor=Color3.fromRGB(105,111,126),air=Color3.fromRGB(164,177,194),
-  decay=Color3.fromRGB(74,79,91),density=.13,haze=.42,exposure=.08,brightness=1.9,clock=8.25,
-  tint=Color3.fromRGB(226,231,239),contrast=.08,saturation=-.08,bloom=.12,rays=.018,
- },
- ["Juggernaut Fight Arena"]={
-  ambient=Color3.fromRGB(60,58,63),outdoor=Color3.fromRGB(98,92,96),air=Color3.fromRGB(164,153,157),
-  decay=Color3.fromRGB(76,68,71),density=.17,haze=.62,exposure=.05,brightness=1.82,clock=8.25,
-  tint=Color3.fromRGB(232,222,224),contrast=.13,saturation=-.16,bloom=.1,rays=.01,
- },
- ["Pirate Bay Island Cove"]={
-  ambient=Color3.fromRGB(59,72,79),outdoor=Color3.fromRGB(103,126,136),air=Color3.fromRGB(168,195,203),
-  decay=Color3.fromRGB(67,85,91),density=.12,haze=.45,exposure=.1,brightness=1.92,clock=8.25,
-  tint=Color3.fromRGB(220,235,236),contrast=.08,saturation=-.06,bloom=.13,rays=.025,
- },
- ["Natural Disaster Survival"]={
-  ambient=Color3.fromRGB(67,69,72),outdoor=Color3.fromRGB(111,116,121),air=Color3.fromRGB(174,182,189),
-  decay=Color3.fromRGB(82,87,91),density=.14,haze=.55,exposure=.08,brightness=1.88,clock=8.25,
-  tint=Color3.fromRGB(231,234,235),contrast=.1,saturation=-.1,bloom=.1,rays=.016,
- },
- ["RocketArena"]={
-  ambient=Color3.fromRGB(63,65,72),outdoor=Color3.fromRGB(104,109,122),air=Color3.fromRGB(166,178,195),
-  decay=Color3.fromRGB(74,79,91),density=.12,haze=.4,exposure=.09,brightness=1.92,clock=8.25,
-  tint=Color3.fromRGB(227,232,240),contrast=.09,saturation=-.08,bloom=.12,rays=.02,
- },
-}
-
-local lightTween,airTween,gradeTween
-local lastKey=nil
-local arenaReflectance=setmetatable({},{__mode="k"})
-local arenaLights=setmetatable({},{__mode="k"})
-
-local function active()
- return (player:GetAttribute("InRound") or player:GetAttribute("Spectating"))
-  and not player:GetAttribute("InMenu") and not player:GetAttribute("VoidActive")
-end
-
-local function reflectionEnabled()
- return player:GetAttribute("LowGraphics")~=true and player:GetAttribute("Reflections")~=false
-end
-
-local function restoreArenaEnhancements()
- for part,value in pairs(arenaReflectance) do
-  if part.Parent then part.Reflectance=value end
-  arenaReflectance[part]=nil
- end
- for light,state in pairs(arenaLights) do
-  if light.Parent then
-   light.Shadows=state.shadows
-   light.Brightness=state.brightness
-  end
-  arenaLights[light]=nil
+for _,obj in ipairs(Lighting:GetChildren()) do
+ if obj:IsA("ColorCorrectionEffect") or obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("Atmosphere") then
+  if obj.Name~="ViolenceDistrictBloom" then obj.Enabled=false end
  end
 end
-
-local function enhanceArena(model)
- restoreArenaEnhancements()
- if not model then return end
- local low=player:GetAttribute("LowGraphics")==true
- local reflect=reflectionEnabled()
- local shadowLights=0
- local reflectedParts=0
- for _,obj in ipairs(model:GetDescendants()) do
-  if obj:IsA("Light") and obj.Enabled and shadowLights<10 then
-   arenaLights[obj]={shadows=obj.Shadows,brightness=obj.Brightness}
-   obj.Shadows=not low and player:GetAttribute("MapShadows")==true
-   obj.Brightness=math.min(1.75,obj.Brightness*(low and 1 or 1.08))
-   shadowLights+=1
-  elseif reflect and obj:IsA("BasePart") and obj.Transparency<.96 and reflectedParts<340 then
-   local target=nil
-   if obj.Material==Enum.Material.Metal or obj.Material==Enum.Material.DiamondPlate then
-    target=.13
-   elseif obj.Material==Enum.Material.Glass then
-    target=.09
-   elseif obj.Material==Enum.Material.SmoothPlastic and obj.Size.X*obj.Size.Z>=36 and obj.CFrame.UpVector.Y>.9 then
-    target=.035
-   end
-   if target and obj.Reflectance<target then
-    arenaReflectance[obj]=obj.Reflectance
-    obj.Reflectance=target
-    reflectedParts+=1
-   end
-  end
- end
-end
-
-local function findArena()
- local arena=workspace:FindFirstChild("ActiveArena")
- return arena and arena:IsA("Model") and arena or nil
-end
-
-local function applyWater(on)
- if on then
-  Terrain.WaterReflectance=.55
-  Terrain.WaterTransparency=.28
-  Terrain.WaterWaveSize=.11
-  Terrain.WaterWaveSpeed=8
- else
-  Terrain.WaterReflectance=original.WaterReflectance
-  Terrain.WaterTransparency=original.WaterTransparency
-  Terrain.WaterWaveSize=original.WaterWaveSize
-  Terrain.WaterWaveSpeed=original.WaterWaveSpeed
- end
-end
-
-local function refresh(force)
- local inArena=active()
- local name=net:GetAttribute("Map")
- local theme=inArena and themes[name] or nil
- local low=player:GetAttribute("LowGraphics")==true
- local reflect=reflectionEnabled()
- local userSaturation=player:GetAttribute("VisualSaturation")
- local userContrast=player:GetAttribute("VisualContrast")
- local userExposure=player:GetAttribute("VisualExposure")
- local userTime=player:GetAttribute("VisualTime")
- if userSaturation==nil then userSaturation=-.65 end
- if userContrast==nil then userContrast=0 end
- if userExposure==nil then userExposure=1.5 end
- if userTime==nil then userTime=8.25 end
- local key=table.concat({
-  theme and name or "Lobby",tostring(low),tostring(reflect),tostring(player:GetAttribute("MapShadows")),
-  tostring(userSaturation),tostring(userContrast),tostring(userExposure),tostring(userTime)
- },"|")
- if key==lastKey and not force then return end
- lastKey=key
-
- if lightTween then lightTween:Cancel() end
- if airTween then airTween:Cancel() end
- if gradeTween then gradeTween:Cancel() end
-
- if theme then
-  local target={
-   Ambient=theme.ambient,
-   OutdoorAmbient=theme.outdoor,
-   ExposureCompensation=userExposure,
-   ClockTime=userTime,
-   Brightness=low and math.min(theme.brightness,1.65) or theme.brightness,
-   ShadowSoftness=low and .65 or .38,
-   EnvironmentDiffuseScale=low and .22 or .42,
-   EnvironmentSpecularScale=reflect and .92 or .18,
-  }
-  lightTween=TweenService:Create(Lighting,TweenInfo.new(1.15,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),target)
-  lightTween:Play()
-
-  local air={
-   Color=theme.air,Decay=theme.decay,
-   Density=low and theme.density*.58 or theme.density,
-   Haze=low and theme.haze*.38 or theme.haze,
-   Glare=low and 0 or .05,Offset=.08,
-  }
-  airTween=TweenService:Create(atmosphere,TweenInfo.new(1.15),air) airTween:Play()
-
-  grade.Enabled=true
-  gradeTween=TweenService:Create(grade,TweenInfo.new(.8),{
-   TintColor=theme.tint,Contrast=userContrast,
-   Saturation=userSaturation,Brightness=0,
-  })
-  gradeTween:Play()
-
-  bloom.Enabled=not low
-  bloom.Intensity=theme.bloom
-  bloom.Size=18
-  bloom.Threshold=1.18
-
-  rays.Enabled=not low
-  rays.Intensity=theme.rays
-  rays.Spread=.72
-
-  dof.Enabled=not low
-  dof.FocusDistance=19
-  dof.InFocusRadius=17
-  dof.NearIntensity=.035
-  dof.FarIntensity=.07
-
-  applyWater(reflect)
-  enhanceArena(findArena())
- else
-  lightTween=TweenService:Create(Lighting,TweenInfo.new(1),{
-   Ambient=original.Ambient,OutdoorAmbient=original.OutdoorAmbient,
-   ExposureCompensation=original.ExposureCompensation,ClockTime=original.ClockTime,
-   Brightness=original.Brightness,ShadowSoftness=original.ShadowSoftness,
-   EnvironmentDiffuseScale=original.EnvironmentDiffuseScale,
-   EnvironmentSpecularScale=original.EnvironmentSpecularScale,
-  }) lightTween:Play()
-  airTween=TweenService:Create(atmosphere,TweenInfo.new(1),originalAir) airTween:Play()
-  grade.Enabled=false bloom.Enabled=false rays.Enabled=false dof.Enabled=false
-  applyWater(false) restoreArenaEnhancements()
- end
-end
-
-for _,name in ipairs({"InRound","Spectating","InMenu","VoidActive","LowGraphics","Reflections","MapShadows"}) do
- player:GetAttributeChangedSignal(name):Connect(function() refresh(true) end)
-end
-net:GetAttributeChangedSignal("Map"):Connect(function() refresh(true) end)
-workspace.ChildAdded:Connect(function(child)
- if child.Name=="ActiveArena" then task.defer(function() refresh(true) end) end
-end)
-workspace.ChildRemoved:Connect(function(child)
- if child.Name=="ActiveArena" then restoreArenaEnhancements() end
-end)
-refresh(true)
+local bloom=Lighting:FindFirstChild("ViolenceDistrictBloom")
+if not bloom then bloom=Instance.new("BloomEffect") bloom.Name="ViolenceDistrictBloom" bloom.Parent=Lighting end
+bloom.Intensity=1 bloom.Threshold=2 bloom.Size=24 bloom.Enabled=true
+Terrain.WaterReflectance=.35
+Terrain.WaterTransparency=.32
+Terrain.WaterWaveSize=.08
+Terrain.WaterWaveSpeed=7
