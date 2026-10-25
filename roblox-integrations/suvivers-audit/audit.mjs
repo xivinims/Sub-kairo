@@ -66,31 +66,24 @@ function first(task){
 
 
 const script=`
-local Players=game:GetService("Players")
-local id=Players:GetUserIdFromNameAsync("ch_ckz2n")
-local description=Players:GetHumanoidDescriptionFromUserIdAsync(id)
-local report={userId=id,shirt=description.Shirt,pants=description.Pants,accessories=description:GetAccessories(true),tables={}}
-local npc=game:GetService("AssetService"):LoadAssetAsync(92697245643515)
-report.joints={}
-for _,v in ipairs(npc:GetDescendants()) do if v:IsA("Motor6D") then table.insert(report.joints,{name=v.Name,part0=v.Part0 and v.Part0.Name,part1=v.Part1 and v.Part1.Name,c0={v.C0:GetComponents()},transform={v.Transform:GetComponents()}}) end end
-local ok,seq=pcall(function() return game:GetService("KeyframeSequenceProvider"):GetKeyframeSequenceAsync("rbxassetid://10353447633") end)
-report.pose={ok=ok}
-if ok then
- local frames=seq:GetKeyframes() table.sort(frames,function(a,b) return a.Time<b.Time end)
- report.pose.frames=#frames report.pose.length=frames[#frames].Time report.pose.first={}
- for _,p in ipairs(frames[1]:GetDescendants()) do if p:IsA("Pose") then table.insert(report.pose.first,{name=p.Name,weight=p.Weight,cf={p.CFrame:GetComponents()}}) end end
-else report.pose.error=tostring(seq) end
-local lobby=workspace:FindFirstChild("JediLibrary")
-local spawn=lobby and lobby:GetAttribute("VerifiedSpawn")
-report.spawn=tostring(spawn)
-local origin=typeof(spawn)=="CFrame" and spawn.Position or typeof(spawn)=="Vector3" and spawn or Vector3.zero
-for _,v in ipairs(lobby:GetDescendants()) do
- if v:IsA("BasePart") and v.Anchored and v.CanCollide and v.Size.X>=4 and v.Size.Z>=3 and v.Size.Y<=2 and v.CFrame.UpVector.Y>.98 then
- table.insert(report.tables,{path=v:GetFullName(),pos=tostring(v.Position),size=tostring(v.Size),distance=(v.Position-origin).Magnitude,name=v.Name,parent=v.Parent.Name})
- end
+local report={assets={}}
+for _,id in ipairs({93583640955196,124873348702500}) do
+ local ok,asset=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(id) end)
+ local rec={id=id,ok=ok,nodes={},scripts={}}
+ if ok then
+  for _,v in ipairs(asset:GetDescendants()) do
+   if v:IsA("LuaSourceContainer") then table.insert(rec.scripts,{path=v:GetFullName(),class=v.ClassName,source=v.Source})
+   elseif v:IsA("GuiObject") or v:IsA("ScreenGui") then
+    local node={path=v:GetFullName(),class=v.ClassName}
+    if v:IsA("GuiObject") then node.size=tostring(v.Size) node.position=tostring(v.Position) node.visible=v.Visible end
+    if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox") then node.text=v.Text end
+    table.insert(rec.nodes,node)
+   end
+  end
+  asset:Destroy()
+ else rec.error=tostring(asset) end
+ table.insert(report.assets,rec)
 end
-table.sort(report.tables,function(a,b) return a.distance<b.distance end)
-while #report.tables>35 do table.remove(report.tables) end
 return report
 `;
-console.log('NPC_AVATAR_AUDIT',JSON.stringify(first(await execute(script))));
+console.log('UI_ASSET_AUDIT',JSON.stringify(first(await execute(script))));
