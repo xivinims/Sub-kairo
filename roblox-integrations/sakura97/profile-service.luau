@@ -14,7 +14,7 @@ function Profiles.new(store,options)
  return setmetatable({store=store,records={},options=options or {}},Profiles)
 end
 function Profiles:attach(p)
- self.records[p]={id=Http:GenerateGUID(false),xp=0,points=0,savedXP=0,savedPoints=0,loaded=false,busy=false}
+ self.records[p]={id=Http:GenerateGUID(false),xp=0,points=0,savedXP=0,savedPoints=0,loaded=false,busy=false,ownedKillers={Jason=true},ownedDirty=false}
  p:SetAttribute("ProfileLoaded",false)
 end
 function Profiles:retry(fn)
@@ -37,6 +37,11 @@ function Profiles:load(p)
  stats.XP.Value=integer(data.xp)+r.xp
  stats.Pontos.Value=math.max(0,integer(data.points)+r.points)
  stats["Nível"].Value=Profiles.level(stats.XP.Value)
+ r.ownedKillers={Jason=true}
+ if type(data.ownedKillers)=="table" then
+  for name,owned in pairs(data.ownedKillers) do if owned==true and type(name)=="string" then r.ownedKillers[name]=true end end
+ end
+ p:SetAttribute("OwnedKillersJson",Http:JSONEncode(r.ownedKillers))
  r.loaded=true p:SetAttribute("ProfileLoaded",true)
  return true
 end
@@ -51,13 +56,31 @@ function Profiles:awardXP(p,delta)
  delta=integer(delta) stats.XP.Value+=delta r.xp+=delta
  stats["Nível"].Value=Profiles.level(stats.XP.Value)
 end
+function Profiles:ownsKiller(p,name)
+ local r=self.records[p]
+ return r and r.ownedKillers and r.ownedKillers[name]==true
+end
+function Profiles:buyKiller(p,name,cost)
+ local r=self.records[p]
+ local stats=p:FindFirstChild("leaderstats")
+ if not r or not r.loaded or not stats or type(name)~="string" then return false,"Perfil indisponível." end
+ if r.ownedKillers[name] then return false,"Você já possui esse perseguidor." end
+ cost=integer(cost)
+ if stats.Pontos.Value<cost then return false,"Pontos insuficientes." end
+ self:points(p,-cost)
+ r.ownedKillers[name]=true
+ r.ownedDirty=true
+ p:SetAttribute("OwnedKillersJson",Http:JSONEncode(r.ownedKillers))
+ return true,"Perseguidor comprado."
+end
 function Profiles:save(p)
  local r=self.records[p]
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
- if r.xp==r.savedXP and r.points==r.savedPoints then return true end
+ if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty then return true end
  r.busy=true
  local xp,points=r.xp,r.points
+ local ownedSnapshot={} for name,owned in pairs(r.ownedKillers or {}) do if owned then ownedSnapshot[name]=true end end
  local timestamp=os.time()
  local ok=self:retry(function()
   return self.store:UpdateAsync(tostring(p.UserId),function(old)
@@ -66,6 +89,9 @@ function Profiles:save(p)
    local previous=type(receipts[r.id])=="table" and receipts[r.id] or {xp=0,points=0}
    old.xp=integer(old.xp)+math.max(0,xp-integer(previous.xp))
    old.points=math.max(0,integer(old.points)+points-(tonumber(previous.points) or 0))
+   old.ownedKillers=type(old.ownedKillers)=="table" and old.ownedKillers or {}
+   old.ownedKillers.Jason=true
+   for name,owned in pairs(ownedSnapshot) do if owned then old.ownedKillers[name]=true end end
    receipts[r.id]={xp=xp,points=points,at=timestamp}
    local keys={} for id,v in pairs(receipts) do if id~=r.id then table.insert(keys,{id=id,at=type(v)=="table" and (v.at or 0) or 0}) end end
    table.sort(keys,function(a,b) return a.at>b.at end)
@@ -75,7 +101,7 @@ function Profiles:save(p)
   end)
  end)
  r.busy=false
- if ok then r.savedXP=xp r.savedPoints=points end
+ if ok then r.savedXP=xp r.savedPoints=points r.ownedDirty=false end
  local again=r.pending r.pending=false
  if again and (r.xp~=xp or r.points~=points) then return self:save(p) end
  return ok
