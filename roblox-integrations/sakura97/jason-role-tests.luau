@@ -124,12 +124,14 @@ local ok,result=xpcall(function()
  for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Automatic lobby admission did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
  send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote join bypassed AFK admission")
  for i=1,8 do send(players[i],"chooseKiller","Jeff") end
+ advance(29)
+ assert(net:GetAttribute("Phase")=="Votação","Six-second voting phase did not begin after intermission")
  local mapName=game.ServerStorage.SurvivalAssets.Maps:GetChildren()[1].Name
  send(players[1],"voteMap",mapName)
  send(players[1],"voteMap","invalid-map")
  assert(players[1]:GetAttribute("MapVote")==mapName,"Invalid map overwrote vote")
- advance(30)
- assert(net:GetAttribute("Phase")=="Escolha","Killer selection did not follow map vote")
+ advance(6)
+ assert(net:GetAttribute("Phase")=="Escolha","Killer selection did not follow six-second map vote")
  local chooser=nil local choices=0
  for _,p in ipairs(players) do if p:GetAttribute("ChoosingKiller") then chooser=p choices+=1 end end
  assert(choices==1,"Selection must be private to exactly one participant")
