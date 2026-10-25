@@ -3,6 +3,7 @@ local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local RS=game:GetService("ReplicatedStorage")
 local Lighting=game:GetService("Lighting")
+local SoundService=game:GetService("SoundService")
 local UIS=game:GetService("UserInputService")
 local player=Players.LocalPlayer
 local ui=script.Parent
@@ -29,6 +30,32 @@ local menuCameraCF=nil
 local horrorToken=0
 local firstMenuIntro=true
 local oldFov=70
+
+local menuMusic=SoundService:FindFirstChild("SuviversMenuMusic")
+if not menuMusic then
+ menuMusic=Instance.new("Sound")
+ menuMusic.Name="SuviversMenuMusic"
+ menuMusic.Parent=SoundService
+end
+menuMusic.SoundId="rbxassetid://97293342453669"
+menuMusic.Looped=true
+menuMusic.Volume=0
+menuMusic:SetAttribute("MenuOnly",true)
+local menuMusicTween=nil
+local function playMenuMusic()
+ if menuMusicTween then menuMusicTween:Cancel() end
+ if not menuMusic.IsPlaying then menuMusic:Play() end
+ menuMusicTween=TweenService:Create(menuMusic,TweenInfo.new(.6,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Volume=.28})
+ menuMusicTween:Play()
+end
+local function stopMenuMusic()
+ if menuMusicTween then menuMusicTween:Cancel() end
+ menuMusicTween=TweenService:Create(menuMusic,TweenInfo.new(.22,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Volume=0})
+ menuMusicTween:Play()
+ task.delay(.24,function()
+  if not inMenu and menuMusic.Parent then menuMusic:Stop() menuMusic.TimePosition=0 end
+ end)
+end
 local MENU_ORIGIN=config:GetAttribute("MenuOrigin") or Vector3.new(10000,2500,10000)
 local menuGrade=nil local menuGlow=nil
 local function enableMenuLook()
@@ -255,12 +282,12 @@ local function revealMenuJason()
  end
  local _,jasonSize=menuJason:GetBoundingBox()
  if jasonSize.Y>0 then
-  local targetHeight=4.4
+  local targetHeight=3.25
   local factor=math.clamp(targetHeight/jasonSize.Y,.15,1)
   pcall(function() menuJason:ScaleTo(menuJason:GetScale()*factor) end)
   _,jasonSize=menuJason:GetBoundingBox()
  end
- local desired=menuCameraCF.Position+menuCameraCF.LookVector*11.2+menuCameraCF.RightVector*1.5
+ local desired=menuCameraCF.Position+menuCameraCF.LookVector*12.4+menuCameraCF.RightVector*1.7
  local params=RaycastParams.new()
  params.FilterType=Enum.RaycastFilterType.Include
  params.FilterDescendantsInstances={menuScene}
@@ -378,6 +405,7 @@ end
 local function open()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  inMenu=true player:SetAttribute("InMenu",true)
+ playMenuMusic()
  ui:SetAttribute("HorrorBlackout",false)
  ui:SetAttribute("HorrorJasonReveal",false)
  ui:SetAttribute("MenuJasonVisible",false)
@@ -404,6 +432,7 @@ end
 local function close()
  horrorToken+=1
  inMenu=false player:SetAttribute("InMenu",false)
+ stopMenuMusic()
  disableMenuLook()
  RunService:UnbindFromRenderStep("SurviversMenuCamera")
  clearPrivateScene()
