@@ -653,7 +653,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  elseif action=="mode" then
   local e=entry(p)
   if value~="walk" and value~="run" and value~="crouch" then return end
-  if e and (e.injured or e.status=="downed") and value=="run" then value="walk" end
+  if e and e.status=="downed" and value=="run" then value="walk" end
   if e and e.status=="alive" then
    if value=="run" and (e.stamina or 0)<=1 then value="walk" end
    p:SetAttribute("MoveMode",value) sync(p)
@@ -850,7 +850,7 @@ RunService.Heartbeat:Connect(function(dt)
      if e.status=="alive" then
       local mode=p:GetAttribute("MoveMode") or "walk"
       local maxStamina=p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina
-      local running=mode=="run" and m.speed>2 and not (p~=jasonPlayer and e.injured)
+      local running=mode=="run" and m.speed>2
       if running then
        e.stamina=math.max(0,(e.stamina or maxStamina)-(p==jasonPlayer and Rules.KillerDrain or Rules.SurvivorDrain)*step)
        if e.stamina<=.1 then p:SetAttribute("MoveMode","walk") mode="walk" end
