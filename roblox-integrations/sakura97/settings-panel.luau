@@ -14,7 +14,6 @@ local categories={
   {key="CameraFOV",label="Campo de visão",description="Ajusta apenas a câmera",min=48,max=82,step=1,default=62},
   {key="ControlScale",label="Tamanho dos botões",description="Ajusta o HUD para o seu dedo",min=80,max=120,default=100,suffix="%"},
   {key="ShowNametags",label="Nomes dos jogadores",description="Mostra os nomes sobre os avatares",default=true},
-  {key="ReducedMotion",label="Menos movimento",description="Reduz balanço de câmera",default=false},
   {section="PARTIDA"},
   {info="Correr cria pontos de ruído. Agachar reduz bastante o som."},
   {info="Hackeie os computadores, encontre uma chave e abra a saída."},
@@ -39,11 +38,11 @@ function Settings.initialize(player)
 end
 function Settings.build(parent,player,onClose)
  Settings.initialize(player)
- local frame=Instance.new("Frame",parent) frame.Name="ReferenceSettings" frame.AnchorPoint=Vector2.new(.5,.5) frame.Position=UDim2.fromScale(.5,.52) frame.Size=UDim2.new(.86,0,.78,0) frame.BackgroundColor3=Color3.fromRGB(10,10,12) frame.BackgroundTransparency=.05 frame.BorderSizePixel=0 frame.ZIndex=50 corner(frame,4) stroke(frame,Color3.fromRGB(74,74,80),1,.35)
+ local frame=Instance.new("Frame",parent) frame.Name="ReferenceSettings" frame.AnchorPoint=Vector2.new(.5,.5) frame.Position=UDim2.fromScale(.5,.52) frame.Size=UDim2.new(.86,0,.78,0) frame.BackgroundColor3=Color3.fromRGB(8,8,9) frame.BackgroundTransparency=.20 frame.BorderSizePixel=0 frame.ZIndex=50 corner(frame,1) stroke(frame,Color3.fromRGB(122,122,128),1,.58) frame:SetAttribute("Style","DistrictInspired")
  local limit=Instance.new("UISizeConstraint",frame) limit.MaxSize=Vector2.new(660,460)
- local tabs=Instance.new("Frame",frame) tabs.BackgroundTransparency=1 tabs.Size=UDim2.new(1,-20,0,42) tabs.Position=UDim2.fromOffset(10,10) tabs.ZIndex=51
- local title=label(frame,"",UDim2.new(1,-30,0,34),UDim2.fromOffset(15,56),Enum.Font.GothamBold) title.TextSize=18
- local content=Instance.new("ScrollingFrame",frame) content.Position=UDim2.fromOffset(15,94) content.Size=UDim2.new(1,-30,1,-109) content.BackgroundTransparency=1 content.BorderSizePixel=0 content.AutomaticCanvasSize=Enum.AutomaticSize.Y content.CanvasSize=UDim2.new() content.ScrollBarThickness=2 content.ZIndex=51
+ local tabs=Instance.new("Frame",frame) tabs.BackgroundTransparency=1 tabs.Size=UDim2.new(1,-20,0,38) tabs.Position=UDim2.fromOffset(10,10) tabs.ZIndex=51
+ local title=label(frame,"",UDim2.new(1,-30,0,28),UDim2.fromOffset(15,56),Enum.Font.GothamBold) title.TextSize=15 title.TextColor3=Color3.fromRGB(205,205,210)
+ local content=Instance.new("ScrollingFrame",frame) content.Position=UDim2.fromOffset(15,88) content.Size=UDim2.new(1,-30,1,-103) content.BackgroundTransparency=1 content.BorderSizePixel=0 content.AutomaticCanvasSize=Enum.AutomaticSize.Y content.CanvasSize=UDim2.new() content.ScrollBarThickness=2 content.ZIndex=51
  local list=Instance.new("UIListLayout",content) list.Padding=UDim.new(0,4) list.SortOrder=Enum.SortOrder.LayoutOrder
  local active={} local tabButtons={} local drag=nil
  local function setValue(row,v)
@@ -55,15 +54,15 @@ function Settings.build(parent,player,onClose)
   clear() title.Text=cat.title
   for k,b in pairs(tabButtons) do b.BackgroundTransparency=k==cat.key and .05 or .65 end
   for i,row in ipairs(cat.rows) do
-   local cell=Instance.new("Frame",content) cell.LayoutOrder=i cell.Size=UDim2.new(1,-4,0,row.section and 32 or row.info and 50 or 68) cell.BackgroundTransparency=1 cell.ZIndex=52
+   local cell=Instance.new("Frame",content) cell.LayoutOrder=i cell.Size=UDim2.new(1,-4,0,row.section and 28 or row.info and 44 or 62) cell.BackgroundTransparency=1 cell.ZIndex=52
    if row.section then local t=label(cell,row.section,UDim2.fromScale(1,1)) t.Font=Enum.Font.GothamBold t.TextSize=12 t.TextColor3=Color3.fromRGB(152,152,160)
    elseif row.info then local t=label(cell,row.info,UDim2.new(1,-8,1,0),nil,Enum.Font.Gotham) t.TextSize=12 t.TextColor3=Color3.fromRGB(176,176,184)
    else
     local n=label(cell,row.label,UDim2.new(.52,-8,0,28),UDim2.fromOffset(0,5),Enum.Font.GothamBold) n.TextSize=13
     local d=label(cell,row.description,UDim2.new(.54,-8,0,27),UDim2.fromOffset(0,33)) d.TextSize=10 d.TextColor3=Color3.fromRGB(154,154,162)
     if row.min then
-     local track=Instance.new("TextButton",cell) track.Text="" track.BackgroundColor3=Color3.fromRGB(28,28,32) track.BorderSizePixel=0 track.Position=UDim2.new(.58,0,.5,-5) track.Size=UDim2.new(.28,0,0,10) track.ZIndex=54 corner(track,2)
-     local fill=Instance.new("Frame",track) fill.BackgroundColor3=Color3.fromRGB(150,150,158) fill.BorderSizePixel=0 fill.ZIndex=55 corner(fill,2)
+     local track=Instance.new("TextButton",cell) track.Text="" track.BackgroundColor3=Color3.fromRGB(32,31,31) track.BorderSizePixel=0 track.Position=UDim2.new(.58,0,.5,-5) track.Size=UDim2.new(.28,0,0,10) track.ZIndex=54 corner(track,2)
+     local fill=Instance.new("Frame",track) fill.BackgroundColor3=Color3.fromRGB(198,198,202) fill.BorderSizePixel=0 fill.ZIndex=55 corner(fill,2)
      local val=label(cell,"",UDim2.new(.11,0,1,0),UDim2.new(.88,0,0,0)) val.TextXAlignment=Enum.TextXAlignment.Right val.TextSize=12
      local function refresh() local v=player:GetAttribute(row.key) or row.default local r=(v-row.min)/(row.max-row.min) fill.Size=UDim2.fromScale(r,1) val.Text=tostring(math.floor(v+.5))..(row.suffix or "") end
      local function move(x) setValue(row,row.min+(row.max-row.min)*math.clamp((x-track.AbsolutePosition.X)/math.max(1,track.AbsoluteSize.X),0,1)) end
@@ -78,8 +77,17 @@ function Settings.build(parent,player,onClose)
    end
   end
  end
- for i,cat in ipairs(categories) do local b=button(tabs,cat.label,cat.color) b.Name=cat.key b.Size=UDim2.new(.28,-5,1,0) b.Position=UDim2.new((i-1)*.29,0,0,0) tabButtons[cat.key]=b b.Activated:Connect(function() select(cat) end) end
- local close=button(tabs,"FECHAR",Color3.fromRGB(120,70,74)) close.Size=UDim2.new(.22,0,1,0) close.Position=UDim2.new(.78,0,0,0) close.Activated:Connect(onClose)
+ for i,cat in ipairs(categories) do
+  local b=button(tabs,cat.label,cat.color)
+  b.Name=cat.key b.Size=UDim2.new(.24,-5,1,0) b.Position=UDim2.new((i-1)*.25,0,0,0)
+  b.BackgroundTransparency=.72
+  if b:FindFirstChildOfClass("UICorner") then b:FindFirstChildOfClass("UICorner").CornerRadius=UDim.new(0,1) end
+  tabButtons[cat.key]=b
+  b.Activated:Connect(function() select(cat) end)
+ end
+ local close=button(tabs,"SAÍDA",Color3.fromRGB(115,82,82))
+ close.Size=UDim2.new(.20,0,1,0) close.Position=UDim2.new(.80,0,0,0) close.BackgroundTransparency=.72
+ close.Activated:Connect(onClose)
  UIS.InputChanged:Connect(function(input) if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseMovement) then drag.move(input.Position.X) end end)
  UIS.InputEnded:Connect(function(input) if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseButton1) then drag=nil end end)
  select(categories[1])
