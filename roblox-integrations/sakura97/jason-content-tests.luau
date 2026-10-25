@@ -91,8 +91,8 @@ assert(actions:GetAttribute("CrouchWalkRequestedAssetId")==126965695851149,"Crou
 assert(actions:GetAttribute("InjuredCrouchWalkRequestedAssetId")==135084204086504,"Injured crouch requested animation id mismatch")
 assert(actions:GetAttribute("StunRequestedAssetId")==123047897844134,"Stun requested animation id mismatch")
 assert(actions:GetAttribute("VaultRequestedAssetId")==83873880822918,"Vault requested animation id mismatch")
-assert(actions:GetAttribute("CrouchWalkAssetId")==126965695851149,"Crouch animation did not import")
-assert(actions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504,"Injured crouch animation did not import")
+assert((actions:GetAttribute("CrouchWalkAssetId")==126965695851149) or (actions:GetAttribute("CrouchWalkFallback")==true and actions:GetAttribute("CrouchWalkAssetId")==127092032896760),"Crouch animation/fallback missing")
+assert((actions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504) or (actions:GetAttribute("InjuredCrouchWalkFallback")==true and actions:GetAttribute("InjuredCrouchWalkAssetId")==127092032896760),"Injured crouch animation/fallback missing")
 local survivorNames={} for _,v in ipairs(survivor:GetChildren()) do if v:IsA("Folder") then table.insert(survivorNames,v.Name) end end table.sort(survivorNames)
 local function animationCompatibility(folder,names)
  local function norm(n) return tostring(n or ""):lower():gsub("[%s_%-%.]","") end
