@@ -291,16 +291,41 @@ local function authoredMotionLibrary(asset,name,assetId)
 end
 
 local function findPursuerRig(asset,rootName)
+ local function usable(model)
+  return model and model:IsA("Model") and model:FindFirstChildWhichIsA("BasePart",true)
+ end
  if rootName then
   local exact=asset:FindFirstChild(rootName,true)
-  if exact and exact:IsA("Model") and exact:FindFirstChildOfClass("Humanoid") then return exact end
+  if usable(exact) then return exact end
  end
+ if usable(asset) then return asset end
+ local best=nil local bestParts=-1
  for _,obj in ipairs(asset:GetDescendants()) do
-  if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and (obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChild("Torso") or obj:FindFirstChild("LowerTorso")) then
-   return obj
+  if usable(obj) then
+   local parts=0 for _,d in ipairs(obj:GetDescendants()) do if d:IsA("BasePart") then parts+=1 end end
+   if parts>bestParts then best=obj bestParts=parts end
   end
  end
- return nil
+ return best
+end
+
+local function ensurePursuerHumanoid(model)
+ local h=model:FindFirstChildOfClass("Humanoid")
+ if not h then
+  local controller=model:FindFirstChildOfClass("AnimationController")
+  if controller then controller:Destroy() end
+  h=Instance.new("Humanoid") h.Name="Humanoid" h.Parent=model
+ end
+ local root=model:FindFirstChild("HumanoidRootPart")
+ if not root then
+  local torso=model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso") or model:FindFirstChild("LowerTorso") or model:FindFirstChildWhichIsA("BasePart",true)
+  assert(torso and torso:IsA("BasePart"),model.Name.." has no usable root")
+  root=Instance.new("Part") root.Name="HumanoidRootPart" root.Size=Vector3.new(2,2,1) root.Transparency=1 root.CanCollide=false root.CanTouch=false root.CanQuery=false root.Massless=true root.CFrame=torso.CFrame root.Parent=model
+  local motor=Instance.new("Motor6D") motor.Name="RootJoint" motor.Part0=root motor.Part1=torso motor.Parent=root
+ end
+ model.PrimaryPart=root
+ h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000 h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+ return h,root
 end
 
 for _,spec in ipairs({
@@ -320,15 +345,7 @@ for _,spec in ipairs({
  for _,v in ipairs(model:GetDescendants()) do
   if v:IsA("KeyframeSequence") or (v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")) then v:Destroy() end
  end
- local h=assert(model:FindFirstChildOfClass("Humanoid"),spec.name.." missing Humanoid")
- local root=model:FindFirstChild("HumanoidRootPart")
- if not root then
-  local torso=assert(model:FindFirstChild("Torso") or model:FindFirstChild("LowerTorso"),spec.name.." missing torso")
-  root=Instance.new("Part") root.Name="HumanoidRootPart" root.Size=Vector3.new(2,2,1) root.Transparency=1 root.CanCollide=false root.CFrame=torso.CFrame root.Parent=model
-  local motor=Instance.new("Motor6D",root) motor.Name="RootJoint" motor.Part0=root motor.Part1=torso
- end
- model.PrimaryPart=root h.RequiresNeck=false h.BreakJointsOnDeath=false h.MaxHealth=1000 h.Health=1000
- h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+ local h,root=ensurePursuerHumanoid(model)
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
  model:SetAttribute("MotionLibrary",libraryName or (spec.name=="Jeff" and "Noli" or spec.name=="Freddy" and "Animatronic" or spec.cool and "Cool" or "Default"))
  model.Parent=rigs
@@ -354,7 +371,8 @@ local function storeObjectiveAsset(id,name)
  local asset=load(id)
  sanitize(asset,true)
  local source=nil
- for _,obj in ipairs(asset:GetDescendants()) do
+ if asset:IsA("Model") and asset:FindFirstChildWhichIsA("BasePart",true) then source=asset end
+ if not source then for _,obj in ipairs(asset:GetDescendants()) do
   if obj:IsA("Model") and (obj:FindFirstChildWhichIsA("BasePart",true) or obj:FindFirstChildWhichIsA("MeshPart",true)) then source=obj break end
  end
  if not source then
