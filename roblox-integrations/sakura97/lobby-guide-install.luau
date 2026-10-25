@@ -17,10 +17,30 @@ for _,motor in ipairs(npc:GetDescendants()) do
  end
 end
 local humanoid=assert(npc:FindFirstChildOfClass("Humanoid"))
-local ownerId=game:GetService("Players"):GetUserIdFromNameAsync("ch_ckz2n")
-assert(ownerId==8344738123,"Avatar username resolved to an unexpected account")
-local description=game:GetService("Players"):GetHumanoidDescriptionFromUserIdAsync(ownerId)
--- Keep clothing, colors and accessories while retaining the requested R6 body.
+local ownerId=8344738123
+
+-- Freeze Fill's current appearance permanently inside the place.
+-- On the first run after this change, capture the already-published Fill NPC that is
+-- currently wearing the approved outfit. Future publishes clone this saved description
+-- and NEVER read the user's live avatar again.
+local frozenTemplate=SS:FindFirstChild("FillFrozenAppearance")
+if not frozenTemplate then
+ local existingGuide=workspace:FindFirstChild("LobbyGuide")
+ local existingHumanoid=existingGuide and existingGuide:FindFirstChildOfClass("Humanoid")
+ if existingHumanoid then
+  frozenTemplate=existingHumanoid:GetAppliedDescription()
+ else
+  -- One-time safety fallback only if an old Fill is genuinely absent.
+  frozenTemplate=game:GetService("Players"):GetHumanoidDescriptionFromUserIdAsync(ownerId)
+ end
+ frozenTemplate.Name="FillFrozenAppearance"
+ frozenTemplate:SetAttribute("Frozen",true)
+ frozenTemplate:SetAttribute("SourceUserId",ownerId)
+ frozenTemplate.Parent=SS
+end
+assert(frozenTemplate:IsA("HumanoidDescription") and frozenTemplate:GetAttribute("Frozen")==true,"Frozen Fill appearance missing")
+local description=frozenTemplate:Clone()
+-- Keep clothing, colors and accessories while retaining the requested R6 body/headless setup.
 description.Head=0 description.Torso=0 description.LeftArm=0 description.RightArm=0 description.LeftLeg=0 description.RightLeg=0
 npc.Parent=workspace
 humanoid:ApplyDescriptionResetAsync(description)
@@ -33,6 +53,8 @@ local applied=humanoid:GetAppliedDescription()
 assert(applied.Shirt==description.Shirt and applied.Pants==description.Pants,"Avatar clothes were not applied")
 npc:SetAttribute("OutfitUserId",ownerId)
 npc:SetAttribute("OutfitUsername","ch_ckz2n")
+npc:SetAttribute("OutfitFrozen",true)
+npc:SetAttribute("OutfitSource","FillFrozenAppearance")
 npc:SetAttribute("OutfitShirt",description.Shirt)
 npc:SetAttribute("OutfitPants",description.Pants)
 npc:SetAttribute("AuthoredPosePreserved",true)
