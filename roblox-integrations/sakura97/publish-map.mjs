@@ -137,17 +137,16 @@ function first(task){
 
 
 const FILL_VOICE_SPECS=[
- {index:1,parts:3,bytes:37378,sha256:'ac9400e94fd2bc08db35606bb4b62a0226652b2bfb034ff7fa50d0e38cab1fbb'},
- {index:2,parts:2,bytes:71741,sha256:'8295bdabf5b261df4bd8039bc15fa2b1487dadcf4fbac390a1232ef3ca7a81dc'},
- {index:3,parts:2,bytes:63389,sha256:'ec949a3e137f4bbe3779e21e7d098431e42279370d798d10154ace4b6cbb52a5'},
- {index:4,parts:2,bytes:50183,sha256:'909b69c45e836039e281d793bfebdbe7963e93908ed70da341f344af0b8d3759'},
- {index:5,parts:2,bytes:51804,sha256:'89f9526c9440887b5cca5d52b0258b297161d2c2db6d634b57cb08b558bbf0c5'},
- {index:6,parts:1,bytes:19532,sha256:'cabe385b8b1df69ef2aeaf168ef8b0eeb85fb9339260bcfa3aa33eff1c2bbd24'},
+ {index:1,files:['voice1.part00.b64','voice1.part01.b64'],bytes:179104,sha256:'f266844a662d530fadb4e1c46ba495621dbb3edee58330cbafedee5250021821'},
+ {index:2,files:['voice2.part00.b64','voice2.part01.b64','voice2.part02.b64'],bytes:304491,sha256:'fbb4e78da0a6c79a629407807d6e092f9043f92ce1eb59dd2a17f2c55f17e4e7'},
+ {index:3,files:['voice3.part00.b64','voice3.part01.b64','voice3.part02.b64'],bytes:270219,sha256:'7d19bf9c429959aac67680f9045e912ede6903d38bdfcffd7d5dc8f8c8227605'},
+ {index:4,files:['voice4.s00.b64','voice4.s01.b64','voice4.s02.b64','voice4.s03.b64','voice4.s04.b64','voice4.s05a.txt','voice4.s05b.txt'],bytes:222571,sha256:'8093407c37c4869f89ae57d0171b788ffdec78501105f71f9d8a9189ff0fb1c3'},
+ {index:5,files:['voice5.part00.txt','voice5.part01.txt','voice5.part02.txt'],bytes:225497,sha256:'77251274508e7943bfd6be336d9e0d872c21f7e9e7a5b55017f81f86653380ac'},
+ {index:6,files:['voice6.part00.txt'],bytes:99691,sha256:'aef4863727523fd6022d2fbb739ff48478933d06b0636634384ace6c0c1d5cda'},
 ];
 function readFillVoice(spec){
- const dir='roblox-integrations/sakura97/fill-voices';
- const names=Array.from({length:spec.parts},(_,i)=>`voice${spec.index}.part${String(i).padStart(2,'0')}.b64`);
- const pieces=names.map(name=>fs.readFileSync(`${dir}/${name}`,'utf8').trim());
+ const dir='roblox-integrations/sakura97/fill-voices-v2';
+ const pieces=spec.files.map(name=>fs.readFileSync(`${dir}/${name}`,'utf8').replace(/[^A-Za-z0-9+/=]/g,''));
  const bytes=Buffer.from(pieces.join(''),'base64');
  const sha=createHash('sha256').update(bytes).digest('hex');
  if(bytes.length!==spec.bytes) throw new Error(`Fill voice ${spec.index} size mismatch: ${bytes.length} != ${spec.bytes}`);
@@ -160,12 +159,12 @@ async function createFillAudioAsset(spec,bytes){
  const request={
   assetType:'Audio',
   displayName:`Suvivers Fill English Voice ${spec.index}`,
-  description:'English dialogue recording for the Fill lobby guide in Suvivers.',
+  description:'Original English dialogue recording supplied for the Fill lobby guide in Suvivers.',
   creationContext:{creator:{userId:'8344738123'}}
  };
  const form=new FormData();
  form.append('request',JSON.stringify(request));
- form.append('fileContent',new Blob([bytes],{type:'audio/ogg'}),`fill-voice-${spec.index}.ogg`);
+ form.append('fileContent',new Blob([bytes],{type:'audio/mpeg'}),`fill-voice-${spec.index}.mp3`);
  const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
   method:'POST',
   headers:{'x-api-key':key},
