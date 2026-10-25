@@ -300,7 +300,7 @@ Run.PreSimulation:Connect(function(dt)
    end
    if d and visible then
     local requested=model:GetAttribute("PresentationState") or "Winning Screen"
-    local elapsed=math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
+    local elapsed=model:GetAttribute("PresentationFrozen") and (model:GetAttribute("PresentationFreezeTime") or .3) or math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
     if requested=="Execution" then
      apply(d,executionName(d),dt,false,elapsed)
     else
@@ -322,13 +322,16 @@ Run.PreSimulation:Connect(function(dt)
     local executionDuration=math.max(.1,model:GetAttribute("ExecutionDuration") or 1.85)
     local executing=execSince>=0 and execSince<executionDuration
     local attacking=not executing and since>=0 and since<.75
-    local state=executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle")
+    local frozen=model:GetAttribute("PresentationFrozen")==true
+    local requested=model:GetAttribute("PresentationState")
+    local state=frozen and (requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or requested) or (executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle"))
     local scale=1
-    if not executing and not attacking then
+    if not frozen and not executing and not attacking then
      if speed>15 then scale=math.clamp(speed/18,.82,1.42)
      elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
     end
-    if d then apply(d,state,dt*scale,not executing and not attacking,executing and execSince or (attacking and since or nil)) end
+    local fixed=frozen and (model:GetAttribute("PresentationFreezeTime") or .3) or (executing and execSince or (attacking and since or nil))
+    if d then apply(d,state,dt*scale,not frozen and not executing and not attacking,fixed) end
    end
   end
  end
