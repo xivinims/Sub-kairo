@@ -114,6 +114,15 @@ local ok,result=xpcall(function()
  fakeNet:SetAttribute("Phase","Intervalo") fakeNet:SetAttribute("EndsAt",workspace:GetServerTimeNow()+30)
  fakeNet:SetAttribute("Waiting",1) fakeNet:SetAttribute("MaxPlayers",8) step()
  assert(gui.Countdown.Visible and not gui.Round.Visible and not gui.Actions.Visible,"Intermission timer must remain visible")
+ camera.CameraType=Enum.CameraType.Scriptable camera.CameraSubject=nil
+ char.Humanoid.Health=37 step()
+ assert(camera.CameraType==Enum.CameraType.Custom and camera.CameraSubject==char.Humanoid,"Camera did not recover the living lobby character")
+ assert(p.CameraMinZoomDistance==4 and p.CameraMaxZoomDistance==24,"Lobby zoom remains locked")
+ assert(gui.Condition.Value.Text=="♥  37","Heart must show real health")
+ assert(gui.Profile.XP.Size.Y.Offset==8 and gui.Profile.XP.Level.Size.Y.Offset>=18,"Thin XP bar clipped the level label")
+ assert(gui.MapVoting.Visible,"Map voting missing in intermission")
+ for _,map in ipairs(require(RS.Survival.Config).Maps) do assert(gui.MapVoting[map.name].Preview.Image:find(tostring(map.id),1,true),"Map thumbnail uses wrong asset") end
+ char.Humanoid.Health=100
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
