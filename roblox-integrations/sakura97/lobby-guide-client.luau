@@ -15,7 +15,8 @@ local neckBase=neck and neck.C0
 local jointBase=joint and joint.C0
 local prompt=npc:WaitForChild("ProximityPrompt")
 local resources=RS:WaitForChild("LobbyGuideResources")
-local old=player.PlayerGui:FindFirstChild("GuideDialogue")
+local playerGui=player:WaitForChild("PlayerGui")
+local old=playerGui:FindFirstChild("GuideDialogue")
 if old then old:Destroy() end
 local ui=resources.dialog:Clone() ui.Name="GuideDialogue" ui.ResetOnSpawn=false ui.Parent=player:WaitForChild("PlayerGui")
 local responses=ui:WaitForChild("dialogResponses")

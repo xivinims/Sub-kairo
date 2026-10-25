@@ -1,8 +1,13 @@
 local host=Instance.new("Folder",workspace) host.Name="GuideClientTest"
 local npc=workspace.LobbyGuide:Clone() npc.Name="GuideTestNPC" npc.Parent=host
 npc.GuideInteraction:Destroy()
-local p=Instance.new("Player") p.Name="GuideTester"
-local gui=Instance.new("PlayerGui",p)
+local attrs={}
+local gui=Instance.new("Folder",host) gui.Name="PlayerGui"
+local p={Name="GuideTester",PlayerGui=gui}
+function p:GetAttribute(name) return attrs[name] end
+function p:SetAttribute(name,value) attrs[name]=value end
+function p:WaitForChild(name) if name=="PlayerGui" then return gui end end
+function p:Destroy() gui:Destroy() end
 local description=Instance.new("HumanoidDescription")
 local character=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
 character.Parent=host p.Character=character

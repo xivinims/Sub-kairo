@@ -148,7 +148,7 @@ const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_S
 const roleTest=read('jason-role-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const menuTest=read('menu-runtime-tests').replace('__MENU_TEST_SOURCE__',read('menu-client').replace('local v=camera.ViewportSize','local v=TEST_VIEWPORT'));
 const animationTest=read('animation-runtime-tests').replace('__ANIMATION_TEST_SOURCE__',read('pursuer-animation'));
-const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT').replace('voice:LoadAsync()','voice:SetAttribute("TestLoadRequested",true)').replace('voice:Play()','voice:SetAttribute("TestPlayRequested",true)'));
+const guideTest=read('lobby-guide-tests').replace('__GUIDE_CLIENT_TEST_SOURCE__',read('lobby-guide-client').replace('local prompt=npc:WaitForChild("ProximityPrompt")','local prompt=TEST_PROMPT').replace('voice:LoadAsync()','voice:SetAttribute("TestLoadRequested",true)').replace('voice:Play()','voice:SetAttribute("TestPlayRequested",true)').replace('output.Player=player','output.Name="TestOutput"'));
 const aiTest=read('jason-ai-tests').replace('__AI_TEST_SOURCE__',read('pursuer-ai').replace('local Run=game:GetService("RunService")','local Run=TEST_RUN'));
 const script=`
 local sourceVersion=game.PlaceVersion
