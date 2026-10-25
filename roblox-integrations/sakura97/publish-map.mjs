@@ -322,7 +322,12 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.LobbyGuide:GetAttribute("OutfitUserId")==8344738123 and workspace.LobbyGuide.Head.Transparency==1,"Guide outfit/headless missing")
   assert(workspace.LobbyGuide.Tabletop.Value==workspace.JediLibrary.GuideTable.Tabletop,"Guide is not on its table")
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")
-  return {guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideTabletop=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find("93583640955196",1,true),"Requested settings design not persisted")
+  assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("124873348702500",1,true),"Requested profile design not persisted")
+  assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
+  assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('player:GetAttribute("MapVote")==nil',1,true),"Vote dismissal missing")
+  return {settingsAsset=93583640955196,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideTabletop=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
