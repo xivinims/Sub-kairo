@@ -5,6 +5,8 @@ return {
   {name="PirateBayIsland",id=127398591748883},
   {name="NaturalDisasterSurvival",id=92220535332787},
   {name="RocketArena",id=112232657511704},
+  {name="PiggySewers",id=7757562864},
+  {name="PiggyMappleDonut",id=16440225099},
  },
  Killers={
   JohnDoe={id=103232099547025,speed=19.5,hearing=62,vision=72,range=5,tip="Use obstáculos para quebrar a visão."},
