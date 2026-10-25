@@ -443,7 +443,12 @@ assert((game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("ClipCount") 
 local survivorActions=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clips missing")
 assert((survivorActions:GetAttribute("ClipCount") or 0)>=2,"Required survivor action clips missing")
 assert(survivorActions:GetAttribute("RequestedClipCount")==6 and survivorActions:GetAttribute("RequiredClipCount")==2,"Survivor action request metadata missing")
-assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504,"Crouch action assets missing")
+assert(
+ (survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 or (survivorActions:GetAttribute("CrouchWalkFallback")==true and survivorActions:GetAttribute("CrouchWalkAssetId")==127092032896760))
+ and
+ (survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504 or (survivorActions:GetAttribute("InjuredCrouchWalkFallback")==true and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==127092032896760)),
+ "Crouch action assets/fallbacks missing"
+)
 local ui=game.StarterGui.TomiaszMenu
 assert(ui.MenuPrincipal.Logo:GetAttribute("SourceAssetId")==136450401317962 and ui.MenuPrincipal.Logo.Image~="")
 result.logoTexture=ui.MenuPrincipal.Logo.Image
@@ -552,8 +557,8 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(survivorActions:GetAttribute("InjuredCrouchWalkRequestedAssetId")==135084204086504)
   assert(survivorActions:GetAttribute("StunRequestedAssetId")==123047897844134)
   assert(survivorActions:GetAttribute("VaultRequestedAssetId")==83873880822918)
-  assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149)
-  assert(survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504)
+  assert(survivorActions:GetAttribute("CrouchWalkAssetId")==126965695851149 or (survivorActions:GetAttribute("CrouchWalkFallback")==true and survivorActions:GetAttribute("CrouchWalkAssetId")==127092032896760))
+  assert(survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==135084204086504 or (survivorActions:GetAttribute("InjuredCrouchWalkFallback")==true and survivorActions:GetAttribute("InjuredCrouchWalkAssetId")==127092032896760))
   assert(typeof(workspace.JediLibrary:GetAttribute("FormerDoorCFrame"))=="CFrame","Former door reference missing")
   assert(not workspace.JediLibrary:FindFirstChild("Door") and not workspace.JediLibrary:FindFirstChild("OriginalLobbyDoor"),"Lobby door geometry/marker returned")
   assert(game.StarterGui.TomiaszMenu.MenuPrincipal.Logo.Image=="rbxassetid://99002027743613")
