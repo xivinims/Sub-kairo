@@ -67,8 +67,46 @@ if needsFixedLobby then
   ground=groundHit.Position
  end
 
- -- Fallback only if the original spawn point is obstructed after Roblox imports the
- -- model. This never modifies the lobby itself.
+ -- Prefer an interior point just inside a real authored door. This keeps players
+ -- inside the house near the entrance instead of dropping them in an arbitrary room.
+ local lobbyCF,lobbySize=replacement:GetBoundingBox()
+ local doorPart=nil local doorScore=math.huge
+ local function doorText(obj)
+  local names={string.lower(obj.Name)}
+  local p=obj.Parent
+  for _=1,4 do
+   if not p or p==replacement then break end
+   table.insert(names,string.lower(p.Name))
+   p=p.Parent
+  end
+  return table.concat(names," ")
+ end
+ for _,part in ipairs(replacement:GetDescendants()) do
+  if part:IsA("BasePart") then
+   local text=doorText(part)
+   if string.find(text,"door",1,true) or string.find(text,"entrance",1,true) then
+    local d=(part.Position-snapshotSpawn).Magnitude
+    if d<doorScore then doorScore=d doorPart=part end
+   end
+  end
+ end
+ if doorPart then
+  local inward=Vector3.new(lobbyCF.Position.X-doorPart.Position.X,0,lobbyCF.Position.Z-doorPart.Position.Z)
+  if inward.Magnitude<.1 then inward=Vector3.new(0,0,-1) else inward=inward.Unit end
+  for _,distance in ipairs({5,7,9,11}) do
+   local candidate=doorPart.Position+inward*distance
+   local hit=workspace:Raycast(candidate+Vector3.new(0,10,0),Vector3.new(0,-24,0),params)
+   if hit and hit.Normal.Y>.82 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),params) then
+    ground=hit.Position
+    lobby:SetAttribute("PreferredDoorPosition",doorPart.Position)
+    lobby:SetAttribute("PreferredDoorSpawnDistance",distance)
+    break
+   end
+  end
+ end
+
+ -- Fallback only if neither the authored door nor the original spawn point produced
+ -- a safe interior floor. This never modifies the lobby itself.
  if not ground then
   local surfaces={}
   for _,part in ipairs(replacement:GetDescendants()) do
@@ -105,7 +143,12 @@ if needsFixedLobby then
 
  -- The original SpawnLocation faces -X. Keep this as metadata used by the existing
  -- spawn-facing and guide placement code; no visible door geometry is added.
- lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(ground+Vector3.new(-12,0,0),ground))
+ local doorPosition=lobby:GetAttribute("PreferredDoorPosition")
+ if typeof(doorPosition)=="Vector3" then
+  lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(doorPosition,ground))
+ else
+  lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(ground+Vector3.new(-12,0,0),ground))
+ end
 end
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
 if typeof(referenceCF)~="CFrame" then
