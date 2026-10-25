@@ -40,6 +40,14 @@ local ok,err=xpcall(function()
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
+ local actions=assert(RS.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clip package missing")
+ local actionData=api.prepare(p.Character,actions)
+ assert(actionData and actionData.clips.CrouchWalk and actionData.clips.CrouchWalk.boundCount>=4,"CrouchWalk cannot drive R6")
+ assert(actionData.clips.InjuredCrouchWalk and actionData.clips.InjuredCrouchWalk.boundCount>=4,"InjuredCrouchWalk cannot drive R6")
+ api.apply(actionData,"CrouchWalk",.2,true)
+ assert(posed(p.Character)>=4,"CrouchWalk did not animate R6 character")
+ api.apply(actionData,"InjuredCrouchWalk",.2,true)
+ assert(posed(p.Character)>=4,"InjuredCrouchWalk did not animate R6 character")
  p.attrs.Downed=true simulate(.2) assert(posed(p.Character)>=1 and animate.Disabled,"Downed pose conflicts with Animator")
  local rootPart=p.Character:FindFirstChild("HumanoidRootPart")
  local root=nil
@@ -67,4 +75,4 @@ local ok,err=xpcall(function()
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,defaultAnimationRestored=true,poseCleanup=true,noCrouchRuntime=true}
+return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,crouchPlayback=true,injuredCrouchPlayback=true,defaultAnimationRestored=true,poseCleanup=true,survivorActionClips=true}
