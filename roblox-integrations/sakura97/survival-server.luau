@@ -27,7 +27,6 @@ local objectiveFolder=nil
 local carryWelds=setmetatable({},{__mode="k"})
 local objectiveConnections={}
 local escapedThisRound=0
-local adminResetRequested=false
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
 local function entry(p) return state.entries[p.UserId] end
@@ -1024,7 +1023,7 @@ local RESULT_PRESENTATION_SECONDS=9
 local function finish()
  for p in pairs(hackSessions) do cancelHack(p) end
  local participants={} local living=0 local escaped=0
- if state.phase=="Partida" and not adminResetRequested then
+ if state.phase=="Partida" then
   for _,p in ipairs(Players:GetPlayers()) do
    local e=entry(p)
    if e then
@@ -1074,7 +1073,7 @@ local function finish()
   net:SetAttribute("Phase","Resultados")
   net:SetAttribute("EndsAt",now()+RESULT_PRESENTATION_SECONDS)
   local resultEnd=now()+RESULT_PRESENTATION_SECONDS
-  while now()<resultEnd and not adminResetRequested do task.wait(.2) end
+  while now()<resultEnd do task.wait(.2) end
  end
  state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
@@ -1088,8 +1087,7 @@ local function finish()
   end
  end
  if lastVictimReplay then lastVictimReplay:Destroy() lastVictimReplay=nil end
- adminResetRequested=false
- table.clear(state.entries) for _,p in ipairs(Players:GetPlayers()) do sync(p) end
+  table.clear(state.entries) for _,p in ipairs(Players:GetPlayers()) do sync(p) end
  disconnectObjectives()
  if npc then npc:Destroy() npc=nil end if arena then arena:Destroy() arena=nil end
 end
@@ -1109,7 +1107,7 @@ task.spawn(function()
   table.clear(mapVotes) voteCounts()
   for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
   endTime=now()+Rules.Intermission
-  while now()<endTime and #Players:GetPlayers()>0 and not adminResetRequested do
+  while now()<endTime and #Players:GetPlayers()>0 do
    net:SetAttribute("Phase","Intervalo")
    net:SetAttribute("EndsAt",endTime)
    net:SetAttribute("Count",0)
@@ -1124,24 +1122,24 @@ task.spawn(function()
    for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then count+=1 end end
    return count>=2
   end
-  while #Players:GetPlayers()>0 and not hasQueued() and not adminResetRequested do
+  while #Players:GetPlayers()>0 and not hasQueued() do
    net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",0) net:SetAttribute("Waiting",0) task.wait(.5)
   end
 
-  if #Players:GetPlayers()>0 and not adminResetRequested then
+  if #Players:GetPlayers()>0 then
    table.clear(mapVotes)
    chooseVoteOptions()
    voteCounts()
    for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
    state.phase="Votação"
    local voteEnd=now()+Rules.VoteDuration
-   while now()<voteEnd and hasQueued() and not adminResetRequested do
+   while now()<voteEnd and hasQueued() do
     net:SetAttribute("Phase","Votação")
     net:SetAttribute("EndsAt",voteEnd)
     task.wait(.15)
    end
   end
-  if #Players:GetPlayers()>0 and not adminResetRequested then
+  if #Players:GetPlayers()>0 then
    local ok,err=xpcall(function()
     roundClosing=false lastKilledUserId=0 lastKilledName=nil
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
@@ -1178,9 +1176,9 @@ task.spawn(function()
     net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+Rules.KillerChoiceDuration)
     selectionPlayer:SetAttribute("ChoosingKiller",true)
     local deadline=now()+Rules.KillerChoiceDuration
-    while now()<deadline and not adminResetRequested and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
+    while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
     selectionPlayer:SetAttribute("ChoosingKiller",false)
-    if adminResetRequested or not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
+    if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
     jasonPlayer=selectionPlayer selectionPlayer=nil
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
