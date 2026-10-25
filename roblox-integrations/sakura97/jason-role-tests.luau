@@ -177,7 +177,7 @@ local ok,result=xpcall(function()
  local position=api.positions()[1]
  assert(not api.canInteract(victim,position,10),"Remote key/PC interaction passed at unlimited distance")
  local oldPivot=victim.Character:GetPivot()
- victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,3)))
+ victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,0)))
  api.startHack(victim,pc,position)
  assert(api.sessions[victim] and victim:GetAttribute("Hacking"),"Valid player could not start hacking")
  advance(1)
@@ -188,7 +188,7 @@ local ok,result=xpcall(function()
  for number=1,3 do
   local computer=workspace.ActiveArena.RoundObjectives["HackComputer_"..number]
   local position=api.positions()[number]
-  victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,3)))
+  victim.Character:PivotTo(CFrame.new(position+Vector3.new(0,3,0)))
   api.startHack(victim,computer,position)
   for _=1,65 do
    if computer:GetAttribute("Hacked") then break end
