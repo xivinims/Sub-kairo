@@ -159,7 +159,7 @@ do
 ${menu}
 end
 result.lobbyGuide=(function()
-${read('lobby-guide-install')}
+${read('lobby-guide-install').replace('__GUIDE_CLIENT_SOURCE__',JSON.stringify(read('lobby-guide-client')))}
 end)()
 assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lobby asset")
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
@@ -303,7 +303,10 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.StarterGui.TomiaszMenu:FindFirstChild("ReturnToMenu"),"Removed return-to-menu object returned")
   assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
-  return {ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  assert(workspace.LobbyGuide:GetAttribute("OutfitUserId")==8344738123 and workspace.LobbyGuide.Head.Transparency==1,"Guide outfit/headless missing")
+  assert(workspace.LobbyGuide.Tabletop.Value==workspace.JediLibrary.GuideTable.Tabletop,"Guide is not on its table")
+  assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")
+  return {guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideTabletop=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
