@@ -325,9 +325,9 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch payload returned")
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
   assert(workspace.LobbyGuide:GetAttribute("OutfitUserId")==8344738123 and workspace.LobbyGuide.Head.Transparency==1,"Guide outfit/headless missing")
-  assert(workspace.LobbyGuide.Tabletop.Value==workspace.JediLibrary.GuideTable.Tabletop,"Guide is not on its table")
-  assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")
-  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="TabletopOnly","Guide seated/table pose was not preserved")
+  assert(workspace.LobbyGuide.Tabletop.Value and workspace.LobbyGuide.Tabletop.Value:IsDescendantOf(workspace.JediLibrary),"Fill is not attached to the lobby reception surface")
+  assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
+  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletop","Fill reception pose was not preserved")
   assert(workspace.LobbyGuide.GuideInteraction.Source:find('VoiceId="1001"',1,true) and workspace.LobbyGuide.GuideInteraction.Source:find('voice.Pitch=.88',1,true),"Guide deeper Portuguese male voice missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("97293342453669",1,true),"Horror menu music asset missing")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find("local targetHeight=2.55",1,true) and game.StarterGui.TomiaszMenu.MenuController.Source:find("menuCameraCF.LookVector*13.8",1,true),"Menu killer is still too large or too close")
@@ -336,7 +336,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('player:GetAttribute("MapVote")==nil',1,true),"Vote dismissal missing")
-  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideTabletop=true,guideDeepMaleVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideDeepMaleVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
