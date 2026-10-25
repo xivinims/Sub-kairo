@@ -285,7 +285,7 @@ assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==1043225187,"Wrong lo
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
 local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==5 and assets.Maps.DoomspireBrickbattle and assets.Maps.JuggernautFightArena and assets.Maps.PirateBayIsland and assets.Maps.NaturalDisasterSurvival and assets.Maps.RocketArena)
-assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason)
+assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason and assets.Killers.Krampus and assets.Killers.Piggy)
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
@@ -373,7 +373,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(assets.Maps.RocketArena:GetAttribute("SourceAssetId")==112232657511704)
   assert(assets.Maps.RocketArena:GetAttribute("RequestedScale")==2,"RocketArena did not persist at 2x scale")
   assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old maps persisted")
-  assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440)
+  assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897)
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==124)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
@@ -444,10 +444,16 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
   assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("124873348702500",1,true),"Requested profile design not persisted")
   assert(game.StarterPlayer.StarterPlayerScripts.PlayerProfileController,"Profile interaction not persisted")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,82)',1,true),"XP/level HUD was not lowered")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('UDim2.fromOffset(18,112)',1,true),"XP/level HUD was not lowered enough")
+  assert(game.ServerScriptService.RoundRules.Source:find("Duration=660",1,true) and game.ServerScriptService.RoundRules.Source:find("VoteDuration=6",1,true),"11-minute round or six-second voting rules missing")
+  assert(game.ServerScriptService.SurvivalServer.Source:find('state.phase="Votação"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("setupObjectives",1,true) and game.ServerScriptService.SurvivalServer.Source:find("toggleCarry",1,true),"Objective gameplay runtime missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('Crouch","AGACHAR"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("ObjectiveInventory",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("MissionBanner",1,true),"Objective HUD/stamina/crouch UI missing")
+  assert(game.ServerStorage.SurvivalAssets.Items.ComputerTemplate:GetAttribute("SourceAssetId")==4845271739 and game.ServerStorage.SurvivalAssets.Items.KeyTemplate:GetAttribute("SourceAssetId")==11471202845,"PC/key objective assets missing")
+  assert(game.ReplicatedStorage.Survival:GetAttribute("InventoryAssetId")==73852738603629 and game.ReplicatedStorage.Survival:GetAttribute("FootstepAssetId")==137365042825200,"Inventory/footstep assets missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('PresentationFrozen',1,true),"Frozen result pose runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('player:GetAttribute("MapVote")==nil',1,true),"Vote dismissal missing")
-  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=124,logo=true,mapCount=5,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {restoredCompactSettings=true,profileAsset=124873348702500,privateKillerSelection=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,frozenResults=true,horrorMenuMusic=true,smallerMenuKiller=true,ok=true,version=game.PlaceVersion,build=125,logo=true,mapCount=5,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
