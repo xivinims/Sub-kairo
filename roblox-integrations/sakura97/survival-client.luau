@@ -115,7 +115,7 @@ local function stopHeldRun(input)
  end
 end
 run.InputBegan:Connect(function(input)
- if player:GetAttribute("Downed") or (not player:GetAttribute("IsJason") and player:GetAttribute("Injured")) then return end
+ if player:GetAttribute("Downed") then return end
  if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
   heldRunInput=input
   if mode~="run" then mode="run" event:FireServer("mode","run") end
@@ -891,10 +891,10 @@ RunService.RenderStepped:Connect(function(dt)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
- run.Visible=controlsVisible and inRound and not down and (isJason or not player:GetAttribute("Injured"))
+ run.Visible=controlsVisible and inRound and not down
  crouch.Visible=controlsVisible and inRound and not down and not isJason
  attackButton.Visible=controlsVisible and inRound and not down and isJason
- if heldRunInput and not down and (isJason or not player:GetAttribute("Injured")) then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
+ if heldRunInput and not down then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
  run.Text="CORRER"
  run.TextTransparency=mode=="run" and 0 or .12
  crouch.Text=mode=="crouch" and "LEVANTAR" or "AGACHAR"
