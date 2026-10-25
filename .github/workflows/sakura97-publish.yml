@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sakura97-place-publisher-v2
+  group: sakura97-place-publisher-v3
   cancel-in-progress: true
 
 jobs:
