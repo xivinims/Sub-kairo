@@ -98,8 +98,8 @@ if needsFixedLobby then
    local hit=workspace:Raycast(candidate+Vector3.new(0,10,0),Vector3.new(0,-24,0),params)
    if hit and hit.Normal.Y>.82 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),params) then
     ground=hit.Position
-    lobby:SetAttribute("PreferredDoorPosition",doorPart.Position)
-    lobby:SetAttribute("PreferredDoorSpawnDistance",distance)
+    replacement:SetAttribute("PreferredDoorPosition",doorPart.Position)
+    replacement:SetAttribute("PreferredDoorSpawnDistance",distance)
     break
    end
   end
