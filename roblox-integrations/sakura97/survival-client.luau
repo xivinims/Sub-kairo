@@ -173,12 +173,13 @@ local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOv
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
 local shopOverlay=Instance.new("Frame",gui) shopOverlay.Name="KillerShop" shopOverlay.Size=UDim2.fromScale(1,1) shopOverlay.BackgroundColor3=Color3.new(0,0,0) shopOverlay.BackgroundTransparency=.32 shopOverlay.ZIndex=115 shopOverlay.Visible=false
-local shopPanel=panel("ShopPanel",UDim2.new(.86,0,.72,0),UDim2.new(.07,0,.14,0)) shopPanel.Parent=shopOverlay shopPanel.ZIndex=116 shopPanel.BackgroundTransparency=.08
+local shopPanel=panel("ShopPanel",UDim2.new(.86,0,.72,0),UDim2.new(.07,0,.14,0)) shopPanel.Parent=shopOverlay shopPanel.ZIndex=116 shopPanel.BackgroundTransparency=.18 shopPanel.BackgroundColor3=Color3.fromRGB(8,8,9) shopPanel:SetAttribute("Style","DistrictInspired")
 local shopLimit=Instance.new("UISizeConstraint",shopPanel) shopLimit.MaxSize=Vector2.new(760,520)
-local shopTitle=text(shopPanel,"Title","LOJA DE PERSEGUIDORES",UDim2.new(1,-110,0,42),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=19 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
+local shopTitle=text(shopPanel,"Title","PERSEGUIDORES",UDim2.new(1,-110,0,30),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=17 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
+local shopSubtitle=text(shopPanel,"Subtitle","COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA",UDim2.new(1,-140,0,18),UDim2.fromOffset(18,37)) shopSubtitle.TextSize=9 shopSubtitle.TextColor3=Color3.fromRGB(145,145,150) shopSubtitle.TextXAlignment=Enum.TextXAlignment.Left shopSubtitle.ZIndex=117
 local shopBalance=text(shopPanel,"Balance","0 PONTOS",UDim2.fromOffset(160,30),UDim2.new(1,-180,0,14)) shopBalance.TextSize=12 shopBalance.Font=Enum.Font.GothamBold shopBalance.ZIndex=117 shopBalance.TextXAlignment=Enum.TextXAlignment.Right
 local shopClose=button(shopPanel,"Close","SAÍDA",UDim2.fromOffset(82,32),UDim2.new(1,-96,1,-46),function() shopOverlay.Visible=false end) shopClose.ZIndex=118 shopClose.TextSize=10
-local shopList=Instance.new("ScrollingFrame",shopPanel) shopList.Name="Items" shopList.Position=UDim2.fromOffset(14,58) shopList.Size=UDim2.new(1,-28,1,-116) shopList.BackgroundTransparency=1 shopList.BorderSizePixel=0 shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y shopList.CanvasSize=UDim2.new() shopList.ScrollBarThickness=2 shopList.ZIndex=117
+local shopList=Instance.new("ScrollingFrame",shopPanel) shopList.Name="Items" shopList.Position=UDim2.fromOffset(14,64) shopList.Size=UDim2.new(1,-28,1,-122) shopList.BackgroundTransparency=1 shopList.BorderSizePixel=0 shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y shopList.CanvasSize=UDim2.new() shopList.ScrollBarThickness=2 shopList.ZIndex=117
 local shopLayout=Instance.new("UIListLayout",shopList) shopLayout.Padding=UDim.new(0,7) shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
 local shopButtons={}
 local function ownedKillers()
@@ -192,11 +193,14 @@ for i,name in ipairs(killerOrder) do
  local killerName=name
  local spec=config.Killers[killerName]
  if spec then
-  local row=Instance.new("Frame",shopList) row.Name=killerName row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,58) row.BackgroundColor3=Color3.fromRGB(14,14,17) row.BackgroundTransparency=.12 row.BorderSizePixel=0 row.ZIndex=117
-  Instance.new("UICorner",row).CornerRadius=UDim.new(0,4)
-  local n=text(row,"Name",killerName,UDim2.new(.46,0,0,24),UDim2.fromOffset(12,7)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
-  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.56,0,0,18),UDim2.fromOffset(12,31)) hint.TextSize=9 hint.TextColor3=Color3.fromRGB(148,148,156) hint.TextXAlignment=Enum.TextXAlignment.Left hint.ZIndex=118
-  local buy=button(row,"Buy","",UDim2.fromOffset(126,34),UDim2.new(1,-138,.5,-17),function() event:FireServer("buyKiller",killerName) end) buy.ZIndex=119 buy.TextSize=10
+  local row=Instance.new("Frame",shopList) row.Name=killerName row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,82) row.BackgroundColor3=Color3.fromRGB(14,14,16) row.BackgroundTransparency=.20 row.BorderSizePixel=0 row.ZIndex=117
+  Instance.new("UICorner",row).CornerRadius=UDim.new(0,2)
+  local border=Instance.new("UIStroke",row) border.Color=Color3.fromRGB(92,92,96) border.Transparency=.64 border.Thickness=1
+  local portrait=Instance.new("ImageLabel",row) portrait.Name="Portrait" portrait.BackgroundColor3=Color3.fromRGB(24,24,27) portrait.BackgroundTransparency=.08 portrait.BorderSizePixel=0 portrait.Position=UDim2.fromOffset(7,7) portrait.Size=UDim2.fromOffset(68,68) portrait.ScaleType=Enum.ScaleType.Crop portrait.Image="rbxthumb://type=Asset&id="..tostring(spec.id).."&w=150&h=150" portrait.ZIndex=118
+  Instance.new("UICorner",portrait).CornerRadius=UDim.new(0,2)
+  local n=text(row,"Name",killerName,UDim2.new(.40,0,0,24),UDim2.fromOffset(86,9)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
+  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.48,0,0,34),UDim2.fromOffset(86,34)) hint.TextSize=9 hint.TextColor3=Color3.fromRGB(153,153,158) hint.TextXAlignment=Enum.TextXAlignment.Left hint.TextYAlignment=Enum.TextYAlignment.Top hint.ZIndex=118
+  local buy=button(row,"Buy","",UDim2.fromOffset(136,36),UDim2.new(1,-148,.5,-18),function() event:FireServer("buyKiller",killerName) end) buy.ZIndex=119 buy.TextSize=10 buy.BackgroundTransparency=.24
   shopButtons[killerName]=buy
  end
 end
