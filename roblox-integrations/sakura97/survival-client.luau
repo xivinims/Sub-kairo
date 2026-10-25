@@ -844,6 +844,13 @@ RunService.RenderStepped:Connect(function(dt)
    watching=true
   end
  elseif watching and not hidden and camera then watching=false watchedId=nil camera.CameraType=Enum.CameraType.Custom camera.CameraSubject=player.Character and player.Character:FindFirstChildOfClass("Humanoid") camera.FieldOfView=player:GetAttribute("CameraFOV") or 48 end
+ if camera and not spec and not hidden and not result.Visible and not loading.Visible then
+  local ownHumanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+  if ownHumanoid and ownHumanoid.Health>0 then
+   if camera.CameraSubject~=ownHumanoid then camera.CameraSubject=ownHumanoid end
+   if camera.CameraType==Enum.CameraType.Scriptable then camera.CameraType=Enum.CameraType.Custom end
+  end
+ end
  highlight.Enabled=false
  if inRound and not hidden then
   for _,m in ipairs(workspace:GetChildren()) do if m:GetAttribute("ActivePursuer") and (m:GetAttribute("TargetUserId") or 0)>0 then
