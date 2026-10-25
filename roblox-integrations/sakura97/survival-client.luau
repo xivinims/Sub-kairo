@@ -740,15 +740,18 @@ for i,map in ipairs(config.Maps) do
  Instance.new("UICorner",preview).CornerRadius=UDim.new(0,10)
  local caption=text(b,"Caption",mapNames[map.name] or map.name,UDim2.new(1,-8,0,24),UDim2.new(0,4,1,-26)) caption.TextSize=12 caption.Font=Enum.Font.GothamBold caption.ZIndex=b.ZIndex+1 caption.TextStrokeTransparency=.2
 end
-local killerBar=Instance.new("Frame",votePanel) killerBar.BackgroundTransparency=1 killerBar.Size=UDim2.new(1,-12,0,44) killerBar.Position=UDim2.new(0,6,1,-48)
+local killerPanel=panel("KillerSelection",UDim2.new(.66,0,.45,0),UDim2.fromScale(.17,.25))
+killerPanel.Visible=false
+text(killerPanel,"Title","VOCÊ É O PERSEGUIDOR • ESCOLHA",UDim2.new(1,0,0,44),UDim2.new())
 local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
 for i,name in ipairs(names) do
- local b=button(killerBar,name,name,UDim2.new(1/#names,-6,1,0),UDim2.new((i-1)/#names,0,0,0),function() event:FireServer("chooseKiller",name) end) b.TextSize=11
+ button(killerPanel,name,name,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function() event:FireServer("chooseKiller",name) end)
 end
 local voteElapsed=0
 RunService.RenderStepped:Connect(function(dt)
  voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
- votePanel.Visible=net:GetAttribute("Phase")=="Intervalo" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
+ killerPanel.Visible=net:GetAttribute("Phase")=="Escolha" and player:GetAttribute("ChoosingKiller")==true and not player:GetAttribute("InMenu") and not loading.Visible
+ votePanel.Visible=player:GetAttribute("MapVote")==nil and net:GetAttribute("Phase")=="Intervalo" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  voteTitle.Text=seconds>0 and ("VOTAR UM MAPA • "..seconds.."s") or "AGUARDANDO 2 JOGADORES"
@@ -778,9 +781,10 @@ RunService.RenderStepped:Connect(function(dt)
  levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text="◉  "..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- countdown.Visible=not hidden and phase=="Intervalo"
+ countdown.Visible=not hidden and (phase=="Intervalo" or phase=="Escolha")
  actionLayout()
- if left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
+ if phase=="Escolha" then countdownText.Text="Escolhendo perseguidor • "..left.."s"
+ elseif left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida" and (inRound or player:GetAttribute("Spectating")==true)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down

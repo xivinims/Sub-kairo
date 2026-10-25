@@ -141,7 +141,7 @@ const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILL
 let install=read('jason-install');
 for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
-const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
+const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const test=read('survival-runtime-tests').replace('__SURVIVAL_SERVER_TEST_SOURCE__',read('survival-server').replace('local function now() return workspace:GetServerTimeNow() end','local function now() return TEST_NOW() end'));
 const clientTest=read('survival-client-tests').replace('__SURVIVAL_CLIENT_TEST_SOURCE__',read('survival-client'));
@@ -156,6 +156,14 @@ local function install()
 ${install}
 end
 local result=install()
+do
+ local net=game.ReplicatedStorage.Survival
+ local old=net:FindFirstChild("PlayerProfile") if old then old:Destroy() end
+ local module=Instance.new("ModuleScript") module.Name="PlayerProfile" module.Source=${JSON.stringify(read('player-profile'))} module.Parent=net
+ local scripts=game.StarterPlayer.StarterPlayerScripts
+ local previous=scripts:FindFirstChild("PlayerProfileController") if previous then previous:Destroy() end
+ local client=Instance.new("LocalScript") client.Name="PlayerProfileController" client.Source=${JSON.stringify(read('profile-client'))} client.Parent=scripts
+end
 do
 ${menu}
 end

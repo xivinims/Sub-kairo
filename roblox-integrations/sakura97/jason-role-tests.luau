@@ -128,7 +128,14 @@ local ok,result=xpcall(function()
  send(players[1],"voteMap",mapName)
  send(players[1],"voteMap","invalid-map")
  assert(players[1]:GetAttribute("MapVote")==mapName,"Invalid map overwrote vote")
- advance(30) assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
+ advance(30)
+ assert(net:GetAttribute("Phase")=="Escolha","Killer selection did not follow map vote")
+ local chooser=nil local choices=0
+ for _,p in ipairs(players) do if p:GetAttribute("ChoosingKiller") then chooser=p choices+=1 end end
+ assert(choices==1,"Selection must be private to exactly one participant")
+ for _,p in ipairs(players) do if p~=chooser then send(p,"chooseKiller","Chucky") assert(not p:GetAttribute("ChoosingKiller"),"Non-selected player got selection UI") end end
+ send(chooser,"chooseKiller","Jeff") advance(1)
+ assert(net:GetAttribute("Phase")=="Partida",string.format("Round did not start: clock=%s ends=%s phase=%s scheduled=%d errors=%s",tostring(clock),tostring(net:GetAttribute("EndsAt")),tostring(net:GetAttribute("Phase")),#scheduled,table.concat(roundErrors," | ")))
  for i=1,8 do
   local status=players[i]:GetAttribute("RoundStatus")
   assert(status=="alive" and players[i]:GetAttribute("InRound"),"Player "..i.." was not admitted immediately; status="..tostring(status))

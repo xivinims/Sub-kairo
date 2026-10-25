@@ -345,7 +345,7 @@ local function channelRevive(p)
  h.channel={target=target,started=now(),position=r.Position,status=h.status}
  p:SetAttribute("ReviveAt",now()+Rules.ReviveTime)
 end
-local mapVotes=setmetatable({},{__mode="k"}) local killerChoices=setmetatable({},{__mode="k"})
+local mapVotes=setmetatable({},{__mode="k"}) local selectionPlayer=nil local selectedKiller=nil
 local function voteCounts()
  local counts={} for _,map in ipairs(assets.Maps:GetChildren()) do counts[map.Name]=0 end
  for p,name in pairs(mapVotes) do if p.Parent and not p:GetAttribute("AFK") and counts[name] then counts[name]+=1 end end
@@ -361,8 +361,8 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   if state.phase~="Intervalo" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 or not assets.Maps:FindFirstChild(value) then return end
   mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
  elseif action=="chooseKiller" then
-  if state.phase~="Intervalo" or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
-  killerChoices[p]=value p:SetAttribute("KillerChoice",value) return
+  if state.phase~="Escolha" or p~=selectionPlayer or selectedKiller or p:GetAttribute("AFK") or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
+  selectedKiller=value p:SetAttribute("ChoosingKiller",false) return
  end
  if action=="afk" then
   if type(value)~="boolean" then return end
@@ -458,6 +458,7 @@ local function convertCharacterToR6(p,char)
 end
 
 local function hook(p)
+ p:SetAttribute("SessionJoinedAt",now())
  local stats=Instance.new("Folder",p) stats.Name="leaderstats"
  local function makeStat(name,value) local v=Instance.new("IntValue",stats) v.Name=name v.Value=value or 0 return v end
  makeStat("Pontos",0) local xp=makeStat("XP",0) makeStat("Nível",1) makeStat("Atingido",0) makeStat("Quedas",0)
@@ -681,7 +682,7 @@ task.spawn(function()
   end
   if #Players:GetPlayers()>0 then
    local ok,err=xpcall(function()
-    Rules.begin(state) roundClosing=false lastKilledUserId=0 lastKilledName=nil
+    roundClosing=false lastKilledUserId=0 lastKilledName=nil
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     table.sort(mapList,function(a,b) return a.Name<b.Name end)
     local choices={} for _,candidate in ipairs(mapList) do if candidate.Name~=previousMap or #mapList==1 then table.insert(choices,candidate) end end
@@ -694,9 +695,18 @@ task.spawn(function()
     local eligible={}
     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
     assert(#eligible>=2,"Two participants required for player-controlled killer")
-    jasonPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
+    selectionPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
+    selectedKiller=nil state.phase="Escolha"
+    net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+12)
+    selectionPlayer:SetAttribute("ChoosingKiller",true)
+    local deadline=now()+12
+    while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
+    selectionPlayer:SetAttribute("ChoosingKiller",false)
+    if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
+    jasonPlayer=selectionPlayer selectionPlayer=nil
+    Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
-    local chosen=assets.Killers:FindFirstChild(killerChoices[jasonPlayer] or "Jason") or rigList[1]
+    local chosen=assets.Killers:FindFirstChild(selectedKiller or "Jason") or rigList[1]
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
