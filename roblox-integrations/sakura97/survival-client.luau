@@ -89,19 +89,23 @@ local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(64,64) topActions.Position=UDim2.new(1,-165,1,-115)
+topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(136,64) topActions.Position=UDim2.new(1,-165,1,-115)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
-bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(74,74) bar.Position=UDim2.new(1,-84,1,-86)
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(150,74) bar.Position=UDim2.new(1,-84,1,-86)
 local function cleanAction(parent,name,label,size,pos,callback)
  local b=button(parent,name,label,size,pos,callback)
  b.BackgroundTransparency=1 b.TextSize=24 b.TextStrokeTransparency=.38
  b.UIStroke.Enabled=false b.UICorner.CornerRadius=UDim.new(1,0)
  return b
 end
-local run=cleanAction(topActions,"Run","CORRER",UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
- if player:GetAttribute("IsJason") then event:FireServer("attack") end
-end)
+local run=cleanAction(topActions,"Run","CORRER",UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function() end)
 run.TextSize=11 run.BackgroundTransparency=.35 run.BackgroundColor3=Color3.fromRGB(25,26,30)
+local crouch=cleanAction(topActions,"Crouch","AGACHAR",UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
+ if player:GetAttribute("Downed") or player:GetAttribute("IsJason") then return end
+ local nextMode=(player:GetAttribute("MoveMode")=="crouch") and "walk" or "crouch"
+ mode=nextMode event:FireServer("mode",nextMode)
+end)
+crouch.TextSize=10 crouch.BackgroundTransparency=.4 crouch.BackgroundColor3=Color3.fromRGB(25,26,30)
 local heldRunInput=nil
 local function stopHeldRun(input)
  if heldRunInput and (not input or input==heldRunInput) then
@@ -111,7 +115,7 @@ local function stopHeldRun(input)
  end
 end
 run.InputBegan:Connect(function(input)
- if player:GetAttribute("IsJason") or player:GetAttribute("Downed") or player:GetAttribute("Injured") then return end
+ if player:GetAttribute("Downed") or (not player:GetAttribute("IsJason") and player:GetAttribute("Injured")) then return end
  if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
   heldRunInput=input
   if mode~="run" then mode="run" event:FireServer("mode","run") end
@@ -122,6 +126,14 @@ local reviveNearby=cleanAction(bar,"ReviveNearby","+",UDim2.fromOffset(66,66),UD
  event:FireServer("revive")
 end)
 reviveNearby.TextSize=38 reviveNearby.Visible=false
+local carryNearby=cleanAction(bar,"CarryNearby","CARREGAR",UDim2.fromOffset(66,66),UDim2.fromOffset(80,4),function()
+ event:FireServer("carry")
+end)
+carryNearby.TextSize=9 carryNearby.Visible=false
+local attackButton=cleanAction(bar,"Attack","ATACAR",UDim2.fromOffset(66,66),UDim2.fromOffset(80,4),function()
+ event:FireServer("attack")
+end)
+attackButton.TextSize=10 attackButton.Visible=false
 
 local function hideDefaultJump()
  local pg=player:FindFirstChild("PlayerGui") or player:WaitForChild("PlayerGui")
@@ -152,15 +164,47 @@ RunService.RenderStepped:Connect(function()
  player.CameraMaxZoomDistance=player:GetAttribute("InRound") and 10 or 24
  player.CameraMinZoomDistance=player:GetAttribute("InRound") and 10 or 4
 end)
-local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,82)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
+local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,112)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
 local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
 local pointsText=text(profileHUD,"Points","◉  0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.TextColor3=Color3.fromRGB(165,215,121) pointsText.TextXAlignment=Enum.TextXAlignment.Left
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  100",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=22 condition.TextColor3=Color3.fromRGB(144,223,111)
+local staminaTrack=Instance.new("Frame",gui) staminaTrack.Name="Stamina" staminaTrack.Size=UDim2.fromOffset(148,7) staminaTrack.Position=UDim2.new(0,18,1,-64)
+staminaTrack.BackgroundColor3=Color3.fromRGB(20,21,25) staminaTrack.BackgroundTransparency=.2 staminaTrack.BorderSizePixel=0 Instance.new("UICorner",staminaTrack).CornerRadius=UDim.new(1,0)
+local staminaFill=Instance.new("Frame",staminaTrack) staminaFill.Name="Fill" staminaFill.Size=UDim2.fromScale(1,1) staminaFill.BackgroundColor3=Color3.fromRGB(190,194,205) staminaFill.BorderSizePixel=0 Instance.new("UICorner",staminaFill).CornerRadius=UDim.new(1,0)
+local mission=panel("Mission",UDim2.fromOffset(360,48),UDim2.new(.5,-180,0,48)) mission.BackgroundTransparency=.42 mission.UIStroke.Transparency=.82
+local missionTitle=text(mission,"Title","MISSÃO",UDim2.fromOffset(68,16),UDim2.fromOffset(10,5)) missionTitle.TextSize=9 missionTitle.Font=Enum.Font.GothamBold missionTitle.TextColor3=Color3.fromRGB(165,168,178) missionTitle.TextXAlignment=Enum.TextXAlignment.Left
+local missionText=text(mission,"Text","",UDim2.new(1,-20,0,22),UDim2.fromOffset(10,20)) missionText.TextSize=12 missionText.Font=Enum.Font.GothamBold missionText.TextXAlignment=Enum.TextXAlignment.Left
+local inventory=panel("ObjectiveInventory",UDim2.fromOffset(82,82),UDim2.new(0,18,1,-148)) inventory.BackgroundTransparency=.28 inventory.UIStroke.Transparency=.7
+inventory:SetAttribute("SourceAssetId",net:GetAttribute("InventoryAssetId") or 73852738603629)
+local inventoryIcon=text(inventory,"Icon","🔑",UDim2.fromScale(1,.62),UDim2.new()) inventoryIcon.TextSize=29
+local inventoryLabel=text(inventory,"Label","VAZIO",UDim2.fromScale(1,.32),UDim2.new(0,0,.64,0)) inventoryLabel.TextSize=9 inventoryLabel.Font=Enum.Font.GothamBold
+local escapeBanner=panel("EscapeBanner",UDim2.fromOffset(360,30),UDim2.new(.5,-180,0,12)) escapeBanner.BackgroundTransparency=.28 escapeBanner.Visible=false escapeBanner.UIStroke.Transparency=.8 escapeBanner.ZIndex=95
+local escapeText=text(escapeBanner,"Text","",UDim2.fromScale(1,1),UDim2.new()) escapeText.TextSize=11 escapeText.Font=Enum.Font.GothamBold escapeText.ZIndex=96
+local missionBanner=panel("MissionBanner",UDim2.fromOffset(420,34),UDim2.new(.5,-210,0,104)) missionBanner.BackgroundTransparency=.18 missionBanner.Visible=false missionBanner.ZIndex=96
+local missionBannerText=text(missionBanner,"Text","NOVA MISSÃO",UDim2.fromScale(1,1),UDim2.new()) missionBannerText.TextSize=12 missionBannerText.Font=Enum.Font.GothamBlack missionBannerText.ZIndex=97
+local hitFlash=Instance.new("Frame",gui) hitFlash.Name="HitFlash" hitFlash.Size=UDim2.fromScale(1,1) hitFlash.BackgroundColor3=Color3.fromRGB(150,0,12) hitFlash.BackgroundTransparency=1 hitFlash.BorderSizePixel=0 hitFlash.ZIndex=200
+local hitGradient=Instance.new("UIGradient",hitFlash) hitGradient.Rotation=90 hitGradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.05),NumberSequenceKeypoint.new(.18,.76),NumberSequenceKeypoint.new(.5,.92),NumberSequenceKeypoint.new(.82,.76),NumberSequenceKeypoint.new(1,.05)})
+local exitHighlight=Instance.new("Highlight") exitHighlight.Name="ObjectiveExitHighlight" exitHighlight.FillColor=Color3.fromRGB(242,211,79) exitHighlight.OutlineColor=Color3.fromRGB(255,243,170) exitHighlight.FillTransparency=.72 exitHighlight.OutlineTransparency=.08 exitHighlight.Enabled=false exitHighlight.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop exitHighlight.Parent=gui
+local function missionCopy(stage)
+ local done=net:GetAttribute("ComputersDone") or 0 local required=net:GetAttribute("ComputersRequired") or 3
+ if stage=="Hack" then return "HACKEIE OS COMPUTADORES  "..done.."/"..required end
+ if stage=="Key" then return player:GetAttribute("HasKey") and "ABRA A SAÍDA COM SUA CHAVE" or "ENCONTRE UMA CHAVE ESCONDIDA" end
+ if stage=="Exit" then return "ABRA A SAÍDA COM SUA CHAVE" end
+ return ""
+end
+local missionPulse=0
+local function announceMission(stage)
+ missionText.Text=missionCopy(stage)
+ missionBannerText.Text="NOVA MISSÃO:  "..missionText.Text
+ missionBanner.Visible=missionText.Text~=""
+ missionPulse+=1 local token=missionPulse
+ task.delay(2.2,function() if token==missionPulse then missionBanner.Visible=false end end)
+end
 local roster=Instance.new("Frame",gui)
-roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(12,112) roster.Size=UDim2.fromOffset(190,306)
+roster.Name="PlayerRoster" roster.BackgroundTransparency=1 roster.Position=UDim2.fromOffset(12,172) roster.Size=UDim2.fromOffset(190,306)
 local rosterList=Instance.new("UIListLayout",roster) rosterList.Padding=UDim.new(0,5) rosterList.SortOrder=Enum.SortOrder.LayoutOrder
 local rosterRows={}
 local function rosterRow(p)
@@ -309,6 +353,12 @@ local function restoreResultCamera()
 end
 local function hideResult()
  result.Visible=false resultGeneration+=1 resultWorld:ClearAllChildren()
+ for _,candidate in ipairs(workspace:GetChildren()) do
+  if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then
+   candidate:SetAttribute("PresentationFrozen",false)
+   candidate:SetAttribute("PresentationState",nil)
+  end
+ end
  restoreResultCamera()
 end
 local resultClose=button(result,"Close","SAÍDA",UDim2.fromOffset(88,36),UDim2.new(1,-100,0,14),hideResult)
@@ -389,30 +439,30 @@ local function showResult(data)
   local victimPlayer=victimId>0 and Players:GetPlayerByUserId(victimId) or nil
   local victimCharacter=victimPlayer and victimPlayer.Character or nil
   if target then
-   local presentationAt=workspace:GetServerTimeNow()
-   target:SetAttribute("PresentationState","Execution")
-   target:SetAttribute("PresentationAt",presentationAt)
-   if victimCharacter then resultVictimReaction(victimCharacter,generation,target) end
-   startResultCamera(target,victimCharacter)
-   task.delay(1.85,function()
-    if generation~=resultGeneration or not result.Visible or not target.Parent then return end
-    target:SetAttribute("PresentationState","Winning Screen")
-    target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
-   end)
+   target:SetAttribute("PresentationState","Jason Idle")
+   target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   target:SetAttribute("PresentationFrozen",true)
+   target:SetAttribute("PresentationFreezeTime",.35)
+   startResultCamera(target,nil)
   else
    local own=player.Character
    if own then startResultCamera(own,nil) end
   end
  else
   local target=nil
-  for _,row in ipairs(data.board or {}) do
-   local survivor=Players:GetPlayerByUserId(tonumber(row.userId) or 0)
-   local char=survivor and survivor.Character
-   local hum=char and char:FindFirstChildOfClass("Humanoid")
-   if char and hum and hum.Health>0 then target=char break end
+  for _,candidate in ipairs(workspace:GetChildren()) do
+   if candidate:IsA("Model") and candidate:GetAttribute("ActivePursuer") then target=candidate break end
   end
-  target=target or player.Character
-  if target then startResultCamera(target,nil) end
+  if target then
+   target:SetAttribute("PresentationState","Jason Slash")
+   target:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+   target:SetAttribute("PresentationFrozen",true)
+   target:SetAttribute("PresentationFreezeTime",.28)
+   startResultCamera(target,nil)
+  else
+   target=player.Character
+   if target then startResultCamera(target,nil) end
+  end
  end
 
  for i,row in ipairs(data.board or {}) do if i>8 then break end
@@ -447,12 +497,13 @@ local function showResult(data)
  task.delay(8.8,function() if generation==resultGeneration then hideResult() end end)
 end
 
-local spectate=panel("Spectate",UDim2.fromOffset(300,90),UDim2.new(.5,-150,1,-120))
-local spectatorName=text(spectate,"Player","Assistindo",UDim2.new(1,0,0,34),UDim2.new())
+local spectate=panel("Spectate",UDim2.fromOffset(330,74),UDim2.new(.5,-165,1,-102))
+spectate.BackgroundTransparency=.28
+local spectatorName=text(spectate,"Player","JOGADOR",UDim2.fromOffset(190,32),UDim2.fromOffset(70,3)) spectatorName.Font=Enum.Font.GothamBold spectatorName.TextSize=12
 local index=1 local watching=false local watchedId=nil
-button(spectate,"Previous","‹",UDim2.fromOffset(50,38),UDim2.fromOffset(8,42),function() index-=1 watchedId=nil end)
-button(spectate,"Next","›",UDim2.fromOffset(50,38),UDim2.fromOffset(242,42),function() index+=1 watchedId=nil end)
-button(spectate,"Exit","Sair da câmera",UDim2.fromOffset(170,38),UDim2.fromOffset(65,42),function() event:FireServer("spectateExit") end)
+button(spectate,"Previous","<<",UDim2.fromOffset(54,32),UDim2.fromOffset(8,3),function() index-=1 watchedId=nil end)
+button(spectate,"Next",">>",UDim2.fromOffset(54,32),UDim2.fromOffset(268,3),function() index+=1 watchedId=nil end)
+button(spectate,"Exit","LOBBY",UDim2.fromOffset(120,28),UDim2.fromOffset(105,40),function() event:FireServer("spectateExit") end)
 local loading=panel("ArenaLoading",UDim2.fromScale(1,1),UDim2.new())
 loading.BackgroundColor3=Color3.fromRGB(4,4,6) loading.BackgroundTransparency=.28 loading.ZIndex=80 loading.Visible=false loading.ClipsDescendants=true
 loading.UIStroke.Enabled=false loading.UICorner.CornerRadius=UDim.new()
@@ -746,6 +797,25 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
   loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
+ elseif action=="mission" then
+  announceMission(a)
+ elseif action=="objectiveDone" then
+  announceMission(net:GetAttribute("MissionStage") or "Hack")
+ elseif action=="escape" then
+  escapeText.Text=tostring(a).." ESCAPOU"
+  escapeBanner.Visible=true
+  task.delay(2.4,function() escapeBanner.Visible=false end)
+ elseif action=="achievement" then
+  missionBannerText.Text=tostring(a).."  •  "..tostring(b or "")
+  missionBanner.Visible=true missionPulse+=1 local token=missionPulse
+  task.delay(3,function() if token==missionPulse then missionBanner.Visible=false end end)
+ elseif action=="hitFlash" then
+  local strength=tonumber(a) or .45
+  hitFlash.BackgroundTransparency=math.clamp(.78-strength*.35,.42,.82)
+  TweenService:Create(hitFlash,TweenInfo.new(.55,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=1}):Play()
+ elseif action=="noisePing" and typeof(a)=="Vector3" then
+  local marker=Instance.new("Part") marker.Name="NoisePing" marker.Shape=Enum.PartType.Ball marker.Size=Vector3.new(1.2,1.2,1.2) marker.Material=Enum.Material.Neon marker.Color=Color3.fromRGB(235,86,89) marker.Transparency=.25 marker.Anchored=true marker.CanCollide=false marker.CanTouch=false marker.Position=a+Vector3.new(0,.7,0) marker.Parent=workspace
+  TweenService:Create(marker,TweenInfo.new(1.6),{Size=Vector3.new(5,5,5),Transparency=1}):Play() Debris:AddItem(marker,1.8)
  elseif action=="load" then
   preload(a,b)
  elseif action=="caught" or action=="executed" then
@@ -758,6 +828,9 @@ end)
 UIS.InputBegan:Connect(function(input,processed)
  if processed or settingsOverlay.Visible or result.Visible or not player:GetAttribute("InRound") then return end
  if input.KeyCode==Enum.KeyCode.LeftShift then mode="run" event:FireServer("mode",mode)
+ elseif input.KeyCode==Enum.KeyCode.C or input.KeyCode==Enum.KeyCode.LeftControl then
+  if not player:GetAttribute("IsJason") then mode=(player:GetAttribute("MoveMode")=="crouch") and "walk" or "crouch" event:FireServer("mode",mode) end
+ elseif input.KeyCode==Enum.KeyCode.E and not player:GetAttribute("IsJason") then event:FireServer("carry")
  elseif input.UserInputType==Enum.UserInputType.MouseButton1 and player:GetAttribute("IsJason") then event:FireServer("attack")
  elseif input.KeyCode==Enum.KeyCode.F then event:FireServer("flashlight") end
 end)
@@ -789,18 +862,24 @@ RunService.RenderStepped:Connect(function(dt)
  end
 end)
 
-local votePanel=panel("MapVoting",UDim2.new(.66,0,.68,0),UDim2.fromScale(.17,.15))
-votePanel.BackgroundTransparency=.18 votePanel.Visible=false
-local voteTitle=text(votePanel,"Title","VOTAR UM MAPA",UDim2.new(1,0,0,34),UDim2.new()) voteTitle.Font=Enum.Font.GothamBold
+local votePanel=panel("MapVoting",UDim2.new(.92,0,.46,0),UDim2.new(.04,0,.27,0))
+votePanel.BackgroundColor3=Color3.fromRGB(7,7,10) votePanel.BackgroundTransparency=.08 votePanel.Visible=false votePanel.ZIndex=60
+local voteTitle=text(votePanel,"Title","ESCOLHA O PRÓXIMO MAPA",UDim2.new(1,-24,0,40),UDim2.fromOffset(12,8)) voteTitle.Font=Enum.Font.GothamBlack voteTitle.TextSize=20 voteTitle.TextXAlignment=Enum.TextXAlignment.Left voteTitle.ZIndex=62
+local voteHint=text(votePanel,"Hint","A votação abre somente depois do intervalo",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
+local voteTimer=text(votePanel,"Timer","6",UDim2.fromOffset(54,48),UDim2.new(1,-68,0,8)) voteTimer.Font=Enum.Font.GothamBlack voteTimer.TextSize=28 voteTimer.ZIndex=63
 local mapButtons={}
-local mapNames={DoomspireBrickbattle="Doomspire Brickbattle",JuggernautFightArena="Juggernaut Fight Arena",PirateBayIsland="Pirate Bay",NaturalDisasterSurvival="Natural Disaster Survival",RocketArena="Rocket Arena"}
+local mapNames={DoomspireBrickbattle="DOOMSPIRE",JuggernautFightArena="JUGGERNAUT",PirateBayIsland="PIRATE BAY",NaturalDisasterSurvival="NATURAL DISASTER",RocketArena="ROCKET ARENA"}
 for i,map in ipairs(config.Maps) do
- local col=(i-1)%2 local row=math.floor((i-1)/2)
- local b=button(votePanel,map.name,map.name,UDim2.new(.48,0,.19,0),UDim2.new(.01+col*.50,0,.12+row*.21,0),function() event:FireServer("voteMap",map.name) end)
- b.TextSize=12 b.TextWrapped=true mapButtons[map.name]=b
- local preview=Instance.new("ImageLabel",b) preview.Name="Preview" preview.Size=UDim2.fromScale(1,1) preview.BackgroundTransparency=1 preview.Image="rbxthumb://type=Asset&id="..map.id.."&w=420&h=420" preview.ImageTransparency=.3 preview.ScaleType=Enum.ScaleType.Crop preview.ZIndex=b.ZIndex b.Text=""
- Instance.new("UICorner",preview).CornerRadius=UDim.new(0,10)
- local caption=text(b,"Caption",mapNames[map.name] or map.name,UDim2.new(1,-8,0,24),UDim2.new(0,4,1,-26)) caption.TextSize=12 caption.Font=Enum.Font.GothamBold caption.ZIndex=b.ZIndex+1 caption.TextStrokeTransparency=.2
+ local width=.188
+ local x=.018+(i-1)*.196
+ local b=button(votePanel,map.name,"",UDim2.new(width,0,.70,0),UDim2.new(x,0,.20,0),function() event:FireServer("voteMap",map.name) end)
+ b.Text="" b.BackgroundColor3=Color3.fromRGB(16,16,21) b.BackgroundTransparency=.06 b.ZIndex=62
+ local preview=Instance.new("ImageLabel",b) preview.Name="Preview" preview.Size=UDim2.new(1,-6,.72,-4) preview.Position=UDim2.fromOffset(3,3) preview.BackgroundTransparency=1 preview.Image="rbxthumb://type=Asset&id="..map.id.."&w=420&h=420" preview.ScaleType=Enum.ScaleType.Crop preview.ZIndex=63
+ Instance.new("UICorner",preview).CornerRadius=UDim.new(0,9)
+ local shade=Instance.new("UIGradient",preview) shade.Rotation=90 shade.Color=ColorSequence.new(Color3.fromRGB(210,210,215),Color3.fromRGB(90,90,100))
+ local caption=text(b,"Caption",mapNames[map.name] or map.name,UDim2.new(1,-8,0,28),UDim2.new(0,4,.73,0)) caption.TextSize=10 caption.Font=Enum.Font.GothamBlack caption.ZIndex=64 caption.TextStrokeTransparency=.35
+ local votes=text(b,"Votes","0 VOTOS",UDim2.new(1,-8,0,20),UDim2.new(0,4,.86,0)) votes.TextSize=9 votes.Font=Enum.Font.GothamBold votes.TextColor3=Color3.fromRGB(170,170,180) votes.ZIndex=64
+ mapButtons[map.name]=b
 end
 local killerPanel=panel("KillerSelection",UDim2.new(.66,0,.45,0),UDim2.fromScale(.17,.25))
 killerPanel.Visible=false
@@ -813,12 +892,18 @@ local voteElapsed=0
 RunService.RenderStepped:Connect(function(dt)
  voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
  killerPanel.Visible=net:GetAttribute("Phase")=="Escolha" and player:GetAttribute("ChoosingKiller")==true and not player:GetAttribute("InMenu") and not loading.Visible
- votePanel.Visible=player:GetAttribute("MapVote")==nil and net:GetAttribute("Phase")=="Intervalo" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
+ votePanel.Visible=net:GetAttribute("Phase")=="Votação" and not player:GetAttribute("InMenu") and not player:GetAttribute("AFK") and not settingsOverlay.Visible and not loading.Visible
  if not votePanel.Visible then return end
  local seconds=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- voteTitle.Text=seconds>0 and ("VOTAR UM MAPA • "..seconds.."s") or "AGUARDANDO 2 JOGADORES"
+ voteTimer.Text=tostring(seconds)
  local ok,counts=pcall(function() return game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVotes") or "{}") end)
- for name,b in pairs(mapButtons) do b.Caption.Text=(mapNames[name] or name).." • "..tostring(ok and counts[name] or 0).." votos" b.BackgroundColor3=player:GetAttribute("MapVote")==name and Color3.fromRGB(42,90,46) or Color3.fromRGB(18,18,22) end
+ for name,b in pairs(mapButtons) do
+  b.Votes.Text=tostring(ok and counts[name] or 0).." VOTOS"
+  local selected=player:GetAttribute("MapVote")==name
+  b.BackgroundColor3=selected and Color3.fromRGB(58,72,105) or Color3.fromRGB(16,16,21)
+  b.UIStroke.Color=selected and Color3.fromRGB(190,205,255) or Color3.fromRGB(150,150,158)
+  b.UIStroke.Transparency=selected and .12 or .72
+ end
 end)
 
 local dtSum=0
@@ -852,13 +937,15 @@ RunService.RenderStepped:Connect(function(dt)
  topActions.Visible=controlsVisible and inRound and not down
  bar.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and inRound and not down and (isJason or not player:GetAttribute("Injured"))
- if heldRunInput and not isJason and not down and not player:GetAttribute("Injured") then
-  mode="run"
- else
-  mode=player:GetAttribute("MoveMode") or "walk"
- end
- run.Text=isJason and "ATACAR" or "CORRER"
- run.TextTransparency=(not isJason and mode=="run") and 0 or .12
+ crouch.Visible=controlsVisible and inRound and not down and not isJason
+ attackButton.Visible=controlsVisible and inRound and not down and isJason
+ if heldRunInput and not down and (isJason or not player:GetAttribute("Injured")) then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
+ run.Text="CORRER"
+ run.TextTransparency=mode=="run" and 0 or .12
+ crouch.Text=mode=="crouch" and "LEVANTAR" or "AGACHAR"
+ local stamina=player:GetAttribute("Stamina") or 0 local maxStamina=math.max(1,player:GetAttribute("MaxStamina") or 100)
+ staminaFill.Size=UDim2.fromScale(math.clamp(stamina/maxStamina,0,1),1)
+ staminaTrack.Visible=not hidden and inRound and not down
  local reviveTarget=nil local reviveDistance=8.5
  if controlsVisible and inRound and not down and not isJason then
   local myRoot=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -874,10 +961,25 @@ RunService.RenderStepped:Connect(function(dt)
    end
   end
  end
- reviveNearby.Visible=reviveTarget~=nil and (player:GetAttribute("ReviveAt") or 0)<=workspace:GetServerTimeNow()
+ reviveNearby.Visible=reviveTarget~=nil and (player:GetAttribute("ReviveAt") or 0)<=workspace:GetServerTimeNow() and (player:GetAttribute("CarryingUserId") or 0)==0
  reviveNearby.Active=reviveNearby.Visible
- bar.Visible=bar.Visible and reviveNearby.Visible
+ carryNearby.Visible=controlsVisible and inRound and not isJason and (reviveTarget~=nil or (player:GetAttribute("CarryingUserId") or 0)>0)
+ carryNearby.Text=(player:GetAttribute("CarryingUserId") or 0)>0 and "SOLTAR" or "CARREGAR"
+ bar.Visible=controlsVisible and inRound and (isJason or reviveNearby.Visible or carryNearby.Visible)
  timer.Text=string.format("%d:%02d",math.floor(left/60),left%60)
+ local stage=net:GetAttribute("MissionStage") or "Waiting"
+ mission.Visible=not hidden and phase=="Partida" and not isJason and (inRound or player:GetAttribute("Spectating"))
+ missionText.Text=missionCopy(stage)
+ inventory.Visible=not hidden and inRound and not isJason
+ inventoryIcon.Text=player:GetAttribute("HasKey") and "🔑" or "—"
+ inventoryLabel.Text=player:GetAttribute("HasKey") and "CHAVE  1/1" or "VAZIO  0/1"
+ exitHighlight.Enabled=false
+ if player:GetAttribute("HasKey") and phase=="Partida" then
+  local activeArena=workspace:FindFirstChild("ActiveArena")
+  local objectives=activeArena and activeArena:FindFirstChild("RoundObjectives")
+  local exit=objectives and objectives:FindFirstChild("EscapeExit")
+  if exit then exitHighlight.Adornee=exit exitHighlight.Enabled=true end
+ end
  local killer=net:GetAttribute("Killer") local stats=player:FindFirstChild("leaderstats") local score=stats and stats:FindFirstChild("Pontos")
  detail.Text=""
  local reviveLeft=(player:GetAttribute("ReviveAt") or 0)-workspace:GetServerTimeNow()
@@ -894,7 +996,7 @@ RunService.RenderStepped:Connect(function(dt)
   local targets={}
   for _,p in ipairs(Players:GetPlayers()) do
    local hum=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
-   if p~=player and p:GetAttribute("InRound") and not p:GetAttribute("IsJason") and not p:GetAttribute("VoidActive") and hum and hum.Health>0 then table.insert(targets,p) end
+   if p~=player and p:GetAttribute("InRound") and not p:GetAttribute("VoidActive") and hum and hum.Health>0 then table.insert(targets,p) end
   end
   table.sort(targets,function(a,b) return a.UserId<b.UserId end)
   if #targets>0 then
@@ -922,6 +1024,23 @@ RunService.RenderStepped:Connect(function(dt)
   for _,m in ipairs(workspace:GetChildren()) do if m:GetAttribute("ActivePursuer") and (m:GetAttribute("TargetUserId") or 0)>0 then
    local p=Players:GetPlayerByUserId(m:GetAttribute("TargetUserId")) highlight.Adornee=p and p.Character highlight.Enabled=p~=nil break
   end end
+ end
+ -- Local footstep audio uses the requested walking asset when that package exposes a Sound.
+ if inRound and not down and not hidden then
+  local rr=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+  local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+  local speed=rr and (rr.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude or 0
+  local stepDelay=mode=="run" and .38 or mode=="crouch" and .95 or .62
+  if hum and hum.FloorMaterial~=Enum.Material.Air and speed>2 then
+   gui:SetAttribute("NextFootstep",gui:GetAttribute("NextFootstep") or 0)
+   if os.clock()>gui:GetAttribute("NextFootstep") then
+    gui:SetAttribute("NextFootstep",os.clock()+stepDelay)
+    local template=net:FindFirstChild("FootstepSound")
+    if template and rr then
+     local sound=template:Clone() sound.Volume=mode=="crouch" and .08 or mode=="run" and .32 or .18 sound.Parent=rr sound:Play() Debris:AddItem(sound,3)
+    end
+   end
+  end
  end
  -- Downed poses are applied with locomotion in PreSimulation, after the Animator.
 
