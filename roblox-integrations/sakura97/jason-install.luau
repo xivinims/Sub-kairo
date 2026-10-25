@@ -173,7 +173,7 @@ local oldGate=workspace:FindFirstChild("LobbyJoinPortal")
 if oldGate then oldGate:Destroy() end
 lobby:SetAttribute("AutomaticRoundAdmission",true)
 
-local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",124) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",1043225187)
+local runtime=assert(RS:FindFirstChild("SweanRuntime")) runtime:SetAttribute("Version",124) runtime:SetAttribute("PreservedLobby",true) runtime:SetAttribute("SurvivorRig","R6") runtime:SetAttribute("LobbySourceAssetId",FIXED_LOBBY_ASSET_ID) runtime:SetAttribute("FixedLobbyRevision","violence-district-lobby-v1")
 runtime:SetAttribute("SpawnX",spawn.Position.X) runtime:SetAttribute("SpawnY",spawn.Position.Y) runtime:SetAttribute("SpawnZ",spawn.Position.Z)
 workspace.StreamingEnabled=false
 local storage=replace(SS,"SurvivalAssets","Folder")
