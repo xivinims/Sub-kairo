@@ -112,15 +112,15 @@ local ok,result=xpcall(function()
  survivor.GetAttribute=function() return false end step()
  assert(not gui.Spectate.Visible,"Spectator UI must disappear when no living target remains")
  attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
- assert(gui.TopActions.Run.Visible and gui.TopActions.Run.Text=="ATACAR","Player killer must use the single context button for attack")
- assert(not gui.Actions.Visible,"Player killer received extra persistent buttons")
+ assert(gui.TopActions.Run.Visible and gui.TopActions.Run.Text=="CORRER","Player killer sprint control missing")
+ assert(gui.Actions.Visible and gui.Actions.Attack.Visible and not gui.Actions.ReviveNearby.Visible and not gui.Actions.CarryNearby.Visible,"Player killer attack/context controls are wrong")
  assert(camera.FieldOfView>(attrs.CameraFOV or 48),"Killer FOV boost did not increase above the configured base FOV")
  attrs.IsJason=false attrs.InRound=false attrs.Spectating=true
  attrs.VoidActive=true step() assert(not gui.Spectate.Visible and not gui.Round.Visible)
  attrs.VoidActive=false attrs.Spectating=false attrs.RoundStatus="lobby"
  fakeNet:SetAttribute("Phase","Votação") fakeNet:SetAttribute("EndsAt",workspace:GetServerTimeNow()+6)
  fakeNet:SetAttribute("Waiting",1) fakeNet:SetAttribute("MaxPlayers",8) step()
- assert(gui.Countdown.Visible and not gui.Round.Visible and not gui.Actions.Visible,"Intermission timer must remain visible")
+ assert(not gui.Countdown.Visible and gui.MapVoting.Visible and not gui.Round.Visible and not gui.Actions.Visible,"Dedicated voting overlay must replace intermission countdown during voting")
  camera.CameraType=Enum.CameraType.Scriptable camera.CameraSubject=nil
  char.Humanoid.Health=37 step()
  assert(camera.CameraType==Enum.CameraType.Custom and camera.CameraSubject==char.Humanoid,"Camera did not recover the living lobby character")
