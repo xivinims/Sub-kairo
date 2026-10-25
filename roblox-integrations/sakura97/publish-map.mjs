@@ -446,6 +446,11 @@ local function install()
 ${install}
 end
 local result=install()
+result.actionSources={}
+for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","Stun","Vault"}) do
+ local folder=game.ReplicatedStorage.Survival.SurvivorActionClips
+ result.actionSources[name]={requested=folder:GetAttribute(name.."RequestedAssetId"),actual=folder:GetAttribute(name.."AssetId"),fallback=folder:GetAttribute(name.."Fallback")==true,unavailable=folder:GetAttribute(name.."Unavailable")==true}
+end
 do
  local asset=game:GetService("InsertService"):LoadAsset(${actionAtlasId})
  local decal=assert(asset:FindFirstChildWhichIsA("Decal",true),"Action atlas decal missing")

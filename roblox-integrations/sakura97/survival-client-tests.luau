@@ -38,6 +38,14 @@ end
 local function step() render:Fire(.2) task.wait() end
 local ok,result=xpcall(function()
  controller() step()
+ local artGui=assert(guiHost:FindFirstChild("SurvivalHUD"))
+ local runArt=assert(artGui.TopActions.Run:FindFirstChild("ReferenceActionArt"),"Reference artwork missing")
+ assert(runArt.Image~="" and runArt.ImageRectOffset==Vector2.new(373,78),"Idle run crop incorrect")
+ attrs.MoveMode="run" step()
+ assert(runArt.ImageRectOffset==Vector2.new(658,71),"Active sprint crop missing")
+ attrs.MoveMode="walk" step()
+ assert(runArt.UICorner.CornerRadius.Scale==1,"Square panel rule broke circular action art")
+
  local gui=assert(guiHost:FindFirstChild("SurvivalHUD")) assert(gui.TopActions.Run.Visible and not gui:FindFirstChild("Join"))
  local mapLoading=assert(gui:FindFirstChild("ArenaLoading"),"Map loading screen missing")
  assert(mapLoading:FindFirstChild("MapProgress") and mapLoading.MapProgress:FindFirstChild("Fill"),"Bottom map loading progress bar missing")
@@ -115,7 +123,7 @@ local ok,result=xpcall(function()
  survivor.GetAttribute=function() return false end step()
  assert(not gui.Spectate.Visible,"Spectator UI must disappear when no living target remains")
  attrs.IsJason=true attrs.InRound=true attrs.Spectating=false step()
- assert(gui.TopActions.Run.Visible and gui.TopActions.Run.Text=="CORRER","Player killer sprint control missing")
+ assert(gui.TopActions.Run.Visible and gui.TopActions.Run:FindFirstChild("ReferenceActionArt")~=nil,"Player killer sprint control missing")
  assert(gui.Actions.Visible and gui.Actions.Attack.Visible and not gui.Actions.ReviveNearby.Visible and not gui.Actions.CarryNearby.Visible,"Player killer attack/context controls are wrong")
  assert(camera.FieldOfView>(attrs.CameraFOV or 48),"Killer FOV boost did not increase above the configured base FOV")
  attrs.IsJason=false attrs.InRound=false attrs.Spectating=true

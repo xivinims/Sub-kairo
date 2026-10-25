@@ -89,9 +89,9 @@ local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(136,64) topActions.Position=UDim2.new(1,-165,1,-115)
+topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(136,64) topActions.Position=UDim2.new(1,-24,1,-30)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
-bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(150,74) bar.Position=UDim2.new(1,-84,1,-86)
+bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(150,74) bar.Position=UDim2.new(1,-24,1,-110)
 local actionRects={Run={373,78,253,258},RunActive={658,71,258,263},Crouch={952,77,258,262},Attack={42,62,294,294},ReviveNearby={642,386,257,257},CarryNearby={1289,720,217,215}}
 local function setActionArt(b,key)
  local art=b:FindFirstChild("ReferenceActionArt") if not art then return end
@@ -164,8 +164,8 @@ local function actionLayout()
  local scale=math.clamp(cam.ViewportSize.Y/650,.76,1)*math.clamp((player:GetAttribute("ControlScale") or 100)/100,.8,1.2)
  local bottomScale=bar:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",bar) bottomScale.Scale=scale
  local topScale=topActions:FindFirstChildOfClass("UIScale") or Instance.new("UIScale",topActions) topScale.Scale=math.min(scale,.96)
- topActions.Position=UDim2.new(1,-165,1,-115)
- bar.Position=UDim2.new(1,-84,1,-86)
+ topActions.Position=UDim2.new(1,-24,1,-30)
+ bar.Position=UDim2.new(1,-24,1,-110)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
