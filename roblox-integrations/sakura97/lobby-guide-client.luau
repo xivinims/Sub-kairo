@@ -3,7 +3,6 @@ local Players=game:GetService("Players")
 local Run=game:GetService("RunService")
 local RS=game:GetService("ReplicatedStorage")
 local UIS=game:GetService("UserInputService")
-local Tween=game:GetService("TweenService")
 local player=Players.LocalPlayer
 local npc=script.Parent
 local root=npc:WaitForChild("HumanoidRootPart")
@@ -18,90 +17,186 @@ local resources=RS:WaitForChild("LobbyGuideResources")
 local playerGui=player:WaitForChild("PlayerGui")
 local old=playerGui:FindFirstChild("GuideDialogue")
 if old then old:Destroy() end
-local ui=resources.dialog:Clone() ui.Name="GuideDialogue" ui.ResetOnSpawn=false ui.Parent=player:WaitForChild("PlayerGui")
+local ui=resources.dialog:Clone()
+ui.Name="GuideDialogue"
+ui.ResetOnSpawn=false
+ui.Parent=playerGui
 local responses=ui:WaitForChild("dialogResponses")
-local template=responses:WaitForChild("template") template.Visible=false
+local template=responses:WaitForChild("template")
+template.Visible=false
 local bubble=head:WaitForChild("gui")
 local label=bubble:WaitForChild("dialog")
 label.Visible=false
-local greeting="Ei. Respira um pouco. Aqui no lobby você pode descansar. Quer que eu te explique como tudo funciona?"
-local choices={"Como eu jogo?","E se eu for o perseguidor?","Só vim descansar."}
-local replies={
- "Escolha um mapa na votação. Quando a partida começar, fique atento aos caminhos e cuide dos outros sobreviventes.",
- "Escolha seu personagem durante o intervalo. Se você for sorteado, vai controlar o perseguidor nessa partida.",
- "Tudo bem. Fica à vontade. Quando estiver pronto, a próxima partida estará esperando por você."
+
+local greeting="Ah... hello. How are you? My name is Fill. I'm your guide around here. If you have a question, go ahead and ask. So... what do you want to know?"
+local choices={
+ "How does the game work?",
+ "What if I'm the killer?",
+ "What can I do here?",
+ "Who are you?",
+ "Nothing right now.",
 }
-local generation=0 local active=false local choosing=false
-local connections={} local buttons={}
-local voice=Instance.new("AudioTextToSpeech") voice.Name="PortugueseVoice" voice.VoiceId="1001" voice.AutoLocalize=false voice.Volume=.34 voice.Speed=.90 voice.Pitch=.88 voice.Parent=ui
-local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=ui
-local wire=Instance.new("Wire") wire.SourceInstance=voice wire.TargetInstance=output wire.Parent=ui
-local function stopVoice() voice:Pause() voice.TimePosition=0 end
-local function speak(line,token)
- task.spawn(function()
-  local ok,err=pcall(function()
-   stopVoice() voice.Text=line voice:LoadAsync()
-   if token==generation and active then voice:Play() end
-  end)
-  if not ok then warn("Guide voice unavailable: "..tostring(err)) end
- end)
+local replies={
+ "Alright. When the match begins, one player will be chosen as the killer. Everyone else will have to survive until the timer runs out. Sounds simple. It isn't. Use the map, pay attention to sounds, and don't stay in one place for too long. If someone needs your help... decide quickly.",
+ "If you're chosen... then the hunt is yours. You'll be able to choose your character before the match begins. Each killer has their own style, animations, and different ways to attack. Find the survivors before time runs out. And don't let anyone escape.",
+ "Here? This is the lobby. You can explore, check your profile, change your settings, or simply wait for the next match. You can also talk to me. I usually know what's going on around here. Usually.",
+ "Still curious about me? Fill. That's the name you need to remember. I stay here to guide new players, explain a few things... and keep an eye on what happens. Let's just say I know this place very well.",
+ "Alright. Enjoy the lobby. When you change your mind... you know where to find me.",
+}
+
+local generation=0
+local active=false
+local choosing=false
+local connections={}
+local buttons={}
+local voice=Instance.new("Sound")
+voice.Name="FillVoice"
+voice.Volume=.58
+voice.Looped=false
+voice.Parent=ui
+
+local voiceConnection=nil
+local function stopVoice()
+ if voiceConnection then voiceConnection:Disconnect() voiceConnection=nil end
+ if voice.IsPlaying then voice:Stop() end
+ voice.TimePosition=0
 end
-local function hideChoices() for _,b in ipairs(buttons) do b.Visible=false end end
+local function voiceId(index)
+ local id=tonumber(resources:GetAttribute("Voice"..index)) or 0
+ return id>0 and id or nil
+end
+local function speak(index,token,done)
+ stopVoice()
+ local id=voiceId(index)
+ if not id then
+  task.defer(function() if token==generation and active then done() end end)
+  return
+ end
+ voice.SoundId="rbxassetid://"..id
+ local finished=false
+ local function finish()
+  if finished then return end
+  finished=true
+  if voiceConnection then voiceConnection:Disconnect() voiceConnection=nil end
+  if token==generation and active then done() end
+ end
+ voiceConnection=voice.Ended:Connect(finish)
+ local ok,err=pcall(function() voice:Play() end)
+ if not ok then
+  warn("Fill voice unavailable: "..tostring(err))
+  finish()
+ end
+end
+
+local function hideChoices()
+ for _,b in ipairs(buttons) do b.Visible=false end
+end
 local function close()
- generation+=1 active=false choosing=false stopVoice() hideChoices()
- label.Visible=false bubble.name.Visible=true bubble.arrow.Visible=true
- bubble.name.TextTransparency=0 bubble.arrow.TextTransparency=0
+ generation+=1
+ active=false
+ choosing=false
+ stopVoice()
+ hideChoices()
+ label.Visible=false
+ bubble.name.Visible=true
+ bubble.arrow.Visible=true
+ bubble.name.TextTransparency=0
+ bubble.arrow.TextTransparency=0
 end
-local function showLine(line,token,after)
- label.Visible=true label.Text="" label.TextTransparency=0 label.UIStroke.Transparency=0
- label.MaxVisibleGraphemes=0 label.Text=line
- speak(line,token)
+local function showLine(line,token,voiceIndex,after)
+ label.Visible=true
+ label.Text=""
+ label.TextTransparency=0
+ label.UIStroke.Transparency=0
+ label.MaxVisibleGraphemes=0
+ label.Text=line
+ local textDone=false
+ local audioDone=false
+ local completed=false
+ local function maybeFinish()
+  if completed or not textDone or not audioDone then return end
+  if generation~=token or not active then return end
+  completed=true
+  label.MaxVisibleGraphemes=-1
+  after()
+ end
+ speak(voiceIndex,token,function() audioDone=true maybeFinish() end)
  task.spawn(function()
   local count=0
   for _ in utf8.graphemes(line) do
    if generation~=token or not active then return end
-   count+=1 label.MaxVisibleGraphemes=count task.wait(.025)
+   count+=1
+   label.MaxVisibleGraphemes=count
+   task.wait(.018)
   end
-  if generation==token and active then label.MaxVisibleGraphemes=-1 after() end
+  textDone=true
+  maybeFinish()
  end)
 end
 local function choose(index)
  if not active or not choosing or not replies[index] then return end
- choosing=false hideChoices() generation+=1
+ choosing=false
+ hideChoices()
+ generation+=1
  local token=generation
- showLine(replies[index],token,function()
-  task.delay(6,function() if generation==token then close() end end)
+ showLine(replies[index],token,index+1,function()
+  task.delay(.45,function() if generation==token and active then close() end end)
  end)
 end
+
 for i,title in ipairs(choices) do
- local b=template:Clone() b.Name="Choice"..i b.Visible=false b.LayoutOrder=i
- b.Size=UDim2.new(1,0,0,42) b.Parent=responses
- b.text.Text=title b.text.TextSize=16 b.text.TextWrapped=true b.text.RichText=false
+ local b=template:Clone()
+ b.Name="Choice"..i
+ b.Visible=false
+ b.LayoutOrder=i
+ b.Size=UDim2.new(1,0,0,40)
+ b.Parent=responses
+ b.text.Text=title
+ b.text.TextSize=15
+ b.text.TextWrapped=true
+ b.text.RichText=false
  table.insert(buttons,b)
  table.insert(connections,b.Activated:Connect(function() choose(i) end))
 end
--- Retain the provided response artwork, with compact mobile-safe spacing.
-responses.AnchorPoint=Vector2.new(.5,1) responses.Position=UDim2.new(.5,0,1,-28) responses.Size=UDim2.new(.8,0,0,142)
-local limit=Instance.new("UISizeConstraint",responses) limit.MaxSize=Vector2.new(480,142)
+responses.AnchorPoint=Vector2.new(.5,1)
+responses.Position=UDim2.new(.5,0,1,-24)
+responses.Size=UDim2.new(.82,0,0,226)
+local limit=Instance.new("UISizeConstraint",responses)
+limit.MaxSize=Vector2.new(500,226)
 local layout=responses:FindFirstChildOfClass("UIListLayout") or Instance.new("UIListLayout",responses)
-layout.Padding=UDim.new(0,6) layout.SortOrder=Enum.SortOrder.LayoutOrder
+layout.Padding=UDim.new(0,5)
+layout.SortOrder=Enum.SortOrder.LayoutOrder
+
 table.insert(connections,prompt.Triggered:Connect(function()
  if active or player:GetAttribute("InRound") or player:GetAttribute("InMenu") then return end
- active=true generation+=1 choosing=false local token=generation
- bubble.name.Visible=false bubble.arrow.Visible=false
- showLine(greeting,token,function() choosing=true for _,b in ipairs(buttons) do b.Visible=true end end)
+ active=true
+ generation+=1
+ choosing=false
+ local token=generation
+ bubble.name.Visible=false
+ bubble.arrow.Visible=false
+ showLine(greeting,token,1,function()
+  choosing=true
+  for _,b in ipairs(buttons) do b.Visible=true end
+ end)
 end))
 table.insert(connections,UIS.InputBegan:Connect(function(input,processed)
  if processed then return end
  if input.KeyCode==Enum.KeyCode.Escape and active then close() return end
- local index=table.find({Enum.KeyCode.One,Enum.KeyCode.Two,Enum.KeyCode.Three},input.KeyCode)
+ local index=table.find({
+  Enum.KeyCode.One,Enum.KeyCode.Two,Enum.KeyCode.Three,Enum.KeyCode.Four,Enum.KeyCode.Five
+ },input.KeyCode)
  if index then choose(index) end
 end))
+
 local connection
 connection=Run.RenderStepped:Connect(function(dt)
  if not npc.Parent then
-  connection:Disconnect() for _,c in ipairs(connections) do c:Disconnect() end
-  ui:Destroy() return
+  connection:Disconnect()
+  for _,c in ipairs(connections) do c:Disconnect() end
+  stopVoice()
+  ui:Destroy()
+  return
  end
  local character=player.Character
  local target=character and character:FindFirstChild("Head")
