@@ -27,7 +27,7 @@ local objectiveFolder=nil
 local carryWelds=setmetatable({},{__mode="k"})
 local objectiveConnections={}
 local escapedThisRound=0
-local adminResetRequested=false local lastAdminReset=-math.huge
+local adminResetRequested=false
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
 local function entry(p) return state.entries[p.UserId] end
@@ -727,12 +727,7 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  rates[p]=rates[p] or {} local t=now()
  if action~="mode" and t-(rates[p][action] or -math.huge)<.18 then return end
  rates[p][action]=t
- if action=="adminReset" then
-  if p.UserId~=8344738123 or t-lastAdminReset<10 then return end
-  lastAdminReset=t adminResetRequested=true endTime=t
-  net.Update:FireAllClients("notice","Rodada reiniciada pelo administrador.")
-  return
- elseif action=="hackTap" then hackTap(p,value) return
+ if action=="hackTap" then hackTap(p,value) return
  elseif action=="hackCancel" then cancelHack(p) return end
  if action=="voteMap" then
   if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 then return end
@@ -740,7 +735,16 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   mapVotes[p]=value p:SetAttribute("MapVote",value) voteCounts() return
  elseif action=="chooseKiller" then
   if state.phase~="Escolha" or p~=selectionPlayer or selectedKiller or p:GetAttribute("AFK") or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
+  if not profiles:ownsKiller(p,value) then net.Update:FireClient(p,"notice","Você ainda não comprou "..value..".") return end
   selectedKiller=value p:SetAttribute("ChoosingKiller",false) return
+ elseif action=="buyKiller" then
+  if type(value)~="string" or #value>40 then return end
+  local spec=config.Killers[value]
+  if not spec or not assets.Killers:FindFirstChild(value) then return end
+  local ok,msg=profiles:buyKiller(p,value,spec.cost or 0)
+  net.Update:FireClient(p,"shopResult",ok,msg,value)
+  if ok then task.spawn(saveProfile,p) end
+  return
  end
  if action=="afk" then
   if type(value)~="boolean" then return end
