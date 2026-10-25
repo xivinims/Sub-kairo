@@ -650,10 +650,23 @@ local function importActionClip(name,id)
  holder:Destroy()
  actionClips:SetAttribute(name.."AssetId",id)
 end
+local importedActions={}
 for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","Stun","Vault"}) do
- importActionClip(name,actionIds[name])
+ actionClips:SetAttribute(name.."RequestedAssetId",actionIds[name])
+ local ok,err=pcall(importActionClip,name,actionIds[name])
+ if ok then
+  importedActions[name]=true
+ else
+  actionClips:SetAttribute(name.."Unavailable",true)
+  actionClips:SetAttribute(name.."UnavailableReason",tostring(err):sub(1,500))
+  warn("Optional survivor animation unavailable: "..name.." ("..actionIds[name]..") "..tostring(err))
+ end
 end
-assert((actionClips:GetAttribute("ClipCount") or 0)==6,"Survivor action clip package is incomplete")
+assert(importedActions.CrouchWalk,"Required crouch walk animation could not be imported")
+assert(importedActions.InjuredCrouchWalk,"Required injured crouch walk animation could not be imported")
+actionClips:SetAttribute("RequestedClipCount",6)
+actionClips:SetAttribute("RequiredClipCount",2)
+assert((actionClips:GetAttribute("ClipCount") or 0)>=2,"Required survivor crouch action clips are missing")
 
 local function scriptAt(parent,name,class,sourceCode) local s=replace(parent,name,class) s.Source=sourceCode return s end
 scriptAt(SSS,"IslandServer","Script",__ISLAND_SERVER_SOURCE__)
