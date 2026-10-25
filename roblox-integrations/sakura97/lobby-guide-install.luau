@@ -66,146 +66,116 @@ dialogUI.ResetOnSpawn=false dialogUI.IgnoreGuiInset=true dialogUI.Parent=resourc
 local example=assert(dialoguePackage:FindFirstChild("showcase npc",true))
 local bubble=assert(example.Head:FindFirstChild("gui")):Clone() bubble.Parent=head
 bubble.name.Text="Fill"
-local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Conversar" prompt.ObjectText="Fill" prompt.MaxActivationDistance=8 prompt.RequiresLineOfSight=true prompt.Parent=npc
+local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Conversar" prompt.ObjectText="Fill" prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=false prompt.Parent=npc
 game:GetService("CollectionService"):AddTag(prompt,"NPCprompt")
 
 local pending=SS:FindFirstChild("PendingLobbyGuide") if pending then pending:Destroy() end
 local previousResources=RS:FindFirstChild("LobbyGuideResources") if previousResources then previousResources:Destroy() end
 resources.Parent=RS
 local lobby=assert(workspace:FindFirstChild("JediLibrary"))
-for _,other in ipairs(workspace:GetChildren()) do if other.Name=="LobbyGuide" and other~=npc then other:Destroy() end end
+for _,other in ipairs(workspace:GetChildren()) do
+ if other.Name=="LobbyGuide" and other~=npc then other:Destroy() end
+end
+-- Remove the old generated table. It was never the lobby reception and was the reason
+-- Fill kept appearing in the wrong place.
+local legacyGuideTable=lobby:FindFirstChild("GuideTable")
+if legacyGuideTable then legacyGuideTable:Destroy() end
 
--- Reception placement: prefer the actual front desk/counter already authored in the lobby.
--- Never depend on the old randomly-created GuideTable, because that could leave the guide
--- missing or far away from reception when the lobby layout changed.
 local spawn=lobby:GetAttribute("VerifiedSpawn")
 local origin=typeof(spawn)=="CFrame" and spawn.Position or spawn
-if typeof(origin)~="Vector3" then origin=lobby:GetPivot().Position end
-local door=lobby:GetAttribute("FormerDoorCFrame")
-local entrance=typeof(door)=="CFrame" and door.Position or origin
+assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 
-local function ancestryText(part)
- local names={string.lower(part.Name)}
- local p=part.Parent
- for _=1,4 do
-  if not p or p==lobby then break end
-  table.insert(names,string.lower(p.Name))
-  p=p.Parent
- end
- return table.concat(names," ")
-end
-
-local function explicitReceptionScore(part)
- if not part:IsA("BasePart") then return -math.huge end
- if math.abs(part.CFrame.UpVector.Y)<.82 then return -math.huge end
- local topArea=part.Size.X*part.Size.Z
- if topArea<5 or part.Size.Y>5 then return -math.huge end
- local text=ancestryText(part)
- local score=0
- if string.find(text,"reception",1,true) then score+=160 end
- if string.find(text,"frontdesk",1,true) or string.find(text,"front desk",1,true) then score+=150 end
- if string.find(text,"counter",1,true) then score+=120 end
- if string.find(text,"desk",1,true) then score+=105 end
- if string.find(text,"tabletop",1,true) then score+=75 end
- if string.find(text,"table",1,true) then score+=55 end
- if score==0 then return -math.huge end
- score+=math.min(topArea,80)*.2
- score-=math.min((part.Position-entrance).Magnitude,120)*.08
- return score
-end
-
-local receptionTop,bestScore
-bestScore=-math.huge
-for _,obj in ipairs(lobby:GetDescendants()) do
- if obj:IsA("BasePart") then
-  local score=explicitReceptionScore(obj)
-  if score>bestScore then bestScore=score receptionTop=obj end
- end
-end
-
--- Some imported Roblox assets have useless names such as "Part". If that happens,
--- select a plausible horizontal counter surface near the entrance/spawn instead.
-if not receptionTop then
- local best=-math.huge
- for _,part in ipairs(lobby:GetDescendants()) do
-  if part:IsA("BasePart") and part.Transparency<1 and math.abs(part.CFrame.UpVector.Y)>.9 then
-   local area=part.Size.X*part.Size.Z
-   local topY=part.Position.Y+part.Size.Y/2
-   local relativeHeight=topY-origin.Y
-   if area>=12 and area<=180 and part.Size.Y<=3.5 and relativeHeight>=1.8 and relativeHeight<=5.2 then
-    local distance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-    if distance<=65 then
-     local score=80-math.abs(relativeHeight-3.1)*14-distance*.35+math.min(area,60)*.08
-     if score>best then best=score receptionTop=part end
-    end
-   end
+-- The authored reception in JediLibrary is an L-shaped set of thin brown wooden
+-- counter pieces far across the lobby from the spawn. Detect the cluster by its
+-- real geometry/material rather than by unreliable imported object names ("Part").
+local receptionPieces={}
+for _,part in ipairs(lobby:GetDescendants()) do
+ if part:IsA("BasePart") and part.Transparency<.98 and part.Material==Enum.Material.Wood and math.abs(part.CFrame.UpVector.Y)>.88 then
+  local area=part.Size.X*part.Size.Z
+  local topY=part.Position.Y+part.Size.Y/2
+  local relativeHeight=topY-origin.Y
+  local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
+  local brown=(part.Color-Color3.fromRGB(105,64,40)).Magnitude<.12
+  if brown and part.Size.Y<=.35 and area>=14 and relativeHeight>=1.8 and relativeHeight<=3.1 and flatDistance>=50 and flatDistance<=76 then
+   table.insert(receptionPieces,part)
   end
  end
 end
+assert(#receptionPieces>=2,"Real lobby reception counter was not found")
 
--- Final safety net: if the imported lobby genuinely has no usable counter, create a
--- deterministic reception desk instead of silently omitting Fill.
-if not receptionTop then
- local ray=RaycastParams.new()
- ray.FilterType=Enum.RaycastFilterType.Include
- ray.FilterDescendantsInstances={lobby}
- ray.RespectCanCollide=true
- local groundHit
- for radius=10,34,6 do
-  for a=0,7 do
-   local point=origin+Vector3.new(math.cos(a*math.pi/4)*radius,12,math.sin(a*math.pi/4)*radius)
-   local hit=workspace:Raycast(point,Vector3.new(0,-24,0),ray)
-   if hit and hit.Normal.Y>.94 then groundHit=hit break end
-  end
-  if groundHit then break end
- end
- local floor=groundHit and groundHit.Position or origin
- local desk=Instance.new("Model") desk.Name="ReceptionDesk" desk.Parent=lobby
- local top=Instance.new("Part")
- top.Name="ReceptionCounter"
- top.Size=Vector3.new(10,.4,4)
- top.CFrame=CFrame.new(floor+Vector3.new(0,3.05,0))
- top.Anchored=true top.CanCollide=true top.Material=Enum.Material.Wood
- top.Color=Color3.fromRGB(55,40,34)
- top.TopSurface=Enum.SurfaceType.Smooth top.BottomSurface=Enum.SurfaceType.Smooth
- top.Parent=desk
- for _,x in ipairs({-4.35,4.35}) do
-  for _,z in ipairs({-1.35,1.35}) do
-   local leg=Instance.new("Part")
-   leg.Name="Leg" leg.Size=Vector3.new(.45,2.85,.45)
-   leg.CFrame=CFrame.new(floor+Vector3.new(x,1.425,z))
-   leg.Anchored=true leg.CanCollide=true leg.Material=Enum.Material.Metal
-   leg.Color=Color3.fromRGB(28,26,26) leg.Parent=desk
-  end
- end
- receptionTop=top
+local weighted=Vector3.zero
+local weightTotal=0
+local receptionTop=nil
+local bestArea=-1
+for _,part in ipairs(receptionPieces) do
+ local area=part.Size.X*part.Size.Z
+ weighted+=part.Position*area
+ weightTotal+=area
+ if area>bestArea then bestArea=area receptionTop=part end
 end
+local deskCenter=weighted/math.max(weightTotal,.001)
+local towardVisitors=Vector3.new(origin.X-deskCenter.X,0,origin.Z-deskCenter.Z)
+if towardVisitors.Magnitude<.1 then towardVisitors=Vector3.new(1,0,0) else towardVisitors=towardVisitors.Unit end
+local behind=-towardVisitors
+local side=Vector3.new(-behind.Z,0,behind.X)
 
--- Put Fill directly on the reception surface and face him toward the lobby entrance/spawn.
-local face=Vector3.new(entrance.X,receptionTop.Position.Y,entrance.Z)
-if (face-receptionTop.Position).Magnitude<.1 then face=Vector3.new(origin.X,receptionTop.Position.Y,origin.Z) end
-if (face-receptionTop.Position).Magnitude<.1 then face=receptionTop.Position+Vector3.new(0,0,-1) end
-npc:PivotTo(CFrame.lookAt(receptionTop.Position,face))
+-- Put Fill behind the actual reception, on its floor, facing the player approach.
+-- Search several offsets so imported counter geometry can never trap him inside the desk.
+local ray=RaycastParams.new()
+ray.FilterType=Enum.RaycastFilterType.Include
+ray.FilterDescendantsInstances={lobby}
+ray.RespectCanCollide=true
+local floorHit=nil
+local standPosition=nil
+for _,distance in ipairs({4.5,5.5,6.5,7.5,8.5}) do
+ for _,sideOffset in ipairs({0,-2.5,2.5,-4,4}) do
+  local flat=deskCenter+behind*distance+side*sideOffset
+  local probe=Vector3.new(flat.X,origin.Y+1.6,flat.Z)
+  local hit=workspace:Raycast(probe,Vector3.new(0,-5,0),ray)
+  if hit and hit.Normal.Y>.82 and math.abs(hit.Position.Y-origin.Y)<1.25 then
+   floorHit=hit
+   standPosition=hit.Position
+   break
+  end
+ end
+ if standPosition then break end
+end
+assert(standPosition and floorHit,"No safe floor position behind the real reception counter")
+
+local facePoint=Vector3.new(origin.X,standPosition.Y,origin.Z)
+npc:PivotTo(CFrame.lookAt(standPosition,facePoint))
 for _=1,3 do
  for _,motor in ipairs(npc:GetDescendants()) do
-  if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then motor.Part1.CFrame=motor.Part0.CFrame*motor.C0*motor.C1:Inverse() end
+  if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 then
+   motor.Part1.CFrame=motor.Part0.CFrame*motor.C0*motor.C1:Inverse()
+  end
  end
 end
 local bounds,dimensions=npc:GetBoundingBox()
 local bottom=bounds.Position.Y-dimensions.Y/2
-local surfaceY=receptionTop.Position.Y+receptionTop.Size.Y/2
-npc:PivotTo(npc:GetPivot()+Vector3.new(receptionTop.Position.X-bounds.Position.X,surfaceY-bottom+.02,receptionTop.Position.Z-bounds.Position.Z))
+npc:PivotTo(npc:GetPivot()+Vector3.new(
+ standPosition.X-bounds.Position.X,
+ standPosition.Y-bottom+.02,
+ standPosition.Z-bounds.Position.Z
+))
+
 npc.Name="LobbyGuide"
 npc:SetAttribute("DisplayName","Fill")
-npc:SetAttribute("Placement","ReceptionTabletop")
+npc:SetAttribute("Placement","ReceptionDesk")
 npc:SetAttribute("ReceptionSurface",receptionTop:GetFullName())
-local tableReference=Instance.new("ObjectValue") tableReference.Name="Tabletop" tableReference.Value=receptionTop tableReference.Parent=npc
-local newBounds,newSize=npc:GetBoundingBox()
-local gap=newBounds.Position.Y-newSize.Y/2-(receptionTop.Position.Y+receptionTop.Size.Y/2)
-assert(math.abs(gap-.02)<.1,"Fill is not aligned with the reception tabletop")
+npc:SetAttribute("ReceptionPosition",standPosition)
+npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
+local tableReference=Instance.new("ObjectValue")
+tableReference.Name="Tabletop"
+tableReference.Value=receptionTop
+tableReference.Parent=npc
+
+local placedBounds,placedSize=npc:GetBoundingBox()
+local floorGap=placedBounds.Position.Y-placedSize.Y/2-standPosition.Y
+assert(math.abs(floorGap-.02)<.1,"Fill is not grounded behind the reception")
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc
 assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headless/R6 validation failed")
 local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
 posePackage:Destroy() dialoguePackage:Destroy()
-return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,tabletopGap=gap,tablePosition=tostring(receptionTop.Position),localGaze=true}
+return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,receptionFloorGap=floorGap,receptionPosition=tostring(standPosition),tablePosition=tostring(receptionTop.Position),localGaze=true}
