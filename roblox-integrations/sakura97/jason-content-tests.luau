@@ -34,6 +34,8 @@ local expectedMaps={
  PirateBayIsland=127398591748883,
  NaturalDisasterSurvival=92220535332787,
  RocketArena=112232657511704,
+ PiggySewers=7757562864,
+ PiggyMappleDonut=16440225099,
 }
 assert(rig:GetAttribute("SourceAssetId")==125165599816440)
 for name,id in pairs(expectedMaps) do
@@ -209,6 +211,6 @@ assert(assets.Killers.Jeff:GetAttribute("MotionLibrary")=="Noli")
 assert(shared.Noli["Jason_Kill"]:GetAttribute("SourceAssetId")==140625681515398)
 assert(assets.Killers.Freddy:GetAttribute("MotionLibrary")=="Animatronic")
 assert(shared.Animatronic["Jason Walk"]:GetAttribute("SourceAssetId")==134168450460030)
-return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,frozenResultPoses=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedFiveMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
+return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,exactLobby1043225187=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,frozenResultPoses=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,referenceVisualSettings=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,menuObjectsRemoved=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
 
