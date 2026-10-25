@@ -60,13 +60,21 @@ source=source:gsub('for i, letter in string.split%(exitQuip,""%) do','for first,
 source=source:gsub('player.Character.PrimaryPart.Position','(player.Character and player.Character.PrimaryPart and player.Character.PrimaryPart.Position or Vector3.new(1e6,1e6,1e6))')
 module.Source=source
 local resources=Instance.new("Folder") resources.Name="LobbyGuideResources"
+resources:SetAttribute("Language","en")
+local survival=assert(RS:FindFirstChild("Survival"),"Survival runtime missing")
+for i=1,6 do
+ local id=tonumber(survival:GetAttribute("FillVoice"..i)) or 0
+ assert(id>0,"Fill English voice asset "..i.." missing")
+ resources:SetAttribute("Voice"..i,id)
+end
+npc:SetAttribute("VoiceLanguage","English")
 module.Parent=resources
 local dialogUI=assert(dialoguePackage:FindFirstChild("dialog",true)):Clone()
 dialogUI.ResetOnSpawn=false dialogUI.IgnoreGuiInset=true dialogUI.Parent=resources
 local example=assert(dialoguePackage:FindFirstChild("showcase npc",true))
 local bubble=assert(example.Head:FindFirstChild("gui")):Clone() bubble.Parent=head
 bubble.name.Text="Fill"
-local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Conversar" prompt.ObjectText="Fill" prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=false prompt.Parent=npc
+local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=false prompt.Parent=npc
 game:GetService("CollectionService"):AddTag(prompt,"NPCprompt")
 
 local pending=SS:FindFirstChild("PendingLobbyGuide") if pending then pending:Destroy() end
@@ -162,4 +170,4 @@ assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headl
 local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
 posePackage:Destroy() dialoguePackage:Destroy()
-return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,seatedGap=seatedGap,receptionPosition=tostring(torso.Position),tablePosition=tostring(receptionTop.Position),localGaze=true}
+return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,seatedGap=seatedGap,receptionPosition=tostring(torso.Position),tablePosition=tostring(receptionTop.Position),localGaze=true,voiceLanguage="English",uploadedVoice=true}
