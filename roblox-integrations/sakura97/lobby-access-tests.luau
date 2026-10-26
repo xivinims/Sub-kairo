@@ -83,7 +83,8 @@ return {
  openDoorParts=openDoorParts,
  doorFrames=doorFrames,
  stairMeshes=stairMeshes,
- visualStairs=visualStairs,\n stairPathSteps=stairSteps,
+ visualStairs=visualStairs,
+ stairPathSteps=stairSteps,
  usableStairs=usableStairs,
  fillDirectFromSpawn=true,
  fillSurface=npc:GetAttribute("ReceptionSurface")
