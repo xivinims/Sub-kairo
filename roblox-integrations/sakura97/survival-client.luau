@@ -259,7 +259,7 @@ lantern.TextSize=9
 lantern.BackgroundTransparency=.34
 lantern.BackgroundColor3=Color3.fromRGB(25,26,30)
 lantern:SetAttribute("LanternAssetId",11906391298)
-lantern:SetAttribute("CrackleSoundAssetId",112352139435056)
+lantern:SetAttribute("CrackleSoundAssetId",129037248569146)
 
 local crouch=cleanAction(topActions,"Crouch",L("AGACHAR","CROUCH"),UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function()
  if player:GetAttribute("Downed") or player:GetAttribute("IsJason") then return end
