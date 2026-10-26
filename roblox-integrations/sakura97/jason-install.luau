@@ -776,17 +776,32 @@ end
 victimRaw:Destroy()
 
 
-local flashlightAsset=load(4573262309)
+local flashlightAsset=load(11906391298)
 local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
-assert(flashlightSource,"LANTERNA asset 4573262309 contains no Tool")
+assert(flashlightSource,"Doors Second Lantern asset 11906391298 contains no Tool")
 local flashlight=flashlightSource:Clone()
 flashlight.Name="Flashlight"
-flashlight:SetAttribute("SourceAssetId",4573262309)
+flashlight:SetAttribute("DisplayName","Doors Second Lantern")
+flashlight:SetAttribute("SourceAssetId",11906391298)
+flashlight:SetAttribute("CrackleSoundAssetId",112352139435056)
 sanitize(flashlight,false)
-local flashlightHandle=assert(flashlight:FindFirstChild("Handle"),"LANTERNA Tool has no Handle")
+local flashlightHandle=assert(flashlight:FindFirstChild("Handle",true),"Doors Second Lantern Tool has no Handle")
 for _,p in ipairs(flashlight:GetDescendants()) do
- if p:IsA("BasePart") then p.Anchored=false p.CanCollide=false p.CanTouch=false p.Massless=true end
+ if p:IsA("BasePart") then
+  p.Anchored=false p.CanCollide=false p.CanTouch=false p.CanQuery=false p.Massless=true
+ end
 end
+local oldCrackle=flashlightHandle:FindFirstChild("LanternFireCrackle")
+if oldCrackle then oldCrackle:Destroy() end
+local crackle=Instance.new("Sound")
+crackle.Name="LanternFireCrackle"
+crackle.SoundId="rbxassetid://112352139435056"
+crackle.Volume=.18
+crackle.Looped=true
+crackle.RollOffMode=Enum.RollOffMode.InverseTapered
+crackle.RollOffMinDistance=3
+crackle.RollOffMaxDistance=22
+crackle.Parent=flashlightHandle
 flashlight.Parent=items
 flashlightAsset:Destroy()
 
