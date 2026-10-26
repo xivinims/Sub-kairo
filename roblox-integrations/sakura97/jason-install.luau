@@ -778,19 +778,92 @@ victimRaw:Destroy()
 
 local flashlightAsset=load(11906391298)
 local flashlightSource=flashlightAsset:FindFirstChildWhichIsA("Tool",true)
-assert(flashlightSource,"Doors Second Lantern asset 11906391298 contains no Tool")
-local flashlight=flashlightSource:Clone()
+local flashlight
+
+if flashlightSource then
+ flashlight=flashlightSource:Clone()
+else
+ -- The requested Doors lantern is published as a model, not a Tool. Wrap its
+ -- original geometry in a safe Tool so the existing survivor item runtime can use it.
+ local sourceModel=nil
+ if flashlightAsset:IsA("Model") and flashlightAsset:FindFirstChildWhichIsA("BasePart",true) then
+  sourceModel=flashlightAsset
+ else
+  for _,obj in ipairs(flashlightAsset:GetDescendants()) do
+   if obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart",true) then
+    sourceModel=obj
+    break
+   end
+  end
+ end
+
+ local visual=Instance.new("Model")
+ visual.Name="LanternVisual"
+ if sourceModel then
+  for _,child in ipairs(sourceModel:GetChildren()) do
+   if not child:IsA("LuaSourceContainer") then child:Clone().Parent=visual end
+  end
+ else
+  local sourcePart=assert(flashlightAsset:FindFirstChildWhichIsA("BasePart",true),"Doors Second Lantern asset has no usable geometry")
+  sourcePart:Clone().Parent=visual
+ end
+
+ assert(visual:FindFirstChildWhichIsA("BasePart",true),"Doors Second Lantern model contains no BasePart")
+ sanitize(visual,false)
+ pcall(function() visual:PivotTo(CFrame.identity) end)
+
+ flashlight=Instance.new("Tool")
+ flashlight.RequiresHandle=true
+ flashlight.CanBeDropped=false
+ flashlight.Grip=CFrame.new(0,-.75,-.05)
+
+ local handle=Instance.new("Part")
+ handle.Name="Handle"
+ handle.Size=Vector3.new(.4,.4,.4)
+ handle.Transparency=1
+ handle.Anchored=false
+ handle.CanCollide=false
+ handle.CanTouch=false
+ handle.CanQuery=false
+ handle.Massless=true
+ handle.CFrame=CFrame.identity
+ handle.Parent=flashlight
+
+ visual.Parent=flashlight
+ for _,part in ipairs(visual:GetDescendants()) do
+  if part:IsA("BasePart") then
+   part.Anchored=false
+   part.CanCollide=false
+   part.CanTouch=false
+   part.CanQuery=false
+   part.Massless=true
+   local weld=Instance.new("WeldConstraint")
+   weld.Name="LanternVisualWeld"
+   weld.Part0=handle
+   weld.Part1=part
+   weld.Parent=part
+  end
+ end
+ flashlight:SetAttribute("WrappedModelAsset",true)
+end
+
 flashlight.Name="Flashlight"
 flashlight:SetAttribute("DisplayName","Doors Second Lantern")
 flashlight:SetAttribute("SourceAssetId",11906391298)
 flashlight:SetAttribute("CrackleSoundAssetId",112352139435056)
 sanitize(flashlight,false)
+
 local flashlightHandle=assert(flashlight:FindFirstChild("Handle",true),"Doors Second Lantern Tool has no Handle")
 for _,p in ipairs(flashlight:GetDescendants()) do
  if p:IsA("BasePart") then
-  p.Anchored=false p.CanCollide=false p.CanTouch=false p.CanQuery=false p.Massless=true
+  p.Anchored=false
+  p.CanCollide=false
+  p.CanTouch=false
+  p.CanQuery=false
+  p.Massless=true
  end
 end
+
 local oldCrackle=flashlightHandle:FindFirstChild("LanternFireCrackle")
 if oldCrackle then oldCrackle:Destroy() end
 local crackle=Instance.new("Sound")
@@ -802,6 +875,7 @@ crackle.RollOffMode=Enum.RollOffMode.InverseTapered
 crackle.RollOffMinDistance=3
 crackle.RollOffMaxDistance=22
 crackle.Parent=flashlightHandle
+
 flashlight.Parent=items
 flashlightAsset:Destroy()
 
