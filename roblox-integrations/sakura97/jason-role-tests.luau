@@ -126,7 +126,7 @@ local ok,result=xpcall(function()
  for i=1,8 do assert(players[i]:GetAttribute("Queued"),"Automatic lobby admission did not queue participant") assert(players[i].Character.Humanoid.RigType==Enum.HumanoidRigType.R6,"Participant is not R6") end
  send(players[9],"join") assert(not players[9]:GetAttribute("Queued"),"Remote join bypassed AFK admission")
  for i=1,8 do send(players[i],"chooseKiller","Jeff") end
- advance(29)
+ advance(59)
  assert(net:GetAttribute("Phase")=="Votação","Six-second voting phase did not begin after intermission")
  local options=game:GetService("HttpService"):JSONDecode(net:GetAttribute("MapVoteOptions") or "[]")
  assert(#options==4,"Voting phase must expose exactly four maps")
