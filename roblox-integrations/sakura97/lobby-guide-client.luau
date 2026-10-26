@@ -241,6 +241,7 @@ end
 local function syncTextLanguage()
  local value=player:GetAttribute("GameLanguage")
  setLanguage(value=="en" and "en" or "pt")
+ prompt.ActionText=language=="pt" and "Falar" or "Talk"
  for i,b in ipairs(buttons) do b.text.Text=choices[i] end
  if active then close() end
 end
