@@ -402,3 +402,5 @@ function M.build(parent,player,onClose)
 end
 
 return M
+
+-- binder publish trigger
