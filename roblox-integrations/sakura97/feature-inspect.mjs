@@ -136,5 +136,7 @@ function first(task){
 }
 
 
-for(const code of ["352b6322f2ce6d4e96b7e7fab0f995a9", "2db28f02cc45624daba6ac3e23e126cf", "a20340283311e24996b7637869ae902d", "3c096d16bc03f74ca8eb14e7f3267d77", "c67b14ca14ad724aba11b910acc8ac73", "18e5685713c2374a961f1886f69b13db"]) {const r=await fetch('https://www.roblox.com/share?code='+code+'&type=AvatarItemDetails');const body=await r.text();console.log('SHARE',code,r.url,body.match(/.{0,80}(?:itemId|assetId|catalog\/|deepLink|redirectUrl).{0,160}/g)?.slice(0,8));}
-console.log("FEATURE_ASSETS",JSON.stringify(first(await execute("local out={} for _,id in ipairs({12467124775,14960444202,4451516224}) do\nlocal a=game:GetService(\"AssetService\"):LoadAssetAsync(id) local cf,size=a:GetBoundingBox() local rows={}\nfor _,v in ipairs(a:GetDescendants()) do if v:IsA(\"Model\") or v:IsA(\"Humanoid\") or (v:IsA(\"BasePart\") and (#rows<18 or v.Name:lower():find(\"door\"))) then table.insert(rows,{name=v:GetFullName(),class=v.ClassName,size=v:IsA(\"BasePart\") and tostring(v.Size) or nil}) end end\nout[tostring(id)]={size=tostring(size),rows=rows} a:Destroy() end return out"))));
+for(const code of ["352b6322f2ce6d4e96b7e7fab0f995a9","2db28f02cc45624daba6ac3e23e126cf","a20340283311e24996b7637869ae902d","3c096d16bc03f74ca8eb14e7f3267d77","c67b14ca14ad724aba11b910acc8ac73","18e5685713c2374a961f1886f69b13db"]){
+const r=await fetch("https://apis.roblox.com/sharelinks/v1/resolve-link",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({linkId:code,linkType:"AvatarItemDetails"})});console.log("SHARE_RESOLVE",code,r.status,await r.text());
+}
+
