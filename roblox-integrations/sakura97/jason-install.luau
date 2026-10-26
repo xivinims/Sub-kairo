@@ -850,7 +850,7 @@ end
 flashlight.Name="Flashlight"
 flashlight:SetAttribute("DisplayName","Doors Second Lantern")
 flashlight:SetAttribute("SourceAssetId",11906391298)
-flashlight:SetAttribute("CrackleSoundAssetId",112352139435056)
+flashlight:SetAttribute("CrackleSoundAssetId",129037248569146)
 sanitize(flashlight,false)
 
 local flashlightHandle=assert(flashlight:FindFirstChild("Handle",true),"Doors Second Lantern Tool has no Handle")
@@ -868,7 +868,7 @@ local oldCrackle=flashlightHandle:FindFirstChild("LanternFireCrackle")
 if oldCrackle then oldCrackle:Destroy() end
 local crackle=Instance.new("Sound")
 crackle.Name="LanternFireCrackle"
-crackle.SoundId="rbxassetid://112352139435056"
+crackle.SoundId="rbxassetid://129037248569146"
 crackle.Volume=.18
 crackle.Looped=true
 crackle.RollOffMode=Enum.RollOffMode.InverseTapered
