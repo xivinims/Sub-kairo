@@ -11,6 +11,8 @@ local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
 local Settings=require(net:WaitForChild("SettingsPanel"))
 Settings.initialize(player)
+local function english() return player:GetAttribute("GameLanguage")=="en" end
+local function L(pt,en) return english() and (en or pt) or pt end
 
 local roundMusic=SoundService:FindFirstChild("SuviversMatchMusic")
 if not roundMusic then
@@ -97,7 +99,7 @@ Instance.new("UICorner",ring).CornerRadius=UDim.new(1,0)
 local clockStroke=Instance.new("UIStroke",ring) clockStroke.Thickness=2 clockStroke.Color=Color3.fromRGB(238,238,241)
 iconLine(countdownIcon,"HourHand",12,12,12,6,2)
 iconLine(countdownIcon,"MinuteHand",12,12,17,15,2)
-local countdownText=text(countdown,"Time","Aguardando jogadores",UDim2.new(1,-38,1,0),UDim2.fromOffset(36,0))
+local countdownText=text(countdown,"Time",L("Aguardando jogadores","Waiting for players"),UDim2.new(1,-38,1,0),UDim2.fromOffset(36,0))
 countdownText.TextSize=14 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left countdownText.TextWrapped=false
 local top=panel("Round",UDim2.fromOffset(130,38),UDim2.new(.5,-65,0,8))
 top.BackgroundTransparency=1 top.UIStroke.Enabled=false
@@ -128,9 +130,9 @@ local function cleanAction(parent,name,label,size,pos,callback)
  b.UIStroke.Enabled=false b.UICorner.CornerRadius=UDim.new(1,0)
  return b
 end
-local run=cleanAction(topActions,"Run","CORRER",UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function() end)
+local run=cleanAction(topActions,"Run",L("CORRER","RUN"),UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function() end)
 run.TextSize=11 run.BackgroundTransparency=.35 run.BackgroundColor3=Color3.fromRGB(25,26,30)
-local crouch=cleanAction(topActions,"Crouch","AGACHAR",UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
+local crouch=cleanAction(topActions,"Crouch",L("AGACHAR","CROUCH"),UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
  if player:GetAttribute("Downed") or player:GetAttribute("IsJason") then return end
  local nextMode=(player:GetAttribute("MoveMode")=="crouch") and "walk" or "crouch"
  mode=nextMode event:FireServer("mode",nextMode)
@@ -160,7 +162,7 @@ local carryNearby=cleanAction(bar,"CarryNearby","CARREGAR",UDim2.fromOffset(66,6
  event:FireServer("carry")
 end)
 carryNearby.TextSize=9 carryNearby.Visible=false
-local attackButton=cleanAction(bar,"Attack","ATACAR",UDim2.fromOffset(66,66),UDim2.fromOffset(80,4),function()
+local attackButton=cleanAction(bar,"Attack",L("ATACAR","ATTACK"),UDim2.fromOffset(66,66),UDim2.fromOffset(80,4),function()
  event:FireServer("attack")
 end)
 attackButton.TextSize=10 attackButton.Visible=false
@@ -184,16 +186,16 @@ local function actionLayout()
  bar.Position=UDim2.new(1,-24,1,-110)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.32 settingsOverlay.ZIndex=110 settingsOverlay.Visible=false
+local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.82 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
 local shopOverlay=Instance.new("Frame",gui) shopOverlay.Name="KillerShop" shopOverlay.Size=UDim2.fromScale(1,1) shopOverlay.BackgroundColor3=Color3.new(0,0,0) shopOverlay.BackgroundTransparency=.32 shopOverlay.ZIndex=115 shopOverlay.Visible=false
 local shopPanel=panel("ShopPanel",UDim2.new(.86,0,.72,0),UDim2.new(.07,0,.14,0)) shopPanel.Parent=shopOverlay shopPanel.ZIndex=116 shopPanel.BackgroundTransparency=.18 shopPanel.BackgroundColor3=Color3.fromRGB(8,8,9) shopPanel:SetAttribute("Style","DistrictInspired")
 local shopLimit=Instance.new("UISizeConstraint",shopPanel) shopLimit.MaxSize=Vector2.new(760,520)
-local shopTitle=text(shopPanel,"Title","PERSEGUIDORES",UDim2.new(1,-110,0,30),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=17 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
-local shopSubtitle=text(shopPanel,"Subtitle","COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA",UDim2.new(1,-140,0,18),UDim2.fromOffset(18,37)) shopSubtitle.TextSize=9 shopSubtitle.TextColor3=Color3.fromRGB(145,145,150) shopSubtitle.TextXAlignment=Enum.TextXAlignment.Left shopSubtitle.ZIndex=117
-local shopBalance=text(shopPanel,"Balance","0 PONTOS",UDim2.fromOffset(160,30),UDim2.new(1,-180,0,14)) shopBalance.TextSize=12 shopBalance.Font=Enum.Font.GothamBold shopBalance.ZIndex=117 shopBalance.TextXAlignment=Enum.TextXAlignment.Right
-local shopClose=button(shopPanel,"Close","SAÍDA",UDim2.fromOffset(82,32),UDim2.new(1,-96,1,-46),function() shopOverlay.Visible=false end) shopClose.ZIndex=118 shopClose.TextSize=10
+local shopTitle=text(shopPanel,"Title",L("PERSEGUIDORES","KILLERS"),UDim2.new(1,-110,0,30),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=17 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
+local shopSubtitle=text(shopPanel,"Subtitle",L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH"),UDim2.new(1,-140,0,18),UDim2.fromOffset(18,37)) shopSubtitle.TextSize=9 shopSubtitle.TextColor3=Color3.fromRGB(145,145,150) shopSubtitle.TextXAlignment=Enum.TextXAlignment.Left shopSubtitle.ZIndex=117
+local shopBalance=text(shopPanel,"Balance",L("0 PONTOS","0 POINTS"),UDim2.fromOffset(160,30),UDim2.new(1,-180,0,14)) shopBalance.TextSize=12 shopBalance.Font=Enum.Font.GothamBold shopBalance.ZIndex=117 shopBalance.TextXAlignment=Enum.TextXAlignment.Right
+local shopClose=button(shopPanel,"Close",L("SAÍDA","EXIT"),UDim2.fromOffset(82,32),UDim2.new(1,-96,1,-46),function() shopOverlay.Visible=false end) shopClose.ZIndex=118 shopClose.TextSize=10
 local shopList=Instance.new("ScrollingFrame",shopPanel) shopList.Name="Items" shopList.Position=UDim2.fromOffset(14,64) shopList.Size=UDim2.new(1,-28,1,-122) shopList.BackgroundTransparency=1 shopList.BorderSizePixel=0 shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y shopList.CanvasSize=UDim2.new() shopList.ScrollBarThickness=2 shopList.ZIndex=117
 local shopLayout=Instance.new("UIListLayout",shopList) shopLayout.Padding=UDim.new(0,7) shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
 local shopButtons={}
@@ -222,18 +224,23 @@ end
 local function refreshShop()
  local owned=ownedKillers()
  local stats=player:FindFirstChild("leaderstats") local pts=stats and stats:FindFirstChild("Pontos")
- shopBalance.Text=tostring(pts and pts.Value or 0).." PONTOS"
+ shopBalance.Text=tostring(pts and pts.Value or 0)..L(" PONTOS"," POINTS")
  for name,b in pairs(shopButtons) do
   local spec=config.Killers[name]
-  if owned[name] then b.Text=name=="Jason" and "PADRÃO" or "COMPRADO" b.Active=false b.AutoButtonColor=false b.BackgroundTransparency=.55
-  else b.Text="COMPRAR  "..tostring(spec and spec.cost or 0) b.Active=true b.AutoButtonColor=true b.BackgroundTransparency=.12 end
+  if owned[name] then
+   b.Text=name=="Jason" and L("PADRÃO","DEFAULT") or L("COMPRADO","OWNED")
+   b.Active=false b.AutoButtonColor=false b.BackgroundTransparency=.55
+  else
+   b.Text=L("COMPRAR  ","BUY  ")..tostring(spec and spec.cost or 0)
+   b.Active=true b.AutoButtonColor=true b.BackgroundTransparency=.12
+  end
  end
 end
 local shopButton=button(gui,"ShopButton","",UDim2.fromOffset(44,44),UDim2.new(1,-110,0,6),function()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  refreshShop() shopOverlay.Visible=not shopOverlay.Visible
 end) shopButton.BackgroundTransparency=1 shopButton.UIStroke.Enabled=false
-shopButton:SetAttribute("AccessibleLabel","Loja de perseguidores")
+shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
 local cart=iconCanvas(shopButton,"CartIcon",UDim2.fromOffset(30,30),UDim2.fromOffset(7,7))
 iconLine(cart,"Handle",2,4,7,4) iconLine(cart,"Stem",7,4,11,21)
 iconLine(cart,"BasketTop",8,8,28,8) iconLine(cart,"BasketFront",28,8,25,17)
@@ -260,7 +267,7 @@ end)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,132)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
-local levelText=text(xpTrack,"Level","NÍVEL 1",UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
+local levelText=text(xpTrack,"Level",L("NÍVEL 1","LEVEL 1"),UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
 local pointsText=text(profileHUD,"Points","0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.Position=UDim2.fromOffset(34,26) pointsText.TextColor3=Color3.fromRGB(231,209,155) pointsText.TextXAlignment=Enum.TextXAlignment.Left
 local coinView=Instance.new("ViewportFrame",profileHUD) coinView.Name="Coin" coinView.Size=UDim2.fromOffset(28,28) coinView.Position=UDim2.fromOffset(0,26) coinView.BackgroundTransparency=1 coinView.Ambient=Color3.fromRGB(200,200,200)
 local coinTemplate=net:FindFirstChild("CoinDisplay")
@@ -275,7 +282,7 @@ local staminaTrack=Instance.new("Frame",gui) staminaTrack.Name="Stamina" stamina
 staminaTrack.BackgroundColor3=Color3.fromRGB(20,21,25) staminaTrack.BackgroundTransparency=.2 staminaTrack.BorderSizePixel=0 Instance.new("UICorner",staminaTrack).CornerRadius=UDim.new(1,0)
 local staminaFill=Instance.new("Frame",staminaTrack) staminaFill.Name="Fill" staminaFill.Size=UDim2.fromScale(1,1) staminaFill.BackgroundColor3=Color3.fromRGB(190,194,205) staminaFill.BorderSizePixel=0 Instance.new("UICorner",staminaFill).CornerRadius=UDim.new(1,0)
 local mission=panel("Mission",UDim2.fromOffset(360,48),UDim2.new(.5,-180,0,48)) mission.BackgroundTransparency=.42 mission.UIStroke.Transparency=.82
-local missionTitle=text(mission,"Title","MISSÃO",UDim2.fromOffset(68,16),UDim2.fromOffset(10,5)) missionTitle.TextSize=9 missionTitle.Font=Enum.Font.GothamBold missionTitle.TextColor3=Color3.fromRGB(165,168,178) missionTitle.TextXAlignment=Enum.TextXAlignment.Left
+local missionTitle=text(mission,"Title",L("MISSÃO","MISSION"),UDim2.fromOffset(68,16),UDim2.fromOffset(10,5)) missionTitle.TextSize=9 missionTitle.Font=Enum.Font.GothamBold missionTitle.TextColor3=Color3.fromRGB(165,168,178) missionTitle.TextXAlignment=Enum.TextXAlignment.Left
 local missionText=text(mission,"Text","",UDim2.new(1,-20,0,22),UDim2.fromOffset(10,20)) missionText.TextSize=12 missionText.Font=Enum.Font.GothamBold missionText.TextXAlignment=Enum.TextXAlignment.Left
 local inventory=panel("ObjectiveInventory",UDim2.fromOffset(82,82),UDim2.new(0,18,1,-148)) inventory.BackgroundTransparency=.28 inventory.UIStroke.Transparency=.7
 inventory:SetAttribute("SourceAssetId",net:GetAttribute("InventoryAssetId") or 73852738603629)
@@ -284,7 +291,7 @@ local inventoryLabel=text(inventory,"Label","VAZIO",UDim2.fromScale(1,.32),UDim2
 local escapeBanner=panel("EscapeBanner",UDim2.fromOffset(360,30),UDim2.new(.5,-180,0,12)) escapeBanner.BackgroundTransparency=.28 escapeBanner.Visible=false escapeBanner.UIStroke.Transparency=.8 escapeBanner.ZIndex=95
 local escapeText=text(escapeBanner,"Text","",UDim2.fromScale(1,1),UDim2.new()) escapeText.TextSize=11 escapeText.Font=Enum.Font.GothamBold escapeText.ZIndex=96
 local missionBanner=panel("MissionBanner",UDim2.fromOffset(420,34),UDim2.new(.5,-210,0,104)) missionBanner.BackgroundTransparency=.18 missionBanner.Visible=false missionBanner.ZIndex=96
-local missionBannerText=text(missionBanner,"Text","NOVA MISSÃO",UDim2.fromScale(1,1),UDim2.new()) missionBannerText.TextSize=12 missionBannerText.Font=Enum.Font.GothamBlack missionBannerText.ZIndex=97
+local missionBannerText=text(missionBanner,"Text",L("NOVA MISSÃO","NEW MISSION"),UDim2.fromScale(1,1),UDim2.new()) missionBannerText.TextSize=12 missionBannerText.Font=Enum.Font.GothamBlack missionBannerText.ZIndex=97
 local hitFlash=Instance.new("Frame",gui) hitFlash.Name="HitFlash" hitFlash.Size=UDim2.fromScale(1,1) hitFlash.BackgroundColor3=Color3.fromRGB(150,0,12) hitFlash.BackgroundTransparency=1 hitFlash.BorderSizePixel=0 hitFlash.ZIndex=200
 local hitGradient=Instance.new("UIGradient",hitFlash) hitGradient.Rotation=90 hitGradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.05),NumberSequenceKeypoint.new(.18,.76),NumberSequenceKeypoint.new(.5,.92),NumberSequenceKeypoint.new(.82,.76),NumberSequenceKeypoint.new(1,.05)})
 local exitHighlight=Instance.new("Highlight") exitHighlight.Name="ObjectiveExitHighlight" exitHighlight.FillColor=Color3.fromRGB(242,211,79) exitHighlight.OutlineColor=Color3.fromRGB(255,243,170) exitHighlight.FillTransparency=.72 exitHighlight.OutlineTransparency=.08 exitHighlight.Enabled=false exitHighlight.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop exitHighlight.Parent=gui
@@ -296,9 +303,22 @@ local function missionCopy(stage)
  return ""
 end
 local missionPulse=0
+local function refreshLanguage()
+ countdownText.Text=L("Aguardando jogadores","Waiting for players")
+ shopTitle.Text=L("PERSEGUIDORES","KILLERS")
+ shopSubtitle.Text=L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH")
+ shopClose.Text=L("SAÍDA","EXIT")
+ shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
+ missionTitle.Text=L("MISSÃO","MISSION")
+ missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
+ resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER")
+ voteTitle.Text=L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP")
+ if killerTitle then killerTitle.Text=L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE") end
+ refreshShop()
+end
 local function announceMission(stage)
  missionText.Text=missionCopy(stage)
- missionBannerText.Text="NOVA MISSÃO:  "..missionText.Text
+ missionBannerText.Text=L("NOVA MISSÃO:  ","NEW MISSION:  ")..missionText.Text
  missionBanner.Visible=missionText.Text~=""
  missionPulse+=1 local token=missionPulse
  task.delay(2.2,function() if token==missionPulse then missionBanner.Visible=false end end)
@@ -382,8 +402,8 @@ local function hackEvent(action,a,b)
  if action=="hackStart" then hackingPc=a hackPanel.Visible=true hackFill.Size=UDim2.fromScale(b or 0,1) hackLabel.Text="HACKEANDO • FIQUE PERTO DO COMPUTADOR" skillButton.Text="AGUARDE"
  elseif action=="hackEnd" then hackingPc=nil hackPanel.Visible=false checkId=nil
  elseif action=="hackProgress" then hackFill.Size=UDim2.fromScale(a,1) hackLabel.Text="HACKEANDO • "..math.floor(a*100).."%"
- elseif action=="hackCheck" then checkId=a checkAt=b cursor.Visible=true targetZone.Visible=true skillButton.Text="CLIQUE NA ÁREA VERDE • Q"
- elseif action=="hackCheckResult" then checkId=nil cursor.Visible=false targetZone.Visible=false skillButton.Text=a and "ACERTOU" or "ERRO • TENTE O PRÓXIMO"
+ elseif action=="hackCheck" then checkId=a checkAt=b cursor.Visible=true targetZone.Visible=true skillButton.Text=L("CLIQUE NA ÁREA VERDE • Q","CLICK THE GREEN AREA • Q")
+ elseif action=="hackCheckResult" then checkId=nil cursor.Visible=false targetZone.Visible=false skillButton.Text=a and L("ACERTOU","HIT") or L("ERRO • TENTE O PRÓXIMO","MISS • TRY THE NEXT ONE")
  elseif action=="pcComplete" and player:GetAttribute("IsJason") and typeof(a)=="Instance" then
   local h=Instance.new("Highlight") h.Name="CompletedComputer" h.Adornee=a h.FillColor=Color3.fromRGB(65,230,115) h.OutlineColor=Color3.new(1,1,1) h.FillTransparency=.45 h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop h.Parent=a Debris:AddItem(h,10)
  end
@@ -400,6 +420,12 @@ end)
 local spotted={} local detectionElapsed=0
 local chase=Instance.new("Sound") chase.Name="LocalChasePulse" chase.SoundId="rbxassetid://135029802046345" chase.Volume=0 chase.Parent=game:GetService("SoundService")
 local nextPulse=0
+player:GetAttributeChangedSignal("GameLanguage"):Connect(function()
+ refreshLanguage()
+ updateMission()
+end)
+refreshLanguage()
+
 RunService.RenderStepped:Connect(function(dt)
  detectionElapsed+=dt if detectionElapsed<.12 then return end detectionElapsed=0
  local me=player.Character local myRoot=me and me:FindFirstChild("HumanoidRootPart")
@@ -456,7 +482,7 @@ local shadeGradient=Instance.new("UIGradient",resultShade)
 shadeGradient.Rotation=0 shadeGradient.Transparency=NumberSequence.new({
  NumberSequenceKeypoint.new(0,.08),NumberSequenceKeypoint.new(.42,.62),NumberSequenceKeypoint.new(1,.34)
 })
-local resultHeader=text(result,"Header","FIM DA PARTIDA",UDim2.new(.92,0,0,42),UDim2.new(.025,0,.045,0))
+local resultHeader=text(result,"Header",L("FIM DA PARTIDA","MATCH OVER"),UDim2.new(.92,0,0,42),UDim2.new(.025,0,.045,0))
 resultHeader.Font=Enum.Font.GothamBlack resultHeader.TextSize=24 resultHeader.TextXAlignment=Enum.TextXAlignment.Left resultHeader.ZIndex=76
 local resultSubtitle=text(result,"Subtitle","",UDim2.new(.7,0,0,26),UDim2.new(.025,0,.10,0))
 resultSubtitle.TextSize=11 resultSubtitle.TextXAlignment=Enum.TextXAlignment.Left resultSubtitle.TextColor3=Color3.fromRGB(190,190,196) resultSubtitle.ZIndex=76
@@ -869,7 +895,7 @@ local function preload(roundId,map)
   if token~=loadToken then return end
   if not geometryReady then
    loading.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() event:FireServer("loadFailed",roundId)
-   notice.Text="A conexão está lenta. A arena continua carregando." return
+   notice.Text=L("A conexão está lenta. A arena continua carregando.","Your connection is slow. The arena is still loading.") return
   end
   local done=false local mediaDeadline=os.clock()+8
   loadingText.Text="PREPARANDO O AMBIENTE"
@@ -958,7 +984,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
   notice.Text=a noticeUntil=os.clock()+5
  elseif action=="shopResult" then
   refreshShop()
-  notice.Text=tostring(b or (a and "Compra concluída." or "Compra não concluída.")) noticeUntil=os.clock()+5
+  notice.Text=tostring(b or (a and L("Compra concluída.","Purchase complete.") or L("Compra não concluída.","Purchase failed."))) noticeUntil=os.clock()+5
  elseif action=="mission" then
   announceMission(a)
  elseif action=="objectiveDone" then
@@ -1023,7 +1049,7 @@ end)
 
 local votePanel=panel("MapVoting",UDim2.new(.92,0,.46,0),UDim2.new(.04,0,.27,0))
 votePanel.BackgroundColor3=Color3.fromRGB(7,7,10) votePanel.BackgroundTransparency=.08 votePanel.Visible=false votePanel.ZIndex=60
-local voteTitle=text(votePanel,"Title","ESCOLHA O PRÓXIMO MAPA",UDim2.new(1,-24,0,40),UDim2.fromOffset(12,8)) voteTitle.Font=Enum.Font.GothamBlack voteTitle.TextSize=20 voteTitle.TextXAlignment=Enum.TextXAlignment.Left voteTitle.ZIndex=62
+local voteTitle=text(votePanel,"Title",L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP"),UDim2.new(1,-24,0,40),UDim2.fromOffset(12,8)) voteTitle.Font=Enum.Font.GothamBlack voteTitle.TextSize=20 voteTitle.TextXAlignment=Enum.TextXAlignment.Left voteTitle.ZIndex=62
 local voteHint=text(votePanel,"Hint","4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
 local voteTimer=text(votePanel,"Timer","6",UDim2.fromOffset(54,48),UDim2.new(1,-68,0,8)) voteTimer.Font=Enum.Font.GothamBlack voteTimer.TextSize=28 voteTimer.ZIndex=63
 local mapNames={
@@ -1083,7 +1109,7 @@ local function refreshVoteCards()
 end
 local killerPanel=panel("KillerSelection",UDim2.new(.66,0,.45,0),UDim2.fromScale(.17,.25))
 killerPanel.Visible=false
-text(killerPanel,"Title","VOCÊ É O PERSEGUIDOR • ESCOLHA",UDim2.new(1,0,0,44),UDim2.new())
+local killerTitle=text(killerPanel,"Title",L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE"),UDim2.new(1,0,0,44),UDim2.new())
 local names={} for name in pairs(config.Killers) do table.insert(names,name) end table.sort(names)
 local killerChoiceButtons={}
 for i,name in ipairs(names) do
@@ -1137,13 +1163,13 @@ RunService.RenderStepped:Connect(function(dt)
  local stats=player:FindFirstChild("leaderstats") local xp=stats and stats:FindFirstChild("XP") local lv=stats and stats:FindFirstChild("Nível") local pts=stats and stats:FindFirstChild("Pontos")
  local n=lv and lv.Value or 1 local total=xp and xp.Value or 0 local minimum=15*(n-1)^2+35*(n-1) local nextLevel=15*n^2+35*n
  xpFill.Size=UDim2.fromScale(n>=1000 and 1 or math.clamp((total-minimum)/(nextLevel-minimum),0,1),1)
- levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text=""..(pts and pts.Value or 0)
+ levelText.Text=L("NÍVEL ","LEVEL ")..n.."   •   "..(n>=1000 and L("MÁXIMO","MAX") or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text=""..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
  countdown.Visible=not hidden and (phase=="Intervalo" or phase=="Escolha" or phase=="Aguardando")
  actionLayout()
- if phase=="Escolha" then countdownText.Text="Escolhendo perseguidor • "..left.."s"
- elseif phase=="Aguardando" or (left==0 and phase=="Intervalo") then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
+ if phase=="Escolha" then countdownText.Text=L("Escolhendo perseguidor • ","Choosing killer • ")..left.."s"
+ elseif phase=="Aguardando" or (left==0 and phase=="Intervalo") then countdownText.Text=player:GetAttribute("AFK") and L("AFK ativado","AFK enabled") or L("Aguardando jogadores","Waiting for players") else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida" and (inRound or player:GetAttribute("Spectating")==true)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down
@@ -1197,7 +1223,7 @@ RunService.RenderStepped:Connect(function(dt)
  local reviveLeft=(player:GetAttribute("ReviveAt") or 0)-workspace:GetServerTimeNow()
  local protected=(player:GetAttribute("ProtectedUntil") or 0)-workspace:GetServerTimeNow()
  if reviveLeft>0 then notice.Text=string.format("Reanimando • %.1fs",reviveLeft)
- elseif down then notice.Text="Caído • "..math.max(0,math.ceil((player:GetAttribute("BleedoutAt") or 0)-workspace:GetServerTimeNow())).."s"
+ elseif down then notice.Text=L("Caído • ","Downed • ")..math.max(0,math.ceil((player:GetAttribute("BleedoutAt") or 0)-workspace:GetServerTimeNow())).."s"
  elseif protected>0 and inRound then notice.Text=""
  elseif os.clock()>noticeUntil then notice.Text="" end
  notice.Visible=not hidden and notice.Text~=""
