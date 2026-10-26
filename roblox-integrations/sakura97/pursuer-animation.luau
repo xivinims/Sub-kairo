@@ -32,7 +32,10 @@ local function decodePose(raw)
 end
 
 local function normalized(name)
- return tostring(name or ""):lower():gsub("[%s_%-%.]","")
+ local key=tostring(name or ""):lower():gsub("[%s_%-%.]","")
+ key=key:gsub("^upperleft","leftupper"):gsub("^upperright","rightupper"):gsub("^lowerleft","leftlower"):gsub("^lowerright","rightlower")
+ if key=="lowerbody" then return "lowertorso" end
+ return key
 end
 
 local sharedClips=setmetatable({},{__mode="k"})
@@ -98,6 +101,14 @@ local function prepare(model,folder)
  local rigType=hum and hum.RigType or Enum.HumanoidRigType.R6
  local motors={}
  for joint in pairs(d.joints) do motors[normalized(joint.Name)]=joint end
+ motors.root=motors.root or motors.rootjoint or motors.roothip
+ do
+  d.lookup.uppertorso=d.lookup.uppertorso or d.lookup.torso
+  d.lookup.leftarm=d.lookup.leftarm or d.lookup.leftupperarm
+  d.lookup.rightarm=d.lookup.rightarm or d.lookup.rightupperarm
+  d.lookup.leftleg=d.lookup.leftleg or d.lookup.leftupperleg
+  d.lookup.rightleg=d.lookup.rightleg or d.lookup.rightupperleg
+ end
  local aliasTargets
  if rigType==Enum.HumanoidRigType.R6 then
   aliasTargets={

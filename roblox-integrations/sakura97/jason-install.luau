@@ -450,6 +450,35 @@ local function ensurePursuerHumanoid(model)
  return h,root
 end
 
+local function repairJeffRig(model)
+ local torso=assert(model:FindFirstChild("Torso",true),"Jeff torso missing")
+ local root=assert(model:FindFirstChild("HumanoidRootPart"),"Jeff root missing")
+ local limbs={"Torso","Head","Left Arm","Right Arm","Left Leg","Right Leg","HumanoidRootPart"}
+ local body={} for _,name in ipairs(limbs) do body[assert(model:FindFirstChild(name,true),"Jeff missing "..name)]=true end
+ for _,obj in ipairs(model:GetDescendants()) do
+  if obj.Name=="MorphButton" then obj:Destroy()
+  elseif (obj:IsA("Weld") or obj:IsA("WeldConstraint") or obj:IsA("Motor6D")) and body[obj.Part0] and body[obj.Part1] then obj:Destroy() end
+ end
+ local description=Instance.new("HumanoidDescription")
+ local reference=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
+ description:Destroy()
+ local count=0
+ for _,original in ipairs(reference:GetDescendants()) do
+  if original:IsA("Motor6D") and original.Part0 and original.Part1 then
+   local p0=model:FindFirstChild(original.Part0.Name,true) local p1=model:FindFirstChild(original.Part1.Name,true)
+   if p0 and p1 then
+    local ratio=p0.Size/original.Part0.Size
+    local jointWorld=p0.CFrame*CFrame.new(original.C0.Position*ratio)*original.C0.Rotation
+    local motor=Instance.new("Motor6D") motor.Name=original.Name motor.Part0=p0 motor.Part1=p1
+    motor.C0=p0.CFrame:ToObjectSpace(jointWorld) motor.C1=p1.CFrame:ToObjectSpace(jointWorld) motor.Parent=p0 count+=1
+   end
+  end
+ end
+ reference:Destroy()
+ assert(count==6,"Jeff repair did not create six animated body joints")
+ model:SetAttribute("RepairedR6Joints",count)
+end
+
 local function fallbackPursuerRig(name)
  local model=Instance.new("Model") model.Name=name
  local function part(n,size,color,cf,shape)
@@ -508,12 +537,23 @@ for _,spec in ipairs({
  if source then collectVictim(asset,source,spec.name) end
  local libraryName=nil
  if spec.authored then libraryName=authoredMotionLibrary(asset,spec.name,spec.id) end
+ if spec.name=="Chucky" and source and not source:FindFirstChildOfClass("Humanoid") then
+  for _,candidate in ipairs(source:GetDescendants()) do
+   if candidate:IsA("Model") and candidate:FindFirstChildOfClass("Humanoid") then source=candidate break end
+  end
+ end
  local model=source and source:Clone() or fallbackPursuerRig(spec.name)
+ if spec.name=="Chucky" then
+  for _,nested in ipairs(model:GetDescendants()) do
+   if nested:IsA("Model") and nested:FindFirstChildOfClass("Humanoid") then nested:Destroy() end
+  end
+ end
  sanitize(model,false) model.Name=spec.name
  for _,v in ipairs(model:GetDescendants()) do
   if v:IsA("KeyframeSequence") then v:Destroy() end
  end
  local h,root=ensurePursuerHumanoid(model)
+ if spec.name=="Jeff" then repairJeffRig(model) end
  model:SetAttribute("SourceAssetId",spec.id) model:SetAttribute("SourceRootSize",root.Size) model:SetAttribute("SourceHipHeight",h.HipHeight)
  model:SetAttribute("MotionLibrary",libraryName or (spec.name=="Jeff" and "Noli" or spec.name=="Freddy" and "Animatronic" or spec.cool and "Cool" or "Default"))
  model.Parent=rigs
@@ -835,3 +875,4 @@ end
 local bloom=light:FindFirstChild("ViolenceDistrictBloom") or Instance.new("BloomEffect")
 bloom.Name="ViolenceDistrictBloom" bloom.Intensity=1 bloom.Threshold=2 bloom.Size=24 bloom.Enabled=true bloom.Parent=light
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
+
