@@ -4,6 +4,9 @@ assert((lobby:GetAttribute("PassageRepairRevision") or 0)>=3,"Lobby passage repa
 assert(lobby:GetAttribute("OutdoorGroundReady")==true,"Exterior lobby ground was not rebuilt")
 local groundSize=lobby:GetAttribute("OutdoorGroundSize")
 assert(typeof(groundSize)=="Vector3" and groundSize.X>=400 and groundSize.Z>=400,"Exterior lobby ground is too small")
+local outdoorGround=assert(lobby:FindFirstChild("OutdoorGround"),"Persistent exterior grass floor missing")
+assert(outdoorGround:IsA("BasePart") and outdoorGround.CanCollide and outdoorGround.Material==Enum.Material.Grass,"Exterior grass floor is not physical")
+assert(outdoorGround:GetAttribute("PersistentOutdoorGround")==true,"Exterior grass floor persistence marker missing")
 
 local openDoorParts,doorFrames,stairMeshes,visualStairs,stairSteps,supports,landingBridge=0,0,0,0,0,0,0
 for _,p in ipairs(house:GetDescendants()) do
