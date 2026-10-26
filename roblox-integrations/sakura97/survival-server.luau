@@ -1272,8 +1272,8 @@ task.spawn(function()
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
     setupObjectives()
-    local preferred=selectionPlayer:GetAttribute("EquippedKiller")
-    if not profiles:ownsKiller(selectionPlayer,preferred) then preferred="Jason" end
+    local preferred=jasonPlayer:GetAttribute("EquippedKiller")
+    if not profiles:ownsKiller(jasonPlayer,preferred) then preferred="Jason" end
     local chosen=assets.Killers:FindFirstChild(selectedKiller or preferred or "Jason") or rigList[1]
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
