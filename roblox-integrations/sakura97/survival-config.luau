@@ -16,7 +16,13 @@ return {
   Piggy={id=8762062897,cost=1000,speed=19.8,hearing=64,vision=68,range=5,tip="Não corra em corredores sem uma rota de fuga."},
  },
  PlayerJasonChance=1/3,
- FlashlightAssetId=4573262309,
+ Lantern={
+  AssetId=11906391298,
+  SoundAssetId=129037248569146,
+  Durations={70,80,90,105,120,140,170},
+  UpgradeCosts={10,30,50,80,100,170},
+ },
+ FlashlightAssetId=11906391298,
  SurvivorAnimationAssetId=127092032896760,
  SurvivorActionAnimations={
   Parry=127096285501517,
