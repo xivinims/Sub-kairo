@@ -399,6 +399,18 @@ pcall(function() terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(63,
 lobby:SetAttribute("OutdoorGroundReady",true)
 lobby:SetAttribute("OutdoorGroundY",porchGroundY)
 lobby:SetAttribute("OutdoorGroundSize",Vector3.new(yardWidth,10,yardDepth))
+local oldGround=lobby:FindFirstChild("OutdoorGround")
+if oldGround then oldGround:Destroy() end
+local persistentGround=Instance.new("Part")
+persistentGround.Name="OutdoorGround"
+persistentGround.Size=Vector3.new(yardWidth,8,yardDepth)
+persistentGround.CFrame=CFrame.new((minX+maxX)/2,porchGroundY-4,(minZ+maxZ)/2)
+persistentGround.Anchored=true persistentGround.CanCollide=true persistentGround.CanTouch=true persistentGround.CanQuery=true
+persistentGround.Material=Enum.Material.Grass persistentGround.Color=Color3.fromRGB(63,72,50)
+persistentGround.TopSurface=Enum.SurfaceType.Smooth persistentGround.BottomSurface=Enum.SurfaceType.Smooth
+persistentGround:SetAttribute("PersistentOutdoorGround",true)
+persistentGround.Parent=lobby
+
 
 local oldLobbyBounds=lobby:FindFirstChild("InvisibleBounds")
 if oldLobbyBounds then oldLobbyBounds:Destroy() end
