@@ -118,10 +118,10 @@ async function patchCloud(path,body){
 }
 
 async function execute(script){
-  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'300s',script});
-  const deadline=Date.now()+480000;
+  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'30s',script});
+  const deadline=Date.now()+180000;
   while(['QUEUED','PENDING','PROCESSING'].includes(task.state)){
-    if(Date.now()>deadline) throw new Error('Luau timeout');
+    if(Date.now()>deadline) throw new Error('Luau timeout '+JSON.stringify(task));
     await sleep(1500);
     task=await req(task.path);
   }
@@ -146,17 +146,7 @@ for _,model in ipairs(SS.SurvivalAssets.Killers:GetChildren()) do
   elseif v:IsA("Motor6D") then table.insert(joints,{name=v.Name,p0=v.Part0 and v.Part0.Name,p1=v.Part1 and v.Part1.Name})
   elseif v:IsA("Weld") or v:IsA("WeldConstraint") then table.insert(welds,{name=v.Name,p0=v.Part0 and v.Part0.Name,p1=v.Part1 and v.Part1.Name}) end
  end
- local library=model:FindFirstChild("MotionClips") or RS.Survival.KillerMotionLibraries:FindFirstChild(model:GetAttribute("MotionLibrary") or "")
  local channels={}
- if library then for _,clip in ipairs(library:GetChildren()) do
-  local chunks=clip:GetChildren() table.sort(chunks,function(a,b) return a.Name<b.Name end)
-  local data={} for _,c in ipairs(chunks) do table.insert(data,c.Value) end
-  local e=game:GetService("EncodingService")
-  local parsed=game:GetService("HttpService"):JSONDecode(buffer.tostring(e:DecompressBuffer(e:Base64Decode(buffer.fromstring(table.concat(data))),Enum.CompressionAlgorithm.Zstd)))
-  local names={} for _,frame in ipairs(parsed.frames) do for name in pairs(frame.poses) do names[name]=true end end
-  local list={} for name in pairs(names) do table.insert(list,name) end
-  channels[clip.Name]=list
- end end
  result[model.Name]={parts=parts,joints=joints,welds=welds,channels=channels,rig=tostring(model:FindFirstChildOfClass("Humanoid").RigType)}
 end
 return result
