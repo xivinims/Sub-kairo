@@ -11,8 +11,6 @@ return {
  Killers={
   JohnDoe={id=103232099547025,cost=650,speed=19.5,hearing=62,vision=72,range=5,tip="Use obstáculos para quebrar a visão."},
   Chucky={id=95580261594507,cost=750,speed=20,hearing=58,vision=62,range=4,tip="Mantenha distância e evite cantos fechados."},
-  Jeff={id=15578797832,cost=850,speed=20.5,hearing=60,vision=70,range=5,tip="Mude de caminho quando sair da visão dele."},
-  Freddy={id=18663196733,cost=900,speed=19,hearing=75,vision=62,range=5.5,tip="Evite fazer barulho perto dele."},
   Jason={id=125165599816440,animation=125165599816440,cost=0,speed=20.5,hearing=65,vision=70,range=5.5,tip="Quebre a linha de visão e não corra perto dele sem necessidade."},
   Krampus={id=92081889778550,cost=1100,speed=20,hearing=68,vision=70,range=5.4,tip="Agache e mude de direção antes que ele alcance o ponto de ruído."},
   Piggy={id=8762062897,cost=1000,speed=19.8,hearing=64,vision=68,range=5,tip="Não corra em corredores sem uma rota de fuga."},
