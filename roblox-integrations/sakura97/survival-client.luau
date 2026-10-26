@@ -1247,6 +1247,169 @@ local goodLuck=text(loading,"GoodLuck","GOOD LUCK",UDim2.new(.92,0,.18,0),UDim2.
 goodLuck.ZIndex=81 goodLuck.Font=Enum.Font.GothamBlack goodLuck.TextScaled=true goodLuck.TextTransparency=.68 goodLuck.Visible=false
 local goodLuckLimit=Instance.new("UITextSizeConstraint",goodLuck) goodLuckLimit.MinTextSize=28 goodLuckLimit.MaxTextSize=92
 
+
+-- Match loading uses the same old television as the initial cinematic, but without
+-- stretching the 3D model. The screen overlay carries the static/roster reveal.
+local gameCornerTitle=text(loading,"GameCornerTitle","SUVIVERS",UDim2.fromOffset(180,32),UDim2.new(1,-196,0,18))
+gameCornerTitle.ZIndex=92
+gameCornerTitle.Font=Enum.Font.Garamond
+gameCornerTitle.TextSize=20
+gameCornerTitle.TextXAlignment=Enum.TextXAlignment.Right
+gameCornerTitle.TextColor3=Color3.fromRGB(224,224,219)
+
+local matchTV=Instance.new("ViewportFrame",loading)
+matchTV.Name="MatchLoadingTelevision"
+matchTV.Size=UDim2.fromScale(1,1)
+matchTV.BackgroundColor3=Color3.fromRGB(2,2,3)
+matchTV.BackgroundTransparency=0
+matchTV.BorderSizePixel=0
+matchTV.Ambient=Color3.fromRGB(12,12,14)
+matchTV.LightColor=Color3.fromRGB(116,108,101)
+matchTV.LightDirection=Vector3.new(-.7,-1,-.45)
+matchTV.ZIndex=80
+local matchTVWorld=Instance.new("WorldModel",matchTV)
+local matchTVCamera=Instance.new("Camera",matchTV)
+matchTVCamera.FieldOfView=31
+matchTV.CurrentCamera=matchTVCamera
+
+local function moveModelBox(model,targetCF)
+ local cf=model:GetBoundingBox()
+ model:PivotTo(targetCF*cf:Inverse()*model:GetPivot())
+end
+
+local matchTVScreenPart=nil
+do
+ local cinematicAssets=ReplicatedFirst:FindFirstChild("LoadingCinematicAssets")
+ if cinematicAssets and cinematicAssets:FindFirstChild("TV") and cinematicAssets:FindFirstChild("Mesa") then
+  local tvModel=cinematicAssets.TV:Clone()
+  local mesa=cinematicAssets.Mesa:Clone()
+  tvModel.Name="MatchTV"
+  mesa.Name="MatchTable"
+  tvModel.Parent=matchTVWorld
+  mesa.Parent=matchTVWorld
+  pcall(function() tvModel:ScaleTo(1.04) end)
+  pcall(function() mesa:ScaleTo(.82) end)
+
+  moveModelBox(mesa,CFrame.new(0,-1.72,0))
+  local tableCF,tableSize=mesa:GetBoundingBox()
+  local tableTop=tableCF.Position.Y+tableSize.Y/2
+  local scr=tvModel:FindFirstChild("Screen",true)
+  if scr and scr:IsA("BasePart") then
+   local desired=CFrame.fromMatrix(Vector3.new(0,tableTop+1.58,0),Vector3.new(0,0,1),Vector3.new(0,1,0))
+   tvModel:PivotTo(desired*scr.CFrame:Inverse()*tvModel:GetPivot())
+   local tvCF,tvSize=tvModel:GetBoundingBox()
+   local bottom=tvCF.Position.Y-tvSize.Y/2
+   tvModel:PivotTo(CFrame.new(0,tableTop-bottom+.035,0)*tvModel:GetPivot())
+   tvCF,tvSize=tvModel:GetBoundingBox()
+   matchTVScreenPart=tvModel:FindFirstChild("Screen",true)
+   if matchTVScreenPart then
+    matchTVScreenPart.Material=Enum.Material.Neon
+    matchTVScreenPart.Color=Color3.fromRGB(90,104,110)
+    matchTVScreenPart.Transparency=.34
+   end
+   local mesaCF,mesaSize=mesa:GetBoundingBox()
+   local top=math.max(tvCF.Position.Y+tvSize.Y/2,mesaCF.Position.Y+mesaSize.Y/2)
+   local bottomY=math.min(tvCF.Position.Y-tvSize.Y/2,mesaCF.Position.Y-mesaSize.Y/2)
+   local height=math.max(3,top-bottomY)
+   local centerY=(top+bottomY)/2
+   local distance=math.clamp((height*.5)/math.tan(math.rad(matchTVCamera.FieldOfView*.5))*1.18,7.2,12)
+   matchTVCamera.CFrame=CFrame.lookAt(Vector3.new(0,centerY+.08,distance),Vector3.new(0,centerY,0))
+  end
+  for _,obj in ipairs(matchTVWorld:GetDescendants()) do
+   if obj:IsA("BasePart") then
+    obj.Anchored=true obj.CanCollide=false obj.CanTouch=false obj.CanQuery=false
+   end
+  end
+ end
+end
+
+local tvStatic=Instance.new("Frame",loading)
+tvStatic.Name="TVStatic"
+tvStatic.AnchorPoint=Vector2.new(.5,.5)
+tvStatic.Position=UDim2.fromScale(.5,.43)
+tvStatic.Size=UDim2.new(.235,0,.285,0)
+tvStatic.BackgroundColor3=Color3.fromRGB(74,82,86)
+tvStatic.BackgroundTransparency=.18
+tvStatic.BorderSizePixel=0
+tvStatic.ClipsDescendants=true
+tvStatic.ZIndex=86
+local staticAspect=Instance.new("UIAspectRatioConstraint",tvStatic)
+staticAspect.AspectRatio=.846
+staticAspect.DominantAxis=Enum.DominantAxis.Height
+
+local staticLines={}
+for i=1,24 do
+ local line=Instance.new("Frame",tvStatic)
+ line.Name="Noise"..i
+ line.BorderSizePixel=0
+ line.BackgroundColor3=i%3==0 and Color3.fromRGB(235,235,230) or Color3.fromRGB(18,18,20)
+ line.BackgroundTransparency=.55
+ line.Size=UDim2.new(1,0,0,i%4==0 and 2 or 1)
+ line.Position=UDim2.new(0,0,(i-1)/24,0)
+ line.ZIndex=87
+ table.insert(staticLines,line)
+end
+
+local killerOnTV=text(tvStatic,"KillerName","",UDim2.new(1,-12,0,58),UDim2.new(0,6,.5,-29))
+killerOnTV.Font=Enum.Font.Garamond
+killerOnTV.TextSize=16
+killerOnTV.TextWrapped=true
+killerOnTV.TextXAlignment=Enum.TextXAlignment.Center
+killerOnTV.TextYAlignment=Enum.TextYAlignment.Center
+killerOnTV.TextColor3=Color3.fromRGB(238,238,231)
+killerOnTV.TextStrokeTransparency=.35
+killerOnTV.ZIndex=90
+killerOnTV.Visible=false
+
+local loadingRoster=text(loading,"LoadingRoster","",UDim2.new(.72,0,0,76),UDim2.new(.14,0,.62,0))
+loadingRoster.Font=Enum.Font.Garamond
+loadingRoster.TextSize=16
+loadingRoster.TextWrapped=true
+loadingRoster.TextColor3=Color3.fromRGB(226,226,220)
+loadingRoster.TextStrokeTransparency=.48
+loadingRoster.TextXAlignment=Enum.TextXAlignment.Center
+loadingRoster.TextYAlignment=Enum.TextYAlignment.Center
+loadingRoster.ZIndex=91
+loadingRoster.Visible=false
+
+local matchTVNoiseToken=0
+local function startMatchTVNoise(token)
+ matchTVNoiseToken+=1
+ local noiseToken=matchTVNoiseToken
+ killerOnTV.Visible=false
+ loadingRoster.Visible=false
+ task.spawn(function()
+  local n=0
+  while noiseToken==matchTVNoiseToken and token==loadToken and loading.Visible do
+   n+=1
+   for i,line in ipairs(staticLines) do
+    local wave=(math.sin(n*.83+i*1.71)+1)*.5
+    line.Position=UDim2.new(0,0,(i*0.041+n*.017)%1,0)
+    line.BackgroundTransparency=.38+wave*.46
+   end
+   tvStatic.BackgroundTransparency=.12+((n%4)*.035)
+   matchTV.Ambient=(n%5==0) and Color3.fromRGB(17,16,19) or Color3.fromRGB(10,10,12)
+   task.wait(.055)
+  end
+ end)
+ task.delay(5,function()
+  if token~=loadToken or not loading.Visible then return end
+  local killerPlayer=tostring(net:GetAttribute("KillerPlayerName") or net:GetAttribute("Killer") or "?")
+  killerOnTV.Text=L("PERSEGUIDOR\n","KILLER\n")..killerPlayer
+  killerOnTV.Visible=true
+  local roster={}
+  local raw=net:GetAttribute("LoadingRoster")
+  if type(raw)=="string" then pcall(function() roster=HttpService:JSONDecode(raw) end) end
+  if type(roster)~="table" or #roster==0 then
+   roster={}
+   for _,p in ipairs(Players:GetPlayers()) do table.insert(roster,p.DisplayName or p.Name) end
+  end
+  loadingRoster.Text=table.concat(roster,"   •   ")
+  loadingRoster.Visible=true
+ end)
+end
+
+
 local loadingAvatar=Instance.new("ViewportFrame",loading)
 loadingAvatar.Name="ArenaAvatar"
 loadingAvatar.BackgroundTransparency=1
@@ -1257,6 +1420,7 @@ loadingAvatar.Ambient=Color3.fromRGB(70,72,80)
 loadingAvatar.LightColor=Color3.fromRGB(224,219,222)
 loadingAvatar.LightDirection=Vector3.new(-.7,-.8,-.45)
 loadingAvatar.ZIndex=82 loadingAvatar.Visible=false
+loadingAvatar:SetAttribute("LegacyHidden",true)
 local loadingAvatarWorld=Instance.new("WorldModel",loadingAvatar)
 local loadingAvatarCamera=Instance.new("Camera",loadingAvatar) loadingAvatarCamera.FieldOfView=34 loadingAvatar.CurrentCamera=loadingAvatarCamera
 local loadingAvatarClone=nil local loadingAvatarRoot=nil local loadingAvatarBase=nil local loadingAvatarConn=nil local loadingAvatarJoints={}
@@ -1384,10 +1548,13 @@ end
 
 local function preload(roundId,map)
  loadToken+=1 local token=loadToken
+ local loadingStarted=os.clock()
  loading.Visible=true goodLuck.Visible=false goodLuck.TextTransparency=.68
  loadingAvatar.Visible=false
- captureLoadingCamera(map,token)
- progressFill.Size=UDim2.fromScale(0,1) loadingText.Text="CARREGANDO MAPA"
+ restoreLoadingCamera()
+ loadingRoster.Visible=false killerOnTV.Visible=false
+ startMatchTVNoise(token)
+ progressFill.Size=UDim2.fromScale(0,1) loadingText.Text=L("CARREGANDO MAPA","LOADING MAP")
  setMapProgress(.04,.05)
  task.spawn(function()
   local deadline=os.clock()+18 local geometryReady=false
@@ -1397,7 +1564,7 @@ local function preload(roundId,map)
     local count=0 for _,d in ipairs(map:GetDescendants()) do if d:IsA("BasePart") then count+=1 end end
     local expected=math.max(1,map:GetAttribute("PartCount") or count)
     local ratio=math.clamp(count/expected,0,1)
-    loadingText.Text="CARREGANDO MAPA  "..math.floor(ratio*100).."%"
+    loadingText.Text=L("CARREGANDO MAPA  ","LOADING MAP  ")..math.floor(ratio*100).."%"
     setMapProgress(.06+ratio*.68,.12)
     if count>=expected then geometryReady=true break end
    end
@@ -1409,7 +1576,7 @@ local function preload(roundId,map)
    notice.Text=L("A conexão está lenta. A arena continua carregando.","Your connection is slow. The arena is still loading.") return
   end
   local done=false local mediaDeadline=os.clock()+8
-  loadingText.Text="PREPARANDO O AMBIENTE"
+  loadingText.Text=L("PREPARANDO O AMBIENTE","PREPARING ENVIRONMENT")
   setMapProgress(.82,.22)
   task.spawn(function()
    pcall(function() game:GetService("ContentProvider"):PreloadAsync({map}) end)
@@ -1420,12 +1587,15 @@ local function preload(roundId,map)
   setMapProgress(.96,.22)
   loadingText.Text=""
   goodLuck.Visible=false
-  task.wait(1.35)
+  local minimumRemaining=loadingStarted+10-os.clock()
+  if minimumRemaining>0 then task.wait(minimumRemaining) end
   if token~=loadToken then return end
   setMapProgress(1,.15)
   task.wait(.18)
+  matchTVNoiseToken+=1
   loading.Visible=false
   goodLuck.Visible=false
+  loadingRoster.Visible=false killerOnTV.Visible=false
   clearArenaLoadingAvatar()
   restoreLoadingCamera()
   -- Geometry gates readiness; optional unavailable audio/decals must not eject a player.
@@ -1490,7 +1660,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  hackEvent(action,a,b)
  if action=="reset" then
   hackEvent("hackEnd") hideResult()
-  loadToken+=1 loading.Visible=false goodLuck.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
+  loadToken+=1 matchTVNoiseToken+=1 loading.Visible=false goodLuck.Visible=false loadingRoster.Visible=false killerOnTV.Visible=false clearArenaLoadingAvatar() restoreLoadingCamera() progressFill.Size=UDim2.fromScale(0,1)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
  elseif action=="shopResult" then
