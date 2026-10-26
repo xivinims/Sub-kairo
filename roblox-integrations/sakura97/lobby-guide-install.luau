@@ -121,50 +121,56 @@ lobby:SetAttribute("ReceptionSearchOrigin",spawn)
 local origin=typeof(spawn)=="CFrame" and spawn.Position or spawn
 assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 
--- Find a real authored counter/desk/table in whichever fixed lobby is installed.
--- Prefer names from the source asset itself ("Counter top", "Counter", "Desk",
--- "Reception") and never create replacement furniture.
+-- Use an actual authored table from the lower lobby floor. The previous generated
+-- stool could sit inside wall geometry because it was placed relative only to spawn.
 local receptionPieces={}
-local receptionVisitor=origin+Vector3.new(0,3,0)
-local receptionPathSteps=1
-
--- Keep Fill inside the guaranteed-clear spawn room. The guide station is intentionally
--- compact and non-collidable so it can never recreate the invisible-wall problem.
 local previousCounter=lobby:FindFirstChild("FillReceptionCounter")
 if previousCounter then previousCounter:Destroy() end
 local previousStool=lobby:FindFirstChild("FillGuideStool")
 if previousStool then previousStool:Destroy() end
 
-local reference=lobby:GetAttribute("FormerDoorCFrame")
-local inward=typeof(reference)=="CFrame" and Vector3.new(reference.LookVector.X,0,reference.LookVector.Z) or Vector3.new(1,0,0)
-if inward.Magnitude<.1 then inward=Vector3.new(1,0,0) else inward=inward.Unit end
-local stationXZ=origin+inward*3.2
-local floorParams=RaycastParams.new()
-floorParams.FilterType=Enum.RaycastFilterType.Include
-floorParams.FilterDescendantsInstances={lobby}
-floorParams.RespectCanCollide=true
-local floorHit=workspace:Raycast(stationXZ+Vector3.new(0,7,0),Vector3.new(0,-15,0),floorParams)
-local floorY=(floorHit and floorHit.Normal.Y>.78 and math.abs(floorHit.Position.Y-origin.Y)<3) and floorHit.Position.Y or origin.Y
-
-local station=Instance.new("Model") station.Name="FillGuideStool" station.Parent=lobby
-local seatCF=CFrame.lookAt(Vector3.new(stationXZ.X,floorY+1.7,stationXZ.Z),Vector3.new(origin.X,floorY+1.7,origin.Z))
-local receptionTop=Instance.new("Part") receptionTop.Name="Seat" receptionTop.Size=Vector3.new(2.35,.28,2.35)
-receptionTop.CFrame=seatCF receptionTop.Anchored=true receptionTop.CanCollide=false receptionTop.CanTouch=false receptionTop.CanQuery=false
-receptionTop.Material=Enum.Material.WoodPlanks receptionTop.Color=Color3.fromRGB(72,58,48) receptionTop.Parent=station
-for _,offset in ipairs({
- Vector3.new(-.82,-.95,-.82),Vector3.new(.82,-.95,-.82),
- Vector3.new(-.82,-.95,.82),Vector3.new(.82,-.95,.82)
-}) do
- local leg=Instance.new("Part") leg.Name="Leg" leg.Size=Vector3.new(.18,1.75,.18)
- leg.CFrame=seatCF*CFrame.new(offset) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false leg.CanQuery=false
- leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=station
+local function ancestryText(part)
+ local names={string.lower(part.Name)}
+ local p=part.Parent
+ for _=1,5 do
+  if not p or p==lobby then break end
+  table.insert(names,string.lower(p.Name))
+  p=p.Parent
+ end
+ return table.concat(names," ")
 end
-station:SetAttribute("SpawnRoomGuideStation",true)
-station:SetAttribute("NonBlocking",true)
+
+local receptionTop=nil
+local bestDistance=math.huge
+for _,part in ipairs(lobby:GetDescendants()) do
+ if part:IsA("BasePart") and part.CanCollide and part.Transparency<.98 then
+  local text=ancestryText(part)
+  local topY=part.Position.Y+part.Size.Y/2
+  local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
+  local authoredConsole=part.Name=="Furniture_Console_A" and string.find(text,"console desk",1,true)
+  local authoredTable=(string.find(text,"table",1,true) or string.find(text,"desk",1,true)) and part.Size.X>=4 and part.Size.Z>=1.8
+  if (authoredConsole or authoredTable) and math.abs(topY-origin.Y)<=2.5 and flatDistance>=8 and flatDistance<=65 then
+   local score=flatDistance+(authoredConsole and -20 or 0)
+   if score<bestDistance then
+    bestDistance=score
+    receptionTop=part
+   end
+  end
+ end
+end
+assert(receptionTop,"No authored lower-floor table found for Fill")
+
+local towardSpawn=Vector3.new(origin.X-receptionTop.Position.X,0,origin.Z-receptionTop.Position.Z)
+if towardSpawn.Magnitude<.1 then towardSpawn=Vector3.new(1,0,0) else towardSpawn=towardSpawn.Unit end
+local receptionVisitor=Vector3.new(
+ receptionTop.Position.X+towardSpawn.X*4.2,
+ origin.Y,
+ receptionTop.Position.Z+towardSpawn.Z*4.2
+)
+local receptionPathSteps=1
 receptionPieces={receptionTop}
-
-
-
+lobby:SetAttribute("FillAuthoredTable",receptionTop:GetFullName())
+lobby:SetAttribute("FillTableTopY",receptionTop.Position.Y+receptionTop.Size.Y/2)
 
 -- Face the lobby and move slightly toward the front edge so the authored seated legs
 -- hang naturally over the counter instead of intersecting the desk.
@@ -206,8 +212,8 @@ npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
 npc:SetAttribute("SeatedOnReception",true)
 npc:SetAttribute("ReceptionAccessValidated",true)
-npc:SetAttribute("ReceptionAccessMode","SpawnRoomDirect")
-npc:SetAttribute("GuideStation","FillGuideStool")
+npc:SetAttribute("ReceptionAccessMode","AuthoredTable")
+npc:SetAttribute("GuideStation",receptionTop:GetFullName())
 npc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)
 npc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
 local tableReference=Instance.new("ObjectValue")
