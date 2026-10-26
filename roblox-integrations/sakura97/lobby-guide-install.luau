@@ -293,7 +293,10 @@ npc:SetAttribute("Placement","ReceptionTabletopSeated")
 npc:SetAttribute("ReceptionSurface",receptionTop:GetFullName())
 npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
-npc:SetAttribute("SeatedOnReception",true)\nnpc:SetAttribute("ReceptionAccessValidated",true)\nnpc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)\nnpc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
+npc:SetAttribute("SeatedOnReception",true)
+npc:SetAttribute("ReceptionAccessValidated",true)
+npc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)
+npc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
 local tableReference=Instance.new("ObjectValue")
 tableReference.Name="Tabletop"
 tableReference.Value=receptionTop
