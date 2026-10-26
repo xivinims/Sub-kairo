@@ -15,6 +15,11 @@ local function saveProfile(p,flush)
  return ok
 end
 local net=RS:WaitForChild("Survival") local config=require(net.Config)
+local LANTERN_DURATIONS=(config.Lantern and config.Lantern.Durations) or {70}
+local LANTERN_COSTS=(config.Lantern and config.Lantern.UpgradeCosts) or {}
+local LANTERN_SOUND_ID=(config.Lantern and config.Lantern.SoundAssetId) or 129037248569146
+local function lanternTier(p) return math.clamp(profiles:lanternTier(p) or 0,0,#LANTERN_DURATIONS-1) end
+local function lanternMaxSeconds(p) return LANTERN_DURATIONS[lanternTier(p)+1] or LANTERN_DURATIONS[1] or 70 end
 local Rules=require(SSS.RoundRules) local AI=require(SSS.PursuerAI) local KillerFactory=require(SSS.KillerFactory)
 local bridge=SSS.SurvivalBridge local assets=SS.SurvivalAssets local items=assets:WaitForChild("Items")
 local state=Rules.new() local queued={} local rates={} local motions={} local catching={}
@@ -49,6 +54,8 @@ local function sync(p)
  p:SetAttribute("MaxStamina",p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina)
  p:SetAttribute("CarryingUserId",e and e.carryingUserId or 0)
  p:SetAttribute("CarriedBy",e and e.carriedBy or 0)
+ p:SetAttribute("LanternDurabilityTier",lanternTier(p))
+ p:SetAttribute("LanternMaxSeconds",lanternMaxSeconds(p))
  local h=humanoid(p)
  if h then
   h.PlatformStand=false h.AutoRotate=not (e and e.status=="downed")
@@ -89,6 +96,14 @@ local function reward(p,pointAmount,xpAmount)
   e.actionPoints=(e.actionPoints or 0)+(pointAmount or 0)
  end
 end
+local function resetLanternBattery(p)
+ local maxSeconds=lanternMaxSeconds(p)
+ p:SetAttribute("LanternDurabilityTier",lanternTier(p))
+ p:SetAttribute("LanternMaxSeconds",maxSeconds)
+ p:SetAttribute("LanternSeconds",maxSeconds)
+ p:SetAttribute("LanternDepleted",false)
+end
+
 local function clearFlashlight(p)
  local char=p.Character
  local existing=char and char:FindFirstChild("EquippedFlashlight")
@@ -99,6 +114,13 @@ end
 local function setFlashlight(p,on)
  clearFlashlight(p)
  if not on or p==jasonPlayer then return false end
+ local remaining=tonumber(p:GetAttribute("LanternSeconds")) or lanternMaxSeconds(p)
+ if remaining<=0 then
+  p:SetAttribute("LanternSeconds",0)
+  p:SetAttribute("LanternDepleted",true)
+  net.Update:FireClient(p,"notice","A lanterna ficou sem carga nesta partida.")
+  return false
+ end
  local char=p.Character local h=humanoid(p)
  if not char or not h or h.Health<=0 or p:GetAttribute("Downed") then return false end
  local hand=char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
@@ -128,7 +150,7 @@ local function setFlashlight(p,on)
  light.Parent=handle
  local crackle=handle:FindFirstChild("LanternFireCrackle") or Instance.new("Sound")
  crackle.Name="LanternFireCrackle"
- crackle.SoundId="rbxassetid://112352139435056"
+ crackle.SoundId="rbxassetid://"..tostring(LANTERN_SOUND_ID)
  crackle.Volume=.18
  crackle.Looped=true
  crackle.RollOffMode=Enum.RollOffMode.InverseTapered
@@ -137,11 +159,34 @@ local function setFlashlight(p,on)
  crackle.Parent=handle
  crackle:Play()
  visual:SetAttribute("LanternAssetId",11906391298)
- visual:SetAttribute("CrackleSoundAssetId",112352139435056)
+ visual:SetAttribute("CrackleSoundAssetId",LANTERN_SOUND_ID)
  p:SetAttribute("FlashlightOn",true)
  p:SetAttribute("LanternOn",true)
+ p:SetAttribute("LanternDepleted",false)
  return true
 end
+
+task.spawn(function()
+ local previous=os.clock()
+ while true do
+  task.wait(.2)
+  local current=os.clock()
+  local dt=math.clamp(current-previous,0,.5)
+  previous=current
+  for _,p in ipairs(Players:GetPlayers()) do
+   if p:GetAttribute("FlashlightOn")==true and p:GetAttribute("InRound")==true and p~=jasonPlayer then
+    local remaining=math.max(0,(tonumber(p:GetAttribute("LanternSeconds")) or lanternMaxSeconds(p))-dt)
+    p:SetAttribute("LanternSeconds",math.floor(remaining*10+.5)/10)
+    if remaining<=0 then
+     clearFlashlight(p)
+     p:SetAttribute("LanternSeconds",0)
+     p:SetAttribute("LanternDepleted",true)
+     net.Update:FireClient(p,"notice","A lanterna apagou: a carga acabou.")
+    end
+   end
+  end
+ end
+end)
 
 local function lobby(p)
  bridge.CancelDeath:Fire(p)
@@ -414,6 +459,7 @@ local function spawnPlayer(p)
  e.hasKey=false e.carryingUserId=0 e.carriedBy=0
  e.stamina=p==jasonPlayer and Rules.KillerStamina or Rules.SurvivorStamina
  clearFlashlight(p)
+ if p~=jasonPlayer then resetLanternBattery(p) end
  p:SetAttribute("BeingExecuted",false) p:SetAttribute("ReviveAt",0)
  p:SetAttribute("MoveMode","walk") p:SetAttribute("Spectating",false) p:SetAttribute("InMenu",false)
 
@@ -755,6 +801,24 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   if state.phase~="Escolha" or p~=selectionPlayer or selectedKiller or p:GetAttribute("AFK") or type(value)~="string" or #value>40 or not assets.Killers:FindFirstChild(value) then return end
   if not profiles:ownsKiller(p,value) then net.Update:FireClient(p,"notice","Você ainda não comprou "..value..".") return end
   selectedKiller=value p:SetAttribute("ChoosingKiller",false) return
+ elseif action=="buyLanternUpgrade" then
+  if p:GetAttribute("InRound") then return end
+  local tier=lanternTier(p)
+  local cost=LANTERN_COSTS[tier+1]
+  if not cost then
+   net.Update:FireClient(p,"itemResult",true,"Lanterna já está no MAX.",tier,lanternMaxSeconds(p))
+   return
+  end
+  local ok,msg=profiles:buyLanternUpgrade(p,cost,#LANTERN_COSTS)
+  local newTier=lanternTier(p)
+  if ok then
+   p:SetAttribute("LanternDurabilityTier",newTier)
+   p:SetAttribute("LanternMaxSeconds",lanternMaxSeconds(p))
+   if not p:GetAttribute("InRound") then p:SetAttribute("LanternSeconds",lanternMaxSeconds(p)) end
+   task.spawn(saveProfile,p)
+  end
+  net.Update:FireClient(p,"itemResult",ok,msg,newTier,lanternMaxSeconds(p))
+  return
  elseif action=="buyKiller" then
   if type(value)~="string" or #value>40 then return end
   local spec=config.Killers[value]
@@ -1231,6 +1295,12 @@ task.spawn(function()
     net:SetAttribute("JoinUntil",roundJoinUntil)
     net:SetAttribute("EndsAt",endTime)
     net:SetAttribute("Killer",killerName)
+    net:SetAttribute("KillerPlayerName",jasonPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName)
+    local loadingRoster={}
+    for _,candidate in ipairs(eligible) do
+     if candidate.Parent and not candidate:GetAttribute("AFK") then table.insert(loadingRoster,candidate.DisplayName or candidate.Name) end
+    end
+    net:SetAttribute("LoadingRoster",game:GetService("HttpService"):JSONEncode(loadingRoster))
     net:SetAttribute("Map",arena:GetAttribute("DisplayName") or "Mapa")
     net:SetAttribute("MaxPlayers",Rules.Capacity)
 
