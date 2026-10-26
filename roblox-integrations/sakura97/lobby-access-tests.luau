@@ -92,6 +92,15 @@ assert(string.find(tabletop:GetFullName(),"Console Desk",1,true) and tabletop.Na
 local point=npc:GetAttribute("VerifiedVisitorPosition")
 assert(typeof(point)=="Vector3","Fill has no visitor position")
 assert((point-npc.HumanoidRootPart.Position).Magnitude<=npc.ProximityPrompt.MaxActivationDistance,"Visitor point is outside Fill interaction range")
+assert(npc:GetAttribute("NonBlockingGuide")==true,"Fill nonblocking guide flag missing")
+local fillParts=0
+for _,p in ipairs(npc:GetDescendants()) do
+ if p:IsA("BasePart") then
+  assert(not p.CanCollide and not p.CanTouch and not p.CanQuery,"Fill body blocks lobby movement: "..p:GetFullName())
+  fillParts+=1
+ end
+end
+assert(fillParts>=6,"Fill rig parts missing during collision validation")
 
 return {
  ok=true,
@@ -104,5 +113,6 @@ return {
  landingBridgeSteps=landingBridge,
  usableStairs=usableStairs,
  fillOnAuthoredTable=true,
+ fillNonBlocking=true,
  fillSurface=tabletop:GetFullName()
 }
