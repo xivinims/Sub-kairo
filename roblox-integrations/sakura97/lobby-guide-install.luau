@@ -241,7 +241,7 @@ for _,part in ipairs(lobby:GetDescendants()) do
 
 table.sort(candidates,function(a,b)return a.score>b.score end)
 for i,candidate in ipairs(candidates) do
- if i>64 then break end
+ if i>16 then break end
  local visitor,steps=findVisitorPoint(candidate.part)
  if visitor then
   receptionTop=candidate.part
@@ -251,7 +251,66 @@ for i,candidate in ipairs(candidates) do
   break
  end
 end
-assert(receptionTop and receptionVisitor,"No authored reception/counter/table surface has a walkable route from lobby spawn")
+
+-- If the authored furniture is isolated behind imported geometry, build one compact
+-- reception counter on the same connected floor as the spawn instead of putting Fill
+-- on decorative dinnerware. The counter is placed only after a real walking route and
+-- a clear player standing spot are verified.
+if not receptionTop then
+ local old=lobby:FindFirstChild("FillReceptionCounter")
+ if old then old:Destroy() end
+ local overlap=OverlapParams.new()
+ overlap.FilterType=Enum.RaycastFilterType.Include
+ overlap.FilterDescendantsInstances={lobby}
+ local directions={}
+ for i=0,11 do
+  local a=i*math.pi/6
+  table.insert(directions,Vector3.new(math.cos(a),0,math.sin(a)))
+ end
+ for _,dir in ipairs(directions) do
+  local visitorXZ=origin+dir*3.5
+  local deskXZ=origin+dir*8.2
+  local visitorHit=workspace:Raycast(visitorXZ+Vector3.new(0,8,0),Vector3.new(0,-18,0),accessParams)
+  local deskHit=workspace:Raycast(deskXZ+Vector3.new(0,8,0),Vector3.new(0,-18,0),accessParams)
+  if visitorHit and deskHit and visitorHit.Normal.Y>.84 and deskHit.Normal.Y>.84
+   and math.abs(visitorHit.Position.Y-deskHit.Position.Y)<1.25
+   and math.abs(visitorHit.Position.Y-origin.Y)<2.5 then
+   local visitor=visitorHit.Position+Vector3.new(0,3,0)
+   local clearHead=not workspace:Raycast(visitorHit.Position+Vector3.new(0,.2,0),Vector3.new(0,5.4,0),accessParams)
+   local clearSight=not workspace:Raycast(visitorHit.Position+Vector3.new(0,2.7,0),(deskHit.Position-visitorHit.Position).Unit*2.2,accessParams)
+   if clearHead and clearSight then
+    local path=PF:CreatePath({AgentRadius=1.4,AgentHeight=5,AgentCanJump=false,AgentCanClimb=true,WaypointSpacing=3})
+    local computed=pcall(function() path:ComputeAsync(spawnPathPoint,visitor) end)
+    local waypoints=computed and path.Status==Enum.PathStatus.Success and path:GetWaypoints() or {}
+    path:Destroy()
+    if #waypoints>=2 then
+     local counter=Instance.new("Model") counter.Name="FillReceptionCounter" counter.Parent=lobby
+     local y=deskHit.Position.Y
+     local deskCF=CFrame.lookAt(Vector3.new(deskHit.Position.X,y+3.05,deskHit.Position.Z),Vector3.new(visitor.X,y+3.05,visitor.Z))
+     local top=Instance.new("Part") top.Name="CounterTop" top.Size=Vector3.new(6.8,.55,2.8) top.CFrame=deskCF
+     top.Anchored=true top.CanCollide=true top.CanTouch=false top.Material=Enum.Material.WoodPlanks top.Color=Color3.fromRGB(72,58,48) top.Parent=counter
+     local front=Instance.new("Part") front.Name="CounterFront" front.Size=Vector3.new(6.5,2.65,.42)
+     front.CFrame=deskCF*CFrame.new(0,-1.55,.85) front.Anchored=true front.CanCollide=true front.CanTouch=false
+     front.Material=Enum.Material.WoodPlanks front.Color=Color3.fromRGB(55,45,39) front.Parent=counter
+     for _,x in ipairs({-2.7,2.7}) do
+      local leg=Instance.new("Part") leg.Name="CounterLeg" leg.Size=Vector3.new(.42,2.7,.42)
+      leg.CFrame=deskCF*CFrame.new(x,-1.6,-.55) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false
+      leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=counter
+     end
+     counter:SetAttribute("GeneratedAccessibleReception",true)
+     counter:SetAttribute("WalkingRouteValidated",true)
+     counter:SetAttribute("Source","LobbySpawnConnectedFloor")
+     receptionTop=top
+     receptionVisitor=visitor
+     receptionPathSteps=#waypoints
+     receptionPieces={top}
+     break
+    end
+   end
+  end
+ end
+end
+assert(receptionTop and receptionVisitor,"No reachable reception point could be created on the lobby spawn floor")
 
 
 -- Face the lobby and move slightly toward the front edge so the authored seated legs
