@@ -18,25 +18,38 @@ async function execute(script){
 }
 const luau=`
 local Http=game:GetService("HttpService")
-local AssetService=game:GetService("AssetService")
-local out={}
-for _,id in ipairs({421148437,397786287}) do
- local asset=AssetService:LoadAssetAsync(id)
- local row={id=id,children={},parts={}}
- for _,c in ipairs(asset:GetChildren()) do table.insert(row.children,{name=c.Name,class=c.ClassName}) end
- for _,d in ipairs(asset:GetDescendants()) do
-  if d:IsA("BasePart") then
-   local cf,size
-   if d:IsA("Model") then cf,size=d:GetBoundingBox() end
-   table.insert(row.parts,{name=d.Name,class=d.ClassName,size=tostring(d.Size),cf=tostring(d.CFrame),trans=d.Transparency,material=tostring(d.Material),color=tostring(d.Color)})
-  end
- end
- table.sort(row.parts,function(a,b)return a.name<b.name end)
- while #row.parts>80 do table.remove(row.parts) end
- table.insert(out,row)
- asset:Destroy()
-end
-return Http:JSONEncode(out)
+local first=game:GetService("ReplicatedFirst")
+local controller=assert(first:FindFirstChild("SweanLoadingController"),"SweanLoadingController missing")
+local assets=assert(first:FindFirstChild("LoadingCinematicAssets"),"LoadingCinematicAssets missing")
+local tv=assert(assets:FindFirstChild("TV"),"TV model missing")
+local mesa=assert(assets:FindFirstChild("Mesa"),"Mesa model missing")
+local screen=assert(tv:FindFirstChild("Screen",true),"TV Screen part missing")
+assert(controller:GetAttribute("CinematicInitialLoading")==true,"CinematicInitialLoading flag missing")
+assert(controller:GetAttribute("CinematicDuration")==8,"Cinematic duration is not 8 seconds")
+assert(controller:GetAttribute("TVAssetId")==421148437,"Wrong TV asset persisted")
+assert(controller:GetAttribute("TableAssetId")==397786287,"Wrong table asset persisted")
+assert(assets:GetAttribute("TVAssetId")==421148437 and assets:GetAttribute("TableAssetId")==397786287,"Loading asset folder IDs wrong")
+assert(tv:GetAttribute("SourceAssetId")==421148437 and mesa:GetAttribute("SourceAssetId")==397786287,"Loading model source IDs missing")
+local source=controller.Source
+assert(source:find("CINEMATIC_DURATION=8",1,true),"8-second timing source missing")
+assert(source:find("LOGO_END=4",1,true),"4-second logo cutoff missing")
+assert(source:find('hand.Name="HandInsideTelevision"',1,true),"Hand-in-TV scene missing")
+assert(source:find("cameraImpact",1,true),"Impact camera shake missing")
+assert(source:find('logo.Texture="rbxassetid://99002027743613"',1,true),"Game logo texture missing from TV")
+assert(source:find("waitUntil(7.05)",1,true),"Final fade cue missing")
+assert(source:find("screen.Size.X/2+.028",1,true),"Logo is not attached to TV glass")
+return Http:JSONEncode({
+ ok=true,
+ version=game.PlaceVersion,
+ tvAsset=tv:GetAttribute("SourceAssetId"),
+ tableAsset=mesa:GetAttribute("SourceAssetId"),
+ screen=screen.Name,
+ cinematicSeconds=controller:GetAttribute("CinematicDuration"),
+ logoUntil=4,
+ handImpact=true,
+ finalFade=true
+})
 `;
 const result=await execute(luau);
-console.log('LOADING_ASSET_DIAG',JSON.stringify(result));
+console.log('LOADING_CINEMATIC_LIVE_VERIFY',JSON.stringify(result));
+if(!result || result.ok!==true) throw new Error('Published loading cinematic verification failed');
