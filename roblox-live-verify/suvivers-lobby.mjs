@@ -41,3 +41,4 @@ const result=await execute("\nlocal Http=game:GetService(\"HttpService\")\nlocal
 console.log('SUVIVERS_QUALITY_LIVE_VERIFY',JSON.stringify(result));
 if(!result?.ok) throw new Error('Quality live verification did not return ok');
 // final republish verification
+// final shop republish verify
