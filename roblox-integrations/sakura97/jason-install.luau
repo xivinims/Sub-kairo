@@ -1,6 +1,7 @@
 assert(game.PlaceId==79738710219521 and game.GameId==9419478735,"Wrong place")
 local SS=game:GetService("ServerStorage") local RS=game:GetService("ReplicatedStorage")
-local SSS=game:GetService("ServerScriptService") local StarterPlayer=game:GetService("StarterPlayer") local SP=StarterPlayer.StarterPlayerScripts\nStarterPlayer.DevCameraOcclusionMode=Enum.DevCameraOcclusionMode.Zoom
+local SSS=game:GetService("ServerScriptService") local StarterPlayer=game:GetService("StarterPlayer") local SP=StarterPlayer.StarterPlayerScripts
+StarterPlayer.DevCameraOcclusionMode=Enum.DevCameraOcclusionMode.Zoom
 local AS=game:GetService("AssetService")
 -- Remove legacy island build data. The Jason build only needs SurvivalAssets.
 local legacyNature=SS:FindFirstChild("NatureTemplates")
