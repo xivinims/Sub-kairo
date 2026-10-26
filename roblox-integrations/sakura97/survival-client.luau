@@ -321,6 +321,7 @@ local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132))
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.82 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local function createShop()
 local shopOverlay=Instance.new("Frame",gui)
 shopOverlay.Name="KillerShop"
 shopOverlay.Size=UDim2.fromScale(1,1)
@@ -979,6 +980,22 @@ task.spawn(function()
  if pts then pts.Changed:Connect(refreshShop) end
  refreshShop()
 end)
+
+local function language()
+ shopTitle.Text=L("PERSEGUIDORES","KILLERS")
+ shopSubtitle.Text=""
+ shopClose.Text="×"
+ shopSearch.PlaceholderText=L("PESQUISAR","SEARCH")
+ shopTabs.Killers.Text=L("PERSEGUIDORES","KILLERS")
+ shopTabs.Items.Text=L("ITENS","ITEMS")
+ placeholderText.Text=activeShopTab=="Emotes" and L("EMOTES • EM BREVE","EMOTES • COMING SOON") or ""
+ lanternTitle.Text=L("LANTERNA","LANTERN")
+ refreshItemShop()
+ shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
+end
+return {overlay=shopOverlay,button=shopButton,ownedKillers=ownedKillers,refresh=refreshShop,refreshItems=refreshItemShop,language=language}
+end
+local shop=createShop()
 
 RunService.RenderStepped:Connect(function()
  local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
@@ -1858,11 +1875,11 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="notice" then
   notice.Text=a noticeUntil=os.clock()+5
  elseif action=="shopResult" then
-  refreshShop()
+  shop.refresh()
   notice.Text=tostring(b or (a and L("Compra concluída.","Purchase complete.") or L("Compra não concluída.","Purchase failed."))) noticeUntil=os.clock()+5
  elseif action=="itemResult" then
-  refreshItemShop()
-  refreshShop()
+  shop.refreshItems()
+  shop.refresh()
   notice.Text=tostring(b or (a and L("Item melhorado.","Item upgraded.") or L("Melhoria não concluída.","Upgrade failed.")))
   noticeUntil=os.clock()+5
  elseif action=="mission" then
@@ -1995,12 +2012,12 @@ local killerChoiceButtons={}
 for i,name in ipairs(names) do
  local killerName=name
  local b=button(killerPanel,killerName,killerName,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function()
-  if ownedKillers()[killerName] then event:FireServer("chooseKiller",killerName) else notice.Text=L("Compre ","Buy ")..killerName..L(" na LOJA primeiro."," in the SHOP first.") noticeUntil=os.clock()+4 end
+  if shop.ownedKillers()[killerName] then event:FireServer("chooseKiller",killerName) else notice.Text=L("Compre ","Buy ")..killerName..L(" na LOJA primeiro."," in the SHOP first.") noticeUntil=os.clock()+4 end
  end)
  killerChoiceButtons[killerName]=b
 end
 local function refreshKillerChoices()
- local owned=ownedKillers()
+ local owned=shop.ownedKillers()
  for name,b in pairs(killerChoiceButtons) do
   b.Text=owned[name] and name or (name.."\n"..L("BLOQUEADO","LOCKED"))
   b.TextTransparency=owned[name] and 0 or .38
@@ -2012,16 +2029,7 @@ refreshKillerChoices()
 
 local function refreshLanguage()
  countdownText.Text=L("Aguardando jogadores","Waiting for players")
- shopTitle.Text=L("PERSEGUIDORES","KILLERS")
- shopSubtitle.Text=""
- shopClose.Text="×"
- shopSearch.PlaceholderText=L("PESQUISAR","SEARCH")
- shopTabs.Killers.Text=L("PERSEGUIDORES","KILLERS")
- shopTabs.Items.Text=L("ITENS","ITEMS")
- placeholderText.Text=activeShopTab=="Emotes" and L("EMOTES • EM BREVE","EMOTES • COMING SOON") or ""
- lanternTitle.Text=L("LANTERNA","LANTERN")
- refreshItemShop()
- shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
+ shop.language()
  missionTitle.Text=L("MISSÃO","MISSION")
  missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
  if not result.Visible then resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER") end
@@ -2029,7 +2037,7 @@ local function refreshLanguage()
  voteHint.Text=L("4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS","4 IN VOTE  •  RANDOM  •  7 MAPS TOTAL")
  killerTitle.Text=L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE")
  missionText.Text=missionCopy(net:GetAttribute("MissionStage") or "Waiting")
- refreshShop()
+ shop.refresh()
  refreshKillerChoices()
  refreshVoteCards()
 end
@@ -2053,9 +2061,9 @@ RunService.RenderStepped:Connect(function(dt)
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
  if result.Visible and os.clock()>=resultUntil then hideResult() end
  settingsButton.Visible=not hidden and not result.Visible
- shopButton.Visible=not hidden and not result.Visible and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
+ shop.button.Visible=not hidden and not result.Visible and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
  settingsOverlay.Visible=settingsOverlay.Visible and not hidden
- if hidden or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then shopOverlay.Visible=false end
+ if hidden or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then shop.overlay.Visible=false end
  profileHUD.Visible=not hidden and not result.Visible
  roster.Visible=not hidden and not result.Visible and player:GetAttribute("InRound")==true and player:GetAttribute("IsJason")~=true and player:GetAttribute("Spectating")~=true
  updateRoster()
