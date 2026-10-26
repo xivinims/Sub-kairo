@@ -94,6 +94,7 @@ local function clearFlashlight(p)
  local existing=char and char:FindFirstChild("EquippedFlashlight")
  if existing then existing:Destroy() end
  p:SetAttribute("FlashlightOn",false)
+ p:SetAttribute("LanternOn",false)
 end
 local function setFlashlight(p,on)
  clearFlashlight(p)
@@ -119,8 +120,26 @@ local function setFlashlight(p,on)
  local weld=Instance.new("WeldConstraint")
  weld.Name="FlashlightGrip" weld.Part0=hand weld.Part1=handle weld.Parent=handle
  local light=handle:FindFirstChild("GameplayLight") or Instance.new("PointLight")
- light.Name="GameplayLight" light.Color=Color3.fromRGB(240,238,214) light.Range=24 light.Brightness=2.4 light.Shadows=false light.Parent=handle
+ light.Name="GameplayLight"
+ light.Color=Color3.fromRGB(255,220,155)
+ light.Range=23
+ light.Brightness=2.15
+ light.Shadows=false
+ light.Parent=handle
+ local crackle=handle:FindFirstChild("LanternFireCrackle") or Instance.new("Sound")
+ crackle.Name="LanternFireCrackle"
+ crackle.SoundId="rbxassetid://112352139435056"
+ crackle.Volume=.18
+ crackle.Looped=true
+ crackle.RollOffMode=Enum.RollOffMode.InverseTapered
+ crackle.RollOffMinDistance=3
+ crackle.RollOffMaxDistance=22
+ crackle.Parent=handle
+ crackle:Play()
+ visual:SetAttribute("LanternAssetId",11906391298)
+ visual:SetAttribute("CrackleSoundAssetId",112352139435056)
  p:SetAttribute("FlashlightOn",true)
+ p:SetAttribute("LanternOn",true)
  return true
 end
 
