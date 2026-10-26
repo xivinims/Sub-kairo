@@ -8,6 +8,7 @@ local TweenService=game:GetService("TweenService")
 local Encoding=game:GetService("EncodingService")
 local net=game.ReplicatedStorage:WaitForChild("Survival")
 local cache=setmetatable({},{__mode="k"})
+local killerMovement=setmetatable({},{__mode="k"})
 local activeFolder=setmetatable({},{__mode="k"})
 local animateState=setmetatable({},{__mode="k"})
 local watchedRigs=setmetatable({},{__mode="k"})
@@ -307,7 +308,10 @@ Run.PreSimulation:Connect(function(dt)
    if d and visible then
     local requested=model:GetAttribute("PresentationState") or "Winning Screen"
     local elapsed=model:GetAttribute("PresentationFrozen") and (model:GetAttribute("PresentationFreezeTime") or .3) or math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
-    if victim then
+    if requested=="RoundVictory" and not victim then
+     local clip=d.clips["Winning Screen"] and "Winning Screen" or (d.clips["Jason Idle"] and "Jason Idle" or locomotionName(d,"idle",false))
+     apply(d,clip,dt,true,elapsed)
+    elseif victim then
      local elapsed=math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("ExecutionAt") or workspace:GetServerTimeNow()))
      local clip=d.clips.VictimExecution local duration=model:GetAttribute("ExecutionDuration") or 2.5
      apply(d,"VictimExecution",dt,false,math.clamp(elapsed/duration,0,1)*(clip and clip.length or duration))
@@ -324,7 +328,15 @@ Run.PreSimulation:Connect(function(dt)
    local folder=motionFolder(model)
    if folder then
     local d=prepare(model,folder)
-    local speed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+    local rawSpeed=(model.PrimaryPart.AssemblyLinearVelocity*Vector3.new(1,0,1)).Magnitude
+    local movement=killerMovement[model] or {speed=rawSpeed,state="idle"} killerMovement[model]=movement
+    movement.speed+=(rawSpeed-movement.speed)*(1-math.exp(-math.max(0,dt)*12))
+    local speed=movement.speed
+    if movement.state=="run" and speed>=12 then movement.state="run"
+    elseif speed>=15 then movement.state="run"
+    elseif speed>(movement.state=="idle" and 1.2 or .6) then movement.state="walk"
+    else movement.state="idle" end
+    setDefaultAnimate(model,false)
     local execution=model:GetAttribute("ExecutionAt") or -100
     local attack=model:GetAttribute("AttackAt") or -100
     local execSince=workspace:GetServerTimeNow()-execution
@@ -335,14 +347,21 @@ Run.PreSimulation:Connect(function(dt)
     local frozen=model:GetAttribute("PresentationFrozen")==true
     local requested=model:GetAttribute("PresentationState")
     local presenting=requested~=nil
-    local state=presenting and (requested=="Execution" and executionName(d) or requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or (d and d.clips[requested] and requested) or pursuerStateName(d,"idle")) or frozen and (requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or requested) or (executing and executionName(d) or attacking and pursuerStateName(d,"attack") or speed>15 and pursuerStateName(d,"run") or speed>1 and pursuerStateName(d,"walk") or pursuerStateName(d,"idle"))
+    local state=presenting and (requested=="Execution" and executionName(d) or requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or (d and d.clips[requested] and requested) or pursuerStateName(d,"idle")) or frozen and (requested=="Jason Slash" and pursuerStateName(d,"attack") or requested=="Jason Idle" and pursuerStateName(d,"idle") or requested) or (executing and executionName(d) or attacking and pursuerStateName(d,"attack") or pursuerStateName(d,movement.state))
     local scale=1
     if not frozen and not executing and not attacking then
      if speed>15 then scale=math.clamp(speed/18,.82,1.42)
      elseif speed>1 then scale=math.clamp(speed/9,.78,1.30) end
     end
     local fixed=presenting and not frozen and math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow())) or frozen and (model:GetAttribute("PresentationFreezeTime") or .3) or (executing and execSince or (attacking and since or nil))
-    if d then apply(d,state,dt*scale,not presenting and not frozen and not executing and not attacking,fixed) end
+    if d then
+     local clip=state and d.clips[state]
+     if clip and not presenting and not frozen then
+      if executing then fixed=math.clamp(execSince/executionDuration,0,1)*clip.length
+      elseif attacking then fixed=math.clamp(since/.75,0,1)*clip.length end
+     end
+     apply(d,state,dt*scale,(presenting and requested=="RoundVictory") or (not presenting and not frozen and not executing and not attacking),fixed)
+    end
    end
   end
  end
@@ -450,3 +469,4 @@ Run.PreSimulation:Connect(function(dt)
   end
  end
 end)
+

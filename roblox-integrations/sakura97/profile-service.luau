@@ -60,23 +60,58 @@ function Profiles:ownsKiller(p,name)
  local r=self.records[p]
  return r and r.ownedKillers and r.ownedKillers[name]==true
 end
-function Profiles:buyKiller(p,name,cost)
- local r=self.records[p]
- local stats=p:FindFirstChild("leaderstats")
- if not r or not r.loaded or not stats or type(name)~="string" then return false,"Perfil indisponível." end
- if r.ownedKillers[name] then return false,"Você já possui esse perseguidor." end
- cost=integer(cost)
- if stats.Pontos.Value<cost then return false,"Pontos insuficientes." end
- self:points(p,-cost)
- r.ownedKillers[name]=true
- r.ownedDirty=true
+function Profiles:buyKiller(p,name,price)
+ local r=self.records[p] local stats=p:FindFirstChild("leaderstats")
+ if not r or not r.loaded or not stats or not self.store then return false,"Aguarde seu progresso carregar." end
+ if r.busy then return false,"Salvando progresso. Tente novamente em instantes." end
+ if self:ownsKiller(p,name) then return true,"Você já tem esse perseguidor." end
+ if type(price)~="number" or price<0 or price%1~=0 then return false,"Preço inválido." end
+ r.busy=true
+ if r.purchase and r.purchase.name~=name then r.busy=false return false,"Aguarde a confirmação da compra anterior." end
+ r.purchase=r.purchase or {name=name,price=price,token=Http:GenerateGUID(false),xp=r.xp,points=r.points}
+ local xp,points=r.purchase.xp,r.purchase.points
+ local token=r.purchase.token
+ local ok,data=self:retry(function()
+  return self.store:UpdateAsync(tostring(p.UserId),function(old)
+   old=type(old)=="table" and old or {}
+   old.purchaseReceipts=type(old.purchaseReceipts)=="table" and old.purchaseReceipts or {}
+   if old.purchaseReceipts[token] then return old end
+   local owned=type(old.ownedKillers)=="table" and old.ownedKillers or {}
+   local receipts=type(old.receipts)=="table" and old.receipts or {}
+   local previous=type(receipts[r.id])=="table" and receipts[r.id] or {xp=0,points=0}
+   local balance=math.max(0,integer(old.points)+points-(tonumber(previous.points) or 0))
+   local cost=owned[name] and 0 or price
+   if balance<cost then return old end
+   old.xp=integer(old.xp)+math.max(0,xp-integer(previous.xp))
+   old.points=balance-cost
+   owned[name]=true owned.Jason=true old.ownedKillers=owned
+   receipts[r.id]={xp=xp,points=points-cost,at=os.time()} old.receipts=receipts
+   old.purchaseReceipts[token]={cost=cost,at=os.time()}
+   local order={} for id,v in pairs(old.purchaseReceipts) do table.insert(order,{id=id,at=v.at or 0}) end
+   table.sort(order,function(a,b) return a.at>b.at end)
+   for i=25,#order do old.purchaseReceipts[order[i].id]=nil end
+   old.schema=3 return old
+  end)
+ end)
+ r.busy=false
+ if not ok then return false,"Compra não confirmada. Tente novamente; não há cobrança duplicada." end
+ local receipt=data and data.purchaseReceipts and data.purchaseReceipts[token]
+ if not receipt then r.purchase=nil return false,"Moedas insuficientes." end
+ r.purchase=nil
+ r.points-=receipt.cost r.savedPoints=points-receipt.cost r.savedXP=xp
+ r.ownedKillers=data.ownedKillers or {Jason=true}
+ stats.Pontos.Value=math.max(0,integer(data.points)+(r.points-r.savedPoints))
+ stats.XP.Value=integer(data.xp)+math.max(0,r.xp-r.savedXP)
+ stats["Nível"].Value=Profiles.level(stats.XP.Value)
  p:SetAttribute("OwnedKillersJson",Http:JSONEncode(r.ownedKillers))
- return true,"Perseguidor comprado."
+ return true,name.." desbloqueado!"
 end
+
 function Profiles:save(p)
  local r=self.records[p]
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
+ if r.purchase then return self:buyKiller(p,r.purchase.name,r.purchase.price) end
  if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty then return true end
  r.busy=true
  local xp,points=r.xp,r.points
@@ -113,3 +148,4 @@ function Profiles:flush(p,timeout)
  return self:save(p)
 end
 return Profiles
+

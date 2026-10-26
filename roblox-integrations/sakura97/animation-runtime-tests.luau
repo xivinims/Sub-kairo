@@ -19,7 +19,7 @@ end
 local function controller()
  local game=proxy
 __ANIMATION_TEST_SOURCE__
- return {prepare=prepare,resolve=locomotionName,apply=apply}
+ return {prepare=prepare,resolve=locomotionName,apply=apply,pursuerState=pursuerStateName,execution=executionName,motion=motionFolder}
 end
 local function posed(model)
  local count=0
@@ -38,6 +38,22 @@ local ok,err=xpcall(function()
  assert(posed(portrait)>=4,"Winning clip did not animate the original Jason portrait")
  assert(posed(p.Character)>=4,"Run clip did not animate R6 character: posed="..posed(p.Character).." disabled="..tostring(animate.Disabled).." state="..tostring(p.Character.Humanoid:GetState()).." "..diagnosticText)
  assert(animate.Disabled,"Default Animate conflicts with custom locomotion")
+ for _,template in ipairs(game.ServerStorage.SurvivalAssets.Killers:GetChildren()) do
+  local rig=template:Clone() rig.Parent=host
+  local folder=api.motion(rig) local data=folder and api.prepare(rig,folder)
+  assert(data,"No motion data for "..template.Name)
+  for _,kind in ipairs({"idle","walk","run","attack"}) do
+   local name=api.pursuerState(data,kind) local clip=name and data.clips[name]
+   assert(clip and clip.boundCount>=4,template.Name.." cannot animate "..kind)
+   api.apply(data,name,.2,true,clip.length*.25)
+   local transforms={} for _,j in ipairs(rig:GetDescendants()) do if j:IsA("Motor6D") or j:IsA("AnimationConstraint") then transforms[j]=j.Transform end end
+   api.apply(data,name,.2,true,clip.length*.7)
+   local changed=0 for joint,cf in pairs(transforms) do if joint.Transform~=cf then changed+=1 end end
+   assert(kind=="idle" or changed>=1,template.Name.." has frozen "..kind)
+  end
+  local kill=api.execution(data) assert(kill and data.clips[kill] and data.clips[kill].boundCount>=4,"Execution joints missing for "..template.Name)
+  rig:Destroy()
+ end
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
  local actions=assert(RS.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clip package missing")
@@ -78,4 +94,5 @@ local ok,err=xpcall(function()
 end,debug.traceback)
 host:Destroy()
 assert(ok,err)
-return {ok=true,winningPortrait=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,crouchPlayback=true,injuredCrouchPlayback=true,stunPlayback=true,defaultAnimationRestored=true,poseCleanup=true,survivorActionClips=true}
+return {ok=true,winningPortrait=true,sevenKillerMotionValidated=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,crouchPlayback=true,injuredCrouchPlayback=true,stunPlayback=true,defaultAnimationRestored=true,poseCleanup=true,survivorActionClips=true}
+

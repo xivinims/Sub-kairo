@@ -507,12 +507,13 @@ local function buildResultScene(source,pose)
  resultActor.Name="WinnerPursuer"
  for _,d in ipairs(resultActor:GetDescendants()) do
   if d:IsA("LuaSourceContainer") or d:IsA("BillboardGui") or d:IsA("Tool") then d:Destroy()
-  elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+  elseif d:IsA("BasePart") then d.Anchored=d==resultActor.PrimaryPart d.CanCollide=false d.CanTouch=false d.CanQuery=false end
  end
+ resultActor:SetAttribute("PresentationPursuer",true)
  resultActor.Parent=workspace
- resultActor:SetAttribute("ActivePursuer",true)
- resultActor:SetAttribute("PresentationState",pose)
- resultActor:SetAttribute("PresentationFrozen",true)
+ resultActor:SetAttribute("ActivePursuer",false)
+ resultActor:SetAttribute("PresentationState","RoundVictory")
+ resultActor:SetAttribute("PresentationFrozen",false)
  resultActor:SetAttribute("PresentationFreezeTime",pose=="Jason Slash" and .28 or .35)
  resultActor:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
  local _,size=resultActor:GetBoundingBox()
@@ -579,7 +580,7 @@ end
 local resultClose=button(result,"Close","SAÍDA",UDim2.fromOffset(88,36),UDim2.new(.025,0,.77,0),hideResult)
 resultClose.ZIndex=77 resultClose.TextSize=12 resultClose.BackgroundTransparency=.18 resultClose.UIStroke.Enabled=false
 result:GetPropertyChangedSignal("Visible"):Connect(function()
- if not result.Visible then restoreResultCamera() end
+ if not result.Visible then clearResultScene() restoreResultCamera() end
 end)
 
 local function showResult(data)
@@ -1247,3 +1248,4 @@ local function squareHud(obj)
 end
 for _,obj in ipairs(gui:GetDescendants()) do squareHud(obj) end
 gui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareHud(obj) end end) end)
+

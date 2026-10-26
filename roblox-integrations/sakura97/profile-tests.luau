@@ -38,5 +38,18 @@ local r=player(993) local failed=Profiles.new(store,{wait=function() end}) faile
 assert(not failed:load(r)) local before=writes failed:awardXP(r,100)
 assert(not failed:save(r) and writes==before,"Failed load wrote default profile")
 assert(Profiles.level(0)==1 and Profiles.level(49)==1 and Profiles.level(50)==2 and Profiles.level(130)==3 and Profiles.level(1e9)==1000,"Level thresholds incorrect")
+failRead=false
+svc:points(p,1000)
+local beforePurchase=values.points+1000
+ambiguous=true
+assert(svc:buyKiller(p,"Jeff",400),"Purchase retry failed")
+assert(svc:ownsKiller(p,"Jeff") and values.points==beforePurchase-400,"Purchase charged twice or ownership missing")
+local afterPurchase=values.points
+svc:buyKiller(p,"Jeff",400) assert(values.points==afterPurchase,"Duplicate purchase charged again")
+assert(not svc:buyKiller(p,"Freddy",99999),"Insufficient funds accepted")
+assert(svc:save(p) and values.points==afterPurchase,"Autosave refunded purchase")
+local reloaded=Profiles.new(store,{wait=function() end}) local pp=player(994) reloaded:attach(pp) assert(reloaded:load(pp))
+assert(reloaded:ownsKiller(pp,"Jeff") and reloaded:ownsKiller(pp,"Jason"),"Owned killer did not persist")
 host:Destroy()
-return {ok=true,killerOwnership=true,killerPurchaseIdempotent=true,pointsPersist=true,readFailureGuard=true,idempotentRetries=true,concurrentSessionXP=true,loadPreservesEarnings=true,levelCap=true}
+return {ok=true,killerOwnership=true,killerPurchaseIdempotent=true,pointsPersist=true,readFailureGuard=true,idempotentRetries=true,concurrentSessionXP=true,loadPreservesEarnings=true,levelCap=true,atomicPurchase=true,noDuplicateDebit=true}
+

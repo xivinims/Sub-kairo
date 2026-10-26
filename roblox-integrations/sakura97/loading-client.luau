@@ -91,7 +91,8 @@ local function attempt()
   local deadline=os.clock()+25
   while not preloadDone and os.clock()<deadline do task.wait(.12) end
   if not preloadDone then pcall(task.cancel,thread) end
-  player:SetAttribute("MenuIntroPending",true)
+  player:SetAttribute("MenuIntroPending",false)
+  player:SetAttribute("InMenu",false)
  end)
  running=false
  if ok then finish()
@@ -103,3 +104,4 @@ end
 
 retry.Activated:Connect(function() task.spawn(attempt) end)
 task.spawn(attempt)
+

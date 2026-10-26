@@ -69,6 +69,12 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("AdminReset"),"Removed reset/test button returned")
   assert(gui:FindFirstChild("KillerShop") and gui:FindFirstChild("ShopButton"),"Killer shop HUD missing")
  assert(gui.HackPanel and gui.Profile.Coin,"Hack UI or requested coin missing")
+ local winnerActor=workspace:FindFirstChild("WinnerPursuer")
+ if winnerActor then
+  assert(winnerActor:GetAttribute("PresentationState")=="RoundVictory" and winnerActor:GetAttribute("PresentationFrozen")==false,"Winner actor is frozen")
+  assert(winnerActor:GetAttribute("PresentationPursuer")==true,"Winner animation driver missing")
+  for _,part in ipairs(winnerActor:GetDescendants()) do if part:IsA("BasePart") and part~=winnerActor.PrimaryPart then assert(not part.Anchored,"Winner limb is anchored") end end
+ end
  assert(gui.RoundResult.BackgroundTransparency==1,"Result overlay is still blocking the real workspace camera")
  assert(camera.CameraType==Enum.CameraType.Scriptable,"Real result camera did not stay scriptable during the cinematic")
  assert(gui.RoundResult.Header.Text:find("JOHNDOE",1,true) and gui.RoundResult.Header.Text:find("GANHADOR",1,true),"Winner wording is not using the pursuer name")
@@ -170,3 +176,4 @@ end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
 assert(ok,result) return result
+
