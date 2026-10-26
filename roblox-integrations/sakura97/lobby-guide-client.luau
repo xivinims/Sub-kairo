@@ -290,7 +290,6 @@ connection=Run.RenderStepped:Connect(function(dt)
  local character=player.Character
  local target=character and character:FindFirstChild("Head")
  local yaw,pitch,lean=0,0,0
- languageButton.Visible=active
  local allowed=not player:GetAttribute("InRound") and not player:GetAttribute("InMenu")
  local distance=target and (target.Position-head.Position).Magnitude or math.huge
  local closeEnough=target and distance<24 and allowed
