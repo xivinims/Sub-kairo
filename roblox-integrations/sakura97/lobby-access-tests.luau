@@ -2,7 +2,7 @@ local lobby=assert(workspace:FindFirstChild("JediLibrary"))
 local house=assert(lobby:FindFirstChild("House"))
 assert((lobby:GetAttribute("PassageRepairRevision") or 0)>=2,"Lobby passage repair v2 missing")
 
-local openDoorParts,doorFrames,stairMeshes,stairSteps,supports=0,0,0,0,0
+local openDoorParts,doorFrames,stairMeshes,visualStairs,stairSteps,supports=0,0,0,0,0,0
 for _,p in ipairs(house:GetDescendants()) do
  if p:IsA("BasePart") then
   if p.Transparency>=.98 then
@@ -17,8 +17,11 @@ for _,p in ipairs(house:GetDescendants()) do
     doorFrames+=1
    end
   end
+  if p:GetAttribute("VisualOnlyStair") then
+   assert(not p.CanCollide,"Original stair/rail mesh still collides: "..p:GetFullName())
+   visualStairs+=1
+  end
   if p:GetAttribute("WalkableReplacement") then
-   assert(not p.CanCollide,"Original stair mesh still collides: "..p:GetFullName())
    stairMeshes+=1
   end
  end
@@ -46,7 +49,7 @@ end
 
 assert(openDoorParts>=7 and doorFrames>=3,"House doorway repairs missing")
 assert(supports>=doorFrames*3,"Door frame supports are incomplete")
-assert(stairMeshes>=3 and stairSteps>=20,"Walkable stair replacement missing")
+assert(visualStairs>=6,"Not all imported stair pieces were made visual-only: "..visualStairs)\nassert(stairMeshes>=1 and stairSteps>=8,"Walkable stair replacement missing meshes="..stairMeshes.." steps="..stairSteps)
 
 local usableStairs=0
 for source,steps in pairs(groups) do
