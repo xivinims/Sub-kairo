@@ -86,14 +86,18 @@ local portugueseReplies={
  "Fill. Esse é meu nome. Eu fico aqui para orientar os novos jogadores e observar o que acontece. Digamos que conheço bem este lugar.",
  "Tudo bem. Aproveite o lobby. Quando mudar de ideia... você sabe onde me encontrar."
 }
-local language="en" local portugueseVoice=nil local portugueseAudio=nil
+local language="en"
 local function setLanguage(value)
- language=value
- greeting=value=="pt" and portugueseGreeting or englishGreeting
- choices=value=="pt" and portugueseChoices or englishChoices
- replies=value=="pt" and portugueseReplies or englishReplies
+ language=value=="en" and "en" or "pt"
+ greeting=language=="pt" and portugueseGreeting or englishGreeting
+ choices=language=="pt" and portugueseChoices or englishChoices
+ replies=language=="pt" and portugueseReplies or englishReplies
 end
-if tostring(player.LocaleId or "en"):sub(1,2)=="pt" then setLanguage("pt") end
+local configuredLanguage=player:GetAttribute("GameLanguage")
+if configuredLanguage==nil then
+ configuredLanguage=tostring(player.LocaleId or "en"):sub(1,2)=="pt" and "pt-BR" or "en"
+end
+setLanguage(configuredLanguage=="en" and "en" or "pt")
 local generation=0
 local active=false
 local choosing=false
@@ -101,6 +105,7 @@ local connections={}
 local buttons={}
 local oldVoice=SoundService:FindFirstChild("FillVoice")
 if oldVoice then oldVoice:Destroy() end
+-- Text follows GameLanguage, but Fill dubbing is intentionally fixed to the six English recordings.
 local voice=Instance.new("Sound")
 voice.Name="FillVoice"
 voice.Volume=.78
@@ -111,7 +116,6 @@ voice.Parent=SoundService
 
 local voiceConnection=nil
 local function stopVoice()
- if portugueseVoice then pcall(function() portugueseVoice:Pause() portugueseVoice.TimePosition=0 end) end
  if voiceConnection then voiceConnection:Disconnect() voiceConnection=nil end
  if voice.IsPlaying then voice:Stop() end
  voice.TimePosition=0
@@ -122,27 +126,6 @@ local function voiceId(index)
 end
 local function speak(index,token,done)
  stopVoice()
- if language=="pt" then
-  task.spawn(function()
-   local ok,err=pcall(function()
-    if not portugueseVoice then
-     portugueseAudio=Instance.new("Folder",SoundService) portugueseAudio.Name="FillPortugueseAudio"
-     portugueseVoice=Instance.new("AudioTextToSpeech") portugueseVoice.Name="FillPortuguese" portugueseVoice.VoiceId="1001" portugueseVoice.AutoLocalize=false portugueseVoice.Speed=.94 portugueseVoice.Volume=.65 portugueseVoice.Parent=portugueseAudio
-     local output=Instance.new("AudioDeviceOutput") output.Player=player output.Parent=portugueseAudio
-     local wire=Instance.new("Wire") wire.SourceInstance=portugueseVoice wire.TargetInstance=output wire.Parent=portugueseAudio
-    end
-    portugueseVoice.Text=index==1 and portugueseGreeting or portugueseReplies[index-1]
-    portugueseVoice:LoadAsync()
-    if token~=generation or not active then return end
-    voiceConnection=portugueseVoice.Ended:Connect(function() if token==generation and active then done() end end)
-    portugueseVoice:Play()
-   end)
-   if not ok then warn("Fill Portuguese voice: "..tostring(err)) end
-   -- Text remains usable if platform speech is temporarily unavailable.
-   task.delay(40,function() if token==generation and active then done() end end)
-  end)
-  return
- end
  local id=voiceId(index)
  if not id then
   warn("Fill voice id missing for line "..tostring(index))
@@ -255,11 +238,14 @@ for i,title in ipairs(choices) do
  table.insert(buttons,b)
  table.insert(connections,b.Activated:Connect(function() choose(i) end))
 end
-local languageButton=Instance.new("TextButton",ui) languageButton.Name="Language" languageButton.Size=UDim2.fromOffset(100,28) languageButton.Position=UDim2.new(.5,90,1,-310) languageButton.BackgroundColor3=Color3.new(0,0,0) languageButton.BackgroundTransparency=.15 languageButton.BorderSizePixel=0 languageButton.TextColor3=Color3.new(1,1,1) languageButton.Text="EN / PT-BR" languageButton.TextSize=12
-languageButton.Activated:Connect(function()
- close() setLanguage(language=="en" and "pt" or "en")
+local function syncTextLanguage()
+ local value=player:GetAttribute("GameLanguage")
+ setLanguage(value=="en" and "en" or "pt")
  for i,b in ipairs(buttons) do b.text.Text=choices[i] end
-end)
+ if active then close() end
+end
+table.insert(connections,player:GetAttributeChangedSignal("GameLanguage"):Connect(syncTextLanguage))
+syncTextLanguage()
 responses.AnchorPoint=Vector2.new(.5,1)
 responses.Position=UDim2.new(.5,0,1,-24)
 responses.Size=UDim2.new(.82,0,0,226)
@@ -297,7 +283,7 @@ connection=Run.RenderStepped:Connect(function(dt)
   connection:Disconnect()
   for _,c in ipairs(connections) do c:Disconnect() end
   stopVoice()
-  voice:Destroy() if portugueseAudio then portugueseAudio:Destroy() end
+  voice:Destroy()
   ui:Destroy()
   return
  end
