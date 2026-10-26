@@ -321,6 +321,10 @@ local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132))
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.82 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local function formatSeconds(seconds)
+ seconds=math.max(0,math.floor((tonumber(seconds) or 0)+.5))
+ return string.format("%d:%02d",math.floor(seconds/60),seconds%60)
+end
 local function createShop()
 local shopOverlay=Instance.new("Frame",gui)
 shopOverlay.Name="KillerShop"
@@ -791,10 +795,6 @@ lanternCosts.ZIndex=120
 
 local itemDurations=(config.Lantern and config.Lantern.Durations) or {70}
 local itemCosts=(config.Lantern and config.Lantern.UpgradeCosts) or {}
-local function formatSeconds(seconds)
- seconds=math.max(0,math.floor((tonumber(seconds) or 0)+.5))
- return string.format("%d:%02d",math.floor(seconds/60),seconds%60)
-end
 local function refreshItemShop()
  local tier=math.clamp(tonumber(player:GetAttribute("LanternDurabilityTier")) or 0,0,#itemDurations-1)
  local seconds=itemDurations[tier+1] or itemDurations[1] or 70
