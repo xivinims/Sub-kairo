@@ -238,7 +238,6 @@ for _,part in ipairs(lobby:GetDescendants()) do
    end
   end
  end
-end
 
 table.sort(candidates,function(a,b)return a.score>b.score end)
 for i,candidate in ipairs(candidates) do
