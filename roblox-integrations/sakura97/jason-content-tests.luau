@@ -82,9 +82,14 @@ assert(#mapReport==7,"Expected seven requested arena templates")
 local flashlight=assert(assets:FindFirstChild("Items") and assets.Items:FindFirstChild("Flashlight"),"Flashlight template missing")
 assert(flashlight:IsA("Tool") and flashlight:GetAttribute("SourceAssetId")==11906391298,"Wrong Doors lantern asset")
 local lanternHandle=assert(flashlight:FindFirstChild("Handle",true),"Doors lantern handle missing")
-assert(flashlight:GetAttribute("CrackleSoundAssetId")==112352139435056,"Lantern crackle metadata missing")
+assert(flashlight:GetAttribute("CrackleSoundAssetId")==129037248569146,"Lantern crackle metadata missing")
 local lanternCrackle=assert(lanternHandle:FindFirstChild("LanternFireCrackle"),"Lantern fire crackle sound missing")
-assert(lanternCrackle.SoundId=="rbxassetid://112352139435056" and lanternCrackle.Looped,"Wrong lantern crackle sound")
+assert(lanternCrackle.SoundId=="rbxassetid://129037248569146" and lanternCrackle.Looped,"Wrong lantern crackle sound")
+local gameplayConfig=require(game.ReplicatedStorage.Survival.Config)
+assert(gameplayConfig.Lantern and gameplayConfig.Lantern.AssetId==11906391298 and gameplayConfig.Lantern.SoundAssetId==129037248569146,"Lantern config assets invalid")
+assert(#gameplayConfig.Lantern.Durations==7 and gameplayConfig.Lantern.Durations[1]==70 and gameplayConfig.Lantern.Durations[7]==170,"Lantern duration tiers invalid")
+assert(table.concat(gameplayConfig.Lantern.UpgradeCosts,",")=="10,30,50,80,100,170","Lantern upgrade costs invalid")
+assert(game.ServerScriptService.RoundRules.Source:find("Intermission=60",1,true),"One-minute intermission missing")
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("JasonTheme"),"Automatic Jason theme must stay removed")
 local survivor=assert(game.ReplicatedStorage.Survival:FindFirstChild("SurvivorClips"),"Forsaken Survivor clips missing")
 assert(survivor:GetAttribute("SourceAssetId")==127092032896760,"Wrong Forsaken survivor animation asset")
@@ -165,7 +170,14 @@ assert(survivalServerSource:find("lastVictimUserId=lastKilledUserId",1,true),"Ex
 assert(survivalServerSource:find("recoverFromFall",1,true),"Arena fall recovery missing")
 assert(not survivalServerSource:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro is still sent by server")
 assert(survivalServerSource:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Flashlight still uses Tool pose inside character")
-assert(survivalServerSource:find("LanternFireCrackle",1,true) and survivalServerSource:find("112352139435056",1,true),"Lantern fire audio runtime missing")
+assert(survivalServerSource:find("LanternFireCrackle",1,true) and survivalServerSource:find("129037248569146",1,true),"Lantern fire audio runtime missing")
+assert(survivalServerSource:find("LanternSeconds",1,true) and survivalServerSource:find('action=="buyLanternUpgrade"',1,true) and survivalServerSource:find("resetLanternBattery",1,true),"Server-owned lantern durability runtime missing")
+assert(game.ServerScriptService.ProfileService.Source:find("lanternTier",1,true) and game.ServerScriptService.ProfileService.Source:find("buyLanternUpgrade",1,true),"Lantern durability persistence missing")
+assert(survivalServerSource:find("KillerPlayerName",1,true) and survivalServerSource:find("LoadingRoster",1,true),"Match loading roster/killer metadata missing")
+assert(survivalClientSource:find('{"Items",L("ITENS","ITEMS")}',1,true) and not survivalClientSource:find('{"Survivors",L("SOBREVIVENTES"',1,true),"Items tab did not replace Survivors")
+assert(survivalClientSource:find("LanternUpgrade",1,true) and survivalClientSource:find('event:FireServer("buyLanternUpgrade")',1,true),"Lantern item upgrade UI missing")
+assert(survivalClientSource:find('matchTV.Name="MatchLoadingTelevision"',1,true) and survivalClientSource:find("task.delay(5,function()",1,true) and survivalClientSource:find("loadingStarted+10",1,true),"Ten-second TV match loading reveal missing")
+assert(survivalClientSource:find("SuviversRoundExposure",1,true) and survivalClientSource:find("covered>=2",1,true) and survivalClientSource:find("Lighting.FogEnd=isKiller and 118 or 92",1,true),"Outdoor fog/indoor darkness runtime missing")
 assert(pursuerAnimationSource:find("pursuerStateName",1,true),"Per-killer locomotion clip resolver missing")
 assert(pursuerAnimationSource:find('speed/(injured and 14 or 18)',1,true),"Survivor run animation is not velocity-synchronized")
 assert(pursuerAnimationSource:find("SurvivorActionClips",1,true) and pursuerAnimationSource:find('"InjuredCrouchWalk"',1,true) and pursuerAnimationSource:find('"CrouchWalk"',1,true),"Dedicated crouch animation runtime missing")
@@ -262,5 +274,5 @@ for _,part in ipairs(passage:GetDescendants()) do
  end
 end
 
-return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,fixedViolenceDistrictLobby=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,animatedWinnerPose=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,mainMenuRemoved=true,killerShop=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
+return {ok=true,lanternDurability=true,itemsShop=true,matchLoadingTV=true,roundExposure=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,fixedViolenceDistrictLobby=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,animatedWinnerPose=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,mainMenuRemoved=true,killerShop=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
