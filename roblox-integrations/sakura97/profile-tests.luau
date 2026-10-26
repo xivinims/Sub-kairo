@@ -40,7 +40,13 @@ assert(not failed:save(r) and writes==before,"Failed load wrote default profile"
 assert(Profiles.level(0)==1 and Profiles.level(49)==1 and Profiles.level(50)==2 and Profiles.level(130)==3 and Profiles.level(1e9)==1000,"Level thresholds incorrect")
 failRead=false
 svc:points(p,1000)
-local beforePurchase=values.points+1000
+assert(svc:lanternTier(p)==0,"Lantern durability must start at tier zero")
+local lanternBefore=stats.Pontos.Value
+local lanternBought,lanternMsg=svc:buyLanternUpgrade(p,10,6)
+assert(lanternBought and svc:lanternTier(p)==1 and stats.Pontos.Value==lanternBefore-10,"Lantern durability upgrade did not deduct points/increment tier")
+assert(p:GetAttribute("LanternDurabilityTier")==1,"Lantern tier player attribute missing")
+assert(svc:save(p) and values.lanternTier==1,"Lantern durability tier did not persist")
+local beforePurchase=stats.Pontos.Value
 ambiguous=true
 assert(svc:buyKiller(p,"Jeff",400),"Purchase retry failed")
 assert(svc:ownsKiller(p,"Jeff") and values.points==beforePurchase-400,"Purchase charged twice or ownership missing")
@@ -50,6 +56,7 @@ assert(not svc:buyKiller(p,"Freddy",99999),"Insufficient funds accepted")
 assert(svc:save(p) and values.points==afterPurchase,"Autosave refunded purchase")
 local reloaded=Profiles.new(store,{wait=function() end}) local pp=player(994) reloaded:attach(pp) assert(reloaded:load(pp))
 assert(reloaded:ownsKiller(pp,"Jeff") and reloaded:ownsKiller(pp,"Jason"),"Owned killer did not persist")
+assert(reloaded:lanternTier(pp)==1 and pp:GetAttribute("LanternDurabilityTier")==1,"Lantern durability did not reload")
 host:Destroy()
-return {ok=true,killerOwnership=true,killerPurchaseIdempotent=true,pointsPersist=true,readFailureGuard=true,idempotentRetries=true,concurrentSessionXP=true,loadPreservesEarnings=true,levelCap=true,atomicPurchase=true,noDuplicateDebit=true}
+return {ok=true,lanternDurability=true,lanternPersistence=true,killerOwnership=true,killerPurchaseIdempotent=true,pointsPersist=true,readFailureGuard=true,idempotentRetries=true,concurrentSessionXP=true,loadPreservesEarnings=true,levelCap=true,atomicPurchase=true,noDuplicateDebit=true}
 
