@@ -12,6 +12,126 @@ local config=require(net.Config)
 local Lighting=game:GetService("Lighting")
 local Settings=require(net:WaitForChild("SettingsPanel"))
 Settings.initialize(player)
+
+-- Round-local exposure treatment. Outside gets distance fog; covered interiors get
+-- darkness instead of white fog bleeding through walls. This is client-side, so it
+-- never rewrites the authored map or the lobby's shared Lighting.
+local roundExposure=Lighting:FindFirstChild("SuviversRoundExposure")
+if not roundExposure then
+ roundExposure=Instance.new("ColorCorrectionEffect")
+ roundExposure.Name="SuviversRoundExposure"
+ roundExposure.Parent=Lighting
+end
+roundExposure.Enabled=false
+
+local roundAtmosphere=Lighting:FindFirstChild("SuviversRoundAtmosphere")
+if not roundAtmosphere then
+ roundAtmosphere=Instance.new("Atmosphere")
+ roundAtmosphere.Name="SuviversRoundAtmosphere"
+ roundAtmosphere.Parent=Lighting
+end
+roundAtmosphere.Density=0
+roundAtmosphere.Haze=0
+roundAtmosphere.Glare=0
+
+local baseFogStart=Lighting.FogStart
+local baseFogEnd=Lighting.FogEnd
+local baseFogColor=Lighting.FogColor
+local exposureIndoor=false
+local exposureOutdoor=false
+local exposureClock=0
+
+local function setExposureState(indoor,outdoor)
+ exposureIndoor=indoor
+ exposureOutdoor=outdoor
+ if not player:GetAttribute("InRound") or player:GetAttribute("Spectating") or player:GetAttribute("VoidActive") then
+  roundExposure.Enabled=false
+  roundAtmosphere.Density=0
+  roundAtmosphere.Haze=0
+  Lighting.FogStart=baseFogStart
+  Lighting.FogEnd=baseFogEnd
+  Lighting.FogColor=baseFogColor
+  return
+ end
+
+ roundExposure.Enabled=true
+ local isKiller=player:GetAttribute("IsJason")==true
+ local lanternOn=player:GetAttribute("FlashlightOn")==true and (tonumber(player:GetAttribute("LanternSeconds")) or 0)>0
+
+ if outdoor then
+  -- Open air: cold distance fog and a mild camera-grade desaturation.
+  Lighting.FogStart=18
+  Lighting.FogEnd=isKiller and 118 or 92
+  Lighting.FogColor=Color3.fromRGB(103,108,112)
+  roundAtmosphere.Color=Color3.fromRGB(154,160,166)
+  roundAtmosphere.Decay=Color3.fromRGB(58,61,66)
+  roundAtmosphere.Density=isKiller and .16 or .22
+  roundAtmosphere.Haze=isKiller and .7 or 1.05
+  roundExposure.Brightness=isKiller and -.05 or -.11
+  roundExposure.Contrast=isKiller and .10 or .16
+  roundExposure.Saturation=-.18
+  roundExposure.TintColor=Color3.fromRGB(218,224,231)
+ elseif indoor then
+  -- Covered rooms: no milky fog. Survivors need the lantern for comfortable vision.
+  Lighting.FogStart=0
+  Lighting.FogEnd=100000
+  roundAtmosphere.Density=0
+  roundAtmosphere.Haze=0
+  if isKiller then
+   roundExposure.Brightness=-.08
+   roundExposure.Contrast=.15
+   roundExposure.Saturation=-.13
+   roundExposure.TintColor=Color3.fromRGB(220,220,225)
+  elseif lanternOn then
+   roundExposure.Brightness=-.12
+   roundExposure.Contrast=.17
+   roundExposure.Saturation=-.10
+   roundExposure.TintColor=Color3.fromRGB(236,224,202)
+  else
+   roundExposure.Brightness=-.38
+   roundExposure.Contrast=.25
+   roundExposure.Saturation=-.22
+   roundExposure.TintColor=Color3.fromRGB(166,173,185)
+  end
+ end
+end
+
+local function updateRoundExposure(dt)
+ exposureClock+=dt
+ if exposureClock<.16 then return end
+ exposureClock=0
+ if not player:GetAttribute("InRound") or player:GetAttribute("Spectating") or player:GetAttribute("VoidActive") then
+  setExposureState(false,false)
+  return
+ end
+ local rootPart=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+ local arena=workspace:FindFirstChild("ActiveArena")
+ if not rootPart or not arena then
+  setExposureState(false,false)
+  return
+ end
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Include
+ params.FilterDescendantsInstances={arena}
+ params.RespectCanCollide=true
+ -- A solid surface overhead means the player is covered. Four offset probes stop a
+ -- doorway/window edge from rapidly flipping the effect while walking through it.
+ local covered=0
+ for _,offset in ipairs({
+  Vector3.zero,
+  Vector3.new(2.2,0,0),
+  Vector3.new(-2.2,0,0),
+  Vector3.new(0,0,2.2),
+  Vector3.new(0,0,-2.2),
+ }) do
+  local hit=workspace:Raycast(rootPart.Position+offset+Vector3.new(0,1.5,0),Vector3.new(0,120,0),params)
+  if hit then covered+=1 end
+ end
+ local indoor=covered>=2
+ setExposureState(indoor,not indoor)
+end
+RunService.RenderStepped:Connect(updateRoundExposure)
+
 local function english() return player:GetAttribute("GameLanguage")=="en" end
 local function L(pt,en) return english() and (en or pt) or pt end
 
