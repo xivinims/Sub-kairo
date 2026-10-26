@@ -41,7 +41,17 @@ local house=assert(lobby:FindFirstChild("House"))
 local npc=workspace:FindFirstChild("LobbyGuide")
 local spawn=lobby:GetAttribute("VerifiedSpawn")
 local lobbyCF,lobbySize=lobby:GetBoundingBox()
-local houseCF,houseSize=house:GetBoundingBox()
+local minv=Vector3.new(math.huge,math.huge,math.huge)
+local maxv=Vector3.new(-math.huge,-math.huge,-math.huge)
+for _,p in ipairs(house:GetDescendants()) do
+ if p:IsA("BasePart") then
+  local half=p.Size/2
+  minv=Vector3.new(math.min(minv.X,p.Position.X-half.X),math.min(minv.Y,p.Position.Y-half.Y),math.min(minv.Z,p.Position.Z-half.Z))
+  maxv=Vector3.new(math.max(maxv.X,p.Position.X+half.X),math.max(maxv.Y,p.Position.Y+half.Y),math.max(maxv.Z,p.Position.Z+half.Z))
+ end
+end
+local houseSize=maxv-minv
+local houseCF=CFrame.new((minv+maxv)/2)
 local out={
  version=game.PlaceVersion,
  spawn=tostring(spawn),
