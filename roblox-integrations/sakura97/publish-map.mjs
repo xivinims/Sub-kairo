@@ -604,7 +604,12 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old maps persisted")
   assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897 and not assets.Killers:FindFirstChild("Jeff") and not assets.Killers:FindFirstChild("Freddy"),"Five-pursuer roster did not persist")
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==126)
-  assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
+  assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==11906391298)
+  local persistedLantern=game.ServerStorage.SurvivalAssets.Items.Flashlight
+  assert(persistedLantern:GetAttribute("CrackleSoundAssetId")==112352139435056,"Lantern crackle metadata did not persist")
+  local persistedLanternHandle=assert(persistedLantern:FindFirstChild("Handle",true),"Persisted lantern handle missing")
+  local persistedCrackle=assert(persistedLanternHandle:FindFirstChild("LanternFireCrackle"),"Persisted lantern crackle missing")
+  assert(persistedCrackle.SoundId=="rbxassetid://112352139435056" and persistedCrackle.Looped,"Persisted lantern crackle is wrong")
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Intro"))
   assert(game.ReplicatedStorage.Survival.KillerMotionLibraries.Default:GetAttribute("ClipCount")==7)
@@ -642,11 +647,14 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.ServerScriptService.SurvivalServer.Source:find('FireClient(p,"jasonIntro"',1,true),"Removed killer intro returned")
   assert(game.ServerScriptService.SurvivalServer.Source:find('CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)',1,true),"R6 appearance-preserving conversion missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find('Instance.new("Model") visual.Name="EquippedFlashlight"',1,true),"Pose-safe flashlight visual missing")
+  assert(game.ServerScriptService.SurvivalServer.Source:find("LanternFireCrackle",1,true) and game.ServerScriptService.SurvivalServer.Source:find("112352139435056",1,true),"Lantern crackle runtime missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('run.InputBegan',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("mode","walk")',1,true),"Hold-run/release-walk control missing")
   local winnerTemplate=game.ReplicatedStorage:FindFirstChild("MenuSceneTemplate")
   assert(winnerTemplate and winnerTemplate:GetAttribute("SourceAssetId")==13327565335 and winnerTemplate:GetAttribute("WinnerSceneOnly")==true,"Old menu background template missing from winner scene")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("buildResultScene",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("WinnerPursuer",1,true),"Winner scene pursuer runtime missing")
   local survivalClientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
+  assert(survivalClientSource:find('local lantern=cleanAction(topActions,"Lantern"',1,true) and survivalClientSource:find('event:FireServer("flashlight")',1,true),"Lantern HUD control missing")
+  assert(survivalClientSource:find("11906391298",1,true) and survivalClientSource:find("112352139435056",1,true),"Lantern HUD metadata missing")
   assert(survivalClientSource:find('roundMusic.Name="SuviversMatchMusic"',1,true),"Match soundtrack missing")
   assert(survivalClientSource:find('roundMusic.SoundId="rbxassetid://108879410219148"',1,true),"Wrong match soundtrack asset")
   assert(survivalClientSource:find('roundMusic.Volume=.35',1,true),"Match soundtrack must stay below half volume")
@@ -759,7 +767,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerScriptService.SurvivalServer.Source:find('p~=selectionPlayer',1,true),"Private selection guard missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('net:GetAttribute("Phase")=="Votação"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('voteTimer.Text=tostring(seconds)',1,true),"Full six-second voting overlay missing")
   assert(game.ReplicatedStorage.Survival.CoinDisplay:GetAttribute("SourceAssetId")==10737243803,"Exact coin missing")
-  assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==7,"Missing victim pairs")
+  assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==5,"Missing victim pairs")
   for _,map in ipairs(assets.Maps:GetChildren()) do assert(#map.ObjectiveSites:GetChildren()>=9 and #map.ArrivalSpawns:GetChildren()>=7,"Map layout missing: "..map.Name) end
   assert(game.ServerScriptService.SurvivalServer.Source:find("profiles:ownsKiller",1,true) and game.ServerScriptService.SurvivalServer.Source:find("profiles:buyKiller",1,true),"Killer shop authority missing")
   return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,fiveVictimAnimations=true,noResetControl=true,coinAsset=10737243803,simplifiedSettings=true,compactProfile=true,privateKillerSelection=true,killerShop=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,winnerMenuScene=true,animatedWinner=true,atomicShopPurchase=true,noMainMenu=true,ok=true,version=game.PlaceVersion,build=158,logo=true,mapCount=7,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
