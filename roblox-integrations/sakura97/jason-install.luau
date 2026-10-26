@@ -150,19 +150,102 @@ if needsFixedLobby then
   lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(ground+Vector3.new(-12,0,0),ground))
  end
 end
--- Door trim must not turn its hollow opening into a solid physics hull.
+-- Imported lobby meshes are visual first. Door/stair movement gets simple, predictable
+-- collision so hollow meshes can never behave like invisible walls.
 local house=assert(lobby:FindFirstChild("House"),"Authored lobby house missing")
 local oldAccess=lobby:FindFirstChild("PassageColliders") if oldAccess then oldAccess:Destroy() end
 local access=Instance.new("Folder",lobby) access.Name="PassageColliders"
-local repairedFrames=0 local repairedMeshes=0 local removedBlockers=0
-local function support(name,size,cf)
+local repairedFrames=0 local repairedMeshes=0 local removedBlockers=0 local openedDoorParts=0 local stairSteps=0
+local repairParams=RaycastParams.new()
+repairParams.FilterType=Enum.RaycastFilterType.Include
+repairParams.FilterDescendantsInstances={lobby}
+repairParams.RespectCanCollide=true
+
+local function support(name,size,cf,kind)
  local p=Instance.new("Part") p.Name=name p.Size=size p.CFrame=cf p.Anchored=true
  p.Transparency=1 p.CanCollide=true p.CanTouch=false p.CanQuery=true p.CastShadow=false
- p:SetAttribute("PassageSupport",true) p.Parent=access return p
+ p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth
+ p:SetAttribute(kind or "PassageSupport",true) p.Parent=access return p
 end
+
+local function ancestryText(part)
+ local names={string.lower(part.Name)}
+ local parent=part.Parent
+ for _=1,5 do
+  if not parent or parent==house then break end
+  table.insert(names,string.lower(parent.Name))
+  parent=parent.Parent
+ end
+ return table.concat(names," ")
+end
+
+local function floorYAt(worldPoint,castTop,castDepth)
+ local hit=workspace:Raycast(Vector3.new(worldPoint.X,castTop,worldPoint.Z),Vector3.new(0,-castDepth,0),repairParams)
+ return hit and hit.Position.Y or nil
+end
+
+local function rebuildStairPath(part)
+ local name=string.lower(part.Name)
+ part.CanCollide=false part.CanTouch=false
+ part:SetAttribute("VisualOnlyStair",true)
+ repairedMeshes+=1
+ if string.find(name,"rail",1,true) then return end
+
+ local alongZ=part.Size.Z>=part.Size.X
+ local run=alongZ and part.Size.Z or part.Size.X
+ local width=alongZ and part.Size.X or part.Size.Z
+ if run<2 or width<1 then return end
+
+ local _,yaw,_=part.CFrame:ToOrientation()
+ local flat=CFrame.new(part.Position)*CFrame.Angles(0,yaw,0)
+ local outside=run/2+1.25
+ local aOffset=alongZ and Vector3.new(0,0,-outside) or Vector3.new(-outside,0,0)
+ local bOffset=alongZ and Vector3.new(0,0,outside) or Vector3.new(outside,0,0)
+ local aWorld=flat:PointToWorldSpace(aOffset)
+ local bWorld=flat:PointToWorldSpace(bOffset)
+ local castTop=part.Position.Y+part.Size.Y+12
+ local castDepth=part.Size.Y+36
+ local y0=floorYAt(aWorld,castTop,castDepth)
+ local y1=floorYAt(bWorld,castTop,castDepth)
+
+ if not y0 or not y1 or math.abs(y1-y0)<.6 then
+  local inside=math.max(.25,run/2-.4)
+  aOffset=alongZ and Vector3.new(0,0,-inside) or Vector3.new(-inside,0,0)
+  bOffset=alongZ and Vector3.new(0,0,inside) or Vector3.new(inside,0,0)
+  aWorld=flat:PointToWorldSpace(aOffset) bWorld=flat:PointToWorldSpace(bOffset)
+  y0=y0 or floorYAt(aWorld,castTop,castDepth)
+  y1=y1 or floorYAt(bWorld,castTop,castDepth)
+ end
+
+ -- Last-resort orientation only applies when the imported mesh hides both landings.
+ -- The small step height still prevents a box-shaped stair hull from blocking players.
+ if not y0 or not y1 or math.abs(y1-y0)<.6 then
+  local rise=math.max(1.5,part.Size.Y*.78)
+  y0=part.Position.Y-rise/2
+  y1=part.Position.Y+rise/2
+ end
+
+ local segments=math.clamp(math.ceil(run/1.15),8,42)
+ local stepLength=run/segments+.12
+ local walkWidth=math.max(1.8,width*.82)
+ for i=1,segments do
+  local t=(i-.5)/segments
+  local along=-run/2+run*t
+  local localOffset=alongZ and Vector3.new(0,0,along) or Vector3.new(along,0,0)
+  local world=flat:PointToWorldSpace(localOffset)
+  local top=y0+(y1-y0)*t
+  local size=alongZ and Vector3.new(walkWidth,1,stepLength) or Vector3.new(stepLength,1,walkWidth)
+  local step=support("StairPath_"..part.Name.."_"..i,size,CFrame.new(world.X,top-.5,world.Z)*CFrame.Angles(0,yaw,0),"WalkableStairStep")
+  step:SetAttribute("SourceStair",part:GetFullName())
+  stairSteps+=1
+ end
+ part:SetAttribute("WalkableReplacement",true)
+end
+
 for _,part in ipairs(house:GetDescendants()) do
  if part:IsA("BasePart") then
-  local name=part.Name:lower()
+  local name=string.lower(part.Name)
+  local text=ancestryText(part)
   if part.Transparency>=.98 and not part:IsA("SpawnLocation") then
    part.CanCollide=false part.CanTouch=false part.CanQuery=false
    part:SetAttribute("InteriorBlockerDisabled",true) removedBlockers+=1
@@ -171,26 +254,27 @@ for _,part in ipairs(house:GetDescendants()) do
    local width=part.Size.X local height=part.Size.Y local depth=part.Size.Z
    local opening=name=="front_door_frame" and math.min(8.1,width-1) or width-.9
    local clearHeight=math.min(7.65,height-.35)
-   local post=(width-opening)/2
+   local post=math.max(.15,(width-opening)/2)
    support("DoorLeft",Vector3.new(post,height,depth),part.CFrame*CFrame.new(-(opening+post)/2,0,0))
    support("DoorRight",Vector3.new(post,height,depth),part.CFrame*CFrame.new((opening+post)/2,0,0))
-   support("DoorLintel",Vector3.new(opening,height-clearHeight,depth),part.CFrame*CFrame.new(0,clearHeight/2,0))
+   support("DoorLintel",Vector3.new(opening,math.max(.15,height-clearHeight),depth),part.CFrame*CFrame.new(0,clearHeight/2,0))
    part:SetAttribute("PassageWidth",opening) part:SetAttribute("PassageHeight",clearHeight)
-   repairedFrames+=1
-  elseif part:IsA("MeshPart") and (name:find("stairs",1,true) or name:find("side_stair",1,true) or name=="rail_stair") then
-   if part:GetAttribute("PrecisePassageCollision")~=true then
-    local size,cf,texture=part.Size,part.CFrame,part.TextureID
-    local rebuilt=AS:CreateMeshPartAsync(part.MeshContent,{CollisionFidelity=Enum.CollisionFidelity.PreciseConvexDecomposition})
-    part:ApplyMesh(rebuilt) part.Size=size part.CFrame=cf part.TextureID=texture rebuilt:Destroy()
-    part:SetAttribute("PrecisePassageCollision",true)
-   end
-   repairedMeshes+=1
+   repairedFrames+=1 openedDoorParts+=1
+  elseif string.find(text,"door",1,true) and not string.find(text,"floor",1,true) then
+   -- Door leaves, arches and decorative collision from the imported house must not
+   -- close a doorway that is visibly open.
+   part.CanCollide=false part.CanTouch=false
+   part:SetAttribute("OpenPassage",true) openedDoorParts+=1
+  elseif part:IsA("MeshPart") and (string.find(name,"stairs",1,true) or string.find(name,"side_stair",1,true) or name=="rail_stair") then
+   rebuildStairPath(part)
   end
  end
 end
-lobby:SetAttribute("PassageRepairRevision",1)
+lobby:SetAttribute("PassageRepairRevision",2)
 lobby:SetAttribute("RepairedDoorFrames",repairedFrames)
+lobby:SetAttribute("OpenedDoorParts",openedDoorParts)
 lobby:SetAttribute("RepairedStairMeshes",repairedMeshes)
+lobby:SetAttribute("WalkableStairSteps",stairSteps)
 lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
 
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
