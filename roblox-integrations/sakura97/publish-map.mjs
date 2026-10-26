@@ -683,9 +683,13 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(frozen and frozen:IsA("HumanoidDescription") and frozen:GetAttribute("Frozen")==true and frozen:GetAttribute("SourceUserId")==8344738123,"Persistent frozen Fill appearance missing")
   assert(workspace.LobbyGuide.Tabletop.Value and workspace.LobbyGuide.Tabletop.Value:IsDescendantOf(workspace.JediLibrary),"Fill is not attached to the lobby reception surface")
   assert(not workspace.JediLibrary:FindFirstChild("GuideTable"),"Legacy generated GuideTable returned")
-  assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=2,"Fill real reception geometry metadata missing")
+  assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=1,"Fill guide-station geometry metadata missing")
+  assert(workspace.LobbyGuide:GetAttribute("ReceptionAccessMode")=="SpawnRoomDirect" and workspace.LobbyGuide:GetAttribute("GuideStation")=="FillGuideStool","Fill direct spawn-room access metadata missing")
+  local guideStation=workspace.JediLibrary:FindFirstChild("FillGuideStool")
+  assert(guideStation and guideStation:GetAttribute("SpawnRoomGuideStation")==true and guideStation:GetAttribute("NonBlocking")==true,"Fill compact guide station missing")
+  for _,part in ipairs(guideStation:GetDescendants()) do if part:IsA("BasePart") then assert(not part.CanCollide,"Fill guide station must never block lobby movement") end end
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
-  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the real reception desk")
+  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on the compact spawn-room guide station")
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
   assert(fillSource:find("portugueseGreeting",1,true) and fillSource:find("englishGreeting",1,true),"Bilingual guide missing")
   assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill English uploaded-audio dialogue missing")
