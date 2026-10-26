@@ -287,7 +287,7 @@ local missionText=text(mission,"Text","",UDim2.new(1,-20,0,22),UDim2.fromOffset(
 local inventory=panel("ObjectiveInventory",UDim2.fromOffset(82,82),UDim2.new(0,18,1,-148)) inventory.BackgroundTransparency=.28 inventory.UIStroke.Transparency=.7
 inventory:SetAttribute("SourceAssetId",net:GetAttribute("InventoryAssetId") or 73852738603629)
 local inventoryIcon=text(inventory,"Icon","🔑",UDim2.fromScale(1,.62),UDim2.new()) inventoryIcon.TextSize=29
-local inventoryLabel=text(inventory,"Label","VAZIO",UDim2.fromScale(1,.32),UDim2.new(0,0,.64,0)) inventoryLabel.TextSize=9 inventoryLabel.Font=Enum.Font.GothamBold
+local inventoryLabel=text(inventory,"Label",L("VAZIO","EMPTY"),UDim2.fromScale(1,.32),UDim2.new(0,0,.64,0)) inventoryLabel.TextSize=9 inventoryLabel.Font=Enum.Font.GothamBold
 local escapeBanner=panel("EscapeBanner",UDim2.fromOffset(360,30),UDim2.new(.5,-180,0,12)) escapeBanner.BackgroundTransparency=.28 escapeBanner.Visible=false escapeBanner.UIStroke.Transparency=.8 escapeBanner.ZIndex=95
 local escapeText=text(escapeBanner,"Text","",UDim2.fromScale(1,1),UDim2.new()) escapeText.TextSize=11 escapeText.Font=Enum.Font.GothamBold escapeText.ZIndex=96
 local missionBanner=panel("MissionBanner",UDim2.fromOffset(420,34),UDim2.new(.5,-210,0,104)) missionBanner.BackgroundTransparency=.18 missionBanner.Visible=false missionBanner.ZIndex=96
@@ -297,25 +297,12 @@ local hitGradient=Instance.new("UIGradient",hitFlash) hitGradient.Rotation=90 hi
 local exitHighlight=Instance.new("Highlight") exitHighlight.Name="ObjectiveExitHighlight" exitHighlight.FillColor=Color3.fromRGB(242,211,79) exitHighlight.OutlineColor=Color3.fromRGB(255,243,170) exitHighlight.FillTransparency=.72 exitHighlight.OutlineTransparency=.08 exitHighlight.Enabled=false exitHighlight.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop exitHighlight.Parent=gui
 local function missionCopy(stage)
  local done=net:GetAttribute("ComputersDone") or 0 local required=net:GetAttribute("ComputersRequired") or 3
- if stage=="Hack" then return "HACKEIE OS COMPUTADORES  "..done.."/"..required end
- if stage=="Key" then return player:GetAttribute("HasKey") and "ABRA A SAÍDA COM SUA CHAVE" or "ENCONTRE UMA CHAVE ESCONDIDA" end
- if stage=="Exit" then return "ABRA A SAÍDA COM SUA CHAVE" end
+ if stage=="Hack" then return L("HACKEIE OS COMPUTADORES  ","HACK THE COMPUTERS  ")..done.."/"..required end
+ if stage=="Key" then return player:GetAttribute("HasKey") and L("ABRA A SAÍDA COM SUA CHAVE","OPEN THE EXIT WITH YOUR KEY") or L("ENCONTRE UMA CHAVE ESCONDIDA","FIND A HIDDEN KEY") end
+ if stage=="Exit" then return L("ABRA A SAÍDA COM SUA CHAVE","OPEN THE EXIT WITH YOUR KEY") end
  return ""
 end
 local missionPulse=0
-local function refreshLanguage()
- countdownText.Text=L("Aguardando jogadores","Waiting for players")
- shopTitle.Text=L("PERSEGUIDORES","KILLERS")
- shopSubtitle.Text=L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH")
- shopClose.Text=L("SAÍDA","EXIT")
- shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
- missionTitle.Text=L("MISSÃO","MISSION")
- missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
- resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER")
- voteTitle.Text=L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP")
- if killerTitle then killerTitle.Text=L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE") end
- refreshShop()
-end
 local function announceMission(stage)
  missionText.Text=missionCopy(stage)
  missionBannerText.Text=L("NOVA MISSÃO:  ","NEW MISSION:  ")..missionText.Text
@@ -420,12 +407,6 @@ end)
 local spotted={} local detectionElapsed=0
 local chase=Instance.new("Sound") chase.Name="LocalChasePulse" chase.SoundId="rbxassetid://135029802046345" chase.Volume=0 chase.Parent=game:GetService("SoundService")
 local nextPulse=0
-player:GetAttributeChangedSignal("GameLanguage"):Connect(function()
- refreshLanguage()
- updateMission()
-end)
-refreshLanguage()
-
 RunService.RenderStepped:Connect(function(dt)
  detectionElapsed+=dt if detectionElapsed<.12 then return end detectionElapsed=0
  local me=player.Character local myRoot=me and me:FindFirstChild("HumanoidRootPart")
@@ -639,11 +620,11 @@ local function showResult(data)
  local generation=resultGeneration
  for _,old in ipairs(resultRows:GetChildren()) do if old:IsA("Frame") then old:Destroy() end end
  resultRows.CanvasPosition=Vector2.zero
- local winnerName=data.killerWinnerName or data.killer or "Perseguidor"
- resultHeader.Text=string.upper(data.jasonWon and (winnerName.." • GANHADOR") or "SOBREVIVENTES • GANHADORES")
+ local winnerName=data.killerWinnerName or data.killer or L("Perseguidor","Killer")
+ resultHeader.Text=string.upper(data.jasonWon and (winnerName..L(" • GANHADOR"," • WINNER")) or L("SOBREVIVENTES • GANHADORES","SURVIVORS • WINNERS"))
  resultHeader.TextColor3=data.jasonWon and Color3.fromRGB(225,104,109) or Color3.fromRGB(235,235,239)
  resultSubtitle.Text=(data.map or "").."  •  +"..tostring(data.xp or 0).." XP"
- resultWinner.Text=data.jasonWon and ("GANHADOR  •  "..winnerName.."  •  "..string.upper(data.killer or "PERSEGUIDOR")) or (data.winnerText or "SOBREVIVENTES ESCAPARAM")
+ resultWinner.Text=data.jasonWon and (L("GANHADOR  •  ","WINNER  •  ")..winnerName.."  •  "..string.upper(data.killer or L("PERSEGUIDOR","KILLER"))) or (data.winnerText or L("SOBREVIVENTES ESCAPARAM","SURVIVORS ESCAPED"))
  resultView.Visible=false
  resultShade.BackgroundTransparency=data.jasonWon and .58 or .46
 
@@ -990,7 +971,7 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="objectiveDone" then
   announceMission(net:GetAttribute("MissionStage") or "Hack")
  elseif action=="escape" then
-  escapeText.Text=tostring(a).." ESCAPOU"
+  escapeText.Text=tostring(a)..L(" ESCAPOU"," ESCAPED")
   escapeBanner.Visible=true
   task.delay(2.4,function() escapeBanner.Visible=false end)
  elseif action=="achievement" then
@@ -1050,7 +1031,7 @@ end)
 local votePanel=panel("MapVoting",UDim2.new(.92,0,.46,0),UDim2.new(.04,0,.27,0))
 votePanel.BackgroundColor3=Color3.fromRGB(7,7,10) votePanel.BackgroundTransparency=.08 votePanel.Visible=false votePanel.ZIndex=60
 local voteTitle=text(votePanel,"Title",L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP"),UDim2.new(1,-24,0,40),UDim2.fromOffset(12,8)) voteTitle.Font=Enum.Font.GothamBlack voteTitle.TextSize=20 voteTitle.TextXAlignment=Enum.TextXAlignment.Left voteTitle.ZIndex=62
-local voteHint=text(votePanel,"Hint","4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
+local voteHint=text(votePanel,"Hint",L("4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS","4 IN VOTE  •  RANDOM  •  7 MAPS TOTAL"),UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42)) voteHint.TextSize=10 voteHint.TextColor3=Color3.fromRGB(150,150,160) voteHint.TextXAlignment=Enum.TextXAlignment.Left voteHint.ZIndex=62
 local voteTimer=text(votePanel,"Timer","6",UDim2.fromOffset(54,48),UDim2.new(1,-68,0,8)) voteTimer.Font=Enum.Font.GothamBlack voteTimer.TextSize=28 voteTimer.ZIndex=63
 local mapNames={
  DoomspireBrickbattle="DOOMSPIRE",
@@ -1096,7 +1077,7 @@ local function refreshVoteCards()
   if value then
    local spec=mapByName[value]
    b.Caption.Text=mapNames[value] or value
-   b.Votes.Text=tostring(counts[value] or 0).." VOTOS"
+   b.Votes.Text=tostring(counts[value] or 0)..L(" VOTOS"," VOTES")
    b.RandomMark.Visible=value=="RANDOM"
    b.Preview.Visible=value~="RANDOM"
    b.Preview.Image=spec and ("rbxthumb://type=Asset&id="..spec.id.."&w=420&h=420") or ""
@@ -1115,20 +1096,40 @@ local killerChoiceButtons={}
 for i,name in ipairs(names) do
  local killerName=name
  local b=button(killerPanel,killerName,killerName,UDim2.new(.3,0,.28,0),UDim2.new(.025+((i-1)%3)*.325,0,.25+math.floor((i-1)/3)*.34,0),function()
-  if ownedKillers()[killerName] then event:FireServer("chooseKiller",killerName) else notice.Text="Compre "..killerName.." na LOJA primeiro." noticeUntil=os.clock()+4 end
+  if ownedKillers()[killerName] then event:FireServer("chooseKiller",killerName) else notice.Text=L("Compre ","Buy ")..killerName..L(" na LOJA primeiro."," in the SHOP first.") noticeUntil=os.clock()+4 end
  end)
  killerChoiceButtons[killerName]=b
 end
 local function refreshKillerChoices()
  local owned=ownedKillers()
  for name,b in pairs(killerChoiceButtons) do
-  b.Text=owned[name] and name or (name.."\nBLOQUEADO")
+  b.Text=owned[name] and name or (name.."\n"..L("BLOQUEADO","LOCKED"))
   b.TextTransparency=owned[name] and 0 or .38
   b.BackgroundTransparency=owned[name] and .18 or .58
  end
 end
 player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshKillerChoices)
 refreshKillerChoices()
+
+local function refreshLanguage()
+ countdownText.Text=L("Aguardando jogadores","Waiting for players")
+ shopTitle.Text=L("PERSEGUIDORES","KILLERS")
+ shopSubtitle.Text=L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH")
+ shopClose.Text=L("SAÍDA","EXIT")
+ shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
+ missionTitle.Text=L("MISSÃO","MISSION")
+ missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
+ resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER")
+ voteTitle.Text=L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP")
+ voteHint.Text=L("4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS","4 IN VOTE  •  RANDOM  •  7 MAPS TOTAL")
+ killerTitle.Text=L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE")
+ missionText.Text=missionCopy(net:GetAttribute("MissionStage") or "Waiting")
+ refreshShop()
+ refreshKillerChoices()
+ refreshVoteCards()
+end
+player:GetAttributeChangedSignal("GameLanguage"):Connect(refreshLanguage)
+refreshLanguage()
 local voteElapsed=0
 RunService.RenderStepped:Connect(function(dt)
  voteElapsed+=dt if voteElapsed<.15 then return end voteElapsed=0
@@ -1210,7 +1211,7 @@ RunService.RenderStepped:Connect(function(dt)
  missionText.Text=missionCopy(stage)
  inventory.Visible=not hidden and inRound and not isJason
  inventoryIcon.Text=player:GetAttribute("HasKey") and "🔑" or "—"
- inventoryLabel.Text=player:GetAttribute("HasKey") and "CHAVE  1/1" or "VAZIO  0/1"
+ inventoryLabel.Text=player:GetAttribute("HasKey") and L("CHAVE  1/1","KEY  1/1") or L("VAZIO  0/1","EMPTY  0/1")
  exitHighlight.Enabled=false
  if player:GetAttribute("HasKey") and phase=="Partida" then
   local activeArena=workspace:FindFirstChild("ActiveArena")
