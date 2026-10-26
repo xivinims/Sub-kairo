@@ -125,73 +125,44 @@ assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 -- Prefer names from the source asset itself ("Counter top", "Counter", "Desk",
 -- "Reception") and never create replacement furniture.
 local receptionPieces={}
-local receptionTop=nil
 local receptionVisitor=origin+Vector3.new(0,3,0)
 local receptionPathSteps=1
 
--- The imported house navmesh is unreliable around hollow mesh doors, so Fill's
--- reception is intentionally kept in the spawn room. A real player is already within
--- interaction range on spawn; doors and stairs are validated separately by collision.
+-- Keep Fill inside the guaranteed-clear spawn room. The guide station is intentionally
+-- compact and non-collidable so it can never recreate the invisible-wall problem.
 local previousCounter=lobby:FindFirstChild("FillReceptionCounter")
 if previousCounter then previousCounter:Destroy() end
+local previousStool=lobby:FindFirstChild("FillGuideStool")
+if previousStool then previousStool:Destroy() end
 
 local reference=lobby:GetAttribute("FormerDoorCFrame")
-local preferred=typeof(reference)=="CFrame" and Vector3.new(reference.LookVector.X,0,reference.LookVector.Z) or Vector3.new(1,0,0)
-if preferred.Magnitude<.1 then preferred=Vector3.new(1,0,0) else preferred=preferred.Unit end
-local right=Vector3.new(-preferred.Z,0,preferred.X)
-local directions={preferred,right,-right,-preferred}
-for i=0,11 do
- local a=i*math.pi/6
- table.insert(directions,Vector3.new(math.cos(a),0,math.sin(a)))
-end
-
+local inward=typeof(reference)=="CFrame" and Vector3.new(reference.LookVector.X,0,reference.LookVector.Z) or Vector3.new(1,0,0)
+if inward.Magnitude<.1 then inward=Vector3.new(1,0,0) else inward=inward.Unit end
+local stationXZ=origin+inward*3.2
 local floorParams=RaycastParams.new()
 floorParams.FilterType=Enum.RaycastFilterType.Include
 floorParams.FilterDescendantsInstances={lobby}
 floorParams.RespectCanCollide=true
-local overlap=OverlapParams.new()
-overlap.FilterType=Enum.RaycastFilterType.Include
-overlap.FilterDescendantsInstances={lobby}
+local floorHit=workspace:Raycast(stationXZ+Vector3.new(0,7,0),Vector3.new(0,-15,0),floorParams)
+local floorY=(floorHit and floorHit.Normal.Y>.78 and math.abs(floorHit.Position.Y-origin.Y)<3) and floorHit.Position.Y or origin.Y
 
-for _,dir in ipairs(directions) do
- local probe=origin+dir*7.4
- local hit=workspace:Raycast(probe+Vector3.new(0,8,0),Vector3.new(0,-18,0),floorParams)
- if hit and hit.Normal.Y>.84 and math.abs(hit.Position.Y-origin.Y)<1.6 then
-  local center=Vector3.new(hit.Position.X,hit.Position.Y+2.95,hit.Position.Z)
-  local cf=CFrame.lookAt(center,Vector3.new(origin.X,center.Y,origin.Z))
-  local occupied=false
-  for _,part in ipairs(workspace:GetPartBoundsInBox(cf,Vector3.new(6.9,5.1,3.1),overlap)) do
-   if part.CanCollide and part~=hit and not part:GetAttribute("WalkableStairStep") and not part:GetAttribute("PassageSupport") then
-    occupied=true break
-   end
-  end
-  local sightStart=origin+Vector3.new(0,2.7,0)
-  local toward=center-sightStart
-  local sight=toward.Magnitude>1 and workspace:Raycast(sightStart,toward.Unit*math.max(0,toward.Magnitude-2.2),floorParams) or nil
-  if not occupied and not sight then
-   local counter=Instance.new("Model") counter.Name="FillReceptionCounter" counter.Parent=lobby
-   local top=Instance.new("Part") top.Name="CounterTop" top.Size=Vector3.new(6.6,.55,2.65) top.CFrame=cf
-   top.Anchored=true top.CanCollide=true top.CanTouch=false top.Material=Enum.Material.WoodPlanks
-   top.Color=Color3.fromRGB(72,58,48) top.Parent=counter
-   local front=Instance.new("Part") front.Name="CounterFront" front.Size=Vector3.new(6.25,2.55,.38)
-   front.CFrame=cf*CFrame.new(0,-1.48,.82) front.Anchored=true front.CanCollide=true front.CanTouch=false
-   front.Material=Enum.Material.WoodPlanks front.Color=Color3.fromRGB(55,45,39) front.Parent=counter
-   for _,x in ipairs({-2.55,2.55}) do
-    local leg=Instance.new("Part") leg.Name="CounterLeg" leg.Size=Vector3.new(.38,2.55,.38)
-    leg.CFrame=cf*CFrame.new(x,-1.5,-.5) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false
-    leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=counter
-   end
-   counter:SetAttribute("GeneratedAccessibleReception",true)
-   counter:SetAttribute("SpawnRoomReception",true)
-   counter:SetAttribute("Source","VerifiedSpawnRoom")
-   receptionTop=top
-   receptionPieces={top,front}
-   break
-  end
- end
+local station=Instance.new("Model") station.Name="FillGuideStool" station.Parent=lobby
+local seatCF=CFrame.lookAt(Vector3.new(stationXZ.X,floorY+1.7,stationXZ.Z),Vector3.new(origin.X,floorY+1.7,origin.Z))
+local receptionTop=Instance.new("Part") receptionTop.Name="Seat" receptionTop.Size=Vector3.new(2.35,.28,2.35)
+receptionTop.CFrame=seatCF receptionTop.Anchored=true receptionTop.CanCollide=false receptionTop.CanTouch=false receptionTop.CanQuery=false
+receptionTop.Material=Enum.Material.WoodPlanks receptionTop.Color=Color3.fromRGB(72,58,48) receptionTop.Parent=station
+for _,offset in ipairs({
+ Vector3.new(-.82,-.95,-.82),Vector3.new(.82,-.95,-.82),
+ Vector3.new(-.82,-.95,.82),Vector3.new(.82,-.95,.82)
+}) do
+ local leg=Instance.new("Part") leg.Name="Leg" leg.Size=Vector3.new(.18,1.75,.18)
+ leg.CFrame=seatCF*CFrame.new(offset) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false leg.CanQuery=false
+ leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=station
 end
+station:SetAttribute("SpawnRoomGuideStation",true)
+station:SetAttribute("NonBlocking",true)
+receptionPieces={receptionTop}
 
-assert(receptionTop,"No clear reception placement found beside the verified lobby spawn")
 
 
 
@@ -235,7 +206,7 @@ npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
 npc:SetAttribute("SeatedOnReception",true)
 npc:SetAttribute("ReceptionAccessValidated",true)
-npc:SetAttribute("ReceptionAccessMode","SpawnRoomDirect")
+npc:SetAttribute("ReceptionAccessMode","SpawnRoomDirect")\nnpc:SetAttribute("GuideStation","FillGuideStool")
 npc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)
 npc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
 local tableReference=Instance.new("ObjectValue")
