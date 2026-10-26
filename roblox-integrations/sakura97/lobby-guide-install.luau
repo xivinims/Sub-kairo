@@ -101,7 +101,7 @@ dialogUI.ResetOnSpawn=false dialogUI.IgnoreGuiInset=true dialogUI.Parent=resourc
 local example=assert(dialoguePackage:FindFirstChild("showcase npc",true))
 local bubble=assert(example.Head:FindFirstChild("gui")):Clone() bubble.Parent=head
 bubble.name.Text="Fill"
-local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=12 prompt.RequiresLineOfSight=false prompt.Parent=npc
+local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=14 prompt.RequiresLineOfSight=false prompt.Parent=npc
 game:GetService("CollectionService"):AddTag(prompt,"NPCprompt")
 
 local pending=SS:FindFirstChild("PendingLobbyGuide") if pending then pending:Destroy() end
@@ -126,7 +126,16 @@ assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 -- "Reception") and never create replacement furniture.
 local receptionPieces={}
 local receptionTop=nil
-local bestScore=-math.huge
+local receptionVisitor=nil
+local receptionPathSteps=0
+local candidates={}
+local seenCandidates={}
+local PF=game:GetService("PathfindingService")
+local accessParams=RaycastParams.new()
+accessParams.FilterType=Enum.RaycastFilterType.Include
+accessParams.FilterDescendantsInstances={lobby}
+accessParams.RespectCanCollide=true
+local spawnPathPoint=origin+Vector3.new(0,3,0)
 
 local function ancestryText(part)
  local names={string.lower(part.Name)}
@@ -139,53 +148,116 @@ local function ancestryText(part)
  return table.concat(names," ")
 end
 
+local function decorative(text)
+ for _,word in ipairs({"dinnerware","hutch","shelf","shelves","cabinet","bookcase","books","decor","decoration","plate","bowl","cup","vase","picture","frame"}) do
+  if string.find(text,word,1,true) then return true end
+ end
+ return false
+end
+
+local function addCandidate(part,score,text)
+ if seenCandidates[part] or decorative(text) then return end
+ seenCandidates[part]=true
+ table.insert(candidates,{part=part,score=score,text=text})
+end
+
+-- Find a spot where a real R6 player can stand beside the furniture AND walk there
+-- from the fixed spawn. This prevents decorative shelves/dinnerware from becoming Fill's desk.
+local function findVisitorPoint(part)
+ local margin=2.35
+ local sx,sz=part.Size.X/2+margin,part.Size.Z/2+margin
+ local offsets={
+  Vector3.new(sx,0,0),Vector3.new(-sx,0,0),Vector3.new(0,0,sz),Vector3.new(0,0,-sz),
+  Vector3.new(sx*.82,0,sz*.82),Vector3.new(-sx*.82,0,sz*.82),
+  Vector3.new(sx*.82,0,-sz*.82),Vector3.new(-sx*.82,0,-sz*.82)
+ }
+ local castTop=math.max(origin.Y+12,part.Position.Y+part.Size.Y/2+9)
+ for _,offset in ipairs(offsets) do
+  local world=part.CFrame:PointToWorldSpace(offset)
+  local hit=workspace:Raycast(Vector3.new(world.X,castTop,world.Z),Vector3.new(0,-34,0),accessParams)
+  if hit and hit.Instance~=part and hit.Normal.Y>.82 and math.abs(hit.Position.Y-origin.Y)<=9 then
+   local headBlocked=workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,5.4,0),accessParams)
+   if not headBlocked then
+    local target=hit.Position+Vector3.new(0,3,0)
+    local path=PF:CreatePath({AgentRadius=1.4,AgentHeight=5,AgentCanJump=false,AgentCanClimb=true,WaypointSpacing=3})
+    local computed=pcall(function() path:ComputeAsync(spawnPathPoint,target) end)
+    if computed and path.Status==Enum.PathStatus.Success then
+     local waypoints=path:GetWaypoints()
+     if #waypoints>=2 then
+      local steps=#waypoints path:Destroy()
+      return target,steps
+     end
+    end
+    path:Destroy()
+   end
+  end
+ end
+ return nil,0
+end
+
+-- First collect semantically plausible furniture. Accessibility is validated afterwards
+-- so one unreachable high-scoring prop cannot win.
 for _,part in ipairs(lobby:GetDescendants()) do
- if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.84 then
+ if part:IsA("BasePart") and part.Transparency<.98 and part.CanCollide and math.abs(part.CFrame.UpVector.Y)>.84 then
   local area=part.Size.X*part.Size.Z
   local topY=part.Position.Y+part.Size.Y/2
   local relativeHeight=topY-origin.Y
   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-  if area>=4 and part.Size.Y<=5 and relativeHeight>=1.4 and relativeHeight<=5.6 and flatDistance<=220 then
+  if area>=4 and part.Size.Y<=5 and relativeHeight>=1.4 and relativeHeight<=5.6 and flatDistance<=160 then
    local text=ancestryText(part)
    local score=0
-   if string.find(text,"reception",1,true) then score+=260 end
-   if string.find(text,"counter top",1,true) or string.find(text,"countertop",1,true) then score+=220 end
-   if string.find(text,"counter",1,true) then score+=170 end
-   if string.find(text,"front desk",1,true) or string.find(text,"frontdesk",1,true) then score+=200 end
-   if string.find(text,"desk",1,true) then score+=120 end
-   if string.find(text,"table",1,true) then score+=55 end
+   if string.find(text,"reception",1,true) then score+=320 end
+   if string.find(text,"counter top",1,true) or string.find(text,"countertop",1,true) then score+=260 end
+   if string.find(text,"counter",1,true) then score+=210 end
+   if string.find(text,"front desk",1,true) or string.find(text,"frontdesk",1,true) then score+=240 end
+   if string.find(text,"desk",1,true) then score+=150 end
+   if string.find(text,"table",1,true) then score+=80 end
    if score>0 then
-    score+=math.min(area,80)*.25
-    score-=flatDistance*.13
-    table.insert(receptionPieces,part)
-    if score>bestScore then bestScore=score receptionTop=part end
+    score+=math.min(area,80)*.25-flatDistance*.16
+    addCandidate(part,score,text)
    end
   end
  end
 end
 
--- Fallback for imported meshes with generic names. It still uses an existing authored
--- horizontal surface and never generates a fake desk.
-if not receptionTop then
- for _,part in ipairs(lobby:GetDescendants()) do
-  if part:IsA("BasePart") and part.Transparency<.98 and math.abs(part.CFrame.UpVector.Y)>.92 then
-   local area=part.Size.X*part.Size.Z
-   local topY=part.Position.Y+part.Size.Y/2
-   local relativeHeight=topY-origin.Y
-   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-   if area>=8 and area<=180 and part.Size.Y<=3.5 and relativeHeight>=1.8 and relativeHeight<=4.8 and flatDistance>=6 and flatDistance<=120 then
-    local score=80-math.abs(relativeHeight-3)*10-flatDistance*.18+math.min(area,60)*.1
-    table.insert(receptionPieces,part)
-    if score>bestScore then bestScore=score receptionTop=part end
+-- Generic imported names are allowed only as a fallback candidate class. Small props,
+-- shelves and decorative hutch pieces are deliberately excluded.
+for _,part in ipairs(lobby:GetDescendants()) do
+ if part:IsA("BasePart") and part.Transparency<.98 and part.CanCollide and math.abs(part.CFrame.UpVector.Y)>.94 then
+  local area=part.Size.X*part.Size.Z
+  local topY=part.Position.Y+part.Size.Y/2
+  local relativeHeight=topY-origin.Y
+  local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
+  local text=ancestryText(part)
+  if area>=12 and area<=180 and math.min(part.Size.X,part.Size.Z)>=2.2 and part.Size.Y<=3.5
+   and relativeHeight>=1.8 and relativeHeight<=4.8 and flatDistance>=5 and flatDistance<=90
+   and not string.find(text,"door",1,true) and not string.find(text,"stair",1,true)
+   and not string.find(text,"rail",1,true) and not decorative(text) then
+    local score=55-math.abs(relativeHeight-3)*10-flatDistance*.22+math.min(area,60)*.1
+    addCandidate(part,score,text)
    end
   end
  end
 end
-assert(receptionTop,"No authored reception/counter/table surface found in fixed lobby")
+
+table.sort(candidates,function(a,b)return a.score>b.score end)
+for i,candidate in ipairs(candidates) do
+ if i>64 then break end
+ local visitor,steps=findVisitorPoint(candidate.part)
+ if visitor then
+  receptionTop=candidate.part
+  receptionVisitor=visitor
+  receptionPathSteps=steps
+  table.insert(receptionPieces,candidate.part)
+  break
+ end
+end
+assert(receptionTop and receptionVisitor,"No authored reception/counter/table surface has a walkable route from lobby spawn")
+
 
 -- Face the lobby and move slightly toward the front edge so the authored seated legs
 -- hang naturally over the counter instead of intersecting the desk.
-local towardVisitors=Vector3.new(origin.X-receptionTop.Position.X,0,origin.Z-receptionTop.Position.Z)
+local towardVisitors=Vector3.new(receptionVisitor.X-receptionTop.Position.X,0,receptionVisitor.Z-receptionTop.Position.Z)
 if towardVisitors.Magnitude<.1 then towardVisitors=Vector3.new(1,0,0) else towardVisitors=towardVisitors.Unit end
 local localFront=receptionTop.CFrame:VectorToObjectSpace(towardVisitors)
 local seatLocal=Vector3.zero
@@ -221,7 +293,7 @@ npc:SetAttribute("Placement","ReceptionTabletopSeated")
 npc:SetAttribute("ReceptionSurface",receptionTop:GetFullName())
 npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
-npc:SetAttribute("SeatedOnReception",true)
+npc:SetAttribute("SeatedOnReception",true)\nnpc:SetAttribute("ReceptionAccessValidated",true)\nnpc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)\nnpc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
 local tableReference=Instance.new("ObjectValue")
 tableReference.Name="Tabletop"
 tableReference.Value=receptionTop
