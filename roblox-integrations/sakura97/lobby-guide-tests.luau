@@ -47,6 +47,10 @@ local ok,result=xpcall(function()
  assert(not ui:FindFirstChildWhichIsA("AudioTextToSpeech",true),"Text-to-speech returned to Fill")
  render:Fire(.2) task.wait()
  assert(neck.C0~=initial,"Fill did not turn toward nearby local user")
+ local rootPose=npc.HumanoidRootPart.RootJoint.C0
+ render:Fire(.1) task.wait()
+ assert(npc.HumanoidRootPart.RootJoint.C0~=rootPose,"Fill idle breathing is frozen")
+ assert(npc.HumanoidRootPart.Anchored and not npc.Torso.Anchored,"Fill body cannot animate on tabletop")
  triggered:Fire() task.wait(6.5)
  assert(ui.dialogResponses.Choice1.Visible and ui.dialogResponses.Choice5.Visible,"Five English Fill responses did not appear")
  assert(ui.dialogResponses.Choice1.text.Text=="How does the game work?","Fill dialogue is not English")
@@ -65,3 +69,4 @@ for i=1,6 do resources:SetAttribute("Voice"..i,savedVoiceIds[i]) end
 host:Destroy() npc:Destroy() p:Destroy() description:Destroy()
 assert(ok,result)
 return result
+

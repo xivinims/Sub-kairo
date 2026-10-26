@@ -68,6 +68,8 @@ local ok,result=xpcall(function()
  assert(gui.RoundResult.Close.Text=="SAÍDA" and gui.RoundResult.Close.Position.Y.Scale>=gui.RoundResult.Ranking.Position.Y.Scale+gui.RoundResult.Ranking.Size.Y.Scale,"Exit must be under ranking")
  assert(not gui:FindFirstChild("AdminReset"),"Removed reset/test button returned")
   assert(gui:FindFirstChild("KillerShop") and gui:FindFirstChild("ShopButton"),"Killer shop HUD missing")
+ assert(gui.ShopButton.Text=="" and gui.ShopButton:FindFirstChild("CartIcon"),"Cart icon missing")
+ assert(gui.Countdown.Icon:FindFirstChild("ClockFace") and gui.Countdown.Icon:FindFirstChild("MinuteHand"),"Native clock icon missing")
  assert(gui.HackPanel and gui.Profile.Coin,"Hack UI or requested coin missing")
  local winnerActor=workspace:FindFirstChild("WinnerPursuer")
  if winnerActor then
@@ -93,7 +95,7 @@ local ok,result=xpcall(function()
  assert(not gui.Actions:FindFirstChild("Slow") and not gui.Actions:FindFirstChild("Jump"),"Removed legacy bottom action buttons returned")
  assert(gui.TopActions.Run.BackgroundTransparency<1 and gui.TopActions.Position.Y.Scale==1,"Run needs visible background and lower-screen placement")
  assert(gui.Round.BackgroundTransparency==1 and not gui.Round.Detail.Visible,"Round HUD must show only the top timer")
- assert(gui.Countdown.Visible==(fakeNet:GetAttribute("Phase")=="Intervalo" or fakeNet:GetAttribute("Phase")=="Escolha"),"Timer visibility must follow non-voting pre-round phases")
+ assert(gui.Countdown.Visible==(fakeNet:GetAttribute("Phase")=="Intervalo" or fakeNet:GetAttribute("Phase")=="Escolha" or fakeNet:GetAttribute("Phase")=="Aguardando"),"Timer visibility must follow non-voting pre-round phases")
  assert(gui.PlayerRoster and gui.PlayerRoster:FindFirstChild("Player_991") and gui.PlayerRoster:FindFirstChild("Player_992"),"Reference-style player roster missing")
  local rosterRow=gui.PlayerRoster.Player_991
  local rosterName=assert(rosterRow:FindFirstChild("Name"),"Roster name label missing")
@@ -176,4 +178,5 @@ end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
 assert(ok,result) return result
+
 

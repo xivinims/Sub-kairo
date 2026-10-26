@@ -49,6 +49,11 @@ for _,motor in ipairs(npc:GetDescendants()) do
   motor.C0=authored[motor.Name] motor.Transform=CFrame.identity
  end
 end
+-- Applying an outfit must not reintroduce a default controller over the seated pose.
+for _,obj in ipairs(npc:GetDescendants()) do
+ if obj:IsA("LuaSourceContainer") then obj:Destroy()
+ elseif obj:IsA("Motor6D") then obj.Enabled=true end
+end
 local applied=humanoid:GetAppliedDescription()
 assert(applied.Shirt==description.Shirt and applied.Pants==description.Pants,"Avatar clothes were not applied")
 npc:SetAttribute("OutfitUserId",ownerId)
@@ -96,7 +101,7 @@ dialogUI.ResetOnSpawn=false dialogUI.IgnoreGuiInset=true dialogUI.Parent=resourc
 local example=assert(dialoguePackage:FindFirstChild("showcase npc",true))
 local bubble=assert(example.Head:FindFirstChild("gui")):Clone() bubble.Parent=head
 bubble.name.Text="Fill"
-local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=false prompt.Parent=npc
+local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=12 prompt.RequiresLineOfSight=false prompt.Parent=npc
 game:GetService("CollectionService"):AddTag(prompt,"NPCprompt")
 
 local pending=SS:FindFirstChild("PendingLobbyGuide") if pending then pending:Destroy() end
@@ -235,3 +240,4 @@ local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
 posePackage:Destroy() dialoguePackage:Destroy()
 return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,seatedGap=seatedGap,receptionPosition=tostring(torso.Position),tablePosition=tostring(receptionTop.Position),localGaze=true,voiceLanguage="English",uploadedVoice=true}
+

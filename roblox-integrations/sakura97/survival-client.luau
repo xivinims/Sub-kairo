@@ -78,12 +78,27 @@ local function button(parent,name,label,size,pos,callback)
   callback()
  end) return b
 end
-local countdown=panel("Countdown",UDim2.fromOffset(208,44),UDim2.new(.5,-104,0,10))
+-- Native vector icons stay crisp without emoji/font or image-loading dependencies.
+local function iconCanvas(parent,name,size,pos)
+ local f=Instance.new("Frame",parent) f.Name=name f.Size=size f.Position=pos f.BackgroundTransparency=1 f.Active=false return f
+end
+local function iconLine(parent,name,x1,y1,x2,y2,width)
+ local dx,dy=x2-x1,y2-y1
+ local f=Instance.new("Frame",parent) f.Name=name f.AnchorPoint=Vector2.new(.5,.5)
+ f.Position=UDim2.fromOffset((x1+x2)/2,(y1+y2)/2) f.Size=UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),width or 2)
+ f.Rotation=math.deg(math.atan2(dy,dx)) f.BackgroundColor3=Color3.fromRGB(238,238,241) f.BorderSizePixel=0
+ Instance.new("UICorner",f).CornerRadius=UDim.new(1,0) return f
+end
+local countdown=panel("Countdown",UDim2.fromOffset(280,40),UDim2.new(.5,-140,0,10))
 countdown.BackgroundTransparency=1 countdown.UIStroke.Enabled=false countdown.Visible=false
-local countdownIcon=text(countdown,"Icon","◷",UDim2.fromOffset(36,36),UDim2.fromOffset(7,4))
-countdownIcon.TextSize=24 countdownIcon.Font=Enum.Font.GothamBold
-local countdownText=text(countdown,"Time","00:30 • 1/8",UDim2.new(1,-48,1,0),UDim2.fromOffset(43,0))
-countdownText.TextSize=16 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left
+local countdownIcon=iconCanvas(countdown,"Icon",UDim2.fromOffset(24,24),UDim2.fromOffset(3,8))
+local ring=iconCanvas(countdownIcon,"ClockFace",UDim2.fromOffset(22,22),UDim2.fromOffset(1,1))
+Instance.new("UICorner",ring).CornerRadius=UDim.new(1,0)
+local clockStroke=Instance.new("UIStroke",ring) clockStroke.Thickness=2 clockStroke.Color=Color3.fromRGB(238,238,241)
+iconLine(countdownIcon,"HourHand",12,12,12,6,2)
+iconLine(countdownIcon,"MinuteHand",12,12,17,15,2)
+local countdownText=text(countdown,"Time","Aguardando jogadores",UDim2.new(1,-38,1,0),UDim2.fromOffset(36,0))
+countdownText.TextSize=14 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left countdownText.TextWrapped=false
 local top=panel("Round",UDim2.fromOffset(130,38),UDim2.new(.5,-65,0,8))
 top.BackgroundTransparency=1 top.UIStroke.Enabled=false
 local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font=Enum.Font.GothamBold timer.TextSize=17
@@ -214,10 +229,19 @@ local function refreshShop()
   else b.Text="COMPRAR  "..tostring(spec and spec.cost or 0) b.Active=true b.AutoButtonColor=true b.BackgroundTransparency=.12 end
  end
 end
-local shopButton=button(gui,"ShopButton","LOJA",UDim2.fromOffset(74,36),UDim2.new(1,-136,0,6),function()
+local shopButton=button(gui,"ShopButton","",UDim2.fromOffset(44,44),UDim2.new(1,-110,0,6),function()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  refreshShop() shopOverlay.Visible=not shopOverlay.Visible
-end) shopButton.TextSize=10 shopButton.BackgroundTransparency=.18
+end) shopButton.BackgroundTransparency=1 shopButton.UIStroke.Enabled=false
+shopButton:SetAttribute("AccessibleLabel","Loja de perseguidores")
+local cart=iconCanvas(shopButton,"CartIcon",UDim2.fromOffset(30,30),UDim2.fromOffset(7,7))
+iconLine(cart,"Handle",2,4,7,4) iconLine(cart,"Stem",7,4,11,21)
+iconLine(cart,"BasketTop",8,8,28,8) iconLine(cart,"BasketFront",28,8,25,17)
+iconLine(cart,"BasketBottom",10,17,25,17) iconLine(cart,"Base",11,21,25,21)
+for i,x in ipairs({13,23}) do
+ local wheel=Instance.new("Frame",cart) wheel.Name="Wheel"..i wheel.Position=UDim2.fromOffset(x-2,24) wheel.Size=UDim2.fromOffset(4,4) wheel.BorderSizePixel=0 wheel.BackgroundColor3=Color3.fromRGB(238,238,241)
+ Instance.new("UICorner",wheel).CornerRadius=UDim.new(1,0)
+end
 player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshShop)
 task.spawn(function()
  local stats=player:WaitForChild("leaderstats",20)
@@ -1116,10 +1140,10 @@ RunService.RenderStepped:Connect(function(dt)
  levelText.Text="NÍVEL "..n.."   •   "..(n>=1000 and "MÁXIMO" or math.max(0,total-minimum).."/"..(nextLevel-minimum)) pointsText.Text=""..(pts and pts.Value or 0)
  local phase=net:GetAttribute("Phase") or "Aguardando"
  local left=math.max(0,math.ceil((net:GetAttribute("EndsAt") or 0)-workspace:GetServerTimeNow()))
- countdown.Visible=not hidden and (phase=="Intervalo" or phase=="Escolha")
+ countdown.Visible=not hidden and (phase=="Intervalo" or phase=="Escolha" or phase=="Aguardando")
  actionLayout()
  if phase=="Escolha" then countdownText.Text="Escolhendo perseguidor • "..left.."s"
- elseif left==0 and phase=="Intervalo" then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
+ elseif phase=="Aguardando" or (left==0 and phase=="Intervalo") then countdownText.Text=player:GetAttribute("AFK") and "AFK ativado" or "Aguardando jogadores" else countdownText.Text=string.format("%02d:%02d • %d/%d",math.floor(left/60),left%60,net:GetAttribute("Waiting") or 0,net:GetAttribute("MaxPlayers") or 8) end
  top.Visible=not hidden and phase=="Partida" and (inRound or player:GetAttribute("Spectating")==true)
  local isJason=player:GetAttribute("IsJason")
  topActions.Visible=controlsVisible and inRound and not down
@@ -1248,4 +1272,5 @@ local function squareHud(obj)
 end
 for _,obj in ipairs(gui:GetDescendants()) do squareHud(obj) end
 gui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareHud(obj) end end) end)
+
 

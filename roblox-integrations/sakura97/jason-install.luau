@@ -150,6 +150,49 @@ if needsFixedLobby then
   lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(ground+Vector3.new(-12,0,0),ground))
  end
 end
+-- Door trim must not turn its hollow opening into a solid physics hull.
+local house=assert(lobby:FindFirstChild("House"),"Authored lobby house missing")
+local oldAccess=lobby:FindFirstChild("PassageColliders") if oldAccess then oldAccess:Destroy() end
+local access=Instance.new("Folder",lobby) access.Name="PassageColliders"
+local repairedFrames=0 local repairedMeshes=0 local removedBlockers=0
+local function support(name,size,cf)
+ local p=Instance.new("Part") p.Name=name p.Size=size p.CFrame=cf p.Anchored=true
+ p.Transparency=1 p.CanCollide=true p.CanTouch=false p.CanQuery=true p.CastShadow=false
+ p:SetAttribute("PassageSupport",true) p.Parent=access return p
+end
+for _,part in ipairs(house:GetDescendants()) do
+ if part:IsA("BasePart") then
+  local name=part.Name:lower()
+  if part.Transparency>=.98 and not part:IsA("SpawnLocation") then
+   part.CanCollide=false part.CanTouch=false part.CanQuery=false
+   part:SetAttribute("InteriorBlockerDisabled",true) removedBlockers+=1
+  elseif part:IsA("MeshPart") and (name=="double_door_frame" or name=="front_door_frame" or name=="shed_doorframe") then
+   part.CanCollide=false part.CanTouch=false part:SetAttribute("OpenPassage",true)
+   local width=part.Size.X local height=part.Size.Y local depth=part.Size.Z
+   local opening=name=="front_door_frame" and math.min(8.1,width-1) or width-.9
+   local clearHeight=math.min(7.65,height-.35)
+   local post=(width-opening)/2
+   support("DoorLeft",Vector3.new(post,height,depth),part.CFrame*CFrame.new(-(opening+post)/2,0,0))
+   support("DoorRight",Vector3.new(post,height,depth),part.CFrame*CFrame.new((opening+post)/2,0,0))
+   support("DoorLintel",Vector3.new(opening,height-clearHeight,depth),part.CFrame*CFrame.new(0,clearHeight/2,0))
+   part:SetAttribute("PassageWidth",opening) part:SetAttribute("PassageHeight",clearHeight)
+   repairedFrames+=1
+  elseif part:IsA("MeshPart") and (name:find("stairs",1,true) or name:find("side_stair",1,true) or name=="rail_stair") then
+   if part:GetAttribute("PrecisePassageCollision")~=true then
+    local size,cf,texture=part.Size,part.CFrame,part.TextureID
+    local rebuilt=AS:CreateMeshPartAsync(part.MeshContent,{CollisionFidelity=Enum.CollisionFidelity.PreciseConvexDecomposition})
+    part:ApplyMesh(rebuilt) part.Size=size part.CFrame=cf part.TextureID=texture rebuilt:Destroy()
+    part:SetAttribute("PrecisePassageCollision",true)
+   end
+   repairedMeshes+=1
+  end
+ end
+end
+lobby:SetAttribute("PassageRepairRevision",1)
+lobby:SetAttribute("RepairedDoorFrames",repairedFrames)
+lobby:SetAttribute("RepairedStairMeshes",repairedMeshes)
+lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
+
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
 if typeof(referenceCF)~="CFrame" then
  local legacy=lobby:FindFirstChild("Door") or lobby:FindFirstChild("OriginalLobbyDoor")
@@ -875,4 +918,5 @@ end
 local bloom=light:FindFirstChild("ViolenceDistrictBloom") or Instance.new("BloomEffect")
 bloom.Name="ViolenceDistrictBloom" bloom.Intensity=1 bloom.Threshold=2 bloom.Size=24 bloom.Enabled=true bloom.Parent=light
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
+
 

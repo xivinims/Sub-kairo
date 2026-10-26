@@ -14,6 +14,11 @@ local neck=torso:FindFirstChild("Neck")
 local joint=root:FindFirstChild("RootJoint")
 local neckBase=neck and neck.C0
 local jointBase=joint and joint.C0
+local leftShoulder=torso:FindFirstChild("Left Shoulder")
+local rightShoulder=torso:FindFirstChild("Right Shoulder")
+local leftBase=leftShoulder and leftShoulder.C0
+local rightBase=rightShoulder and rightShoulder.C0
+local idleTime=0
 local prompt=npc:WaitForChild("ProximityPrompt")
 local resources=RS:WaitForChild("LobbyGuideResources")
 local playerGui=player:WaitForChild("PlayerGui")
@@ -302,18 +307,24 @@ connection=Run.RenderStepped:Connect(function(dt)
  languageButton.Visible=active
  local allowed=not player:GetAttribute("InRound") and not player:GetAttribute("InMenu")
  local distance=target and (target.Position-head.Position).Magnitude or math.huge
- local closeEnough=target and distance<16 and allowed
+ local closeEnough=target and distance<24 and allowed
  prompt.Enabled=allowed and not active
  if closeEnough then
   local delta=root.CFrame:VectorToObjectSpace(target.Position-head.Position)
-  if delta.Z<0 then
+  if delta.Z<4 then
    yaw=math.clamp(math.atan2(-delta.X,-delta.Z),-.38,.38)
    pitch=math.clamp(math.atan2(delta.Y,math.max(.1,Vector2.new(delta.X,delta.Z).Magnitude)),-.15,.15)
-   lean=.025
+   lean=.04
   end
  end
  local alpha=1-math.exp(-dt*5)
  if neck then neck.C0=neck.C0:Lerp(neckBase*CFrame.Angles(pitch,0,yaw),alpha) end
- if joint then joint.C0=joint.C0:Lerp(jointBase*CFrame.Angles(lean+math.sin(os.clock()*1.3)*.004,0,yaw*.12),alpha) end
+ idleTime+=math.min(dt,.1)
+ local breath=math.sin(idleTime*1.65)
+ if joint then joint.C0=joint.C0:Lerp(jointBase*CFrame.new(0,breath*.025,0)*CFrame.Angles(lean+breath*.018,0,yaw*.18),alpha) end
+ local gesture=active and math.sin(idleTime*2.2)*.035 or breath*.008
+ if leftShoulder then leftShoulder.C0=leftShoulder.C0:Lerp(leftBase*CFrame.Angles(gesture,0,0),alpha) end
+ if rightShoulder then rightShoulder.C0=rightShoulder.C0:Lerp(rightBase*CFrame.Angles(-gesture,0,0),alpha) end
  if active and (not allowed or distance>12 or not target) then close() end
 end)
+
