@@ -3,6 +3,7 @@
 local AssetService=game:GetService("AssetService")
 local SS=game:GetService("ServerStorage")
 local RS=game:GetService("ReplicatedStorage")
+local PhysicsService=game:GetService("PhysicsService")
 local posePackage=AssetService:LoadAssetAsync(92697245643515)
 local dialoguePackage=AssetService:LoadAssetAsync(80608769509945)
 local npc=assert(posePackage:FindFirstChild("Creator",true),"Pose rig missing"):Clone()
@@ -232,9 +233,17 @@ assert(math.abs(seatedGap-.025)<.08,"Fill is floating or clipping instead of sit
 -- Final collision normalization happens AFTER ApplyDescription, pose restoration and
 -- tabletop placement. Humanoid character parts can re-enable collision while the rig is
 -- settling; the published guide must remain purely visual and never block a doorway.
+local ghostGroup="LobbyGuideGhost"
+pcall(function() PhysicsService:RegisterCollisionGroup(ghostGroup) end)
+for _,group in ipairs(PhysicsService:GetRegisteredCollisionGroups()) do
+ pcall(function() PhysicsService:CollisionGroupSetCollidable(ghostGroup,group.name,false) end)
+end
+pcall(function() PhysicsService:CollisionGroupSetCollidable(ghostGroup,ghostGroup,false) end)
+
 local nonBlockingParts=0
 for _,obj in ipairs(npc:GetDescendants()) do
  if obj:IsA("BasePart") then
+  pcall(function() obj.CollisionGroup=ghostGroup end)
   obj.CanCollide=false
   obj.CanTouch=false
   obj.CanQuery=false
@@ -247,11 +256,61 @@ end
 root.Anchored=true
 npc:SetAttribute("NonBlockingGuide",true)
 npc:SetAttribute("NonBlockingPartCount",nonBlockingParts)
+npc:SetAttribute("CollisionGroup",ghostGroup)
 for _,obj in ipairs(npc:GetDescendants()) do
  if obj:IsA("BasePart") then
+  assert(obj.CollisionGroup==ghostGroup,"Fill ghost collision group missing on "..obj:GetFullName())
   assert(not obj.CanCollide and not obj.CanTouch and not obj.CanQuery,"Fill collision returned on "..obj:GetFullName())
  end
 end
+
+local guard=Instance.new("Script")
+guard.Name="NonBlockingGuard"
+guard.Source=[=[
+local PhysicsService=game:GetService("PhysicsService")
+local npc=script.Parent
+local GROUP="LobbyGuideGhost"
+pcall(function() PhysicsService:RegisterCollisionGroup(GROUP) end)
+
+local locked=setmetatable({},{__mode="k"})
+local function refreshGroups()
+ for _,group in ipairs(PhysicsService:GetRegisteredCollisionGroups()) do
+  pcall(function() PhysicsService:CollisionGroupSetCollidable(GROUP,group.name,false) end)
+ end
+ pcall(function() PhysicsService:CollisionGroupSetCollidable(GROUP,GROUP,false) end)
+end
+
+local function lockPart(part)
+ if not part:IsA("BasePart") then return end
+ pcall(function() part.CollisionGroup=GROUP end)
+ part.CanCollide=false
+ part.CanTouch=false
+ part.CanQuery=false
+ if part.Name~="HumanoidRootPart" then part.Massless=true end
+ if locked[part] then return end
+ locked[part]=true
+ part:GetPropertyChangedSignal("CanCollide"):Connect(function()
+  if part.Parent and part.CanCollide then part.CanCollide=false end
+ end)
+ part:GetPropertyChangedSignal("CanTouch"):Connect(function()
+  if part.Parent and part.CanTouch then part.CanTouch=false end
+ end)
+ part:GetPropertyChangedSignal("CanQuery"):Connect(function()
+  if part.Parent and part.CanQuery then part.CanQuery=false end
+ end)
+end
+
+refreshGroups()
+for _,obj in ipairs(npc:GetDescendants()) do lockPart(obj) end
+npc.DescendantAdded:Connect(function(obj) task.defer(lockPart,obj) end)
+
+while npc.Parent do
+ task.wait(5)
+ refreshGroups()
+ for _,obj in ipairs(npc:GetDescendants()) do lockPart(obj) end
+end
+]=]
+guard.Parent=npc
 
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc
 assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headless/R6 validation failed")
