@@ -1,11 +1,19 @@
 local host=Instance.new("Folder",workspace) host.Name="GuideClientTest"
 local npc=workspace.LobbyGuide:Clone() npc.Name="GuideTestNPC" npc.Parent=host
 npc.GuideInteraction:Destroy()
-local attrs={}
+local attrs={GameLanguage="en"}
 local gui=Instance.new("Folder",host) gui.Name="PlayerGui"
 local p={Name="GuideTester",PlayerGui=gui}
 function p:GetAttribute(name) return attrs[name] end
-function p:SetAttribute(name,value) attrs[name]=value end
+local attributeSignals={}
+function p:GetAttributeChangedSignal(name)
+ if not attributeSignals[name] then attributeSignals[name]=Instance.new("BindableEvent",host) end
+ return attributeSignals[name].Event
+end
+function p:SetAttribute(name,value)
+ attrs[name]=value
+ if attributeSignals[name] then attributeSignals[name]:Fire() end
+end
 function p:WaitForChild(name) if name=="PlayerGui" then return gui end end
 function p:Destroy() gui:Destroy() end
 local description=Instance.new("HumanoidDescription")
@@ -52,9 +60,15 @@ local ok,result=xpcall(function()
  assert(npc.HumanoidRootPart.RootJoint.C0~=rootPose,"Fill idle breathing is frozen")
  assert(npc.HumanoidRootPart.Anchored and not npc.Torso.Anchored,"Fill body cannot animate on tabletop")
  triggered:Fire() task.wait(6.5)
- assert(ui.dialogResponses.Choice1.Visible and ui.dialogResponses.Choice5.Visible,"Five English Fill responses did not appear")
- assert(ui.dialogResponses.Choice1.text.Text=="How does the game work?","Fill dialogue is not English")
+ assert(ui.dialogResponses.Choice1.Visible and ui.dialogResponses.Choice5.Visible,"Five Fill responses did not appear")
+ assert(ui.dialogResponses.Choice1.text.Text=="How does the game work?","English Fill text did not follow settings")
  assert(ui.dialogResponses.Choice5.text.Text=="Nothing right now.","Fill fifth response missing")
+ assert(not ui:FindFirstChild("Language"),"Manual Fill language button returned")
+ p:SetAttribute("GameLanguage","pt-BR") task.wait()
+ triggered:Fire() task.wait(.2)
+ assert(ui.dialogResponses.Choice1.text.Text=="Como o jogo funciona?","Portuguese Fill text did not follow game language setting")
+ assert(not ui:FindFirstChildWhichIsA("AudioTextToSpeech",true),"Fill dubbing must never switch to Portuguese TTS")
+ p:SetAttribute("GameLanguage","en") task.wait()
  input:Fire({KeyCode=Enum.KeyCode.One},false) task.wait(.2)
  assert(not ui.dialogResponses.Choice1.Visible,"Chosen Fill response did not hide choices")
  p:SetAttribute("InRound",true) render:Fire(.2) task.wait()
