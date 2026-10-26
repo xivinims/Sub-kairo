@@ -211,7 +211,7 @@ assert(ambienceSource:find("EnvironmentSpecularScale=.72",1,true) and ambienceSo
 local settingsSource=assert(game.ReplicatedStorage.Survival:FindFirstChild("SettingsPanel"),"Settings panel missing").Source
 assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay Camera FOV setting missing")
 assert(not settingsSource:find('key="VisualSaturation"',1,true) and not settingsSource:find('key="VisualContrast"',1,true) and not settingsSource:find('key="VisualExposure"',1,true) and not settingsSource:find('key="VisualTime"',1,true),"Removed visual/environment settings returned")
-assert(ambienceSource:find("Lighting.ClockTime=17.35",1,true) and ambienceSource:find("Lighting.Brightness=2.15",1,true) and ambienceSource:find("SuviversDistrictBloom",1,true) and ambienceSource:find("SuviversAtmosphere",1,true),"Fixed dusk environment missing")
+assert(ambienceSource:find("Lighting.ClockTime=.5",1,true) and ambienceSource:find("Lighting.Brightness=1.12",1,true) and ambienceSource:find("Lighting.OutdoorAmbient=Color3.fromRGB(7,9,17)",1,true) and ambienceSource:find("Lighting.ExposureCompensation=-.27",1,true) and ambienceSource:find("SuviversDistrictBloom",1,true) and ambienceSource:find("SuviversAtmosphere",1,true),"Fixed dark-night environment missing")
 assert(voidSource:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death UI media reference can be nil")
 assert(not nametagSource:find("CantorBadge",1,true),"Obsolete Cantor badge returned")
 assert(friendSource:find('FindFirstChild("SweanNametag")',1,true),"ShowNametags does not control normal nametags")
