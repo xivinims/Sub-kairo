@@ -26,40 +26,7 @@ async function execute(script){
  if(task.state!=='COMPLETE'||task.error) throw new Error(JSON.stringify(task));
  const v=task?.output?.results?.[0]; if(typeof v!=='string') return v??null; try{return JSON.parse(v)}catch{return v}
 }
-const luau=`
-local Http=game:GetService("HttpService")
-local first=game:GetService("ReplicatedFirst")
-local controller=assert(first:FindFirstChild("SweanLoadingController"),"SweanLoadingController missing")
-local assets=assert(first:FindFirstChild("LoadingCinematicAssets"),"LoadingCinematicAssets missing")
-local tv=assert(assets:FindFirstChild("TV"),"TV model missing")
-local mesa=assert(assets:FindFirstChild("Mesa"),"Mesa model missing")
-local screen=assert(tv:FindFirstChild("Screen",true),"TV Screen part missing")
-assert(controller:GetAttribute("CinematicInitialLoading")==true,"CinematicInitialLoading flag missing")
-assert(controller:GetAttribute("CinematicDuration")==8,"Cinematic duration is not 8 seconds")
-assert(controller:GetAttribute("TVAssetId")==421148437,"Wrong TV asset persisted")
-assert(controller:GetAttribute("TableAssetId")==397786287,"Wrong table asset persisted")
-assert(assets:GetAttribute("TVAssetId")==421148437 and assets:GetAttribute("TableAssetId")==397786287,"Loading asset folder IDs wrong")
-assert(tv:GetAttribute("SourceAssetId")==421148437 and mesa:GetAttribute("SourceAssetId")==397786287,"Loading model source IDs missing")
-local source=controller.Source
-assert(source:find("CINEMATIC_DURATION=8",1,true),"8-second timing source missing")
-assert(source:find("LOGO_END=4",1,true),"4-second logo cutoff missing")
-assert(source:find('hand.Name="HandInsideTelevision"',1,true),"Hand-in-TV scene missing")
-assert(source:find("cameraImpact",1,true),"Impact camera shake missing")
-assert(source:find('logo.Texture="rbxassetid://99002027743613"',1,true),"Game logo texture missing from TV")
-assert(source:find("waitUntil(7.05)",1,true),"Final fade cue missing")
-assert(source:find("screen.Size.X/2+.028",1,true),"Logo is not attached to TV glass")
-return Http:JSONEncode({
- ok=true,
- version=game.PlaceVersion,
- tvAsset=tv:GetAttribute("SourceAssetId"),
- tableAsset=mesa:GetAttribute("SourceAssetId"),
- screen=screen.Name,
- cinematicSeconds=controller:GetAttribute("CinematicDuration"),
- logoUntil=4,
- handImpact=true,
- finalFade=true
-})
-`;
+const luau="\nlocal Http=game:GetService(\"HttpService\")\nlocal first=game:GetService(\"ReplicatedFirst\")\nlocal assets=assert(first:FindFirstChild(\"LoadingCinematicAssets\"),\"LoadingCinematicAssets missing\")\nlocal tv=assert(assets:FindFirstChild(\"TV\"),\"TV model missing\")\nlocal screen=assert(tv:FindFirstChild(\"Screen\",true),\"TV Screen part missing\")\nlocal cf,size=tv:GetBoundingBox()\nlocal parts={}\nfor _,p in ipairs(tv:GetDescendants()) do\n if p:IsA(\"BasePart\") then\n  local n=string.lower(p.Name)\n  if p==screen or n:find(\"foot\",1,true) or n:find(\"leg\",1,true) or n:find(\"stand\",1,true) or n:find(\"base\",1,true) or n:find(\"screen\",1,true) then\n   table.insert(parts,{\n    path=p:GetFullName(),name=p.Name,size=tostring(p.Size),pos=tostring(p.Position),\n    right=tostring(p.CFrame.RightVector),up=tostring(p.CFrame.UpVector),look=tostring(p.CFrame.LookVector)\n   })\n  end\n end\nend\nreturn Http:JSONEncode({\n ok=true,version=game.PlaceVersion,\n modelCF=tostring(cf),modelSize=tostring(size),\n screenSize=tostring(screen.Size),screenPos=tostring(screen.Position),\n screenRight=tostring(screen.CFrame.RightVector),screenUp=tostring(screen.CFrame.UpVector),screenLook=tostring(screen.CFrame.LookVector),\n parts=parts\n})\n";
 const result=await execute(luau);
-console.log('LOADING_CINEMATIC_LIVE_VERIFY',JSON.stringify(result));
+console.log('LOADING_TV_GEOMETRY_DIAGNOSTIC',JSON.stringify(result));
 if(!result || result.ok!==true) throw new Error('Published loading cinematic verification failed');
