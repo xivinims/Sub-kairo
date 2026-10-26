@@ -93,10 +93,16 @@ local point=npc:GetAttribute("VerifiedVisitorPosition")
 assert(typeof(point)=="Vector3","Fill has no visitor position")
 assert((point-npc.HumanoidRootPart.Position).Magnitude<=npc.ProximityPrompt.MaxActivationDistance,"Visitor point is outside Fill interaction range")
 assert(npc:GetAttribute("NonBlockingGuide")==true,"Fill nonblocking guide flag missing")
+assert(npc:GetAttribute("CollisionGroup")=="LobbyGuideGhost","Fill ghost collision metadata missing")
+local PhysicsService=game:GetService("PhysicsService")
+assert(not PhysicsService:CollisionGroupsAreCollidable("LobbyGuideGhost","Default"),"Fill ghost group still collides with Default")
+local guard=assert(npc:FindFirstChild("NonBlockingGuard"),"Fill nonblocking guard missing")
+assert(guard:IsA("LuaSourceContainer"),"Fill nonblocking guard is not a script")
 local fillParts=0
 for _,p in ipairs(npc:GetDescendants()) do
  if p:IsA("BasePart") then
-  assert(not p.CanCollide and not p.CanTouch and not p.CanQuery,"Fill body blocks lobby movement: "..p:GetFullName())
+  assert(p.CollisionGroup=="LobbyGuideGhost","Fill part is outside ghost group: "..p:GetFullName())
+  assert(not p.CanTouch and not p.CanQuery,"Fill touch/query returned: "..p:GetFullName())
   fillParts+=1
  end
 end
