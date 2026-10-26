@@ -14,7 +14,7 @@ function Profiles.new(store,options)
  return setmetatable({store=store,records={},options=options or {}},Profiles)
 end
 function Profiles:attach(p)
- self.records[p]={id=Http:GenerateGUID(false),xp=0,points=0,savedXP=0,savedPoints=0,loaded=false,busy=false,ownedKillers={Jason=true},ownedDirty=false}
+ self.records[p]={id=Http:GenerateGUID(false),xp=0,points=0,savedXP=0,savedPoints=0,loaded=false,busy=false,ownedKillers={Jason=true},ownedDirty=false,lanternTier=0,lanternDirty=false}
  p:SetAttribute("ProfileLoaded",false)
 end
 function Profiles:retry(fn)
@@ -42,6 +42,8 @@ function Profiles:load(p)
   for name,owned in pairs(data.ownedKillers) do if owned==true and type(name)=="string" then r.ownedKillers[name]=true end end
  end
  p:SetAttribute("OwnedKillersJson",Http:JSONEncode(r.ownedKillers))
+ r.lanternTier=math.clamp(integer(data.lanternTier),0,6)
+ p:SetAttribute("LanternDurabilityTier",r.lanternTier)
  r.loaded=true p:SetAttribute("ProfileLoaded",true)
  return true
 end
@@ -107,15 +109,39 @@ function Profiles:buyKiller(p,name,price)
  return true,name.." desbloqueado!"
 end
 
+
+function Profiles:lanternTier(p)
+ local r=self.records[p]
+ return r and r.lanternTier or 0
+end
+
+function Profiles:buyLanternUpgrade(p,price,maxTier)
+ local r=self.records[p]
+ local stats=p:FindFirstChild("leaderstats")
+ maxTier=math.clamp(integer(maxTier),0,20)
+ if not r or not r.loaded or not stats then return false,"Aguarde seu progresso carregar." end
+ if r.busy then return false,"Salvando progresso. Tente novamente em instantes." end
+ local tier=math.clamp(integer(r.lanternTier),0,maxTier)
+ if tier>=maxTier then return true,"Lanterna já está no MAX." end
+ if type(price)~="number" or price<0 or price%1~=0 then return false,"Preço inválido." end
+ if stats.Pontos.Value<price then return false,"Pontos insuficientes." end
+ self:points(p,-price)
+ r.lanternTier=tier+1
+ r.lanternDirty=true
+ p:SetAttribute("LanternDurabilityTier",r.lanternTier)
+ return true,"Durabilidade da lanterna melhorada."
+end
+
 function Profiles:save(p)
  local r=self.records[p]
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
  if r.purchase then return self:buyKiller(p,r.purchase.name,r.purchase.price) end
- if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty then return true end
+ if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty and not r.lanternDirty then return true end
  r.busy=true
  local xp,points=r.xp,r.points
  local ownedSnapshot={} for name,owned in pairs(r.ownedKillers or {}) do if owned then ownedSnapshot[name]=true end end
+ local lanternTier=math.clamp(integer(r.lanternTier),0,6)
  local timestamp=os.time()
  local ok=self:retry(function()
   return self.store:UpdateAsync(tostring(p.UserId),function(old)
@@ -127,6 +153,7 @@ function Profiles:save(p)
    old.ownedKillers=type(old.ownedKillers)=="table" and old.ownedKillers or {}
    old.ownedKillers.Jason=true
    for name,owned in pairs(ownedSnapshot) do if owned then old.ownedKillers[name]=true end end
+   old.lanternTier=math.max(integer(old.lanternTier),lanternTier)
    receipts[r.id]={xp=xp,points=points,at=timestamp}
    local keys={} for id,v in pairs(receipts) do if id~=r.id then table.insert(keys,{id=id,at=type(v)=="table" and (v.at or 0) or 0}) end end
    table.sort(keys,function(a,b) return a.at>b.at end)
@@ -136,7 +163,7 @@ function Profiles:save(p)
   end)
  end)
  r.busy=false
- if ok then r.savedXP=xp r.savedPoints=points r.ownedDirty=false end
+ if ok then r.savedXP=xp r.savedPoints=points r.ownedDirty=false r.lanternDirty=false end
  local again=r.pending r.pending=false
  if again and (r.xp~=xp or r.points~=points) then return self:save(p) end
  return ok
