@@ -107,7 +107,7 @@ local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
-topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(136,64) topActions.Position=UDim2.new(1,-24,1,-30)
+topActions.AnchorPoint=Vector2.new(1,1) topActions.Size=UDim2.fromOffset(208,64) topActions.Position=UDim2.new(1,-24,1,-30)
 local bar=Instance.new("Frame",gui) bar.Name="Actions" bar.BackgroundTransparency=1
 bar.AnchorPoint=Vector2.new(1,1) bar.Size=UDim2.fromOffset(150,74) bar.Position=UDim2.new(1,-24,1,-110)
 local actionRects={Run={373,78,253,258},RunActive={658,71,258,263},Crouch={952,77,258,262},Attack={42,62,294,294},ReviveNearby={642,386,257,257},CarryNearby={1289,720,217,215}}
@@ -130,14 +130,25 @@ local function cleanAction(parent,name,label,size,pos,callback)
  b.UIStroke.Enabled=false b.UICorner.CornerRadius=UDim.new(1,0)
  return b
 end
-local run=cleanAction(topActions,"Run",L("CORRER","RUN"),UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function() end)
-run.TextSize=11 run.BackgroundTransparency=.35 run.BackgroundColor3=Color3.fromRGB(25,26,30)
-local crouch=cleanAction(topActions,"Crouch",L("AGACHAR","CROUCH"),UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
+local lantern=cleanAction(topActions,"Lantern",L("LANTERNA","LANTERN"),UDim2.fromOffset(64,64),UDim2.fromOffset(0,0),function()
+ if player:GetAttribute("Downed") or player:GetAttribute("IsJason") then return end
+ event:FireServer("flashlight")
+end)
+lantern.TextSize=9
+lantern.BackgroundTransparency=.34
+lantern.BackgroundColor3=Color3.fromRGB(25,26,30)
+lantern:SetAttribute("LanternAssetId",11906391298)
+lantern:SetAttribute("CrackleSoundAssetId",112352139435056)
+
+local crouch=cleanAction(topActions,"Crouch",L("AGACHAR","CROUCH"),UDim2.fromOffset(64,64),UDim2.fromOffset(72,0),function()
  if player:GetAttribute("Downed") or player:GetAttribute("IsJason") then return end
  local nextMode=(player:GetAttribute("MoveMode")=="crouch") and "walk" or "crouch"
  mode=nextMode event:FireServer("mode",nextMode)
 end)
 crouch.TextSize=10 crouch.BackgroundTransparency=.4 crouch.BackgroundColor3=Color3.fromRGB(25,26,30)
+
+local run=cleanAction(topActions,"Run",L("CORRER","RUN"),UDim2.fromOffset(64,64),UDim2.fromOffset(144,0),function() end)
+run.TextSize=11 run.BackgroundTransparency=.35 run.BackgroundColor3=Color3.fromRGB(25,26,30)
 local heldRunInput=nil
 local function stopHeldRun(input)
  if heldRunInput and (not input or input==heldRunInput) then
@@ -1267,6 +1278,10 @@ RunService.RenderStepped:Connect(function(dt)
  bar.Visible=controlsVisible and inRound
  run.Visible=controlsVisible and inRound and not down
  crouch.Visible=controlsVisible and inRound and not down and not isJason
+ lantern.Visible=controlsVisible and inRound and not down and not isJason
+ lantern.Active=lantern.Visible
+ lantern.Text=player:GetAttribute("FlashlightOn")==true and L("APAGAR","OFF") or L("LANTERNA","LANTERN")
+ lantern.BackgroundColor3=player:GetAttribute("FlashlightOn")==true and Color3.fromRGB(92,67,34) or Color3.fromRGB(25,26,30)
  attackButton.Visible=controlsVisible and inRound and not down and isJason
  if heldRunInput and not down then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
  if run:FindFirstChild("ReferenceActionArt") then setActionArt(run,mode=="run" and "RunActive" or "Run") else run.Text="CORRER" end
