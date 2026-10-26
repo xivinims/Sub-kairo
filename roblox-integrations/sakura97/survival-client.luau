@@ -1449,14 +1449,14 @@ local tvStatic=Instance.new("Frame",loading)
 tvStatic.Name="TVStatic"
 tvStatic.AnchorPoint=Vector2.new(.5,.5)
 tvStatic.Position=UDim2.fromScale(.5,.43)
-tvStatic.Size=UDim2.new(.235,0,.285,0)
+tvStatic.Size=UDim2.new(.272,0,.23,0)
 tvStatic.BackgroundColor3=Color3.fromRGB(74,82,86)
 tvStatic.BackgroundTransparency=.18
 tvStatic.BorderSizePixel=0
 tvStatic.ClipsDescendants=true
 tvStatic.ZIndex=86
 local staticAspect=Instance.new("UIAspectRatioConstraint",tvStatic)
-staticAspect.AspectRatio=.846
+staticAspect.AspectRatio=1.182
 staticAspect.DominantAxis=Enum.DominantAxis.Height
 
 local staticLines={}
