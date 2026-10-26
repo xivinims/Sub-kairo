@@ -86,3 +86,4 @@ return Http:JSONEncode({
 const result=await execute(luau);
 console.log('LOADING_CINEMATIC_LIVE_VERIFY',JSON.stringify(result));
 if(!result || result.ok!==true) throw new Error('Published loading cinematic verification failed');
+// verify version 196 metadata
