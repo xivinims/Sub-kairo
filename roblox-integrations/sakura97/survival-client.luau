@@ -1119,7 +1119,7 @@ local function refreshLanguage()
  shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
  missionTitle.Text=L("MISSÃO","MISSION")
  missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
- resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER")
+ if not result.Visible then resultHeader.Text=L("FIM DA PARTIDA","MATCH OVER") end
  voteTitle.Text=L("ESCOLHA O PRÓXIMO MAPA","CHOOSE THE NEXT MAP")
  voteHint.Text=L("4 NA VOTAÇÃO  •  RANDOM  •  7 MAPAS TOTAIS","4 IN VOTE  •  RANDOM  •  7 MAPS TOTAL")
  killerTitle.Text=L("VOCÊ É O PERSEGUIDOR • ESCOLHA","YOU ARE THE KILLER • CHOOSE")
