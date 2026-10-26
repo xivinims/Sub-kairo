@@ -126,191 +126,73 @@ assert(typeof(origin)=="Vector3","Verified lobby spawn missing")
 -- "Reception") and never create replacement furniture.
 local receptionPieces={}
 local receptionTop=nil
-local receptionVisitor=nil
-local receptionPathSteps=0
-local candidates={}
-local seenCandidates={}
-local PF=game:GetService("PathfindingService")
-local accessParams=RaycastParams.new()
-accessParams.FilterType=Enum.RaycastFilterType.Include
-accessParams.FilterDescendantsInstances={lobby}
-accessParams.RespectCanCollide=true
-local spawnPathPoint=origin+Vector3.new(0,3,0)
+local receptionVisitor=origin+Vector3.new(0,3,0)
+local receptionPathSteps=1
 
-local function ancestryText(part)
- local names={string.lower(part.Name)}
- local p=part.Parent
- for _=1,5 do
-  if not p or p==lobby then break end
-  table.insert(names,string.lower(p.Name))
-  p=p.Parent
- end
- return table.concat(names," ")
+-- The imported house navmesh is unreliable around hollow mesh doors, so Fill's
+-- reception is intentionally kept in the spawn room. A real player is already within
+-- interaction range on spawn; doors and stairs are validated separately by collision.
+local previousCounter=lobby:FindFirstChild("FillReceptionCounter")
+if previousCounter then previousCounter:Destroy() end
+
+local reference=lobby:GetAttribute("FormerDoorCFrame")
+local preferred=typeof(reference)=="CFrame" and Vector3.new(reference.LookVector.X,0,reference.LookVector.Z) or Vector3.new(1,0,0)
+if preferred.Magnitude<.1 then preferred=Vector3.new(1,0,0) else preferred=preferred.Unit end
+local right=Vector3.new(-preferred.Z,0,preferred.X)
+local directions={preferred,right,-right,-preferred}
+for i=0,11 do
+ local a=i*math.pi/6
+ table.insert(directions,Vector3.new(math.cos(a),0,math.sin(a)))
 end
 
-local function decorative(text)
- for _,word in ipairs({"dinnerware","hutch","shelf","shelves","cabinet","bookcase","books","decor","decoration","plate","bowl","cup","vase","picture","frame"}) do
-  if string.find(text,word,1,true) then return true end
- end
- return false
-end
+local floorParams=RaycastParams.new()
+floorParams.FilterType=Enum.RaycastFilterType.Include
+floorParams.FilterDescendantsInstances={lobby}
+floorParams.RespectCanCollide=true
+local overlap=OverlapParams.new()
+overlap.FilterType=Enum.RaycastFilterType.Include
+overlap.FilterDescendantsInstances={lobby}
 
-local function addCandidate(part,score,text)
- if seenCandidates[part] or decorative(text) then return end
- seenCandidates[part]=true
- table.insert(candidates,{part=part,score=score,text=text})
-end
-
--- Find a spot where a real R6 player can stand beside the furniture AND walk there
--- from the fixed spawn. This prevents decorative shelves/dinnerware from becoming Fill's desk.
-local function findVisitorPoint(part)
- local margin=2.35
- local sx,sz=part.Size.X/2+margin,part.Size.Z/2+margin
- local offsets={
-  Vector3.new(sx,0,0),Vector3.new(-sx,0,0),Vector3.new(0,0,sz),Vector3.new(0,0,-sz),
-  Vector3.new(sx*.82,0,sz*.82),Vector3.new(-sx*.82,0,sz*.82),
-  Vector3.new(sx*.82,0,-sz*.82),Vector3.new(-sx*.82,0,-sz*.82)
- }
- local castTop=math.max(origin.Y+12,part.Position.Y+part.Size.Y/2+9)
- for _,offset in ipairs(offsets) do
-  local world=part.CFrame:PointToWorldSpace(offset)
-  local hit=workspace:Raycast(Vector3.new(world.X,castTop,world.Z),Vector3.new(0,-34,0),accessParams)
-  if hit and hit.Instance~=part and hit.Normal.Y>.82 and math.abs(hit.Position.Y-origin.Y)<=9 then
-   local headBlocked=workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,5.4,0),accessParams)
-   if not headBlocked then
-    local target=hit.Position+Vector3.new(0,3,0)
-    local path=PF:CreatePath({AgentRadius=1.4,AgentHeight=5,AgentCanJump=false,AgentCanClimb=true,WaypointSpacing=3})
-    local computed=pcall(function() path:ComputeAsync(spawnPathPoint,target) end)
-    if computed and path.Status==Enum.PathStatus.Success then
-     local waypoints=path:GetWaypoints()
-     if #waypoints>=2 then
-      local steps=#waypoints path:Destroy()
-      return target,steps
-     end
-    end
-    path:Destroy()
+for _,dir in ipairs(directions) do
+ local probe=origin+dir*7.4
+ local hit=workspace:Raycast(probe+Vector3.new(0,8,0),Vector3.new(0,-18,0),floorParams)
+ if hit and hit.Normal.Y>.84 and math.abs(hit.Position.Y-origin.Y)<1.6 then
+  local center=Vector3.new(hit.Position.X,hit.Position.Y+2.95,hit.Position.Z)
+  local cf=CFrame.lookAt(center,Vector3.new(origin.X,center.Y,origin.Z))
+  local occupied=false
+  for _,part in ipairs(workspace:GetPartBoundsInBox(cf,Vector3.new(6.9,5.1,3.1),overlap)) do
+   if part.CanCollide and part~=hit and not part:GetAttribute("WalkableStairStep") and not part:GetAttribute("PassageSupport") then
+    occupied=true break
    end
   end
- end
- return nil,0
-end
-
--- First collect semantically plausible furniture. Accessibility is validated afterwards
--- so one unreachable high-scoring prop cannot win.
-for _,part in ipairs(lobby:GetDescendants()) do
- if part:IsA("BasePart") and part.Transparency<.98 and part.CanCollide and math.abs(part.CFrame.UpVector.Y)>.84 then
-  local area=part.Size.X*part.Size.Z
-  local topY=part.Position.Y+part.Size.Y/2
-  local relativeHeight=topY-origin.Y
-  local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-  if area>=4 and part.Size.Y<=5 and relativeHeight>=1.4 and relativeHeight<=5.6 and flatDistance<=160 then
-   local text=ancestryText(part)
-   local score=0
-   if string.find(text,"reception",1,true) then score+=320 end
-   if string.find(text,"counter top",1,true) or string.find(text,"countertop",1,true) then score+=260 end
-   if string.find(text,"counter",1,true) then score+=210 end
-   if string.find(text,"front desk",1,true) or string.find(text,"frontdesk",1,true) then score+=240 end
-   if string.find(text,"desk",1,true) then score+=150 end
-   if string.find(text,"table",1,true) then score+=80 end
-   if score>0 then
-    score+=math.min(area,80)*.25-flatDistance*.16
-    addCandidate(part,score,text)
+  local sightStart=origin+Vector3.new(0,2.7,0)
+  local toward=center-sightStart
+  local sight=toward.Magnitude>1 and workspace:Raycast(sightStart,toward.Unit*math.max(0,toward.Magnitude-2.2),floorParams) or nil
+  if not occupied and not sight then
+   local counter=Instance.new("Model") counter.Name="FillReceptionCounter" counter.Parent=lobby
+   local top=Instance.new("Part") top.Name="CounterTop" top.Size=Vector3.new(6.6,.55,2.65) top.CFrame=cf
+   top.Anchored=true top.CanCollide=true top.CanTouch=false top.Material=Enum.Material.WoodPlanks
+   top.Color=Color3.fromRGB(72,58,48) top.Parent=counter
+   local front=Instance.new("Part") front.Name="CounterFront" front.Size=Vector3.new(6.25,2.55,.38)
+   front.CFrame=cf*CFrame.new(0,-1.48,.82) front.Anchored=true front.CanCollide=true front.CanTouch=false
+   front.Material=Enum.Material.WoodPlanks front.Color=Color3.fromRGB(55,45,39) front.Parent=counter
+   for _,x in ipairs({-2.55,2.55}) do
+    local leg=Instance.new("Part") leg.Name="CounterLeg" leg.Size=Vector3.new(.38,2.55,.38)
+    leg.CFrame=cf*CFrame.new(x,-1.5,-.5) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false
+    leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=counter
    end
+   counter:SetAttribute("GeneratedAccessibleReception",true)
+   counter:SetAttribute("SpawnRoomReception",true)
+   counter:SetAttribute("Source","VerifiedSpawnRoom")
+   receptionTop=top
+   receptionPieces={top,front}
+   break
   end
  end
 end
 
--- Generic imported names are allowed only as a fallback candidate class. Small props,
--- shelves and decorative hutch pieces are deliberately excluded.
-for _,part in ipairs(lobby:GetDescendants()) do
- if part:IsA("BasePart") and part.Transparency<.98 and part.CanCollide and math.abs(part.CFrame.UpVector.Y)>.94 then
-  local area=part.Size.X*part.Size.Z
-  local topY=part.Position.Y+part.Size.Y/2
-  local relativeHeight=topY-origin.Y
-  local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
-  local text=ancestryText(part)
-  if area>=12 and area<=180 and math.min(part.Size.X,part.Size.Z)>=2.2 and part.Size.Y<=3.5
-   and relativeHeight>=1.8 and relativeHeight<=4.8 and flatDistance>=5 and flatDistance<=90
-   and not string.find(text,"door",1,true) and not string.find(text,"stair",1,true)
-   and not string.find(text,"rail",1,true) and not decorative(text) then
-    local score=55-math.abs(relativeHeight-3)*10-flatDistance*.22+math.min(area,60)*.1
-    addCandidate(part,score,text)
-   end
-  end
- end
+assert(receptionTop,"No clear reception placement found beside the verified lobby spawn")
 
-table.sort(candidates,function(a,b)return a.score>b.score end)
-for i,candidate in ipairs(candidates) do
- if i>16 then break end
- local visitor,steps=findVisitorPoint(candidate.part)
- if visitor then
-  receptionTop=candidate.part
-  receptionVisitor=visitor
-  receptionPathSteps=steps
-  table.insert(receptionPieces,candidate.part)
-  break
- end
-end
-
--- If the authored furniture is isolated behind imported geometry, build one compact
--- reception counter on the same connected floor as the spawn instead of putting Fill
--- on decorative dinnerware. The counter is placed only after a real walking route and
--- a clear player standing spot are verified.
-if not receptionTop then
- local old=lobby:FindFirstChild("FillReceptionCounter")
- if old then old:Destroy() end
- local overlap=OverlapParams.new()
- overlap.FilterType=Enum.RaycastFilterType.Include
- overlap.FilterDescendantsInstances={lobby}
- local directions={}
- for i=0,11 do
-  local a=i*math.pi/6
-  table.insert(directions,Vector3.new(math.cos(a),0,math.sin(a)))
- end
- for _,dir in ipairs(directions) do
-  local visitorXZ=origin+dir*3.5
-  local deskXZ=origin+dir*8.2
-  local visitorHit=workspace:Raycast(visitorXZ+Vector3.new(0,8,0),Vector3.new(0,-18,0),accessParams)
-  local deskHit=workspace:Raycast(deskXZ+Vector3.new(0,8,0),Vector3.new(0,-18,0),accessParams)
-  if visitorHit and deskHit and visitorHit.Normal.Y>.84 and deskHit.Normal.Y>.84
-   and math.abs(visitorHit.Position.Y-deskHit.Position.Y)<1.25
-   and math.abs(visitorHit.Position.Y-origin.Y)<2.5 then
-   local visitor=visitorHit.Position+Vector3.new(0,3,0)
-   local clearHead=not workspace:Raycast(visitorHit.Position+Vector3.new(0,.2,0),Vector3.new(0,5.4,0),accessParams)
-   local clearSight=not workspace:Raycast(visitorHit.Position+Vector3.new(0,2.7,0),(deskHit.Position-visitorHit.Position).Unit*2.2,accessParams)
-   if clearHead and clearSight then
-    local path=PF:CreatePath({AgentRadius=1.4,AgentHeight=5,AgentCanJump=false,AgentCanClimb=true,WaypointSpacing=3})
-    local computed=pcall(function() path:ComputeAsync(spawnPathPoint,visitor) end)
-    local waypoints=computed and path.Status==Enum.PathStatus.Success and path:GetWaypoints() or {}
-    path:Destroy()
-    if #waypoints>=2 then
-     local counter=Instance.new("Model") counter.Name="FillReceptionCounter" counter.Parent=lobby
-     local y=deskHit.Position.Y
-     local deskCF=CFrame.lookAt(Vector3.new(deskHit.Position.X,y+3.05,deskHit.Position.Z),Vector3.new(visitor.X,y+3.05,visitor.Z))
-     local top=Instance.new("Part") top.Name="CounterTop" top.Size=Vector3.new(6.8,.55,2.8) top.CFrame=deskCF
-     top.Anchored=true top.CanCollide=true top.CanTouch=false top.Material=Enum.Material.WoodPlanks top.Color=Color3.fromRGB(72,58,48) top.Parent=counter
-     local front=Instance.new("Part") front.Name="CounterFront" front.Size=Vector3.new(6.5,2.65,.42)
-     front.CFrame=deskCF*CFrame.new(0,-1.55,.85) front.Anchored=true front.CanCollide=true front.CanTouch=false
-     front.Material=Enum.Material.WoodPlanks front.Color=Color3.fromRGB(55,45,39) front.Parent=counter
-     for _,x in ipairs({-2.7,2.7}) do
-      local leg=Instance.new("Part") leg.Name="CounterLeg" leg.Size=Vector3.new(.42,2.7,.42)
-      leg.CFrame=deskCF*CFrame.new(x,-1.6,-.55) leg.Anchored=true leg.CanCollide=false leg.CanTouch=false
-      leg.Material=Enum.Material.Wood leg.Color=Color3.fromRGB(47,38,33) leg.Parent=counter
-     end
-     counter:SetAttribute("GeneratedAccessibleReception",true)
-     counter:SetAttribute("WalkingRouteValidated",true)
-     counter:SetAttribute("Source","LobbySpawnConnectedFloor")
-     receptionTop=top
-     receptionVisitor=visitor
-     receptionPathSteps=#waypoints
-     receptionPieces={top}
-     break
-    end
-   end
-  end
- end
-end
-assert(receptionTop and receptionVisitor,"No reachable reception point could be created on the lobby spawn floor")
 
 
 -- Face the lobby and move slightly toward the front edge so the authored seated legs
@@ -352,7 +234,7 @@ npc:SetAttribute("ReceptionSurface",receptionTop:GetFullName())
 npc:SetAttribute("ReceptionPosition",torso.Position)
 npc:SetAttribute("ReceptionPieceCount",#receptionPieces)
 npc:SetAttribute("SeatedOnReception",true)
-npc:SetAttribute("ReceptionAccessValidated",true)
+npc:SetAttribute("ReceptionAccessValidated",true)\nnpc:SetAttribute("ReceptionAccessMode","SpawnRoomDirect")
 npc:SetAttribute("VerifiedVisitorPosition",receptionVisitor)
 npc:SetAttribute("ReceptionAccessSteps",receptionPathSteps)
 local tableReference=Instance.new("ObjectValue")
