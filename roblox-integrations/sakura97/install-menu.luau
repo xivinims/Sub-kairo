@@ -173,13 +173,13 @@ config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
--- Eight-second cinematic loading set. Keep the two requested Toolbox assets in
+-- Ten-second cinematic loading set. Keep the two requested Toolbox assets in
 -- ReplicatedFirst so the TV and table exist before the rest of the place finishes replicating.
 local cinematic=Instance.new("Folder")
 cinematic.Name="LoadingCinematicAssets"
 cinematic:SetAttribute("TVAssetId",421148437)
 cinematic:SetAttribute("TableAssetId",397786287)
-cinematic:SetAttribute("Duration",8)
+cinematic:SetAttribute("Duration",10)
 
 local function importLoadingModel(id,expectedName)
  local asset=game:GetService("AssetService"):LoadAssetAsync(id)
@@ -211,7 +211,7 @@ local loader=Instance.new("LocalScript")
 loader.Name="SweanLoadingController"
 loader.Source=__LOADING_SOURCE__
 loader:SetAttribute("CinematicInitialLoading",true)
-loader:SetAttribute("CinematicDuration",8)
+loader:SetAttribute("CinematicDuration",10)
 loader:SetAttribute("TVAssetId",421148437)
 loader:SetAttribute("TableAssetId",397786287)
 loader:SetAttribute("MapLoadingOwnsGoodLuck",true)
