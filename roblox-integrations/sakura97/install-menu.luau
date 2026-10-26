@@ -4,7 +4,7 @@ local starter=game:GetService("StarterGui")
 local first=game:GetService("ReplicatedFirst")
 local runtime=assert(RS:FindFirstChild("SweanRuntime"),"Runtime missing")
 
-for _,pair in ipairs({{starter,"TomiaszMenu"},{first,"SweanLoadingController"},{RS,"SweanMenuConfig"}}) do
+for _,pair in ipairs({{starter,"TomiaszMenu"},{first,"SweanLoadingController"},{first,"LoadingCinematicAssets"},{RS,"SweanMenuConfig"}}) do
  local old=pair[1]:FindFirstChild(pair[2]) if old then old:Destroy() end
 end
 
@@ -173,7 +173,49 @@ config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
-local loader=Instance.new("LocalScript") loader.Name="SweanLoadingController" loader.Source=__LOADING_SOURCE__ loader:SetAttribute("LogoOnlyInitialLoading",true) loader:SetAttribute("MapLoadingOwnsGoodLuck",true) loader.Parent=first
+-- Eight-second cinematic loading set. Keep the two requested Toolbox assets in
+-- ReplicatedFirst so the TV and table exist before the rest of the place finishes replicating.
+local cinematic=Instance.new("Folder")
+cinematic.Name="LoadingCinematicAssets"
+cinematic:SetAttribute("TVAssetId",421148437)
+cinematic:SetAttribute("TableAssetId",397786287)
+cinematic:SetAttribute("Duration",8)
+
+local function importLoadingModel(id,expectedName)
+ local asset=game:GetService("AssetService"):LoadAssetAsync(id)
+ local source=asset:FindFirstChild(expectedName,true) or asset:FindFirstChildWhichIsA("Model",true)
+ assert(source and source:IsA("Model"),"Loading asset "..id.." missing model "..expectedName)
+ local model=source:Clone()
+ model.Name=expectedName
+ for _,d in ipairs(model:GetDescendants()) do
+  if d:IsA("LuaSourceContainer") or d:IsA("RemoteEvent") or d:IsA("RemoteFunction") or d:IsA("ClickDetector") or d:IsA("ProximityPrompt") then
+   d:Destroy()
+  elseif d:IsA("BasePart") then
+   d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false
+  elseif d:IsA("Sound") then
+   d:Destroy()
+  end
+ end
+ model:SetAttribute("SourceAssetId",id)
+ model.Parent=cinematic
+ asset:Destroy()
+ return model
+end
+
+local loadingTV=importLoadingModel(421148437,"TV")
+local loadingTable=importLoadingModel(397786287,"Mesa")
+assert(loadingTV:FindFirstChild("Screen",true),"Old Television screen surface missing")
+cinematic.Parent=first
+
+local loader=Instance.new("LocalScript")
+loader.Name="SweanLoadingController"
+loader.Source=__LOADING_SOURCE__
+loader:SetAttribute("CinematicInitialLoading",true)
+loader:SetAttribute("CinematicDuration",8)
+loader:SetAttribute("TVAssetId",421148437)
+loader:SetAttribute("TableAssetId",397786287)
+loader:SetAttribute("MapLoadingOwnsGoodLuck",true)
+loader.Parent=first
 
 -- The old menu no longer exists in gameplay. Keep only its disabled controller stub;
 -- MenuSceneTemplate above is retained exclusively for the winner presentation.
