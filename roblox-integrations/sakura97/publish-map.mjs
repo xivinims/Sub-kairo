@@ -490,7 +490,7 @@ assert(workspace.JediLibrary:GetAttribute("FixedLobbySHA256")=="ec6fb99dec82f22e
 assert(game.ReplicatedStorage.SweanRuntime:GetAttribute("SurvivorRig")=="R6","R6 survivor runtime missing")
 local assets=game.ServerStorage.SurvivalAssets
 assert(#assets.Maps:GetChildren()==7 and assets.Maps.DoomspireBrickbattle and assets.Maps.JuggernautFightArena and assets.Maps.PirateBayIsland and assets.Maps.NaturalDisasterSurvival and assets.Maps.RocketArena and assets.Maps.PiggySewers and assets.Maps.PiggyMappleDonut)
-assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason and assets.Killers.Krampus and assets.Killers.Piggy)
+assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason and assets.Killers.JohnDoe and assets.Killers.Chucky and assets.Killers.Krampus and assets.Killers.Piggy and not assets.Killers:FindFirstChild("Jeff") and not assets.Killers:FindFirstChild("Freddy"),"Expected exactly five pursuers")
 assert(assets.Killers.Jason.MotionClips:FindFirstChild("Jason Slash"))
 assert(game.ReplicatedStorage.Survival.SurvivorClips:GetAttribute("SourceAssetId")==127092032896760)
 assert(not game.ReplicatedStorage.Survival:FindFirstChild("CrouchClips"),"Removed crouch package returned")
@@ -602,7 +602,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(assets.Maps.PiggyMappleDonut:GetAttribute("SourceAssetId")==16440225099)
   assert(assets.Maps.RocketArena:GetAttribute("RequestedScale")==2,"RocketArena did not persist at 2x scale")
   assert(not assets.Maps:FindFirstChild("HorrorMap") and not assets.Maps:FindFirstChild("MilitaryBase") and not assets.Maps:FindFirstChild("AlpineFortress"),"Old maps persisted")
-  assert(#assets.Killers:GetChildren()==7 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897)
+  assert(#assets.Killers:GetChildren()==5 and assets.Killers.Jason:GetAttribute("SourceAssetId")==125165599816440 and assets.Killers.Krampus:GetAttribute("SourceAssetId")==92081889778550 and assets.Killers.Piggy:GetAttribute("SourceAssetId")==8762062897 and not assets.Killers:FindFirstChild("Jeff") and not assets.Killers:FindFirstChild("Freddy"),"Five-pursuer roster did not persist")
   assert(game.ReplicatedStorage.Survival:GetAttribute("Version")==126)
   assert(game.ServerStorage.SurvivalAssets.Items.Flashlight:GetAttribute("SourceAssetId")==4573262309)
   assert(game.ServerStorage.SurvivalAssets.Killers.Jason.MotionClips:FindFirstChild("Jason Run"))
@@ -691,6 +691,9 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not game.ServerScriptService.SurvivalServer.Source:find('action=="boost"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('action=="musicPlay"',1,true) and not game.ServerScriptService.SurvivalServer.Source:find('value=="slow"',1,true),"Legacy gameplay actions returned")
   assert(workspace.LobbyGuide:GetAttribute("OutfitUserId")==8344738123 and workspace.LobbyGuide.Head.Transparency==1,"Guide outfit/headless missing")
   assert(workspace.LobbyGuide:GetAttribute("OutfitFrozen")==true and workspace.LobbyGuide:GetAttribute("OutfitSource")=="FillFrozenAppearance","Fill outfit is not frozen")
+  assert(workspace.LobbyGuide:GetAttribute("OutfitPants")==110421904136844 and workspace.LobbyGuide:GetAttribute("CrossbodyBagAssetId")==97665507839365,"Requested Fill pants/satchel metadata missing")
+  assert(workspace.LobbyGuide:FindFirstChild("FillCrossbodySatchel",true),"Requested Fill satchel accessory missing")
+  assert(workspace.LobbyGuide:GetAttribute("OutfitRevision")=="2026-10-26-mafia-satchel-v1","Fill outfit revision not frozen")
   local frozen=game:GetService("ServerStorage"):FindFirstChild("FillFrozenAppearance")
   assert(frozen and frozen:IsA("HumanoidDescription") and frozen:GetAttribute("Frozen")==true and frozen:GetAttribute("SourceUserId")==8344738123,"Persistent frozen Fill appearance missing")
   local fillTable=assert(workspace.LobbyGuide.Tabletop.Value,"Fill tabletop reference missing")
@@ -698,17 +701,22 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not workspace.JediLibrary:FindFirstChild("GuideTable") and not workspace.JediLibrary:FindFirstChild("FillGuideStool"),"Generated Fill furniture returned")
   assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=1,"Fill authored-table geometry metadata missing")
   assert(workspace.LobbyGuide:GetAttribute("ReceptionAccessMode")=="AuthoredTable" and workspace.LobbyGuide:GetAttribute("GuideStation")==fillTable:GetFullName(),"Fill authored table metadata missing")
-  assert(workspace.JediLibrary:GetAttribute("OutdoorGroundReady")==true and typeof(workspace.JediLibrary:GetAttribute("OutdoorGroundSize"))=="Vector3","Lobby exterior terrain metadata missing")
-  assert((workspace.JediLibrary:GetAttribute("PassageRepairRevision") or 0)>=3 and (workspace.JediLibrary:GetAttribute("ClearedFoyerRails") or 0)>=1,"Foyer stair/rail repair metadata missing")
-  local landingBridge=0
+  local exteriorGround=assert(workspace.JediLibrary:FindFirstChild("OutdoorGround"),"Exterior ground missing")
+  assert(workspace.JediLibrary:GetAttribute("OutdoorGroundReady")==true and workspace.JediLibrary:GetAttribute("OutdoorGroundMaterial")=="Ground","Exterior ground metadata missing")
+  assert(exteriorGround.Material==Enum.Material.Ground and exteriorGround.Transparency==0,"Exterior ground is still grass/invisible")
+  assert(math.abs((exteriorGround.Position.Y+exteriorGround.Size.Y/2)-625.031494140625)<.25,"Exterior ground is vertically misaligned")
   local passage=assert(workspace.JediLibrary:FindFirstChild("PassageColliders"),"Lobby passage colliders missing")
   for _,part in ipairs(passage:GetDescendants()) do
-   if part:IsA("BasePart") and part:GetAttribute("UpperLandingBridge") then
-    assert(part.CanCollide and part.Transparency>=.98,"Upper stair bridge must be invisible and solid")
-    landingBridge+=1
+   if part:IsA("BasePart") then
+    assert(not part:GetAttribute("WalkableStairStep") and not part:GetAttribute("UpperLandingBridge"),"Invisible stair floor returned")
    end
   end
-  assert(landingBridge>=5,"Foyer stair path does not reach the upper landing")
+  assert((workspace.JediLibrary:GetAttribute("PassageRepairRevision") or 0)>=4 and workspace.JediLibrary:GetAttribute("StairAccessClosed")==true,"Stair closure revision missing")
+  assert((workspace.JediLibrary:GetAttribute("WalkableStairSteps") or 0)==0,"Invisible stair path count returned")
+  local stairWarning=assert(workspace.JediLibrary:FindFirstChild("StairClosedSign"),"Requested construction sign missing")
+  assert(workspace.JediLibrary:GetAttribute("StairWarningAssetId")==17143448214 and stairWarning:GetAttribute("SourceAssetId")==17143448214,"Wrong construction sign asset")
+  assert(stairWarning:GetAttribute("BlocksUpperFloor")==true and stairWarning:FindFirstChild("NoUpstairsLabel",true),"NÃO SUBA stair warning incomplete")
+  assert(game.StarterPlayer.DevCameraOcclusionMode==Enum.DevCameraOcclusionMode.Zoom,"Camera still uses wall transparency/Invisicam behavior")
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
   assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the authored lobby table")
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
@@ -721,6 +729,10 @@ local assets=game.ServerStorage.SurvivalAssets
   for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill English voice asset "..i.." missing") end
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
   local clientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
+  assert(clientSource:find("ViewportFrame",1,true) and clientSource:find("KillerPreviews",1,true),"3D killer shop source not persisted")
+  assert(clientSource:find('local killerOrder={"Jason","JohnDoe","Chucky","Piggy","Krampus"}',1,true),"Five-character killer order not persisted")
+  local previewFolder=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerPreviews"),"Killer shop previews missing")
+  assert(#previewFolder:GetChildren()==5 and not previewFolder:FindFirstChild("Jeff") and not previewFolder:FindFirstChild("Freddy"),"Killer shop preview roster is not five")
   assert(settingsSource:find("GameLanguage",1,true) and settingsSource:find('key="language"',1,true),"Game language setting not persisted")
   assert(clientSource:find('BackgroundTransparency=.82',1,true) and clientSource:find('settingsOverlay.ZIndex=40',1,true),"Readable settings overlay fix not persisted")
   assert(clientSource:find("GameLanguage",1,true) and clientSource:find('L("PERSEGUIDORES","KILLERS")',1,true),"Settings-driven HUD translations not persisted")
@@ -750,7 +762,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==7,"Missing victim pairs")
   for _,map in ipairs(assets.Maps:GetChildren()) do assert(#map.ObjectiveSites:GetChildren()>=9 and #map.ArrivalSpawns:GetChildren()>=7,"Map layout missing: "..map.Name) end
   assert(game.ServerScriptService.SurvivalServer.Source:find("profiles:ownsKiller",1,true) and game.ServerScriptService.SurvivalServer.Source:find("profiles:buyKiller",1,true),"Killer shop authority missing")
-  return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,sevenVictimAnimations=true,noResetControl=true,coinAsset=10737243803,simplifiedSettings=true,compactProfile=true,privateKillerSelection=true,killerShop=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,winnerMenuScene=true,animatedWinner=true,atomicShopPurchase=true,noMainMenu=true,ok=true,version=game.PlaceVersion,build=158,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,fiveVictimAnimations=true,noResetControl=true,coinAsset=10737243803,simplifiedSettings=true,compactProfile=true,privateKillerSelection=true,killerShop=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,winnerMenuScene=true,animatedWinner=true,atomicShopPurchase=true,noMainMenu=true,ok=true,version=game.PlaceVersion,build=158,logo=true,mapCount=7,pursuerCount=5,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
