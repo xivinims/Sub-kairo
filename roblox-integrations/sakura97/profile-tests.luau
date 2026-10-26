@@ -57,6 +57,13 @@ assert(svc:save(p) and values.points==afterPurchase,"Autosave refunded purchase"
 local reloaded=Profiles.new(store,{wait=function() end}) local pp=player(994) reloaded:attach(pp) assert(reloaded:load(pp))
 assert(reloaded:ownsKiller(pp,"Jeff") and reloaded:ownsKiller(pp,"Jason"),"Owned killer did not persist")
 assert(reloaded:lanternTier(pp)==1 and pp:GetAttribute("LanternDurabilityTier")==1,"Lantern durability did not reload")
+assert(not reloaded:equipKiller(pp,"Freddy"),"Cannot equip an unowned killer")
+assert(reloaded:equipKiller(pp,"JohnDoe"),"Owned killer could not be equipped")
+assert(reloaded:save(pp) and values.equippedKiller=="JohnDoe","Equipped selection was not saved")
+local equippedProfile=Profiles.new(store,{wait=function() end}) local equippedPlayer=player(995)
+equippedProfile:attach(equippedPlayer) assert(equippedProfile:load(equippedPlayer))
+assert(equippedPlayer:GetAttribute("EquippedKiller")=="JohnDoe","Equipped selection did not reload")
 host:Destroy()
 return {ok=true,lanternDurability=true,lanternPersistence=true,killerOwnership=true,killerPurchaseIdempotent=true,pointsPersist=true,readFailureGuard=true,idempotentRetries=true,concurrentSessionXP=true,loadPreservesEarnings=true,levelCap=true,atomicPurchase=true,noDuplicateDebit=true}
+
 

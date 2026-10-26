@@ -317,6 +317,29 @@ lobby:SetAttribute("StairAccessClosed",true)
 lobby:SetAttribute("StairWarningAssetId",17143448214)
 lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
 
+-- Restore the authored under-stair facade; its existing narrow collision proxies
+-- protect the wall without filling the doorway or staircase with a mesh hull.
+local underStairRestored=0
+for _,part in ipairs(house:GetDescendants()) do
+ if part:IsA("BasePart") and part.Name:find("Foyer_Wall_Panel_Tall_Side_Stair_L",1,true) then
+  part.Transparency=0 part.CastShadow=true underStairRestored+=1
+ end
+end
+lobby:SetAttribute("UnderStairWallRestored",underStairRestored)
+-- Derive the spawn from the actual lowest front-door frame, not old snapshot metadata.
+local frontFrame
+for _,part in ipairs(house:GetDescendants()) do
+ if part:IsA("BasePart") and part.Name:find("Front_Door_Frame",1,true) and (not frontFrame or part.Position.Y<frontFrame.Position.Y) then frontFrame=part end
+end
+if frontFrame then
+ local center=Vector3.zero local count=0
+ for _,part in ipairs(house:GetDescendants()) do if part:IsA("BasePart") then center+=part.Position count+=1 end end
+ center/=math.max(1,count)
+ local normal=Vector3.new(frontFrame.CFrame.LookVector.X,0,frontFrame.CFrame.LookVector.Z).Unit
+ if normal:Dot(center-frontFrame.Position)<0 then normal=-normal end
+ local bottom=frontFrame.Position-Vector3.new(0,frontFrame.Size.Y*.5,0)
+ lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(bottom,bottom+normal))
+end
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
 if typeof(referenceCF)~="CFrame" then
  local legacy=lobby:FindFirstChild("Door") or lobby:FindFirstChild("OriginalLobbyDoor")
@@ -339,7 +362,7 @@ if doorForward.Magnitude<.1 then doorForward=Vector3.new(1,0,0) else doorForward
 -- inward direction. This is recalculated every publish instead of trusting an old spawn.
 for _,distance in ipairs({4.5,6,7.5,9}) do
  local candidate=original+doorForward*distance
- local hit=workspace:Raycast(candidate+Vector3.new(0,9,0),Vector3.new(0,-22,0),lobbyParams)
+ local hit=workspace:Raycast(candidate+Vector3.new(0,4,0),Vector3.new(0,-10,0),lobbyParams)
  if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then
   floor=hit
   lobby:SetAttribute("LobbySpawnMode","InsideDoor")
@@ -726,10 +749,12 @@ for _,killer in ipairs(rigs:GetChildren()) do
  local preview=killer:Clone()
  preview.Name=killer.Name
  for _,obj in ipairs(preview:GetDescendants()) do
-  if obj:IsA("LuaSourceContainer") or obj:IsA("Humanoid") or obj:IsA("AnimationController") or obj:IsA("KeyframeSequence") or obj:IsA("Animation") then
+  if obj:IsA("LuaSourceContainer") or obj:IsA("KeyframeSequence") or obj:IsA("Animation") then
    obj:Destroy()
   elseif obj:IsA("BasePart") then
-   obj.Anchored=true obj.CanCollide=false obj.CanTouch=false obj.CanQuery=false
+   obj.Anchored=obj.Name=="HumanoidRootPart" obj.CanCollide=false obj.CanTouch=false obj.CanQuery=false
+  elseif obj:IsA("Humanoid") then
+   obj.AutoRotate=false obj.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
   end
  end
  preview:SetAttribute("ShopPreview",true)
@@ -1121,10 +1146,10 @@ net:SetAttribute("Version",126) net:SetAttribute("MaxParticipants",8) net:SetAtt
 net:SetAttribute("MissionStage","Waiting") net:SetAttribute("ComputersDone",0) net:SetAttribute("ComputersRequired",3)
 local light=game:GetService("Lighting")
 -- Fixed environment copied from the supplied Violence_District.rbxlx.
-light.ClockTime=5
-light.Brightness=3
-light.Ambient=Color3.fromRGB(78,102,108)
-light.OutdoorAmbient=Color3.fromRGB(93,104,124)
+light.ClockTime=.5
+light.Brightness=1.45
+light.Ambient=Color3.fromRGB(42,43,52)
+light.OutdoorAmbient=Color3.fromRGB(14,18,29)
 light.ColorShift_Top=Color3.fromRGB(62,78,81)
 light.ExposureCompensation=0
 light.GlobalShadows=true
@@ -1141,5 +1166,6 @@ end
 local bloom=light:FindFirstChild("ViolenceDistrictBloom") or Instance.new("BloomEffect")
 bloom.Name="ViolenceDistrictBloom" bloom.Intensity=1 bloom.Threshold=2 bloom.Size=24 bloom.Enabled=true bloom.Parent=light
 return {maps=mapReports,mapParts=mapReports[1].parts,connectedPoints=mapReports[1].connected,jasonClips=#clips:GetChildren(),lobbyPreserved=true,pursuers=#rigs:GetChildren(),computerAsset=computerTemplate:GetAttribute("SourceAssetId"),keyAsset=keyTemplate:GetAttribute("SourceAssetId")}
+
 
 

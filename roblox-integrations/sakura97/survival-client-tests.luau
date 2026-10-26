@@ -76,7 +76,13 @@ local ok,result=xpcall(function()
  assert(gui.ShopButton.Text=="" and gui.ShopButton:FindFirstChild("CartIcon"),"Cart icon missing")
  assert(gui.KillerShop.ShopPanel.Items:FindFirstChild("Jeff")==nil and gui.KillerShop.ShopPanel.Items:FindFirstChild("Freddy")==nil,"Removed killers returned to shop")
  local jasonShop=assert(gui.KillerShop.ShopPanel.Items:FindFirstChild("Jason"),"Jason shop row missing")
- assert(jasonShop:FindFirstChild("Portrait") and jasonShop.Portrait:IsA("ViewportFrame"),"Killer shop portrait is not a 3D ViewportFrame")
+ assert(jasonShop:FindFirstChild("Name") and jasonShop:FindFirstChild("Select"),"Killer name/select button missing")
+ assert(gui.KillerShop.ShopPanel.Size==UDim2.fromScale(1,1),"Shop is not full screen")
+ assert(gui.KillerShop.ShopPanel.Items:FindFirstChildWhichIsA("UIListLayout"),"Killer names must use a vertical list")
+ local portrait=gui.KillerShop.ShopPanel.DetailPanel.SelectedPortrait
+ local actor=assert(portrait:FindFirstChild("PreviewWorld"):FindFirstChild("Jason"),"Selected actor missing")
+ assert(actor:GetAttribute("PresentationState")=="ShopIdle" and actor:GetAttribute("PresentationPursuer"),"Shop actor is not animated idle")
+ assert(gui.KillerShop.ShopPanel.DetailPanel.Action.Text=="ATUALMENTE","Equipped Jason state missing")
  local shopRows=0
  for _,row in ipairs(gui.KillerShop.ShopPanel.Items:GetChildren()) do
   if row:IsA("Frame") then shopRows+=1 end
@@ -208,5 +214,6 @@ end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
 assert(ok,result) return result
+
 
 

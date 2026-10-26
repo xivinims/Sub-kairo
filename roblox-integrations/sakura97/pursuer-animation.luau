@@ -319,7 +319,9 @@ Run.PreSimulation:Connect(function(dt)
    if d and visible then
     local requested=model:GetAttribute("PresentationState") or "Winning Screen"
     local elapsed=model:GetAttribute("PresentationFrozen") and (model:GetAttribute("PresentationFreezeTime") or .3) or math.max(0,workspace:GetServerTimeNow()-(model:GetAttribute("PresentationAt") or workspace:GetServerTimeNow()))
-    if requested=="RoundVictory" and not victim then
+    if requested=="ShopIdle" and not victim then
+     apply(d,pursuerStateName(d,"idle"),dt,true,elapsed)
+    elseif requested=="RoundVictory" and not victim then
      local clip=d.clips["Winning Screen"] and "Winning Screen" or (d.clips["Jason Idle"] and "Jason Idle" or locomotionName(d,"idle",false))
      apply(d,clip,dt,true,elapsed)
     elseif victim then
@@ -480,4 +482,5 @@ Run.PreSimulation:Connect(function(dt)
   end
  end
 end)
+
 

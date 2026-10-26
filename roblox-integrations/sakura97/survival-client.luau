@@ -335,7 +335,7 @@ shopPanel.Parent=shopOverlay
 shopPanel.ZIndex=116
 shopPanel.BackgroundTransparency=.08
 shopPanel.BackgroundColor3=Color3.fromRGB(5,5,6)
-shopPanel:SetAttribute("Style","DistressedStore")
+shopPanel:SetAttribute("Style","LostInspiredStage")
 shopPanel.UIStroke.Color=Color3.fromRGB(238,238,232)
 shopPanel.UIStroke.Transparency=.10
 shopPanel.UIStroke.Thickness=2
@@ -491,10 +491,8 @@ gridPad.PaddingTop=UDim.new(0,8)
 gridPad.PaddingLeft=UDim.new(0,8)
 gridPad.PaddingRight=UDim.new(0,8)
 gridPad.PaddingBottom=UDim.new(0,8)
-local shopLayout=Instance.new("UIGridLayout",shopList)
-shopLayout.CellPadding=UDim2.fromOffset(8,8)
-shopLayout.CellSize=UDim2.new(.25,-8,0,176)
-shopLayout.FillDirectionMaxCells=4
+local shopLayout=Instance.new("UIListLayout",shopList)
+shopLayout.Padding=UDim.new(0,12)
 shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
 
 -- Right selected-character panel.
@@ -572,45 +570,40 @@ local function clearViewport(viewport)
 end
 
 local function populateShopViewport(viewport,killerName,wide)
+ if viewport:GetAttribute("SelectedKiller")==killerName and viewport:FindFirstChild("PreviewWorld") then return end
  clearViewport(viewport)
- local world=Instance.new("WorldModel",viewport)
- world.Name="PreviewWorld"
+ viewport:SetAttribute("SelectedKiller",killerName)
  local source=previews and previews:FindFirstChild(killerName)
  if not source then return end
-
+ local world=Instance.new("WorldModel") world.Name="PreviewWorld"
  local model=source:Clone()
  model.Name=killerName
- model.Parent=world
-
+ model:SetAttribute("PresentationPursuer",true)
+ model:SetAttribute("PresentationState","ShopIdle")
+ model:SetAttribute("PresentationFrozen",false)
+ model:SetAttribute("PresentationAt",workspace:GetServerTimeNow())
+ model:PivotTo(CFrame.new())
+ model.Parent=world world.Parent=viewport
  local cf,size=model:GetBoundingBox()
- local center=cf.Position+Vector3.new(0,size.Y*(wide and .02 or .06),0)
+ local center=cf.Position+Vector3.new(0,size.Y*.02,0)
  local root=model:FindFirstChild("HumanoidRootPart",true) or model.PrimaryPart
  local forward=root and root.CFrame.LookVector or Vector3.new(0,0,-1)
- forward=Vector3.new(forward.X,0,forward.Z)
- if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
- local distance=wide and math.max(5,size.Y*.82,size.Z*1.45) or math.max(5.2,size.Y*.92,size.Z*1.65)
-
- local camera=Instance.new("Camera",viewport)
- camera.Name="PreviewCamera"
- camera.FieldOfView=wide and 27 or 30
- camera.CFrame=CFrame.lookAt(center+forward*distance,center)
+ forward=Vector3.new(forward.X,0,forward.Z).Unit
+ local camera=Instance.new("Camera",viewport) camera.Name="PreviewCamera" camera.FieldOfView=34
+ local function fit()
+  local pixels=viewport.AbsoluteSize
+  local aspect=math.max(.45,pixels.X/math.max(1,pixels.Y))
+  local distance=math.max(size.Y,size.X/aspect)*.56/math.tan(math.rad(camera.FieldOfView/2))+size.Z*.5
+  camera.CFrame=CFrame.lookAt(center+forward*distance+Vector3.new(distance*.06,size.Y*.03,0),center)
+ end
+ fit()
  viewport.CurrentCamera=camera
-end
-
-local function buildShopPortrait(card,killerName)
- local portrait=Instance.new("ViewportFrame",card)
- portrait.Name="Portrait"
- portrait.BackgroundColor3=Color3.fromRGB(12,12,13)
- portrait.BackgroundTransparency=0
- portrait.BorderSizePixel=0
- portrait.Position=UDim2.fromOffset(5,5)
- portrait.Size=UDim2.new(1,-10,1,-39)
- portrait.Ambient=Color3.fromRGB(100,100,106)
- portrait.LightColor=Color3.fromRGB(238,233,222)
- portrait.LightDirection=Vector3.new(-.6,-1,-.5)
- portrait.ZIndex=119
- populateShopViewport(portrait,killerName,false)
- return portrait
+ -- Resizing the window must not crop an animated character.
+ local connection
+ connection=viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+  if camera.Parent then fit() else connection:Disconnect() end
+ end)
+ camera.Destroying:Connect(function() connection:Disconnect() end)
 end
 
 local function refreshSelectedKiller()
@@ -622,9 +615,10 @@ local function refreshSelectedKiller()
 
  local owned=ownedKillers()
  if owned[selectedKiller] then
-  detailPrice.Text=L("DESBLOQUEADO","UNLOCKED")
-  detailAction.Text=L("ADQUIRIDO","OWNED")
-  detailAction.Active=false
+  local equipped=(player:GetAttribute("EquippedKiller") or "Jason")==selectedKiller
+  detailPrice.Text=equipped and L("SELECIONADO PARA A PRÓXIMA PARTIDA","SELECTED FOR YOUR NEXT ROUND") or L("TOQUE PARA EQUIPAR","TAP TO EQUIP")
+  detailAction.Text=equipped and L("ATUALMENTE","EQUIPPED") or L("ADQUIRIDO","OWNED")
+  detailAction.Active=not equipped
   detailAction.AutoButtonColor=false
   detailAction.BackgroundTransparency=.68
  else
@@ -645,7 +639,7 @@ end
 
 detailAction=button(detailPanel,"Action",L("COMPRAR","BUY"),UDim2.new(1,-20,0,36),UDim2.new(0,10,1,-43),function()
  local owned=ownedKillers()
- if owned[selectedKiller] then return end
+ if owned[selectedKiller] then event:FireServer("equipKiller",selectedKiller) return end
  event:FireServer("buyKiller",selectedKiller)
 end)
 detailAction.ZIndex=121
@@ -673,11 +667,13 @@ for i,name in ipairs(killerOrder) do
   stroke.Thickness=1
   shopCardStrokes[killerName]=stroke
 
-  buildShopPortrait(card,killerName)
+  card.Size=UDim2.new(1,-18,0,42)
+  card.Rotation=i%2==0 and .4 or -.4
+  card.BackgroundTransparency=.82
 
-  local nameLabel=text(card,"Name",killerName,UDim2.new(1,-10,0,26),UDim2.new(0,5,1,-31))
+  local nameLabel=text(card,"Name",killerName,UDim2.new(1,-16,1,0),UDim2.fromOffset(8,0))
   nameLabel.Font=Enum.Font.Garamond
-  nameLabel.TextSize=14
+  nameLabel.TextSize=23
   nameLabel.TextXAlignment=Enum.TextXAlignment.Center
   nameLabel.ZIndex=120
 
@@ -687,6 +683,7 @@ for i,name in ipairs(killerOrder) do
   status.TextXAlignment=Enum.TextXAlignment.Right
   status.TextColor3=Color3.fromRGB(205,205,198)
   status.ZIndex=121
+  status.Visible=false
   shopCardStatus[killerName]=status
 
   local hit=Instance.new("TextButton",card)
@@ -696,7 +693,7 @@ for i,name in ipairs(killerOrder) do
   hit.Text=""
   hit.AutoButtonColor=false
   hit.ZIndex=122
-  hit.MouseButton1Click:Connect(function()
+  hit.Activated:Connect(function()
    selectedKiller=killerName
    refreshSelectedKiller()
   end)
@@ -885,6 +882,81 @@ end
 setShopTab("Killers")
 refreshSelectedKiller()
 
+-- Full-screen shop stage. Keep the gameplay camera untouched: closing the shop
+-- cannot strand a player in Scriptable mode or change their FOV.
+do
+ shopPanel.Size=UDim2.fromScale(1,1) shopPanel.Position=UDim2.fromScale(0,0)
+ shopPanel.BackgroundTransparency=1 shopPanel.UIStroke.Enabled=false
+ shopLimit:Destroy() innerBorder.Visible=false shopRail.Visible=false searchWrap.Visible=false
+ for _,child in ipairs(shopPanel:GetChildren()) do
+  if child.Name:find("Scratch") then child.Visible=false end
+ end
+ shopOverlay.BackgroundTransparency=0
+ shopTitle.Visible=true shopTitle.Position=UDim2.fromScale(.075,.09) shopTitle.Size=UDim2.fromScale(.37,.13)
+ shopTitle.Font=Enum.Font.Antique shopTitle.TextScaled=true shopTitle.TextXAlignment=Enum.TextXAlignment.Left shopTitle.ZIndex=120
+ local titleLimit=Instance.new("UITextSizeConstraint",shopTitle) titleLimit.MaxTextSize=54 titleLimit.MinTextSize=19
+ tabBar.Position=UDim2.fromScale(.075,.24) tabBar.Size=UDim2.fromScale(.5,.08)
+ shopTabs.Emotes.Visible=false
+ shopList.Position=UDim2.fromScale(.075,.34) shopList.Size=UDim2.fromScale(.35,.52) shopList.BackgroundTransparency=1
+ shopBalance.Position=UDim2.fromScale(.075,.89) shopBalance.Size=UDim2.fromScale(.35,.06) shopBalance.TextSize=16
+ detailPanel.Position=UDim2.fromScale(.47,.12) detailPanel.Size=UDim2.fromScale(.48,.82)
+ detailPanel.BackgroundTransparency=1 detailStroke.Enabled=false
+ detailPortrait.Position=UDim2.fromScale(0,0) detailPortrait.Size=UDim2.fromScale(1,.72)
+ detailPortrait.BackgroundTransparency=1 detailPortraitStroke.Enabled=false
+ detailPortrait.Ambient=Color3.fromRGB(100,95,106) detailPortrait.LightColor=Color3.fromRGB(252,205,153)
+ detailName.Position=UDim2.fromScale(.06,.72) detailName.Size=UDim2.fromScale(.88,.06) detailName.TextSize=25
+ detailTip.Position=UDim2.fromScale(.06,.79) detailTip.Size=UDim2.fromScale(.88,.06) detailTip.TextSize=12
+ detailPrice.Position=UDim2.fromScale(.06,.86) detailPrice.Size=UDim2.fromScale(.88,.045)
+ detailAction.Position=UDim2.fromScale(.18,.92) detailAction.Size=UDim2.fromScale(.64,.08) detailAction.TextSize=20
+ shopClose.Position=UDim2.new(1,-62,0,22) shopClose.Size=UDim2.fromOffset(42,42) shopClose.TextSize=30
+ itemsPanel.Position=UDim2.fromScale(.075,.34) itemsPanel.Size=UDim2.fromScale(.84,.55)
+ shopPlaceholder.Position=shopList.Position shopPlaceholder.Size=shopList.Size
+ local scene=Instance.new("ViewportFrame",shopOverlay) scene.Name="DoorsBackdrop"
+ scene.Size=UDim2.fromScale(1,1) scene.BackgroundTransparency=1 scene.ZIndex=115
+ scene.Ambient=Color3.fromRGB(53,46,45) scene.LightColor=Color3.fromRGB(181,143,99) scene.LightDirection=Vector3.new(-1,-.5,-1)
+ local shade=Instance.new("Frame",shopOverlay) shade.Name="StageShade" shade.Size=UDim2.fromScale(1,1)
+ shade.BackgroundColor3=Color3.fromRGB(3,4,8) shade.BackgroundTransparency=.25 shade.BorderSizePixel=0 shade.ZIndex=116
+ local gradient=Instance.new("UIGradient",shade)
+ gradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.1),NumberSequenceKeypoint.new(.5,.45),NumberSequenceKeypoint.new(1,.72)})
+ local scale=Instance.new("UIScale",shopPanel)
+ local transition
+ local function resize()
+  local h=math.max(240,shopOverlay.AbsoluteSize.Y)
+  local height=math.clamp((h*.52-60)/5,27,48)
+  shopLayout.Padding=UDim.new(0,math.clamp(h*.016,6,14))
+  for _,card in pairs(shopCards) do
+   card.Size=UDim2.new(1,-18,0,height)
+   local label=card:FindFirstChild("Name") if label then label.TextSize=math.clamp(height*.55,17,25) end
+  end
+ end
+ shopOverlay:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize) resize()
+ shopOverlay:GetPropertyChangedSignal("Visible"):Connect(function()
+  if transition then transition:Cancel() end
+  if shopOverlay.Visible then
+   if not scene.CurrentCamera then
+    local source=net:FindFirstChild("ShopScene")
+    if source then
+     local world=Instance.new("WorldModel",scene) local room=source:Clone() room.Parent=world
+     local camera=Instance.new("Camera",scene) camera.FieldOfView=65
+     camera.CFrame=source:GetAttribute("PreviewCamera") or CFrame.new(0,6,20)
+     scene.CurrentCamera=camera
+    end
+   end
+   selectedKiller=player:GetAttribute("EquippedKiller") or selectedKiller
+   refreshShop() scale.Scale=.965
+   shopPanel.Position=UDim2.fromScale(0,.025)
+   transition=TweenService:Create(shopPanel,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromScale(0,0)}) transition:Play()
+   TweenService:Create(scale,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Scale=1}):Play()
+  else
+   clearViewport(scene)
+  end
+ end)
+ game:GetService("ProximityPromptService").PromptTriggered:Connect(function(prompt,who)
+  if prompt.Name~="SuviversShopPrompt" or (who and who~=player) or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
+  settingsOverlay.Visible=false shopOverlay.Visible=true
+ end)
+end
+
 local shopButton=button(gui,"ShopButton","",UDim2.fromOffset(44,44),UDim2.new(1,-110,0,6),function()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  refreshShop() shopOverlay.Visible=not shopOverlay.Visible
@@ -899,6 +971,7 @@ for i,x in ipairs({13,23}) do
  Instance.new("UICorner",wheel).CornerRadius=UDim.new(1,0)
 end
 player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshShop)
+player:GetAttributeChangedSignal("EquippedKiller"):Connect(refreshShop)
 player:GetAttributeChangedSignal("LanternDurabilityTier"):Connect(refreshItemShop)
 task.spawn(function()
  local stats=player:WaitForChild("leaderstats",20)
@@ -2143,5 +2216,6 @@ local function squareHud(obj)
 end
 for _,obj in ipairs(gui:GetDescendants()) do squareHud(obj) end
 gui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareHud(obj) end end) end)
+
 
 

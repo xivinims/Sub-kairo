@@ -42,6 +42,8 @@ function Profiles:load(p)
   for name,owned in pairs(data.ownedKillers) do if owned==true and type(name)=="string" then r.ownedKillers[name]=true end end
  end
  p:SetAttribute("OwnedKillersJson",Http:JSONEncode(r.ownedKillers))
+ r.equippedKiller=r.ownedKillers[data.equippedKiller] and data.equippedKiller or "Jason"
+ p:SetAttribute("EquippedKiller",r.equippedKiller)
  r.lanternTier=math.clamp(integer(data.lanternTier),0,6)
  p:SetAttribute("LanternDurabilityTier",r.lanternTier)
  r.loaded=true p:SetAttribute("ProfileLoaded",true)
@@ -61,6 +63,13 @@ end
 function Profiles:ownsKiller(p,name)
  local r=self.records[p]
  return r and r.ownedKillers and r.ownedKillers[name]==true
+end
+function Profiles:equipKiller(p,name)
+ local r=self.records[p]
+ if not r or not r.loaded or not self:ownsKiller(p,name) then return false,"Perseguidor não adquirido." end
+ r.equippedKiller=name r.equippedDirty=true
+ p:SetAttribute("EquippedKiller",name)
+ return true,"Perseguidor equipado."
 end
 function Profiles:buyKiller(p,name,price)
  local r=self.records[p] local stats=p:FindFirstChild("leaderstats")
@@ -137,11 +146,12 @@ function Profiles:save(p)
  if not self.store or not r or not r.loaded then return false end
  if r.busy then r.pending=true return false end
  if r.purchase then return self:buyKiller(p,r.purchase.name,r.purchase.price) end
- if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty and not r.lanternDirty then return true end
+ if r.xp==r.savedXP and r.points==r.savedPoints and not r.ownedDirty and not r.lanternDirty and not r.equippedDirty then return true end
  r.busy=true
  local xp,points=r.xp,r.points
  local ownedSnapshot={} for name,owned in pairs(r.ownedKillers or {}) do if owned then ownedSnapshot[name]=true end end
  local lanternTier=math.clamp(integer(r.lanternTier),0,6)
+ local equippedSnapshot=r.equippedKiller or "Jason"
  local timestamp=os.time()
  local ok=self:retry(function()
   return self.store:UpdateAsync(tostring(p.UserId),function(old)
@@ -154,6 +164,7 @@ function Profiles:save(p)
    old.ownedKillers.Jason=true
    for name,owned in pairs(ownedSnapshot) do if owned then old.ownedKillers[name]=true end end
    old.lanternTier=math.max(integer(old.lanternTier),lanternTier)
+   old.equippedKiller=old.ownedKillers[equippedSnapshot] and equippedSnapshot or "Jason"
    receipts[r.id]={xp=xp,points=points,at=timestamp}
    local keys={} for id,v in pairs(receipts) do if id~=r.id then table.insert(keys,{id=id,at=type(v)=="table" and (v.at or 0) or 0}) end end
    table.sort(keys,function(a,b) return a.at>b.at end)
@@ -163,9 +174,9 @@ function Profiles:save(p)
   end)
  end)
  r.busy=false
- if ok then r.savedXP=xp r.savedPoints=points r.ownedDirty=false r.lanternDirty=false end
+ if ok then r.savedXP=xp r.savedPoints=points r.ownedDirty=false r.lanternDirty=false r.equippedDirty=r.equippedKiller~=equippedSnapshot end
  local again=r.pending r.pending=false
- if again and (r.xp~=xp or r.points~=points) then return self:save(p) end
+ if again and (r.xp~=xp or r.points~=points or r.equippedDirty) then return self:save(p) end
  return ok
 end
 function Profiles:flush(p,timeout)
@@ -175,4 +186,5 @@ function Profiles:flush(p,timeout)
  return self:save(p)
 end
 return Profiles
+
 

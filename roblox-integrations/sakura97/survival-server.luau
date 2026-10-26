@@ -819,6 +819,12 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
   end
   net.Update:FireClient(p,"itemResult",ok,msg,newTier,lanternMaxSeconds(p))
   return
+ elseif action=="equipKiller" then
+  if p:GetAttribute("InRound") or type(value)~="string" or #value>40 or not config.Killers[value] or not assets.Killers:FindFirstChild(value) then return end
+  local ok,msg=profiles:equipKiller(p,value)
+  net.Update:FireClient(p,"shopResult",ok,msg,value)
+  if ok then task.spawn(saveProfile,p) end
+  return
  elseif action=="buyKiller" then
   if type(value)~="string" or #value>40 then return end
   local spec=config.Killers[value]
@@ -1266,7 +1272,9 @@ task.spawn(function()
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
     setupObjectives()
-    local chosen=assets.Killers:FindFirstChild(selectedKiller or "Jason") or rigList[1]
+    local preferred=selectionPlayer:GetAttribute("EquippedKiller")
+    if not profiles:ownsKiller(selectionPlayer,preferred) then preferred="Jason" end
+    local chosen=assets.Killers:FindFirstChild(selectedKiller or preferred or "Jason") or rigList[1]
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
@@ -1336,3 +1344,4 @@ task.spawn(function()
   end
  end
 end)
+

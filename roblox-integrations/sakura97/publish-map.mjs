@@ -422,7 +422,7 @@ const sources={CONFIG:'survival-config',RULES:'round-rules',AI:'pursuer-ai',KILL
 let install=read('jason-install');
 for(const [key,name] of Object.entries(sources)) install=install.replace(`__${key}_SOURCE__`,JSON.stringify(read(name)));
 const menu=read('install-menu').replaceAll('__SURVIVERS_LOGO_ID__','136450401317962').replace('__MENU_SOURCE__',JSON.stringify(read('menu-client'))).replace('__LOADING_SOURCE__',JSON.stringify(read('loading-client')));
-const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
+const syntax=Object.values(sources).concat(['menu-client','loading-client','lobby-guide-client','lobby-guide-install','shop-stage-install','player-profile','profile-client']).map((name,i)=>`local function s${i}()\n${read(name)}\nend`).join('\n')+'\nreturn {ok=true}';
 console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const atlasManifest=JSON.parse(fs.readFileSync('roblox-integrations/sakura97/action-atlas.json','utf8'));
 const actionAtlasId=atlasManifest.assetId || await createActionAtlas(Buffer.from(fs.readFileSync('roblox-integrations/sakura97/action-atlas.b64','utf8'),'base64'));
@@ -477,6 +477,9 @@ ${menu}
 end
 result.lobbyGuide=(function()
 ${read('lobby-guide-install').replace('__GUIDE_CLIENT_SOURCE__',JSON.stringify(read('lobby-guide-client')))}
+end)()
+result.shopStage=(function()
+${read('shop-stage-install')}
 end)()
 result.playerProfile=(function()
 ${profileTest}
@@ -691,7 +694,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(loadingSource:find('screen.CFrame*CFrame.new(screen.Size.X/2+.028,0,0)',1,true),"Logo was not placed on the TV glass")
   assert(loadingSource:find("waitUntil(9.05)",1,true) and loadingSource:find("CINEMATIC_DURATION",1,true),"Final cinematic fade timing missing")
   assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
-  assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=17.35",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Fixed dusk ambience missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=.5",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Night lobby ambience missing")
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
   assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay FOV setting missing")
   assert(not settingsSource:find('key="visual"',1,true) and not settingsSource:find('VisualSaturation',1,true) and not settingsSource:find('VisualTime',1,true),"Removed visual/environment settings returned")
@@ -699,12 +702,12 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
   local shopSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
-  assert(shopSource:find('shopPanel:SetAttribute("Style","DistressedStore")',1,true),"Distressed store style marker missing")
-  assert(shopSource:find('local shopLayout=Instance.new("UIGridLayout",shopList)',1,true) and shopSource:find('shopLayout.FillDirectionMaxCells=4',1,true),"Reference-style killer card grid missing")
+  assert(shopSource:find('shopPanel:SetAttribute("Style","LostInspiredStage")',1,true),"Full-screen shop stage marker missing")
+  assert(shopSource:find('local shopLayout=Instance.new("UIListLayout",shopList)',1,true) and shopSource:find('shopPanel.Size=UDim2.fromScale(1,1)',1,true),"Full-screen shop name list missing")
   assert(shopSource:find('shopSearch.Name="Search"',1,true) and shopSource:find('tabBar.Name="Tabs"',1,true),"Shop tabs/search layout missing")
   assert(shopSource:find('detailPanel.Name="DetailPanel"',1,true) and shopSource:find('detailPortrait.Name="SelectedPortrait"',1,true),"Selected killer detail panel missing")
   assert(shopSource:find('local killerOrder={"Jason","JohnDoe","Chucky","Piggy","Krampus"}',1,true),"Five-killer reference shop order missing")
-  assert(shopSource:find('portrait.Name="Portrait"',1,true) and shopSource:find('Instance.new("ViewportFrame",card)',1,true),"3D killer card portrait design missing")
+  assert(shopSource:find('model:SetAttribute("PresentationState","ShopIdle")',1,true) and game.ReplicatedStorage.Survival:FindFirstChild("ShopScene"),"Animated selected killer or DOORS backdrop missing")
   assert(not shopSource:find("forgot a",1,true) and not shopSource:find("lmao",1,true),"Reference meme text leaked into game shop")
   assert(shopSource:find('{"Items",L("ITENS","ITEMS")}',1,true) and not shopSource:find('{"Survivors",L("SOBREVIVENTES"',1,true),"Items tab did not replace Survivors")
   assert(shopSource:find('lanternCard.Name="LanternUpgrade"',1,true) and shopSource:find('event:FireServer("buyLanternUpgrade")',1,true),"Lantern durability item shop missing")
@@ -798,5 +801,6 @@ local assets=game.ServerStorage.SurvivalAssets
 if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
  throw new Error('Suvivers build was not published; inspect saveError above');
 }
+
 
 

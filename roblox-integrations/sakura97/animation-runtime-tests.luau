@@ -54,6 +54,23 @@ local ok,err=xpcall(function()
   local kill=api.execution(data) assert(kill and data.clips[kill] and data.clips[kill].boundCount>=4,"Execution joints missing for "..template.Name)
   rig:Destroy()
  end
+ for _,template in ipairs(RS.Survival.KillerPreviews:GetChildren()) do
+  local preview=template:Clone()
+  preview:SetAttribute("PresentationPursuer",true) preview:SetAttribute("PresentationState","ShopIdle")
+  preview:SetAttribute("PresentationAt",workspace:GetServerTimeNow()-.4)
+  preview.Parent=world task.wait()
+  for i=1,5 do simulate(.16) end
+  assert(posed(preview)>=4,"Shop idle did not pose "..preview.Name)
+  local root=preview:FindFirstChild("HumanoidRootPart",true)
+  assert(root and root.Anchored,"Shop root must be anchored")
+  for _,part in ipairs(preview:GetDescendants()) do
+   if part:IsA("BasePart") and part~=root then assert(not part.Anchored,"Shop limb frozen: "..part:GetFullName()) end
+  end
+  local data=api.prepare(preview,api.motion(preview)) local clip=data.clips[api.pursuerState(data,"idle")]
+  preview:SetAttribute("PresentationAt",workspace:GetServerTimeNow()-clip.length*2.4)
+  simulate(.2) assert(posed(preview)>=4,"Shop idle failed beyond first loop: "..preview.Name)
+  preview:Destroy()
+ end
  p.attrs.MoveMode="walk" p.attrs.Injured=true
  simulate(.2) assert(posed(p.Character)>=4,"Injured clip did not animate")
  local actions=assert(RS.Survival:FindFirstChild("SurvivorActionClips"),"Survivor action clip package missing")
@@ -95,4 +112,5 @@ end,debug.traceback)
 host:Destroy()
 assert(ok,err)
 return {ok=true,winningPortrait=true,sevenKillerMotionValidated=true,runPlayback=true,r6AvatarJoints=true,downedPose=true,executionOverridesDowned=true,injuredPlayback=true,crouchPlayback=true,injuredCrouchPlayback=true,stunPlayback=true,defaultAnimationRestored=true,poseCleanup=true,survivorActionClips=true}
+
 

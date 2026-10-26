@@ -2,6 +2,11 @@ local lobby=assert(workspace:FindFirstChild("JediLibrary"))
 local house=assert(lobby:FindFirstChild("House"))
 assert((lobby:GetAttribute("PassageRepairRevision") or 0)>=4,"Lobby passage repair v4 missing")
 
+assert((lobby:GetAttribute("UnderStairWallRestored") or 0)>0,"Under-stair wall missing")
+local room=assert(lobby:FindFirstChild("DoorsMerchantRoom"),"Exact DOORS shop missing")
+assert(room:GetAttribute("SourceAssetId")==12467124775,"Wrong DOORS shop asset")
+assert(room:FindFirstChild("SuviversShopPrompt",true),"Merchant shop interaction missing")
+assert(game.ReplicatedStorage.Survival:FindFirstChild("ShopScene"),"Shop backdrop missing")
 local ground=assert(lobby:FindFirstChild("OutdoorGround"),"Exterior ground missing")
 assert(ground:IsA("BasePart") and ground.CanCollide and ground.Transparency==0,"Exterior ground must be visible and physical")
 assert(ground.Material==Enum.Material.Ground,"Exterior ground must not be grass")
@@ -98,3 +103,4 @@ return {
  fillNonBlocking=true,
  fillSurface=tabletop:GetFullName()
 }
+

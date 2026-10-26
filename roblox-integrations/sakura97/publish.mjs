@@ -1,1 +1,1 @@
-await import('./feature-inspect.mjs');
+await import('./publish-map.mjs');

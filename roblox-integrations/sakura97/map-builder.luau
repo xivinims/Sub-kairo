@@ -198,9 +198,22 @@ function Builder.build(load,sanitize,destination)
   local arrivals=Instance.new("Folder",map) arrivals.Name="ArrivalSpawns"
   local arrivalsChosen={}
   local available={}
-  for _,point in ipairs(candidates) do
-   if (point-far).Magnitude>=math.max(18,math.min(36,distance*.45)) and pathOk(start,point) then table.insert(available,point) end
-   if #available>=24 then break end
+  -- Spread probes over the entire navigation region before path checks. The old
+  -- first-24 scan could put every survivor in the same corner of a large map.
+  local probesForSpawns={} local pending=table.clone(candidates)
+  while #probesForSpawns<32 and #pending>0 do
+   local bestIndex,bestScore=nil,-1
+   for i,point in ipairs(pending) do
+    if (point-far).Magnitude>=math.max(18,math.min(36,distance*.45)) then
+     local separation=(point-far).Magnitude
+     for _,used in ipairs(probesForSpawns) do separation=math.min(separation,(point-used).Magnitude) end
+     if separation>bestScore then bestIndex=i bestScore=separation end
+    end
+   end
+   if not bestIndex then break end
+   local point=table.remove(pending,bestIndex)
+   table.insert(probesForSpawns,point)
+   if pathOk(start,point) then table.insert(available,point) end
   end
   while #arrivalsChosen<8 do
    local best,bestDistance=nil,-1
@@ -285,3 +298,4 @@ function Builder.build(load,sanitize,destination)
  return reports
 end
 return Builder
+
