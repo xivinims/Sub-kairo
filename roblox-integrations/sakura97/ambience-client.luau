@@ -4,19 +4,19 @@ local Terrain=workspace.Terrain
 -- Fixed Suvivers atmosphere: night outside, readable warm interior lights with restrained haze.
 -- There are intentionally no player-facing environment/visual sliders.
 Lighting.ClockTime=.5
-Lighting.Brightness=1.45
-Lighting.Ambient=Color3.fromRGB(42,43,52)
-Lighting.OutdoorAmbient=Color3.fromRGB(14,18,29)
-Lighting.ColorShift_Top=Color3.fromRGB(8,10,18)
-Lighting.ColorShift_Bottom=Color3.fromRGB(8,8,10)
-Lighting.ExposureCompensation=-.18
+Lighting.Brightness=1.12
+Lighting.Ambient=Color3.fromRGB(32,33,42)
+Lighting.OutdoorAmbient=Color3.fromRGB(7,9,17)
+Lighting.ColorShift_Top=Color3.fromRGB(5,7,15)
+Lighting.ColorShift_Bottom=Color3.fromRGB(5,5,9)
+Lighting.ExposureCompensation=-.27
 Lighting.GlobalShadows=true
 Lighting.ShadowSoftness=.28
 Lighting.EnvironmentDiffuseScale=.28
 Lighting.EnvironmentSpecularScale=.72
-Lighting.FogColor=Color3.fromRGB(24,29,42)
-Lighting.FogStart=35
-Lighting.FogEnd=520
+Lighting.FogColor=Color3.fromRGB(15,18,30)
+Lighting.FogStart=28
+Lighting.FogEnd=455
 pcall(function() Lighting.Technology=Enum.Technology.Future end)
 
 for _,name in ipairs({"SuviversArenaGrade","SuviversArenaRays","SuviversArenaDOF","SuviversAtmosphere","ViolenceDistrictBloom"}) do
@@ -32,20 +32,20 @@ end
 
 local atmosphere=Instance.new("Atmosphere")
 atmosphere.Name="SuviversAtmosphere"
-atmosphere.Density=.24
-atmosphere.Offset=.08
-atmosphere.Color=Color3.fromRGB(99,112,141)
-atmosphere.Decay=Color3.fromRGB(30,35,51)
-atmosphere.Glare=.04
-atmosphere.Haze=1.35
+atmosphere.Density=.29
+atmosphere.Offset=.06
+atmosphere.Color=Color3.fromRGB(78,88,116)
+atmosphere.Decay=Color3.fromRGB(20,24,39)
+atmosphere.Glare=.025
+atmosphere.Haze=1.68
 atmosphere.Parent=Lighting
 
 local grade=Instance.new("ColorCorrectionEffect")
 grade.Name="SuviversArenaGrade"
-grade.Brightness=-.025
-grade.Contrast=.12
-grade.Saturation=-.20
-grade.TintColor=Color3.fromRGB(222,228,242)
+grade.Brightness=-.05
+grade.Contrast=.18
+grade.Saturation=-.24
+grade.TintColor=Color3.fromRGB(210,218,238)
 grade.Parent=Lighting
 
 local bloom=Instance.new("BloomEffect")

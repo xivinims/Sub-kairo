@@ -337,6 +337,7 @@ shopPanel.ZIndex=116
 shopPanel.BackgroundTransparency=.08
 shopPanel.BackgroundColor3=Color3.fromRGB(5,5,6)
 shopPanel:SetAttribute("Style","LostInspiredStage")
+shopPanel:SetAttribute("StyleRevision","2026-10-26-killer-stage-v2")
 shopPanel.UIStroke.Color=Color3.fromRGB(238,238,232)
 shopPanel.UIStroke.Transparency=.10
 shopPanel.UIStroke.Thickness=2
@@ -670,12 +671,14 @@ for i,name in ipairs(killerOrder) do
 
   card.Size=UDim2.new(1,-18,0,42)
   card.Rotation=i%2==0 and .4 or -.4
-  card.BackgroundTransparency=.82
+  card.BackgroundTransparency=.74
+  local cardCorner=Instance.new("UICorner",card)
+  cardCorner.CornerRadius=UDim.new(0,4)
 
-  local nameLabel=text(card,"Name",killerName,UDim2.new(1,-16,1,0),UDim2.fromOffset(8,0))
+  local nameLabel=text(card,"Name",killerName,UDim2.new(1,-34,1,0),UDim2.fromOffset(24,0))
   nameLabel.Font=Enum.Font.Garamond
   nameLabel.TextSize=23
-  nameLabel.TextXAlignment=Enum.TextXAlignment.Center
+  nameLabel.TextXAlignment=Enum.TextXAlignment.Left
   nameLabel.ZIndex=120
 
   local status=text(card,"Status","",UDim2.new(1,-10,0,16),UDim2.new(0,5,0,7))
@@ -896,34 +899,37 @@ do
  shopTitle.Visible=true shopTitle.Position=UDim2.fromScale(.075,.09) shopTitle.Size=UDim2.fromScale(.37,.13)
  shopTitle.Font=Enum.Font.Antique shopTitle.TextScaled=true shopTitle.TextXAlignment=Enum.TextXAlignment.Left shopTitle.ZIndex=120
  local titleLimit=Instance.new("UITextSizeConstraint",shopTitle) titleLimit.MaxTextSize=54 titleLimit.MinTextSize=19
- tabBar.Position=UDim2.fromScale(.075,.24) tabBar.Size=UDim2.fromScale(.5,.08)
- shopTabs.Emotes.Visible=false
- shopList.Position=UDim2.fromScale(.075,.34) shopList.Size=UDim2.fromScale(.35,.52) shopList.BackgroundTransparency=1
- shopBalance.Position=UDim2.fromScale(.075,.89) shopBalance.Size=UDim2.fromScale(.35,.06) shopBalance.TextSize=16
- detailPanel.Position=UDim2.fromScale(.47,.12) detailPanel.Size=UDim2.fromScale(.48,.82)
+ tabBar.Visible=false
+ shopTabs.Killers.Visible=false shopTabs.Items.Visible=false shopTabs.Emotes.Visible=false
+ searchWrap.Visible=false shopRail.Visible=false
+ shopList.Position=UDim2.fromScale(.065,.29) shopList.Size=UDim2.fromScale(.35,.57) shopList.BackgroundTransparency=1
+ shopBalance.Position=UDim2.fromScale(.068,.89) shopBalance.Size=UDim2.fromScale(.34,.055) shopBalance.TextSize=15
+ detailPanel.Position=UDim2.fromScale(.43,.07) detailPanel.Size=UDim2.fromScale(.54,.87)
  detailPanel.BackgroundTransparency=1 detailStroke.Enabled=false
- detailPortrait.Position=UDim2.fromScale(0,0) detailPortrait.Size=UDim2.fromScale(1,.72)
+ detailPortrait.Position=UDim2.fromScale(0,0) detailPortrait.Size=UDim2.fromScale(1,.76)
  detailPortrait.BackgroundTransparency=1 detailPortraitStroke.Enabled=false
- detailPortrait.Ambient=Color3.fromRGB(100,95,106) detailPortrait.LightColor=Color3.fromRGB(252,205,153)
- detailName.Position=UDim2.fromScale(.06,.72) detailName.Size=UDim2.fromScale(.88,.06) detailName.TextSize=25
- detailTip.Position=UDim2.fromScale(.06,.79) detailTip.Size=UDim2.fromScale(.88,.06) detailTip.TextSize=12
- detailPrice.Position=UDim2.fromScale(.06,.86) detailPrice.Size=UDim2.fromScale(.88,.045)
- detailAction.Position=UDim2.fromScale(.18,.92) detailAction.Size=UDim2.fromScale(.64,.08) detailAction.TextSize=20
- shopClose.Position=UDim2.new(1,-62,0,22) shopClose.Size=UDim2.fromOffset(42,42) shopClose.TextSize=30
- itemsPanel.Position=UDim2.fromScale(.075,.34) itemsPanel.Size=UDim2.fromScale(.84,.55)
+ detailPortrait.Ambient=Color3.fromRGB(78,72,86) detailPortrait.LightColor=Color3.fromRGB(255,197,139)
+ detailPortrait:SetAttribute("AnimatedPreview",true)
+ detailName.Position=UDim2.fromScale(.06,.75) detailName.Size=UDim2.fromScale(.88,.06) detailName.TextSize=27
+ detailTip.Position=UDim2.fromScale(.08,.815) detailTip.Size=UDim2.fromScale(.84,.055) detailTip.TextSize=11
+ detailPrice.Position=UDim2.fromScale(.08,.872) detailPrice.Size=UDim2.fromScale(.84,.04)
+ detailAction.Position=UDim2.fromScale(.19,.92) detailAction.Size=UDim2.fromScale(.62,.07) detailAction.TextSize=20
+ shopClose.Position=UDim2.new(1,-64,0,20) shopClose.Size=UDim2.fromOffset(44,44) shopClose.TextSize=31
+ itemsPanel.Visible=false
+ shopPlaceholder.Visible=false
  shopPlaceholder.Position=shopList.Position shopPlaceholder.Size=shopList.Size
  local scene=Instance.new("ViewportFrame",shopOverlay) scene.Name="DoorsBackdrop"
  scene.Size=UDim2.fromScale(1,1) scene.BackgroundTransparency=1 scene.ZIndex=115
- scene.Ambient=Color3.fromRGB(53,46,45) scene.LightColor=Color3.fromRGB(181,143,99) scene.LightDirection=Vector3.new(-1,-.5,-1)
+ scene.Ambient=Color3.fromRGB(38,34,43) scene.LightColor=Color3.fromRGB(214,155,103) scene.LightDirection=Vector3.new(-.8,-.55,-1)
  local shade=Instance.new("Frame",shopOverlay) shade.Name="StageShade" shade.Size=UDim2.fromScale(1,1)
- shade.BackgroundColor3=Color3.fromRGB(3,4,8) shade.BackgroundTransparency=.25 shade.BorderSizePixel=0 shade.ZIndex=116
+ shade.BackgroundColor3=Color3.fromRGB(2,3,7) shade.BackgroundTransparency=.30 shade.BorderSizePixel=0 shade.ZIndex=116
  local gradient=Instance.new("UIGradient",shade)
  gradient.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.1),NumberSequenceKeypoint.new(.5,.45),NumberSequenceKeypoint.new(1,.72)})
  local scale=Instance.new("UIScale",shopPanel)
  local transition
  local function resize()
   local h=math.max(240,shopOverlay.AbsoluteSize.Y)
-  local height=math.clamp((h*.52-60)/5,27,48)
+  local height=math.clamp((h*.57-64)/5,30,52)
   shopLayout.Padding=UDim.new(0,math.clamp(h*.016,6,14))
   for _,card in pairs(shopCards) do
    card.Size=UDim2.new(1,-18,0,height)
@@ -944,10 +950,12 @@ do
     end
    end
    selectedKiller=player:GetAttribute("EquippedKiller") or selectedKiller
-   refreshShop() scale.Scale=.965
-   shopPanel.Position=UDim2.fromScale(0,.025)
-   transition=TweenService:Create(shopPanel,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromScale(0,0)}) transition:Play()
-   TweenService:Create(scale,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Scale=1}):Play()
+   refreshShop() scale.Scale=.95
+   shade.BackgroundTransparency=.58
+   shopPanel.Position=UDim2.fromScale(-.018,.018)
+   transition=TweenService:Create(shopPanel,TweenInfo.new(.48,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromScale(0,0)}) transition:Play()
+   TweenService:Create(scale,TweenInfo.new(.48,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Scale=1}):Play()
+   TweenService:Create(shade,TweenInfo.new(.42,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundTransparency=.30}):Play()
   else
    clearViewport(scene)
   end
@@ -961,7 +969,7 @@ end
 local shopButton=button(gui,"ShopButton","",UDim2.fromOffset(44,44),UDim2.new(1,-110,0,6),function()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  refreshShop() shopOverlay.Visible=not shopOverlay.Visible
-end) shopButton.BackgroundTransparency=1 shopButton.UIStroke.Enabled=false
+end) shopButton.BackgroundTransparency=1 shopButton.UIStroke.Enabled=false shopButton.Visible=false
 shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
 local cart=iconCanvas(shopButton,"CartIcon",UDim2.fromOffset(30,30),UDim2.fromOffset(7,7))
 iconLine(cart,"Handle",2,4,7,4) iconLine(cart,"Stem",7,4,11,21)
@@ -2061,7 +2069,7 @@ RunService.RenderStepped:Connect(function(dt)
  local hidden=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("SweanLoadingDone")~=true
  if result.Visible and os.clock()>=resultUntil then hideResult() end
  settingsButton.Visible=not hidden and not result.Visible
- shop.button.Visible=not hidden and not result.Visible and not player:GetAttribute("InRound") and not player:GetAttribute("Spectating")
+ shop.button.Visible=false -- NPC-only shop entry
  settingsOverlay.Visible=settingsOverlay.Visible and not hidden
  if hidden or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then shop.overlay.Visible=false end
  profileHUD.Visible=not hidden and not result.Visible

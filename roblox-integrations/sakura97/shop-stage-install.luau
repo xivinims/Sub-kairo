@@ -89,9 +89,42 @@ local doors=room:FindFirstChild("Doors")
 if doors then for _,d in ipairs(doors:GetDescendants()) do if d:IsA("BasePart") then d.CanCollide=false d.Transparency=1 end end end
 for _,d in ipairs(room:GetDescendants()) do
  if d:IsA("BasePart") and (d.Transparency>=.98 or d.Name:lower():find("doorframe",1,true)) then d.CanCollide=false end
- if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then d.Enabled=true d.Brightness=math.clamp(d.Brightness,.5,2) end
+ if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then d.Enabled=true d.Brightness=math.clamp(d.Brightness,.55,2.25) end
 end
-local lamp=Instance.new("PointLight",root) lamp.Name="MerchantWarmLight" lamp.Color=Color3.fromRGB(255,198,132) lamp.Brightness=1.2 lamp.Range=18 lamp.Shadows=true
+
+-- Restore the missing solid wall volume directly under the authored foyer staircase.
+-- The fixed lobby mesh stays untouched; this repair only fills the invisible hole below it.
+do
+ local house=assert(lobby:FindFirstChild("House"),"Lobby house missing for under-stair wall repair")
+ local stair
+ for _,d in ipairs(house:GetDescendants()) do
+  if d:IsA("BasePart") and string.find(string.lower(d.Name),"house_foyer_stairs_lower",1,true) then stair=d break end
+ end
+ assert(stair,"Main foyer stair mesh missing for under-stair wall repair")
+ local old=lobby:FindFirstChild("UnderStairWallRepair") if old then old:Destroy() end
+ local params=RaycastParams.new()
+ params.FilterType=Enum.RaycastFilterType.Exclude
+ params.FilterDescendantsInstances={stair,room}
+ params.RespectCanCollide=true
+ local castOrigin=stair.Position+Vector3.new(0,math.max(8,stair.Size.Y*.55),0)
+ local hit=workspace:Raycast(castOrigin,Vector3.new(0,-120,0),params)
+ local floorY=hit and hit.Position.Y or (stair.Position.Y-stair.Size.Y*.6)
+ local wallHeight=math.clamp(stair.Position.Y-floorY+stair.Size.Y*.18,6,math.max(8,stair.Size.Y*1.15))
+ local wall=Instance.new("Part")
+ wall.Name="UnderStairWallRepair"
+ wall.Size=Vector3.new(math.max(5,stair.Size.X*.90),wallHeight,math.max(5,stair.Size.Z*.90))
+ wall.CFrame=CFrame.new(stair.Position.X,floorY+wallHeight/2,stair.Position.Z)*stair.CFrame.Rotation
+ wall.Anchored=true wall.CanCollide=true wall.CanTouch=false wall.CanQuery=true
+ wall.Material=Enum.Material.WoodPlanks
+ wall.Color=Color3.fromRGB(43,36,35)
+ wall.TopSurface=Enum.SurfaceType.Smooth wall.BottomSurface=Enum.SurfaceType.Smooth
+ wall:SetAttribute("VisualRepair","LobbyUnderStairWall")
+ wall.Parent=lobby
+ lobby:SetAttribute("UnderStairWallRepaired",true)
+ lobby:SetAttribute("UnderStairWallRevision",2)
+end
+
+local lamp=Instance.new("PointLight",root) lamp.Name="MerchantWarmLight" lamp.Color=Color3.fromRGB(255,198,132) lamp.Brightness=1.35 lamp.Range=20 lamp.Shadows=true
 local clients=game.StarterPlayer.StarterPlayerScripts
 local old=clients:FindFirstChild("MerchantIdle") if old then old:Destroy() end
 if #ids>0 then
@@ -116,4 +149,4 @@ end)
 ]==]
 client.Parent=clients
 end
-return {ok=true,asset=12467124775,outfitItems=#ids,headless=#ids>0,animatedShop=true,merchantPosition=tostring(root.Position)}
+return {ok=true,asset=12467124775,outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=true,merchantPosition=tostring(root.Position)}
