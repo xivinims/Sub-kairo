@@ -5,9 +5,19 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function req(path,body){
  const key=process.env.ROBLOX_API_KEY;
  if(!key) throw new Error('Missing ROBLOX_API_KEY');
- const res=await fetch(CLOUD+path,{method:body?'POST':'GET',headers:{'x-api-key':key,'content-type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(60000)});
- const raw=await res.text(); let data; try{data=JSON.parse(raw)}catch{data={raw}};
- if(!res.ok) throw new Error('HTTP '+res.status+': '+JSON.stringify(data)); return data;
+ let last;
+ for(let i=0;i<8;i++){
+  const res=await fetch(CLOUD+path,{method:body?'POST':'GET',headers:{'x-api-key':key,'content-type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(60000)});
+  const raw=await res.text(); let data; try{data=JSON.parse(raw)}catch{data={raw}};
+  if(res.ok) return data;
+  if([429,500,502,503].includes(res.status)){
+   last=new Error('HTTP '+res.status+': '+JSON.stringify(data));
+   await sleep(Math.min(30000,3000*(i+1)));
+   continue;
+  }
+  throw new Error('HTTP '+res.status+': '+JSON.stringify(data));
+ }
+ throw last||new Error('Request retries exhausted');
 }
 async function execute(script){
  let task=await req(TARGET+'luau-execution-session-tasks',{timeout:'90s',script});
