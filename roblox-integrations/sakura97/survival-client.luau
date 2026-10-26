@@ -1,5 +1,6 @@
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
+local ReplicatedFirst=game:GetService("ReplicatedFirst")
 local RunService=game:GetService("RunService")
 local TweenService=game:GetService("TweenService")
 local UIS=game:GetService("UserInputService")
@@ -597,23 +598,121 @@ placeholderText.TextXAlignment=Enum.TextXAlignment.Center
 placeholderText.TextYAlignment=Enum.TextYAlignment.Center
 placeholderText.ZIndex=119
 
+local itemsPanel=Instance.new("Frame",shopPanel)
+itemsPanel.Name="ItemsPanel"
+itemsPanel.Position=shopList.Position
+itemsPanel.Size=UDim2.new(.98,-82,1,-112)
+itemsPanel.BackgroundTransparency=1
+itemsPanel.Visible=false
+itemsPanel.ZIndex=118
+
+local lanternCard=Instance.new("Frame",itemsPanel)
+lanternCard.Name="LanternUpgrade"
+lanternCard.Position=UDim2.fromOffset(8,8)
+lanternCard.Size=UDim2.new(1,-16,0,212)
+lanternCard.BackgroundColor3=Color3.fromRGB(7,7,8)
+lanternCard.BackgroundTransparency=.05
+lanternCard.BorderSizePixel=0
+lanternCard.ZIndex=119
+local lanternStroke=Instance.new("UIStroke",lanternCard)
+lanternStroke.Color=Color3.fromRGB(220,220,214)
+lanternStroke.Transparency=.30
+lanternStroke.Thickness=1
+
+local lanternTitle=text(lanternCard,"Title",L("LANTERNA","LANTERN"),UDim2.new(1,-24,0,32),UDim2.fromOffset(12,10))
+lanternTitle.Font=Enum.Font.Garamond
+lanternTitle.TextSize=24
+lanternTitle.TextXAlignment=Enum.TextXAlignment.Left
+lanternTitle.ZIndex=120
+
+local lanternAsset=text(lanternCard,"Asset","Doors Second Lantern  •  11906391298",UDim2.new(1,-24,0,20),UDim2.fromOffset(12,42))
+lanternAsset.Font=Enum.Font.Garamond
+lanternAsset.TextSize=11
+lanternAsset.TextColor3=Color3.fromRGB(150,150,148)
+lanternAsset.TextXAlignment=Enum.TextXAlignment.Left
+lanternAsset.ZIndex=120
+
+local lanternDuration=text(lanternCard,"Duration","",UDim2.new(.46,0,0,28),UDim2.fromOffset(12,72))
+lanternDuration.Font=Enum.Font.Garamond
+lanternDuration.TextSize=16
+lanternDuration.TextXAlignment=Enum.TextXAlignment.Left
+lanternDuration.ZIndex=120
+
+local lanternLevel=text(lanternCard,"Level","",UDim2.new(.46,0,0,22),UDim2.fromOffset(12,102))
+lanternLevel.Font=Enum.Font.Garamond
+lanternLevel.TextSize=12
+lanternLevel.TextColor3=Color3.fromRGB(185,185,180)
+lanternLevel.TextXAlignment=Enum.TextXAlignment.Left
+lanternLevel.ZIndex=120
+
+local ladder=text(lanternCard,"Ladder","1:10  >  1:20  >  1:30  >  1:45  >  2:00  >  2:20  >  2:50",UDim2.new(1,-24,0,28),UDim2.fromOffset(12,132))
+ladder.Font=Enum.Font.Garamond
+ladder.TextSize=11
+ladder.TextColor3=Color3.fromRGB(205,205,199)
+ladder.TextXAlignment=Enum.TextXAlignment.Left
+ladder.TextWrapped=true
+ladder.ZIndex=120
+
+local lanternUpgrade=button(lanternCard,"Upgrade","",UDim2.fromOffset(184,40),UDim2.new(1,-196,1,-52),function()
+ event:FireServer("buyLanternUpgrade")
+end)
+lanternUpgrade.ZIndex=121
+lanternUpgrade.Font=Enum.Font.Garamond
+lanternUpgrade.TextSize=14
+lanternUpgrade.UIStroke.Color=Color3.fromRGB(225,225,218)
+
+local lanternCosts=text(lanternCard,"Costs","10  •  30  •  50  •  80  •  100  •  170  •  MAX",UDim2.new(.62,0,0,22),UDim2.fromOffset(12,174))
+lanternCosts.Font=Enum.Font.Garamond
+lanternCosts.TextSize=10
+lanternCosts.TextColor3=Color3.fromRGB(145,145,142)
+lanternCosts.TextXAlignment=Enum.TextXAlignment.Left
+lanternCosts.ZIndex=120
+
+local itemDurations=(config.Lantern and config.Lantern.Durations) or {70}
+local itemCosts=(config.Lantern and config.Lantern.UpgradeCosts) or {}
+local function formatSeconds(seconds)
+ seconds=math.max(0,math.floor((tonumber(seconds) or 0)+.5))
+ return string.format("%d:%02d",math.floor(seconds/60),seconds%60)
+end
+local function refreshItemShop()
+ local tier=math.clamp(tonumber(player:GetAttribute("LanternDurabilityTier")) or 0,0,#itemDurations-1)
+ local seconds=itemDurations[tier+1] or itemDurations[1] or 70
+ lanternDuration.Text=L("DURAÇÃO  ","DURATION  ")..formatSeconds(seconds)
+ lanternLevel.Text=L("NÍVEL DE DURABILIDADE  ","DURABILITY LEVEL  ")..tostring(tier).."/"..tostring(#itemDurations-1)
+ local cost=itemCosts[tier+1]
+ if cost then
+  lanternUpgrade.Text=L("MELHORAR  ","UPGRADE  ")..tostring(cost)
+  lanternUpgrade.Active=true
+  lanternUpgrade.AutoButtonColor=true
+  lanternUpgrade.BackgroundTransparency=.12
+ else
+  lanternUpgrade.Text="MAX"
+  lanternUpgrade.Active=false
+  lanternUpgrade.AutoButtonColor=false
+  lanternUpgrade.BackgroundTransparency=.62
+ end
+end
+
 local function setShopTab(tab)
  activeShopTab=tab
  for name,b in pairs(shopTabs) do styleTab(b,name==tab) end
  local killersActive=tab=="Killers"
+ local itemsActive=tab=="Items"
  shopList.Visible=killersActive
  detailPanel.Visible=killersActive
- shopPlaceholder.Visible=not killersActive
+ itemsPanel.Visible=itemsActive
+ shopPlaceholder.Visible=not killersActive and not itemsActive
  shopSearch.Visible=killersActive
  searchIcon.Visible=killersActive
- if not killersActive then
-  placeholderText.Text=tab=="Survivors" and L("SOBREVIVENTES • EM BREVE","SURVIVORS • COMING SOON") or L("EMOTES • EM BREVE","EMOTES • COMING SOON")
+ if not killersActive and not itemsActive then
+  placeholderText.Text=L("EMOTES • EM BREVE","EMOTES • COMING SOON")
  end
+ if itemsActive then refreshItemShop() end
 end
 
 local tabSpecs={
  {"Killers",L("PERSEGUIDORES","KILLERS")},
- {"Survivors",L("SOBREVIVENTES","SURVIVORS")},
+ {"Items",L("ITENS","ITEMS")},
  {"Emotes","EMOTES"},
 }
 for i,item in ipairs(tabSpecs) do
@@ -629,9 +728,9 @@ for i,item in ipairs(tabSpecs) do
 end
 
 railButton("Killers","K",1,function() setShopTab("Killers") end)
-railButton("Survivors","S",2,function() setShopTab("Survivors") end)
+railButton("Items","I",2,function() setShopTab("Items") end)
 railButton("Emotes","E",3,function() setShopTab("Emotes") end)
-railButton("Inventory","◇",4,function() setShopTab("Killers") end)
+railButton("Inventory","◇",4,function() setShopTab("Items") end)
 railButton("Settings","⚙",5,function()
  shopOverlay.Visible=false
  settingsOverlay.Visible=true
@@ -660,6 +759,7 @@ local function refreshShop()
   end
  end
  refreshSelectedKiller()
+ refreshItemShop()
 end
 
 setShopTab("Killers")
@@ -679,6 +779,7 @@ for i,x in ipairs({13,23}) do
  Instance.new("UICorner",wheel).CornerRadius=UDim.new(1,0)
 end
 player:GetAttributeChangedSignal("OwnedKillersJson"):Connect(refreshShop)
+player:GetAttributeChangedSignal("LanternDurabilityTier"):Connect(refreshItemShop)
 task.spawn(function()
  local stats=player:WaitForChild("leaderstats",20)
  local pts=stats and stats:FindFirstChild("Pontos")
@@ -1395,6 +1496,11 @@ net.Update.OnClientEvent:Connect(function(action,a,b)
  elseif action=="shopResult" then
   refreshShop()
   notice.Text=tostring(b or (a and L("Compra concluída.","Purchase complete.") or L("Compra não concluída.","Purchase failed."))) noticeUntil=os.clock()+5
+ elseif action=="itemResult" then
+  refreshItemShop()
+  refreshShop()
+  notice.Text=tostring(b or (a and L("Item melhorado.","Item upgraded.") or L("Melhoria não concluída.","Upgrade failed.")))
+  noticeUntil=os.clock()+5
  elseif action=="mission" then
   announceMission(a)
  elseif action=="objectiveDone" then
@@ -1547,8 +1653,10 @@ local function refreshLanguage()
  shopClose.Text="×"
  shopSearch.PlaceholderText=L("PESQUISAR","SEARCH")
  shopTabs.Killers.Text=L("PERSEGUIDORES","KILLERS")
- shopTabs.Survivors.Text=L("SOBREVIVENTES","SURVIVORS")
- placeholderText.Text=activeShopTab=="Survivors" and L("SOBREVIVENTES • EM BREVE","SURVIVORS • COMING SOON") or activeShopTab=="Emotes" and L("EMOTES • EM BREVE","EMOTES • COMING SOON") or ""
+ shopTabs.Items.Text=L("ITENS","ITEMS")
+ placeholderText.Text=activeShopTab=="Emotes" and L("EMOTES • EM BREVE","EMOTES • COMING SOON") or ""
+ lanternTitle.Text=L("LANTERNA","LANTERN")
+ refreshItemShop()
  shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
  missionTitle.Text=L("MISSÃO","MISSION")
  missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
@@ -1611,9 +1719,17 @@ RunService.RenderStepped:Connect(function(dt)
  run.Visible=controlsVisible and inRound and not down
  crouch.Visible=controlsVisible and inRound and not down and not isJason
  lantern.Visible=controlsVisible and inRound and not down and not isJason
- lantern.Active=lantern.Visible
- lantern.Text=player:GetAttribute("FlashlightOn")==true and L("APAGAR","OFF") or L("LANTERNA","LANTERN")
- lantern.BackgroundColor3=player:GetAttribute("FlashlightOn")==true and Color3.fromRGB(92,67,34) or Color3.fromRGB(25,26,30)
+ local lanternSeconds=math.max(0,tonumber(player:GetAttribute("LanternSeconds")) or tonumber(player:GetAttribute("LanternMaxSeconds")) or 70)
+ local lanternCharged=lanternSeconds>.05
+ lantern.Active=lantern.Visible and lanternCharged
+ if not lanternCharged then
+  lantern.Text=L("SEM CARGA","EMPTY")
+ elseif player:GetAttribute("FlashlightOn")==true then
+  lantern.Text=L("APAGAR ","OFF ")..formatSeconds(lanternSeconds)
+ else
+  lantern.Text=L("LANTERNA ","LANTERN ")..formatSeconds(lanternSeconds)
+ end
+ lantern.BackgroundColor3=player:GetAttribute("FlashlightOn")==true and Color3.fromRGB(92,67,34) or lanternCharged and Color3.fromRGB(25,26,30) or Color3.fromRGB(44,31,31)
  attackButton.Visible=controlsVisible and inRound and not down and isJason
  if heldRunInput and not down then mode="run" else mode=player:GetAttribute("MoveMode") or "walk" end
  if run:FindFirstChild("ReferenceActionArt") then setActionArt(run,mode=="run" and "RunActive" or "Run") else run.Text="CORRER" end
