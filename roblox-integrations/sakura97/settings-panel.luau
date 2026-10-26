@@ -1,229 +1,403 @@
+local M={}
 local UIS=game:GetService("UserInputService")
-local SoundService=game:GetService("SoundService")
-local Settings={}
-local initialized=setmetatable({},{__mode="k"})
 
-local categories={
- {key="audio",label="ÁUDIO",labelEn="AUDIO",title="ÁUDIO",titleEn="AUDIO",rows={
-  {section="SONS",sectionEn="SOUNDS"},
-  {key="EffectsVolume",label="Efeitos",labelEn="Effects",description="Passos, avisos, ataques e interface",descriptionEn="Footsteps, alerts, attacks and interface",min=0,max=100,default=80,suffix="%"},
-  {key="MenuSounds",label="Sons dos botões",labelEn="Button sounds",description="Som curto ao tocar na interface",descriptionEn="Short sound when using the interface",default=true},
-  {key="FriendAlerts",label="Avisos de amizade",labelEn="Friend alerts",description="Aviso quando um amigo entra",descriptionEn="Alert when a friend joins",default=true},
- }},
- {key="gameplay",label="JOGO",labelEn="GAME",title="JOGO",titleEn="GAME",rows={
-  {key="AFK",label="AFK",labelEn="AFK",description="Fica fora das próximas partidas",descriptionEn="Stay out of upcoming matches",default=false},
-  {key="CameraFOV",label="Campo de visão",labelEn="Field of view",description="Ajusta apenas a câmera",descriptionEn="Adjusts only the camera",min=48,max=82,step=1,default=62},
-  {key="ControlScale",label="Tamanho dos botões",labelEn="Button size",description="Ajusta o HUD para o seu dedo",descriptionEn="Adjusts the HUD controls",min=80,max=120,default=100,suffix="%"},
-  {key="ShowNametags",label="Nomes dos jogadores",labelEn="Player names",description="Mostra os nomes sobre os avatares",descriptionEn="Shows names above avatars",default=true},
-  {section="PARTIDA",sectionEn="MATCH"},
-  {info="Correr cria pontos de ruído. Agachar reduz bastante o som.",infoEn="Running creates noise points. Crouching greatly reduces sound."},
-  {info="Hackeie os computadores, encontre uma chave e abra a saída.",infoEn="Hack the computers, find a key and open the exit."},
- }},
- {key="language",label="IDIOMA",labelEn="LANGUAGE",title="IDIOMA",titleEn="LANGUAGE",rows={
-  {section="TEXTO DO JOGO",sectionEn="GAME TEXT"},
-  {key="GameLanguage",label="Idioma do jogo",labelEn="Game language",description="Muda os textos do jogo. A dublagem do Fill continua em inglês.",descriptionEn="Changes game text. Fill's voice always stays in English.",options={"Português (Brasil)","English"},values={"pt-BR","en"},default="pt-BR"},
- }},
-}
+local PAPER=Color3.fromRGB(231,218,190)
+local INK=Color3.fromRGB(42,33,29)
+local MUTED=Color3.fromRGB(94,77,67)
+local RED=Color3.fromRGB(118,20,25)
+local DARK=Color3.fromRGB(21,19,20)
 
-local function isEnglish(player)
- return player:GetAttribute("GameLanguage")=="en"
+local function corner(parent,r)
+ local c=Instance.new("UICorner")
+ c.CornerRadius=UDim.new(0,r or 5)
+ c.Parent=parent
+ return c
 end
-local function tr(player,pt,en)
- return isEnglish(player) and (en or pt) or pt
+
+local function stroke(parent,color,transparency,thickness)
+ local s=Instance.new("UIStroke")
+ s.Color=color or INK
+ s.Transparency=transparency or 0
+ s.Thickness=thickness or 1
+ s.Parent=parent
+ return s
 end
-local function corner(o,r) local c=Instance.new("UICorner",o) c.CornerRadius=UDim.new(0,r or 3) end
-local function stroke(o,c,w,a) local x=Instance.new("UIStroke",o) x.Color=c x.Thickness=w or 1 x.Transparency=a or .6 return x end
-local function label(p,t,size,pos,font)
- local x=Instance.new("TextLabel",p)
- x.BackgroundTransparency=1 x.Text=t x.Size=size x.Position=pos or UDim2.new()
- x.TextColor3=Color3.fromRGB(232,232,235) x.TextSize=14 x.Font=font or Enum.Font.Gotham
- x.TextXAlignment=Enum.TextXAlignment.Left x.TextWrapped=true x.ZIndex=p.ZIndex+1
- return x
+
+local function label(parent,name,value,size,pos,z)
+ local t=Instance.new("TextLabel")
+ t.Name=name
+ t.Text=value
+ t.Size=size
+ t.Position=pos or UDim2.new()
+ t.BackgroundTransparency=1
+ t.BorderSizePixel=0
+ t.Font=Enum.Font.Garamond
+ t.TextColor3=INK
+ t.TextSize=18
+ t.TextWrapped=true
+ t.ZIndex=z or 46
+ t.Parent=parent
+ return t
 end
-local function button(p,t,c)
- local b=Instance.new("TextButton",p)
- b.Text=t b.BackgroundColor3=Color3.fromRGB(16,16,18) b.BackgroundTransparency=.08 b.BorderSizePixel=0
- b.TextColor3=Color3.fromRGB(238,238,240) b.Font=Enum.Font.GothamBold b.TextSize=13 b.ZIndex=p.ZIndex+2
- corner(b,3) stroke(b,c,1,.55)
+
+local function textButton(parent,name,value,size,pos,z)
+ local b=Instance.new("TextButton")
+ b.Name=name
+ b.Text=value
+ b.Size=size
+ b.Position=pos or UDim2.new()
+ b.BackgroundColor3=Color3.fromRGB(224,207,175)
+ b.BackgroundTransparency=.08
+ b.BorderSizePixel=0
+ b.AutoButtonColor=false
+ b.Font=Enum.Font.Garamond
+ b.TextColor3=INK
+ b.TextSize=17
+ b.ZIndex=z or 48
+ corner(b,5)
+ stroke(b,Color3.fromRGB(75,57,49),.25,1)
+ b.Parent=parent
  return b
 end
 
-function Settings.initialize(player)
- if initialized[player] then return end
- initialized[player]=true
- if player:GetAttribute("GameLanguage")==nil then
-  local locale=tostring(player.LocaleId or "en"):lower()
-  player:SetAttribute("GameLanguage",locale:sub(1,2)=="pt" and "pt-BR" or "en")
+local function ensure(player,key,default)
+ local value=player:GetAttribute(key)
+ if value==nil then
+  player:SetAttribute(key,default)
+  value=default
  end
- for _,cat in ipairs(categories) do
-  for _,row in ipairs(cat.rows) do
-   if row.key and player:GetAttribute(row.key)==nil then player:SetAttribute(row.key,row.default) end
-  end
- end
- local group=SoundService:FindFirstChild("SuviversEffects") or Instance.new("SoundGroup",SoundService)
- group.Name="SuviversEffects"
- local function apply() group.Volume=(player:GetAttribute("EffectsVolume") or 80)/100 end
- player:GetAttributeChangedSignal("EffectsVolume"):Connect(apply) apply()
- local function bind(o)
-  if o:IsA("Sound") and (o.Name=="MenuClick" or o.Name=="Click" or o.Name=="PlayClick" or o.Name=="FriendJoined" or o.Name=="Regenerate" or o.Name=="RegenerationCue") then
-   o.SoundGroup=group
-  end
- end
- for _,root in ipairs({SoundService,workspace,player:WaitForChild("PlayerGui")}) do
-  root.DescendantAdded:Connect(bind)
-  for _,o in ipairs(root:GetDescendants()) do bind(o) end
- end
+ return value
 end
 
-function Settings.build(parent,player,onClose)
- Settings.initialize(player)
- local frame=Instance.new("Frame",parent)
- frame.Name="ReferenceSettings" frame.AnchorPoint=Vector2.new(.5,.5) frame.Position=UDim2.fromScale(.5,.52)
- frame.Size=UDim2.new(.86,0,.78,0) frame.BackgroundColor3=Color3.fromRGB(8,8,9)
- frame.BackgroundTransparency=.08 frame.BorderSizePixel=0 frame.ZIndex=parent.ZIndex+2
- corner(frame,1) stroke(frame,Color3.fromRGB(122,122,128),1,.48)
- frame:SetAttribute("Style","DistrictInspired")
- local limit=Instance.new("UISizeConstraint",frame) limit.MaxSize=Vector2.new(660,460)
+local GAME_SPECS={
+ {key="MusicVolume",label="MÚSICA",default=65,min=0,max=100,step=5,suffix="%"},
+ {key="EffectsVolume",label="EFEITOS",default=80,min=0,max=100,step=5,suffix="%"},
+ {key="ControlScale",label="TAMANHO DOS CONTROLES",default=100,min=80,max=120,step=5,suffix="%"},
+ {key="CameraSensitivity",label="SENSIBILIDADE",default=100,min=50,max=150,step=5,suffix="%"},
+}
+local VISUAL_SPECS={
+ {key="CameraFOV",label="CAMPO DE VISÃO",default=62,min=50,max=80,step=1,suffix="°"},
+ {key="HUDScale",label="ESCALA DA INTERFACE",default=100,min=85,max=115,step=5,suffix="%"},
+}
 
- local tabs=Instance.new("Frame",frame)
- tabs.BackgroundTransparency=1 tabs.Size=UDim2.new(1,-20,0,38) tabs.Position=UDim2.fromOffset(10,10) tabs.ZIndex=frame.ZIndex+1
- local title=label(frame,"",UDim2.new(1,-30,0,28),UDim2.fromOffset(15,56),Enum.Font.GothamBold)
- title.TextSize=15 title.TextColor3=Color3.fromRGB(224,224,229)
- local content=Instance.new("ScrollingFrame",frame)
- content.Position=UDim2.fromOffset(15,88) content.Size=UDim2.new(1,-30,1,-103)
- content.BackgroundTransparency=1 content.BorderSizePixel=0 content.AutomaticCanvasSize=Enum.AutomaticSize.Y
- content.CanvasSize=UDim2.new() content.ScrollBarThickness=3 content.ZIndex=frame.ZIndex+1
- local list=Instance.new("UIListLayout",content) list.Padding=UDim.new(0,4) list.SortOrder=Enum.SortOrder.LayoutOrder
+function M.build(parent,player,onClose)
+ local frame=Instance.new("Frame")
+ frame.Name="ReferenceSettings"
+ frame.Size=UDim2.fromScale(1,1)
+ frame.BackgroundTransparency=1
+ frame.BorderSizePixel=0
+ frame.ZIndex=41
+ frame:SetAttribute("Style","RedBinderBook")
+ frame:SetAttribute("ScrollablePages",true)
+ frame:SetAttribute("RibbonTabs",true)
+ frame.Parent=parent
 
- local active={} local tabButtons={} local drag=nil local currentCategory=categories[1]
- local function setValue(row,v)
-  if row.min then
-   local st=row.step or 1
-   v=math.clamp(v,row.min,row.max)
-   v=math.floor(v/st+.5)*st
+ local shadow=Instance.new("Frame")
+ shadow.Name="BookShadow"
+ shadow.AnchorPoint=Vector2.new(.5,.5)
+ shadow.Position=UDim2.fromScale(.5,.515)
+ shadow.BackgroundColor3=Color3.new(0,0,0)
+ shadow.BackgroundTransparency=.38
+ shadow.BorderSizePixel=0
+ shadow.ZIndex=41
+ corner(shadow,18)
+ shadow.Parent=frame
+
+ local book=Instance.new("ImageLabel")
+ book.Name="BookBackground"
+ book.AnchorPoint=Vector2.new(.5,.5)
+ book.Position=UDim2.fromScale(.5,.5)
+ book.BackgroundColor3=Color3.fromRGB(28,22,23)
+ book.BackgroundTransparency=0
+ book.BorderSizePixel=0
+ book.ScaleType=Enum.ScaleType.Stretch
+ book.ZIndex=42
+ local bookAsset=tonumber(game:GetService("ReplicatedStorage"):WaitForChild("Survival"):GetAttribute("SettingsBookAssetId")) or 0
+ if bookAsset>0 then
+  book.Image="rbxassetid://"..tostring(bookAsset)
+  book.BackgroundTransparency=1
+ end
+ book.Parent=frame
+
+ -- Fallback paper spread so the panel is still usable if the texture is loading.
+ local fallback=Instance.new("Frame")
+ fallback.Name="FallbackPaper"
+ fallback.Position=UDim2.fromScale(.105,.095)
+ fallback.Size=UDim2.fromScale(.79,.80)
+ fallback.BackgroundColor3=Color3.fromRGB(235,224,200)
+ fallback.BackgroundTransparency=bookAsset>0 and 1 or 0
+ fallback.BorderSizePixel=0
+ fallback.ZIndex=42
+ corner(fallback,8)
+ stroke(fallback,Color3.fromRGB(63,42,40),.1,2)
+ fallback.Parent=book
+
+ local title=label(book,"Title","CONFIGURAÇÕES",UDim2.fromScale(.48,.065),UDim2.fromScale(.115,.095),46)
+ title.Font=Enum.Font.Garamond
+ title.TextSize=31
+ title.TextXAlignment=Enum.TextXAlignment.Left
+ title.TextStrokeColor3=Color3.fromRGB(249,239,216)
+ title.TextStrokeTransparency=.72
+
+ local subtitle=label(book,"Subtitle","JOGO",UDim2.fromScale(.28,.035),UDim2.fromScale(.115,.145),46)
+ subtitle.TextSize=13
+ subtitle.TextColor3=MUTED
+ subtitle.TextXAlignment=Enum.TextXAlignment.Left
+
+ local scroll=Instance.new("ScrollingFrame")
+ scroll.Name="PageScroll"
+ scroll.Position=UDim2.fromScale(.115,.19)
+ scroll.Size=UDim2.fromScale(.745,.64)
+ scroll.BackgroundTransparency=1
+ scroll.BorderSizePixel=0
+ scroll.CanvasSize=UDim2.new()
+ scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+ scroll.ScrollingDirection=Enum.ScrollingDirection.Y
+ scroll.ScrollBarThickness=4
+ scroll.ScrollBarImageColor3=RED
+ scroll.ScrollBarImageTransparency=.15
+ scroll.ElasticBehavior=Enum.ElasticBehavior.WhenScrollable
+ scroll.ZIndex=45
+ scroll.Parent=book
+
+ local pad=Instance.new("UIPadding")
+ pad.PaddingTop=UDim.new(0,8)
+ pad.PaddingBottom=UDim.new(0,16)
+ pad.PaddingLeft=UDim.new(0,3)
+ pad.PaddingRight=UDim.new(0,7)
+ pad.Parent=scroll
+
+ local grid=Instance.new("UIGridLayout")
+ grid.Name="TwoPageGrid"
+ grid.CellSize=UDim2.new(.445,0,0,92)
+ grid.CellPadding=UDim2.new(.105,0,0,14)
+ grid.FillDirection=Enum.FillDirection.Horizontal
+ grid.FillDirectionMaxCells=2
+ grid.HorizontalAlignment=Enum.HorizontalAlignment.Left
+ grid.SortOrder=Enum.SortOrder.LayoutOrder
+ grid.Parent=scroll
+
+ local cards={}
+ local activeCategory="game"
+ local tabButtons={}
+
+ local function clearCards()
+  for _,c in ipairs(cards) do if c.Parent then c:Destroy() end end
+  table.clear(cards)
+  scroll.CanvasPosition=Vector2.zero
+ end
+
+ local function cardBase(name,order)
+  local card=Instance.new("Frame")
+  card.Name=name
+  card.LayoutOrder=order
+  card.BackgroundColor3=Color3.fromRGB(239,228,204)
+  card.BackgroundTransparency=.22
+  card.BorderSizePixel=0
+  card.ZIndex=46
+  corner(card,6)
+  stroke(card,Color3.fromRGB(78,61,52),.42,1)
+  card.Parent=scroll
+  table.insert(cards,card)
+  return card
+ end
+
+ local function addSlider(spec,order)
+  local card=cardBase(spec.key,order)
+  local name=label(card,"Label",spec.label,UDim2.new(.68,0,0,28),UDim2.fromOffset(10,7),48)
+  name.TextSize=15
+  name.Font=Enum.Font.Garamond
+  name.TextXAlignment=Enum.TextXAlignment.Left
+  local valueLabel=label(card,"Value","",UDim2.new(.28,0,0,28),UDim2.new(.70,0,0,7),48)
+  valueLabel.TextSize=15
+  valueLabel.TextXAlignment=Enum.TextXAlignment.Right
+
+  local minus=textButton(card,"Minus","−",UDim2.fromOffset(28,28),UDim2.new(0,10,1,-37),49)
+  minus.TextSize=21
+  local plus=textButton(card,"Plus","+",UDim2.fromOffset(28,28),UDim2.new(1,-38,1,-37),49)
+  plus.TextSize=20
+  local rail=Instance.new("Frame")
+  rail.Name="Rail"
+  rail.Position=UDim2.new(0,46,1,-27)
+  rail.Size=UDim2.new(1,-92,0,7)
+  rail.BackgroundColor3=Color3.fromRGB(115,94,77)
+  rail.BackgroundTransparency=.48
+  rail.BorderSizePixel=0
+  rail.Active=true
+  rail.ZIndex=48
+  corner(rail,4)
+  rail.Parent=card
+  local fill=Instance.new("Frame")
+  fill.Name="Fill"
+  fill.Size=UDim2.fromScale(0,1)
+  fill.BackgroundColor3=RED
+  fill.BorderSizePixel=0
+  fill.ZIndex=49
+  corner(fill,4)
+  fill.Parent=rail
+
+  local dragging=false
+  local function current()
+   return math.clamp(tonumber(ensure(player,spec.key,spec.default)) or spec.default,spec.min,spec.max)
   end
-  if row.key=="AFK" then
-   game.ReplicatedStorage.Survival.Action:FireServer("afk",v)
+  local function apply(v)
+   v=math.clamp(v,spec.min,spec.max)
+   v=math.floor((v/spec.step)+.5)*spec.step
+   player:SetAttribute(spec.key,v)
+   valueLabel.Text=tostring(v)..(spec.suffix or "")
+   fill.Size=UDim2.fromScale((v-spec.min)/(spec.max-spec.min),1)
+   if spec.key=="CameraFOV" and workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView=v end
+   if spec.key=="CameraSensitivity" then UIS.MouseDeltaSensitivity=v/100 end
+  end
+  local function fromX(x)
+   local ratio=math.clamp((x-rail.AbsolutePosition.X)/math.max(1,rail.AbsoluteSize.X),0,1)
+   apply(spec.min+(spec.max-spec.min)*ratio)
+  end
+  minus.Activated:Connect(function() apply(current()-spec.step) end)
+  plus.Activated:Connect(function() apply(current()+spec.step) end)
+  rail.InputBegan:Connect(function(input)
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true fromX(input.Position.X) end
+  end)
+  rail.InputEnded:Connect(function(input)
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+  end)
+  UIS.InputChanged:Connect(function(input)
+   if dragging and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then fromX(input.Position.X) end
+  end)
+  player:GetAttributeChangedSignal(spec.key):Connect(function() if card.Parent then apply(current()) end end)
+  apply(current())
+ end
+
+ local function addToggle(nameText,key,default,order)
+  local card=cardBase(key,order)
+  local name=label(card,"Label",nameText,UDim2.new(.64,0,1,0),UDim2.fromOffset(10,0),48)
+  name.TextSize=15 name.TextXAlignment=Enum.TextXAlignment.Left
+  local b=textButton(card,"Toggle","",UDim2.fromOffset(82,34),UDim2.new(1,-92,.5,-17),49)
+  local function refresh()
+   local on=ensure(player,key,default)==true
+   b.Text=on and "ATIVO" or "DESL."
+   b.BackgroundColor3=on and Color3.fromRGB(132,42,42) or Color3.fromRGB(176,159,134)
+   b.TextColor3=on and Color3.fromRGB(248,231,208) or INK
+  end
+  b.Activated:Connect(function() player:SetAttribute(key,not (player:GetAttribute(key)==true)) refresh() end)
+  refresh()
+ end
+
+ local function addLanguage(order)
+  local card=cardBase("language",order)
+  card.Size=UDim2.new()
+  local name=label(card,"Label","IDIOMA DO JOGO",UDim2.new(1,-20,0,26),UDim2.fromOffset(10,7),48)
+  name.TextSize=15 name.TextXAlignment=Enum.TextXAlignment.Left
+  local pt=textButton(card,"Portuguese","PORTUGUÊS",UDim2.new(.46,0,0,34),UDim2.new(.03,0,1,-42),49)
+  local en=textButton(card,"English","ENGLISH",UDim2.new(.46,0,0,34),UDim2.new(.51,0,1,-42),49)
+  pt.TextSize=13 en.TextSize=13
+  local function refresh()
+   local lang=ensure(player,"GameLanguage","pt-BR")
+   pt.BackgroundColor3=lang=="pt-BR" and RED or Color3.fromRGB(224,207,175)
+   en.BackgroundColor3=lang=="en-US" and RED or Color3.fromRGB(224,207,175)
+   pt.TextColor3=lang=="pt-BR" and Color3.fromRGB(248,231,208) or INK
+   en.TextColor3=lang=="en-US" and Color3.fromRGB(248,231,208) or INK
+  end
+  pt.Activated:Connect(function() player:SetAttribute("GameLanguage","pt-BR") refresh() end)
+  en.Activated:Connect(function() player:SetAttribute("GameLanguage","en-US") refresh() end)
+  refresh()
+ end
+
+ local function addInfo(titleText,body,order)
+  local card=cardBase("Info"..order,order)
+  local t=label(card,"Label",titleText,UDim2.new(1,-20,0,24),UDim2.fromOffset(10,6),48)
+  t.TextSize=15 t.TextXAlignment=Enum.TextXAlignment.Left
+  local b=label(card,"Body",body,UDim2.new(1,-20,1,-34),UDim2.fromOffset(10,31),48)
+  b.TextSize=12 b.TextColor3=MUTED b.TextXAlignment=Enum.TextXAlignment.Left b.TextYAlignment=Enum.TextYAlignment.Top
+ end
+
+ local function buildCategory(category)
+  activeCategory=category
+  clearCards()
+  local english=player:GetAttribute("GameLanguage")=="en-US"
+  if category=="game" then
+   subtitle.Text=english and "GAME" or "JOGO"
+   for i,spec in ipairs(GAME_SPECS) do addSlider(spec,i) end
+   addToggle(english and "INTERFACE FEEDBACK" or "RESPOSTA DA INTERFACE","UIFeedback",true,10)
+   addInfo(english and "CONTROLS" or "CONTROLES",english and "Hold the run button to sprint. Crouch and action buttons remain on the right side." or "Segure o botão de correr para sprintar. Agachar e ações continuam no lado direito.",11)
+  elseif category=="visual" then
+   subtitle.Text="VISUAL"
+   for i,spec in ipairs(VISUAL_SPECS) do addSlider(spec,i) end
+   addToggle(english and "DAMAGE FLASH" or "FLASH DE DANO","DamageFlash",true,10)
+   addInfo(english and "NIGHT" or "NOITE",english and "The lobby keeps the authored dark-night lighting. These options do not brighten the outside map." or "O lobby mantém a iluminação noturna escura do mapa. Estas opções não clareiam a parte externa.",11)
   else
-   player:SetAttribute(row.key,v)
+   subtitle.Text=english and "LANGUAGE" or "LINGUAGEM"
+   addLanguage(1)
+   addInfo(english and "INTERFACE LANGUAGE" or "IDIOMA DA INTERFACE",english and "Changes menu and HUD text. Character names and proper names stay unchanged." or "Troca os textos do menu e da HUD. Nomes de personagens e nomes próprios continuam iguais.",2)
   end
- end
- local function clear()
-  drag=nil
-  for _,c in ipairs(active) do c:Disconnect() end
-  table.clear(active)
-  for _,o in ipairs(content:GetChildren()) do if o:IsA("GuiObject") then o:Destroy() end end
- end
-
- local select
- select=function(cat)
-  currentCategory=cat
-  clear()
-  title.Text=tr(player,cat.title,cat.titleEn)
-  for k,b in pairs(tabButtons) do
-   b.BackgroundTransparency=k==cat.key and .08 or .48
-   local c
-   for _,candidate in ipairs(categories) do if candidate.key==k then c=candidate break end end
-   if c then b.Text=tr(player,c.label,c.labelEn) end
-  end
-
-  for i,row in ipairs(cat.rows) do
-   local cell=Instance.new("Frame",content)
-   cell.LayoutOrder=i cell.Size=UDim2.new(1,-4,0,row.section and 28 or row.info and 44 or 62)
-   cell.BackgroundTransparency=1 cell.ZIndex=content.ZIndex+1
-   if row.section then
-    local t=label(cell,tr(player,row.section,row.sectionEn),UDim2.fromScale(1,1))
-    t.Font=Enum.Font.GothamBold t.TextSize=12 t.TextColor3=Color3.fromRGB(170,170,180)
-   elseif row.info then
-    local t=label(cell,tr(player,row.info,row.infoEn),UDim2.new(1,-8,1,0),nil,Enum.Font.Gotham)
-    t.TextSize=12 t.TextColor3=Color3.fromRGB(190,190,198)
-   else
-    local n=label(cell,tr(player,row.label,row.labelEn),UDim2.new(.52,-8,0,28),UDim2.fromOffset(0,5),Enum.Font.GothamBold)
-    n.TextSize=13
-    local d=label(cell,tr(player,row.description,row.descriptionEn),UDim2.new(.54,-8,0,27),UDim2.fromOffset(0,33))
-    d.TextSize=10 d.TextColor3=Color3.fromRGB(178,178,188)
-
-    if row.options then
-     local b=button(cell,"",Color3.fromRGB(118,118,128))
-     b.Size=UDim2.new(.40,0,0,34) b.AnchorPoint=Vector2.new(1,.5) b.Position=UDim2.new(1,-2,.5,0)
-     local function refresh()
-      local value=player:GetAttribute(row.key)
-      local index=table.find(row.values,value) or 1
-      b.Text=row.options[index]
-     end
-     b.Activated:Connect(function()
-      local value=player:GetAttribute(row.key)
-      local index=table.find(row.values,value) or 1
-      index=index%#row.values+1
-      setValue(row,row.values[index])
-     end)
-     table.insert(active,player:GetAttributeChangedSignal(row.key):Connect(refresh))
-     refresh()
-    elseif row.min then
-     local track=Instance.new("TextButton",cell)
-     track.Text="" track.BackgroundColor3=Color3.fromRGB(38,38,42) track.BorderSizePixel=0
-     track.Position=UDim2.new(.58,0,.5,-5) track.Size=UDim2.new(.28,0,0,10) track.ZIndex=cell.ZIndex+2
-     corner(track,2)
-     local fill=Instance.new("Frame",track)
-     fill.BackgroundColor3=Color3.fromRGB(210,210,216) fill.BorderSizePixel=0 fill.ZIndex=track.ZIndex+1
-     corner(fill,2)
-     local val=label(cell,"",UDim2.new(.11,0,1,0),UDim2.new(.88,0,0,0))
-     val.TextXAlignment=Enum.TextXAlignment.Right val.TextSize=12
-     local function refresh()
-      local v=player:GetAttribute(row.key) or row.default
-      local r=(v-row.min)/(row.max-row.min)
-      fill.Size=UDim2.fromScale(r,1)
-      val.Text=tostring(math.floor(v+.5))..(row.suffix or "")
-     end
-     local function move(x)
-      setValue(row,row.min+(row.max-row.min)*math.clamp((x-track.AbsolutePosition.X)/math.max(1,track.AbsoluteSize.X),0,1))
-     end
-     track.InputBegan:Connect(function(input)
-      if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-       drag={input=input,move=move} move(input.Position.X)
-      end
-     end)
-     table.insert(active,player:GetAttributeChangedSignal(row.key):Connect(refresh))
-     refresh()
-    else
-     local b=button(cell,"",Color3.fromRGB(100,100,108))
-     b.Size=UDim2.fromOffset(34,34) b.AnchorPoint=Vector2.new(1,.5) b.Position=UDim2.new(1,-2,.5,0)
-     local function refresh() b.Text=player:GetAttribute(row.key)==true and "✓" or "" end
-     b.Activated:Connect(function() setValue(row,not player:GetAttribute(row.key)) end)
-     table.insert(active,player:GetAttributeChangedSignal(row.key):Connect(refresh))
-     refresh()
-    end
+  for key,data in pairs(tabButtons) do
+   if key~="close" then
+    local selected=key==category
+    data.tint.BackgroundTransparency=selected and .42 or 1
+    data.button.TextColor3=selected and Color3.fromRGB(255,238,218) or Color3.fromRGB(220,214,202)
    end
   end
  end
 
- local tabWidth=.25
- for i,cat in ipairs(categories) do
-  local b=button(tabs,tr(player,cat.label,cat.labelEn),cat.color or Color3.fromRGB(112,112,120))
-  b.Name=cat.key b.Size=UDim2.new(tabWidth,-5,1,0) b.Position=UDim2.new((i-1)*tabWidth,0,0,0)
-  b.BackgroundTransparency=.48
-  if b:FindFirstChildOfClass("UICorner") then b:FindFirstChildOfClass("UICorner").CornerRadius=UDim.new(0,1) end
-  tabButtons[cat.key]=b
-  b.Activated:Connect(function() select(cat) end)
+ local function addRibbon(key,ptLabel,enLabel,y)
+  local b=Instance.new("TextButton")
+  b.Name=key=="close" and "Close" or ("Tab_"..key)
+  b.Position=UDim2.fromScale(.885,y)
+  b.Size=UDim2.fromScale(.105,.075)
+  b.BackgroundTransparency=1
+  b.BorderSizePixel=0
+  b.Text=ptLabel
+  b.Font=Enum.Font.Garamond
+  b.TextScaled=true
+  b.TextColor3=Color3.fromRGB(220,214,202)
+  b.TextStrokeColor3=Color3.fromRGB(23,18,18)
+  b.TextStrokeTransparency=.2
+  b.ZIndex=52
+  b.Parent=book
+  local lim=Instance.new("UITextSizeConstraint") lim.MinTextSize=8 lim.MaxTextSize=15 lim.Parent=b
+  local tint=Instance.new("Frame")
+  tint.Name="SelectionTint"
+  tint.Size=UDim2.fromScale(1,1)
+  tint.BackgroundColor3=RED
+  tint.BackgroundTransparency=1
+  tint.BorderSizePixel=0
+  tint.ZIndex=51
+  tint.Parent=b
+  corner(tint,3)
+  tabButtons[key]={button=b,tint=tint,pt=ptLabel,en=enLabel}
+  return b
  end
- local close=button(tabs,tr(player,"SAÍDA","EXIT"),Color3.fromRGB(115,82,82))
- close.Name="Close" close.Size=UDim2.new(.20,0,1,0) close.Position=UDim2.new(.80,0,0,0) close.BackgroundTransparency=.48
- close.Activated:Connect(onClose)
 
- local languageConnection=player:GetAttributeChangedSignal("GameLanguage"):Connect(function()
-  close.Text=tr(player,"SAÍDA","EXIT")
-  select(currentCategory)
- end)
+ local gameTab=addRibbon("game","JOGO","GAME",.115)
+ local visualTab=addRibbon("visual","VISUAL","VISUAL",.215)
+ local languageTab=addRibbon("language","LINGUAGEM","LANGUAGE",.315)
+ local closeTab=addRibbon("close","X","X",.415)
 
- UIS.InputChanged:Connect(function(input)
-  if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseMovement) then drag.move(input.Position.X) end
- end)
- UIS.InputEnded:Connect(function(input)
-  if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseButton1) then drag=nil end
- end)
- frame.Destroying:Connect(function() if languageConnection then languageConnection:Disconnect() end end)
+ gameTab.Activated:Connect(function() buildCategory("game") end)
+ visualTab.Activated:Connect(function() buildCategory("visual") end)
+ languageTab.Activated:Connect(function() buildCategory("language") end)
+ closeTab.Activated:Connect(function() if onClose then onClose() else parent.Visible=false end end)
 
- select(categories[1])
- return {frame=frame,select=select,setValue=setValue}
+ local function refreshLanguage()
+  local english=player:GetAttribute("GameLanguage")=="en-US"
+  title.Text=english and "SETTINGS" or "CONFIGURAÇÕES"
+  for key,data in pairs(tabButtons) do data.button.Text=english and data.en or data.pt end
+  buildCategory(activeCategory)
+ end
+ player:GetAttributeChangedSignal("GameLanguage"):Connect(refreshLanguage)
+
+ local function fitBook()
+  local s=parent.AbsoluteSize
+  local aspect=1500/1024
+  local w=math.min(s.X*.96,s.Y*.91*aspect)
+  local h=w/aspect
+  book.Size=UDim2.fromOffset(w,h)
+  shadow.Size=UDim2.fromOffset(w,h)
+ end
+ parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitBook)
+ fitBook()
+ refreshLanguage()
+ return frame
 end
-return Settings
+
+return M

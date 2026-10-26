@@ -157,6 +157,8 @@ local survivalServerSource=assert(game.ServerScriptService:FindFirstChild("Survi
 local survivalClientSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SurvivalClient"),"Survival client missing").Source
 local pursuerAnimationSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("PursuerAnimation"),"Pursuer animation controller missing").Source
 local ambienceSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ArenaAmbience"),"Arena ambience missing").Source
+local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
+assert(settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('book.Name="BookBackground"',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true),"Red binder settings background missing")
 local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing").Source
 local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
 local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source

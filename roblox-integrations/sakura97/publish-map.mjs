@@ -193,6 +193,46 @@ async function createActionAtlas(bytes){
  if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio atlas operation returned no assetId: ${JSON.stringify(operation)}`);
  return id;
 }
+
+async function createSettingsBookAsset(bytes){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const request={
+  assetType:'Decal',
+  displayName:'Suvivers reference action controls',
+  description:'Action controls artwork supplied by the game owner.',
+  creationContext:{creator:{userId:'8344738123'}}
+ };
+ const form=new FormData();
+ form.append('request',JSON.stringify(request));
+ form.append('fileContent',new Blob([bytes],{type:'image/jpeg'}),'action-controls.jpg');
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
+  method:'POST',
+  headers:{'x-api-key':key},
+  body:form,
+  signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text();
+ let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
+ if(!response.ok) throw new Error(`Fill audio atlas upload HTTP ${response.status}: ${JSON.stringify(operation)}`);
+ if(!operation.path) throw new Error(`Fill audio atlas upload returned no operation path: ${JSON.stringify(operation)}`);
+ const deadline=Date.now()+240000;
+ while(!operation.done){
+  if(Date.now()>deadline) throw new Error(`Fill audio atlas moderation/upload operation timed out`);
+  await sleep(1500);
+  const opResponse=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{
+   headers:{'x-api-key':key},
+   signal:AbortSignal.timeout(60000)
+  });
+  const opRaw=await opResponse.text();
+  try{operation=JSON.parse(opRaw)}catch{operation={raw:opRaw}}
+  if(!opResponse.ok) throw new Error(`Fill audio atlas operation HTTP ${opResponse.status}: ${JSON.stringify(operation)}`);
+ }
+ if(operation.error) throw new Error(`Fill audio atlas operation failed: ${JSON.stringify(operation.error)}`);
+ const id=Number(operation?.response?.assetId);
+ if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio atlas operation returned no assetId: ${JSON.stringify(operation)}`);
+ return id;
+}
 async function createFillAudioAsset(spec,bytes){
  const key=process.env.ROBLOX_API_KEY;
  if(!key) throw new Error('Missing ROBLOX_API_KEY');
@@ -427,6 +467,18 @@ console.log('SYNTAX',JSON.stringify(first(await execute(syntax))));
 const atlasManifest=JSON.parse(fs.readFileSync('roblox-integrations/sakura97/action-atlas.json','utf8'));
 const actionAtlasId=atlasManifest.assetId || await createActionAtlas(Buffer.from(fs.readFileSync('roblox-integrations/sakura97/action-atlas.b64','utf8'),'base64'));
 console.log('ACTION_ATLAS_ASSET_ID',actionAtlasId);
+let settingsBookAssetId=0;
+try {
+ const state=first(await execute(`
+  local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
+  return {id=net and (net:GetAttribute("SettingsBookAssetId") or 0) or 0}
+ `));
+ settingsBookAssetId=Number(state and state.id) or 0;
+} catch {}
+if(!settingsBookAssetId && fs.existsSync('roblox-integrations/sakura97/settings-book-reference.jpg')){
+ settingsBookAssetId=await createSettingsBookAsset(fs.readFileSync('roblox-integrations/sakura97/settings-book-reference.jpg'));
+}
+console.log('SETTINGS_BOOK_ASSET_ID',settingsBookAssetId);
 const fillVoiceIds=await ensureFillVoiceAssets();
 console.log('FILL_VOICE_IDS',JSON.stringify(fillVoiceIds));
 const fixedLobbyAssetId=await ensureFixedLobbyAsset();
@@ -446,6 +498,8 @@ local function install()
 ${install}
 end
 local result=install()
+game.ReplicatedStorage.Survival:SetAttribute("SettingsBookAssetId",${settingsBookAssetId})
+result.settingsBookAssetId=${settingsBookAssetId}
 result.actionSources={}
 for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","Stun","Vault"}) do
  local folder=game.ReplicatedStorage.Survival.SurvivorActionClips
@@ -698,7 +752,7 @@ local assets=game.ServerStorage.SurvivalAssets
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
   assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay FOV setting missing")
   assert(not settingsSource:find('key="visual"',1,true) and not settingsSource:find('VisualSaturation',1,true) and not settingsSource:find('VisualTime',1,true),"Removed visual/environment settings returned")
-  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","DistrictInspired")',1,true),"Visual-style option returned or flat settings style missing")
+  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true) and settingsSource:find('addRibbon("game","JOGO","GAME"',1,true),"Book settings panel missing")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
   local shopSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
