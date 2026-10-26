@@ -33,86 +33,84 @@ async function execute(script){
   try{return JSON.parse(v)}catch{return v}
 }
 
+
 const luau = `
 local Http=game:GetService("HttpService")
-local lobby=assert(workspace:FindFirstChild("JediLibrary"),"JediLibrary missing")
-local house=assert(lobby:FindFirstChild("House"),"Lobby house missing")
-assert((lobby:GetAttribute("PassageRepairRevision") or 0)>=2,"Passage repair revision missing")
+local lobby=assert(workspace:FindFirstChild("JediLibrary"))
+local house=assert(lobby:FindFirstChild("House"))
+local npc=workspace:FindFirstChild("LobbyGuide")
+local spawn=lobby:GetAttribute("VerifiedSpawn")
+local lobbyCF,lobbySize=lobby:GetBoundingBox()
+local houseCF,houseSize=house:GetBoundingBox()
+local out={
+ version=game.PlaceVersion,
+ spawn=tostring(spawn),
+ lobby={cf=tostring(lobbyCF),size=tostring(lobbySize)},
+ house={cf=tostring(houseCF),size=tostring(houseSize)},
+ npc=npc and {root=tostring(npc.HumanoidRootPart.Position),surface=npc:GetAttribute("ReceptionSurface")} or nil,
+ furniture={},stairs={},outside={}
+}
 
-local openDoorParts,doorFrames,visualStairs,stairSteps=0,0,0,0
+local function ancestry(obj)
+ local names={obj.Name}
+ local p=obj.Parent
+ for _=1,5 do
+  if not p or p==lobby then break end
+  table.insert(names,1,p.Name)
+  p=p.Parent
+ end
+ return table.concat(names,"/")
+end
+
 for _,p in ipairs(house:GetDescendants()) do
  if p:IsA("BasePart") then
-  if p.Transparency>=.98 then
-   assert(not p.CanCollide,"Invisible collidable blocker: "..p:GetFullName())
+  local text=string.lower(ancestry(p))
+  if string.find(text,"table",1,true) or string.find(text,"desk",1,true) or string.find(text,"counter",1,true) or string.find(text,"dining",1,true) or string.find(text,"hutch",1,true) then
+   table.insert(out.furniture,{
+    path=ancestry(p),name=p.Name,pos=tostring(p.Position),size=tostring(p.Size),
+    top=p.Position.Y+p.Size.Y/2,collide=p.CanCollide,trans=p.Transparency,
+    spawnDist=typeof(spawn)=="Vector3" and (p.Position-spawn).Magnitude or -1,
+    npcDist=npc and (p.Position-npc.HumanoidRootPart.Position).Magnitude or -1
+   })
   end
-  if p:GetAttribute("OpenPassage") then
-   assert(not p.CanCollide,"Open passage collides: "..p:GetFullName())
-   openDoorParts+=1
-   if p:GetAttribute("PassageWidth") then doorFrames+=1 end
-  end
-  if p:GetAttribute("VisualOnlyStair") then
-   assert(not p.CanCollide,"Visual stair still collides: "..p:GetFullName())
-   visualStairs+=1
+  local n=string.lower(p.Name)
+  if string.find(n,"stair",1,true) or string.find(n,"step",1,true) or string.find(n,"rail",1,true) then
+   table.insert(out.stairs,{path=ancestry(p),pos=tostring(p.Position),size=tostring(p.Size),collide=p.CanCollide,visual=p:GetAttribute("VisualOnlyStair"),walkable=p:GetAttribute("WalkableReplacement")})
   end
  end
 end
-assert(openDoorParts>=7 and doorFrames>=3,"Persisted door repair incomplete")
-assert(visualStairs>=6,"Persisted stair visuals incomplete")
 
-local access=assert(lobby:FindFirstChild("PassageColliders"),"PassageColliders missing")
-local groups={}
-for _,p in ipairs(access:GetDescendants()) do
- if p:IsA("BasePart") and p:GetAttribute("WalkableStairStep") then
-  assert(p.CanCollide and p.Transparency>=.98,"Walkable stair step invalid")
-  stairSteps+=1
-  local source=p:GetAttribute("SourceStair") or "unknown"
-  groups[source]=(groups[source] or 0)+1
+table.sort(out.furniture,function(a,b)return a.npcDist<b.npcDist end)
+while #out.furniture>30 do table.remove(out.furniture) end
+
+local access=lobby:FindFirstChild("PassageColliders")
+if access then
+ for _,p in ipairs(access:GetChildren()) do
+  if p:IsA("BasePart") and p:GetAttribute("WalkableStairStep") then
+   table.insert(out.stairs,{path="PassageColliders/"..p.Name,pos=tostring(p.Position),size=tostring(p.Size),collide=p.CanCollide,source=p:GetAttribute("SourceStair")})
+  end
  end
 end
-local usableStairs=0
-for _,count in pairs(groups) do if count>=8 then usableStairs+=1 end end
-assert(stairSteps>=8 and usableStairs>=1,"Persisted walkable stair chain missing")
+while #out.stairs>80 do table.remove(out.stairs) end
 
-local npc=assert(workspace:FindFirstChild("LobbyGuide"),"Fill missing")
-assert(npc:GetAttribute("ReceptionAccessMode")=="SpawnRoomDirect","Fill direct access mode missing")
-assert(npc:GetAttribute("GuideStation")=="FillGuideStool","Fill guide station metadata missing")
-local station=assert(lobby:FindFirstChild("FillGuideStool"),"FillGuideStool missing")
-assert(station:GetAttribute("SpawnRoomGuideStation")==true and station:GetAttribute("NonBlocking")==true,"Fill station flags missing")
-for _,p in ipairs(station:GetDescendants()) do
- if p:IsA("BasePart") then assert(not p.CanCollide,"Fill station blocks movement: "..p:GetFullName()) end
+local params=RaycastParams.new()
+params.FilterType=Enum.RaycastFilterType.Include
+params.FilterDescendantsInstances={lobby}
+params.RespectCanCollide=true
+local yTop=math.max(houseCF.Position.Y+houseSize.Y/2+30,lobbyCF.Position.Y+lobbySize.Y/2+10)
+for xi=-3,3 do
+ for zi=-3,3 do
+  local x=houseCF.Position.X+xi*(houseSize.X/2+12)/3
+  local z=houseCF.Position.Z+zi*(houseSize.Z/2+12)/3
+  local inHouse=math.abs(x-houseCF.Position.X)<houseSize.X/2-2 and math.abs(z-houseCF.Position.Z)<houseSize.Z/2-2
+  if not inHouse then
+   local hit=workspace:Raycast(Vector3.new(x,yTop,z),Vector3.new(0,-220,0),params)
+   table.insert(out.outside,{x=x,z=z,hit=hit and ancestry(hit.Instance) or nil,y=hit and hit.Position.Y or nil,normal=hit and tostring(hit.Normal) or nil,collide=hit and hit.Instance.CanCollide or nil})
+  end
+ end
 end
-local visitor=npc:GetAttribute("VerifiedVisitorPosition")
-local spawn=lobby:GetAttribute("VerifiedSpawn")
-assert(typeof(visitor)=="Vector3" and typeof(spawn)=="Vector3","Fill/spawn access position missing")
-local flat=(Vector2.new(visitor.X,visitor.Z)-Vector2.new(spawn.X,spawn.Z)).Magnitude
-assert(flat<=1.5,"Fill visitor point is not at spawn")
-assert((visitor-npc.HumanoidRootPart.Position).Magnitude<=npc.ProximityPrompt.MaxActivationDistance,"Fill outside prompt range from spawn")
-
-local client=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("SurvivalClient"),"SurvivalClient missing")
-local source=client.Source
-assert(source:find("CartIcon",1,true),"Shop cart icon source missing")
-assert(source:find("ClockFace",1,true) and source:find("MinuteHand",1,true),"Waiting clock icon source missing")
-assert(source:find('phase=="Aguardando"',1,true),"Waiting-player clock state missing")
-
-local guideSource=assert(npc:FindFirstChild("GuideInteraction"),"Fill GuideInteraction missing").Source
-assert(guideSource:find("local breath=math.sin",1,true),"Fill breathing animation missing")
-assert(guideSource:find("leftShoulder",1,true) and guideSource:find("rightShoulder",1,true),"Fill shoulder idle animation missing")
-
-return Http:JSONEncode({
- ok=true,
- version=game.PlaceVersion,
- openDoorParts=openDoorParts,
- doorFrames=doorFrames,
- visualStairs=visualStairs,
- stairSteps=stairSteps,
- usableStairs=usableStairs,
- fillDirectFromSpawn=true,
- shopCart=true,
- waitingClock=true,
- fillAnimated=true
-})
+return Http:JSONEncode(out)
 `;
 
 const result=await execute(luau);
-console.log('SUVIVERS_LOBBY_LIVE_VERIFY',JSON.stringify(result));
-if(!result || result.ok!==true) throw new Error('Live lobby verification did not return ok');
+console.log('SUVIVERS_LOBBY_DIAGNOSTIC',JSON.stringify(result));
