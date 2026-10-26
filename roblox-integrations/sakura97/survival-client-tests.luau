@@ -2,7 +2,7 @@ local originalSounds={} for _,v in ipairs(game:GetService("SoundService"):GetChi
 local realGame=game local RS=game:GetService("ReplicatedStorage")
 local host=Instance.new("Folder",workspace) host.Name="SurvivalClientTest"
 local render=Instance.new("BindableEvent",host) local input=Instance.new("BindableEvent",host) local ended=Instance.new("BindableEvent",host) local update=Instance.new("BindableEvent",host)
-local attrs={InRound=true,SweanLoadingDone=true,RoundStatus="alive",GameLanguage="pt-BR"}
+local attrs={InRound=true,SweanLoadingDone=true,RoundStatus="alive",GameLanguage="pt-BR",LanternDurabilityTier=0,LanternMaxSeconds=70,LanternSeconds=70,FlashlightOn=false}
 local p={attrs=attrs,Character=nil,UserId=991,DisplayName="Tester",Parent=host}
 local description=Instance.new("HumanoidDescription")
 local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) char.Parent=host p.Character=char
@@ -50,7 +50,12 @@ local ok,result=xpcall(function()
  local mapLoading=assert(gui:FindFirstChild("ArenaLoading"),"Map loading screen missing")
  assert(mapLoading:FindFirstChild("MapProgress") and mapLoading.MapProgress:FindFirstChild("Fill"),"Bottom map loading progress bar missing")
  assert(mapLoading:FindFirstChild("GoodLuck") and mapLoading.GoodLuck.Text=="GOOD LUCK","Good Luck loading text missing")
- assert(mapLoading.Size==UDim2.fromScale(1,1) and mapLoading:FindFirstChild("ArenaAvatar") and mapLoading.ArenaAvatar.Visible==false,"Map loading must use the real full-screen workspace camera, not a visible avatar viewport")
+ assert(mapLoading.Size==UDim2.fromScale(1,1) and mapLoading:FindFirstChild("ArenaAvatar") and mapLoading.ArenaAvatar.Visible==false,"Legacy loading avatar must stay hidden")
+ assert(mapLoading.ArenaAvatar:GetAttribute("LegacyHidden")==true,"Legacy loading avatar marker missing")
+ assert(mapLoading:FindFirstChild("MatchLoadingTelevision") and mapLoading.MatchLoadingTelevision:IsA("ViewportFrame"),"Match-loading TV viewport missing")
+ assert(mapLoading:FindFirstChild("TVStatic") and mapLoading:FindFirstChild("LoadingRoster"),"TV static or player roster reveal missing")
+ assert(mapLoading:FindFirstChild("GameCornerTitle") and mapLoading.GameCornerTitle.Text=="SUVIVERS","SUVIVERS top-right loading title missing")
+ assert(game:GetService("Lighting"):FindFirstChild("SuviversRoundExposure") and game:GetService("Lighting"):FindFirstChild("SuviversRoundAtmosphere"),"Round fog/darkness camera effects missing")
  update:Fire("jasonIntro",{duration=4},introJason) task.wait()
  assert(gui:GetAttribute("CinematicActive")~=true and not workspace:FindFirstChild("LocalJasonIntro"),"Removed killer intro cinematic returned")
  update:Fire("caught","Jason",CFrame.new(0,0,-3)) task.wait()
@@ -77,6 +82,11 @@ local ok,result=xpcall(function()
   if row:IsA("Frame") then shopRows+=1 end
  end
  assert(shopRows==5,"Killer shop must contain exactly five pursuers")
+ assert(gui.KillerShop.ShopPanel.Tabs:FindFirstChild("Items") and not gui.KillerShop.ShopPanel.Tabs:FindFirstChild("Survivors"),"Items tab did not replace Survivors")
+ local itemsPanel=assert(gui.KillerShop.ShopPanel:FindFirstChild("ItemsPanel"),"Items panel missing")
+ local lanternUpgrade=assert(itemsPanel:FindFirstChild("LanternUpgrade"),"Lantern durability item missing")
+ assert(lanternUpgrade:FindFirstChild("Duration") and lanternUpgrade:FindFirstChild("Upgrade"),"Lantern upgrade duration/button missing")
+ assert(lanternUpgrade.Costs.Text:find("10",1,true) and lanternUpgrade.Costs.Text:find("170",1,true) and lanternUpgrade.Costs.Text:find("MAX",1,true),"Lantern upgrade cost ladder missing")
  assert(gui.Countdown.Icon:FindFirstChild("ClockFace") and gui.Countdown.Icon:FindFirstChild("MinuteHand"),"Native clock icon missing")
  assert(gui.SettingsOverlay.BackgroundTransparency>=.75,"Settings overlay is still darkening the controls")
  assert(gui.SettingsOverlay.ReferenceSettings.ZIndex>gui.SettingsOverlay.ZIndex,"Settings panel is rendered behind its dark overlay")
@@ -84,6 +94,7 @@ local ok,result=xpcall(function()
  attrs.GameLanguage="en" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
  assert(gui.KillerShop.ShopPanel.Title.Text=="KILLERS","HUD text did not switch to English from settings")
  assert(languageTab.Text=="LANGUAGE","Settings language tab did not translate")
+ assert(gui.KillerShop.ShopPanel.Tabs.Items.Text=="ITEMS","Items shop tab did not translate")
  attrs.GameLanguage="pt-BR" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
  assert(gui.KillerShop.ShopPanel.Title.Text=="PERSEGUIDORES","HUD text did not switch back to Portuguese")
  assert(gui.HackPanel and gui.Profile.Coin,"Hack UI or requested coin missing")
@@ -104,7 +115,8 @@ local ok,result=xpcall(function()
  if beforeResultSubject then assert(camera.CameraSubject==beforeResultSubject,"Gameplay camera subject was not restored after result closed") end
  assert(gui.TopActions and gui.TopActions:FindFirstChild("Run"),"Hold-to-run control missing")
  local lanternButton=assert(gui.TopActions:FindFirstChild("Lantern"),"Survivor lantern button missing")
- assert(lanternButton:GetAttribute("LanternAssetId")==11906391298 and lanternButton:GetAttribute("CrackleSoundAssetId")==112352139435056,"Lantern button metadata incorrect")
+ assert(lanternButton:GetAttribute("LanternAssetId")==11906391298 and lanternButton:GetAttribute("CrackleSoundAssetId")==129037248569146,"Lantern button metadata incorrect")
+ assert(lanternButton.Text:find("1:10",1,true),"Lantern HUD does not show base 70-second charge")
  assert(not gui.TopActions:FindFirstChild("Boost") and not gui.TopActions:FindFirstChild("Medkit"),"Removed persistent top buttons returned")
  assert(not gui:FindFirstChild("Leave"),"Return-to-menu button returned to gameplay")
  assert(gui.Actions:FindFirstChild("ReviveNearby"),"Contextual proximity revive button missing")
@@ -191,7 +203,7 @@ local ok,result=xpcall(function()
  fakeNet:SetAttribute("Phase","Partida") step()
  assert(not gui:FindFirstChild("Join") and not gui.Actions.Visible and not gui.Round.Visible,"Active round HUD leaked to a lobby player")
  attrs.InMenu=true step() assert(not gui:FindFirstChild("Join") and not gui.Round.Visible and not gui.Countdown.Visible)
- return {ok=true,fullScreenKillResult=true,realWorkspaceResultCamera=true,realWorkspaceLoadingCamera=true,resultCameraRestored=true,dynamicKillerWinnerName=true,musicHudRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winnerMenuScene=true,killerShop=true,noResetButton=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,lanternHudAndKeyboard=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
+ return {ok=true,itemsShop=true,lanternDurabilityHud=true,matchLoadingTV=true,roundExposure=true,fullScreenKillResult=true,realWorkspaceResultCamera=true,realWorkspaceLoadingCamera=true,resultCameraRestored=true,dynamicKillerWinnerName=true,musicHudRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,mapLoadingBottomBar=true,goodLuckLoadingText=true,r6ClientRig=true,singleHoldRunControl=true,compactReferenceRoster=true,topTimerOnly=true,transparentActionButtons=true,scrollableResults=true,winnerMenuScene=true,killerShop=true,noResetButton=true,automaticGameMusicRemoved=true,teammateReviveProgress=true,noHitCinematic=true,noKillerIntro=true,smoothCameraReturn=true,lanternHudAndKeyboard=true,persistentMovementControls=true,jasonFovBoost=true,proximityReviveButton=true,spectatorCamera=true,targetMarker=true,menuAndDeathHideHUD=true,noBoostOrKitButtons=true,noReturnButton=true}
 end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
