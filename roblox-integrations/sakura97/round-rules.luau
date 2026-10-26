@@ -1,7 +1,7 @@
 -- Server-owned round admission, objective state and movement economy.
 -- The client never supplies damage, XP, stamina, keys or objective completion.
 local Rules={
- Duration=660, Intermission=30, VoteDuration=6, KillerChoiceDuration=12,
+ Duration=660, Intermission=60, VoteDuration=6, KillerChoiceDuration=12,
  Capacity=8, Bleedout=38, ReviveTime=2.5,
  SurvivorWalk=15, SurvivorRun=20, SurvivorCrouch=8.5,
  SurvivorStamina=100, SurvivorDrain=18, SurvivorRegen=22,
