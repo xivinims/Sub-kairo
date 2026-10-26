@@ -9,8 +9,8 @@ player:SetAttribute("SweanLoadingDone",false)
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
 local startedAt=os.clock()
-local CINEMATIC_DURATION=8
-local LOGO_END=4
+local CINEMATIC_DURATION=10
+local LOGO_END=5
 
 local gui=Instance.new("ScreenGui")
 gui.Name="SurviversLoading"
@@ -96,8 +96,8 @@ local tableModel=assert(assets:FindFirstChild("Mesa"),"Requested table asset mis
 tv.Parent=world
 tableModel.Parent=world
 
-pcall(function() tableModel:ScaleTo(.78) end)
-pcall(function() tv:ScaleTo(1.5) end)
+pcall(function() tableModel:ScaleTo(.82) end)
+pcall(function() tv:ScaleTo(1.04) end)
 
 local function moveBoundingBox(model,targetCF)
  local currentCF=model:GetBoundingBox()
@@ -105,29 +105,31 @@ local function moveBoundingBox(model,targetCF)
  model:PivotTo(delta*model:GetPivot())
 end
 
+-- The Toolbox TV is authored lying on its side. Its Screen is a thin X-axis plate
+-- (X ~= .177), so local X is the screen normal and local Y is the true vertical axis.
+-- Align those two axes explicitly instead of relying on the model's original pivot.
 local tableCF,tableSize=tableModel:GetBoundingBox()
-moveBoundingBox(tableModel,CFrame.new(0,-1.75,0))
+moveBoundingBox(tableModel,CFrame.new(0,-1.72,0))
 tableCF,tableSize=tableModel:GetBoundingBox()
 local tableTop=tableCF.Position.Y+tableSize.Y/2
 
 local screen=assert(tv:FindFirstChild("Screen",true),"Requested TV screen missing")
-local desiredScreen=CFrame.fromMatrix(
- Vector3.new(0,tableTop+1.6,0),
- Vector3.new(0,0,1),
- Vector3.new(0,1,0)
-)
-local orient=desiredScreen*screen.CFrame:Inverse()
-tv:PivotTo(orient*tv:GetPivot())
+local screenCenter=Vector3.new(0,tableTop+1.58,0)
+local screenNormal=Vector3.new(0,0,1)
+local screenUp=Vector3.new(0,1,0)
+local desiredScreen=CFrame.fromMatrix(screenCenter,screenNormal,screenUp)
+local correction=desiredScreen*screen.CFrame:Inverse()
+tv:PivotTo(correction*tv:GetPivot())
 
 local tvCF,tvSize=tv:GetBoundingBox()
 local tvBottom=tvCF.Position.Y-tvSize.Y/2
-tv:PivotTo(CFrame.new(0,tableTop-tvBottom+.04,0)*tv:GetPivot())
+tv:PivotTo(CFrame.new(0,tableTop-tvBottom+.035,0)*tv:GetPivot())
 tvCF,tvSize=tv:GetBoundingBox()
 screen=assert(tv:FindFirstChild("Screen",true))
 
-screen.Transparency=.38
+screen.Transparency=.34
 screen.Material=Enum.Material.Neon
-screen.Color=Color3.fromRGB(102,119,128)
+screen.Color=Color3.fromRGB(105,119,126)
 for _,part in ipairs(tv:GetDescendants()) do
  if part:IsA("BasePart") then
   part.Anchored=true
@@ -200,14 +202,22 @@ for i=1,4 do
 end
 handPart("Thumb",Vector3.new(.065,.28,.11),CFrame.new(-.52,-.02,.34)*CFrame.Angles(math.rad(38),0,0))
 
-local baseHandPivot=hand:GetPivot()
 local behindHand=screen.CFrame*CFrame.new(-.54,-.08,0)
 local impactHand=screen.CFrame*CFrame.new(screen.Size.X/2+.02,-.08,0)
 local retreatHand=screen.CFrame*CFrame.new(-.18,-.08,0)
 hand:PivotTo(behindHand)
 
-local cameraTarget=Vector3.new(0,tableTop+1.28,0)
-local cameraBase=CFrame.lookAt(Vector3.new(0,tableTop+1.42,10.4),cameraTarget)
+-- Fit the camera to the actual TV/table bounding boxes. This avoids the stretched
+-- look that came from a fixed 10.4-stud camera after scaling the TV to 1.5x.
+local tableNowCF,tableNowSize=tableModel:GetBoundingBox()
+local focusY=(math.max(tvCF.Position.Y+tvSize.Y/2,tableNowCF.Position.Y+tableNowSize.Y/2)+
+ math.min(tvCF.Position.Y-tvSize.Y/2,tableNowCF.Position.Y-tableNowSize.Y/2))/2
+local cameraTarget=Vector3.new(0,focusY,0)
+local sceneHeight=math.max(tvSize.Y+1.2,tableNowSize.Y+tvSize.Y*.55)
+local vfov=math.rad(camera.FieldOfView)
+local fitDistance=(sceneHeight*.5)/math.tan(vfov*.5)
+local cameraDistance=math.clamp(fitDistance*1.18,7.2,12)
+local cameraBase=CFrame.lookAt(Vector3.new(0,cameraTarget.Y+.08,cameraDistance),cameraTarget)
 camera.CFrame=cameraBase
 
 local handDriver=Instance.new("CFrameValue")
@@ -251,7 +261,7 @@ local function cameraImpact()
 end
 
 task.spawn(function()
- waitUntil(3.62)
+ waitUntil(4.62)
  for i=1,5 do
   logo.Transparency=(i%2==0) and .12 or .72
   task.wait(.055)
@@ -275,7 +285,7 @@ task.spawn(function()
  retreat:Play()
  screen.Transparency=.28
 
- waitUntil(7.05)
+ waitUntil(9.05)
  TweenService:Create(fade,TweenInfo.new(.95,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0}):Play()
 end)
 
