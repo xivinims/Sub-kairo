@@ -2,7 +2,7 @@ local originalSounds={} for _,v in ipairs(game:GetService("SoundService"):GetChi
 local realGame=game local RS=game:GetService("ReplicatedStorage")
 local host=Instance.new("Folder",workspace) host.Name="SurvivalClientTest"
 local render=Instance.new("BindableEvent",host) local input=Instance.new("BindableEvent",host) local ended=Instance.new("BindableEvent",host) local update=Instance.new("BindableEvent",host)
-local attrs={InRound=true,SweanLoadingDone=true,RoundStatus="alive"}
+local attrs={InRound=true,SweanLoadingDone=true,RoundStatus="alive",GameLanguage="pt-BR"}
 local p={attrs=attrs,Character=nil,UserId=991,DisplayName="Tester",Parent=host}
 local description=Instance.new("HumanoidDescription")
 local char=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6) char.Parent=host p.Character=char
@@ -70,6 +70,14 @@ local ok,result=xpcall(function()
   assert(gui:FindFirstChild("KillerShop") and gui:FindFirstChild("ShopButton"),"Killer shop HUD missing")
  assert(gui.ShopButton.Text=="" and gui.ShopButton:FindFirstChild("CartIcon"),"Cart icon missing")
  assert(gui.Countdown.Icon:FindFirstChild("ClockFace") and gui.Countdown.Icon:FindFirstChild("MinuteHand"),"Native clock icon missing")
+ assert(gui.SettingsOverlay.BackgroundTransparency>=.75,"Settings overlay is still darkening the controls")
+ assert(gui.SettingsOverlay.ReferenceSettings.ZIndex>gui.SettingsOverlay.ZIndex,"Settings panel is rendered behind its dark overlay")
+ assert(gui.SettingsOverlay.ReferenceSettings:FindFirstChild("language"),"Game language tab missing")
+ attrs.GameLanguage="en" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
+ assert(gui.KillerShop.ShopPanel.Title.Text=="KILLERS","HUD text did not switch to English from settings")
+ assert(gui.SettingsOverlay.ReferenceSettings.language.Text=="LANGUAGE","Settings language tab did not translate")
+ attrs.GameLanguage="pt-BR" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
+ assert(gui.KillerShop.ShopPanel.Title.Text=="PERSEGUIDORES","HUD text did not switch back to Portuguese")
  assert(gui.HackPanel and gui.Profile.Coin,"Hack UI or requested coin missing")
  local winnerActor=workspace:FindFirstChild("WinnerPursuer")
  if winnerActor then
