@@ -137,6 +137,6 @@ function first(task){
 
 
 for(const code of ["352b6322f2ce6d4e96b7e7fab0f995a9","2db28f02cc45624daba6ac3e23e126cf","a20340283311e24996b7637869ae902d","3c096d16bc03f74ca8eb14e7f3267d77","c67b14ca14ad724aba11b910acc8ac73","18e5685713c2374a961f1886f69b13db"]){
-const r=await fetch("https://apis.roblox.com/sharelinks/v1/resolve-link",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({linkId:code,linkType:"AvatarItemDetails"})});console.log("SHARE_RESOLVE",code,r.status,await r.text());
+let r=await fetch("https://apis.roblox.com/sharelinks/v1/resolve-link",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({linkId:code,linkType:"AvatarItemDetails"})});const csrf=r.headers.get("x-csrf-token"); if(r.status===403&&csrf){r=await fetch("https://apis.roblox.com/sharelinks/v1/resolve-link",{method:"POST",headers:{"content-type":"application/json","x-csrf-token":csrf},body:JSON.stringify({linkId:code,linkType:"AvatarItemDetails"})});} console.log("SHARE_RESOLVE",code,r.status,await r.text());
 }
 
