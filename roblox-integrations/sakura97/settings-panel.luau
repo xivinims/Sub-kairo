@@ -75,6 +75,7 @@ local GAME_SPECS={
  {key="ControlScale",label="TAMANHO DOS CONTROLES",default=100,min=80,max=120,step=5,suffix="%"},
  {key="CameraSensitivity",label="SENSIBILIDADE",default=100,min=50,max=150,step=5,suffix="%"},
 }
+local LANGUAGE_SPEC={key="language",attribute="GameLanguage",default="pt-BR"}
 local VISUAL_SPECS={
  {key="CameraFOV",label="CAMPO DE VISÃO",default=62,min=50,max=80,step=1,suffix="°"},
  {key="HUDScale",label="ESCALA DA INTERFACE",default=100,min=85,max=115,step=5,suffix="%"},
