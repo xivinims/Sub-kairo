@@ -1368,6 +1368,8 @@ goodLuck.ZIndex=81 goodLuck.Font=Enum.Font.GothamBlack goodLuck.TextScaled=true 
 local goodLuckLimit=Instance.new("UITextSizeConstraint",goodLuck) goodLuckLimit.MinTextSize=28 goodLuckLimit.MaxTextSize=92
 
 
+local loadToken=0
+
 -- Match loading uses the same old television as the initial cinematic, but without
 -- stretching the 3D model. The screen overlay carries the static/roster reveal.
 local gameCornerTitle=text(loading,"GameCornerTitle","SUVIVERS",UDim2.fromOffset(180,32),UDim2.new(1,-196,0,18))
@@ -1599,7 +1601,6 @@ progressFill.Name="Fill" progressFill.Size=UDim2.fromScale(0,1) progressFill.Bor
 local progressGlow=Instance.new("Frame",progressFill)
 progressGlow.Name="Tip" progressGlow.AnchorPoint=Vector2.new(1,.5) progressGlow.Position=UDim2.new(1,0,.5,0) progressGlow.Size=UDim2.fromOffset(18,16)
 progressGlow.BackgroundColor3=Color3.fromRGB(245,245,248) progressGlow.BackgroundTransparency=.35 progressGlow.BorderSizePixel=0 progressGlow.ZIndex=86
-local loadToken=0
 local loadingCameraState=nil
 local loadingCameraConn=nil
 local function restoreLoadingCamera()
