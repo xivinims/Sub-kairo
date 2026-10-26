@@ -69,6 +69,14 @@ local ok,result=xpcall(function()
  assert(not gui:FindFirstChild("AdminReset"),"Removed reset/test button returned")
   assert(gui:FindFirstChild("KillerShop") and gui:FindFirstChild("ShopButton"),"Killer shop HUD missing")
  assert(gui.ShopButton.Text=="" and gui.ShopButton:FindFirstChild("CartIcon"),"Cart icon missing")
+ assert(gui.KillerShop.ShopPanel.Items:FindFirstChild("Jeff")==nil and gui.KillerShop.ShopPanel.Items:FindFirstChild("Freddy")==nil,"Removed killers returned to shop")
+ local jasonShop=assert(gui.KillerShop.ShopPanel.Items:FindFirstChild("Jason"),"Jason shop row missing")
+ assert(jasonShop:FindFirstChild("Portrait") and jasonShop.Portrait:IsA("ViewportFrame"),"Killer shop portrait is not a 3D ViewportFrame")
+ local shopRows=0
+ for _,row in ipairs(gui.KillerShop.ShopPanel.Items:GetChildren()) do
+  if row:IsA("Frame") then shopRows+=1 end
+ end
+ assert(shopRows==5,"Killer shop must contain exactly five pursuers")
  assert(gui.Countdown.Icon:FindFirstChild("ClockFace") and gui.Countdown.Icon:FindFirstChild("MinuteHand"),"Native clock icon missing")
  assert(gui.SettingsOverlay.BackgroundTransparency>=.75,"Settings overlay is still darkening the controls")
  assert(gui.SettingsOverlay.ReferenceSettings.ZIndex>gui.SettingsOverlay.ZIndex,"Settings panel is rendered behind its dark overlay")
