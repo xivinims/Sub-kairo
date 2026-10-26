@@ -228,16 +228,41 @@ local function rebuildStairPath(part)
  local segments=math.clamp(math.ceil(run/1.15),8,42)
  local stepLength=run/segments+.12
  local walkWidth=math.max(1.8,width*.82)
+ local lastTop=y0
  for i=1,segments do
   local t=(i-.5)/segments
   local along=-run/2+run*t
   local localOffset=alongZ and Vector3.new(0,0,along) or Vector3.new(along,0,0)
   local world=flat:PointToWorldSpace(localOffset)
   local top=y0+(y1-y0)*t
+  lastTop=top
   local size=alongZ and Vector3.new(walkWidth,1,stepLength) or Vector3.new(stepLength,1,walkWidth)
   local step=support("StairPath_"..part.Name.."_"..i,size,CFrame.new(world.X,top-.5,world.Z)*CFrame.Angles(0,yaw,0),"WalkableStairStep")
   step:SetAttribute("SourceStair",part:GetFullName())
   stairSteps+=1
+ end
+
+ -- The authored foyer staircase reaches the upper floor visually, but the imported
+ -- collision/nav geometry stops several studs early. Add a short physical continuation
+ -- to the real upper landing rather than leaving an invisible gap at the top.
+ if string.find(name,"house_foyer_stairs_lower",1,true) then
+  local extension=5.2
+  local targetTop=part.Position.Y+part.Size.Y/2-.05
+  local extra=6
+  local extraLength=extension/extra+.16
+  for j=1,extra do
+   local t=j/extra
+   local along=run/2+extension*t
+   local localOffset=alongZ and Vector3.new(0,0,along) or Vector3.new(along,0,0)
+   local world=flat:PointToWorldSpace(localOffset)
+   local top=lastTop+(targetTop-lastTop)*t
+   local size=alongZ and Vector3.new(walkWidth,1,extraLength) or Vector3.new(extraLength,1,walkWidth)
+   local step=support("StairLandingBridge_"..j,size,CFrame.new(world.X,top-.5,world.Z)*CFrame.Angles(0,yaw,0),"WalkableStairStep")
+   step:SetAttribute("SourceStair",part:GetFullName())
+   step:SetAttribute("UpperLandingBridge",true)
+   stairSteps+=1
+  end
+  part:SetAttribute("UpperLandingExtended",true)
  end
  part:SetAttribute("WalkableReplacement",true)
 end
@@ -270,11 +295,34 @@ for _,part in ipairs(house:GetDescendants()) do
   end
  end
 end
-lobby:SetAttribute("PassageRepairRevision",2)
+-- Decorative foyer rails were intersecting the top landing. Keep their visuals,
+-- but remove collision only around the main staircase so the upper floor is reachable.
+local mainFoyer=nil
+for _,p in ipairs(house:GetDescendants()) do
+ if p:IsA("BasePart") and string.find(string.lower(p.Name),"house_foyer_stairs_lower",1,true) then
+  mainFoyer=p break
+ end
+end
+local clearedFoyerRails=0
+if mainFoyer then
+ for _,p in ipairs(house:GetDescendants()) do
+  if p:IsA("BasePart") and string.lower(p.Name)=="rail_a" then
+   local flatDistance=(Vector2.new(p.Position.X,p.Position.Z)-Vector2.new(mainFoyer.Position.X,mainFoyer.Position.Z)).Magnitude
+   if flatDistance<=18 and math.abs(p.Position.Y-mainFoyer.Position.Y)<=14 then
+    p.CanCollide=false p.CanTouch=false
+    p:SetAttribute("FoyerRailPassThrough",true)
+    clearedFoyerRails+=1
+   end
+  end
+ end
+end
+
+lobby:SetAttribute("PassageRepairRevision",3)
 lobby:SetAttribute("RepairedDoorFrames",repairedFrames)
 lobby:SetAttribute("OpenedDoorParts",openedDoorParts)
 lobby:SetAttribute("RepairedStairMeshes",repairedMeshes)
 lobby:SetAttribute("WalkableStairSteps",stairSteps)
+lobby:SetAttribute("ClearedFoyerRails",clearedFoyerRails)
 lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
 
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
@@ -325,6 +373,32 @@ local face=Vector3.new(original.X,floor.Position.Y,original.Z)
 spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,spawn.Size.Y/2+.08,0),face)
 spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.CanTouch=false spawn.CanQuery=false spawn.Duration=0
 spawn.AllowTeamChangeOnTouch=false
+
+-- The fixed lobby snapshot did not include Workspace.Terrain, which left the entire
+-- exterior visually floating over the void. Rebuild a broad grass yard at the bottom
+-- of the authored porch steps, underneath the house/driveway geometry.
+local minX,maxX,minZ,maxZ=math.huge,-math.huge,math.huge,-math.huge
+local porchGroundY=nil
+for _,p in ipairs(house:GetDescendants()) do
+ if p:IsA("BasePart") then
+  minX=math.min(minX,p.Position.X-p.Size.X/2) maxX=math.max(maxX,p.Position.X+p.Size.X/2)
+  minZ=math.min(minZ,p.Position.Z-p.Size.Z/2) maxZ=math.max(maxZ,p.Position.Z+p.Size.Z/2)
+  if string.find(string.lower(p.Name),"side_porch_steps",1,true) then
+   local bottom=p.Position.Y-p.Size.Y/2
+   porchGroundY=porchGroundY and math.min(porchGroundY,bottom) or bottom
+  end
+ end
+end
+porchGroundY=porchGroundY or ((lobby:GetAttribute("VerifiedSpawn") or Vector3.new()).Y-14)
+local yardWidth=(maxX-minX)+260
+local yardDepth=(maxZ-minZ)+260
+local yardCenter=Vector3.new((minX+maxX)/2,porchGroundY-5,(minZ+maxZ)/2)
+local terrain=workspace.Terrain
+terrain:FillBlock(CFrame.new(yardCenter),Vector3.new(yardWidth,10,yardDepth),Enum.Material.Grass)
+pcall(function() terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(63,72,50)) end)
+lobby:SetAttribute("OutdoorGroundReady",true)
+lobby:SetAttribute("OutdoorGroundY",porchGroundY)
+lobby:SetAttribute("OutdoorGroundSize",Vector3.new(yardWidth,10,yardDepth))
 
 local oldLobbyBounds=lobby:FindFirstChild("InvisibleBounds")
 if oldLobbyBounds then oldLobbyBounds:Destroy() end
