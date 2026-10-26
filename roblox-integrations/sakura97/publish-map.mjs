@@ -733,7 +733,14 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.ServerScriptService.SurvivalServer.Source:find('state.phase="Votação"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("setupObjectives",1,true) and game.ServerScriptService.SurvivalServer.Source:find("toggleCarry",1,true),"Objective gameplay runtime missing")
   assert(game.ServerScriptService.SurvivalServer.Source:find("MapVoteOptions",1,true) and game.ServerScriptService.SurvivalServer.Source:find('RANDOM=0',1,true),"Four-map plus random voting runtime missing")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("4 NA VOTAÇÃO",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("7 MAPAS TOTAIS",1,true),"Four-map plus random voting UI missing")
-  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('Crouch","AGACHAR"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("ObjectiveInventory",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("MissionBanner",1,true),"Objective HUD/stamina/crouch UI missing")
+  local survivalClientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
+  assert(
+   survivalClientSource:find('cleanAction(topActions,"Crouch",L("AGACHAR","CROUCH")',1,true)
+   and survivalClientSource:find('staminaTrack.Name="Stamina"',1,true)
+   and survivalClientSource:find("ObjectiveInventory",1,true)
+   and survivalClientSource:find("MissionBanner",1,true),
+   "Current localized objective HUD/stamina/crouch UI missing"
+  )
   assert(game.ServerStorage.SurvivalAssets.Items.ComputerTemplate:GetAttribute("SourceAssetId")==4845271739 and game.ServerStorage.SurvivalAssets.Items.KeyTemplate:GetAttribute("SourceAssetId")==11471202845,"PC/key objective assets missing")
   assert(game.ReplicatedStorage.Survival:GetAttribute("InventoryAssetId")==73852738603629 and game.ReplicatedStorage.Survival:GetAttribute("FootstepAssetId")==137365042825200,"Inventory/footstep assets missing")
   assert(game.StarterPlayer.StarterPlayerScripts.PursuerAnimation.Source:find('requested=="RoundVictory"',1,true),"Animated winner runtime missing")
