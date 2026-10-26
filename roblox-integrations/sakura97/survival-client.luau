@@ -200,143 +200,471 @@ local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132))
 local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.82 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
 local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
 local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
-local shopOverlay=Instance.new("Frame",gui) shopOverlay.Name="KillerShop" shopOverlay.Size=UDim2.fromScale(1,1) shopOverlay.BackgroundColor3=Color3.new(0,0,0) shopOverlay.BackgroundTransparency=.32 shopOverlay.ZIndex=115 shopOverlay.Visible=false
-local shopPanel=panel("ShopPanel",UDim2.new(.86,0,.72,0),UDim2.new(.07,0,.14,0)) shopPanel.Parent=shopOverlay shopPanel.ZIndex=116 shopPanel.BackgroundTransparency=.18 shopPanel.BackgroundColor3=Color3.fromRGB(8,8,9) shopPanel:SetAttribute("Style","DistrictInspired")
-local shopLimit=Instance.new("UISizeConstraint",shopPanel) shopLimit.MaxSize=Vector2.new(760,520)
-local shopTitle=text(shopPanel,"Title",L("PERSEGUIDORES","KILLERS"),UDim2.new(1,-110,0,30),UDim2.fromOffset(18,10)) shopTitle.Font=Enum.Font.GothamBlack shopTitle.TextSize=17 shopTitle.ZIndex=117 shopTitle.TextXAlignment=Enum.TextXAlignment.Left
-local shopSubtitle=text(shopPanel,"Subtitle",L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH"),UDim2.new(1,-140,0,18),UDim2.fromOffset(18,37)) shopSubtitle.TextSize=9 shopSubtitle.TextColor3=Color3.fromRGB(145,145,150) shopSubtitle.TextXAlignment=Enum.TextXAlignment.Left shopSubtitle.ZIndex=117
-local shopBalance=text(shopPanel,"Balance",L("0 PONTOS","0 POINTS"),UDim2.fromOffset(160,30),UDim2.new(1,-180,0,14)) shopBalance.TextSize=12 shopBalance.Font=Enum.Font.GothamBold shopBalance.ZIndex=117 shopBalance.TextXAlignment=Enum.TextXAlignment.Right
-local shopClose=button(shopPanel,"Close",L("SAÍDA","EXIT"),UDim2.fromOffset(82,32),UDim2.new(1,-96,1,-46),function() shopOverlay.Visible=false end) shopClose.ZIndex=118 shopClose.TextSize=10
-local shopList=Instance.new("ScrollingFrame",shopPanel) shopList.Name="Items" shopList.Position=UDim2.fromOffset(14,64) shopList.Size=UDim2.new(1,-28,1,-122) shopList.BackgroundTransparency=1 shopList.BorderSizePixel=0 shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y shopList.CanvasSize=UDim2.new() shopList.ScrollBarThickness=2 shopList.ZIndex=117
-local shopLayout=Instance.new("UIListLayout",shopList) shopLayout.Padding=UDim.new(0,7) shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
+local shopOverlay=Instance.new("Frame",gui)
+shopOverlay.Name="KillerShop"
+shopOverlay.Size=UDim2.fromScale(1,1)
+shopOverlay.BackgroundColor3=Color3.fromRGB(0,0,0)
+shopOverlay.BackgroundTransparency=.48
+shopOverlay.ZIndex=115
+shopOverlay.Visible=false
+
+-- Large distressed black/white store window inspired by the supplied reference.
+local shopPanel=panel("ShopPanel",UDim2.new(.88,0,.76,0),UDim2.new(.06,0,.12,0))
+shopPanel.Parent=shopOverlay
+shopPanel.ZIndex=116
+shopPanel.BackgroundTransparency=.08
+shopPanel.BackgroundColor3=Color3.fromRGB(5,5,6)
+shopPanel:SetAttribute("Style","DistressedStore")
+shopPanel.UIStroke.Color=Color3.fromRGB(238,238,232)
+shopPanel.UIStroke.Transparency=.10
+shopPanel.UIStroke.Thickness=2
+local shopLimit=Instance.new("UISizeConstraint",shopPanel)
+shopLimit.MaxSize=Vector2.new(1020,590)
+shopLimit.MinSize=Vector2.new(650,390)
+
+local innerBorder=Instance.new("Frame",shopPanel)
+innerBorder.Name="InnerBorder"
+innerBorder.Position=UDim2.fromOffset(8,8)
+innerBorder.Size=UDim2.new(1,-16,1,-16)
+innerBorder.BackgroundTransparency=1
+innerBorder.ZIndex=116
+local innerStroke=Instance.new("UIStroke",innerBorder)
+innerStroke.Color=Color3.fromRGB(215,215,210)
+innerStroke.Transparency=.48
+innerStroke.Thickness=1
+
+local function scratch(parent,name,pos,size,rotation,alpha)
+ local line=Instance.new("Frame",parent)
+ line.Name=name
+ line.Position=pos
+ line.Size=size
+ line.Rotation=rotation or 0
+ line.BorderSizePixel=0
+ line.BackgroundColor3=Color3.fromRGB(232,232,226)
+ line.BackgroundTransparency=alpha or .62
+ line.ZIndex=117
+ return line
+end
+scratch(shopPanel,"ScratchTopA",UDim2.new(.14,0,0,7),UDim2.new(.23,0,0,1),-1,.50)
+scratch(shopPanel,"ScratchTopB",UDim2.new(.51,0,0,10),UDim2.new(.18,0,0,1),1,.63)
+scratch(shopPanel,"ScratchBottomA",UDim2.new(.21,0,1,-10),UDim2.new(.30,0,0,1),1,.56)
+scratch(shopPanel,"ScratchLeftA",UDim2.new(0,10,.34,0),UDim2.fromOffset(1,82),-1,.56)
+scratch(shopPanel,"ScratchRightA",UDim2.new(1,-11,.18,0),UDim2.fromOffset(1,110),1,.60)
+
+-- Left vertical rail.
+local shopRail=Instance.new("Frame",shopPanel)
+shopRail.Name="SideRail"
+shopRail.Position=UDim2.fromOffset(14,54)
+shopRail.Size=UDim2.new(0,48,1,-72)
+shopRail.BackgroundTransparency=1
+shopRail.ZIndex=118
+local railLayout=Instance.new("UIListLayout",shopRail)
+railLayout.Padding=UDim.new(0,8)
+railLayout.SortOrder=Enum.SortOrder.LayoutOrder
+
+local function railButton(name,label,order,callback)
+ local b=button(shopRail,name,label,UDim2.fromOffset(44,44),UDim2.new(),callback)
+ b.LayoutOrder=order
+ b.ZIndex=119
+ b.Font=Enum.Font.GothamBlack
+ b.TextSize=18
+ b.BackgroundColor3=Color3.fromRGB(8,8,9)
+ b.BackgroundTransparency=.05
+ b.UIStroke.Color=Color3.fromRGB(224,224,218)
+ b.UIStroke.Transparency=.22
+ b.UIStroke.Thickness=1
+ b:SetAttribute("RailStyle",true)
+ return b
+end
+
+-- Top tabs.
+local tabBar=Instance.new("Frame",shopPanel)
+tabBar.Name="Tabs"
+tabBar.Position=UDim2.fromOffset(72,14)
+tabBar.Size=UDim2.new(.62,-90,0,34)
+tabBar.BackgroundTransparency=1
+tabBar.ZIndex=118
+local tabLayout=Instance.new("UIListLayout",tabBar)
+tabLayout.FillDirection=Enum.FillDirection.Horizontal
+tabLayout.Padding=UDim.new(0,2)
+tabLayout.SortOrder=Enum.SortOrder.LayoutOrder
+
+local shopTabs={}
+local activeShopTab="Killers"
+local shopPlaceholder
+
+local function styleTab(b,active)
+ b.BackgroundTransparency=active and 0 or 1
+ b.BackgroundColor3=Color3.fromRGB(238,238,232)
+ b.TextColor3=active and Color3.fromRGB(8,8,9) or Color3.fromRGB(224,224,218)
+ b.UIStroke.Color=Color3.fromRGB(225,225,220)
+ b.UIStroke.Transparency=active and .10 or .55
+ b.Font=Enum.Font.Garamond
+end
+
+local shopTitle=text(shopPanel,"Title","",UDim2.fromOffset(1,1),UDim2.fromOffset(-10,-10))
+shopTitle.Visible=false
+local shopSubtitle=text(shopPanel,"Subtitle","",UDim2.fromOffset(1,1),UDim2.fromOffset(-10,-10))
+shopSubtitle.Visible=false
+
+local shopBalance=text(shopPanel,"Balance",L("0 PONTOS","0 POINTS"),UDim2.fromOffset(140,28),UDim2.new(0,74,1,-42))
+shopBalance.TextSize=12
+shopBalance.Font=Enum.Font.Garamond
+shopBalance.ZIndex=119
+shopBalance.TextXAlignment=Enum.TextXAlignment.Left
+shopBalance.TextColor3=Color3.fromRGB(235,235,229)
+
+local shopClose=button(shopPanel,"Close","×",UDim2.fromOffset(34,30),UDim2.new(1,-43,0,12),function()
+ shopOverlay.Visible=false
+end)
+shopClose.ZIndex=122
+shopClose.TextSize=22
+shopClose.Font=Enum.Font.GothamBold
+shopClose.BackgroundTransparency=1
+shopClose.UIStroke.Transparency=1
+
+-- Search field in the reference-style top bar.
+local searchWrap=Instance.new("Frame",shopPanel)
+searchWrap.Name="SearchWrap"
+searchWrap.Position=UDim2.new(.58,0,0,14)
+searchWrap.Size=UDim2.new(.20,0,0,34)
+searchWrap.BackgroundTransparency=1
+searchWrap.ZIndex=118
+local searchIcon=text(searchWrap,"Icon","⌕",UDim2.fromOffset(24,30),UDim2.fromOffset(0,2))
+searchIcon.Font=Enum.Font.Garamond
+searchIcon.TextSize=18
+searchIcon.TextColor3=Color3.fromRGB(210,210,205)
+searchIcon.ZIndex=119
+local shopSearch=Instance.new("TextBox",searchWrap)
+shopSearch.Name="Search"
+shopSearch.Position=UDim2.fromOffset(25,0)
+shopSearch.Size=UDim2.new(1,-25,1,0)
+shopSearch.BackgroundTransparency=1
+shopSearch.BorderSizePixel=0
+shopSearch.ClearTextOnFocus=false
+shopSearch.Font=Enum.Font.Garamond
+shopSearch.Text=""
+shopSearch.PlaceholderText=L("PESQUISAR","SEARCH")
+shopSearch.PlaceholderColor3=Color3.fromRGB(115,115,118)
+shopSearch.TextColor3=Color3.fromRGB(235,235,230)
+shopSearch.TextSize=13
+shopSearch.TextXAlignment=Enum.TextXAlignment.Left
+shopSearch.ZIndex=119
+scratch(searchWrap,"SearchLine",UDim2.new(0,0,1,-2),UDim2.new(1,0,0,1),0,.35)
+
+-- Main center grid.
+local shopList=Instance.new("ScrollingFrame",shopPanel)
+shopList.Name="Items"
+shopList.Position=UDim2.fromOffset(74,58)
+shopList.Size=UDim2.new(.66,-80,1,-112)
+shopList.BackgroundColor3=Color3.fromRGB(7,7,8)
+shopList.BackgroundTransparency=.34
+shopList.BorderSizePixel=0
+shopList.AutomaticCanvasSize=Enum.AutomaticSize.Y
+shopList.CanvasSize=UDim2.new()
+shopList.ScrollBarThickness=2
+shopList.ScrollBarImageColor3=Color3.fromRGB(220,220,214)
+shopList.ZIndex=117
+local gridPad=Instance.new("UIPadding",shopList)
+gridPad.PaddingTop=UDim.new(0,8)
+gridPad.PaddingLeft=UDim.new(0,8)
+gridPad.PaddingRight=UDim.new(0,8)
+gridPad.PaddingBottom=UDim.new(0,8)
+local shopLayout=Instance.new("UIGridLayout",shopList)
+shopLayout.CellPadding=UDim2.fromOffset(8,8)
+shopLayout.CellSize=UDim2.new(.25,-8,0,176)
+shopLayout.FillDirectionMaxCells=4
+shopLayout.SortOrder=Enum.SortOrder.LayoutOrder
+
+-- Right selected-character panel.
+local detailPanel=Instance.new("Frame",shopPanel)
+detailPanel.Name="DetailPanel"
+detailPanel.Position=UDim2.new(.67,0,0,58)
+detailPanel.Size=UDim2.new(.32,-12,1,-112)
+detailPanel.BackgroundColor3=Color3.fromRGB(4,4,5)
+detailPanel.BackgroundTransparency=.12
+detailPanel.BorderSizePixel=0
+detailPanel.ZIndex=118
+local detailStroke=Instance.new("UIStroke",detailPanel)
+detailStroke.Color=Color3.fromRGB(226,226,220)
+detailStroke.Transparency=.28
+detailStroke.Thickness=1
+
+local detailPortrait=Instance.new("ViewportFrame",detailPanel)
+detailPortrait.Name="SelectedPortrait"
+detailPortrait.Position=UDim2.fromOffset(8,8)
+detailPortrait.Size=UDim2.new(1,-16,.58,-8)
+detailPortrait.BackgroundColor3=Color3.fromRGB(3,3,4)
+detailPortrait.BackgroundTransparency=0
+detailPortrait.BorderSizePixel=0
+detailPortrait.Ambient=Color3.fromRGB(95,95,100)
+detailPortrait.LightColor=Color3.fromRGB(240,235,224)
+detailPortrait.LightDirection=Vector3.new(-.7,-1,-.4)
+detailPortrait.ZIndex=119
+local detailPortraitStroke=Instance.new("UIStroke",detailPortrait)
+detailPortraitStroke.Color=Color3.fromRGB(218,218,212)
+detailPortraitStroke.Transparency=.50
+
+local detailName=text(detailPanel,"SelectedName","",UDim2.new(1,-18,0,30),UDim2.new(0,9,.59,2))
+detailName.Font=Enum.Font.Garamond
+detailName.TextSize=22
+detailName.TextXAlignment=Enum.TextXAlignment.Center
+detailName.ZIndex=120
+
+local detailTip=text(detailPanel,"SelectedTip","",UDim2.new(1,-22,0,42),UDim2.new(0,11,.59,34))
+detailTip.Font=Enum.Font.Garamond
+detailTip.TextSize=11
+detailTip.TextColor3=Color3.fromRGB(164,164,160)
+detailTip.TextWrapped=true
+detailTip.TextXAlignment=Enum.TextXAlignment.Center
+detailTip.TextYAlignment=Enum.TextYAlignment.Top
+detailTip.ZIndex=120
+
+local detailPrice=text(detailPanel,"SelectedPrice","",UDim2.new(1,-20,0,20),UDim2.new(0,10,1,-70))
+detailPrice.Font=Enum.Font.Garamond
+detailPrice.TextSize=12
+detailPrice.TextColor3=Color3.fromRGB(226,226,220)
+detailPrice.TextXAlignment=Enum.TextXAlignment.Center
+detailPrice.ZIndex=120
+
+local detailAction
+local selectedKiller="Jason"
 local shopButtons={}
+local shopCards={}
+local shopCardStrokes={}
+local shopCardStatus={}
+local killerOrder={"Jason","JohnDoe","Chucky","Piggy","Krampus"}
+local previews=net:FindFirstChild("KillerPreviews")
+
 local function ownedKillers()
  local raw=player:GetAttribute("OwnedKillersJson")
  if type(raw)~="string" or raw=="" then return {Jason=true} end
  local ok,data=pcall(function() return HttpService:JSONDecode(raw) end)
  return ok and type(data)=="table" and data or {Jason=true}
 end
-local killerOrder={"Jason","JohnDoe","Chucky","Piggy","Krampus"}
-local previews=net:FindFirstChild("KillerPreviews")
 
-local function buildShopPortrait(row,killerName)
- local portrait=Instance.new("ViewportFrame",row)
- portrait.Name="Portrait"
- portrait.BackgroundColor3=Color3.fromRGB(17,17,20)
- portrait.BackgroundTransparency=0
- portrait.BorderSizePixel=0
- portrait.Position=UDim2.fromOffset(8,8)
- portrait.Size=UDim2.fromOffset(82,82)
- portrait.Ambient=Color3.fromRGB(105,105,112)
- portrait.LightColor=Color3.fromRGB(235,230,220)
- portrait.LightDirection=Vector3.new(-.6,-1,-.5)
- portrait.ZIndex=118
- Instance.new("UICorner",portrait).CornerRadius=UDim.new(0,5)
+local function clearViewport(viewport)
+ for _,child in ipairs(viewport:GetChildren()) do
+  if child:IsA("WorldModel") or child:IsA("Camera") then child:Destroy() end
+ end
+ viewport.CurrentCamera=nil
+end
 
- local world=Instance.new("WorldModel",portrait)
+local function populateShopViewport(viewport,killerName,wide)
+ clearViewport(viewport)
+ local world=Instance.new("WorldModel",viewport)
  world.Name="PreviewWorld"
  local source=previews and previews:FindFirstChild(killerName)
- if source then
-  local model=source:Clone()
-  model.Name=killerName
-  model.Parent=world
+ if not source then return end
 
-  local visible={}
-  local minV=Vector3.new(math.huge,math.huge,math.huge)
-  local maxV=Vector3.new(-math.huge,-math.huge,-math.huge)
-  for _,p in ipairs(model:GetDescendants()) do
-   if p:IsA("BasePart") and p.Transparency<.98 then
-    table.insert(visible,p)
-    local half=p.Size/2
-    minV=Vector3.new(math.min(minV.X,p.Position.X-half.X),math.min(minV.Y,p.Position.Y-half.Y),math.min(minV.Z,p.Position.Z-half.Z))
-    maxV=Vector3.new(math.max(maxV.X,p.Position.X+half.X),math.max(maxV.Y,p.Position.Y+half.Y),math.max(maxV.Z,p.Position.Z+half.Z))
-   end
-  end
-  local cf,size=model:GetBoundingBox()
-  if #visible>0 then
-   size=maxV-minV
-   cf=CFrame.new((minV+maxV)/2)
-  end
+ local model=source:Clone()
+ model.Name=killerName
+ model.Parent=world
 
-  local center=cf.Position+Vector3.new(0,size.Y*.04,0)
-  local root=model:FindFirstChild("HumanoidRootPart",true) or model.PrimaryPart
-  local forward=root and root.CFrame.LookVector or Vector3.new(0,0,-1)
-  forward=Vector3.new(forward.X,0,forward.Z)
-  if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
-  local distance=math.max(5.2,size.Y*.95,size.X*1.1,size.Z*1.65)
+ local cf,size=model:GetBoundingBox()
+ local center=cf.Position+Vector3.new(0,size.Y*(wide and .02 or .06),0)
+ local root=model:FindFirstChild("HumanoidRootPart",true) or model.PrimaryPart
+ local forward=root and root.CFrame.LookVector or Vector3.new(0,0,-1)
+ forward=Vector3.new(forward.X,0,forward.Z)
+ if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+ local distance=wide and math.max(5,size.Y*.82,size.Z*1.45) or math.max(5.2,size.Y*.92,size.Z*1.65)
 
-  local camera=Instance.new("Camera",portrait)
-  camera.Name="PreviewCamera"
-  camera.FieldOfView=30
-  camera.CFrame=CFrame.lookAt(center+forward*distance+Vector3.new(0,size.Y*.03,0),center)
-  portrait.CurrentCamera=camera
- else
-  local missing=text(portrait,"Missing","3D",UDim2.fromScale(1,1),UDim2.new())
-  missing.TextSize=11
-  missing.TextColor3=Color3.fromRGB(120,120,126)
-  missing.TextXAlignment=Enum.TextXAlignment.Center
- end
+ local camera=Instance.new("Camera",viewport)
+ camera.Name="PreviewCamera"
+ camera.FieldOfView=wide and 27 or 30
+ camera.CFrame=CFrame.lookAt(center+forward*distance,center)
+ viewport.CurrentCamera=camera
+end
+
+local function buildShopPortrait(card,killerName)
+ local portrait=Instance.new("ViewportFrame",card)
+ portrait.Name="Portrait"
+ portrait.BackgroundColor3=Color3.fromRGB(12,12,13)
+ portrait.BackgroundTransparency=0
+ portrait.BorderSizePixel=0
+ portrait.Position=UDim2.fromOffset(5,5)
+ portrait.Size=UDim2.new(1,-10,1,-39)
+ portrait.Ambient=Color3.fromRGB(100,100,106)
+ portrait.LightColor=Color3.fromRGB(238,233,222)
+ portrait.LightDirection=Vector3.new(-.6,-1,-.5)
+ portrait.ZIndex=119
+ populateShopViewport(portrait,killerName,false)
  return portrait
 end
+
+local function refreshSelectedKiller()
+ local spec=config.Killers[selectedKiller]
+ if not spec then return end
+ detailName.Text=selectedKiller
+ detailTip.Text=spec.tip or ""
+ populateShopViewport(detailPortrait,selectedKiller,true)
+
+ local owned=ownedKillers()
+ if owned[selectedKiller] then
+  detailPrice.Text=L("DESBLOQUEADO","UNLOCKED")
+  detailAction.Text=L("ADQUIRIDO","OWNED")
+  detailAction.Active=false
+  detailAction.AutoButtonColor=false
+  detailAction.BackgroundTransparency=.68
+ else
+  detailPrice.Text=L("PREÇO  ","PRICE  ")..tostring(spec.cost or 0)
+  detailAction.Text=L("COMPRAR","BUY")
+  detailAction.Active=true
+  detailAction.AutoButtonColor=true
+  detailAction.BackgroundTransparency=.12
+ end
+
+ for name,stroke in pairs(shopCardStrokes) do
+  local active=name==selectedKiller
+  stroke.Thickness=active and 2 or 1
+  stroke.Transparency=active and .02 or .52
+  stroke.Color=active and Color3.fromRGB(245,245,238) or Color3.fromRGB(190,190,186)
+ end
+end
+
+detailAction=button(detailPanel,"Action",L("COMPRAR","BUY"),UDim2.new(1,-20,0,36),UDim2.new(0,10,1,-43),function()
+ local owned=ownedKillers()
+ if owned[selectedKiller] then return end
+ event:FireServer("buyKiller",selectedKiller)
+end)
+detailAction.ZIndex=121
+detailAction.Font=Enum.Font.Garamond
+detailAction.TextSize=15
+detailAction.UIStroke.Color=Color3.fromRGB(228,228,222)
+detailAction.UIStroke.Transparency=.16
 
 for i,name in ipairs(killerOrder) do
  local killerName=name
  local spec=config.Killers[killerName]
  if spec then
-  local row=Instance.new("Frame",shopList)
-  row.Name=killerName
-  row.LayoutOrder=i
-  row.Size=UDim2.new(1,-4,0,98)
-  row.BackgroundColor3=Color3.fromRGB(12,12,14)
-  row.BackgroundTransparency=.08
-  row.BorderSizePixel=0
-  row.ZIndex=117
-  Instance.new("UICorner",row).CornerRadius=UDim.new(0,5)
-  local border=Instance.new("UIStroke",row)
-  border.Color=Color3.fromRGB(82,82,88)
-  border.Transparency=.52
-  border.Thickness=1
+  local card=Instance.new("Frame",shopList)
+  card.Name=killerName
+  card.LayoutOrder=i
+  card.BackgroundColor3=Color3.fromRGB(7,7,8)
+  card.BackgroundTransparency=.05
+  card.BorderSizePixel=0
+  card.ZIndex=118
+  shopCards[killerName]=card
 
-  buildShopPortrait(row,killerName)
+  local stroke=Instance.new("UIStroke",card)
+  stroke.Color=Color3.fromRGB(190,190,186)
+  stroke.Transparency=.52
+  stroke.Thickness=1
+  shopCardStrokes[killerName]=stroke
 
-  local n=text(row,"Name",killerName,UDim2.new(.37,0,0,24),UDim2.fromOffset(102,11))
-  n.Font=Enum.Font.GothamBold
-  n.TextSize=14
-  n.TextXAlignment=Enum.TextXAlignment.Left
-  n.ZIndex=118
+  buildShopPortrait(card,killerName)
 
-  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.42,0,0,42),UDim2.fromOffset(102,39))
-  hint.TextSize=9
-  hint.TextColor3=Color3.fromRGB(166,166,172)
-  hint.TextXAlignment=Enum.TextXAlignment.Left
-  hint.TextYAlignment=Enum.TextYAlignment.Top
-  hint.ZIndex=118
+  local nameLabel=text(card,"Name",killerName,UDim2.new(1,-10,0,26),UDim2.new(0,5,1,-31))
+  nameLabel.Font=Enum.Font.Garamond
+  nameLabel.TextSize=14
+  nameLabel.TextXAlignment=Enum.TextXAlignment.Center
+  nameLabel.ZIndex=120
 
-  local buy=button(row,"Buy","",UDim2.fromOffset(132,38),UDim2.new(1,-144,.5,-19),function()
-   event:FireServer("buyKiller",killerName)
+  local status=text(card,"Status","",UDim2.new(1,-10,0,16),UDim2.new(0,5,0,7))
+  status.Font=Enum.Font.Garamond
+  status.TextSize=9
+  status.TextXAlignment=Enum.TextXAlignment.Right
+  status.TextColor3=Color3.fromRGB(205,205,198)
+  status.ZIndex=121
+  shopCardStatus[killerName]=status
+
+  local hit=Instance.new("TextButton",card)
+  hit.Name="Select"
+  hit.Size=UDim2.fromScale(1,1)
+  hit.BackgroundTransparency=1
+  hit.Text=""
+  hit.AutoButtonColor=false
+  hit.ZIndex=122
+  hit.MouseButton1Click:Connect(function()
+   selectedKiller=killerName
+   refreshSelectedKiller()
   end)
-  buy.ZIndex=119
-  buy.TextSize=10
-  buy.BackgroundTransparency=.14
-  shopButtons[killerName]=buy
  end
 end
+
+shopPlaceholder=Instance.new("Frame",shopPanel)
+shopPlaceholder.Name="CategoryPlaceholder"
+shopPlaceholder.Position=shopList.Position
+shopPlaceholder.Size=UDim2.new(.66,-80,1,-112)
+shopPlaceholder.BackgroundTransparency=1
+shopPlaceholder.Visible=false
+shopPlaceholder.ZIndex=118
+local placeholderText=text(shopPlaceholder,"Text",L("EM BREVE","COMING SOON"),UDim2.fromScale(1,1),UDim2.new())
+placeholderText.Font=Enum.Font.Garamond
+placeholderText.TextSize=22
+placeholderText.TextColor3=Color3.fromRGB(155,155,150)
+placeholderText.TextXAlignment=Enum.TextXAlignment.Center
+placeholderText.TextYAlignment=Enum.TextYAlignment.Center
+placeholderText.ZIndex=119
+
+local function setShopTab(tab)
+ activeShopTab=tab
+ for name,b in pairs(shopTabs) do styleTab(b,name==tab) end
+ local killersActive=tab=="Killers"
+ shopList.Visible=killersActive
+ detailPanel.Visible=killersActive
+ shopPlaceholder.Visible=not killersActive
+ shopSearch.Visible=killersActive
+ searchIcon.Visible=killersActive
+ if not killersActive then
+  placeholderText.Text=tab=="Survivors" and L("SOBREVIVENTES • EM BREVE","SURVIVORS • COMING SOON") or L("EMOTES • EM BREVE","EMOTES • COMING SOON")
+ end
+end
+
+local tabSpecs={
+ {"Killers",L("PERSEGUIDORES","KILLERS")},
+ {"Survivors",L("SOBREVIVENTES","SURVIVORS")},
+ {"Emotes","EMOTES"},
+}
+for i,item in ipairs(tabSpecs) do
+ local key,label=item[1],item[2]
+ local tab=button(tabBar,key,label,UDim2.fromOffset(i==1 and 116 or 124,30),UDim2.new(),function()
+  setShopTab(key)
+ end)
+ tab.LayoutOrder=i
+ tab.ZIndex=119
+ tab.TextSize=13
+ tab.UIStroke.Thickness=1
+ shopTabs[key]=tab
+end
+
+railButton("Killers","K",1,function() setShopTab("Killers") end)
+railButton("Survivors","S",2,function() setShopTab("Survivors") end)
+railButton("Emotes","E",3,function() setShopTab("Emotes") end)
+railButton("Inventory","◇",4,function() setShopTab("Killers") end)
+railButton("Settings","⚙",5,function()
+ shopOverlay.Visible=false
+ settingsOverlay.Visible=true
+end)
+
+local function refreshShopSearch()
+ local query=string.lower(shopSearch.Text or "")
+ for name,card in pairs(shopCards) do
+  card.Visible=query=="" or string.find(string.lower(name),query,1,true)~=nil
+ end
+end
+shopSearch:GetPropertyChangedSignal("Text"):Connect(refreshShopSearch)
 
 local function refreshShop()
  local owned=ownedKillers()
- local stats=player:FindFirstChild("leaderstats") local pts=stats and stats:FindFirstChild("Pontos")
+ local stats=player:FindFirstChild("leaderstats")
+ local pts=stats and stats:FindFirstChild("Pontos")
  shopBalance.Text=tostring(pts and pts.Value or 0)..L(" PONTOS"," POINTS")
- for name,b in pairs(shopButtons) do
+
+ for name,status in pairs(shopCardStatus) do
   local spec=config.Killers[name]
   if owned[name] then
-   b.Text=name=="Jason" and L("PADRÃO","DEFAULT") or L("COMPRADO","OWNED")
-   b.Active=false b.AutoButtonColor=false b.BackgroundTransparency=.55
+   status.Text=name=="Jason" and L("PADRÃO","DEFAULT") or L("ADQUIRIDO","OWNED")
   else
-   b.Text=L("COMPRAR  ","BUY  ")..tostring(spec and spec.cost or 0)
-   b.Active=true b.AutoButtonColor=true b.BackgroundTransparency=.12
+   status.Text=tostring(spec and spec.cost or 0)
   end
  end
+ refreshSelectedKiller()
 end
+
+setShopTab("Killers")
+refreshSelectedKiller()
+
 local shopButton=button(gui,"ShopButton","",UDim2.fromOffset(44,44),UDim2.new(1,-110,0,6),function()
  if player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
  refreshShop() shopOverlay.Visible=not shopOverlay.Visible
@@ -1215,8 +1543,12 @@ refreshKillerChoices()
 local function refreshLanguage()
  countdownText.Text=L("Aguardando jogadores","Waiting for players")
  shopTitle.Text=L("PERSEGUIDORES","KILLERS")
- shopSubtitle.Text=L("COMPRE E LIBERE PARA SUA PRÓXIMA PARTIDA","BUY AND UNLOCK FOR YOUR NEXT MATCH")
- shopClose.Text=L("SAÍDA","EXIT")
+ shopSubtitle.Text=""
+ shopClose.Text="×"
+ shopSearch.PlaceholderText=L("PESQUISAR","SEARCH")
+ shopTabs.Killers.Text=L("PERSEGUIDORES","KILLERS")
+ shopTabs.Survivors.Text=L("SOBREVIVENTES","SURVIVORS")
+ placeholderText.Text=activeShopTab=="Survivors" and L("SOBREVIVENTES • EM BREVE","SURVIVORS • COMING SOON") or activeShopTab=="Emotes" and L("EMOTES • EM BREVE","EMOTES • COMING SOON") or ""
  shopButton:SetAttribute("AccessibleLabel",L("Loja de perseguidores","Killer shop"))
  missionTitle.Text=L("MISSÃO","MISSION")
  missionBannerText.Text=L("NOVA MISSÃO","NEW MISSION")
