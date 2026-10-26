@@ -681,22 +681,37 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.LobbyGuide:GetAttribute("OutfitFrozen")==true and workspace.LobbyGuide:GetAttribute("OutfitSource")=="FillFrozenAppearance","Fill outfit is not frozen")
   local frozen=game:GetService("ServerStorage"):FindFirstChild("FillFrozenAppearance")
   assert(frozen and frozen:IsA("HumanoidDescription") and frozen:GetAttribute("Frozen")==true and frozen:GetAttribute("SourceUserId")==8344738123,"Persistent frozen Fill appearance missing")
-  assert(workspace.LobbyGuide.Tabletop.Value and workspace.LobbyGuide.Tabletop.Value:IsDescendantOf(workspace.JediLibrary),"Fill is not attached to the lobby reception surface")
-  assert(not workspace.JediLibrary:FindFirstChild("GuideTable"),"Legacy generated GuideTable returned")
-  assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=1,"Fill guide-station geometry metadata missing")
-  assert(workspace.LobbyGuide:GetAttribute("ReceptionAccessMode")=="SpawnRoomDirect" and workspace.LobbyGuide:GetAttribute("GuideStation")=="FillGuideStool","Fill direct spawn-room access metadata missing")
-  local guideStation=workspace.JediLibrary:FindFirstChild("FillGuideStool")
-  assert(guideStation and guideStation:GetAttribute("SpawnRoomGuideStation")==true and guideStation:GetAttribute("NonBlocking")==true,"Fill compact guide station missing")
-  for _,part in ipairs(guideStation:GetDescendants()) do if part:IsA("BasePart") then assert(not part.CanCollide,"Fill guide station must never block lobby movement") end end
+  local fillTable=assert(workspace.LobbyGuide.Tabletop.Value,"Fill tabletop reference missing")
+  assert(fillTable:IsDescendantOf(workspace.JediLibrary.House) and fillTable.Name=="Furniture_Console_A" and fillTable:GetFullName():find("Console Desk",1,true),"Fill is not seated on the authored lobby console table")
+  assert(not workspace.JediLibrary:FindFirstChild("GuideTable") and not workspace.JediLibrary:FindFirstChild("FillGuideStool"),"Generated Fill furniture returned")
+  assert(typeof(workspace.LobbyGuide:GetAttribute("ReceptionPosition"))=="Vector3" and (workspace.LobbyGuide:GetAttribute("ReceptionPieceCount") or 0)>=1,"Fill authored-table geometry metadata missing")
+  assert(workspace.LobbyGuide:GetAttribute("ReceptionAccessMode")=="AuthoredTable" and workspace.LobbyGuide:GetAttribute("GuideStation")==fillTable:GetFullName(),"Fill authored table metadata missing")
+  assert(workspace.JediLibrary:GetAttribute("OutdoorGroundReady")==true and typeof(workspace.JediLibrary:GetAttribute("OutdoorGroundSize"))=="Vector3","Lobby exterior terrain metadata missing")
+  assert((workspace.JediLibrary:GetAttribute("PassageRepairRevision") or 0)>=3 and (workspace.JediLibrary:GetAttribute("ClearedFoyerRails") or 0)>=1,"Foyer stair/rail repair metadata missing")
+  local landingBridge=0
+  local passage=assert(workspace.JediLibrary:FindFirstChild("PassageColliders"),"Lobby passage colliders missing")
+  for _,part in ipairs(passage:GetDescendants()) do
+   if part:IsA("BasePart") and part:GetAttribute("UpperLandingBridge") then
+    assert(part.CanCollide and part.Transparency>=.98,"Upper stair bridge must be invisible and solid")
+    landingBridge+=1
+   end
+  end
+  assert(landingBridge>=5,"Foyer stair path does not reach the upper landing")
   assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
-  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on the compact spawn-room guide station")
+  assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the authored lobby table")
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
-  assert(fillSource:find("portugueseGreeting",1,true) and fillSource:find("englishGreeting",1,true),"Bilingual guide missing")
-  assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill English uploaded-audio dialogue missing")
+  assert(fillSource:find("portugueseGreeting",1,true) and fillSource:find("englishGreeting",1,true) and fillSource:find("GameLanguage",1,true),"Settings-driven bilingual Fill text missing")
+  assert(not fillSource:find("languageButton",1,true) and not fillSource:find("AudioTextToSpeech",1,true),"Fill manual language/TTS controls returned")
+  assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill fixed English uploaded-audio dialogue missing")
   assert(fillSource:find('SoundService',1,true) and fillSource:find('ContentProvider:PreloadAsync',1,true),"Fill voice is not preloaded from SoundService")
   assert(fillSource:find('bubble.Size=UDim2.fromOffset(250,92)',1,true) and fillSource:find('label.TextSize=11',1,true) and fillSource:find('nameLabel.TextSize=12',1,true),"Fill overhead dialogue is not compact")
-  assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="Talk","Fill English language metadata/prompt missing")
-  for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill voice asset "..i.." missing") end
+  assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="Talk","Fill fixed English voice metadata/prompt missing")
+  for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill English voice asset "..i.." missing") end
+  local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
+  local clientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
+  assert(settingsSource:find("GameLanguage",1,true) and settingsSource:find('key="language"',1,true),"Game language setting not persisted")
+  assert(clientSource:find('BackgroundTransparency=.82',1,true) and clientSource:find('settingsOverlay.ZIndex=40',1,true),"Readable settings overlay fix not persisted")
+  assert(clientSource:find("GameLanguage",1,true) and clientSource:find('L("PERSEGUIDORES","KILLERS")',1,true),"Settings-driven HUD translations not persisted")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find('player:SetAttribute("InMenu",false)',1,true),"Direct-lobby menu controller missing")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
   assert(game.ReplicatedStorage.Survival.PlayerProfile.Source:find("CompactProfile",1,true),"Compact private profile not persisted")
@@ -716,7 +731,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(#game.ReplicatedStorage.Survival.VictimMotionLibraries:GetChildren()==7,"Missing victim pairs")
   for _,map in ipairs(assets.Maps:GetChildren()) do assert(#map.ObjectiveSites:GetChildren()>=9 and #map.ArrivalSpawns:GetChildren()>=7,"Map layout missing: "..map.Name) end
   assert(game.ServerScriptService.SurvivalServer.Source:find("profiles:ownsKiller",1,true) and game.ServerScriptService.SurvivalServer.Source:find("profiles:buyKiller",1,true),"Killer shop authority missing")
-  return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,sevenVictimAnimations=true,noResetControl=true,coinAsset=10737243803,simplifiedSettings=true,compactProfile=true,privateKillerSelection=true,killerShop=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,winnerMenuScene=true,animatedWinner=true,atomicShopPurchase=true,noMainMenu=true,ok=true,version=game.PlaceVersion,build=156,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
+  return {survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,objectiveChecks=true,sevenVictimAnimations=true,noResetControl=true,coinAsset=10737243803,simplifiedSettings=true,compactProfile=true,privateKillerSelection=true,killerShop=true,voteDismissal=true,guide=true,guideAvatar="ch_ckz2n",guideHeadless=true,guideReception=true,guideEnglishUploadedVoice=true,objectiveEscape=true,stamina=true,crouch=true,carryDowned=true,dedicatedVoting=true,winnerMenuScene=true,animatedWinner=true,atomicShopPurchase=true,noMainMenu=true,ok=true,version=game.PlaceVersion,build=158,logo=true,mapCount=7,pursuerCount=7,lobbyPreserved=true,noLobbyPortal=true,noLobbyDoorGeometry=true,invisibleBounds=true,holdRun=true,fullScreenKillerResult=true,synchronizedExecution=true,resultCameraRestored=true,initialLogoOnly=true,mapAnimatedLoading=true,smoothLocomotion=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,legacySystemsRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true}
  `));
  console.log('PERSISTED_PUBLICATION',JSON.stringify(persisted));
 }
