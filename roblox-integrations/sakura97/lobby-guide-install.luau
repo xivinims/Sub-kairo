@@ -228,6 +228,31 @@ assert(typeof(preservedSpawn)=="Vector3","Fixed lobby verified spawn missing")
 npc:SetAttribute("LobbySpawnDistance",(preservedSpawn-seatWorld).Magnitude)
 local seatedGap=(torso.Position.Y-torso.Size.Y/2)-topY
 assert(math.abs(seatedGap-.025)<.08,"Fill is floating or clipping instead of sitting on reception tabletop")
+
+-- Final collision normalization happens AFTER ApplyDescription, pose restoration and
+-- tabletop placement. Humanoid character parts can re-enable collision while the rig is
+-- settling; the published guide must remain purely visual and never block a doorway.
+local nonBlockingParts=0
+for _,obj in ipairs(npc:GetDescendants()) do
+ if obj:IsA("BasePart") then
+  obj.CanCollide=false
+  obj.CanTouch=false
+  obj.CanQuery=false
+  obj.AssemblyLinearVelocity=Vector3.zero
+  obj.AssemblyAngularVelocity=Vector3.zero
+  if obj~=root then obj.Massless=true end
+  nonBlockingParts+=1
+ end
+end
+root.Anchored=true
+npc:SetAttribute("NonBlockingGuide",true)
+npc:SetAttribute("NonBlockingPartCount",nonBlockingParts)
+for _,obj in ipairs(npc:GetDescendants()) do
+ if obj:IsA("BasePart") then
+  assert(not obj.CanCollide and not obj.CanTouch and not obj.CanQuery,"Fill collision returned on "..obj:GetFullName())
+ end
+end
+
 local client=Instance.new("Script") client.Name="GuideInteraction" client.RunContext=Enum.RunContext.Client client.Source=__GUIDE_CLIENT_SOURCE__ client.Parent=npc
 assert(head.Transparency==1 and humanoid.RigType==Enum.HumanoidRigType.R6,"Headless/R6 validation failed")
 local accessoryIds={}
