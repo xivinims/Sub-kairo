@@ -19,61 +19,108 @@ for _,motor in ipairs(npc:GetDescendants()) do
 end
 local humanoid=assert(npc:FindFirstChildOfClass("Humanoid"))
 local ownerId=8344738123
+local OUTFIT_REVISION="2026-10-26-mafia-satchel-v1"
+local REQUESTED_PANTS_ID=110421904136844
+local REQUESTED_BAG_ID=97665507839365
 
--- Freeze Fill's current appearance permanently inside the place.
--- On the first run after this change, capture the already-published Fill NPC that is
--- currently wearing the approved outfit. Future publishes clone this saved description
--- and NEVER read the user's live avatar again.
+-- Refresh from the owner's current avatar once for this requested revision, apply the
+-- requested pants/bag, then freeze that exact appearance for later publishes.
 local frozenTemplate=SS:FindFirstChild("FillFrozenAppearance")
-if not frozenTemplate then
- local existingGuide=workspace:FindFirstChild("LobbyGuide")
- local existingHumanoid=existingGuide and existingGuide:FindFirstChildOfClass("Humanoid")
- if existingHumanoid then
-  frozenTemplate=existingHumanoid:GetAppliedDescription()
- else
-  -- One-time safety fallback only if an old Fill is genuinely absent.
-  frozenTemplate=game:GetService("Players"):GetHumanoidDescriptionFromUserIdAsync(ownerId)
- end
+if not frozenTemplate or frozenTemplate:GetAttribute("Revision")~=OUTFIT_REVISION then
+ if frozenTemplate then frozenTemplate:Destroy() end
+ frozenTemplate=game:GetService("Players"):GetHumanoidDescriptionFromUserIdAsync(ownerId)
  frozenTemplate.Name="FillFrozenAppearance"
+ frozenTemplate.Pants=REQUESTED_PANTS_ID
  frozenTemplate:SetAttribute("Frozen",true)
  frozenTemplate:SetAttribute("SourceUserId",ownerId)
+ frozenTemplate:SetAttribute("Revision",OUTFIT_REVISION)
+ frozenTemplate:SetAttribute("RequestedPantsAssetId",REQUESTED_PANTS_ID)
+ frozenTemplate:SetAttribute("RequestedBagAssetId",REQUESTED_BAG_ID)
  frozenTemplate.Parent=SS
 end
 assert(frozenTemplate:IsA("HumanoidDescription") and frozenTemplate:GetAttribute("Frozen")==true,"Frozen Fill appearance missing")
+
 local description=frozenTemplate:Clone()
--- Keep clothing, colors and accessories while retaining the requested R6 body/headless setup.
+description.Pants=REQUESTED_PANTS_ID
+-- If the live avatar already contains this exact satchel, remove that copy from the
+-- description because the requested catalog asset is attached explicitly below.
+pcall(function()
+ local filtered={}
+ for _,item in ipairs(description:GetAccessories(true)) do
+  if item.AssetId~=REQUESTED_BAG_ID then table.insert(filtered,item) end
+ end
+ description:SetAccessories(filtered,true)
+end)
+
+-- Keep the user's clothing/colors/accessories while preserving the authored R6/headless body.
 description.Head=0 description.Torso=0 description.LeftArm=0 description.RightArm=0 description.LeftLeg=0 description.RightLeg=0
 npc.Parent=workspace
 humanoid:ApplyDescriptionResetAsync(description)
-for _,motor in ipairs(npc:GetDescendants()) do
- if motor:IsA("Motor6D") and authored[motor.Name] then
-  motor.C0=authored[motor.Name] motor.Transform=CFrame.identity
+
+local oldBag=npc:FindFirstChild("FillCrossbodySatchel",true)
+if oldBag then oldBag:Destroy() end
+local bagPackage=AssetService:LoadAssetAsync(REQUESTED_BAG_ID)
+local bagSource=assert(bagPackage:FindFirstChildWhichIsA("Accessory",true),"Requested crossbody satchel is not an Accessory")
+local bag=bagSource:Clone()
+bag.Name="FillCrossbodySatchel"
+for _,obj in ipairs(bag:GetDescendants()) do
+ if obj:IsA("LuaSourceContainer") then
+  obj:Destroy()
+ elseif obj:IsA("BasePart") then
+  obj.CanCollide=false obj.CanTouch=false obj.CanQuery=false obj.Massless=true
  end
 end
+humanoid:AddAccessory(bag)
+bagPackage:Destroy()
+assert(npc:FindFirstChild("FillCrossbodySatchel",true),"Requested crossbody satchel failed to attach")
+
+for _,motor in ipairs(npc:GetDescendants()) do
+ if motor:IsA("Motor6D") and authored[motor.Name] then
+  motor.C0=authored[motor.Name]
+  motor.Transform=CFrame.identity
+ end
+end
+
 -- Applying an outfit must not reintroduce a default controller over the seated pose.
 for _,obj in ipairs(npc:GetDescendants()) do
  if obj:IsA("LuaSourceContainer") then obj:Destroy()
  elseif obj:IsA("Motor6D") then obj.Enabled=true end
 end
+
 local applied=humanoid:GetAppliedDescription()
-assert(applied.Shirt==description.Shirt and applied.Pants==description.Pants,"Avatar clothes were not applied")
+assert(applied.Shirt==description.Shirt and applied.Pants==REQUESTED_PANTS_ID,"Requested Fill clothes were not applied")
 npc:SetAttribute("OutfitUserId",ownerId)
 npc:SetAttribute("OutfitUsername","ch_ckz2n")
 npc:SetAttribute("OutfitFrozen",true)
 npc:SetAttribute("OutfitSource","FillFrozenAppearance")
+npc:SetAttribute("OutfitRevision",OUTFIT_REVISION)
 npc:SetAttribute("OutfitShirt",description.Shirt)
-npc:SetAttribute("OutfitPants",description.Pants)
+npc:SetAttribute("OutfitPants",REQUESTED_PANTS_ID)
+npc:SetAttribute("CrossbodyBagAssetId",REQUESTED_BAG_ID)
 npc:SetAttribute("AuthoredPosePreserved",true)
+
 assert(humanoid.RigType==Enum.HumanoidRigType.R6,"Guide must retain R6 pose")
 humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
-humanoid.RequiresNeck=false humanoid.AutoRotate=false humanoid.EvaluateStateMachine=false
+humanoid.RequiresNeck=false
+humanoid.AutoRotate=false
+humanoid.EvaluateStateMachine=false
 local root=assert(npc:FindFirstChild("HumanoidRootPart"))
 npc.PrimaryPart=root
 for _,obj in ipairs(npc:GetDescendants()) do
- if obj:IsA("BasePart") then obj.Anchored=obj==root obj.CanCollide=false obj.CanTouch=false end
+ if obj:IsA("BasePart") then
+  obj.Anchored=obj==root
+  obj.CanCollide=false
+  obj.CanTouch=false
+  obj.CanQuery=false
+ end
 end
-local head=assert(npc:FindFirstChild("Head")) head.Transparency=1
-for _,obj in ipairs(head:GetDescendants()) do if obj:IsA("Decal") or obj:IsA("Texture") then obj:Destroy() end end
+
+local head=assert(npc:FindFirstChild("Head"))
+head.Transparency=1
+for _,obj in ipairs(head:GetDescendants()) do
+ if obj:IsA("Decal") or obj:IsA("Texture") then obj:Destroy() end
+end
+
 npc:SetAttribute("PoseSourceAssetId",92697245643515)
 npc:SetAttribute("DialogueSourceAssetId",80608769509945)
 npc:SetAttribute("AppearanceVerified",true)
