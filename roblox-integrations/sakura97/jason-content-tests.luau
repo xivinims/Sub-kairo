@@ -211,7 +211,7 @@ assert(workspace.JediLibrary:GetAttribute("FixedLobbySHA256")=="ec6fb99dec82f22e
 assert(not workspace:FindFirstChild("LobbyJoinPortal"),"Lobby join portal returned")
 assert(not workspace:FindFirstChild("SurviversLobbyDoorVisual"),"Lobby join door visual returned")
 assert(game.StarterGui.TomiaszMenu.Enabled==false and game.StarterGui.TomiaszMenu:GetAttribute("MenuRemoved")==true,"Main menu was not removed")
-assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
+assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('ViewportFrame',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('KillerPreviews',1,true),"3D killer shop HUD missing")
 assert(game.ServerScriptService.SurvivalServer.Source:find('action=="buyKiller"',1,true) and game.ServerScriptService.SurvivalServer.Source:find("profiles:ownsKiller",1,true),"Server-side killer ownership missing")
 assert(game.ServerScriptService.ProfileService.Source:find("ownedKillers",1,true) and game.ServerScriptService.ProfileService.Source:find("buyKiller",1,true),"Killer ownership persistence missing")
 assert(workspace.JediLibrary:GetAttribute("AutomaticRoundAdmission")==true,"Lobby automatic admission contract missing")
@@ -220,21 +220,43 @@ assert(#lobbyBounds:GetChildren()>=5 and lobbyBounds:FindFirstChild("SafetyFloor
 local shared=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerMotionLibraries"),"Shared pursuer motion libraries missing")
 assert(shared:FindFirstChild("Default") and shared.Default:GetAttribute("ClipCount")==7,"Default shared motion library invalid")
 assert(shared:FindFirstChild("Cool") and shared.Cool:GetAttribute("ClipCount")==7,"Cool shared motion library invalid")
-for _,name in ipairs({"Jason","JohnDoe","Jeff","Chucky","Freddy"}) do
+assert(not shared:FindFirstChild("Noli") and not shared:FindFirstChild("Animatronic"),"Removed Jeff/Freddy motion libraries returned")
+
+assert(#assets.Killers:GetChildren()==5,"Expected five pursuers after Jeff/Freddy removal")
+for _,name in ipairs({"Jason","JohnDoe","Chucky","Krampus","Piggy"}) do
  local k=assert(assets.Killers:FindFirstChild(name),name.." template missing")
  assert(k.PrimaryPart and k:FindFirstChildOfClass("Humanoid"),name.." missing root/humanoid")
  assert(k:GetAttribute("SourceAssetId"),name.." missing source id")
 end
-for _,name in ipairs({"JohnDoe","Jeff","Chucky","Freddy"}) do
+assert(not assets.Killers:FindFirstChild("Jeff") and not assets.Killers:FindFirstChild("Freddy"),"Jeff/Freddy templates returned")
+
+for _,name in ipairs({"JohnDoe","Chucky","Krampus","Piggy"}) do
  local k=assert(assets.Killers:FindFirstChild(name))
  assert(not k:FindFirstChild("MotionClips"),name.." still duplicates MotionClips")
  assert(shared:FindFirstChild(k:GetAttribute("MotionLibrary") or ""),name.." missing shared motion reference")
 end
+
+local previews=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerPreviews"),"Killer shop preview folder missing")
+assert(#previews:GetChildren()==5 and previews.Jason and previews.JohnDoe and previews.Chucky and previews.Piggy and previews.Krampus,"Killer shop previews incomplete")
 assert(game.ReplicatedStorage.Survival.PresentationJason.MotionClips:GetAttribute("ClipCount")==1,"Portrait must not replicate the full combat library")
 assert(game.ServerScriptService.SurvivalBridge:FindFirstChild("CancelDeath"),"Death cancellation bridge missing")
-assert(assets.Killers.Jeff:GetAttribute("MotionLibrary")=="Noli")
-assert(shared.Noli["Jason_Kill"]:GetAttribute("SourceAssetId")==140625681515398)
-assert(assets.Killers.Freddy:GetAttribute("MotionLibrary")=="Animatronic")
-assert(shared.Animatronic["Jason Walk"]:GetAttribute("SourceAssetId")==134168450460030)
+
+assert(game.StarterPlayer.DevCameraOcclusionMode==Enum.DevCameraOcclusionMode.Zoom,"Camera wall occlusion must use Zoom, not wall transparency")
+local ground=assert(workspace.JediLibrary:FindFirstChild("OutdoorGround"),"Exterior ground missing")
+assert(ground.Material==Enum.Material.Ground and ground.Transparency==0,"Exterior ground must be visible and non-grass")
+assert(math.abs((ground.Position.Y+ground.Size.Y/2)-625.031494140625)<.25,"Exterior ground is below the authored props")
+assert(workspace.JediLibrary:GetAttribute("OutdoorGroundMaterial")=="Ground","Exterior ground material metadata missing")
+
+assert(workspace.JediLibrary:GetAttribute("StairAccessClosed")==true,"Upper stair closure metadata missing")
+assert(workspace.JediLibrary:GetAttribute("StairWarningAssetId")==17143448214,"Wrong stair warning asset")
+local warning=assert(workspace.JediLibrary:FindFirstChild("StairClosedSign"),"Construction sign missing")
+assert(warning:GetAttribute("SourceAssetId")==17143448214 and warning:GetAttribute("BlocksUpperFloor")==true,"Construction sign metadata invalid")
+local passage=assert(workspace.JediLibrary:FindFirstChild("PassageColliders"),"PassageColliders missing")
+for _,part in ipairs(passage:GetDescendants()) do
+ if part:IsA("BasePart") then
+  assert(not part:GetAttribute("WalkableStairStep") and not part:GetAttribute("UpperLandingBridge"),"Invisible stair floor returned")
+ end
+end
+
 return {ok=true,safeRoundRespawn=true,characterHookDedup=true,exactFinalVictim=true,musicHudRemoved=true,fullScreenExecutionResult=true,deathScreenOnlyOnRealDeath=true,safePursuerSpawns=true,sharedPursuerMotionLibraries=true,survivorR6=true,crouchRuntime=true,fixedViolenceDistrictLobby=true,maps=mapReport,killerMotionClips=true,flashlight=true,survivorCompatibility=survivorCompatibility,originalClips=clips,originalFrames=frames,jasonClipNames=jasonClipNames,hasExecutionClip=hasExecution,legacyThemesRemoved=true,buckshotRoundMusic=true,lowVolumeRoundMusic=true,noLobbyJoinDoor=true,noLobbyDoorGeometry=true,automaticLobbyAdmission=true,invisibleArenaBounds=true,invisibleLobbyBounds=true,velocitySyncedRun=true,perKillerLocomotion=true,flashlightPoseSafe=true,rigPoseBindings=true,originalRigDimensions=true,poseMetadata=true,separatedSpawns=true,groundedLobbySpawn=true,wholeMapReplication=true,fallRecovery=true,forsakenSurvivor=true,injuredAnimations=true,survivorActionAnimations=true,crouchAnimation=true,injuredCrouchAnimation=true,mapAnimatedLoading=true,initialLogoOnly=true,smoothLocomotionBlend=true,r6ReplacementSafe=true,animatedWinnerPose=true,synchronizedExecution=true,resultCameraRestored=true,adaptiveGraphics=true,fixedViolenceDistrictEnvironment=true,requestedSevenMaps=true,rocketArena2x=true,pursuersNormalized=true,deathMediaSafe=true,deadSystemsRemoved=true,mainMenuRemoved=true,killerShop=true,nametagToggleFixed=true,survivorClipNames=survivorNames}
 
