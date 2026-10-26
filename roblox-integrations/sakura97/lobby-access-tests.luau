@@ -49,7 +49,8 @@ end
 
 assert(openDoorParts>=7 and doorFrames>=3,"House doorway repairs missing")
 assert(supports>=doorFrames*3,"Door frame supports are incomplete")
-assert(visualStairs>=6,"Not all imported stair pieces were made visual-only: "..visualStairs)\nassert(stairMeshes>=1 and stairSteps>=8,"Walkable stair replacement missing meshes="..stairMeshes.." steps="..stairSteps)
+assert(visualStairs>=6,"Not all imported stair pieces were made visual-only: "..visualStairs)
+assert(stairMeshes>=1 and stairSteps>=8,"Walkable stair replacement missing meshes="..stairMeshes.." steps="..stairSteps)
 
 local usableStairs=0
 for source,steps in pairs(groups) do
@@ -82,7 +83,7 @@ return {
  openDoorParts=openDoorParts,
  doorFrames=doorFrames,
  stairMeshes=stairMeshes,
- stairPathSteps=stairSteps,
+ visualStairs=visualStairs,\n stairPathSteps=stairSteps,
  usableStairs=usableStairs,
  fillDirectFromSpawn=true,
  fillSurface=npc:GetAttribute("ReceptionSurface")
