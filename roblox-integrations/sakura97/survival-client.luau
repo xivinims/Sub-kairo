@@ -205,22 +205,112 @@ local function ownedKillers()
  local ok,data=pcall(function() return HttpService:JSONDecode(raw) end)
  return ok and type(data)=="table" and data or {Jason=true}
 end
-local killerOrder={"Jason","JohnDoe","Chucky","Jeff","Freddy","Piggy","Krampus"}
+local killerOrder={"Jason","JohnDoe","Chucky","Piggy","Krampus"}
+local previews=net:FindFirstChild("KillerPreviews")
+
+local function buildShopPortrait(row,killerName)
+ local portrait=Instance.new("ViewportFrame",row)
+ portrait.Name="Portrait"
+ portrait.BackgroundColor3=Color3.fromRGB(17,17,20)
+ portrait.BackgroundTransparency=0
+ portrait.BorderSizePixel=0
+ portrait.Position=UDim2.fromOffset(8,8)
+ portrait.Size=UDim2.fromOffset(82,82)
+ portrait.Ambient=Color3.fromRGB(105,105,112)
+ portrait.LightColor=Color3.fromRGB(235,230,220)
+ portrait.LightDirection=Vector3.new(-.6,-1,-.5)
+ portrait.ZIndex=118
+ Instance.new("UICorner",portrait).CornerRadius=UDim.new(0,5)
+
+ local world=Instance.new("WorldModel",portrait)
+ world.Name="PreviewWorld"
+ local source=previews and previews:FindFirstChild(killerName)
+ if source then
+  local model=source:Clone()
+  model.Name=killerName
+  model.Parent=world
+
+  local visible={}
+  local minV=Vector3.new(math.huge,math.huge,math.huge)
+  local maxV=Vector3.new(-math.huge,-math.huge,-math.huge)
+  for _,p in ipairs(model:GetDescendants()) do
+   if p:IsA("BasePart") and p.Transparency<.98 then
+    table.insert(visible,p)
+    local half=p.Size/2
+    minV=Vector3.new(math.min(minV.X,p.Position.X-half.X),math.min(minV.Y,p.Position.Y-half.Y),math.min(minV.Z,p.Position.Z-half.Z))
+    maxV=Vector3.new(math.max(maxV.X,p.Position.X+half.X),math.max(maxV.Y,p.Position.Y+half.Y),math.max(maxV.Z,p.Position.Z+half.Z))
+   end
+  end
+  local cf,size=model:GetBoundingBox()
+  if #visible>0 then
+   size=maxV-minV
+   cf=CFrame.new((minV+maxV)/2)
+  end
+
+  local center=cf.Position+Vector3.new(0,size.Y*.04,0)
+  local root=model:FindFirstChild("HumanoidRootPart",true) or model.PrimaryPart
+  local forward=root and root.CFrame.LookVector or Vector3.new(0,0,-1)
+  forward=Vector3.new(forward.X,0,forward.Z)
+  if forward.Magnitude<.1 then forward=Vector3.new(0,0,-1) else forward=forward.Unit end
+  local distance=math.max(5.2,size.Y*.95,size.X*1.1,size.Z*1.65)
+
+  local camera=Instance.new("Camera",portrait)
+  camera.Name="PreviewCamera"
+  camera.FieldOfView=30
+  camera.CFrame=CFrame.lookAt(center+forward*distance+Vector3.new(0,size.Y*.03,0),center)
+  portrait.CurrentCamera=camera
+ else
+  local missing=text(portrait,"Missing","3D",UDim2.fromScale(1,1),UDim2.new())
+  missing.TextSize=11
+  missing.TextColor3=Color3.fromRGB(120,120,126)
+  missing.TextXAlignment=Enum.TextXAlignment.Center
+ end
+ return portrait
+end
+
 for i,name in ipairs(killerOrder) do
  local killerName=name
  local spec=config.Killers[killerName]
  if spec then
-  local row=Instance.new("Frame",shopList) row.Name=killerName row.LayoutOrder=i row.Size=UDim2.new(1,-4,0,82) row.BackgroundColor3=Color3.fromRGB(14,14,16) row.BackgroundTransparency=.20 row.BorderSizePixel=0 row.ZIndex=117
-  Instance.new("UICorner",row).CornerRadius=UDim.new(0,2)
-  local border=Instance.new("UIStroke",row) border.Color=Color3.fromRGB(92,92,96) border.Transparency=.64 border.Thickness=1
-  local portrait=Instance.new("ImageLabel",row) portrait.Name="Portrait" portrait.BackgroundColor3=Color3.fromRGB(24,24,27) portrait.BackgroundTransparency=.08 portrait.BorderSizePixel=0 portrait.Position=UDim2.fromOffset(7,7) portrait.Size=UDim2.fromOffset(68,68) portrait.ScaleType=Enum.ScaleType.Crop portrait.Image="rbxthumb://type=Asset&id="..tostring(spec.id).."&w=150&h=150" portrait.ZIndex=118
-  Instance.new("UICorner",portrait).CornerRadius=UDim.new(0,2)
-  local n=text(row,"Name",killerName,UDim2.new(.40,0,0,24),UDim2.fromOffset(86,9)) n.Font=Enum.Font.GothamBold n.TextSize=13 n.TextXAlignment=Enum.TextXAlignment.Left n.ZIndex=118
-  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.48,0,0,34),UDim2.fromOffset(86,34)) hint.TextSize=9 hint.TextColor3=Color3.fromRGB(153,153,158) hint.TextXAlignment=Enum.TextXAlignment.Left hint.TextYAlignment=Enum.TextYAlignment.Top hint.ZIndex=118
-  local buy=button(row,"Buy","",UDim2.fromOffset(136,36),UDim2.new(1,-148,.5,-18),function() event:FireServer("buyKiller",killerName) end) buy.ZIndex=119 buy.TextSize=10 buy.BackgroundTransparency=.24
+  local row=Instance.new("Frame",shopList)
+  row.Name=killerName
+  row.LayoutOrder=i
+  row.Size=UDim2.new(1,-4,0,98)
+  row.BackgroundColor3=Color3.fromRGB(12,12,14)
+  row.BackgroundTransparency=.08
+  row.BorderSizePixel=0
+  row.ZIndex=117
+  Instance.new("UICorner",row).CornerRadius=UDim.new(0,5)
+  local border=Instance.new("UIStroke",row)
+  border.Color=Color3.fromRGB(82,82,88)
+  border.Transparency=.52
+  border.Thickness=1
+
+  buildShopPortrait(row,killerName)
+
+  local n=text(row,"Name",killerName,UDim2.new(.37,0,0,24),UDim2.fromOffset(102,11))
+  n.Font=Enum.Font.GothamBold
+  n.TextSize=14
+  n.TextXAlignment=Enum.TextXAlignment.Left
+  n.ZIndex=118
+
+  local hint=text(row,"Hint",spec.tip or "",UDim2.new(.42,0,0,42),UDim2.fromOffset(102,39))
+  hint.TextSize=9
+  hint.TextColor3=Color3.fromRGB(166,166,172)
+  hint.TextXAlignment=Enum.TextXAlignment.Left
+  hint.TextYAlignment=Enum.TextYAlignment.Top
+  hint.ZIndex=118
+
+  local buy=button(row,"Buy","",UDim2.fromOffset(132,38),UDim2.new(1,-144,.5,-19),function()
+   event:FireServer("buyKiller",killerName)
+  end)
+  buy.ZIndex=119
+  buy.TextSize=10
+  buy.BackgroundTransparency=.14
   shopButtons[killerName]=buy
  end
 end
+
 local function refreshShop()
  local owned=ownedKillers()
  local stats=player:FindFirstChild("leaderstats") local pts=stats and stats:FindFirstChild("Pontos")
