@@ -554,10 +554,10 @@ console.log('SETTINGS_BOOK_ASSET_ID',settingsBookAssetId);
 
 let settingsIconImageId=0;
 try{
- const state=first(await execute(\`
+ const state=first(await execute(`
   local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
   return {id=net and (net:GetAttribute("SettingsIconImageId") or 0) or 0}
- \`));
+ `));
  settingsIconImageId=Number(state?.id)||0;
 }catch{}
 if(!settingsIconImageId){
@@ -567,16 +567,16 @@ if(!settingsIconImageId){
   'Transparent settings button icon based on the owner supplied reference.',
   'settings-hex.png'
  );
- const ready=first(await execute(\`
-  local asset=game:GetService("AssetService"):LoadAssetAsync(\${decalId})
+ const ready=first(await execute(`
+  local asset=game:GetService("AssetService"):LoadAssetAsync(${decalId})
   local decal=asset:FindFirstChildWhichIsA("Decal",true)
-  local image=decal and tonumber(decal.Texture:match("%d+")) or \${decalId}
+  local image=decal and tonumber(decal.Texture:match("%d+")) or ${decalId}
   asset:Destroy()
   local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
   if net then net:SetAttribute("SettingsIconImageId",image) end
   game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
   return {id=image}
- \`));
+ `));
  settingsIconImageId=Number(ready.id);
 }
 console.log('SETTINGS_ICON_IMAGE_ID',settingsIconImageId);
