@@ -122,7 +122,11 @@ end)
 
 remotes[Protocol.Events.Dialogue].OnClientEvent:Connect(function(kind, payload)
     if kind == "line" then
-        dialogue:Show(payload)
+        local ui=player.PlayerGui:FindFirstChild("DeadSignalFrontEnd")
+        if ui and ui:GetAttribute("Subtitles")==false and payload.radio then
+            dialogue:Hide()
+            task.delay(4,function() remotes[Protocol.Events.DialogueAdvance]:FireServer() end)
+        else dialogue:Show(payload) end
     elseif kind == "finished" then
         dialogue:Hide()
     end

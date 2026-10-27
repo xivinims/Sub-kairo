@@ -83,7 +83,7 @@ function StalkerService:_nearestVisiblePlayer()
         local character = player.Character
         local humanoid = character and character:FindFirstChildOfClass("Humanoid")
         local root = character and character:FindFirstChild("HumanoidRootPart")
-        if humanoid and humanoid.Health > 0 and root and self:_lineOfSight(root) then
+        if player:GetAttribute("DeadSignalPlaying") and not player:GetAttribute("DeadSignalPaused") and humanoid and humanoid.Health > 0 and root and self:_lineOfSight(root) then
             local distance = (root.Position - self.Root.Position).Magnitude
             if not bestDistance or distance < bestDistance then
                 best, bestDistance = player, distance
@@ -146,6 +146,9 @@ function StalkerService:Step()
     if not self.Enabled or not self.Model or not self.Root then return end
 
     if self.State == "Observe" or self.State == "Cooldown" or self.State == "Dormant" then return end
+    local active=false
+    for _,p in ipairs(Players:GetPlayers()) do if p:GetAttribute("DeadSignalPlaying") and not p:GetAttribute("DeadSignalPaused") then active=true; break end end
+    if not active then if self.Humanoid then self.Humanoid:MoveTo(self.Root.Position) end; return end
     local visible = self:_nearestVisiblePlayer()
     if visible then
         self.Target = visible

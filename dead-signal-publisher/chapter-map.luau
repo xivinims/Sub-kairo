@@ -34,6 +34,7 @@ end
 local function lamp(parent,x,y,z,col,node)
     box(parent,"LuminaireHousing",x,y+0.2,z,7,0.5,2,C(25,31,32))
     local p=box(parent,"Luminaire",x,y,z,6,0.12,1.2,col,Enum.Material.Neon,false)
+    CollectionService:AddTag(p,"DeadSignalLocalLight")
     local l=Instance.new("PointLight"); l.Range=28; l.Brightness=1.3; l.Color=col; l.Shadows=false; l.Parent=p
     if node then p:SetAttribute("LightPowerNode",node); l.Enabled=false; p.Material=Enum.Material.Glass end
     return p

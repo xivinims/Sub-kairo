@@ -1,6 +1,6 @@
 local Config = {}
 
-Config.BuildId = "dead-signal-ch01-signalworks-v3"
+Config.BuildId = "dead-signal-ch01-assets-v4"
 Config.DataVersion = 1
 Config.DefaultChapter = "Chapter01"
 Config.DefaultCheckpoint = "CH01_START"

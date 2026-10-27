@@ -1,6 +1,6 @@
 # Signalworks — Chapter 1 test build
 
-Build: `dead-signal-ch01-signalworks-v3`. Target: universe 9421311218 / place 118064584465155.
+Build: `dead-signal-ch01-assets-v4`. Target: universe 9421311218 / place 118064584465155.
 Only branch `dead-signal-publisher` is used. Other game folders and branches are unchanged.
 
 ## Player route
@@ -34,3 +34,12 @@ Mobile uses native proximity prompts (F on keyboard), existing E/USAR cable aimi
 Publisher aborts on validation errors, saves/publishes once, reopens the place in a separate task, validates BuildId and objects, then requests restartServers. A green workflow alone is not publication evidence: inspect the returned Roblox version and verification JSON.
 
 No interactive Roblox client is available in the container. Visual/mobile rendering and complete human playthrough must not be described as verified by structural tests.
+
+
+## Visual revision 4
+
+The previous primitive-only dressing is replaced by selected geometry from all ten approved visual asset IDs: floor 11961684378, passages 96103787859080, stations 9609111841, doors 8593730677, individual cells/sockets 16551049618, electrical props 16592756903, staircase flights 120661626985584, toy/block/cot props 16390129962 and 136978268470872, and four individual structural columns from 72028919182927. Selection is by exact audited object name. Reference-only map, GrabPack and Bramble creature remain excluded.
+
+SafeAssetImporter.Select clones only BaseParts and approved visual descendants from detached source containers; all executable code, audio, animations, prompts and constraints from the source are discarded. Door visual leaves receive our own WeldConstraints to the original DoorPanel. Original stair treads remain invisible simplified collision geometry.
+
+First-person is enforced in StarterPlayer and reapplied on play/respawn. Menus release mouse capture and disable movement; native touch camera stays available during gameplay. Settings use four tabs, scrolling rows, touch-sized +/- controls, defaults and server-validated persisted values. Sprint (22), crouch (8), walk (16) and cable carry (13) are server-authoritative. Flashlight is a local SpotLight. Graphics presets control local light activation distance and nearby light shadows. Mouse sensitivity is explicitly labelled as mouse-only.

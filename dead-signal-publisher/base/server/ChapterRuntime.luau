@@ -17,7 +17,7 @@ function Run:Feedback(player,text,kind)
 end
 function Run:Active()
     local list={}
-    for _,p in ipairs(Players:GetPlayers()) do if p:GetAttribute("DeadSignalPlaying") then table.insert(list,p) end end
+    for _,p in ipairs(Players:GetPlayers()) do if p:GetAttribute("DeadSignalPlaying") and not p:GetAttribute("DeadSignalPaused") then table.insert(list,p) end end
     return list
 end
 function Run:Flag(flag,value)
@@ -263,10 +263,27 @@ function Run:Start()
     self.remotes[self.protocol.Events.ChapterAction].OnServerEvent:Connect(function(p,action,settings)
         if action=="settings" and type(settings)=="table" then
             self.save:Mutate(p,function(d)
-                if type(settings.masterVolume)=="number" then d.settings.masterVolume=math.clamp(settings.masterVolume,0,1) end
-                d.settings.reducedMotion=settings.reducedMotion==true
-                d.settings.shadows=settings.shadows==true
+                local bounds={masterVolume={0,1},sfxVolume={0,1},dialogueVolume={0,1},fov={60,100},sensitivity={0.25,2},brightness={-0.1,0.25}}
+                for k,range in pairs(bounds) do
+                    local v=settings[k]
+                    if type(v)=="number" and v==v then d.settings[k]=math.clamp(v,range[1],range[2]) end
+                end
+                for _,k in ipairs({"reducedMotion","shadows","subtitles"}) do if type(settings[k])=="boolean" then d.settings[k]=settings[k] end end
+                if settings.graphics=="Baixo" or settings.graphics=="Médio" or settings.graphics=="Alto" then d.settings.graphics=settings.graphics end
             end)
+            return
+        end
+        if action=="pause" and type(settings)=="boolean" then
+            p:SetAttribute("DeadSignalPaused",settings)
+            local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed=settings and 0 or 16 end
+            return
+        end
+        if action=="movement" and p:GetAttribute("DeadSignalPlaying") and not p:GetAttribute("DeadSignalPaused") then
+            local mode=settings
+            if mode~="walk" and mode~="sprint" and mode~="crouch" then return end
+            local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed=self.wires.PlayerCarry[p] and 13 or mode=="crouch" and 8 or mode=="sprint" and 22 or 16 end
             return
         end
         if action~="continue" and action~="new" and action~="drop" then return end
@@ -279,7 +296,9 @@ function Run:Start()
         end
         if p:GetAttribute("DeadSignalPlaying") then return end
         if action=="new" then
-            if #self:Active()>0 then self:Feedback(p,"Há uma sessão em andamento. Use Continuar."); return end
+            local hasSession=false
+            for _,other in ipairs(Players:GetPlayers()) do if other:GetAttribute("DeadSignalPlaying") then hasSession=true end end
+            if hasSession then self:Feedback(p,"Há uma sessão em andamento. Use Continuar."); return end
             self.save:Mutate(p,function(d)
                 local defaults=self.save:DefaultData()
                 d.checkpoint=defaults.checkpoint; d.flags={}; d.objectives={}; d.inventory={}
@@ -287,6 +306,7 @@ function Run:Start()
             self:ResetWorld()
         end
         p:SetAttribute("DeadSignalPlaying",true)
+        p:SetAttribute("DeadSignalPaused",false)
         self:Restore(p); self.checkpoints:RespawnCharacter(p,p.Character)
         self:Feedback(p,"Sinal recebido.","started")
     end)

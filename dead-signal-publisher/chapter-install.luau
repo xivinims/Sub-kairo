@@ -1,4 +1,4 @@
-local BUILD_ID = "dead-signal-ch01-signalworks-v3"
+local BUILD_ID = "dead-signal-ch01-assets-v4"
 local UNIVERSE_ID = 9421311218
 local PLACE_ID = 118064584465155
 
@@ -130,6 +130,7 @@ end
 __SHARED_MODULES__
 __CLIENT_MODULES__
 __SERVER_MODULES__
+__VISUAL_DRESSING__
 
 local serverBootstrap = Instance.new("Script")
 serverBootstrap.Name = "ServerBootstrap"
@@ -142,9 +143,9 @@ clientBootstrap.Name = "DeadSignalFoundationClient"
 clientBootstrap.Source = __CLIENT_BOOTSTRAP__
 clientBootstrap.Parent = StarterPlayer.StarterPlayerScripts
 
-StarterPlayer.CameraMode = Enum.CameraMode.Classic
+StarterPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 StarterPlayer.CameraMinZoomDistance = 0.5
-StarterPlayer.CameraMaxZoomDistance = 18
+StarterPlayer.CameraMaxZoomDistance = 0.5
 StarterPlayer.CharacterWalkSpeed = 16
 StarterPlayer.CharacterJumpPower = 50
 

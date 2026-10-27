@@ -4,7 +4,7 @@ Roblox prepublish validator separately requires real ModuleScripts in the engine
 from pathlib import Path
 import re, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
-files=list((root/'base').rglob('*.luau'))+[root/'chapter-map.luau',root/'chapter-install.luau',root/'chapter-validate.luau',root/'assembled-install.luau']
+files=list((root/'base').rglob('*.luau'))+[root/'chapter-map.luau',root/'visual-dressing.luau',root/'chapter-install.luau',root/'chapter-validate.luau',root/'assembled-install.luau']
 checker='''local p=arg[1]\nlocal f,e=loadfile(p)\nif not f then print(e); os.exit(1) end\n'''
 with tempfile.TemporaryDirectory() as temp:
  check=Path(temp)/'check.lua';check.write_text(checker)

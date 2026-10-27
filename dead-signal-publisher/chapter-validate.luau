@@ -46,11 +46,23 @@ if map then
     end
 end
 check(externalScripts==0,"Map contains executable content")
-check(parts<2200,"Mobile part budget exceeded: "..parts)
+check(parts<2900,"Mobile part budget exceeded: "..parts)
 check(#Tags:GetTagged("DeadSignalRadio")==1,"Missing MARA screen")
 local monsters=Tags:GetTagged("DeadSignalStalker")
 check(#monsters==1,"Expected exactly one stalker")
 if monsters[1] then check(monsters[1]:FindFirstChild("HumanoidRootPart")~=nil and monsters[1]:FindFirstChildOfClass("Humanoid")~=nil,"Invalid stalker rig") end
+check(game:GetService("StarterPlayer").CameraMode==Enum.CameraMode.LockFirstPerson,"First-person default not configured")
+check(map and map:GetAttribute("VisualRevision")=="audited-assets-v4","Missing visual revision")
+local imported,assetIds=0,{}
+if map then
+    for _,m in ipairs(map:GetDescendants()) do
+        local id=m:GetAttribute("DeadSignalSourceAssetId")
+        if id and m:IsA("Model") then imported+=1; assetIds[tostring(id)]=true end
+    end
+end
+for _,id in ipairs({11961684378,96103787859080,9609111841,8593730677,16551049618,16592756903,120661626985584,16390129962,136978268470872,72028919182927}) do
+    check(assetIds[tostring(id)],"Requested visual asset absent: "..id)
+end
 check(workspace.StreamingEnabled,"Streaming is disabled")
 check(workspace:GetAttribute("ChapterRoomCount")==12,"Missing sectors")
 local root=SS:FindFirstChild("DeadSignalFoundation")
@@ -65,6 +77,7 @@ if root then
         if m then local ok,result=pcall(require,m); check(ok,"Module require failed "..name..": "..tostring(result)) end
     end
     local shared=RS:FindFirstChild("DeadSignalFoundation")
+    check(shared and shared.Client:FindFirstChild("SettingsController"),"Missing settings controller")
     local config=shared and require(shared.Shared.GameConfig)
     if config and sf then
         -- Exercise actual services against an isolated temporary graph, not the live chapter graph.
@@ -116,9 +129,14 @@ if root then
         testFolder:Destroy(); tests.chapterCircuits=true
     end
 end
+if root and root:FindFirstChild("Services") then
+    local Debug=require(root.Services.DebugService)
+    local logger=Debug.new({Debug={Enabled=true}})
+    for _,message in ipairs(errors) do logger:Error("CHAPTER_VALIDATION",message) end
+end
 local function count(t) local n=0; for _ in pairs(t) do n+=1 end; return n end
 return {ok=#errors==0,errors=errors,build=workspace:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,
-    rooms=workspace:GetAttribute("ChapterRoomCount"),parts=parts,powerNodes=count(nodes),endpoints=count(ends),wires=count(wires),
+    rooms=workspace:GetAttribute("ChapterRoomCount"),parts=parts,importedModels=imported,assetIds=assetIds,firstPerson=game:GetService("StarterPlayer").CameraMode.Name,powerNodes=count(nodes),endpoints=count(ends),wires=count(wires),
     doors=count(doors),checkpoints=count(cps),npc=#Tags:GetTagged("DeadSignalRadio"),stalkers=#monsters,serviceTests=tests,
     serverBootstrap=root and root:FindFirstChild("ServerBootstrap")~=nil,
     clientBootstrap=game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("DeadSignalFoundationClient")~=nil}
