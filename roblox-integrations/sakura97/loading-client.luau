@@ -128,7 +128,7 @@ world.Parent=viewport
 
 local camera=Instance.new("Camera")
 camera.Name="LoadingCamera"
-camera.FieldOfView=34
+camera.FieldOfView=29
 camera.Parent=viewport
 viewport.CurrentCamera=camera
 
@@ -165,9 +165,10 @@ local tv=assert(assets:FindFirstChild("TV"),"Requested TV asset missing"):Clone(
 local tableModel=assert(assets:FindFirstChild("Mesa"),"Requested table asset missing"):Clone()
 tv.Parent=world
 tableModel.Parent=world
+tableModel:SetAttribute("LoadingHidden",true)
 
 pcall(function() tableModel:ScaleTo(.48) end)
-pcall(function() tv:ScaleTo(1.04) end)
+pcall(function() tv:ScaleTo(1.22) end)
 
 -- Model bounds inherit the pivot rotation; project part corners into world axes.
 local function worldBounds(model)
@@ -185,14 +186,12 @@ local function worldBounds(model)
  return CFrame.new((lo+hi)*.5),hi-lo
 end
 local function fitLoadingCamera(view,camera,television,tableModel)
- local a,sa=worldBounds(television) local b,sb=worldBounds(tableModel)
- local lo=Vector3.new(math.min(a.X-sa.X/2,b.X-sb.X/2),math.min(a.Y-sa.Y/2,b.Y-sb.Y/2),math.min(a.Z-sa.Z/2,b.Z-sb.Z/2))
- local hi=Vector3.new(math.max(a.X+sa.X/2,b.X+sb.X/2),math.max(a.Y+sa.Y/2,b.Y+sb.Y/2),math.max(a.Z+sa.Z/2,b.Z+sb.Z/2))
- local center=(lo+hi)*.5 local size=hi-lo
+ local centerCF,size=worldBounds(television)
+ local center=centerCF.Position
  local pixels=view.AbsoluteSize
  local aspect=math.max(.1,pixels.X/math.max(1,pixels.Y))
  local fitDistance=math.max(size.Y,size.X/aspect)*.5/math.tan(math.rad(camera.FieldOfView*.5))
- local cameraDistance=fitDistance*1.18+size.Z*.5
+ local cameraDistance=fitDistance*.88+size.Z*.5
  camera.CFrame=CFrame.lookAt(center+Vector3.new(0,0,cameraDistance),center)
  return camera.CFrame
 end
@@ -201,13 +200,11 @@ local function moveBoundingBox(model,targetCF)
  model:PivotTo(model:GetPivot()+(targetCF.Position-currentCF.Position))
 end
 -- Local X faces the viewer, local Z points DOWN in this authored television.
-local tableCF,tableSize=worldBounds(tableModel)
-moveBoundingBox(tableModel,CFrame.new(0,-1.72,0))
-tableCF,tableSize=worldBounds(tableModel)
-local tableTop=tableCF.Position.Y+tableSize.Y/2
+-- Mesa remains loaded only for validation; the cinematic shows the TV alone.
+moveBoundingBox(tableModel,CFrame.new(0,-30,0))
 
 local screen=assert(tv:FindFirstChild("Screen",true),"Requested TV screen missing")
-local screenCenter=Vector3.new(0,tableTop+1.58,0)
+local screenCenter=Vector3.new(0,0,0)
 local screenNormal=Vector3.new(0,0,1)
 local screenUp=Vector3.new(-1,0,0)
 local desiredScreen=CFrame.fromMatrix(screenCenter,screenNormal,screenUp)
@@ -215,9 +212,6 @@ local correction=desiredScreen*screen.CFrame:Inverse()
 tv:PivotTo(correction*tv:GetPivot())
 
 local tvCF,tvSize=worldBounds(tv)
-local tvBottom=tvCF.Position.Y-tvSize.Y/2
-tv:PivotTo(CFrame.new(0,tableTop-tvBottom+.035,0)*tv:GetPivot())
-tvCF,tvSize=worldBounds(tv)
 screen=assert(tv:FindFirstChild("Screen",true))
 
 screen.Material=Enum.Material.Neon
@@ -241,7 +235,8 @@ for _,part in ipairs(tableModel:GetDescendants()) do
   part.CanCollide=false
   part.CanTouch=false
   part.CanQuery=false
-  part.CastShadow=true
+  part.CastShadow=false
+  part.Transparency=1
  end
 end
 
@@ -318,10 +313,13 @@ driftConnection=RunService.RenderStepped:Connect(function(dt)
  end
  cameraClock+=math.min(dt,.05)
  if cameraBase and not impactActive then
-  local x=math.sin(cameraClock*.55)*.035
-  local y=math.sin(cameraClock*.37+1.4)*.018
-  local roll=math.sin(cameraClock*.29)*math.rad(.18)
-  camera.CFrame=cameraBase*CFrame.new(x,y,math.sin(cameraClock*.22)*.025)*CFrame.Angles(0,0,roll)
+  local x=math.sin(cameraClock*.55)*.025
+  local y=math.sin(cameraClock*.37+1.4)*.012
+  local roll=math.sin(cameraClock*.29)*math.rad(.14)
+  local progress=math.clamp((os.clock()-startedAt)/CINEMATIC_DURATION,0,1)
+  local eased=1-(1-progress)^2
+  local zoomBack=1.7*(1-eased)+.08
+  camera.CFrame=cameraBase*CFrame.new(x,y,zoomBack+math.sin(cameraClock*.22)*.018)*CFrame.Angles(0,0,roll)
  end
 end)
 
