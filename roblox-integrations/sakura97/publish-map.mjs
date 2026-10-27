@@ -561,10 +561,14 @@ try{
  settingsIconImageId=Number(state?.id)||0;
 }catch{}
 if(!settingsIconImageId){
+ const settingsIconBytes=Buffer.from(
+  fs.readFileSync('roblox-integrations/sakura97/settings-icon.b64','utf8').replace(/[^A-Za-z0-9+/=]/g,''),
+  'base64'
+ );
  const decalId=await createUiImageAsset(
-  makeSettingsHexIconPng(),
+  settingsIconBytes,
   'Suvivers settings hex icon',
-  'Transparent settings button icon based on the owner supplied reference.',
+  'Transparent settings button icon extracted from the owner supplied reference.',
   'settings-hex.png'
  );
  const ready=first(await execute(`
