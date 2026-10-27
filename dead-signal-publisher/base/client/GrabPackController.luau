@@ -23,10 +23,11 @@ function Grab.Start(layer,remotes,protocol,input)
         local b=Instance.new("Attachment"); b.Parent=bPart
         local beam=Instance.new("Beam"); beam.Attachment0=a; beam.Attachment1=b; beam.Width0=0.065; beam.Width1=0.065
         beam.Color=ColorSequence.new(Color3.fromRGB(32,36,35)); beam.Segments=10; beam.FaceCamera=true; beam.Parent=aPart
-        sides[side]={hand=m,cuff=cuff,a=aPart,b=bPart,beam=beam,shot=nil,last=0}
+        sides[side]={hand=m,cuff=cuff,handScale=m:GetScale(),cuffScale=cuff:GetScale(),portrait=nil,a=aPart,b=bPart,beam=beam,shot=nil,last=0}
     end
     local function active()
-        return player:GetAttribute("DeadSignalPlaying")==true and not player:GetAttribute("DeadSignalPaused") and not layer:GetAttribute("UIBlocked")
+        local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        return hum and hum.Health>0 and player:GetAttribute("DeadSignalPlaying")==true and not player:GetAttribute("DeadSignalPaused") and not layer:GetAttribute("UIBlocked")
     end
     local function fire(side)
         if not active() or os.clock()-sides[side].last<0.5 then return end
@@ -73,8 +74,16 @@ function Grab.Start(layer,remotes,protocol,input)
         local bob=reduced and 0 or math.sin(os.clock()*8)*0.025*speed
         for side,s in pairs(sides) do
             local sign=side=="Left" and -1 or 1
-            local idle=cam.CFrame*CFrame.new(sign*0.75,-0.63+bob,-1.55)*CFrame.Angles(0,0,math.rad(sign*-7))
-            local cuff=cam.CFrame*CFrame.new(sign*0.75,-1.12+bob,-1.02)*CFrame.Angles(math.rad(-8),0,0)
+            local portrait=cam.ViewportSize.X<cam.ViewportSize.Y
+            if s.portrait~=portrait then
+                s.portrait=portrait
+                s.hand:ScaleTo(s.handScale*(portrait and 0.7 or 1))
+                s.cuff:ScaleTo(s.cuffScale*(portrait and 0.7 or 1))
+            end
+            local spread=portrait and 0.32 or 0.75
+            local fovRatio=math.tan(math.rad(75/2))/math.tan(math.rad(cam.FieldOfView/2))
+            local idle=cam.CFrame*CFrame.new(sign*spread,-0.63+bob,-(portrait and 1.9 or 1.55)*fovRatio)*CFrame.Angles(0,0,math.rad(sign*-7))
+            local cuff=cam.CFrame*CFrame.new(sign*spread,-1.12+bob,-(portrait and 1.35 or 1.02)*fovRatio)*CFrame.Angles(math.rad(-8),0,0)
             local cf=idle
             if s.shot then
                 local t=os.clock()-s.shot.at

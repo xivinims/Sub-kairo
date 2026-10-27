@@ -99,9 +99,9 @@ function StalkerService:_moveTo(position)
     self.LastRepath = os.clock()
 
     local path = PathfindingService:CreatePath({
-        AgentRadius = 2,
-        AgentHeight = 5,
-        AgentCanJump = true,
+        AgentRadius = 1.6,
+        AgentHeight = 11,
+        AgentCanJump = false,
         WaypointSpacing = 6,
     })
 
