@@ -104,3 +104,16 @@ Probe executed through Roblox Open Cloud without calling SavePlaceAsync. No plac
 ## Security rule
 
 Every external model that enters the runtime goes through SafeAssetImporter. Third-party scripts are deleted before parenting to the game. Large kits are never imported wholesale.
+
+
+### Map Items Kit — 136978268470872
+- Name: Poppy Playtime Chapter 3 Kit Toy Factory Horror 2
+- Creator metadata: Content Deleted - 158552482
+- 16 parts / 16 MeshParts
+- 4 Models
+- 8 Scripts + 4 LocalScripts
+- 4 Sounds
+- 0 Animations
+- 0 Humanoids
+- Approx size: 28.13 × 13.76 × 28.12 studs
+- Decision: selective-only. Never import the whole kit into runtime. Extract useful visual props individually, strip all scripts/local scripts, review sounds separately, then normalize pivots/anchoring before use.
