@@ -32,6 +32,8 @@ local objectiveFolder=nil
 local carryWelds=setmetatable({},{__mode="k"})
 local objectiveConnections={}
 local escapedThisRound=0
+local ADMIN_USERNAME="ch_ckz2n"
+local adminTestRequested=nil
 local function root(p) return p.Character and p.Character:FindFirstChild("HumanoidRootPart") end
 local function humanoid(p) return p.Character and p.Character:FindFirstChildOfClass("Humanoid") end
 local function entry(p) return state.entries[p.UserId] end
@@ -793,6 +795,21 @@ net.Action.OnServerEvent:Connect(function(p,action,value)
  rates[p][action]=t
  if action=="hackTap" then hackTap(p,value) return
  elseif action=="hackCancel" then cancelHack(p) return end
+ if action=="adminStart" then
+  if string.lower(tostring(p.Name or ""))~=ADMIN_USERNAME then return end
+  if state.phase=="Partida" or state.phase=="Resultados" then
+   net.Update:FireClient(p,"notice","Já existe uma rodada em andamento.")
+   return
+  end
+  p:SetAttribute("AFK",false)
+  queued[p]=true
+  adminTestRequested=p
+  endTime=now()
+  net:SetAttribute("AdminTestPending",true)
+  sync(p)
+  net.Update:FireClient(p,"notice","Teste admin solicitado. Killer IA aleatório entrando.")
+  return
+ end
  if action=="voteMap" then
   if state.phase~="Votação" or p:GetAttribute("AFK") or type(value)~="string" or #value>80 then return end
   if value~="RANDOM" and not table.find(voteOptions,value) then return end
@@ -1164,7 +1181,7 @@ local function finish()
   local resultEnd=now()+RESULT_PRESENTATION_SECONDS
   while now()<resultEnd do task.wait(.2) end
  end
- state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) if brain then brain.stop() brain=nil end
+ state.phase="Intervalo" roundClosing=false roundJoinUntil=0 net:SetAttribute("JoinUntil",0) net:SetAttribute("AdminTestActive",false) if brain then brain.stop() brain=nil end
  local former=jasonPlayer jasonPlayer=nil
  if former and former.Parent then morphing[former]=true former:SetAttribute("IsJason",false) pcall(function() former:LoadCharacterAsync() end) morphing[former]=nil end
  for _,p in ipairs(Players:GetPlayers()) do
@@ -1196,7 +1213,7 @@ task.spawn(function()
   table.clear(mapVotes) voteCounts()
   for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
   endTime=now()+Rules.Intermission
-  while now()<endTime and #Players:GetPlayers()>0 do
+  while now()<endTime and #Players:GetPlayers()>0 and not adminTestRequested do
    net:SetAttribute("Phase","Intervalo")
    net:SetAttribute("EndsAt",endTime)
    net:SetAttribute("Count",0)
@@ -1207,6 +1224,10 @@ task.spawn(function()
   end
 
   local function hasQueued()
+   local requested=adminTestRequested
+   if requested and requested.Parent and string.lower(tostring(requested.Name or ""))==ADMIN_USERNAME and root(requested) and humanoid(requested) and humanoid(requested).Health>0 and not requested:GetAttribute("VoidActive") then
+    return true
+   end
    local count=0
    for p in pairs(queued) do if not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then count+=1 end end
    return count>=2
@@ -1215,14 +1236,14 @@ task.spawn(function()
    net:SetAttribute("Phase","Intervalo") net:SetAttribute("EndsAt",0) net:SetAttribute("Waiting",0) task.wait(.5)
   end
 
-  if #Players:GetPlayers()>0 then
+  if #Players:GetPlayers()>0 and not adminTestRequested then
    table.clear(mapVotes)
    chooseVoteOptions()
    voteCounts()
    for _,p in ipairs(Players:GetPlayers()) do p:SetAttribute("MapVote",nil) end
    state.phase="Votação"
    local voteEnd=now()+Rules.VoteDuration
-   while now()<voteEnd and hasQueued() do
+   while now()<voteEnd and hasQueued() and not adminTestRequested do
     net:SetAttribute("Phase","Votação")
     net:SetAttribute("EndsAt",voteEnd)
     task.wait(.15)
@@ -1231,6 +1252,17 @@ task.spawn(function()
   if #Players:GetPlayers()>0 then
    local ok,err=xpcall(function()
     roundClosing=false lastKilledUserId=0 lastKilledName=nil
+    local requestedAdmin=adminTestRequested
+    local adminBotRound=requestedAdmin~=nil
+     and requestedAdmin.Parent~=nil
+     and string.lower(tostring(requestedAdmin.Name or ""))==ADMIN_USERNAME
+     and root(requestedAdmin)~=nil
+     and humanoid(requestedAdmin)~=nil
+     and humanoid(requestedAdmin).Health>0
+     and not requestedAdmin:GetAttribute("VoidActive")
+    adminTestRequested=nil
+    net:SetAttribute("AdminTestPending",false)
+    net:SetAttribute("AdminTestActive",adminBotRound)
     local mapList=assets.Maps:GetChildren() local rigList=assets.Killers:GetChildren()
     table.sort(mapList,function(a,b) return a.Name<b.Name end)
     local counts=voteCounts() local winnerTokens={} local highest=0
@@ -1258,23 +1290,39 @@ task.spawn(function()
     assert(selected,"Selected voting map missing")
     previousMap=selected.Name
     local eligible={}
-    for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
-    assert(#eligible>=2,"Two participants required for player-controlled killer")
-    selectionPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
-    selectedKiller=nil state.phase="Escolha"
-    net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+Rules.KillerChoiceDuration)
-    selectionPlayer:SetAttribute("ChoosingKiller",true)
-    local deadline=now()+Rules.KillerChoiceDuration
-    while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
-    selectionPlayer:SetAttribute("ChoosingKiller",false)
-    if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
-    jasonPlayer=selectionPlayer selectionPlayer=nil
+    if adminBotRound then
+     queued[requestedAdmin]=true
+     table.insert(eligible,requestedAdmin)
+    else
+     for _,p in ipairs(Players:GetPlayers()) do if queued[p] and not p:GetAttribute("AFK") and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then table.insert(eligible,p) end end
+    end
+    assert(#eligible>=(adminBotRound and 1 or 2),adminBotRound and "Admin test player unavailable" or "Two participants required for player-controlled killer")
+    selectedKiller=nil
+    if adminBotRound then
+     jasonPlayer=nil
+     selectionPlayer=nil
+    else
+     selectionPlayer=eligible[math.random(math.min(#eligible,Rules.Capacity))]
+     state.phase="Escolha"
+     net:SetAttribute("Phase","Escolha") net:SetAttribute("EndsAt",now()+Rules.KillerChoiceDuration)
+     selectionPlayer:SetAttribute("ChoosingKiller",true)
+     local deadline=now()+Rules.KillerChoiceDuration
+     while now()<deadline and not selectedKiller and selectionPlayer.Parent and not selectionPlayer:GetAttribute("AFK") do task.wait(.2) end
+     selectionPlayer:SetAttribute("ChoosingKiller",false)
+     if not selectionPlayer.Parent or selectionPlayer:GetAttribute("AFK") or not humanoid(selectionPlayer) or humanoid(selectionPlayer).Health<=0 then selectionPlayer=nil return end
+     jasonPlayer=selectionPlayer selectionPlayer=nil
+    end
     Rules.begin(state)
     arena=selected:Clone() arena.Name="ActiveArena" arena.Parent=workspace arena:SetAttribute("RoundId",state.id)
     setupObjectives()
-    local preferred=jasonPlayer:GetAttribute("EquippedKiller")
-    if not profiles:ownsKiller(jasonPlayer,preferred) then preferred="Jason" end
-    local chosen=assets.Killers:FindFirstChild(selectedKiller or preferred or "Jason") or rigList[1]
+    local chosen
+    if adminBotRound then
+     chosen=rigList[math.random(#rigList)]
+    else
+     local preferred=jasonPlayer:GetAttribute("EquippedKiller")
+     if not profiles:ownsKiller(jasonPlayer,preferred) then preferred="Jason" end
+     chosen=assets.Killers:FindFirstChild(selectedKiller or preferred or "Jason") or rigList[1]
+    end
     killerName=chosen.Name
     npc=KillerFactory.create(killerName,config.Killers[killerName])
     npc.Parent=workspace
@@ -1289,7 +1337,16 @@ task.spawn(function()
     npc:SetAttribute("ActivePursuer",true)
     npc:SetAttribute("AttackUntil",0)
     npc:FindFirstChildOfClass("Humanoid").Died:Connect(function() endTime=now() end)
-    do
+    if adminBotRound then
+     npc.Name=killerName.."_Bot"
+     npc:SetAttribute("AIControlled",true)
+     brain=AI.start(npc,arena,config.Killers[killerName],{
+      players=players,
+      vulnerable=vulnerable,
+      catch=catchPlayer,
+     })
+     net.Update:FireClient(requestedAdmin,"notice","Teste iniciado contra "..killerName.." [BOT IA].")
+    else
      clearFlashlight(jasonPlayer)
      local old=jasonPlayer.Character morphing[jasonPlayer]=true
      npc.Name=jasonPlayer.Name jasonPlayer.Character=npc
@@ -1303,7 +1360,7 @@ task.spawn(function()
     net:SetAttribute("JoinUntil",roundJoinUntil)
     net:SetAttribute("EndsAt",endTime)
     net:SetAttribute("Killer",killerName)
-    net:SetAttribute("KillerPlayerName",jasonPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName)
+    net:SetAttribute("KillerPlayerName",adminBotRound and (killerName.." [BOT IA]") or (jasonPlayer and (jasonPlayer.DisplayName or jasonPlayer.Name) or killerName))
     local loadingRoster={}
     for _,candidate in ipairs(eligible) do
      if candidate.Parent and not candidate:GetAttribute("AFK") then table.insert(loadingRoster,candidate.DisplayName or candidate.Name) end
@@ -1316,7 +1373,8 @@ task.spawn(function()
     if jasonPlayer then
      if join(jasonPlayer) then spawnPlayer(jasonPlayer) admitted=1 end
     end
-    for _,p in ipairs(Players:GetPlayers()) do
+    local admissionPool=adminBotRound and eligible or Players:GetPlayers()
+    for _,p in ipairs(admissionPool) do
      if admitted>=Rules.Capacity then break end
      if queued[p] and not p:GetAttribute("AFK") and p.Parent and root(p) and humanoid(p) and humanoid(p).Health>0 and not p:GetAttribute("VoidActive") then
       if join(p) then spawnPlayer(p) admitted+=1 end
