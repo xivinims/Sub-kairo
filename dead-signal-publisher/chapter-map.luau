@@ -132,10 +132,10 @@ local function door(id,z,power)
     return m
 end
 node("IND_SOURCE","Source",-10,133,40); node("IND_DOOR","Consumer",10,145,20)
-cable("IND_CABLE",-3,134,28,"IND_SOURCE","IND_DOOR"); door("INDUCTION_GATE",158,"IND_DOOR")
+cable("IND_CABLE",-6,134,28,"IND_SOURCE","IND_DOOR"); door("INDUCTION_GATE",158,"IND_DOOR")
 node("BAT_SOURCE","Source",-15,239,60,false); node("BAT_DOOR","Consumer",14,253,40)
-cable("BAT_CABLE",-3,240,36,"BAT_SOURCE","BAT_DOOR"); door("ACCUMULATOR_GATE",266,"BAT_DOOR")
-node("PROD_SOURCE","Source",-24,337,80,false); node("PROD_DOOR","Consumer",0,353,60)
+cable("BAT_CABLE",-6,240,36,"BAT_SOURCE","BAT_DOOR"); door("ACCUMULATOR_GATE",266,"BAT_DOOR")
+node("PROD_SOURCE","Source",-24,337,80,false); node("PROD_DOOR","Consumer",-6,353,60)
 cable("PROD_CABLE",-14,339,32,"PROD_SOURCE","PROD_DOOR"); door("ASSEMBLY_GATE",366,"PROD_DOOR")
 node("DIST_SOURCE","Source",-20,386,100); node("DIST_BUS","Junction",0,397,0)
 cable("DIST_CABLE",-9,385,26,"DIST_SOURCE","DIST_BUS")
@@ -146,7 +146,7 @@ node("DIST_RELAY","Consumer",-20,414,30,false)
 door("ARCHIVE_GATE",418,"DIST_DOOR"); door("RETURN_GATE",458,"DIST_LIFT")
 for i,id in ipairs({"DIST_DOOR","DIST_LIFT","DIST_LIGHTS","DIST_RELAY"}) do
     local x=({-18,-6,6,18})[i]
-    local p=box(map,"Switch_"..id,x,3.5,392,3,2,2,C(47,66,62))
+    local p=box(map,"Switch_"..id,x,3.5,389,3,2,2,C(47,66,62))
     prompt(p,"PowerSwitch","Alternar circuito",{NodeId=id})
     sign(map,({"PORTA / 50","ELEVADOR / 70","LUZES / 20","RELÉ / 30"})[i],x,6,392,10,2)
 end
@@ -228,7 +228,7 @@ prompt(crt,"Mara","Falar com MARA")
 for i=1,7 do box(rooms[8],"ArchiveDrawer",15,2+i*1.5,443,7,1.4,5,C(84+i*3,90,76)) end
 sign(rooms[8],"NÃO APAGUE A LUZ PARA ECONOMIZAR.\nEle escuta melhor sem os ventiladores.",0,11,448,23,4)
 -- Selective emergency lighting. Not a fully black map.
-for z=465,640,18 do lamp(map,8,5,z,C(186,89,55)) end
+for z=465,640,18 do lamp(map,12,9,z,C(186,89,55)) end
 -- Escape has alternating islands and two routes around each, all > 7 studs wide.
 for i,z in ipairs({550,576,596,625}) do
     box(map,"FreightIsland",i%2==0 and -5 or 5,2.5,z,12,5,7,C(86,77,58),Enum.Material.WoodPlanks)

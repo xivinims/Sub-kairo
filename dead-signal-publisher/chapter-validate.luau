@@ -148,7 +148,7 @@ local route={{0,12},{0,120},{0,153},{0,218},{0,266},{0,316},{7,320},{7,333},{0,3
 for i=1,#route-1 do
     local a=Vector3.new(route[i][1],3.6,route[i][2]); local b=Vector3.new(route[i+1][1],3.6,route[i+1][2])
     local result=workspace:Blockcast(CFrame.new(a),Vector3.new(2.6,5.4,2.6),b-a,params)
-    check(not result,"Avatar route blocked at segment "..i..": "..(result and result.Instance:GetFullName() or ""))
+    check(not result,"Avatar route blocked at segment "..i..": "..(result and result.Instance.Name or ""))
 end
 local solidImported=0
 if map then
