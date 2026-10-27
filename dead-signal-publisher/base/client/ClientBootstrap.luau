@@ -110,6 +110,9 @@ remotes[Protocol.Events.WireState].OnClientEvent:Connect(function(kind, payload)
         screenEffects:PulseDanger(0.35)
     elseif kind == "connected" and payload and payload.wire and carriedWire == payload.wire.id then
         carriedWire = payload.wire.id
+        if payload.wire.endpointA and payload.wire.endpointB then
+            remotes[Protocol.Events.WireAction]:FireServer("end")
+        end
     end
 end)
 
