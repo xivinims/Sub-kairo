@@ -1147,13 +1147,18 @@ return {overlay=shopOverlay,button=shopButton,ownedKillers=ownedKillers,refresh=
 end
 local shop=createShop()
 
-RunService.RenderStepped:Connect(function()
- local blocked=player:GetAttribute("InMenu") or player:GetAttribute("VoidActive") or player:GetAttribute("Spectating") or player:GetAttribute("SweanLoadingDone")~=true
- if blocked then return end
- player.CameraMode=Enum.CameraMode.Classic
- player.CameraMaxZoomDistance=player:GetAttribute("InRound") and 10 or 24
- player.CameraMinZoomDistance=player:GetAttribute("InRound") and 10 or 4
-end)
+local function enforceFirstPerson()
+ local scripted=player:GetAttribute("VoidActive")
+  or player:GetAttribute("Spectating")
+  or player:GetAttribute("SettingsOpen")
+  or player:GetAttribute("SweanLoadingDone")~=true
+  or gui:GetAttribute("CinematicActive")==true
+ if scripted then return end
+ player.CameraMode=Enum.CameraMode.LockFirstPerson
+ player.CameraMinZoomDistance=.5
+ player.CameraMaxZoomDistance=.5
+end
+RunService.RenderStepped:Connect(enforceFirstPerson)
 local profileHUD=panel("Profile",UDim2.fromOffset(190,58),UDim2.fromOffset(18,132)) profileHUD.BackgroundTransparency=1 profileHUD.UIStroke.Enabled=false
 local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UDim2.new(1,0,0,8) xpTrack.BackgroundColor3=Color3.fromRGB(22,23,32) xpTrack.BackgroundTransparency=.3 xpTrack.BorderSizePixel=0 Instance.new("UICorner",xpTrack).CornerRadius=UDim.new(0,5)
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
