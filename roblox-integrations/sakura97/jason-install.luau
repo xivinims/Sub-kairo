@@ -205,7 +205,11 @@ for _,part in ipairs(house:GetDescendants()) do
  if part:IsA("BasePart") then
   local name=string.lower(part.Name)
   local text=ancestryText(part)
-  if part.Transparency>=.98 and not part:IsA("SpawnLocation") then
+  if name=="collision_part" and string.find(text,"kitchen",1,true) then
+   part.CanCollide=true part.CanTouch=false part.CanQuery=true
+   part:SetAttribute("AuthoredFurnitureCollider",true)
+   part:SetAttribute("InteriorBlockerDisabled",nil)
+  elseif part.Transparency>=.98 and not part:IsA("SpawnLocation") then
    part.CanCollide=false part.CanTouch=false part.CanQuery=false
    part:SetAttribute("InteriorBlockerDisabled",true) removedBlockers+=1
   elseif part:IsA("MeshPart") and (name=="double_door_frame" or name=="front_door_frame" or name=="shed_doorframe") then

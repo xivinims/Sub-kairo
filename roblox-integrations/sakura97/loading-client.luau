@@ -96,35 +96,58 @@ local tableModel=assert(assets:FindFirstChild("Mesa"),"Requested table asset mis
 tv.Parent=world
 tableModel.Parent=world
 
-pcall(function() tableModel:ScaleTo(.82) end)
+pcall(function() tableModel:ScaleTo(.48) end)
 pcall(function() tv:ScaleTo(1.04) end)
 
-local function moveBoundingBox(model,targetCF)
- local currentCF=model:GetBoundingBox()
- local delta=targetCF*currentCF:Inverse()
- model:PivotTo(delta*model:GetPivot())
+-- Model bounds inherit the pivot rotation; project part corners into world axes.
+local function worldBounds(model)
+ local lo=Vector3.new(math.huge,math.huge,math.huge)
+ local hi=-lo
+ for _,part in ipairs(model:GetDescendants()) do
+  if part:IsA("BasePart") then
+   for x=-1,1,2 do for y=-1,1,2 do for z=-1,1,2 do
+    local v=part.CFrame:PointToWorldSpace(part.Size*Vector3.new(x,y,z)*.5)
+    lo=Vector3.new(math.min(lo.X,v.X),math.min(lo.Y,v.Y),math.min(lo.Z,v.Z))
+    hi=Vector3.new(math.max(hi.X,v.X),math.max(hi.Y,v.Y),math.max(hi.Z,v.Z))
+   end end end
+  end
+ end
+ return CFrame.new((lo+hi)*.5),hi-lo
 end
-
--- The Toolbox TV is authored lying on its side. Its Screen is a thin X-axis plate
--- (X ~= .177), so local X is the screen normal and local Y is the true vertical axis.
--- Align those two axes explicitly instead of relying on the model's original pivot.
-local tableCF,tableSize=tableModel:GetBoundingBox()
+local function fitLoadingCamera(view,camera,television,tableModel)
+ local a,sa=worldBounds(television) local b,sb=worldBounds(tableModel)
+ local lo=Vector3.new(math.min(a.X-sa.X/2,b.X-sb.X/2),math.min(a.Y-sa.Y/2,b.Y-sb.Y/2),math.min(a.Z-sa.Z/2,b.Z-sb.Z/2))
+ local hi=Vector3.new(math.max(a.X+sa.X/2,b.X+sb.X/2),math.max(a.Y+sa.Y/2,b.Y+sb.Y/2),math.max(a.Z+sa.Z/2,b.Z+sb.Z/2))
+ local center=(lo+hi)*.5 local size=hi-lo
+ local pixels=view.AbsoluteSize
+ local aspect=math.max(.1,pixels.X/math.max(1,pixels.Y))
+ local fitDistance=math.max(size.Y,size.X/aspect)*.5/math.tan(math.rad(camera.FieldOfView*.5))
+ local cameraDistance=fitDistance*1.18+size.Z*.5
+ camera.CFrame=CFrame.lookAt(center+Vector3.new(0,0,cameraDistance),center)
+ return camera.CFrame
+end
+local function moveBoundingBox(model,targetCF)
+ local currentCF=worldBounds(model)
+ model:PivotTo(model:GetPivot()+(targetCF.Position-currentCF.Position))
+end
+-- Local X faces the viewer, local Z points DOWN in this authored television.
+local tableCF,tableSize=worldBounds(tableModel)
 moveBoundingBox(tableModel,CFrame.new(0,-1.72,0))
-tableCF,tableSize=tableModel:GetBoundingBox()
+tableCF,tableSize=worldBounds(tableModel)
 local tableTop=tableCF.Position.Y+tableSize.Y/2
 
 local screen=assert(tv:FindFirstChild("Screen",true),"Requested TV screen missing")
 local screenCenter=Vector3.new(0,tableTop+1.58,0)
 local screenNormal=Vector3.new(0,0,1)
-local screenUp=Vector3.new(0,1,0)
+local screenUp=Vector3.new(-1,0,0)
 local desiredScreen=CFrame.fromMatrix(screenCenter,screenNormal,screenUp)
 local correction=desiredScreen*screen.CFrame:Inverse()
 tv:PivotTo(correction*tv:GetPivot())
 
-local tvCF,tvSize=tv:GetBoundingBox()
+local tvCF,tvSize=worldBounds(tv)
 local tvBottom=tvCF.Position.Y-tvSize.Y/2
 tv:PivotTo(CFrame.new(0,tableTop-tvBottom+.035,0)*tv:GetPivot())
-tvCF,tvSize=tv:GetBoundingBox()
+tvCF,tvSize=worldBounds(tv)
 screen=assert(tv:FindFirstChild("Screen",true))
 
 screen.Transparency=.34
@@ -159,8 +182,8 @@ logoPanel.CastShadow=false
 logoPanel.Material=Enum.Material.SmoothPlastic
 logoPanel.Color=Color3.new(0,0,0)
 logoPanel.Transparency=.96
-logoPanel.Size=Vector3.new(.035,screen.Size.Y*.74,screen.Size.Z*.74)
-logoPanel.CFrame=screen.CFrame*CFrame.new(screen.Size.X/2+.028,0,0)
+logoPanel.Size=Vector3.new(.035,screen.Size.Z*.74,screen.Size.Y*.74)
+logoPanel.CFrame=CFrame.fromMatrix(screen.Position+Vector3.new(0,0,screen.Size.X/2+.028),Vector3.new(0,0,1),Vector3.new(0,1,0))
 logoPanel.Parent=world
 
 local logo=Instance.new("Decal")
@@ -173,13 +196,14 @@ logo.Parent=logoPanel
 local hand=Instance.new("Model")
 hand.Name="HandInsideTelevision"
 hand.Parent=world
+local handPlane=CFrame.fromMatrix(screen.Position,Vector3.new(0,0,1),Vector3.new(0,1,0))
 local handColor=Color3.fromRGB(180,171,166)
 
 local function handPart(name,size,localCF)
  local p=Instance.new("Part")
  p.Name=name
  p.Size=size
- p.CFrame=screen.CFrame*localCF
+ p.CFrame=handPlane*localCF
  p.Anchored=true
  p.CanCollide=false
  p.CanTouch=false
@@ -202,23 +226,17 @@ for i=1,4 do
 end
 handPart("Thumb",Vector3.new(.065,.28,.11),CFrame.new(-.52,-.02,.34)*CFrame.Angles(math.rad(38),0,0))
 
-local behindHand=screen.CFrame*CFrame.new(-.54,-.08,0)
-local impactHand=screen.CFrame*CFrame.new(screen.Size.X/2+.02,-.08,0)
-local retreatHand=screen.CFrame*CFrame.new(-.18,-.08,0)
+local behindHand=handPlane*CFrame.new(-.54,-.08,0)
+local impactHand=handPlane*CFrame.new(screen.Size.X/2+.02,-.08,0)
+local retreatHand=handPlane*CFrame.new(-.18,-.08,0)
 hand:PivotTo(behindHand)
 
--- Fit the camera to the actual TV/table bounding boxes. This avoids the stretched
--- look that came from a fixed 10.4-stud camera after scaling the TV to 1.5x.
-local tableNowCF,tableNowSize=tableModel:GetBoundingBox()
-local focusY=(math.max(tvCF.Position.Y+tvSize.Y/2,tableNowCF.Position.Y+tableNowSize.Y/2)+
- math.min(tvCF.Position.Y-tvSize.Y/2,tableNowCF.Position.Y-tableNowSize.Y/2))/2
-local cameraTarget=Vector3.new(0,focusY,0)
-local sceneHeight=math.max(tvSize.Y+1.2,tableNowSize.Y+tvSize.Y*.55)
-local vfov=math.rad(camera.FieldOfView)
-local fitDistance=(sceneHeight*.5)/math.tan(vfov*.5)
-local cameraDistance=math.clamp(fitDistance*1.18,7.2,12)
-local cameraBase=CFrame.lookAt(Vector3.new(0,cameraTarget.Y+.08,cameraDistance),cameraTarget)
-camera.CFrame=cameraBase
+local cameraBase
+local function resizeCamera()
+ cameraBase=fitLoadingCamera(viewport,camera,tv,tableModel)
+end
+resizeCamera()
+viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(resizeCamera)
 
 local handDriver=Instance.new("CFrameValue")
 handDriver.Value=hand:GetPivot()

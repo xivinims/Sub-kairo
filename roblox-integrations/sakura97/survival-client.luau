@@ -222,8 +222,12 @@ iconLine(countdownIcon,"HourHand",12,12,12,6,2)
 iconLine(countdownIcon,"MinuteHand",12,12,17,15,2)
 local countdownText=text(countdown,"Time",L("Aguardando jogadores","Waiting for players"),UDim2.new(1,-38,1,0),UDim2.fromOffset(36,0))
 countdownText.TextSize=14 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left countdownText.TextWrapped=false
-local top=panel("Round",UDim2.fromOffset(130,38),UDim2.new(.5,-65,0,8))
-top.BackgroundTransparency=1 top.UIStroke.Enabled=false
+local top=panel("Round",UDim2.fromOffset(68,68),UDim2.new(.5,-34,0,8))
+top.BackgroundTransparency=.22 top.BackgroundColor3=Color3.fromRGB(9,10,12)
+top:FindFirstChildOfClass("UICorner").CornerRadius=UDim.new(1,0)
+top.UIStroke.Enabled=true top.UIStroke.Thickness=2 top.UIStroke.Transparency=.15
+top.UIStroke.Color=Color3.fromRGB(224,224,219)
+Instance.new("UIAspectRatioConstraint",top).AspectRatio=1
 local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font=Enum.Font.GothamBold timer.TextSize=17
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
@@ -594,7 +598,8 @@ local function populateShopViewport(viewport,killerName,wide)
  local center=cf.Position+Vector3.new(0,size.Y*.02,0)
  local root=model:FindFirstChild("HumanoidRootPart",true) or model.PrimaryPart
  local forward=root and root.CFrame.LookVector or Vector3.new(0,0,-1)
- forward=Vector3.new(forward.X,0,forward.Z).Unit
+ forward=Vector3.new(forward.X,0,forward.Z)
+ forward=forward.Magnitude>.001 and forward.Unit or Vector3.new(0,0,-1)
  local camera=Instance.new("Camera",viewport) camera.Name="PreviewCamera" camera.FieldOfView=34
  local function fit()
   local pixels=viewport.AbsoluteSize
@@ -928,7 +933,21 @@ do
  local scale=Instance.new("UIScale",shopPanel)
  local transition
  local function resize()
+  local w=math.max(1,shopOverlay.AbsoluteSize.X)
   local h=math.max(240,shopOverlay.AbsoluteSize.Y)
+  local portrait=w<h
+  shopTitle.Position=UDim2.fromScale(.065,.10)
+  shopTitle.Size=UDim2.fromScale(portrait and .65 or .37,.09)
+  shopList.Position=UDim2.fromScale(.04,portrait and .23 or .29)
+  shopList.Size=UDim2.fromScale(portrait and .38 or .35,portrait and .58 or .57)
+  detailPanel.Position=UDim2.fromScale(.43,portrait and .21 or .07)
+  detailPanel.Size=UDim2.fromScale(.54,portrait and .67 or .87)
+  detailName.TextSize=math.clamp(w*.024,16,27)
+  detailAction.TextSize=math.clamp(w*.021,14,20)
+  detailAction.Size=UDim2.new(.82,0,0,44)
+  detailAction.Position=UDim2.fromScale(.09,.91)
+  detailTip.TextWrapped=true detailPrice.TextWrapped=true
+  shopBalance.TextSize=math.clamp(w*.016,11,15)
   local height=math.clamp((h*.57-64)/5,30,52)
   shopLayout.Padding=UDim.new(0,math.clamp(h*.016,6,14))
   for _,card in pairs(shopCards) do
@@ -1492,9 +1511,36 @@ local matchTVCamera=Instance.new("Camera",matchTV)
 matchTVCamera.FieldOfView=31
 matchTV.CurrentCamera=matchTVCamera
 
+-- Model bounds inherit the pivot rotation; project part corners into world axes.
+local function worldBounds(model)
+ local lo=Vector3.new(math.huge,math.huge,math.huge)
+ local hi=-lo
+ for _,part in ipairs(model:GetDescendants()) do
+  if part:IsA("BasePart") then
+   for x=-1,1,2 do for y=-1,1,2 do for z=-1,1,2 do
+    local v=part.CFrame:PointToWorldSpace(part.Size*Vector3.new(x,y,z)*.5)
+    lo=Vector3.new(math.min(lo.X,v.X),math.min(lo.Y,v.Y),math.min(lo.Z,v.Z))
+    hi=Vector3.new(math.max(hi.X,v.X),math.max(hi.Y,v.Y),math.max(hi.Z,v.Z))
+   end end end
+  end
+ end
+ return CFrame.new((lo+hi)*.5),hi-lo
+end
+local function fitLoadingCamera(view,camera,television,tableModel)
+ local a,sa=worldBounds(television) local b,sb=worldBounds(tableModel)
+ local lo=Vector3.new(math.min(a.X-sa.X/2,b.X-sb.X/2),math.min(a.Y-sa.Y/2,b.Y-sb.Y/2),math.min(a.Z-sa.Z/2,b.Z-sb.Z/2))
+ local hi=Vector3.new(math.max(a.X+sa.X/2,b.X+sb.X/2),math.max(a.Y+sa.Y/2,b.Y+sb.Y/2),math.max(a.Z+sa.Z/2,b.Z+sb.Z/2))
+ local center=(lo+hi)*.5 local size=hi-lo
+ local pixels=view.AbsoluteSize
+ local aspect=math.max(.1,pixels.X/math.max(1,pixels.Y))
+ local fitDistance=math.max(size.Y,size.X/aspect)*.5/math.tan(math.rad(camera.FieldOfView*.5))
+ local cameraDistance=fitDistance*1.18+size.Z*.5
+ camera.CFrame=CFrame.lookAt(center+Vector3.new(0,0,cameraDistance),center)
+ return camera.CFrame
+end
 local function moveModelBox(model,targetCF)
- local cf=model:GetBoundingBox()
- model:PivotTo(targetCF*cf:Inverse()*model:GetPivot())
+ local cf=worldBounds(model)
+ model:PivotTo(model:GetPivot()+(targetCF.Position-cf.Position))
 end
 
 local matchTVScreenPart=nil
@@ -1508,32 +1554,30 @@ do
   tvModel.Parent=matchTVWorld
   mesa.Parent=matchTVWorld
   pcall(function() tvModel:ScaleTo(1.04) end)
-  pcall(function() mesa:ScaleTo(.82) end)
+  pcall(function() mesa:ScaleTo(.48) end)
 
   moveModelBox(mesa,CFrame.new(0,-1.72,0))
-  local tableCF,tableSize=mesa:GetBoundingBox()
+  local tableCF,tableSize=worldBounds(mesa)
   local tableTop=tableCF.Position.Y+tableSize.Y/2
   local scr=tvModel:FindFirstChild("Screen",true)
   if scr and scr:IsA("BasePart") then
-   local desired=CFrame.fromMatrix(Vector3.new(0,tableTop+1.58,0),Vector3.new(0,0,1),Vector3.new(0,1,0))
+   local desired=CFrame.fromMatrix(Vector3.new(0,tableTop+1.58,0),Vector3.new(0,0,1),Vector3.new(-1,0,0))
    tvModel:PivotTo(desired*scr.CFrame:Inverse()*tvModel:GetPivot())
-   local tvCF,tvSize=tvModel:GetBoundingBox()
+   local tvCF,tvSize=worldBounds(tvModel)
    local bottom=tvCF.Position.Y-tvSize.Y/2
    tvModel:PivotTo(CFrame.new(0,tableTop-bottom+.035,0)*tvModel:GetPivot())
-   tvCF,tvSize=tvModel:GetBoundingBox()
+   tvCF,tvSize=worldBounds(tvModel)
    matchTVScreenPart=tvModel:FindFirstChild("Screen",true)
    if matchTVScreenPart then
     matchTVScreenPart.Material=Enum.Material.Neon
     matchTVScreenPart.Color=Color3.fromRGB(90,104,110)
     matchTVScreenPart.Transparency=.34
    end
-   local mesaCF,mesaSize=mesa:GetBoundingBox()
-   local top=math.max(tvCF.Position.Y+tvSize.Y/2,mesaCF.Position.Y+mesaSize.Y/2)
-   local bottomY=math.min(tvCF.Position.Y-tvSize.Y/2,mesaCF.Position.Y-mesaSize.Y/2)
-   local height=math.max(3,top-bottomY)
-   local centerY=(top+bottomY)/2
-   local distance=math.clamp((height*.5)/math.tan(math.rad(matchTVCamera.FieldOfView*.5))*1.18,7.2,12)
-   matchTVCamera.CFrame=CFrame.lookAt(Vector3.new(0,centerY+.08,distance),Vector3.new(0,centerY,0))
+   local function resizeTV()
+    fitLoadingCamera(matchTV,matchTVCamera,tvModel,mesa)
+   end
+   resizeTV()
+   matchTV:GetPropertyChangedSignal("AbsoluteSize"):Connect(resizeTV)
   end
   for _,obj in ipairs(matchTVWorld:GetDescendants()) do
    if obj:IsA("BasePart") then

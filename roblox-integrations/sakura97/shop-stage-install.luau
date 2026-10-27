@@ -34,8 +34,12 @@ local oldScene=net:FindFirstChild("ShopScene") if oldScene then oldScene:Destroy
 scene.Parent=net
 
 local merchant,root
-if #ids>0 then
+do
 local description=Instance.new("HumanoidDescription")
+description.HeadColor=Color3.fromRGB(198,180,160)
+description.LeftArmColor=description.HeadColor description.RightArmColor=description.HeadColor
+description.TorsoColor=Color3.fromRGB(51,47,43)
+description.LeftLegColor=Color3.fromRGB(33,35,39) description.RightLegColor=description.LeftLegColor
 local accessories={}
 local accessoryTypes={ [8]=Enum.AccessoryType.Hat,[41]=Enum.AccessoryType.Hair,[42]=Enum.AccessoryType.Face,[43]=Enum.AccessoryType.Neck,[44]=Enum.AccessoryType.Shoulder,[45]=Enum.AccessoryType.Front,[46]=Enum.AccessoryType.Back,[47]=Enum.AccessoryType.Waist }
 for _,id in ipairs(ids) do
@@ -50,10 +54,10 @@ end
 description:SetAccessories(accessories,true)
 merchant=game:GetService("Players"):CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
 merchant.Name="ShopMerchant"
-merchant:SetAttribute("Headless",true) merchant:SetAttribute("OutfitCount",#ids)
+merchant:SetAttribute("Headless",#ids>0) merchant:SetAttribute("OutfitCount",#ids)
 merchant:SetAttribute("SourceOutfitIds",game:GetService("HttpService"):JSONEncode(ids))
 local head=merchant:FindFirstChild("Head")
-if head then head.Transparency=1 for _,d in ipairs(head:GetDescendants()) do if d:IsA("Decal") then d.Transparency=1 end end end
+if head and #ids>0 then head.Transparency=1 for _,d in ipairs(head:GetDescendants()) do if d:IsA("Decal") then d.Transparency=1 end end end
 local hum=merchant:FindFirstChildOfClass("Humanoid") hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None hum.AutoRotate=false hum.RequiresNeck=false
 root=merchant:FindFirstChild("HumanoidRootPart") merchant.PrimaryPart=root
 for _,d in ipairs(merchant:GetDescendants()) do
@@ -66,13 +70,11 @@ local pos=keeperCF and keeperCF.Position or (standCF and standCF.Position) or (f
 pos=Vector3.new(pos.X,floorTop+3,pos.Z)
 merchant:PivotTo(CFrame.lookAt(pos,Vector3.new(cameraCF.Position.X,pos.Y,cameraCF.Position.Z)))
 merchant.Parent=room
-else
- merchant=assert(oldKeeper,"Existing shopkeeper missing")
- root=assert(merchant:FindFirstChildWhichIsA("BasePart",true),"Shopkeeper interaction anchor missing")
- merchant:SetAttribute("OutfitPending",true)
 end
+assert(merchant.Humanoid.RigType==Enum.HumanoidRigType.R6,"Shop merchant must be R6")
+
 local prompt=Instance.new("ProximityPrompt",root) prompt.Name="SuviversShopPrompt" prompt.ObjectText="Loja / Shop" prompt.ActionText="Abrir / Open"
-prompt.MaxActivationDistance=16 prompt.RequiresLineOfSight=false prompt.HoldDuration=0
+prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=true prompt.HoldDuration=0
 -- Keep the DOORS room only as the full-screen shop backdrop. The physical
 -- monster room is removed from the lobby; only its shopkeeper remains in the house.
 local priorRoom=lobby:FindFirstChild("DoorsMerchantRoom") if priorRoom then priorRoom:Destroy() end
@@ -82,7 +84,7 @@ merchant.Name="ShopMerchant"
 merchant.Parent=lobby
 for _,d in ipairs(merchant:GetDescendants()) do
  if d:IsA("LuaSourceContainer") or d:IsA("ClickDetector") then d:Destroy()
- elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
+ elseif d:IsA("BasePart") then d.Anchored=d==root d.CanCollide=false d.CanTouch=false d.CanQuery=false end
 end
 
 local house=assert(lobby:FindFirstChild("House"),"Lobby house missing for kitchen merchant placement")
@@ -182,7 +184,7 @@ lobby:SetAttribute("InteriorWallRemoved",true)
 local lamp=Instance.new("PointLight",root) lamp.Name="MerchantWarmLight" lamp.Color=Color3.fromRGB(255,198,132) lamp.Brightness=1.35 lamp.Range=20 lamp.Shadows=true
 local clients=game.StarterPlayer.StarterPlayerScripts
 local old=clients:FindFirstChild("MerchantIdle") if old then old:Destroy() end
-if #ids>0 then
+do
 local client=Instance.new("LocalScript") client.Name="MerchantIdle"
 client.Source=[==[
 local Run=game:GetService("RunService")
@@ -203,4 +205,4 @@ end)
 ]==]
 client.Parent=clients
 end
-return {ok=true,asset=12467124775,outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=false,physicalMonsterShop=false,merchantPlacement="KitchenNearSpawn",merchantPosition=tostring(root.Position)}
+return {ok=true,asset=12467124775,rig="R6",outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=false,physicalMonsterShop=false,merchantPlacement="KitchenNearSpawn",merchantPosition=tostring(root.Position)}

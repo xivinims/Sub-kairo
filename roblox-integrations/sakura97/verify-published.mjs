@@ -240,7 +240,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(loadingTV:GetAttribute("SourceAssetId")==421148437 and loadingTable:GetAttribute("SourceAssetId")==397786287,"Loading asset source IDs missing")
   local loadingSource=loadingController.Source
   assert(loadingSource:find("CINEMATIC_DURATION=10",1,true) and loadingSource:find("LOGO_END=5",1,true),"Loading cinematic timing missing")
-  assert(loadingSource:find("screenNormal=Vector3.new(0,0,1)",1,true) and loadingSource:find("screenUp=Vector3.new(0,1,0)",1,true),"TV upright-axis correction missing")
+  assert(loadingSource:find("screenNormal=Vector3.new(0,0,1)",1,true) and loadingSource:find("screenUp=Vector3.new(-1,0,0)",1,true),"TV upright-axis correction missing")
   assert(loadingSource:find("fitDistance",1,true) and loadingSource:find("cameraDistance",1,true) and not loadingSource:find("tv:ScaleTo(1.5)",1,true),"TV adaptive framing/stretch fix missing")
   assert(loadingSource:find('hand.Name="HandInsideTelevision"',1,true) and loadingSource:find("cameraImpact",1,true),"Hand impact cinematic missing")
   assert(loadingSource:find('logo.Texture="rbxassetid://99002027743613"',1,true),"Game logo is not inside the TV")

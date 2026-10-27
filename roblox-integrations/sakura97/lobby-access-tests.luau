@@ -6,6 +6,8 @@ assert(not lobby:FindFirstChild("UnderStairWallRepair"),"Generated under-stair w
 assert(lobby:GetAttribute("GeneratedUnderStairWallRemoved")==true,"Generated under-stair wall removal metadata missing")
 assert(not lobby:FindFirstChild("DoorsMerchantRoom"),"Physical monster shop returned")
 local merchant=assert(lobby:FindFirstChild("ShopMerchant"),"Kitchen shop NPC missing")
+assert(merchant:FindFirstChildOfClass("Humanoid").RigType==Enum.HumanoidRigType.R6,"Shop merchant must be R6")
+assert(merchant.HumanoidRootPart.Anchored and not merchant.Torso.Anchored,"Merchant joints cannot animate when torso is anchored")
 assert(merchant:GetAttribute("Placement")=="KitchenNearSpawn","Shop NPC is not in the kitchen")
 assert(merchant:FindFirstChild("SuviversShopPrompt",true),"Merchant shop interaction missing")
 assert(lobby:GetAttribute("PhysicalMonsterShopRemoved")==true,"Physical monster shop removal metadata missing")
@@ -21,7 +23,7 @@ assert(lobby:GetAttribute("OutdoorGroundMaterial")=="Ground","Exterior ground ma
 local openDoorParts,doorFrames,supports,outdoorStairs=0,0,0,0
 for _,p in ipairs(house:GetDescendants()) do
  if p:IsA("BasePart") then
-  if p.Transparency>=.98 then
+  if p.Transparency>=.98 and not p:GetAttribute("AuthoredFurnitureCollider") then
    assert(not p.CanCollide,"Invisible interior blocker: "..p:GetFullName())
   end
   if p:GetAttribute("OpenPassage") then
