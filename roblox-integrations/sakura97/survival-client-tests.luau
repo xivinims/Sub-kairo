@@ -96,10 +96,15 @@ local ok,result=xpcall(function()
  assert(gui.Countdown.Icon:FindFirstChild("ClockFace") and gui.Countdown.Icon:FindFirstChild("MinuteHand"),"Native clock icon missing")
  assert(gui.SettingsOverlay.BackgroundTransparency>=.75,"Settings overlay is still darkening the controls")
  assert(gui.SettingsOverlay.ReferenceSettings.ZIndex>gui.SettingsOverlay.ZIndex,"Settings panel is rendered behind its dark overlay")
+ local book=assert(gui.SettingsOverlay.ReferenceSettings:FindFirstChild("BookBackground"),"Book image missing")
+ assert(book.Image~="" and book:FindFirstChild("PageScroll"),"Book texture or scrolling pages missing")
+ assert(book.PageScroll.AutomaticCanvasSize==Enum.AutomaticSize.Y,"Book contents must scroll")
+ assert(book:FindFirstChild("game") and book:FindFirstChild("visual") and book:FindFirstChild("Close"),"Ribbon tabs missing")
+ assert(book.PageScroll:FindFirstChild("AFK"),"AFK setting missing")
  local languageTab=assert(gui.SettingsOverlay.ReferenceSettings:FindFirstChild("language",true),"Game language tab missing")
  attrs.GameLanguage="en" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
  assert(gui.KillerShop.ShopPanel.Title.Text=="KILLERS","HUD text did not switch to English from settings")
- assert(languageTab.Text=="LANGUAGE","Settings language tab did not translate")
+ assert(languageTab:GetAttribute("AccessibleLabel")=="LANGUAGE" and languageTab:FindFirstChild("Icon"),"Ribbon icon or translated accessible label missing")
  assert(gui.KillerShop.ShopPanel.Tabs.Items.Text=="ITEMS","Items shop tab did not translate")
  attrs.GameLanguage="pt-BR" if attributeEvents.GameLanguage then attributeEvents.GameLanguage:Fire() end task.wait()
  assert(gui.KillerShop.ShopPanel.Title.Text=="PERSEGUIDORES","HUD text did not switch back to Portuguese")
@@ -214,6 +219,7 @@ end,debug.traceback)
 workspace.CurrentCamera=oldCamera host:Destroy() description:Destroy()
 for _,v in ipairs(game:GetService("SoundService"):GetChildren()) do if not originalSounds[v] then v:Destroy() end end
 assert(ok,result) return result
+
 
 
 

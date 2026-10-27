@@ -1,5 +1,7 @@
 local M={}
 local UIS=game:GetService("UserInputService")
+local SoundService=game:GetService("SoundService")
+local initialized=setmetatable({},{__mode="k"})
 
 local PAPER=Color3.fromRGB(231,218,190)
 local INK=Color3.fromRGB(42,33,29)
@@ -78,10 +80,41 @@ local GAME_SPECS={
 local LANGUAGE_SPEC={key="language",attribute="GameLanguage",default="pt-BR"}
 local VISUAL_SPECS={
  {key="CameraFOV",label="CAMPO DE VISÃO",default=62,min=50,max=80,step=1,suffix="°"},
- {key="HUDScale",label="ESCALA DA INTERFACE",default=100,min=85,max=115,step=5,suffix="%"},
+
 }
 
+function M.initialize(player)
+ if initialized[player] then return end
+ initialized[player]=true
+ if player:GetAttribute("GameLanguage")==nil then
+  local locale=tostring(player.LocaleId or "en"):lower()
+  player:SetAttribute("GameLanguage",locale:sub(1,2)=="pt" and "pt-BR" or "en")
+ end
+ for key,value in pairs({MusicVolume=65,EffectsVolume=80,MenuSounds=true,FriendAlerts=true,AFK=false,CameraFOV=62,ControlScale=100,ShowNametags=true,CameraSensitivity=100}) do
+  if player:GetAttribute(key)==nil then player:SetAttribute(key,value) end
+ end
+ local music=SoundService:FindFirstChild("SuviversMusic") or Instance.new("SoundGroup",SoundService)
+ music.Name="SuviversMusic"
+ local function applyMusic() music.Volume=(player:GetAttribute("MusicVolume") or 65)/100 end
+ player:GetAttributeChangedSignal("MusicVolume"):Connect(applyMusic) applyMusic()
+ local group=SoundService:FindFirstChild("SuviversEffects") or Instance.new("SoundGroup",SoundService)
+ group.Name="SuviversEffects"
+ local function apply() group.Volume=(player:GetAttribute("EffectsVolume") or 80)/100 end
+ player:GetAttributeChangedSignal("EffectsVolume"):Connect(apply) apply()
+ local function bind(o)
+  if o:IsA("Sound") and o.Name=="SuviversMatchMusic" then o.SoundGroup=music end
+  if o:IsA("Sound") and (o.Name=="MenuClick" or o.Name=="Click" or o.Name=="PlayClick" or o.Name=="FriendJoined" or o.Name=="Regenerate" or o.Name=="RegenerationCue") then
+   o.SoundGroup=group
+  end
+ end
+ for _,root in ipairs({SoundService,workspace,player:WaitForChild("PlayerGui")}) do
+  root.DescendantAdded:Connect(bind)
+  for _,o in ipairs(root:GetDescendants()) do bind(o) end
+ end
+end
+
 function M.build(parent,player,onClose)
+ M.initialize(player)
  local frame=Instance.new("Frame")
  frame.Name="ReferenceSettings"
  frame.Size=UDim2.fromScale(1,1)
@@ -133,9 +166,11 @@ function M.build(parent,player,onClose)
  stroke(fallback,Color3.fromRGB(63,42,40),.1,2)
  fallback.Parent=book
 
- local title=label(book,"Title","CONFIGURAÇÕES",UDim2.fromScale(.48,.065),UDim2.fromScale(.115,.095),46)
+ local title=label(book,"Title","CONFIGURAÇÕES",UDim2.fromScale(.34,.065),UDim2.fromScale(.115,.095),46)
  title.Font=Enum.Font.Garamond
  title.TextSize=31
+ title.TextScaled=true
+ local titleLimit=Instance.new("UITextSizeConstraint",title) titleLimit.MinTextSize=14 titleLimit.MaxTextSize=31
  title.TextXAlignment=Enum.TextXAlignment.Left
  title.TextStrokeColor3=Color3.fromRGB(249,239,216)
  title.TextStrokeTransparency=.72
@@ -147,8 +182,8 @@ function M.build(parent,player,onClose)
 
  local scroll=Instance.new("ScrollingFrame")
  scroll.Name="PageScroll"
- scroll.Position=UDim2.fromScale(.115,.19)
- scroll.Size=UDim2.fromScale(.745,.64)
+ scroll.Position=UDim2.fromScale(.125,.20)
+ scroll.Size=UDim2.fromScale(.75,.64)
  scroll.BackgroundTransparency=1
  scroll.BorderSizePixel=0
  scroll.CanvasSize=UDim2.new()
@@ -170,8 +205,8 @@ function M.build(parent,player,onClose)
 
  local grid=Instance.new("UIGridLayout")
  grid.Name="TwoPageGrid"
- grid.CellSize=UDim2.new(.445,0,0,92)
- grid.CellPadding=UDim2.new(.105,0,0,14)
+ grid.CellSize=UDim2.new(.44,0,0,102)
+ grid.CellPadding=UDim2.new(.12,0,0,14)
  grid.FillDirection=Enum.FillDirection.Horizontal
  grid.FillDirectionMaxCells=2
  grid.HorizontalAlignment=Enum.HorizontalAlignment.Left
@@ -179,10 +214,14 @@ function M.build(parent,player,onClose)
  grid.Parent=scroll
 
  local cards={}
+ local cardConnections={}
+ local function track(connection) table.insert(cardConnections,connection) end
  local activeCategory="game"
  local tabButtons={}
 
  local function clearCards()
+  for _,connection in ipairs(cardConnections) do connection:Disconnect() end
+  table.clear(cardConnections)
   for _,c in ipairs(cards) do if c.Parent then c:Destroy() end end
   table.clear(cards)
   scroll.CanvasPosition=Vector2.zero
@@ -206,6 +245,8 @@ function M.build(parent,player,onClose)
  local function addSlider(spec,order)
   local card=cardBase(spec.key,order)
   local name=label(card,"Label",spec.label,UDim2.new(.68,0,0,28),UDim2.fromOffset(10,7),48)
+  local translations={MusicVolume="MUSIC",EffectsVolume="EFFECTS",ControlScale="CONTROL SIZE",CameraSensitivity="SENSITIVITY",CameraFOV="FIELD OF VIEW"}
+  if player:GetAttribute("GameLanguage")=="en" then name.Text=translations[spec.key] or spec.label end
   name.TextSize=15
   name.Font=Enum.Font.Garamond
   name.TextXAlignment=Enum.TextXAlignment.Left
@@ -262,10 +303,12 @@ function M.build(parent,player,onClose)
   rail.InputEnded:Connect(function(input)
    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
   end)
-  UIS.InputChanged:Connect(function(input)
+  track(UIS.InputChanged:Connect(function(input)
    if dragging and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then fromX(input.Position.X) end
-  end)
-  player:GetAttributeChangedSignal(spec.key):Connect(function() if card.Parent then apply(current()) end end)
+  end))
+  track(player:GetAttributeChangedSignal(spec.key):Connect(function() if card.Parent then
+   local v=current() valueLabel.Text=tostring(v)..(spec.suffix or "") fill.Size=UDim2.fromScale((v-spec.min)/(spec.max-spec.min),1)
+  end end))
   apply(current())
  end
 
@@ -276,11 +319,18 @@ function M.build(parent,player,onClose)
   local b=textButton(card,"Toggle","",UDim2.fromOffset(82,34),UDim2.new(1,-92,.5,-17),49)
   local function refresh()
    local on=ensure(player,key,default)==true
-   b.Text=on and "ATIVO" or "DESL."
+   local english=player:GetAttribute("GameLanguage")=="en"
+   b.Text=on and (english and "ON" or "ATIVO") or (english and "OFF" or "DESL.")
    b.BackgroundColor3=on and Color3.fromRGB(132,42,42) or Color3.fromRGB(176,159,134)
    b.TextColor3=on and Color3.fromRGB(248,231,208) or INK
   end
-  b.Activated:Connect(function() player:SetAttribute(key,not (player:GetAttribute(key)==true)) refresh() end)
+  b.Activated:Connect(function()
+   local nextValue=not (player:GetAttribute(key)==true)
+   if key=="AFK" then game.ReplicatedStorage.Survival.Action:FireServer("afk",nextValue)
+   else player:SetAttribute(key,nextValue) end
+   refresh()
+  end)
+  track(player:GetAttributeChangedSignal(key):Connect(refresh))
   refresh()
  end
 
@@ -295,12 +345,12 @@ function M.build(parent,player,onClose)
   local function refresh()
    local lang=ensure(player,"GameLanguage","pt-BR")
    pt.BackgroundColor3=lang=="pt-BR" and RED or Color3.fromRGB(224,207,175)
-   en.BackgroundColor3=lang=="en-US" and RED or Color3.fromRGB(224,207,175)
+   en.BackgroundColor3=lang=="en" and RED or Color3.fromRGB(224,207,175)
    pt.TextColor3=lang=="pt-BR" and Color3.fromRGB(248,231,208) or INK
-   en.TextColor3=lang=="en-US" and Color3.fromRGB(248,231,208) or INK
+   en.TextColor3=lang=="en" and Color3.fromRGB(248,231,208) or INK
   end
   pt.Activated:Connect(function() player:SetAttribute("GameLanguage","pt-BR") refresh() end)
-  en.Activated:Connect(function() player:SetAttribute("GameLanguage","en-US") refresh() end)
+  en.Activated:Connect(function() player:SetAttribute("GameLanguage","en") refresh() end)
   refresh()
  end
 
@@ -315,16 +365,18 @@ function M.build(parent,player,onClose)
  local function buildCategory(category)
   activeCategory=category
   clearCards()
-  local english=player:GetAttribute("GameLanguage")=="en-US"
+  local english=player:GetAttribute("GameLanguage")=="en"
   if category=="game" then
    subtitle.Text=english and "GAME" or "JOGO"
    for i,spec in ipairs(GAME_SPECS) do addSlider(spec,i) end
-   addToggle(english and "INTERFACE FEEDBACK" or "RESPOSTA DA INTERFACE","UIFeedback",true,10)
+   addToggle("AFK","AFK",false,7)
+   addToggle(english and "BUTTON SOUNDS" or "SONS DOS BOTÕES","MenuSounds",true,8)
+   addToggle(english and "FRIEND ALERTS" or "AVISOS DE AMIZADE","FriendAlerts",true,9)
    addInfo(english and "CONTROLS" or "CONTROLES",english and "Hold the run button to sprint. Crouch and action buttons remain on the right side." or "Segure o botão de correr para sprintar. Agachar e ações continuam no lado direito.",11)
   elseif category=="visual" then
    subtitle.Text="VISUAL"
    for i,spec in ipairs(VISUAL_SPECS) do addSlider(spec,i) end
-   addToggle(english and "DAMAGE FLASH" or "FLASH DE DANO","DamageFlash",true,10)
+   addToggle(english and "PLAYER NAMES" or "NOMES DOS JOGADORES","ShowNametags",true,10)
    addInfo(english and "NIGHT" or "NOITE",english and "The lobby keeps the authored dark-night lighting. These options do not brighten the outside map." or "O lobby mantém a iluminação noturna escura do mapa. Estas opções não clareiam a parte externa.",11)
   else
    subtitle.Text=english and "LANGUAGE" or "LINGUAGEM"
@@ -342,12 +394,16 @@ function M.build(parent,player,onClose)
 
  local function addRibbon(key,ptLabel,enLabel,y)
   local b=Instance.new("TextButton")
-  b.Name=key=="close" and "Close" or ("Tab_"..key)
-  b.Position=UDim2.fromScale(.885,y)
-  b.Size=UDim2.fromScale(.105,.075)
+  b.Name=key=="close" and "Close" or key
+  b.Position=UDim2.fromScale(.905,y)
+  b.Size=UDim2.fromScale(.08,.075)
   b.BackgroundTransparency=1
   b.BorderSizePixel=0
-  b.Text=ptLabel
+  b.Text=""
+  b:SetAttribute("AccessibleLabel",ptLabel)
+  local icon=label(b,"Icon",({game="⚙",visual="◉",language="文",close="×"})[key],UDim2.fromScale(1,1),UDim2.new(),54)
+  icon.Font=Enum.Font.GothamBold icon.TextScaled=true icon.TextColor3=Color3.fromRGB(245,232,213)
+  local iconLimit=Instance.new("UITextSizeConstraint",icon) iconLimit.MinTextSize=14 iconLimit.MaxTextSize=27
   b.Font=Enum.Font.Garamond
   b.TextScaled=true
   b.TextColor3=Color3.fromRGB(220,214,202)
@@ -380,16 +436,17 @@ function M.build(parent,player,onClose)
  closeTab.Activated:Connect(function() if onClose then onClose() else parent.Visible=false end end)
 
  local function refreshLanguage()
-  local english=player:GetAttribute("GameLanguage")=="en-US"
+  local english=player:GetAttribute("GameLanguage")=="en"
   title.Text=english and "SETTINGS" or "CONFIGURAÇÕES"
-  for key,data in pairs(tabButtons) do data.button.Text=english and data.en or data.pt end
+  for key,data in pairs(tabButtons) do data.button:SetAttribute("AccessibleLabel",english and data.en or data.pt) end
   buildCategory(activeCategory)
  end
  player:GetAttributeChangedSignal("GameLanguage"):Connect(refreshLanguage)
 
+ frame.Destroying:Connect(clearCards)
  local function fitBook()
   local s=parent.AbsoluteSize
-  local aspect=1500/1024
+  local aspect=1536/1024
   local w=math.min(s.X*.96,s.Y*.91*aspect)
   local h=w/aspect
   book.Size=UDim2.fromOffset(w,h)
@@ -404,3 +461,4 @@ end
 return M
 
 -- binder publish trigger
+

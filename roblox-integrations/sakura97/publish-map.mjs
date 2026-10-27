@@ -199,13 +199,13 @@ async function createSettingsBookAsset(bytes){
  if(!key) throw new Error('Missing ROBLOX_API_KEY');
  const request={
   assetType:'Decal',
-  displayName:'Suvivers reference action controls',
-  description:'Action controls artwork supplied by the game owner.',
+  displayName:'Suvivers settings book',
+  description:'Exact settings book artwork supplied by the game owner.',
   creationContext:{creator:{userId:'8344738123'}}
  };
  const form=new FormData();
  form.append('request',JSON.stringify(request));
- form.append('fileContent',new Blob([bytes],{type:'image/jpeg'}),'action-controls.jpg');
+ form.append('fileContent',new Blob([bytes],{type:'image/jpeg'}),'settings-book.jpg');
  const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
   method:'POST',
   headers:{'x-api-key':key},
@@ -214,11 +214,11 @@ async function createSettingsBookAsset(bytes){
  });
  const raw=await response.text();
  let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
- if(!response.ok) throw new Error(`Fill audio atlas upload HTTP ${response.status}: ${JSON.stringify(operation)}`);
- if(!operation.path) throw new Error(`Fill audio atlas upload returned no operation path: ${JSON.stringify(operation)}`);
+ if(!response.ok) throw new Error(`Settings book upload HTTP ${response.status}: ${JSON.stringify(operation)}`);
+ if(!operation.path) throw new Error(`Settings book upload returned no operation path: ${JSON.stringify(operation)}`);
  const deadline=Date.now()+240000;
  while(!operation.done){
-  if(Date.now()>deadline) throw new Error(`Fill audio atlas moderation/upload operation timed out`);
+  if(Date.now()>deadline) throw new Error(`Settings book moderation/upload operation timed out`);
   await sleep(1500);
   const opResponse=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{
    headers:{'x-api-key':key},
@@ -226,11 +226,11 @@ async function createSettingsBookAsset(bytes){
   });
   const opRaw=await opResponse.text();
   try{operation=JSON.parse(opRaw)}catch{operation={raw:opRaw}}
-  if(!opResponse.ok) throw new Error(`Fill audio atlas operation HTTP ${opResponse.status}: ${JSON.stringify(operation)}`);
+  if(!opResponse.ok) throw new Error(`Settings book operation HTTP ${opResponse.status}: ${JSON.stringify(operation)}`);
  }
- if(operation.error) throw new Error(`Fill audio atlas operation failed: ${JSON.stringify(operation.error)}`);
+ if(operation.error) throw new Error(`Settings book operation failed: ${JSON.stringify(operation.error)}`);
  const id=Number(operation?.response?.assetId);
- if(!Number.isFinite(id)||id<=0) throw new Error(`Fill audio atlas operation returned no assetId: ${JSON.stringify(operation)}`);
+ if(!Number.isFinite(id)||id<=0) throw new Error(`Settings book operation returned no assetId: ${JSON.stringify(operation)}`);
  return id;
 }
 async function createFillAudioAsset(spec,bytes){
@@ -468,15 +468,31 @@ const atlasManifest=JSON.parse(fs.readFileSync('roblox-integrations/sakura97/act
 const actionAtlasId=atlasManifest.assetId || await createActionAtlas(Buffer.from(fs.readFileSync('roblox-integrations/sakura97/action-atlas.b64','utf8'),'base64'));
 console.log('ACTION_ATLAS_ASSET_ID',actionAtlasId);
 let settingsBookAssetId=0;
+let bookUploaded=false;
 try {
  const state=first(await execute(`
   local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
   return {id=net and (net:GetAttribute("SettingsBookAssetId") or 0) or 0}
  `));
- settingsBookAssetId=Number(state and state.id) or 0;
+ settingsBookAssetId=Number(state?.id)||0;
 } catch {}
-if(!settingsBookAssetId && fs.existsSync('roblox-integrations/sakura97/settings-book-reference.jpg')){
- settingsBookAssetId=await createSettingsBookAsset(fs.readFileSync('roblox-integrations/sakura97/settings-book-reference.jpg'));
+if(!settingsBookAssetId && fs.existsSync('roblox-integrations/sakura97/settings-book-reference.b64')){
+ settingsBookAssetId=await createSettingsBookAsset(Buffer.from(fs.readFileSync('roblox-integrations/sakura97/settings-book-reference.b64','utf8'),'base64'));
+ bookUploaded=true;
+}
+if(!settingsBookAssetId) throw new Error('Settings book artwork was not uploaded');
+if(bookUploaded){
+const bookReady=first(await execute(`
+ local net=game.ReplicatedStorage:FindFirstChild("Survival")
+ local asset=game:GetService("AssetService"):LoadAssetAsync(${settingsBookAssetId})
+ local decal=asset:FindFirstChildWhichIsA("Decal",true)
+ local image=decal and tonumber(decal.Texture:match("%d+")) or ${settingsBookAssetId}
+ asset:Destroy()
+ if net then net:SetAttribute("SettingsBookAssetId",image) end
+ game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
+ return {id=image}
+`));
+settingsBookAssetId=Number(bookReady.id);
 }
 console.log('SETTINGS_BOOK_ASSET_ID',settingsBookAssetId);
 const fillVoiceIds=await ensureFillVoiceAssets();
@@ -857,6 +873,7 @@ local assets=game.ServerStorage.SurvivalAssets
 if(!applied.saved && process.env.SURVIVERS_DRY_RUN!=='1'){
  throw new Error('Suvivers build was not published; inspect saveError above');
 }
+
 
 
 
