@@ -300,7 +300,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.JediLibrary:GetAttribute("StairWarningAssetId")==17143448214 and stairWarning:GetAttribute("SourceAssetId")==17143448214,"Wrong construction sign asset")
   assert(not workspace.JediLibrary:FindFirstChild("UnderStairWallRepair"),"Removed interior under-stair wall returned")
   assert(workspace.JediLibrary:GetAttribute("UnderStairWallRepaired")==false and workspace.JediLibrary:GetAttribute("InteriorWallRemoved")==true,"Interior wall removal metadata missing")
-  assert((workspace.JediLibrary:GetAttribute("UnderStairWallRemoved") or 0)>=1,"Authored under-stair facade was not removed")
+  assert(workspace.JediLibrary:GetAttribute("GeneratedUnderStairWallRemoved")==true,"Generated wall removal metadata missing")
   assert(not workspace.JediLibrary:FindFirstChild("DoorsMerchantRoom"),"Physical monster shop returned to the lobby")
   local shopMerchant=assert(workspace.JediLibrary:FindFirstChild("ShopMerchant"),"Kitchen shop NPC missing")
   assert(shopMerchant:GetAttribute("Placement")=="KitchenNearSpawn" and shopMerchant:FindFirstChild("SuviversShopPrompt",true),"Shop NPC is not active in the kitchen")

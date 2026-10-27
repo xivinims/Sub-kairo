@@ -317,17 +317,13 @@ lobby:SetAttribute("StairAccessClosed",true)
 lobby:SetAttribute("StairWarningAssetId",17143448214)
 lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
 
--- The user wants the interior under-stair wall gone. Hide its authored facade too,
--- so a later publish cannot visually recreate the wall after the generated repair is removed.
-local underStairRemoved=0
-for _,part in ipairs(house:GetDescendants()) do
- if part:IsA("BasePart") and part.Name:find("Foyer_Wall_Panel_Tall_Side_Stair_L",1,true) then
-  part.Transparency=1 part.CastShadow=false part.CanCollide=false part.CanTouch=false part.CanQuery=false
-  underStairRemoved+=1
- end
-end
+-- Remove only the generated interior repair wall. Some authored pieces with "Wall" in
+-- their names also provide the exterior stair collision, so they must remain untouched.
+local staleUnderStairWall=lobby:FindFirstChild("UnderStairWallRepair")
+if staleUnderStairWall then staleUnderStairWall:Destroy() end
 lobby:SetAttribute("UnderStairWallRestored",0)
-lobby:SetAttribute("UnderStairWallRemoved",underStairRemoved)
+lobby:SetAttribute("UnderStairWallRemoved",0)
+lobby:SetAttribute("GeneratedUnderStairWallRemoved",true)
 -- Center the spawn on the complete front-door frame. Using one side-frame piece made
 -- the old spawn drift toward the wall; the combined frame center keeps it in front of the door.
 local frontFrames={}
