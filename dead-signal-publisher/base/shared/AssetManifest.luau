@@ -1,0 +1,88 @@
+local Assets = {
+    Floor = {
+        id = 11961684378,
+        role = "surface",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Piso modular para corredores e salas industriais.",
+    },
+    DoorFrame = {
+        id = 96103787859080,
+        role = "architecture",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Batentes e passagens. A lógica de porta vem do DoorService.",
+    },
+    GrabPackReference = {
+        id = 10468403169,
+        role = "reference",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Não será usado como mecânica. Serve apenas para estudar proporção/interação.",
+    },
+    Chapter4IdeaKit = {
+        id = 72028919182927,
+        role = "reference-library",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Biblioteca visual. Não importar o kit inteiro no runtime.",
+    },
+    ModelKit = {
+        id = 16390129962,
+        role = "reference-library",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Biblioteca de props/ideias. Componentes precisam ser selecionados manualmente.",
+    },
+    PowerStation = {
+        id = 9609111841,
+        role = "power-prop",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Base visual para estação/painel de energia. A lógica vem do PowerService.",
+    },
+    WhiteDoor = {
+        id = 8593730677,
+        role = "door",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Geometria de porta. DoorService controla abertura, energia e bloqueio.",
+    },
+    StalkerReference = {
+        id = 115602504342753,
+        role = "creature-reference",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Referência de silhueta/movimento. O perseguidor final será original.",
+    },
+    Batteries = {
+        id = 16551049618,
+        role = "battery-system",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Baterias e encaixes como props. A lógica será refeita no sistema próprio.",
+    },
+    PowerLinks = {
+        id = 16592756903,
+        role = "power-reference",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Referência de ligações de energia e painéis.",
+    },
+    MapReference = {
+        id = 10231610849,
+        role = "layout-reference",
+        importMode = "reference-only",
+        stripScripts = true,
+        notes = "Referência de composição e escala. Não copiar o mapa inteiro.",
+    },
+    Stairs = {
+        id = 120661626985584,
+        role = "architecture",
+        importMode = "static",
+        stripScripts = true,
+        notes = "Escadarias e circulação vertical.",
+    },
+}
+
+return table.freeze(Assets)
