@@ -1,6 +1,6 @@
 local Config = {}
 
-Config.BuildId = "dead-signal-ch01-grabpack-v6"
+Config.BuildId = "dead-signal-ch01-polish-v7"
 Config.DataVersion = 1
 Config.DefaultChapter = "Chapter01"
 Config.DefaultCheckpoint = "CH01_START"

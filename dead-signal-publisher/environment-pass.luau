@@ -146,3 +146,48 @@ end
 for _,p in ipairs(scenic:GetDescendants()) do if p:IsA("BasePart") then p.CastShadow=p.CanCollide end end
 map:SetAttribute("ScenicRevision","play-space-and-service-v5")
 map:SetAttribute("FloatingSigns",0)
+-- Close-range environmental storytelling stays against the architecture, away from the puzzle route.
+local finish=model("ArchitecturalFinish",scenic)
+for _,idx in ipairs({4,5,6,7,9,10,11}) do
+    local d=roomDefs[idx]
+    for _,side in ipairs({-1,1}) do
+        local x=side*(d[4]/2-1.45)
+        box(finish,"WallSkirting",x,0.55,(d[2]+d[3])/2,0.16,0.75,d[3]-d[2]-2,C(47,58,54),Enum.Material.Metal,false)
+        for z=d[2]+7,d[3]-6,19 do
+            box(finish,"WallExpansionJoint",x-side*0.03,6,z,0.08,11,0.10,C(72,80,72),Enum.Material.Concrete,false)
+            local conduit=box(finish,"ServiceConduit",x-side*0.3,d[5]-3,z,0.28,0.28,17,C(64,75,70),Enum.Material.Metal,false)
+            for _,offset in ipairs({-6,6}) do
+                box(finish,"ConduitBracket",x-side*0.25,d[5]-3,z+offset,0.5,0.65,0.14,C(95,102,90),Enum.Material.Metal,false)
+            end
+        end
+    end
+end
+-- Inspection bays in production: inset shutters, cable trays and grounded machine bases.
+for _,z in ipairs({282,307,344}) do
+    local x=39
+    box(finish,"MachineFoundation",x,0.35,z,5.6,0.7,8,C(72,80,72),Enum.Material.Concrete)
+    box(finish,"MachineHousing",x,3.1,z,4.8,4.8,5.5,C(65,91,86),Enum.Material.Metal)
+    box(finish,"AccessPanel",x-2.45,3.2,z,0.12,3.3,4,C(42,62,61),Enum.Material.DiamondPlate,false)
+    box(finish,"PanelLatch",x-2.58,3.2,z+1.3,0.18,0.7,0.2,C(148,143,112),Enum.Material.Metal,false)
+    for n=-1,1 do box(finish,"CoolingLouvre",x-2.55,3.5+n*0.5,z-0.4,0.06,0.13,1.9,C(22,34,34),nil,false) end
+    box(finish,"MachineExhaust",x,6.6,z,1.3,2.2,1.3,C(76,83,74),Enum.Material.CorrodedMetal,false)
+end
+-- A maintenance bench records an interrupted repair through tools and disassembled components.
+local benchX,benchZ=-11.5,204
+box(finish,"RepairBenchTop",benchX,3.1,benchZ,5.6,0.35,2.6,C(112,91,59),Enum.Material.Wood)
+for _,dx in ipairs({-2.3,2.3}) do
+    for _,dz in ipairs({-0.9,0.9}) do box(finish,"BenchLeg",benchX+dx,1.5,benchZ+dz,0.2,3,0.2,C(54,66,61),Enum.Material.Metal) end
+end
+box(finish,"OpenMotorCasing",benchX,3.7,benchZ,1.5,0.85,1.2,C(78,89,79),Enum.Material.Metal,false)
+box(finish,"RemovedMotorCover",benchX+1.9,3.34,benchZ,0.85,0.12,1.2,C(88,92,77),Enum.Material.Metal,false)
+local spanner=box(finish,"SpannerShaft",benchX-1.7,3.34,benchZ,0.13,0.10,1.25,C(144,146,125),Enum.Material.Metal,false)
+spanner.CFrame*=CFrame.Angles(0,math.rad(30),0)
+box(finish,"ToolDrawer",benchX,2.5,benchZ-0.9,4.7,0.65,0.35,C(59,76,69),Enum.Material.Metal,false)
+-- Atrium benches face the fabricated garden and leave the central circulation open.
+for _,z in ipairs({70,99}) do
+    box(finish,"GardenBenchSeat",-29,1.7,z,4.8,0.3,1.5,C(104,84,52),Enum.Material.Wood)
+    box(finish,"GardenBenchBack",-29,2.7,z+0.7,4.8,1.6,0.22,C(104,84,52),Enum.Material.Wood)
+    for _,dx in ipairs({-1.8,1.8}) do box(finish,"GardenBenchFoot",-29+dx,0.8,z,0.3,1.6,1.3,C(45,60,52),Enum.Material.Metal) end
+end
+for _,p in ipairs(finish:GetDescendants()) do if p:IsA("BasePart") then p.CastShadow=p.CanCollide end end
+map:SetAttribute("FinishRevision","architectural-finish-v7")

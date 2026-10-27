@@ -10,9 +10,19 @@ end
 function Grab.new(ctx)
     return setmetatable({ctx=ctx,last={},charge={},links={},pullBusy={}},Grab)
 end
-function Grab:Clear(player)
+function Grab:_unlink(player)
     local link=self.links[player]
-    if link then self.ctx.power:SetLink(link[1],link[2],false); self.ctx.power:Recalculate(); self.links[player]=nil end
+    self.links[player]=nil
+    if not link then return end
+    -- Another player may still be holding the same physical circuit closed.
+    for _,other in pairs(self.links) do
+        if other[1]==link[1] and other[2]==link[2] then return end
+    end
+    self.ctx.power:SetLink(link[1],link[2],false)
+    self.ctx.power:Recalculate()
+end
+function Grab:Clear(player)
+    self:_unlink(player)
     self.charge[player]=nil
 end
 function Grab:Fire(player,side,direction)
@@ -38,12 +48,14 @@ function Grab:Fire(player,side,direction)
             self:Clear(player)
             local record={node=source:GetAttribute("PowerNodeId"),untilTime=os.clock()+8,source=source}
             self.charge[player]=record; payload.latched=true; payload.kind="charged"; payload.duration=8
-            task.delay(8,function() if self.charge[player]==record then self:Clear(player) end end)
+            task.delay(8,function() if self.charge[player]==record then self:Clear(player); self.ctx.remote:FireClient(player,{kind="retract"}) end end)
         elseif receiver and side=="Right" and self.charge[player] and self.charge[player].untilTime>os.clock() then
             local record=self.charge[player]
             if (head.Position-record.source.Position).Magnitude>RANGE then self:Clear(player); return false,"source-range" end
             local node=receiver:GetAttribute("PowerNodeId")
+            self:_unlink(player)
             self.ctx.power:SetLink(record.node,node,true); self.ctx.power:Recalculate(); self.links[player]={record.node,node}
+            record.receiver=receiver
             payload.latched=true; payload.kind="power-bridge"; payload.duration=math.max(0.2,record.untilTime-os.clock())
             self.ctx.chapters:SetFlag(player,"grabBridge",true)
         elseif pullable and pullable.PrimaryPart and not self.pullBusy[pullable] then
@@ -78,7 +90,40 @@ function Grab:Fire(player,side,direction)
     self.ctx.remote:FireClient(player,payload)
     return true,payload
 end
+function Grab:TetherValid(player,record)
+    local char=player.Character
+    local head=char and char:FindFirstChild("Head")
+    local hum=char and char:FindFirstChildOfClass("Humanoid")
+    if not head or not hum or hum.Health<=0 or player:GetAttribute("DeadSignalPlaying")~=true
+        or os.clock()>=record.untilTime then return false end
+    for _,endpoint in pairs({source=record.source,receiver=record.receiver}) do
+        if not endpoint.Parent then return false end
+        local delta=endpoint.Position-head.Position
+        if delta.Magnitude>RANGE then return false end
+        if delta.Magnitude>0.01 then
+            local params=RaycastParams.new()
+            params.FilterType=Enum.RaycastFilterType.Exclude
+            params.FilterDescendantsInstances={char}
+            local obstruction=workspace:Raycast(head.Position,delta,params)
+            if obstruction and obstruction.Instance~=endpoint and not obstruction.Instance:IsDescendantOf(endpoint) then return false end
+        end
+    end
+    return true
+end
 function Grab:Start()
+    -- Range, death and occlusion are checked at 5 Hz, never every render frame.
+    task.spawn(function()
+        while true do
+            task.wait(0.2)
+            for player,record in pairs(self.charge) do
+                local valid=self:TetherValid(player,record)
+                if not valid then
+                    self:Clear(player)
+                    self.ctx.remote:FireClient(player,{kind="retract"})
+                end
+            end
+        end
+    end)
     self.ctx.action.OnServerEvent:Connect(function(player,side,direction)
         if side=="Retract" then self:Clear(player); self.ctx.remote:FireClient(player,{kind="retract"}); return end
         self:Fire(player,side,direction)

@@ -9,11 +9,16 @@ local function handAsset(selection,name,scale,color)
         end
     end
     m.Parent=assets
+    return m
 end
-handAsset("HandL2","BlueHand",0.55,C(44,83,173))
-handAsset("HandL","RedHand",0.6,C(169,42,39))
-handAsset("Gunl","RightLauncher",0.45,nil)
-handAsset("Gunl2","LeftLauncher",0.45,nil)
+-- Keep the source's hand-to-launcher proportions instead of scaling each piece independently.
+local blue=handAsset("HandL2","BlueHand",0.48,C(44,83,173))
+local red=handAsset("HandL","RedHand",0.48,C(169,42,39))
+handAsset("Gunl","RightLauncher",0.48,nil)
+handAsset("Gunl2","LeftLauncher",0.48,nil)
+-- Measured from the sanitized source asset, in its authored forward (-Z) basis.
+blue:SetAttribute("DockOffset",V(0.151855,1.134340,-1.579798)*0.48)
+red:SetAttribute("DockOffset",V(-0.167435,1.216814,-1.641716)*0.48)
 Importer.ClearSelectionCache()
 for _,p in ipairs(CollectionService:GetTagged("DeadSignalInteraction")) do
     local action=p:GetAttribute("ActionId")

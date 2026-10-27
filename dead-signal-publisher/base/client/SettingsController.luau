@@ -17,6 +17,7 @@ function Settings.new(layer,send,onVisibility)
     local function button(parent,t,pos,size,fn)
         local b=Instance.new("TextButton"); b.Text=t; b.Position=pos; b.Size=size; b.BackgroundTransparency=1
         b.TextColor3=Color3.fromRGB(219,213,191); b.Font=Enum.Font.Code; b.TextSize=18
+        b.TextScaled=true; local textLimit=Instance.new("UITextSizeConstraint"); textLimit.MinTextSize=11; textLimit.MaxTextSize=18; textLimit.Parent=b
         b.ZIndex=13; b.Modal=true; b.Parent=parent; b.Activated:Connect(fn); return b
     end
     text(panel,"CONFIGURAÇÕES",UDim2.fromScale(0,0),UDim2.fromScale(0.8,0.09),Enum.Font.Code).TextSize=30
@@ -88,7 +89,7 @@ function Settings.new(layer,send,onVisibility)
     slider("ÁUDIO","Efeitos sonoros","sfxVolume",0,1,0.1,"%")
     slider("ÁUDIO","Diálogos","dialogueVolume",0,1,0.1,"%")
     slider("CONTROLES","Sensibilidade (mouse)","sensitivity",0.25,2,0.25,"×")
-    for _,t in ipairs({"WASD / analógico — andar","SHIFT / CORRER — correr","C / AGACHAR — agachar","F / toque na interação — usar","E / USAR — mirar cabo","Q / SOLTAR — largar item","T / LUZ — lanterna","P / PAUSA — configurações"}) do
+    for _,t in ipairs({"WASD / analógico — andar","SHIFT / CORRER — correr","C / AGACHAR — agachar","F / toque na interação — usar","E / USAR — mirar cabo","Q / SOLTAR — largar item","T / LUZ — lanterna","P / PAUSA — configurações","MOUSE 1 / R2 — mão azul","MOUSE 2 / L2 — mão vermelha","R — recolher as duas mãos"}) do
         local r=row("CONTROLES",t); r:FindFirstChildOfClass("TextLabel").Size=UDim2.new(1,-24,1,0)
     end
     button(panel,"VOLTAR",UDim2.fromScale(0,0.89),UDim2.fromScale(0.3,0.1),function() self:SetVisible(false) end)

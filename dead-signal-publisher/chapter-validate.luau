@@ -164,6 +164,10 @@ local geometry=RS.DeadSignalFoundation:FindFirstChild("GrabPackGeometry")
 check(geometry~=nil,"GrabPack geometry missing")
 if geometry then
     for _,name in ipairs({"BlueHand","RedHand","LeftLauncher","RightLauncher"}) do check(geometry:FindFirstChild(name)~=nil,"GrabPack part absent: "..name) end
+    for _,name in ipairs({"BlueHand","RedHand"}) do
+        local hand=geometry:FindFirstChild(name)
+        check(hand and typeof(hand:GetAttribute("DockOffset"))=="Vector3","Missing authored hand dock: "..name)
+    end
     for _,d in ipairs(geometry:GetDescendants()) do check(not d:IsA("LuaSourceContainer"),"Third-party code found in GrabPack geometry") end
 end
 check(workspace:FindFirstChild("MenuStage")~=nil,"Missing rendered menu stage")
@@ -199,7 +203,15 @@ if root and geometry then
     check(flags.grabBridge==true,"GrabPack progression flag missing")
     check(not grab:Fire(fake,"Wrong",Vector3.new(0,0,1)),"GrabPack accepted invalid hand")
     check(not grab:Fire(fake,"Right",Vector3.new(0,0,100)),"GrabPack accepted forged ray magnitude")
+    check(grab:TetherValid(fake,grab.charge[fake]),"Valid GrabPack tether rejected")
+    head.Position=Vector3.new(100,4,15)
+    check(not grab:TetherValid(fake,grab.charge[fake]),"GrabPack tether accepted out-of-range player")
+    head.Position=Vector3.new(17,4,15)
+    local second={}
+    grab.links[second]={"GRAB_SOURCE","GRAB_RECEIVER"}
     grab:Clear(fake)
+    check(gp:IsEnergized("GRAB_RECEIVER"),"One player disconnected another player's held circuit")
+    grab:Clear(second)
     check(not gp:IsEnergized("GRAB_RECEIVER"),"GrabPack did not release temporary power link")
     avatar:Destroy(); temp:Destroy()
     tests.grabPack=true

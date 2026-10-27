@@ -23,7 +23,7 @@ function Grab.Start(layer,remotes,protocol,input)
         local b=Instance.new("Attachment"); b.Parent=bPart
         local beam=Instance.new("Beam"); beam.Attachment0=a; beam.Attachment1=b; beam.Width0=0.065; beam.Width1=0.065
         beam.Color=ColorSequence.new(Color3.fromRGB(32,36,35)); beam.Segments=10; beam.FaceCamera=true; beam.Parent=aPart
-        sides[side]={hand=m,cuff=cuff,handScale=m:GetScale(),cuffScale=cuff:GetScale(),portrait=nil,a=aPart,b=bPart,beam=beam,shot=nil,last=0}
+        sides[side]={hand=m,cuff=cuff,dock=m:GetAttribute("DockOffset") or Vector3.new(0,0.5,-0.75),handScale=m:GetScale(),cuffScale=cuff:GetScale(),portrait=nil,a=aPart,b=bPart,beam=beam,shot=nil,last=0}
     end
     local function active()
         local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -66,7 +66,9 @@ function Grab.Start(layer,remotes,protocol,input)
     end)
     RunService:BindToRenderStep("DeadSignalGrabPack",Enum.RenderPriority.Camera.Value+2,function(dt)
         local cam=workspace.CurrentCamera; if not cam then return end
+        if view.Parent~=cam then view.Parent=cam end
         local enabled=active()
+        if not enabled then sides.Left.shot=nil; sides.Right.shot=nil end
         for _,b in ipairs(buttons) do b.Visible=enabled and UIS.TouchEnabled end
         local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
         local speed=hum and hum.MoveDirection.Magnitude or 0
@@ -82,8 +84,19 @@ function Grab.Start(layer,remotes,protocol,input)
             end
             local spread=portrait and 0.32 or 0.75
             local fovRatio=math.tan(math.rad(75/2))/math.tan(math.rad(cam.FieldOfView/2))
-            local idle=cam.CFrame*CFrame.new(sign*spread,-0.63+bob,-(portrait and 1.9 or 1.55)*fovRatio)*CFrame.Angles(0,0,math.rad(sign*-7))
-            local cuff=cam.CFrame*CFrame.new(sign*spread,-1.12+bob,-(portrait and 1.35 or 1.02)*fovRatio)*CFrame.Angles(math.rad(-8),0,0)
+            local cuff=cam.CFrame*CFrame.new(sign*spread,-1.12+bob,-(portrait and 1.35 or 1.02)*fovRatio)
+            local idle=cuff*CFrame.new(s.dock*(portrait and 0.7 or 1))
+            -- Bring the whole assembly back together near walls; do not let palms clip through doors.
+            local params=RaycastParams.new()
+            params.FilterType=Enum.RaycastFilterType.Exclude
+            params.FilterDescendantsInstances={player.Character,view}
+            params.RespectCanCollide=true
+            local delta=idle.Position-cam.CFrame.Position
+            local wall=workspace:Raycast(cam.CFrame.Position,delta,params)
+            if wall then
+                local push=delta.Unit*(delta.Magnitude-math.max(0.15,wall.Distance-0.3))
+                idle=idle-push; cuff=cuff-push
+            end
             local cf=idle
             if s.shot then
                 local t=os.clock()-s.shot.at
@@ -98,7 +111,7 @@ function Grab.Start(layer,remotes,protocol,input)
             end
             s.hand:PivotTo(enabled and cf or CFrame.new(0,-200,0))
             s.cuff:PivotTo(enabled and cuff or CFrame.new(0,-200,0))
-            s.a.CFrame=cuff; s.b.CFrame=cf
+            s.a.CFrame=cuff*CFrame.new(0,0,-0.6); s.b.CFrame=cf*CFrame.new(0,-0.3,0)
             s.beam.Enabled=enabled and s.shot~=nil
             s.beam.Color=ColorSequence.new(s.shot and (s.shot.kind=="charged" or s.shot.kind=="power-bridge") and Color3.fromRGB(73,145,189) or Color3.fromRGB(32,36,35))
             s.beam.LightEmission=s.shot and s.shot.latched and 0.55 or 0

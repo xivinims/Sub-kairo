@@ -61,3 +61,11 @@ The user's latest instruction supersedes the former no-GrabPack rule. The game n
 Static imported visual assets now have collision/query enabled and mesh collision fidelity appropriate to their role. Door leaves retain the DoorPanel proxy, stairs retain tread colliders, and portable cells retain the CellHandle proxy. The validator sweeps an avatar-sized box along the route and tests GrabPack charging/bridging/releasing in an isolated graph.
 
 The front end follows the uploaded Chapter 3 composition: chapter/title/description at upper left, five outlined buttons below, original red-lit 3D creature stage at right. Credits and exit confirmation are functional. This does not claim a pixel-identical official menu or a rendered client playtest.
+
+## Revision 7 — assembly and runtime review
+
+Hand and launcher scale now match (0.48), with docking offsets measured from source geometry rather than independent screen placement. Both assemblies retract together near solid walls. Camera replacements and inactive/dead states no longer leave stale local hand models visible. A rendered client review is still required to confirm palm presentation; source transforms alone cannot establish visual quality.
+
+GrabPack checks both tether endpoints at 5 Hz for range, occlusion, expiry and avatar health. Shared temporary links remain powered while another player holds the same circuit, and switching receivers releases the previous link. Reduced motion restores neutral joints without muting stalker footsteps. Settings include both hand controls and retraction; button text fits narrower displays.
+
+Architectural finish adds wall skirting, expansion joints, supported conduits, production machine bases/access panels/louvres, a maintenance repair bench and garden seating. No floating instruction boards are added. Existing avatar-route and power tests run before publication; new checks cover dock metadata, out-of-range tethers and shared-link release.

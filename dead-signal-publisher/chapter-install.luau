@@ -1,4 +1,4 @@
-local BUILD_ID = "dead-signal-ch01-grabpack-v6"
+local BUILD_ID = "dead-signal-ch01-polish-v7"
 local UNIVERSE_ID = 9421311218
 local PLACE_ID = 118064584465155
 

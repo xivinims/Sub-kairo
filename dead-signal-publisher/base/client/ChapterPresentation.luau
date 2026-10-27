@@ -214,7 +214,6 @@ function Presentation.Start(gui,remotes,protocol,input)
         end
         -- Nearby visual animation only. No server AI or pathfinding every render frame.
         steps.Volume=0
-        if reduced then return end
         local camera=workspace.CurrentCamera
         for _,rig in ipairs(Tags:GetTagged("DeadSignalStalker")) do
             local root=rig:FindFirstChild("HumanoidRootPart")
@@ -226,7 +225,7 @@ function Presentation.Start(gui,remotes,protocol,input)
                         original[joint]=original[joint] or joint.C0
                         local arm=string.find(joint.Name,"Arm") or string.find(joint.Name,"Leg")
                         local phase=string.find(joint.Name,"Left") and 0 or math.pi
-                        joint.C0=original[joint]*CFrame.Angles(arm and math.sin(elapsed*(speed>12 and 11 or 3)+phase)*(speed>1 and 0.4 or 0.018) or 0,0,math.sin(elapsed*1.7)*0.018)
+                        joint.C0=original[joint]*(reduced and CFrame.new() or CFrame.Angles(arm and math.sin(elapsed*(speed>12 and 11 or 3)+phase)*(speed>1 and 0.4 or 0.018) or 0,0,math.sin(elapsed*1.7)*0.018))
                     end
                 end
             end
