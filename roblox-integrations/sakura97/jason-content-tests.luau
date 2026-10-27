@@ -159,6 +159,10 @@ local pursuerAnimationSource=assert(game.StarterPlayer.StarterPlayerScripts:Find
 local ambienceSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ArenaAmbience"),"Arena ambience missing").Source
 local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
 assert(settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('book.Name="BookBackground"',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true),"Red binder settings background missing")
+assert(settingsSource:find("BOOK_PAGE_SOUND_ID=6102885802",1,true) and settingsSource:find('frame:SetAttribute("BookAnimation",true)',1,true),"Book open/page audio animation missing")
+local guideSource=assert(workspace:FindFirstChild("LobbyGuide"),"Lobby guide missing").GuideInteraction.Source
+assert(guideSource:find('subtitle.Name="CinematicSubtitle"',1,true) and guideSource:find('bubble.Enabled=false',1,true),"Fill dialogue was not moved off the NPC")
+assert(guideSource:find("local explain=talking",1,true) and guideSource:find("leftShoulder.C0",1,true) and guideSource:find("rightShoulder.C0",1,true),"Fill expressive explanation gestures missing")
 local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing").Source
 local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
 local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source
@@ -210,7 +214,12 @@ assert(loadingCinematicAssets:GetAttribute("HandAssetId")==8091676187 and loadin
 assert(loadingSource:find('assets:FindFirstChild("BloodHand"',1,true) and loadingSource:find("cameraImpact",1,true),"TV blood-hand impact loading scene missing")
 assert(loadingSource:find('logo.Texture="rbxassetid://99002027743613"',1,true) and loadingSource:find('logoPanel:SetAttribute("PreserveLogoAspect",true)',1,true),"Game logo is missing or distorted inside the TV")
 assert(loadingSource:find("screen.Material=Enum.Material.Neon",1,true) and loadingSource:find('vignetteLayer("HorizontalVignette"',1,true),"Dark-focus luminous-TV loading treatment missing")
+assert(loadingSource:find('letterbox("CinematicTopBar"',1,true) and loadingSource:find('filmTitle.Name="FilmTitle"',1,true) and loadingSource:find("RunService.RenderStepped",1,true),"Film-style loading camera/text treatment missing")
 assert(survivalClientSource:find('shopPanel:SetAttribute("ResponsiveLayout","StackedPortraitV3")',1,true),"Responsive portrait shop layout missing")
+local shopMerchant=assert(workspace.JediLibrary:FindFirstChild("ShopMerchant"),"Shop merchant missing")
+local shopPrompt=assert(shopMerchant:FindFirstChild("SuviversShopPrompt",true),"Shop prompt missing")
+assert(shopPrompt.ObjectText=="" and shopPrompt.ActionText=="" and shopPrompt:GetAttribute("TextlessInteraction")==true,"Shop NPC still shows text")
+assert(game.StarterPlayer.StarterPlayerScripts.MerchantIdle.Source:find("local explain=nearby",1,true),"Shop R6 merchant body gestures missing")
 assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"GOOD LUCK/avatar leaked into initial game loading")
 assert(not loadingSource:find('Name="Progress"',1,true),"Map-style progress UI leaked into initial game loading")
 assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true) and survivalClientSource:find('"GOOD LUCK"',1,true),"Map loading lost avatar/GOOD LUCK presentation")

@@ -59,6 +59,36 @@ if label:IsA("TextLabel") then
  label.Position=UDim2.fromOffset(10,26)
 end
 label.Visible=false
+if bubble:IsA("BillboardGui") then bubble.Enabled=false end
+bubble:SetAttribute("DialogueMovedToScreen",true)
+
+local subtitle=Instance.new("Frame")
+subtitle.Name="CinematicSubtitle"
+subtitle.AnchorPoint=Vector2.new(.5,1)
+subtitle.Position=UDim2.new(.5,0,1,-262)
+subtitle.Size=UDim2.new(.74,0,0,84)
+subtitle.BackgroundColor3=Color3.fromRGB(5,5,7)
+subtitle.BackgroundTransparency=.16
+subtitle.BorderSizePixel=0
+subtitle.Visible=false
+subtitle.ZIndex=20
+subtitle.Parent=ui
+local subtitleLimit=Instance.new("UISizeConstraint",subtitle)
+subtitleLimit.MaxSize=Vector2.new(620,84)
+local subtitleCorner=Instance.new("UICorner",subtitle) subtitleCorner.CornerRadius=UDim.new(0,7)
+local subtitleStroke=Instance.new("UIStroke",subtitle)
+subtitleStroke.Color=Color3.fromRGB(122,28,34) subtitleStroke.Transparency=.22 subtitleStroke.Thickness=1
+local accent=Instance.new("Frame",subtitle)
+accent.Name="Accent" accent.Size=UDim2.new(0,3,1,0) accent.BackgroundColor3=Color3.fromRGB(128,22,28) accent.BorderSizePixel=0 accent.ZIndex=21
+local speaker=Instance.new("TextLabel",subtitle)
+speaker.Name="Speaker" speaker.Position=UDim2.fromOffset(14,8) speaker.Size=UDim2.new(1,-28,0,18)
+speaker.BackgroundTransparency=1 speaker.Text="FILL" speaker.Font=Enum.Font.GothamBold speaker.TextSize=11
+speaker.TextColor3=Color3.fromRGB(202,88,88) speaker.TextXAlignment=Enum.TextXAlignment.Left speaker.ZIndex=22
+local subtitleText=Instance.new("TextLabel",subtitle)
+subtitleText.Name="Line" subtitleText.Position=UDim2.fromOffset(14,28) subtitleText.Size=UDim2.new(1,-28,1,-36)
+subtitleText.BackgroundTransparency=1 subtitleText.Text="" subtitleText.Font=Enum.Font.GothamMedium subtitleText.TextSize=13
+subtitleText.TextWrapped=true subtitleText.TextColor3=Color3.fromRGB(238,235,230)
+subtitleText.TextXAlignment=Enum.TextXAlignment.Left subtitleText.TextYAlignment=Enum.TextYAlignment.Top subtitleText.ZIndex=22
 
 local greeting="Ah... hello. How are you? My name is Fill. I'm your guide around here. If you have a question, go ahead and ask. So... what do you want to know?"
 local choices={
@@ -178,18 +208,16 @@ local function close()
  stopVoice()
  hideChoices()
  label.Visible=false
- bubble.name.Visible=true
- bubble.arrow.Visible=true
- bubble.name.TextTransparency=0
- bubble.arrow.TextTransparency=0
+ subtitle.Visible=false
+ subtitleText.Text=""
+ subtitleText.MaxVisibleGraphemes=-1
 end
 local function showLine(line,token,voiceIndex,after)
- label.Visible=true
- label.Text=""
- label.TextTransparency=0
- label.UIStroke.Transparency=0
- label.MaxVisibleGraphemes=0
- label.Text=line
+ subtitle.Visible=true
+ subtitleText.Text=""
+ subtitleText.TextTransparency=0
+ subtitleText.MaxVisibleGraphemes=0
+ subtitleText.Text=line
  local textDone=false
  local audioDone=false
  local completed=false
@@ -197,7 +225,7 @@ local function showLine(line,token,voiceIndex,after)
   if completed or not textDone or not audioDone then return end
   if generation~=token or not active then return end
   completed=true
-  label.MaxVisibleGraphemes=-1
+  subtitleText.MaxVisibleGraphemes=-1
   after()
  end
  speak(voiceIndex,token,function() audioDone=true maybeFinish() end)
@@ -206,7 +234,7 @@ local function showLine(line,token,voiceIndex,after)
   for _ in utf8.graphemes(line) do
    if generation~=token or not active then return end
    count+=1
-   label.MaxVisibleGraphemes=count
+   subtitleText.MaxVisibleGraphemes=count
    task.wait(.018)
   end
   textDone=true
@@ -241,7 +269,9 @@ end
 local function syncTextLanguage()
  local value=player:GetAttribute("GameLanguage")
  setLanguage(value=="en" and "en" or "pt")
- prompt.ActionText=language=="pt" and "Falar" or "Talk"
+ prompt.ActionText=""
+ prompt.ObjectText=""
+ prompt:SetAttribute("TextlessInteraction",true)
  for i,b in ipairs(buttons) do b.text.Text=choices[i] end
  if active then close() end
 end
@@ -262,8 +292,7 @@ table.insert(connections,prompt.Triggered:Connect(function()
  generation+=1
  choosing=false
  local token=generation
- bubble.name.Visible=false
- bubble.arrow.Visible=false
+ subtitle.Visible=true
  showLine(greeting,token,1,function()
   choosing=true
   for _,b in ipairs(buttons) do b.Visible=true end
@@ -303,14 +332,24 @@ connection=Run.RenderStepped:Connect(function(dt)
    lean=.04
   end
  end
- local alpha=1-math.exp(-dt*5)
- if neck then neck.C0=neck.C0:Lerp(neckBase*CFrame.Angles(pitch,0,yaw),alpha) end
  idleTime+=math.min(dt,.1)
  local breath=math.sin(idleTime*1.65)
- if joint then joint.C0=joint.C0:Lerp(jointBase*CFrame.new(0,breath*.025,0)*CFrame.Angles(lean+breath*.018,0,yaw*.18),alpha) end
- local gesture=active and math.sin(idleTime*2.2)*.035 or breath*.008
- if leftShoulder then leftShoulder.C0=leftShoulder.C0:Lerp(leftBase*CFrame.Angles(gesture,0,0),alpha) end
- if rightShoulder then rightShoulder.C0=rightShoulder.C0:Lerp(rightBase*CFrame.Angles(-gesture,0,0),alpha) end
+ local talking=active and (voice.IsPlaying and 1 or .68) or 0
+ local explain=talking*math.max(0,math.sin(idleTime*.92))
+ local counter=talking*math.max(0,math.sin(idleTime*.92+math.pi))
+ local nod=talking*math.sin(idleTime*2.25)*.035
+ local sway=talking*math.sin(idleTime*.72)*.018
+ local alpha=1-math.exp(-dt*5.5)
+ if neck then neck.C0=neck.C0:Lerp(neckBase*CFrame.Angles(pitch+nod,0,yaw+sway),alpha) end
+ if joint then
+  joint.C0=joint.C0:Lerp(jointBase*CFrame.new(0,breath*.025,0)*CFrame.Angles(lean+breath*.018,yaw*.18,sway*.45),alpha)
+ end
+ if leftShoulder then
+  leftShoulder.C0=leftShoulder.C0:Lerp(leftBase*CFrame.Angles(-explain*.13+breath*.008,0,-explain*.075+counter*.025),alpha)
+ end
+ if rightShoulder then
+  rightShoulder.C0=rightShoulder.C0:Lerp(rightBase*CFrame.Angles(-counter*.11-breath*.008,0,counter*.07-explain*.025),alpha)
+ end
  if active and (not allowed or distance>12 or not target) then close() end
 end)
 

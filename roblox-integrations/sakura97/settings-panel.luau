@@ -1,7 +1,9 @@
 local M={}
 local UIS=game:GetService("UserInputService")
 local SoundService=game:GetService("SoundService")
+local TweenService=game:GetService("TweenService")
 local initialized=setmetatable({},{__mode="k"})
+local BOOK_PAGE_SOUND_ID=6102885802
 
 local PAPER=Color3.fromRGB(231,218,190)
 local INK=Color3.fromRGB(42,33,29)
@@ -124,6 +126,8 @@ function M.build(parent,player,onClose)
  frame:SetAttribute("Style","RedBinderBook")
  frame:SetAttribute("ScrollablePages",true)
  frame:SetAttribute("RibbonTabs",true)
+ frame:SetAttribute("BookAudio",true)
+ frame:SetAttribute("BookAnimation",true)
  frame.Parent=parent
 
  local shadow=Instance.new("Frame")
@@ -146,6 +150,48 @@ function M.build(parent,player,onClose)
  book.BorderSizePixel=0
  book.ScaleType=Enum.ScaleType.Stretch
  book.ZIndex=42
+
+ local paper=Instance.new("Sound")
+ paper.Name="SettingsBookPaper"
+ paper.SoundId="rbxassetid://"..BOOK_PAGE_SOUND_ID
+ paper.Volume=.26
+ paper.PlaybackSpeed=1
+ paper.SoundGroup=SoundService:FindFirstChild("SuviversEffects")
+ paper.Parent=SoundService
+ local function playPaper(speed,volume)
+  if player:GetAttribute("MenuSounds")==false then return end
+  paper:Stop()
+  paper.TimePosition=0
+  paper.PlaybackSpeed=speed or 1
+  paper.Volume=volume or .26
+  pcall(function() paper:Play() end)
+ end
+ local function animatePaperTurn(direction)
+  local sign=direction or 1
+  book.Rotation=sign*.9
+  TweenService:Create(book,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Rotation=0}):Play()
+ end
+ local function animateBookOpen()
+  if not parent.Visible then return end
+  playPaper(.88,.34)
+  book.Rotation=-2.2
+  book.Position=UDim2.fromScale(.5,.515)
+  book.ImageTransparency=.08
+  TweenService:Create(book,TweenInfo.new(.30,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
+   Position=UDim2.fromScale(.5,.5),Rotation=0,ImageTransparency=0
+  }):Play()
+ end
+ local previousVisible=parent.Visible
+ parent:GetPropertyChangedSignal("Visible"):Connect(function()
+  if parent.Visible and not previousVisible then
+   animateBookOpen()
+  elseif not parent.Visible and previousVisible then
+   playPaper(.76,.17)
+  end
+  previousVisible=parent.Visible
+ end)
+ frame.Destroying:Connect(function() if paper.Parent then paper:Destroy() end end)
+
  local bookAsset=tonumber(game:GetService("ReplicatedStorage"):WaitForChild("Survival"):GetAttribute("SettingsBookAssetId")) or 0
  if bookAsset>0 then
   book.Image="rbxassetid://"..tostring(bookAsset)
@@ -438,10 +484,10 @@ function M.build(parent,player,onClose)
  local languageTab=addRibbon("language","LINGUAGEM","LANGUAGE",.315)
  local closeTab=addRibbon("close","X","X",.415)
 
- gameTab.Activated:Connect(function() buildCategory("game") end)
- visualTab.Activated:Connect(function() buildCategory("visual") end)
- languageTab.Activated:Connect(function() buildCategory("language") end)
- closeTab.Activated:Connect(function() if onClose then onClose() else parent.Visible=false end end)
+ gameTab.Activated:Connect(function() playPaper(1.04,.22) animatePaperTurn(-1) buildCategory("game") end)
+ visualTab.Activated:Connect(function() playPaper(1.08,.22) animatePaperTurn(1) buildCategory("visual") end)
+ languageTab.Activated:Connect(function() playPaper(1.12,.22) animatePaperTurn(-1) buildCategory("language") end)
+ closeTab.Activated:Connect(function() playPaper(.78,.18) if onClose then onClose() else parent.Visible=false end end)
 
  local function refreshLanguage()
   local english=player:GetAttribute("GameLanguage")=="en"

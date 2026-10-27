@@ -246,6 +246,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(loadingSource:find('assets:FindFirstChild("BloodHand"',1,true) and loadingSource:find("cameraImpact",1,true),"Blood hand impact cinematic missing")
   assert(loadingSource:find('logo.Texture="rbxassetid://99002027743613"',1,true) and loadingSource:find('logoPanel:SetAttribute("PreserveLogoAspect",true)',1,true),"Game logo is missing or distorted inside the TV")
   assert(loadingSource:find("screen.Material=Enum.Material.Neon",1,true) and loadingSource:find('vignetteLayer("HorizontalVignette"',1,true),"Dark-focus luminous TV treatment missing")
+   assert(loadingSource:find('letterbox("CinematicTopBar"',1,true) and loadingSource:find('filmTitle.Name="FilmTitle"',1,true) and loadingSource:find("RunService.RenderStepped",1,true),"Film-style loading camera/text treatment missing")
   assert(loadingSource:find("waitUntil(9.05)",1,true) and loadingSource:find("CINEMATIC_DURATION",1,true),"Final cinematic fade timing missing")
   assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=.5",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Night lobby ambience missing")
@@ -253,6 +254,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay FOV setting missing")
   assert(not settingsSource:find('key="visual"',1,true) and not settingsSource:find('VisualSaturation',1,true) and not settingsSource:find('VisualTime',1,true),"Removed visual/environment settings returned")
   assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true) and settingsSource:find('addRibbon("game","JOGO","GAME"',1,true),"Book settings panel missing")
+   assert(settingsSource:find("BOOK_PAGE_SOUND_ID=6102885802",1,true) and settingsSource:find('frame:SetAttribute("BookAudio",true)',1,true) and settingsSource:find("animateBookOpen",1,true),"Book paper audio/open animation missing")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
   local shopSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
@@ -304,20 +306,21 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(workspace.JediLibrary:GetAttribute("GeneratedUnderStairWallRemoved")==true,"Generated wall removal metadata missing")
   assert(not workspace.JediLibrary:FindFirstChild("DoorsMerchantRoom"),"Physical monster shop returned to the lobby")
   local shopMerchant=assert(workspace.JediLibrary:FindFirstChild("ShopMerchant"),"Kitchen shop NPC missing")
-  assert(shopMerchant:GetAttribute("Placement")=="KitchenNearSpawn" and shopMerchant:FindFirstChild("SuviversShopPrompt",true),"Shop NPC is not active in the kitchen")
+  local shopPrompt=assert(shopMerchant:FindFirstChild("SuviversShopPrompt",true),"Shop prompt missing")
+  assert(shopMerchant:GetAttribute("Placement")=="KitchenNearSpawn" and shopPrompt.ObjectText=="" and shopPrompt.ActionText=="" and shopPrompt:GetAttribute("TextlessInteraction")==true,"Shop NPC is not active/textless in the kitchen")
   assert(workspace.JediLibrary:GetAttribute("PhysicalMonsterShopRemoved")==true and workspace.JediLibrary:GetAttribute("ShopMerchantPlacement")=="KitchenNearSpawn","Kitchen shop placement metadata missing")
   assert((workspace.JediLibrary:GetAttribute("ShopMerchantDistanceFromSpawn") or math.huge)<=90,"Kitchen shop NPC is too far from spawn")
   assert(stairWarning:GetAttribute("BlocksUpperFloor")==true and stairWarning:FindFirstChild("NoUpstairsLabel",true),"NÃO SUBA stair warning incomplete")
   assert(game.StarterPlayer.DevCameraOcclusionMode==Enum.DevCameraOcclusionMode.Zoom,"Camera still uses wall transparency/Invisicam behavior")
-  assert(workspace.LobbyGuide.GuideInteraction.RunContext==Enum.RunContext.Client,"NPC gaze must be local")\n  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="Fill" and workspace.LobbyGuide.Head.gui.name.Text=="Fill","Fill display name was not persisted")
+  assert(workspace.LobbyGuide:GetAttribute("DisplayName")=="Fill" and workspace.LobbyGuide.ProximityPrompt.ObjectText=="" and workspace.LobbyGuide.ProximityPrompt.ActionText=="" and workspace.LobbyGuide.ProximityPrompt:GetAttribute("TextlessInteraction")==true,"Fill textless prompt was not persisted")
   assert(workspace.LobbyGuide:GetAttribute("AuthoredPosePreserved")==true and workspace.LobbyGuide:GetAttribute("Placement")=="ReceptionTabletopSeated" and workspace.LobbyGuide:GetAttribute("SeatedOnReception")==true,"Fill is not seated on top of the authored lobby table")
   local fillSource=workspace.LobbyGuide.GuideInteraction.Source
   assert(fillSource:find("portugueseGreeting",1,true) and fillSource:find("englishGreeting",1,true) and fillSource:find("GameLanguage",1,true),"Settings-driven bilingual Fill text missing")
   assert(not fillSource:find("languageButton",1,true) and not fillSource:find("AudioTextToSpeech",1,true),"Fill manual language/TTS controls returned")
   assert(fillSource:find('voice.Name="FillVoice"',1,true) and fillSource:find("How does the game work?",1,true) and fillSource:find("Nothing right now.",1,true),"Fill fixed English uploaded-audio dialogue missing")
   assert(fillSource:find('SoundService',1,true) and fillSource:find('ContentProvider:PreloadAsync',1,true),"Fill voice is not preloaded from SoundService")
-  assert(fillSource:find('bubble.Size=UDim2.fromOffset(250,92)',1,true) and fillSource:find('label.TextSize=11',1,true) and fillSource:find('nameLabel.TextSize=12',1,true),"Fill overhead dialogue is not compact")
-  assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="Talk","Fill fixed English voice metadata/prompt missing")
+  assert(fillSource:find('subtitle.Name="CinematicSubtitle"',1,true) and fillSource:find('bubble.Enabled=false',1,true) and fillSource:find("local explain=talking",1,true),"Fill cinematic subtitles/body explanation gestures missing")
+  assert(workspace.LobbyGuide:GetAttribute("VoiceLanguage")=="English" and workspace.LobbyGuide.ProximityPrompt.ActionText=="" and workspace.LobbyGuide.ProximityPrompt:GetAttribute("TextlessInteraction")==true,"Fill fixed English voice/textless prompt metadata missing")
   for i=1,6 do assert((game.ReplicatedStorage.Survival:GetAttribute("FillVoice"..i) or 0)>0,"Persisted Fill English voice asset "..i.." missing") end
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
   local clientSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source

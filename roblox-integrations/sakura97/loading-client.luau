@@ -3,6 +3,7 @@ local ReplicatedFirst=game:GetService("ReplicatedFirst")
 local RS=game:GetService("ReplicatedStorage")
 local ContentProvider=game:GetService("ContentProvider")
 local TweenService=game:GetService("TweenService")
+local RunService=game:GetService("RunService")
 
 local player=Players.LocalPlayer
 player:SetAttribute("SweanLoadingDone",false)
@@ -74,6 +75,52 @@ local function vignetteLayer(name,rotation)
 end
 vignetteLayer("HorizontalVignette",0)
 vignetteLayer("VerticalVignette",90)
+
+local function letterbox(name,anchorY,posY)
+ local bar=Instance.new("Frame")
+ bar.Name=name
+ bar.AnchorPoint=Vector2.new(0,anchorY)
+ bar.Position=UDim2.fromScale(0,posY)
+ bar.Size=UDim2.fromScale(1,.085)
+ bar.BackgroundColor3=Color3.new(0,0,0)
+ bar.BackgroundTransparency=.04
+ bar.BorderSizePixel=0
+ bar.ZIndex=7
+ bar.Parent=background
+ return bar
+end
+letterbox("CinematicTopBar",0,0)
+letterbox("CinematicBottomBar",1,1)
+
+local filmTitle=Instance.new("TextLabel")
+filmTitle.Name="FilmTitle"
+filmTitle.AnchorPoint=Vector2.new(0,1)
+filmTitle.Position=UDim2.new(.045,0,.91,0)
+filmTitle.Size=UDim2.new(.52,0,0,38)
+filmTitle.BackgroundTransparency=1
+filmTitle.Text="SURVIVERS"
+filmTitle.Font=Enum.Font.GothamBold
+filmTitle.TextSize=18
+filmTitle.TextColor3=Color3.fromRGB(238,232,224)
+filmTitle.TextTransparency=1
+filmTitle.TextXAlignment=Enum.TextXAlignment.Left
+filmTitle.ZIndex=9
+filmTitle.Parent=background
+
+local filmMeta=Instance.new("TextLabel")
+filmMeta.Name="FilmMeta"
+filmMeta.AnchorPoint=Vector2.new(1,0)
+filmMeta.Position=UDim2.new(.955,0,.105,0)
+filmMeta.Size=UDim2.new(.55,0,0,24)
+filmMeta.BackgroundTransparency=1
+filmMeta.Text="ARQUIVO 01  •  SINAL INSTÁVEL"
+filmMeta.Font=Enum.Font.GothamMedium
+filmMeta.TextSize=10
+filmMeta.TextColor3=Color3.fromRGB(170,158,158)
+filmMeta.TextTransparency=1
+filmMeta.TextXAlignment=Enum.TextXAlignment.Right
+filmMeta.ZIndex=9
+filmMeta.Parent=background
 
 local world=Instance.new("WorldModel")
 world.Name="LoadingWorld"
@@ -255,11 +302,28 @@ local impactHand=behindHand+Vector3.new(0,0,.52+screen.Size.X/2+.035)
 local retreatHand=behindHand+Vector3.new(0,0,.28)
 
 local cameraBase
+local impactActive=false
+local cameraClock=0
 local function resizeCamera()
  cameraBase=fitLoadingCamera(viewport,camera,tv,tableModel)
 end
 resizeCamera()
 viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(resizeCamera)
+
+local driftConnection
+driftConnection=RunService.RenderStepped:Connect(function(dt)
+ if not gui.Parent then
+  if driftConnection then driftConnection:Disconnect() driftConnection=nil end
+  return
+ end
+ cameraClock+=math.min(dt,.05)
+ if cameraBase and not impactActive then
+  local x=math.sin(cameraClock*.55)*.035
+  local y=math.sin(cameraClock*.37+1.4)*.018
+  local roll=math.sin(cameraClock*.29)*math.rad(.18)
+  camera.CFrame=cameraBase*CFrame.new(x,y,math.sin(cameraClock*.22)*.025)*CFrame.Angles(0,0,roll)
+ end
+end)
 
 local handDriver=Instance.new("CFrameValue")
 handDriver.Value=hand:GetPivot()
@@ -292,14 +356,25 @@ local function revealHand()
 end
 
 local function cameraImpact()
+ impactActive=true
  for i=1,8 do
   local x=math.sin(i*3.7)*.055
   local y=math.cos(i*4.1)*.035
-  camera.CFrame=cameraBase*CFrame.new(x,y,0)
+  camera.CFrame=cameraBase*CFrame.new(x,y,0)*CFrame.Angles(0,0,math.rad((i%2==0 and 1 or -1)*.28))
   task.wait(.018)
  end
  camera.CFrame=cameraBase
+ impactActive=false
 end
+
+task.spawn(function()
+ waitUntil(.28)
+ TweenService:Create(filmTitle,TweenInfo.new(.55,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency=0}):Play()
+ TweenService:Create(filmMeta,TweenInfo.new(.65,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency=.12}):Play()
+ waitUntil(3.35)
+ TweenService:Create(filmTitle,TweenInfo.new(.5),{TextTransparency=1}):Play()
+ TweenService:Create(filmMeta,TweenInfo.new(.5),{TextTransparency=1}):Play()
+end)
 
 task.spawn(function()
  waitUntil(4.62)

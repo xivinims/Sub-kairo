@@ -149,7 +149,9 @@ dialogUI.ResetOnSpawn=false dialogUI.IgnoreGuiInset=true dialogUI.Parent=resourc
 local example=assert(dialoguePackage:FindFirstChild("showcase npc",true))
 local bubble=assert(example.Head:FindFirstChild("gui")):Clone() bubble.Parent=head
 bubble.name.Text="Fill"
-local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt" prompt.ActionText="Talk" prompt.ObjectText="Fill" prompt.MaxActivationDistance=14 prompt.RequiresLineOfSight=false prompt.Parent=npc
+local prompt=Instance.new("ProximityPrompt") prompt.Name="ProximityPrompt"
+prompt.ActionText="" prompt.ObjectText="" prompt.MaxActivationDistance=14 prompt.RequiresLineOfSight=false prompt.ClickablePrompt=true
+prompt:SetAttribute("TextlessInteraction",true) prompt.Parent=npc
 game:GetService("CollectionService"):AddTag(prompt,"NPCprompt")
 
 local pending=SS:FindFirstChild("PendingLobbyGuide") if pending then pending:Destroy() end

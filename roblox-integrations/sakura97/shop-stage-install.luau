@@ -83,8 +83,9 @@ merchant.Parent=room
 end
 assert(merchant.Humanoid.RigType==Enum.HumanoidRigType.R6,"Shop merchant must be R6")
 
-local prompt=Instance.new("ProximityPrompt",root) prompt.Name="SuviversShopPrompt" prompt.ObjectText="Loja / Shop" prompt.ActionText="Abrir / Open"
-prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=true prompt.HoldDuration=0
+local prompt=Instance.new("ProximityPrompt",root) prompt.Name="SuviversShopPrompt"
+prompt.ObjectText="" prompt.ActionText="" prompt:SetAttribute("TextlessInteraction",true)
+prompt.MaxActivationDistance=10 prompt.RequiresLineOfSight=true prompt.HoldDuration=0 prompt.ClickablePrompt=true
 -- Keep the DOORS room only as the full-screen shop backdrop. The physical
 -- monster room is removed from the lobby; only its shopkeeper remains in the house.
 local priorRoom=lobby:FindFirstChild("DoorsMerchantRoom") if priorRoom then priorRoom:Destroy() end
@@ -202,17 +203,31 @@ local p=game:GetService("Players").LocalPlayer
 local npc=workspace:WaitForChild("JediLibrary"):WaitForChild("ShopMerchant")
 local torso=npc:WaitForChild("Torso")
 local root=npc:WaitForChild("HumanoidRootPart")
-local joint=root:FindFirstChildWhichIsA("Motor6D")
+local neck=torso:FindFirstChild("Neck")
+local left=torso:FindFirstChild("Left Shoulder")
+local right=torso:FindFirstChild("Right Shoulder")
+local joint=root:FindFirstChild("RootJoint") or root:FindFirstChildWhichIsA("Motor6D")
 local base=joint and joint.C0
-Run.RenderStepped:Connect(function()
+local neckBase=neck and neck.C0
+local leftBase=left and left.C0
+local rightBase=right and right.C0
+local t=0
+Run.RenderStepped:Connect(function(dt)
  local character=p.Character local hr=character and character:FindFirstChild("HumanoidRootPart")
  if not hr or not joint or not joint.Parent then return end
+ t+=math.min(dt,.05)
  local delta=root.CFrame:PointToObjectSpace(hr.Position)
- local yaw=delta.Magnitude<24 and math.clamp(math.atan2(-delta.X,-delta.Z),-.22,.22) or 0
- local target=base*CFrame.Angles(0,yaw,math.sin(os.clock()*1.3)*.012)
- joint.C0=joint.C0:Lerp(target,.08)
+ local nearby=delta.Magnitude<20
+ local yaw=nearby and math.clamp(math.atan2(-delta.X,-delta.Z),-.28,.28) or 0
+ local breath=math.sin(t*1.45)
+ local explain=nearby and math.max(0,math.sin(t*.78)) or 0
+ local alpha=1-math.exp(-dt*5.5)
+ joint.C0=joint.C0:Lerp(base*CFrame.new(0,breath*.018,0)*CFrame.Angles(breath*.012,yaw*.34,math.sin(t*.55)*.012),alpha)
+ if neck then neck.C0=neck.C0:Lerp(neckBase*CFrame.Angles(math.sin(t*1.15)*.025,yaw*.72,0),alpha) end
+ if left then left.C0=left.C0:Lerp(leftBase*CFrame.Angles(-explain*.085,0,-explain*.055+breath*.008),alpha) end
+ if right then right.C0=right.C0:Lerp(rightBase*CFrame.Angles(-explain*.12,0,explain*.075-breath*.008),alpha) end
 end)
 ]==]
 client.Parent=clients
 end
-return {ok=true,asset=12467124775,rig="R6",outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=false,physicalMonsterShop=false,merchantPlacement="KitchenNearSpawn",merchantPosition=tostring(root.Position)}
+return {ok=true,asset=12467124775,rig="R6",outfitItems=#ids,headless=#ids>0,animatedShop=true,textlessPrompt=true,bodyGestures=true,underStairWall=false,physicalMonsterShop=false,merchantPlacement="KitchenNearSpawn",merchantPosition=tostring(root.Position)}
