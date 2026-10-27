@@ -2,14 +2,39 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-social-lobby-v1';
+const BUILD_ID = 'dead-signal-foundation-test-v2';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const SHARED_MODULES = ['GameConfig', 'RemoteProtocol', 'AssetManifest'];
+const SERVER_MODULES = [
+  'SaveService',
+  'ChapterService',
+  'CheckpointService',
+  'PowerService',
+  'WireService',
+  'DoorService',
+  'InteractionService',
+  'DialogueService',
+  'EventDirector',
+  'StalkerService',
+  'NoiseService',
+  'DebugService',
+  'SafeAssetImporter',
+];
+const CLIENT_MODULES = [
+  'InputController',
+  'ObjectiveController',
+  'DialogueController',
+  'WireController',
+  'ScreenEffectsController',
+];
+
 async function roblox(url, options = {}) {
   const key = process.env.ROBLOX_API_KEY;
   if (!key) throw new Error('Missing ROBLOX_API_KEY');
+
   let last;
   for (let attempt = 0; attempt < 6; attempt++) {
     const response = await fetch(url, {
@@ -27,7 +52,7 @@ async function roblox(url, options = {}) {
     try { data = JSON.parse(raw); } catch { data = { raw }; }
 
     if (response.ok) return data;
-    last = new Error('HTTP ' + response.status + ': ' + raw.slice(0, 1200));
+    last = new Error('HTTP ' + response.status + ': ' + raw.slice(0, 1400));
     if (![429, 500, 502, 503, 504].includes(response.status)) throw last;
     await sleep(2500 * (attempt + 1));
   }
@@ -44,7 +69,7 @@ async function execute(script, label) {
   while (['QUEUED', 'PENDING', 'PROCESSING'].includes(task.state)) {
     if (Date.now() > deadline) throw new Error(label + ': timeout');
     if (!String(task.path || '').includes(TARGET)) throw new Error(label + ': wrong target');
-    await sleep(1600);
+    await sleep(1500);
     task = await roblox(CLOUD + task.path);
   }
 
@@ -60,37 +85,60 @@ async function execute(script, label) {
 }
 
 function luaLongString(source) {
-  const close = ']====]';
-  if (source.includes(close)) throw new Error('Luau source delimiter collision');
-  return '[====[' + source + close;
+  for (let level = 4; level < 12; level++) {
+    const eq = '='.repeat(level);
+    const close = ']' + eq + ']';
+    if (!source.includes(close)) return '[' + eq + '[' + source + close;
+  }
+  throw new Error('Unable to encode Luau source safely');
+}
+
+async function readModule(group, name) {
+  return fs.readFile(new URL('./base/' + group + '/' + name + '.luau', import.meta.url), 'utf8');
+}
+
+async function moduleStatements(group, names, parentVar) {
+  const sources = await Promise.all(names.map((name) => readModule(group, name)));
+  return names.map((name, index) =>
+    'module(' + parentVar + ', ' + JSON.stringify(name) + ', ' + luaLongString(sources[index]) + ')'
+  ).join('\n');
 }
 
 async function main() {
-  const [patch, server, client, loading, verify] = await Promise.all([
-    fs.readFile(new URL('./patch.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./server.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./client.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./loading.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./verify.luau', import.meta.url), 'utf8'),
+  const [template, verify, serverBootstrap, clientBootstrap, sharedStatements, serverStatements, clientStatements] = await Promise.all([
+    fs.readFile(new URL('./foundation-test-install.luau', import.meta.url), 'utf8'),
+    fs.readFile(new URL('./foundation-test-verify.luau', import.meta.url), 'utf8'),
+    fs.readFile(new URL('./base/server/ServerBootstrap.luau', import.meta.url), 'utf8'),
+    fs.readFile(new URL('./base/client/ClientBootstrap.luau', import.meta.url), 'utf8'),
+    moduleStatements('shared', SHARED_MODULES, 'sharedFolder'),
+    moduleStatements('server', SERVER_MODULES, 'services'),
+    moduleStatements('client', CLIENT_MODULES, 'clientModules'),
   ]);
 
-  let install = patch
-    .replace('__SERVER_SOURCE__', luaLongString(server))
-    .replace('__CLIENT_SOURCE__', luaLongString(client))
-    .replace('__LOADING_SOURCE__', luaLongString(loading));
+  let install = template
+    .replace('__SHARED_MODULES__', sharedStatements)
+    .replace('__SERVER_MODULES__', serverStatements)
+    .replace('__CLIENT_MODULES__', clientStatements)
+    .replace('__SERVER_BOOTSTRAP__', luaLongString(serverBootstrap))
+    .replace('__CLIENT_BOOTSTRAP__', luaLongString(clientBootstrap));
 
-  if (install.includes('__SERVER_SOURCE__') || install.includes('__CLIENT_SOURCE__') || install.includes('__LOADING_SOURCE__')) {
-    throw new Error('Publisher source placeholder replacement failed');
-  }
+  const leftovers = [
+    '__SHARED_MODULES__',
+    '__SERVER_MODULES__',
+    '__CLIENT_MODULES__',
+    '__SERVER_BOOTSTRAP__',
+    '__CLIENT_BOOTSTRAP__',
+  ].filter((token) => install.includes(token));
+  if (leftovers.length) throw new Error('Publisher placeholders remain: ' + leftovers.join(', '));
   if (!install.includes(BUILD_ID)) throw new Error('Build marker missing');
 
-  const installed = await execute(install, 'install');
+  const installed = await execute(install, 'foundation-install');
   if (!installed?.ok || !installed?.published || installed.build !== BUILD_ID) {
     throw new Error('Install failed: ' + JSON.stringify(installed));
   }
 
-  await sleep(3500);
-  const verified = await execute(verify, 'verify');
+  await sleep(4000);
+  const verified = await execute(verify, 'foundation-verify');
   if (!verified?.ok || verified.build !== BUILD_ID) {
     throw new Error('Verification failed: ' + JSON.stringify(verified));
   }
@@ -106,7 +154,7 @@ async function main() {
   }
 
   console.log(JSON.stringify({
-    stage: 'dead-signal-social-lobby-published',
+    stage: 'dead-signal-foundation-test-published',
     universeId: UNIVERSE_ID,
     placeId: PLACE_ID,
     installed,
