@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-ch01-polish-v7';
+const BUILD_ID = 'dead-signal-bramble-arena-v1';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,40 +111,16 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template, verify, serverBootstrap, clientBootstrap, sharedStatements, serverStatements, clientStatements] = await Promise.all([
-    fs.readFile(new URL('./chapter-install.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./chapter-validate.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./base/server/ServerBootstrap.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./base/client/ClientBootstrap.luau', import.meta.url), 'utf8'),
-    moduleStatements('shared', SHARED_MODULES, 'sharedFolder'),
-    moduleStatements('server', SERVER_MODULES, 'services'),
-    moduleStatements('client', CLIENT_MODULES, 'clientModules'),
-  ]);
-
-  let install = template
-    .replace('__COLLISION_PASS__', await fs.readFile(new URL('./collision-pass.luau', import.meta.url), 'utf8'))
-    .replace('__GRABPACK_INSTALL__', await fs.readFile(new URL('./grabpack-install.luau', import.meta.url), 'utf8'))
-    .replace('__MENU_STAGE__', await fs.readFile(new URL('./menu-stage.luau', import.meta.url), 'utf8'))
-    .replace('__ENVIRONMENT_PASS__', await fs.readFile(new URL('./environment-pass.luau', import.meta.url), 'utf8'))
-    .replace('__VISUAL_DRESSING__', await fs.readFile(new URL('./visual-dressing.luau', import.meta.url), 'utf8'))
-    .replace('__CHAPTER_MAP__', await fs.readFile(new URL('./chapter-map.luau', import.meta.url), 'utf8'))
-    .replace('__PREPUBLISH_VALIDATE__', 'local validation = (function()\n' + verify + '\nend)()\nassert(validation.ok, HttpService:JSONEncode(validation))')
-    .replace('__SHARED_MODULES__', sharedStatements)
-    .replace('__SERVER_MODULES__', serverStatements)
-    .replace('__CLIENT_MODULES__', clientStatements)
-    .replace('__SERVER_BOOTSTRAP__', luaLongString(serverBootstrap))
-    .replace('__CLIENT_BOOTSTRAP__', luaLongString(clientBootstrap));
-
-  const leftovers = [
-    '__SHARED_MODULES__',
-    '__SERVER_MODULES__',
-    '__CLIENT_MODULES__',
-    '__SERVER_BOOTSTRAP__',
-    '__CLIENT_BOOTSTRAP__',
-  ].filter((token) => install.includes(token));
-  if (leftovers.length) throw new Error('Publisher placeholders remain: ' + leftovers.join(', '));
-  if (!install.includes(BUILD_ID)) throw new Error('Build marker missing');
-
+  const [template, verify, importer, animation, server, client] = await Promise.all(
+    ['arena-install.luau','arena-validate.luau','base/server/SafeAssetImporter.luau','arena-animation.luau','arena-server.luau','arena-client.luau'].map(
+      path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
+  const install=template
+    .replace('__IMPORTER__',luaLongString(importer))
+    .replace('__ANIMATION__',luaLongString(animation))
+    .replace('__SERVER__',luaLongString(server))
+    .replace('__CLIENT__',luaLongString(client))
+    .replace('__PREPUBLISH_VALIDATE__','local validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
+  if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded arena placeholder');
   if (process.argv.includes('--dry-run')) {
     await fs.writeFile(new URL('./assembled-install.luau',import.meta.url),install);
     console.log(JSON.stringify({build:BUILD_ID,bytes:install.length,dryRun:true})); return;
