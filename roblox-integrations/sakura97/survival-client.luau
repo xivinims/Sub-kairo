@@ -222,13 +222,57 @@ iconLine(countdownIcon,"HourHand",12,12,12,6,2)
 iconLine(countdownIcon,"MinuteHand",12,12,17,15,2)
 local countdownText=text(countdown,"Time",L("Aguardando jogadores","Waiting for players"),UDim2.new(1,-38,1,0),UDim2.fromOffset(36,0))
 countdownText.TextSize=14 countdownText.Font=Enum.Font.GothamBold countdownText.TextXAlignment=Enum.TextXAlignment.Left countdownText.TextWrapped=false
-local top=panel("Round",UDim2.fromOffset(68,68),UDim2.new(.5,-34,0,8))
-top.BackgroundTransparency=.22 top.BackgroundColor3=Color3.fromRGB(9,10,12)
-top:FindFirstChildOfClass("UICorner").CornerRadius=UDim.new(1,0)
-top.UIStroke.Enabled=true top.UIStroke.Thickness=2 top.UIStroke.Transparency=.15
-top.UIStroke.Color=Color3.fromRGB(224,224,219)
-Instance.new("UIAspectRatioConstraint",top).AspectRatio=1
-local timer=text(top,"Timer","0:00",UDim2.fromScale(1,1),UDim2.new()) timer.Font=Enum.Font.GothamBold timer.TextSize=17
+local top=panel("Round",UDim2.fromOffset(92,108),UDim2.new(.5,-46,0,8))
+top.BackgroundTransparency=1 top.UIStroke.Enabled=false
+top:SetAttribute("ReferenceClockStyle","IMG_2414")
+top:SetAttribute("TransparentOuterBackground",true)
+
+local clockFace=Instance.new("Frame",top)
+clockFace.Name="ReferenceClockFace"
+clockFace.AnchorPoint=Vector2.new(.5,0)
+clockFace.Position=UDim2.new(.5,0,0,0)
+clockFace.Size=UDim2.fromOffset(82,82)
+clockFace.BackgroundColor3=Color3.fromRGB(184,184,181)
+clockFace.BorderSizePixel=0
+clockFace.ZIndex=top.ZIndex+1
+Instance.new("UICorner",clockFace).CornerRadius=UDim.new(1,0)
+local clockAspect=Instance.new("UIAspectRatioConstraint",clockFace) clockAspect.AspectRatio=1
+
+local clockCenter=Instance.new("Frame",clockFace)
+clockCenter.Name="ClockCenter"
+clockCenter.AnchorPoint=Vector2.new(.5,.5)
+clockCenter.Position=UDim2.fromScale(.5,.5)
+clockCenter.Size=UDim2.fromOffset(10,10)
+clockCenter.BackgroundColor3=Color3.fromRGB(5,5,5)
+clockCenter.BorderSizePixel=0
+clockCenter.ZIndex=clockFace.ZIndex+3
+Instance.new("UICorner",clockCenter).CornerRadius=UDim.new(1,0)
+
+local hourHand=Instance.new("Frame",clockFace)
+hourHand.Name="ReferenceHourHand"
+hourHand.AnchorPoint=Vector2.new(1,.5)
+hourHand.Position=UDim2.fromScale(.5,.5)
+hourHand.Size=UDim2.fromOffset(33,9)
+hourHand.Rotation=-34
+hourHand.BackgroundColor3=Color3.fromRGB(4,4,4)
+hourHand.BorderSizePixel=0
+hourHand.ZIndex=clockFace.ZIndex+2
+Instance.new("UICorner",hourHand).CornerRadius=UDim.new(1,0)
+
+local minuteHand=Instance.new("Frame",clockFace)
+minuteHand.Name="ReferenceMinuteHand"
+minuteHand.AnchorPoint=Vector2.new(0,.5)
+minuteHand.Position=UDim2.fromScale(.5,.5)
+minuteHand.Size=UDim2.fromOffset(31,9)
+minuteHand.Rotation=-90
+minuteHand.BackgroundColor3=Color3.fromRGB(4,4,4)
+minuteHand.BorderSizePixel=0
+minuteHand.ZIndex=clockFace.ZIndex+2
+Instance.new("UICorner",minuteHand).CornerRadius=UDim.new(1,0)
+
+local timer=text(top,"Timer","0:00",UDim2.new(1,0,0,22),UDim2.fromOffset(0,84))
+timer.Font=Enum.Font.GothamBold timer.TextSize=15 timer.TextColor3=Color3.fromRGB(238,238,238)
+timer.TextStrokeTransparency=.65
 local detail=text(top,"Detail","",UDim2.new(),UDim2.new()) detail.Visible=false
 local mode="walk"
 local topActions=Instance.new("Frame",gui) topActions.Name="TopActions" topActions.BackgroundTransparency=1
