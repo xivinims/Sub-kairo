@@ -1,6 +1,7 @@
 local assets=assert(game.ReplicatedFirst:FindFirstChild("LoadingCinematicAssets"))
 local world=Instance.new("WorldModel")
-local camera=Instance.new("Camera") camera.FieldOfView=34
+local camera=Instance.new("Camera") camera.FieldOfView=29
+local RunService={RenderStepped={Connect=function(_,fn) return {Disconnect=function() end} end}}
 local viewport={AbsoluteSize=Vector2.new(1624,750)}
 local function compose()
 __LOADING_COMPOSITION__
