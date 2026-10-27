@@ -197,8 +197,8 @@ for _,part in ipairs(lobby:GetDescendants()) do
   local flatDistance=(Vector3.new(part.Position.X,origin.Y,part.Position.Z)-origin).Magnitude
   local authoredConsole=part.Name=="Furniture_Console_A" and string.find(text,"console desk",1,true)
   local authoredTable=(string.find(text,"table",1,true) or string.find(text,"desk",1,true)) and part.Size.X>=4 and part.Size.Z>=1.8
-  if (authoredConsole or authoredTable) and math.abs(topY-origin.Y)<=2.5 and flatDistance>=8 and flatDistance<=65 then
-   local score=flatDistance+(authoredConsole and -20 or 0)
+  if authoredConsole and math.abs(topY-origin.Y)<=10 then
+   local score=flatDistance+math.abs(topY-origin.Y)*15
    if score<bestDistance then
     bestDistance=score
     receptionTop=part
@@ -206,7 +206,7 @@ for _,part in ipairs(lobby:GetDescendants()) do
   end
  end
 end
-assert(receptionTop,"No authored lower-floor table found for Fill")
+assert(receptionTop,"No authored lower-floor console table found for Fill")
 
 local towardSpawn=Vector3.new(origin.X-receptionTop.Position.X,0,origin.Z-receptionTop.Position.Z)
 if towardSpawn.Magnitude<.1 then towardSpawn=Vector3.new(1,0,0) else towardSpawn=towardSpawn.Unit end
@@ -365,4 +365,5 @@ local accessoryIds={}
 for _,a in ipairs(applied:GetAccessories(true)) do table.insert(accessoryIds,a.AssetId) end
 posePackage:Destroy() dialoguePackage:Destroy()
 return {ok=true,staged=false,headless=true,rig="R6",appearanceVerified=true,userId=ownerId,shirt=description.Shirt,pants=description.Pants,accessoryIds=accessoryIds,seatedGap=seatedGap,receptionPosition=tostring(torso.Position),tablePosition=tostring(receptionTop.Position),localGaze=true,voiceLanguage="English",uploadedVoice=true}
+
 

@@ -165,6 +165,8 @@ function M.build(parent,player,onClose)
  corner(fallback,8)
  stroke(fallback,Color3.fromRGB(63,42,40),.1,2)
  fallback.Parent=book
+ fallback.Visible=not book.IsLoaded
+ book:GetPropertyChangedSignal("IsLoaded"):Connect(function() fallback.Visible=not book.IsLoaded end)
 
  local title=label(book,"Title","CONFIGURAÇÕES",UDim2.fromScale(.34,.065),UDim2.fromScale(.115,.095),46)
  title.Font=Enum.Font.Garamond
@@ -244,13 +246,15 @@ function M.build(parent,player,onClose)
 
  local function addSlider(spec,order)
   local card=cardBase(spec.key,order)
-  local name=label(card,"Label",spec.label,UDim2.new(.68,0,0,28),UDim2.fromOffset(10,7),48)
+  local name=label(card,"Label",spec.label,UDim2.new(1,-20,0,36),UDim2.fromOffset(10,4),48)
   local translations={MusicVolume="MUSIC",EffectsVolume="EFFECTS",ControlScale="CONTROL SIZE",CameraSensitivity="SENSITIVITY",CameraFOV="FIELD OF VIEW"}
   if player:GetAttribute("GameLanguage")=="en" then name.Text=translations[spec.key] or spec.label end
-  name.TextSize=15
+  name.TextSize=14
+  name.TextScaled=true
+  local fit=Instance.new("UITextSizeConstraint",name) fit.MinTextSize=10 fit.MaxTextSize=14
   name.Font=Enum.Font.Garamond
   name.TextXAlignment=Enum.TextXAlignment.Left
-  local valueLabel=label(card,"Value","",UDim2.new(.28,0,0,28),UDim2.new(.70,0,0,7),48)
+  local valueLabel=label(card,"Value","",UDim2.new(1,-20,0,18),UDim2.fromOffset(10,42),48)
   valueLabel.TextSize=15
   valueLabel.TextXAlignment=Enum.TextXAlignment.Right
 
@@ -278,7 +282,7 @@ function M.build(parent,player,onClose)
   corner(fill,4)
   fill.Parent=rail
 
-  local dragging=false
+  local dragging=nil
   local function current()
    return math.clamp(tonumber(ensure(player,spec.key,spec.default)) or spec.default,spec.min,spec.max)
   end
@@ -298,13 +302,16 @@ function M.build(parent,player,onClose)
   minus.Activated:Connect(function() apply(current()-spec.step) end)
   plus.Activated:Connect(function() apply(current()+spec.step) end)
   rail.InputBegan:Connect(function(input)
-   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true fromX(input.Position.X) end
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=input fromX(input.Position.X) end
   end)
   rail.InputEnded:Connect(function(input)
-   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+   if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=nil end
   end)
   track(UIS.InputChanged:Connect(function(input)
-   if dragging and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then fromX(input.Position.X) end
+   if dragging and (input==dragging or input.UserInputType==Enum.UserInputType.MouseMovement) then fromX(input.Position.X) end
+  end))
+  track(UIS.InputEnded:Connect(function(input)
+   if input==dragging or input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=nil end
   end))
   track(player:GetAttributeChangedSignal(spec.key):Connect(function() if card.Parent then
    local v=current() valueLabel.Text=tostring(v)..(spec.suffix or "") fill.Size=UDim2.fromScale((v-spec.min)/(spec.max-spec.min),1)
@@ -314,9 +321,9 @@ function M.build(parent,player,onClose)
 
  local function addToggle(nameText,key,default,order)
   local card=cardBase(key,order)
-  local name=label(card,"Label",nameText,UDim2.new(.64,0,1,0),UDim2.fromOffset(10,0),48)
+  local name=label(card,"Label",nameText,UDim2.new(1,-20,0,38),UDim2.fromOffset(10,4),48)
   name.TextSize=15 name.TextXAlignment=Enum.TextXAlignment.Left
-  local b=textButton(card,"Toggle","",UDim2.fromOffset(82,34),UDim2.new(1,-92,.5,-17),49)
+  local b=textButton(card,"Toggle","",UDim2.fromOffset(82,34),UDim2.new(.5,-41,1,-43),49)
   local function refresh()
    local on=ensure(player,key,default)==true
    local english=player:GetAttribute("GameLanguage")=="en"
@@ -341,7 +348,8 @@ function M.build(parent,player,onClose)
   name.TextSize=15 name.TextXAlignment=Enum.TextXAlignment.Left
   local pt=textButton(card,"Portuguese","PORTUGUÊS",UDim2.new(.46,0,0,34),UDim2.new(.03,0,1,-42),49)
   local en=textButton(card,"English","ENGLISH",UDim2.new(.46,0,0,34),UDim2.new(.51,0,1,-42),49)
-  pt.TextSize=13 en.TextSize=13
+  pt.TextSize=13 en.TextSize=13 pt.TextScaled=true en.TextScaled=true
+  for _,b in ipairs({pt,en}) do local fit=Instance.new("UITextSizeConstraint",b) fit.MinTextSize=9 fit.MaxTextSize=13 end
   local function refresh()
    local lang=ensure(player,"GameLanguage","pt-BR")
    pt.BackgroundColor3=lang=="pt-BR" and RED or Color3.fromRGB(224,207,175)
