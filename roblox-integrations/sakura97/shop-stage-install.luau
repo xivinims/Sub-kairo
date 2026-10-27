@@ -65,7 +65,17 @@ for _,d in ipairs(merchant:GetDescendants()) do
  elseif d:IsA("BasePart") then d.Anchored=d==root d.CanCollide=false d.CanTouch=false d.CanQuery=false end
 end
 local stand=room:FindFirstChild("ShopStand",true)
-local standCF,standSize=stand and stand:GetBoundingBox()
+local standCF=nil
+if stand then
+ if stand:IsA("Model") then
+  standCF=select(1,stand:GetBoundingBox())
+ elseif stand:IsA("BasePart") then
+  standCF=stand.CFrame
+ else
+  local standPart=stand:FindFirstChildWhichIsA("BasePart",true)
+  if standPart then standCF=standPart.CFrame end
+ end
+end
 local pos=keeperCF and keeperCF.Position or (standCF and standCF.Position) or (floor.Position+Vector3.new(0,0,-floor.Size.Z*.3))
 pos=Vector3.new(pos.X,floorTop+3,pos.Z)
 merchant:PivotTo(CFrame.lookAt(pos,Vector3.new(cameraCF.Position.X,pos.Y,cameraCF.Position.Z)))
