@@ -73,56 +73,111 @@ else
 end
 local prompt=Instance.new("ProximityPrompt",root) prompt.Name="SuviversShopPrompt" prompt.ObjectText="Loja / Shop" prompt.ActionText="Abrir / Open"
 prompt.MaxActivationDistance=16 prompt.RequiresLineOfSight=false prompt.HoldDuration=0
--- The room is outdoors beside the house, facing its front entrance. No duplicate
--- doors or collision sheets are placed in the lobby's existing passages.
-local reference=lobby:GetAttribute("FormerDoorCFrame")
-local yard=assert(lobby:FindFirstChild("OutdoorGround"))
-local target=reference.Position-reference.LookVector*58+reference.RightVector*48
-local y=yard.Position.Y+yard.Size.Y/2
-local destination=CFrame.lookAt(Vector3.new(target.X,y+.5,target.Z),Vector3.new(reference.Position.X,y+.5,reference.Position.Z))
-local relative=floorCF:ToObjectSpace(room:GetPivot())
-room:PivotTo(destination*relative)
-local prior=lobby:FindFirstChild("DoorsMerchantRoom") if prior then prior:Destroy() end
-room:SetAttribute("SourceAssetId",12467124775) room:SetAttribute("MerchantReady",#ids>0) room.Parent=lobby
--- Doors at the two ends stay open; imported hollow decorative meshes are noncolliding.
-local doors=room:FindFirstChild("Doors")
-if doors then for _,d in ipairs(doors:GetDescendants()) do if d:IsA("BasePart") then d.CanCollide=false d.Transparency=1 end end end
-for _,d in ipairs(room:GetDescendants()) do
- if d:IsA("BasePart") and (d.Transparency>=.98 or d.Name:lower():find("doorframe",1,true)) then d.CanCollide=false end
- if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then d.Enabled=true d.Brightness=math.clamp(d.Brightness,.55,2.25) end
+-- Keep the DOORS room only as the full-screen shop backdrop. The physical
+-- monster room is removed from the lobby; only its shopkeeper remains in the house.
+local priorRoom=lobby:FindFirstChild("DoorsMerchantRoom") if priorRoom then priorRoom:Destroy() end
+local priorMerchant=lobby:FindFirstChild("ShopMerchant")
+if priorMerchant and priorMerchant~=merchant then priorMerchant:Destroy() end
+merchant.Name="ShopMerchant"
+merchant.Parent=lobby
+for _,d in ipairs(merchant:GetDescendants()) do
+ if d:IsA("LuaSourceContainer") or d:IsA("ClickDetector") then d:Destroy()
+ elseif d:IsA("BasePart") then d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false end
 end
 
--- Restore the missing solid wall volume directly under the authored foyer staircase.
--- The fixed lobby mesh stays untouched; this repair only fills the invisible hole below it.
-do
- local house=assert(lobby:FindFirstChild("House"),"Lobby house missing for under-stair wall repair")
- local stair
- for _,d in ipairs(house:GetDescendants()) do
-  if d:IsA("BasePart") and string.find(string.lower(d.Name),"house_foyer_stairs_lower",1,true) then stair=d break end
+local house=assert(lobby:FindFirstChild("House"),"Lobby house missing for kitchen merchant placement")
+local spawnPos=lobby:GetAttribute("VerifiedSpawn")
+if typeof(spawnPos)~="Vector3" then spawnPos=house:GetPivot().Position end
+local function ancestryText(part)
+ local names={string.lower(part.Name)}
+ local p=part.Parent
+ for _=1,6 do
+  if not p or p==lobby then break end
+  table.insert(names,string.lower(p.Name))
+  p=p.Parent
  end
- assert(stair,"Main foyer stair mesh missing for under-stair wall repair")
- local old=lobby:FindFirstChild("UnderStairWallRepair") if old then old:Destroy() end
- local params=RaycastParams.new()
- params.FilterType=Enum.RaycastFilterType.Exclude
- params.FilterDescendantsInstances={stair,room}
- params.RespectCanCollide=true
- local castOrigin=stair.Position+Vector3.new(0,math.max(8,stair.Size.Y*.55),0)
- local hit=workspace:Raycast(castOrigin,Vector3.new(0,-120,0),params)
- local floorY=hit and hit.Position.Y or (stair.Position.Y-stair.Size.Y*.6)
- local wallHeight=math.clamp(stair.Position.Y-floorY+stair.Size.Y*.18,6,math.max(8,stair.Size.Y*1.15))
- local wall=Instance.new("Part")
- wall.Name="UnderStairWallRepair"
- wall.Size=Vector3.new(math.max(5,stair.Size.X*.90),wallHeight,math.max(5,stair.Size.Z*.90))
- wall.CFrame=CFrame.new(stair.Position.X,floorY+wallHeight/2,stair.Position.Z)*stair.CFrame.Rotation
- wall.Anchored=true wall.CanCollide=true wall.CanTouch=false wall.CanQuery=true
- wall.Material=Enum.Material.WoodPlanks
- wall.Color=Color3.fromRGB(43,36,35)
- wall.TopSurface=Enum.SurfaceType.Smooth wall.BottomSurface=Enum.SurfaceType.Smooth
- wall:SetAttribute("VisualRepair","LobbyUnderStairWall")
- wall.Parent=lobby
- lobby:SetAttribute("UnderStairWallRepaired",true)
- lobby:SetAttribute("UnderStairWallRevision",2)
+ return table.concat(names," ")
 end
+local kitchenAnchor=nil
+local best=math.huge
+for _,p in ipairs(house:GetDescendants()) do
+ if p:IsA("BasePart") and p.Transparency<.98 then
+  local t=ancestryText(p)
+  local kitchen=string.find(t,"kitchen",1,true) or string.find(t,"cozinha",1,true)
+  local fixture=string.find(t,"counter",1,true) or string.find(t,"cabinet",1,true)
+   or string.find(t,"sink",1,true) or string.find(t,"stove",1,true)
+   or string.find(t,"oven",1,true) or string.find(t,"fridge",1,true)
+   or string.find(t,"refrigerator",1,true) or string.find(t,"island",1,true)
+  local flat=(Vector3.new(p.Position.X,spawnPos.Y,p.Position.Z)-spawnPos).Magnitude
+  if (kitchen or fixture) and flat<=90 then
+   local score=flat-(kitchen and 36 or 0)-(fixture and 10 or 0)
+   if score<best then best=score kitchenAnchor=p end
+  end
+ end
+end
+if not kitchenAnchor then
+ for _,p in ipairs(house:GetDescendants()) do
+  if p:IsA("BasePart") and p.Transparency<.98 then
+   local t=ancestryText(p)
+   local furniture=string.find(t,"furniture",1,true) or string.find(t,"table",1,true) or string.find(t,"desk",1,true)
+   local flat=(Vector3.new(p.Position.X,spawnPos.Y,p.Position.Z)-spawnPos).Magnitude
+   if furniture and flat<=45 and flat<best then best=flat kitchenAnchor=p end
+  end
+ end
+end
+assert(kitchenAnchor,"No kitchen/furniture anchor was found near the lobby spawn")
+
+local toSpawn=Vector3.new(spawnPos.X-kitchenAnchor.Position.X,0,spawnPos.Z-kitchenAnchor.Position.Z)
+if toSpawn.Magnitude<.1 then
+ local ref=lobby:GetAttribute("FormerDoorCFrame")
+ toSpawn=typeof(ref)=="CFrame" and -Vector3.new(ref.LookVector.X,0,ref.LookVector.Z) or Vector3.new(0,0,-1)
+end
+if toSpawn.Magnitude<.1 then toSpawn=Vector3.new(0,0,-1) else toSpawn=toSpawn.Unit end
+local side=Vector3.new(-toSpawn.Z,0,toSpawn.X)
+local edge=math.max(kitchenAnchor.Size.X,kitchenAnchor.Size.Z)*.5+3.5
+local placementCandidates={
+ kitchenAnchor.Position+toSpawn*edge,
+ kitchenAnchor.Position-toSpawn*edge,
+ kitchenAnchor.Position+side*edge,
+ kitchenAnchor.Position-side*edge,
+ spawnPos+side*8+toSpawn*5,
+ spawnPos-side*8+toSpawn*5,
+}
+local rayParams=RaycastParams.new()
+rayParams.FilterType=Enum.RaycastFilterType.Include
+rayParams.FilterDescendantsInstances={lobby}
+rayParams.RespectCanCollide=true
+local kitchenFloor=nil
+for _,candidate in ipairs(placementCandidates) do
+ local hit=workspace:Raycast(Vector3.new(candidate.X,spawnPos.Y+14,candidate.Z),Vector3.new(0,-44,0),rayParams)
+ if hit and hit.Normal.Y>.82 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),rayParams) then
+  kitchenFloor=hit.Position
+  break
+ end
+end
+assert(kitchenFloor,"Kitchen shopkeeper floor is blocked")
+
+local merchantCF,merchantSize=merchant:GetBoundingBox()
+local pivot=merchant:GetPivot()
+local pivotToBottom=pivot.Position.Y-(merchantCF.Position.Y-merchantSize.Y/2)
+local targetPos=Vector3.new(kitchenFloor.X,kitchenFloor.Y+pivotToBottom+.04,kitchenFloor.Z)
+local face=Vector3.new(spawnPos.X,targetPos.Y,spawnPos.Z)
+if (face-targetPos).Magnitude<.1 then face=targetPos+toSpawn end
+merchant:PivotTo(CFrame.lookAt(targetPos,face))
+merchant:SetAttribute("Placement","KitchenNearSpawn")
+merchant:SetAttribute("KitchenAnchor",kitchenAnchor:GetFullName())
+merchant:SetAttribute("PhysicalShopRemoved",true)
+lobby:SetAttribute("PhysicalMonsterShopRemoved",true)
+lobby:SetAttribute("ShopMerchantPlacement","KitchenNearSpawn")
+lobby:SetAttribute("ShopMerchantKitchenAnchor",kitchenAnchor:GetFullName())
+lobby:SetAttribute("ShopMerchantDistanceFromSpawn",(Vector3.new(targetPos.X,spawnPos.Y,targetPos.Z)-spawnPos).Magnitude)
+
+room:Destroy()
+local oldWall=lobby:FindFirstChild("UnderStairWallRepair")
+if oldWall then oldWall:Destroy() end
+lobby:SetAttribute("UnderStairWallRepaired",false)
+lobby:SetAttribute("UnderStairWallRevision",3)
+lobby:SetAttribute("InteriorWallRemoved",true)
 
 local lamp=Instance.new("PointLight",root) lamp.Name="MerchantWarmLight" lamp.Color=Color3.fromRGB(255,198,132) lamp.Brightness=1.35 lamp.Range=20 lamp.Shadows=true
 local clients=game.StarterPlayer.StarterPlayerScripts
@@ -132,8 +187,7 @@ local client=Instance.new("LocalScript") client.Name="MerchantIdle"
 client.Source=[==[
 local Run=game:GetService("RunService")
 local p=game:GetService("Players").LocalPlayer
-local room=workspace:WaitForChild("JediLibrary"):WaitForChild("DoorsMerchantRoom")
-local npc=room:WaitForChild("ShopMerchant")
+local npc=workspace:WaitForChild("JediLibrary"):WaitForChild("ShopMerchant")
 local torso=npc:WaitForChild("Torso")
 local root=npc:WaitForChild("HumanoidRootPart")
 local joint=root:FindFirstChildWhichIsA("Motor6D")
@@ -149,4 +203,4 @@ end)
 ]==]
 client.Parent=clients
 end
-return {ok=true,asset=12467124775,outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=true,merchantPosition=tostring(root.Position)}
+return {ok=true,asset=12467124775,outfitItems=#ids,headless=#ids>0,animatedShop=true,underStairWall=false,physicalMonsterShop=false,merchantPlacement="KitchenNearSpawn",merchantPosition=tostring(root.Position)}

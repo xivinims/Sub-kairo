@@ -317,28 +317,48 @@ lobby:SetAttribute("StairAccessClosed",true)
 lobby:SetAttribute("StairWarningAssetId",17143448214)
 lobby:SetAttribute("DisabledInteriorBlockers",removedBlockers)
 
--- Restore the authored under-stair facade; its existing narrow collision proxies
--- protect the wall without filling the doorway or staircase with a mesh hull.
-local underStairRestored=0
+-- The user wants the interior under-stair wall gone. Hide its authored facade too,
+-- so a later publish cannot visually recreate the wall after the generated repair is removed.
+local underStairRemoved=0
 for _,part in ipairs(house:GetDescendants()) do
  if part:IsA("BasePart") and part.Name:find("Foyer_Wall_Panel_Tall_Side_Stair_L",1,true) then
-  part.Transparency=0 part.CastShadow=true underStairRestored+=1
+  part.Transparency=1 part.CastShadow=false part.CanCollide=false part.CanTouch=false part.CanQuery=false
+  underStairRemoved+=1
  end
 end
-lobby:SetAttribute("UnderStairWallRestored",underStairRestored)
--- Derive the spawn from the actual lowest front-door frame, not old snapshot metadata.
-local frontFrame
+lobby:SetAttribute("UnderStairWallRestored",0)
+lobby:SetAttribute("UnderStairWallRemoved",underStairRemoved)
+-- Center the spawn on the complete front-door frame. Using one side-frame piece made
+-- the old spawn drift toward the wall; the combined frame center keeps it in front of the door.
+local frontFrames={}
 for _,part in ipairs(house:GetDescendants()) do
- if part:IsA("BasePart") and part.Name:find("Front_Door_Frame",1,true) and (not frontFrame or part.Position.Y<frontFrame.Position.Y) then frontFrame=part end
+ if part:IsA("BasePart") and part.Name:find("Front_Door_Frame",1,true) then table.insert(frontFrames,part) end
 end
-if frontFrame then
- local center=Vector3.zero local count=0
- for _,part in ipairs(house:GetDescendants()) do if part:IsA("BasePart") then center+=part.Position count+=1 end end
- center/=math.max(1,count)
- local normal=Vector3.new(frontFrame.CFrame.LookVector.X,0,frontFrame.CFrame.LookVector.Z).Unit
- if normal:Dot(center-frontFrame.Position)<0 then normal=-normal end
- local bottom=frontFrame.Position-Vector3.new(0,frontFrame.Size.Y*.5,0)
+if #frontFrames>0 then
+ local houseCenter=Vector3.zero local houseCount=0
+ for _,part in ipairs(house:GetDescendants()) do if part:IsA("BasePart") then houseCenter+=part.Position houseCount+=1 end end
+ houseCenter/=math.max(1,houseCount)
+ local doorSum=Vector3.zero local doorBottomY=math.huge
+ for _,part in ipairs(frontFrames) do
+  doorSum+=part.Position
+  doorBottomY=math.min(doorBottomY,part.Position.Y-part.Size.Y*.5)
+ end
+ local doorAverage=doorSum/#frontFrames
+ local bottom=Vector3.new(doorAverage.X,doorBottomY,doorAverage.Z)
+ local towardCenter=Vector3.new(houseCenter.X-bottom.X,0,houseCenter.Z-bottom.Z)
+ if towardCenter.Magnitude<.1 then towardCenter=Vector3.new(0,0,-1) else towardCenter=towardCenter.Unit end
+ local sample=frontFrames[1]
+ local look=Vector3.new(sample.CFrame.LookVector.X,0,sample.CFrame.LookVector.Z)
+ local right=Vector3.new(sample.CFrame.RightVector.X,0,sample.CFrame.RightVector.Z)
+ if look.Magnitude<.1 then look=nil else look=look.Unit end
+ if right.Magnitude<.1 then right=nil else right=right.Unit end
+ local normal
+ if look and right then normal=math.abs(look:Dot(towardCenter))>=math.abs(right:Dot(towardCenter)) and look or right
+ else normal=look or right or towardCenter end
+ if normal:Dot(towardCenter)<0 then normal=-normal end
  lobby:SetAttribute("FormerDoorCFrame",CFrame.lookAt(bottom,bottom+normal))
+ lobby:SetAttribute("FrontDoorFrameCenter",bottom)
+ lobby:SetAttribute("FrontDoorFramePartCount",#frontFrames)
 end
 local referenceCF=lobby:GetAttribute("FormerDoorCFrame")
 if typeof(referenceCF)~="CFrame" then
@@ -357,15 +377,14 @@ local floor
 local doorForward=Vector3.new(rotation.LookVector.X,0,rotation.LookVector.Z)
 if doorForward.Magnitude<.1 then doorForward=Vector3.new(1,0,0) else doorForward=doorForward.Unit end
 
--- Always prefer a safe point just INSIDE the authored doorway. FormerDoorCFrame points
--- from the door toward the previously verified interior floor, so its LookVector is the
--- inward direction. This is recalculated every publish instead of trusting an old spawn.
-for _,distance in ipairs({4.5,6,7.5,9}) do
+-- Put the spawn directly on the doorway's inward normal, centered in front of it.
+-- This prevents the old diagonal placement beside the wall.
+for _,distance in ipairs({5.5,6.5,7.5}) do
  local candidate=original+doorForward*distance
  local hit=workspace:Raycast(candidate+Vector3.new(0,4,0),Vector3.new(0,-10,0),lobbyParams)
  if hit and hit.Normal.Y>.85 and not workspace:Raycast(hit.Position+Vector3.new(0,.25,0),Vector3.new(0,7,0),lobbyParams) then
   floor=hit
-  lobby:SetAttribute("LobbySpawnMode","InsideDoor")
+  lobby:SetAttribute("LobbySpawnMode","DoorFront")
   lobby:SetAttribute("LobbySpawnDoorDistance",(Vector3.new(hit.Position.X,original.Y,hit.Position.Z)-original).Magnitude)
   break
  end
@@ -384,8 +403,9 @@ assert(floor and floor.Normal.Y>.85,"Lobby safe spawn floor missing")
 lobby:SetAttribute("VerifiedSpawn",floor.Position)
 local spawn=assert(workspace:FindFirstChild("IslandSpawn"))
 spawn.Size=Vector3.new(6,1,6)
-local face=Vector3.new(original.X,floor.Position.Y,original.Z)
-spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,spawn.Size.Y/2+.08,0),face)
+local face=floor.Position+doorForward*10
+spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,spawn.Size.Y/2+.08,0),Vector3.new(face.X,floor.Position.Y,face.Z))
+lobby:SetAttribute("LobbySpawnFacing","IntoHouse")
 spawn.Enabled=true spawn.Neutral=true spawn.Transparency=1 spawn.CanCollide=false spawn.CanTouch=false spawn.CanQuery=false spawn.Duration=0
 spawn.AllowTeamChangeOnTouch=false
 
