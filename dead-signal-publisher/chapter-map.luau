@@ -253,7 +253,7 @@ local monster=model("Threadbare")
 tag(monster,"DeadSignalStalker",{})
 local root=box(monster,"HumanoidRootPart",0,6,710,2,4,2,C(38,40,35)); root.Transparency=1; root.Anchored=false
 monster.PrimaryPart=root
-local hum=Instance.new("Humanoid"); hum.HipHeight=4; hum.MaxHealth=1000; hum.Health=1000; hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None; hum.Parent=monster
+local hum=Instance.new("Humanoid"); hum.HipHeight=4; hum.RequiresNeck=false; hum.BreakJointsOnDeath=false; hum.MaxHealth=1000; hum.Health=1000; hum.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None; hum.Parent=monster
 local function limb(name,offset,size,col)
     local p=part(monster,name,size,root.CFrame*CFrame.new(offset),col,Enum.Material.Fabric,false)
     p.Anchored=false; p.Massless=true

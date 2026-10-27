@@ -17,7 +17,7 @@ function Presentation.Start(gui,remotes,protocol,input)
     local function button(parent,text,pos,size,fn)
         local b=Instance.new("TextButton"); b.Text=text; b.Position=pos; b.Size=size
         b.BackgroundColor3=Color3.fromRGB(24,31,30); b.BackgroundTransparency=0.2; b.TextColor3=Color3.fromRGB(228,219,192)
-        b.Font=Enum.Font.GothamMedium; b.TextSize=22; b.AutoButtonColor=true; b.Parent=parent
+        b.Font=Enum.Font.GothamMedium; b.TextSize=22; b.TextScaled=true; b.AutoButtonColor=true; b.Parent=parent
         local stroke=Instance.new("UIStroke"); stroke.Color=Color3.fromRGB(102,106,83); stroke.Transparency=0.5; stroke.Parent=b
         b.Modal=true; b.Activated:Connect(fn); return b
     end
@@ -27,7 +27,7 @@ function Presentation.Start(gui,remotes,protocol,input)
     label(menu,"DEAD\nSIGNAL",UDim2.fromScale(0.075,0.1),UDim2.fromScale(0.46,0.29),Enum.Font.GothamBlack)
     label(menu,"CAPÍTULO 01 · A LINHA DE ESCUTA",UDim2.fromScale(0.08,0.405),UDim2.fromScale(0.6,0.045))
     label(menu,"AURIVANE WORKS / SIGNALWORKS 1978",UDim2.fromScale(0.08,0.91),UDim2.fromScale(0.72,0.027))
-    label(menu,"BUILD 04 · TESTE",UDim2.fromScale(0.73,0.94),UDim2.fromScale(0.25,0.025))
+    label(menu,"BUILD 05 · TESTE",UDim2.fromScale(0.73,0.94),UDim2.fromScale(0.25,0.025))
     for i=1,18 do
         local l=Instance.new("Frame"); l.BackgroundColor3=Color3.new(0,0,0); l.BackgroundTransparency=0.85
         l.BorderSizePixel=0; l.Size=UDim2.new(1,0,0,1); l.Position=UDim2.fromScale(0,i/19); l.Parent=menu

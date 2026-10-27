@@ -1,4 +1,4 @@
-local BUILD_ID = "dead-signal-ch01-assets-v4"
+local BUILD_ID = "dead-signal-ch01-scenic-v5"
 local UNIVERSE_ID = 9421311218
 local PLACE_ID = 118064584465155
 
@@ -131,6 +131,7 @@ __SHARED_MODULES__
 __CLIENT_MODULES__
 __SERVER_MODULES__
 __VISUAL_DRESSING__
+__ENVIRONMENT_PASS__
 
 local serverBootstrap = Instance.new("Script")
 serverBootstrap.Name = "ServerBootstrap"

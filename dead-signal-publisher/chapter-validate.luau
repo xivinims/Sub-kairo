@@ -34,6 +34,10 @@ end
 for _,id in ipairs({"CH01_START","CH01_BATTERY","CH01_PRODUCTION","CH01_DISTRIBUTION","CH01_DARK","CH01_CHASE","CH01_SAFE"}) do check(cps[id]~=nil,"Missing checkpoint: "..id) end
 local map=workspace:FindFirstChild("SignalworksChapter01")
 check(map~=nil,"Missing chapter map")
+if map then
+    check(map:GetAttribute("ScenicRevision")=="play-space-and-service-v5","Missing scenic pass")
+    for _,d in ipairs(map:GetDescendants()) do check(d.Name~="Wayfinding","Floating editorial sign remains") end
+end
 local parts,externalScripts=0,0
 if map then
     for _,p in ipairs(map:GetDescendants()) do
@@ -46,7 +50,7 @@ if map then
     end
 end
 check(externalScripts==0,"Map contains executable content")
-check(parts<2900,"Mobile part budget exceeded: "..parts)
+check(parts<3100,"Mobile part budget exceeded: "..parts)
 check(#Tags:GetTagged("DeadSignalRadio")==1,"Missing MARA screen")
 local monsters=Tags:GetTagged("DeadSignalStalker")
 check(#monsters==1,"Expected exactly one stalker")

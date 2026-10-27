@@ -1,6 +1,6 @@
 # Signalworks — Chapter 1 test build
 
-Build: `dead-signal-ch01-assets-v4`. Target: universe 9421311218 / place 118064584465155.
+Build: `dead-signal-ch01-scenic-v5`. Target: universe 9421311218 / place 118064584465155.
 Only branch `dead-signal-publisher` is used. Other game folders and branches are unchanged.
 
 ## Player route
@@ -43,3 +43,12 @@ The previous primitive-only dressing is replaced by selected geometry from all t
 SafeAssetImporter.Select clones only BaseParts and approved visual descendants from detached source containers; all executable code, audio, animations, prompts and constraints from the source are discarded. Door visual leaves receive our own WeldConstraints to the original DoorPanel. Original stair treads remain invisible simplified collision geometry.
 
 First-person is enforced in StarterPlayer and reapplied on play/respawn. Menus release mouse capture and disable movement; native touch camera stays available during gameplay. Settings use four tabs, scrolling rows, touch-sized +/- controls, defaults and server-validated persisted values. Sprint (22), crouch (8), walk (16) and cable carry (13) are server-authoritative. Flashlight is a local SpotLight. Graphics presets control local light activation distance and nearby light shadows. Mouse sensitivity is explicitly labelled as mouse-only.
+
+
+## Scenic revision 5
+
+Remove all Wayfinding objects from the final place, including room-title boards, lot labels, standalone node captions, sequence instruction board, route arrows and end-build placard. The tagged MARA surface is retained as CRT glass. Electrical units are engraved directly on the machine; the relay order is a repeating 2/1/3 lamp pattern rather than a hanging instruction sign. The build end is shown by the existing HUD.
+
+Public rooms receive small coloured floor inserts over the supplied floor, finer texture tiling/grout, aged mural plaster, blue painted contours, a curved reception counter, yellow corridor arches, an indoor atrium garden, suspended scenic clouds and two original playhouse facades. Maintenance and escape rooms receive pale service walls with red stripes, damaged plaster at the edges and a suspended damaged fluorescent fitting. Central progression lanes and all puzzle positions remain unchanged.
+
+The unavailable JPEG attachments were not opened; the scenic direction uses only the inline images visible in the conversation. This remains a technical engine validation, not a verified rendered playthrough.

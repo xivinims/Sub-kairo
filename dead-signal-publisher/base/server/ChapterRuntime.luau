@@ -178,7 +178,7 @@ function Run:Start()
             if self.sequence==3 then self.power:SetEnabled("PROD_SOURCE",true); self.power:Recalculate(); self:Flag("sequence",true) end
         else
             self.sequence=0; self.power:SetEnabled("PROD_SOURCE",false); self.power:Recalculate()
-            self.noise:Emit(q.Parent.Position,1,"relay-fault"); self:Feedback(p,"Falha de sequência. Consulte a placa da partida a frio.","fault")
+            self.noise:Emit(q.Parent.Position,1,"relay-fault"); self:Feedback(p,"Falha de sequência. Observe o padrão das três luzes dos relés.","fault")
         end
         return true
     end)
@@ -378,10 +378,19 @@ function Run:Zone(p,id)
             self.stalker:SetState("Chase"); self.chaseAt=os.clock(); self:Objective(6)
             self:Feedback(p,"CORRA ATÉ A DESCARGA.","chase")
         end
-    elseif id=="END" then self:Flag("chapterTestComplete",true) end
+    elseif id=="END" and not self.chapters:GetFlag(p,"chapterTestComplete") then
+        self:Flag("chapterTestComplete",true)
+        self:Feedback(p,"FIM DA BUILD DE TESTE", "info")
+    end
 end
 function Run:Step()
     local now=os.clock()
+    local pattern=math.floor(now/0.75)%6+1
+    for _,lamp in ipairs(Tags:GetTagged("DeadSignalSequenceLamp")) do
+        local on=self.stage==3 and pattern==lamp:GetAttribute("SequenceOrder")
+        lamp.Color=on and Color3.fromRGB(223,186,91) or Color3.fromRGB(57,60,49)
+        lamp.Material=on and Enum.Material.Neon or Enum.Material.Metal
+    end
     for _,p in ipairs(self:Active()) do
         local root=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
         local hum=p.Character and p.Character:FindFirstChildOfClass("Humanoid")

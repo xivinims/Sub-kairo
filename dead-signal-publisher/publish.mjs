@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-ch01-assets-v4';
+const BUILD_ID = 'dead-signal-ch01-scenic-v5';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -119,6 +119,7 @@ async function main() {
   ]);
 
   let install = template
+    .replace('__ENVIRONMENT_PASS__', await fs.readFile(new URL('./environment-pass.luau', import.meta.url), 'utf8'))
     .replace('__VISUAL_DRESSING__', await fs.readFile(new URL('./visual-dressing.luau', import.meta.url), 'utf8'))
     .replace('__CHAPTER_MAP__', await fs.readFile(new URL('./chapter-map.luau', import.meta.url), 'utf8'))
     .replace('__PREPUBLISH_VALIDATE__', 'local validation = (function()\n' + verify + '\nend)()\nassert(validation.ok, HttpService:JSONEncode(validation))')
