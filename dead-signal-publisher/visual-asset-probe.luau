@@ -7,7 +7,7 @@ for _,d in ipairs(a:GetDescendants()) do
     if d:IsA("BasePart") then
         local p=d.Position
         table.insert(r.parts,{name=d.Name,parent=d.Parent.Name,path=d:GetFullName(),class=d.ClassName,
-            position={p.X,p.Y,p.Z},size={d.Size.X,d.Size.Y,d.Size.Z},color={d.Color.R,d.Color.G,d.Color.B}})
+            cframe={d.CFrame:GetComponents()},mesh=d:IsA("MeshPart") and d.MeshId or nil,texture=d:IsA("MeshPart") and d.TextureID or nil,position={p.X,p.Y,p.Z},size={d.Size.X,d.Size.Y,d.Size.Z},color={d.Color.R,d.Color.G,d.Color.B}})
     elseif d:IsA("Model") or d:IsA("Tool") then
         table.insert(r.groups,{name=d.Name,path=d:GetFullName(),class=d.ClassName})
     elseif d:IsA("Sound") then table.insert(r.sounds,{name=d.Name,id=d.SoundId}) end
