@@ -322,9 +322,46 @@ local function actionLayout()
  bar.Position=UDim2.new(1,-24,1,-110)
 end
 local notice=text(gui,"Notice","",UDim2.new(.72,0,0,46),UDim2.new(.14,0,1,-132)) notice.TextSize=15
-local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.82 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
-local settingsUI=Settings.build(settingsOverlay,player,function() settingsOverlay.Visible=false end)
-local settingsButton=button(gui,"SettingsButton","⚙",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),function() settingsOverlay.Visible=not settingsOverlay.Visible end) settingsButton.TextSize=27 settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local settingsOverlay=Instance.new("Frame",gui) settingsOverlay.Name="SettingsOverlay" settingsOverlay.Size=UDim2.fromScale(1,1) settingsOverlay.BackgroundColor3=Color3.new(0,0,0) settingsOverlay.BackgroundTransparency=.34 settingsOverlay.ZIndex=40 settingsOverlay.Visible=false
+local settingsBlur=game:GetService("Lighting"):FindFirstChild("SuviversSettingsBlur") or Instance.new("BlurEffect")
+settingsBlur.Name="SuviversSettingsBlur" settingsBlur.Size=0 settingsBlur.Parent=game:GetService("Lighting")
+local settingsCameraState=nil
+local controlsObject=nil
+pcall(function() controlsObject=require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls() end)
+local function closeSettings()
+ if not settingsOverlay.Visible then return end
+ settingsOverlay.Visible=false
+ player:SetAttribute("SettingsOpen",false)
+ if controlsObject then pcall(function() controlsObject:Enable() end) end
+ if settingsCameraState and workspace.CurrentCamera then
+  workspace.CurrentCamera.CameraType=settingsCameraState.type
+  workspace.CurrentCamera.CFrame=settingsCameraState.cframe
+  workspace.CurrentCamera.Focus=settingsCameraState.focus
+ end
+ settingsCameraState=nil
+ TweenService:Create(settingsBlur,TweenInfo.new(.18),{Size=0}):Play()
+end
+local settingsUI=Settings.build(settingsOverlay,player,closeSettings)
+local function openSettings()
+ if settingsOverlay.Visible then closeSettings() return end
+ local cam=workspace.CurrentCamera
+ if cam then
+  settingsCameraState={type=cam.CameraType,cframe=cam.CFrame,focus=cam.Focus}
+  cam.CameraType=Enum.CameraType.Scriptable cam.CFrame=settingsCameraState.cframe cam.Focus=settingsCameraState.focus
+ end
+ if controlsObject then pcall(function() controlsObject:Disable() end) end
+ player:SetAttribute("SettingsOpen",true)
+ settingsOverlay.Visible=true
+ TweenService:Create(settingsBlur,TweenInfo.new(.2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=10}):Play()
+end
+local settingsButton=button(gui,"SettingsButton","",UDim2.fromOffset(44,44),UDim2.new(1,-52,0,2),openSettings)
+settingsButton.BackgroundTransparency=1 settingsButton.UIStroke.Enabled=false
+local settingsIcon=Instance.new("ImageLabel",settingsButton)
+settingsIcon.Name="SettingsHexIcon" settingsIcon.BackgroundTransparency=1 settingsIcon.AnchorPoint=Vector2.new(.5,.5)
+settingsIcon.Position=UDim2.fromScale(.5,.5) settingsIcon.Size=UDim2.fromOffset(34,34) settingsIcon.ScaleType=Enum.ScaleType.Fit
+local settingsIconId=tonumber(net:GetAttribute("SettingsIconImageId")) or 0
+settingsIcon.Image=settingsIconId>0 and ("rbxassetid://"..settingsIconId) or ""
+settingsIcon.ZIndex=settingsButton.ZIndex+1
 local function formatSeconds(seconds)
  seconds=math.max(0,math.floor((tonumber(seconds) or 0)+.5))
  return string.format("%d:%02d",math.floor(seconds/60),seconds%60)
@@ -859,7 +896,7 @@ railButton("Emotes","E",3,function() setShopTab("Emotes") end)
 railButton("Inventory","◇",4,function() setShopTab("Items") end)
 railButton("Settings","⚙",5,function()
  shopOverlay.Visible=false
- settingsOverlay.Visible=true
+ openSettings()
 end)
 
 local function refreshShopSearch()
@@ -1022,7 +1059,8 @@ do
  end)
  game:GetService("ProximityPromptService").PromptTriggered:Connect(function(prompt,who)
   if prompt.Name~="SuviversShopPrompt" or (who and who~=player) or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then return end
-  settingsOverlay.Visible=false shopOverlay.Visible=true
+  if settingsOverlay.Visible then closeSettings() end
+   shopOverlay.Visible=true
  end)
 end
 
@@ -1077,13 +1115,11 @@ local xpTrack=Instance.new("Frame",profileHUD) xpTrack.Name="XP" xpTrack.Size=UD
 local xpFill=Instance.new("Frame",xpTrack) xpFill.Name="Fill" xpFill.Size=UDim2.fromScale(0,1) xpFill.BackgroundColor3=Color3.fromRGB(96,118,205) xpFill.BorderSizePixel=0 Instance.new("UICorner",xpFill).CornerRadius=UDim.new(0,5)
 local levelText=text(xpTrack,"Level",L("NÍVEL 1","LEVEL 1"),UDim2.new(1,-12,0,18),UDim2.fromOffset(6,-20)) levelText.TextSize=11 levelText.Font=Enum.Font.GothamBold levelText.TextXAlignment=Enum.TextXAlignment.Left
 local pointsText=text(profileHUD,"Points","0",UDim2.new(1,0,0,28),UDim2.fromOffset(0,26)) pointsText.TextSize=19 pointsText.Position=UDim2.fromOffset(34,26) pointsText.TextColor3=Color3.fromRGB(231,209,155) pointsText.TextXAlignment=Enum.TextXAlignment.Left
-local coinView=Instance.new("ViewportFrame",profileHUD) coinView.Name="Coin" coinView.Size=UDim2.fromOffset(28,28) coinView.Position=UDim2.fromOffset(0,26) coinView.BackgroundTransparency=1 coinView.Ambient=Color3.fromRGB(200,200,200)
-local coinTemplate=net:FindFirstChild("CoinDisplay")
-if coinTemplate then
- local model=coinTemplate:Clone() model.Parent=coinView
- local cf,size=model:GetBoundingBox()
- local cam=Instance.new("Camera",coinView) cam.FieldOfView=35 cam.CFrame=CFrame.lookAt(cf.Position+Vector3.new(0,size.Magnitude*.18,size.Magnitude*1.7),cf.Position) coinView.CurrentCamera=cam
-end
+local coinView=Instance.new("ImageLabel",profileHUD)
+coinView.Name="RobuxIcon" coinView.Size=UDim2.fromOffset(28,28) coinView.Position=UDim2.fromOffset(0,26)
+coinView.BackgroundTransparency=1 coinView.Image="rbxasset://textures/ui/common/robux@3x.png"
+coinView.ImageColor3=Color3.fromRGB(226,226,226) coinView.ScaleType=Enum.ScaleType.Fit
+coinView:SetAttribute("OfficialRobuxTexture",true)
 local healthHUD=panel("Condition",UDim2.fromOffset(148,38),UDim2.new(0,18,1,-52)) healthHUD.UIStroke.Color=Color3.fromRGB(106,150,91)
 local condition=text(healthHUD,"Value","♥  100",UDim2.fromScale(1,1),UDim2.new()) condition.Font=Enum.Font.GothamBold condition.TextSize=22 condition.TextColor3=Color3.fromRGB(144,223,111)
 local staminaTrack=Instance.new("Frame",gui) staminaTrack.Name="Stamina" staminaTrack.Size=UDim2.fromOffset(148,7) staminaTrack.Position=UDim2.new(0,18,1,-64)
@@ -2155,7 +2191,7 @@ RunService.RenderStepped:Connect(function(dt)
  if result.Visible and os.clock()>=resultUntil then hideResult() end
  settingsButton.Visible=not hidden and not result.Visible
  shop.button.Visible=false -- NPC-only shop entry
- settingsOverlay.Visible=settingsOverlay.Visible and not hidden
+ if hidden and settingsOverlay.Visible then closeSettings() end
  if hidden or player:GetAttribute("InRound") or player:GetAttribute("Spectating") then shop.overlay.Visible=false end
  profileHUD.Visible=not hidden and not result.Visible
  roster.Visible=not hidden and not result.Visible and player:GetAttribute("InRound")==true and player:GetAttribute("IsJason")~=true and player:GetAttribute("Spectating")~=true
