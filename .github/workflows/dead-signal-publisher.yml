@@ -2,6 +2,11 @@ name: Dead Signal Publisher
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - dead-signal-publisher
+    paths:
+      - "dead-signal-publisher/release.trigger"
 
 permissions:
   contents: read
@@ -13,7 +18,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout dead signal publisher branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -24,7 +29,7 @@ jobs:
       - name: Validate publisher syntax
         run: node --check dead-signal-publisher/publish.mjs
 
-      - name: Run Dead Signal publisher
+      - name: Publish and verify Dead Signal social lobby
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/publish.mjs
