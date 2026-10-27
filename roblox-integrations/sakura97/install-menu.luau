@@ -173,25 +173,38 @@ config:SetAttribute("LogoAssetId",logoId or 0)
 config:SetAttribute("SourceAssetId",0)
 config.Parent=RS
 
--- Ten-second cinematic loading set. Keep the two requested Toolbox assets in
--- ReplicatedFirst so the TV and table exist before the rest of the place finishes replicating.
+-- Ten-second cinematic loading set. Keep the requested Toolbox assets in
+-- ReplicatedFirst so the TV, table and horror hand exist before the rest of the place finishes replicating.
 local cinematic=Instance.new("Folder")
 cinematic.Name="LoadingCinematicAssets"
 cinematic:SetAttribute("TVAssetId",421148437)
 cinematic:SetAttribute("TableAssetId",397786287)
+cinematic:SetAttribute("HandAssetId",8091676187)
 cinematic:SetAttribute("Duration",10)
 
 local function importLoadingModel(id,expectedName)
  local asset=game:GetService("AssetService"):LoadAssetAsync(id)
  local source=asset:FindFirstChild(expectedName,true) or asset:FindFirstChildWhichIsA("Model",true)
- assert(source and source:IsA("Model"),"Loading asset "..id.." missing model "..expectedName)
- local model=source:Clone()
+ local model
+ if source and source:IsA("Model") then
+  model=source:Clone()
+ else
+  model=Instance.new("Model")
+  for _,child in ipairs(asset:GetChildren()) do
+   if child:IsA("BasePart") or child:IsA("Model") or child:IsA("Folder") or child:IsA("Accessory") then
+    child:Clone().Parent=model
+   end
+  end
+  assert(model:FindFirstChildWhichIsA("BasePart",true),"Loading asset "..id.." missing renderable geometry "..expectedName)
+ end
  model.Name=expectedName
  for _,d in ipairs(model:GetDescendants()) do
   if d:IsA("LuaSourceContainer") or d:IsA("RemoteEvent") or d:IsA("RemoteFunction") or d:IsA("ClickDetector") or d:IsA("ProximityPrompt") then
    d:Destroy()
   elseif d:IsA("BasePart") then
    d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false
+  elseif d:IsA("ParticleEmitter") or d:IsA("Trail") then
+   d.Enabled=false
   elseif d:IsA("Sound") then
    d:Destroy()
   end
@@ -204,7 +217,9 @@ end
 
 local loadingTV=importLoadingModel(421148437,"TV")
 local loadingTable=importLoadingModel(397786287,"Mesa")
+local loadingHand=importLoadingModel(8091676187,"BloodHand")
 assert(loadingTV:FindFirstChild("Screen",true),"Old Television screen surface missing")
+assert(loadingHand:FindFirstChildWhichIsA("BasePart",true),"Blood hand geometry missing")
 cinematic.Parent=first
 
 local loader=Instance.new("LocalScript")

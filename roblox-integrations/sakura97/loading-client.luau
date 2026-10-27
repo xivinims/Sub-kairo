@@ -33,8 +33,8 @@ glow.Name="TelevisionGlow"
 glow.AnchorPoint=Vector2.new(.5,.5)
 glow.Position=UDim2.fromScale(.5,.48)
 glow.Size=UDim2.new(.48,0,.62,0)
-glow.BackgroundColor3=Color3.fromRGB(46,39,35)
-glow.BackgroundTransparency=.92
+glow.BackgroundColor3=Color3.fromRGB(70,49,54)
+glow.BackgroundTransparency=.89
 glow.BorderSizePixel=0
 glow.ZIndex=1
 glow.Parent=background
@@ -46,11 +46,34 @@ viewport.Name="Cinematic"
 viewport.Size=UDim2.fromScale(1,1)
 viewport.BackgroundTransparency=1
 viewport.BorderSizePixel=0
-viewport.Ambient=Color3.fromRGB(12,12,15)
-viewport.LightColor=Color3.fromRGB(126,112,102)
+viewport.Ambient=Color3.fromRGB(3,3,5)
+viewport.LightColor=Color3.fromRGB(82,69,68)
 viewport.LightDirection=Vector3.new(-.7,-1,-.45)
 viewport.ZIndex=2
 viewport.Parent=background
+
+local function vignetteLayer(name,rotation)
+ local layer=Instance.new("Frame")
+ layer.Name=name
+ layer.Size=UDim2.fromScale(1,1)
+ layer.BackgroundColor3=Color3.new(0,0,0)
+ layer.BorderSizePixel=0
+ layer.ZIndex=3
+ layer.Parent=background
+ local gradient=Instance.new("UIGradient")
+ gradient.Rotation=rotation
+ gradient.Transparency=NumberSequence.new({
+  NumberSequenceKeypoint.new(0,.06),
+  NumberSequenceKeypoint.new(.22,.68),
+  NumberSequenceKeypoint.new(.5,1),
+  NumberSequenceKeypoint.new(.78,.68),
+  NumberSequenceKeypoint.new(1,.06),
+ })
+ gradient.Parent=layer
+ return layer
+end
+vignetteLayer("HorizontalVignette",0)
+vignetteLayer("VerticalVignette",90)
 
 local world=Instance.new("WorldModel")
 world.Name="LoadingWorld"
@@ -150,7 +173,10 @@ tv:PivotTo(CFrame.new(0,tableTop-tvBottom+.035,0)*tv:GetPivot())
 tvCF,tvSize=worldBounds(tv)
 screen=assert(tv:FindFirstChild("Screen",true))
 
+screen.Material=Enum.Material.Neon
+screen.Color=Color3.fromRGB(76,57,62)
 screen.Transparency=.34
+screen:SetAttribute("LoadingScreenGlow",true)
 screen.Material=Enum.Material.Neon
 screen.Color=Color3.fromRGB(105,119,126)
 for _,part in ipairs(tv:GetDescendants()) do
@@ -182,7 +208,9 @@ logoPanel.CastShadow=false
 logoPanel.Material=Enum.Material.SmoothPlastic
 logoPanel.Color=Color3.new(0,0,0)
 logoPanel.Transparency=.96
-logoPanel.Size=Vector3.new(.035,screen.Size.Z*.74,screen.Size.Y*.74)
+local logoExtent=math.min(screen.Size.Y,screen.Size.Z)*.72
+logoPanel.Size=Vector3.new(.035,logoExtent,logoExtent)
+logoPanel:SetAttribute("PreserveLogoAspect",true)
 logoPanel.CFrame=CFrame.fromMatrix(screen.Position+Vector3.new(0,0,screen.Size.X/2+.028),Vector3.new(0,0,1),Vector3.new(0,1,0))
 logoPanel.Parent=world
 
@@ -193,43 +221,38 @@ logo.Texture="rbxassetid://99002027743613"
 logo.Transparency=0
 logo.Parent=logoPanel
 
-local hand=Instance.new("Model")
+local hand=assert(assets:FindFirstChild("BloodHand"),"Requested blood hand asset missing"):Clone()
 hand.Name="HandInsideTelevision"
+hand:SetAttribute("SourceAssetId",8091676187)
 hand.Parent=world
-local handPlane=CFrame.fromMatrix(screen.Position,Vector3.new(0,0,1),Vector3.new(0,1,0))
-local handColor=Color3.fromRGB(180,171,166)
 
-local function handPart(name,size,localCF)
- local p=Instance.new("Part")
- p.Name=name
- p.Size=size
- p.CFrame=handPlane*localCF
- p.Anchored=true
- p.CanCollide=false
- p.CanTouch=false
- p.CanQuery=false
- p.CastShadow=false
- p.Material=Enum.Material.SmoothPlastic
- p.Color=handColor
- p.Transparency=1
- p.Parent=hand
- return p
+local handVisuals={}
+for _,d in ipairs(hand:GetDescendants()) do
+ if d:IsA("BasePart") then
+  d.Anchored=true d.CanCollide=false d.CanTouch=false d.CanQuery=false d.CastShadow=false
+  handVisuals[d]=d.Transparency
+  d.Transparency=1
+ elseif d:IsA("Decal") or d:IsA("Texture") then
+  handVisuals[d]=d.Transparency
+  d.Transparency=1
+ elseif d:IsA("ParticleEmitter") or d:IsA("Trail") then
+  d.Enabled=false
+ end
 end
 
-local palm=handPart("Palm",Vector3.new(.075,.64,.52),CFrame.new(-.52,-.08,0))
-hand.PrimaryPart=palm
-local fingerZ={-.205,-.072,.065,.198}
-local fingerLength={.39,.49,.52,.44}
-for i=1,4 do
- local len=fingerLength[i]
- handPart("Finger"..i,Vector3.new(.065,len,.095),CFrame.new(-.52,.32+len/2,fingerZ[i]))
+local _,rawHandSize=worldBounds(hand)
+local rawHandExtent=math.max(rawHandSize.X,rawHandSize.Y,rawHandSize.Z)
+local targetHandExtent=math.min(screen.Size.Y,screen.Size.Z)*.84
+if rawHandExtent>.001 then
+ local currentScale=1
+ pcall(function() currentScale=hand:GetScale() end)
+ pcall(function() hand:ScaleTo(currentScale*targetHandExtent/rawHandExtent) end)
 end
-handPart("Thumb",Vector3.new(.065,.28,.11),CFrame.new(-.52,-.02,.34)*CFrame.Angles(math.rad(38),0,0))
-
-local behindHand=handPlane*CFrame.new(-.54,-.08,0)
-local impactHand=handPlane*CFrame.new(screen.Size.X/2+.02,-.08,0)
-local retreatHand=handPlane*CFrame.new(-.18,-.08,0)
-hand:PivotTo(behindHand)
+local handCenter=screen.Position+Vector3.new(0,-math.min(screen.Size.Y,screen.Size.Z)*.05,0)
+moveBoundingBox(hand,CFrame.new(handCenter+Vector3.new(0,0,-.52)))
+local behindHand=hand:GetPivot()
+local impactHand=behindHand+Vector3.new(0,0,.52+screen.Size.X/2+.035)
+local retreatHand=behindHand+Vector3.new(0,0,.28)
 
 local cameraBase
 local function resizeCamera()
@@ -257,14 +280,14 @@ task.spawn(function()
   local pulse=(n%5==0) and .52 or ((n%2==0) and .32 or .41)
   screen.Transparency=pulse
   logo.Transparency=(n%7==0) and .18 or 0
-  viewport.Ambient=(n%4==0) and Color3.fromRGB(16,15,18) or Color3.fromRGB(11,11,14)
+  viewport.Ambient=(n%4==0) and Color3.fromRGB(7,6,9) or Color3.fromRGB(2,2,4)
   task.wait(.055+(n%3)*.018)
  end
 end)
 
 local function revealHand()
- for _,p in ipairs(hand:GetDescendants()) do
-  if p:IsA("BasePart") then p.Transparency=.06 end
+ for obj,alpha in pairs(handVisuals) do
+  if obj.Parent then obj.Transparency=alpha end
  end
 end
 
