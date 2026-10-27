@@ -136,6 +136,62 @@ function first(task){
 }
 
 
+
+function makeSettingsHexIconPng(size=128){
+ const w=size,h=size,raw=Buffer.alloc((w*4+1)*h);
+ const cx=(w-1)/2,cy=(h-1)/2,outer=w*.36,inner=w*.14;
+ function insideHex(x,y,r){
+  const dx=Math.abs(x-cx),dy=Math.abs(y-cy);
+  return dx<=r && dy<=r*.8660254 && 1.7320508*dx+dy<=1.7320508*r;
+ }
+ function sample(px,py){
+  let hit=0,white=0;
+  for(let sy=0;sy<4;sy++) for(let sx=0;sx<4;sx++){
+   const x=px+(sx+.5)/4,y=py+(sy+.5)/4;
+   if(insideHex(x,y,outer)) hit++;
+   const dx=x-cx,dy=y-cy;
+   if(dx*dx+dy*dy<=inner*inner) white++;
+  }
+  if(!hit) return [0,0,0,0];
+  if(white) return [245,245,245,Math.round(255*Math.max(hit,white)/16)];
+  return [31,30,33,Math.round(255*hit/16)];
+ }
+ for(let y=0;y<h;y++){
+  let off=y*(w*4+1); raw[off++]=0;
+  for(let x=0;x<w;x++){
+   const c=sample(x,y); raw[off++]=c[0]; raw[off++]=c[1]; raw[off++]=c[2]; raw[off++]=c[3];
+  }
+ }
+ const sig=Buffer.from([137,80,78,71,13,10,26,10]);
+ const ihdr=Buffer.alloc(13); ihdr.writeUInt32BE(w,0); ihdr.writeUInt32BE(h,4); ihdr[8]=8; ihdr[9]=6;
+ return Buffer.concat([sig,pngChunk('IHDR',ihdr),pngChunk('IDAT',deflateSync(raw,{level:9})),pngChunk('IEND')]);
+}
+async function createUiImageAsset(bytes,displayName,description,filename){
+ const key=process.env.ROBLOX_API_KEY;
+ if(!key) throw new Error('Missing ROBLOX_API_KEY');
+ const request={assetType:'Decal',displayName,description,creationContext:{creator:{userId:'8344738123'}}};
+ const form=new FormData();
+ form.append('request',JSON.stringify(request));
+ form.append('fileContent',new Blob([bytes],{type:'image/png'}),filename);
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets',{
+  method:'POST',headers:{'x-api-key':key},body:form,signal:AbortSignal.timeout(60000)
+ });
+ const raw=await response.text(); let operation; try{operation=JSON.parse(raw)}catch{operation={raw}}
+ if(!response.ok||!operation.path) throw new Error('UI image upload failed '+response.status+': '+JSON.stringify(operation));
+ const deadline=Date.now()+240000;
+ while(!operation.done){
+  if(Date.now()>deadline) throw new Error('UI image upload timed out');
+  await sleep(1500);
+  const r=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{headers:{'x-api-key':key},signal:AbortSignal.timeout(60000)});
+  const t=await r.text(); try{operation=JSON.parse(t)}catch{operation={raw:t}}
+  if(!r.ok) throw new Error('UI image operation failed '+r.status+': '+JSON.stringify(operation));
+ }
+ if(operation.error) throw new Error('UI image operation failed: '+JSON.stringify(operation.error));
+ const id=Number(operation?.response?.assetId);
+ if(!Number.isFinite(id)||id<=0) throw new Error('UI image upload returned no assetId');
+ return id;
+}
+
 const FILL_VOICE_REVISION='2026-10-25-v3-exact-mp3';
 const FILL_VOICE_SPECS=[
  {index:1,files:['voice1.part00.b64','voice1.part01.b64'],bytes:179104,sha256:'f266844a662d530fadb4e1c46ba495621dbb3edee58330cbafedee5250021821'},
@@ -495,6 +551,36 @@ const bookReady=first(await execute(`
 settingsBookAssetId=Number(bookReady.id);
 }
 console.log('SETTINGS_BOOK_ASSET_ID',settingsBookAssetId);
+
+let settingsIconImageId=0;
+try{
+ const state=first(await execute(\`
+  local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
+  return {id=net and (net:GetAttribute("SettingsIconImageId") or 0) or 0}
+ \`));
+ settingsIconImageId=Number(state?.id)||0;
+}catch{}
+if(!settingsIconImageId){
+ const decalId=await createUiImageAsset(
+  makeSettingsHexIconPng(),
+  'Suvivers settings hex icon',
+  'Transparent settings button icon based on the owner supplied reference.',
+  'settings-hex.png'
+ );
+ const ready=first(await execute(\`
+  local asset=game:GetService("AssetService"):LoadAssetAsync(\${decalId})
+  local decal=asset:FindFirstChildWhichIsA("Decal",true)
+  local image=decal and tonumber(decal.Texture:match("%d+")) or \${decalId}
+  asset:Destroy()
+  local net=game:GetService("ReplicatedStorage"):FindFirstChild("Survival")
+  if net then net:SetAttribute("SettingsIconImageId",image) end
+  game:GetService("AssetService"):SavePlaceAsync({PlaceId=79738710219521,SaveWithoutPublish=false})
+  return {id=image}
+ \`));
+ settingsIconImageId=Number(ready.id);
+}
+console.log('SETTINGS_ICON_IMAGE_ID',settingsIconImageId);
+
 const fillVoiceIds=await ensureFillVoiceAssets();
 console.log('FILL_VOICE_IDS',JSON.stringify(fillVoiceIds));
 const fixedLobbyAssetId=await ensureFixedLobbyAsset();
@@ -515,6 +601,7 @@ ${install}
 end
 local result=install()
 game.ReplicatedStorage.Survival:SetAttribute("SettingsBookAssetId",${settingsBookAssetId})
+game.ReplicatedStorage.Survival:SetAttribute("SettingsIconImageId",${settingsIconImageId})
 result.settingsBookAssetId=${settingsBookAssetId}
 result.actionSources={}
 for _,name in ipairs({"Parry","BreakPallet","CrouchWalk","InjuredCrouchWalk","Stun","Vault"}) do
@@ -773,10 +860,13 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=.5",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Night lobby ambience missing")
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
+  assert((game.ReplicatedStorage.Survival:GetAttribute("SettingsIconImageId") or 0)>0,"Settings hex icon image missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('coinView.Image="rbxasset://textures/ui/common/robux@3x.png"',1,true),"Official Robux HUD icon missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("settingsCameraState",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("SuviversSettingsBlur",1,true),"Frozen camera settings backdrop missing")
   assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay FOV setting missing")
   assert(not settingsSource:find('key="visual"',1,true) and not settingsSource:find('VisualSaturation',1,true) and not settingsSource:find('VisualTime',1,true),"Removed visual/environment settings returned")
-  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true) and settingsSource:find('addRibbon("game","JOGO","GAME"',1,true),"Book settings panel missing")
-   assert(settingsSource:find("BOOK_PAGE_SOUND_ID=6102885802",1,true) and settingsSource:find('frame:SetAttribute("BookAudio",true)',1,true) and settingsSource:find("animateBookOpen",1,true),"Book paper audio/open animation missing")
+  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","CinematicSideSettings")',1,true) and settingsSource:find('nav.Name="CategoryRail"',1,true) and settingsSource:find('panel.Name="OptionsPanel"',1,true),"Cinematic side settings panel missing")
+   assert(settingsSource:find('click.SoundId="rbxassetid://6102885802"',1,true) and settingsSource:find('frame:SetAttribute("FrozenCameraBackdrop",true)',1,true),"Settings open audio/frozen-camera metadata missing")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
   local shopSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
