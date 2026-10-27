@@ -14,16 +14,17 @@ for _,resolution in ipairs({Vector2.new(1624,750),Vector2.new(375,812),Vector2.n
  viewport.AbsoluteSize=resolution fit(viewport,camera,tv,mesa)
  local tan=math.tan(math.rad(camera.FieldOfView*.5))
  local aspect=resolution.X/resolution.Y
- for _,model in ipairs({tv,mesa}) do
-  for _,part in ipairs(model:GetDescendants()) do
-   if part:IsA("BasePart") then
-    for x=-1,1,2 do for y=-1,1,2 do for z=-1,1,2 do
-     local point=camera.CFrame:PointToObjectSpace(part.CFrame:PointToWorldSpace(part.Size*Vector3.new(x,y,z)*.5))
-     assert(point.Z<0,"Loading part behind camera")
-     assert(math.abs(point.X/(-point.Z*tan*aspect))<.99 and math.abs(point.Y/(-point.Z*tan))<.99,"Loading TV/table cropped at "..tostring(resolution))
-    end end end
-   end
+ for _,part in ipairs(tv:GetDescendants()) do
+  if part:IsA("BasePart") then
+   for x=-1,1,2 do for y=-1,1,2 do for z=-1,1,2 do
+    local point=camera.CFrame:PointToObjectSpace(part.CFrame:PointToWorldSpace(part.Size*Vector3.new(x,y,z)*.5))
+    assert(point.Z<0,"Loading TV part behind camera")
+    assert(math.abs(point.X/(-point.Z*tan*aspect))<.99 and math.abs(point.Y/(-point.Z*tan))<.99,"Loading TV cropped at "..tostring(resolution))
+   end end end
   end
+ end
+ for _,part in ipairs(mesa:GetDescendants()) do
+  if part:IsA("BasePart") then assert(part.Transparency==1,"Loading table must stay invisible") end
  end
  tested+=1
 end
