@@ -18,45 +18,14 @@ async function execute(script){
   const v=task?.output?.results?.[0]; if(typeof v!=='string') return v??null; try{return JSON.parse(v)}catch{return v}
 }
 const script=String.raw`
-local HttpService=game:GetService("HttpService")
-local RS=game:GetService("ReplicatedStorage")
-local SSS=game:GetService("ServerScriptService")
-local SP=game:GetService("StarterPlayer").StarterPlayerScripts
-local SG=game:GetService("StarterGui")
-local RF=game:GetService("ReplicatedFirst")
-local survival=assert(RS:FindFirstChild("Survival"))
-local lobby=assert(workspace:FindFirstChild("JediLibrary"))
-local server=assert(SSS:FindFirstChild("SurvivalServer"))
-local client=assert(SP:FindFirstChild("SurvivalClient"))
-local builder=assert(SSS:FindFirstChild("MapBuilder"))
-local menu=assert(SG.TomiaszMenu:FindFirstChild("MenuController"))
-local loading=assert(RF:FindFirstChild("SweanLoadingController"))
-local assets=assert(game.ServerStorage:FindFirstChild("SurvivalAssets"))
-local report={
- placeVersion=game.PlaceVersion,
- build=survival:GetAttribute("Version"),
- lobbySource=lobby:GetAttribute("SourceAssetId"),
- survivorRig=survival:GetAttribute("SurvivorRig"),
- runtimeRig=RS.SweanRuntime:GetAttribute("SurvivorRig"),
- lobbyHeldOpen=lobby.Door:GetAttribute("HeldOpen"),
- automaticThemeAbsent=survival:FindFirstChild("JasonTheme")==nil and game:GetService("SoundService"):FindFirstChild("LocalJasonTheme")==nil,
- r6UserAppearance=server.Source:find("GetHumanoidDescriptionFromUserIdAsync",1,true)~=nil and server.Source:find("Enum.HumanoidRigType.R6",1,true)~=nil,
- playerRoster=client.Source:find("PlayerRoster",1,true)~=nil,
- spectatorNoSelf=client.Source:find("Spectator UI must",1,true)==nil and client.Source:find("spectate.Visible=false",1,true)~=nil,
- fakeArenaDoorAbsent=builder.Source:find("InvisibleMarker",1,true)~=nil and builder.Source:find('smallPart(entrance,"Left"',1,true)==nil,
- winnerActualKiller=client.Source:find("WinnerPursuer",1,true)~=nil,
- finalSurvivorScene=client.Source:find("VictorySurvivor",1,true)~=nil,
- doorsVictoryScene=client.Source:find("VictoryDoorsScene",1,true)~=nil,
- loadingLogoOnly=loading:GetAttribute("LogoOnlyLoading")==true,
- menuClosePortrait=menu.Source:find("ClosePortrait",1,true)~=nil,
- menuDelayedBlackout=menu.Source:find("HorrorBlackout",1,true)~=nil,
- mapCount=#assets.Maps:GetChildren(),
- killerCount=#assets.Killers:GetChildren(),
- maps={}
-}
-for _,map in ipairs(assets.Maps:GetChildren()) do
- table.insert(report.maps,{name=map.Name,source=map:GetAttribute("SourceAssetId"),killerClearance=map:GetAttribute("KillerSpawnClearance"),arrivalCount=#map.ArrivalSpawns:GetChildren(),safeCount=#map.SafePoints:GetChildren()})
+local function describe(model)
+ local parts={}
+ for _,p in ipairs(model:GetDescendants()) do
+  if p:IsA("BasePart") then table.insert(parts,{name=p:GetFullName(),size={p.Size.X,p.Size.Y,p.Size.Z},cf={p.CFrame:GetComponents()},collide=p.CanCollide,transparency=p.Transparency,attributes=p:GetAttributes()}) end
+ end
+ return parts
 end
-return HttpService:JSONEncode(report)
+local assets=game.ReplicatedFirst.LoadingCinematicAssets
+return game.HttpService:JSONEncode({version=game.PlaceVersion,tv=describe(assets.TV),mesa=describe(assets.Mesa),house=describe(workspace.JediLibrary.House)})
 `;
-execute(script).then(r=>console.log('SURVIVORS_POLISH_PROBE '+JSON.stringify(r))).catch(e=>{console.error(e.stack||e);process.exit(1)});
+execute(script).then(r=>console.log('GEOMETRY_PROBE '+JSON.stringify(r))).catch(e=>{console.error(e.stack||e);process.exit(1)});
