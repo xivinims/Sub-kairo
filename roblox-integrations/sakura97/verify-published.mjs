@@ -247,7 +247,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(loadingSource:find('logo.Texture="rbxassetid://99002027743613"',1,true) and loadingSource:find('logoPanel:SetAttribute("PreserveLogoAspect",true)',1,true),"Game logo is missing or distorted inside the TV")
   assert(loadingSource:find("screen.Material=Enum.Material.Neon",1,true) and loadingSource:find('vignetteLayer("HorizontalVignette"',1,true),"Dark-focus luminous TV treatment missing")
    assert(loadingSource:find('letterbox("CinematicTopBar"',1,true) and loadingSource:find('filmTitle.Name="FilmTitle"',1,true) and loadingSource:find("RunService.RenderStepped",1,true),"Film-style loading camera/text treatment missing")
-assert(loadingSource:find("LoadingHidden",1,true) and loadingSource:find("zoomBack",1,true) and loadingSource:find("cameraDistance=fitDistance*.88",1,true),"TV-only close-up/slow zoom loading missing")
+assert(loadingSource:find("LoadingHidden",1,true) and loadingSource:find("zoomBack",1,true) and loadingSource:find("closeFitScale=aspect<.7 and 1.08",1,true),"TV-only close-up/slow zoom loading missing")
   assert(loadingSource:find("waitUntil(9.05)",1,true) and loadingSource:find("CINEMATIC_DURATION",1,true),"Final cinematic fade timing missing")
   assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=.5",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Night lobby ambience missing")
