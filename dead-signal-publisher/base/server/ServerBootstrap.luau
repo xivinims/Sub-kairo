@@ -139,7 +139,9 @@ end
 
 local wireRemote = eventsByName[Protocol.Events.WireAction]
 wireRemote.OnServerEvent:Connect(function(player, action, a, b)
-    if type(action) ~= "string" then return end
+    if type(action) ~= "string" or not player:GetAttribute("DeadSignalPlaying") then return end
+    if a ~= nil and type(a) ~= "string" then return end
+    if b ~= nil and type(b) ~= "string" then return end
 
     if action == "begin" then
         local wire = wires.Wires[a]
@@ -174,6 +176,10 @@ wireRemote.OnServerEvent:Connect(function(player, action, a, b)
 
     elseif action == "disconnect" then
         if not validatePlayerNearEndpoint(player, b, 2) then return end
+        local wire = wires.Wires[a]
+        local endpoint = wires.Endpoints[b]
+        if not wire or not endpoint or endpoint.occupiedBy ~= a then return end
+        if wire.carriedBy and wire.carriedBy ~= player then return end
         if wires:Disconnect(a, b) then
             eventsByName[Protocol.Events.WireState]:FireAllClients("disconnected", {
                 wire = wires:GetState(a),
@@ -280,13 +286,19 @@ events:Register("PowerRecalculate", function()
     return power:Recalculate()
 end)
 
+local ChapterRuntime = require(servicesFolder:WaitForChild("ChapterRuntime"))
+local chapterRuntime
+
 local function onCharacter(player, character)
     task.wait()
+    if chapterRuntime then chapterRuntime:Restore(player) end
     checkpoints:RespawnCharacter(player, character)
 end
 
 local function onPlayer(player)
     save:Load(player)
+    while not chapterRuntime do task.wait() end
+    chapterRuntime:Restore(player)
     player.CharacterAdded:Connect(function(character) onCharacter(player, character) end)
     if player.Character then task.spawn(onCharacter, player, player.Character) end
 end
@@ -296,11 +308,16 @@ for _, player in ipairs(Players:GetPlayers()) do task.spawn(onPlayer, player) en
 
 Players.PlayerRemoving:Connect(function(player)
     wires:EndCarry(player)
+    dialogue:Cancel(player)
     save:Save(player, true)
     save:Forget(player)
 end)
 
 scanMap()
+chapterRuntime = ChapterRuntime.new({save=save,chapters=chapters,checkpoints=checkpoints,power=power,wires=wires,doors=doors,
+    interactions=interactions,dialogue=dialogue,stalker=stalker,noise=noise,debug=debug,events=events,
+    remotes=eventsByName,protocol=Protocol,config=Config})
+chapterRuntime:Start()
 save:Start()
 events:Start()
 stalker:Start()
@@ -316,3 +333,4 @@ end)
 
 serverFolder:SetAttribute("Ready", true)
 serverFolder:SetAttribute("BuildId", Config.BuildId)
+

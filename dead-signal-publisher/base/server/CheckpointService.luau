@@ -15,6 +15,7 @@ function CheckpointService:Register(part)
     assert(part:IsA("BasePart"), "Checkpoint must be a BasePart")
     local id = part:GetAttribute("CheckpointId") or part.Name
     assert(type(id) == "string" and id ~= "", "Checkpoint id missing")
+    assert(not self.Checkpoints[id], "Duplicate checkpoint: " .. id)
     self.Checkpoints[id] = part
     return id
 end
@@ -45,7 +46,7 @@ function CheckpointService:RespawnCharacter(player, character)
     local data = self.SaveService:Get(player)
     local checkpoint = self.Checkpoints[data.checkpoint]
     if not checkpoint then
-        checkpoint = self.Checkpoints[next(self.Checkpoints)]
+        checkpoint = self.Checkpoints[self.SaveService.Config.DefaultCheckpoint]
     end
     if not checkpoint or not character then return false end
 
@@ -59,3 +60,4 @@ function CheckpointService:RespawnCharacter(player, character)
 end
 
 return CheckpointService
+

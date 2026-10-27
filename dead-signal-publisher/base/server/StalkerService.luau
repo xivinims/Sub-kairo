@@ -39,6 +39,7 @@ function StalkerService:BindModel(model)
     self.Humanoid = assert(model:FindFirstChildOfClass("Humanoid"), "Stalker humanoid missing")
     self.Root = assert(model:FindFirstChild("HumanoidRootPart"), "Stalker root missing")
     self.Enabled = true
+    pcall(function() self.Root:SetNetworkOwner(nil) end)
     self:SetState("Dormant")
 end
 
@@ -72,7 +73,7 @@ function StalkerService:_lineOfSight(targetRoot)
     local params = RaycastParams.new()
     params.FilterType = Enum.RaycastFilterType.Exclude
     params.FilterDescendantsInstances = {self.Model}
-    local hit = Workspace:Raycast(self.Root.Position + Vector3.new(0, 2, 0), delta, params)
+    local hit = Workspace:Raycast(self.Root.Position + Vector3.new(0, 2, 0), targetRoot.Position - (self.Root.Position + Vector3.new(0, 2, 0)), params)
     return not hit or hit.Instance:IsDescendantOf(targetRoot.Parent)
 end
 
@@ -136,7 +137,7 @@ function StalkerService:Deactivate()
 end
 
 function StalkerService:Investigate(position)
-    if not self.Enabled then return end
+    if not self.Enabled or self.State == "Observe" or self.State == "Chase" then return end
     self.LastSeenPosition = position
     self:SetState("Investigate")
 end
@@ -144,6 +145,7 @@ end
 function StalkerService:Step()
     if not self.Enabled or not self.Model or not self.Root then return end
 
+    if self.State == "Observe" or self.State == "Cooldown" or self.State == "Dormant" then return end
     local visible = self:_nearestVisiblePlayer()
     if visible then
         self.Target = visible
@@ -206,3 +208,4 @@ function StalkerService:Stop()
 end
 
 return StalkerService
+

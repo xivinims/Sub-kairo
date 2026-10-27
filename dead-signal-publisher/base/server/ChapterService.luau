@@ -32,8 +32,9 @@ function ChapterService:SetObjectiveState(player, objectiveId, state)
     assert(state == "inactive" or state == "active" or state == "complete" or state == "failed", "Invalid objective state")
 
     self.SaveService:Mutate(player, function(data)
+        local previous = data.objectives[objectiveId]
         data.objectives[objectiveId] = state
-        if state == "complete" then
+        if state == "complete" and previous ~= "complete" then
             data.stats.puzzlesSolved = (data.stats.puzzlesSolved or 0) + 1
         end
     end)
@@ -63,7 +64,9 @@ function ChapterService:ExportState(player)
         checkpoint = data.checkpoint,
         objectives = table.clone(data.objectives),
         flags = table.clone(data.flags),
+        settings = table.clone(data.settings),
     }
 end
 
 return ChapterService
+

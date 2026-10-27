@@ -172,4 +172,6 @@ task.spawn(function()
 end)
 
 input:Start()
+require(clientFolder:WaitForChild("ChapterPresentation")).Start(gui,remotes,Protocol,input)
 foundation:SetAttribute("ClientReady_" .. player.UserId, true)
+

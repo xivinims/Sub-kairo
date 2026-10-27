@@ -90,45 +90,44 @@ function PowerService:_floodFromSource(sourceId, visited)
 end
 
 function PowerService:Recalculate()
-    local energized = {}
-    local totalOutput = 0
-
-    for id, node in pairs(self.Nodes) do
-        if node.type == "Source" and node.enabled and node.output > 0 then
-            totalOutput += node.output
-            self:_floodFromSource(id, energized)
+    -- Capacity belongs to each connected component, not to the whole map.
+    local visited, powered = {}, {}
+    local totalOutput, totalDemand, overloaded = 0, 0, false
+    for start, startNode in pairs(self.Nodes) do
+        if startNode.enabled and not visited[start] then
+            local queue, ids, output, demand = {start}, {}, 0, 0
+            visited[start] = true
+            local index = 1
+            while queue[index] do
+                local id = queue[index]; index += 1
+                local n = self.Nodes[id]; table.insert(ids, id)
+                if n.type == "Source" then output += n.output end
+                if n.type == "Consumer" then demand += n.demand end
+                for other in pairs(self.Links[id] or {}) do
+                    if self.Nodes[other] and self.Nodes[other].enabled and not visited[other] then
+                        visited[other] = true; table.insert(queue,other)
+                    end
+                end
+            end
+            local trip = output > 0 and demand > output + 0.001
+            overloaded = overloaded or trip
+            totalOutput += output; totalDemand += demand
+            for _,id in ipairs(ids) do
+                powered[id] = output > 0 and not trip
+                self.Nodes[id].instance:SetAttribute("Overloaded",trip)
+            end
         end
     end
-
-    local totalDemand = 0
-    for id, node in pairs(self.Nodes) do
-        if energized[id] and node.type == "Consumer" and node.enabled then
-            totalDemand += node.demand
-        end
-    end
-
-    local loadRatio = totalOutput > 0 and (totalDemand / totalOutput) or math.huge
-    local overloaded = loadRatio > 1.001
-
-    for id, node in pairs(self.Nodes) do
+    for id,node in pairs(self.Nodes) do
         local before = node.energized
-        node.energized = energized[id] == true and not overloaded
+        node.energized = powered[id] == true
         node.voltage = node.energized and self.Config.Power.DefaultVoltage or 0
-
-        node.instance:SetAttribute("Energized", node.energized)
-        node.instance:SetAttribute("Voltage", node.voltage)
-
-        if before ~= node.energized then
-            self.NodeChanged:Fire(id, node.energized, node.voltage)
-        end
+        node.instance:SetAttribute("Energized",node.energized)
+        node.instance:SetAttribute("Voltage",node.voltage)
+        if before ~= node.energized then self.NodeChanged:Fire(id,node.energized,node.voltage) end
     end
-
-    return {
-        totalOutput = totalOutput,
-        totalDemand = totalDemand,
-        loadRatio = loadRatio,
-        overloaded = overloaded,
-    }
+    return {totalOutput=totalOutput,totalDemand=totalDemand,overloaded=overloaded,
+        loadRatio=totalOutput>0 and totalDemand/totalOutput or 0}
 end
 
 function PowerService:IsEnergized(id)
@@ -137,3 +136,4 @@ function PowerService:IsEnergized(id)
 end
 
 return PowerService
+

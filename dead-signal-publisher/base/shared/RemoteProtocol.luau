@@ -1,6 +1,8 @@
 local Protocol = {
     Folder = "DeadSignalGameRemotes",
     Events = {
+        ChapterAction = "ChapterAction",
+        ChapterFeedback = "ChapterFeedback",
         Interaction = "Interaction",
         WireAction = "WireAction",
         WireState = "WireState",
@@ -18,3 +20,4 @@ local Protocol = {
 }
 
 return table.freeze(Protocol)
+

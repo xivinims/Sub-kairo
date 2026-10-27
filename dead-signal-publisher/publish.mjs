@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-foundation-test-v2';
+const BUILD_ID = 'dead-signal-ch01-signalworks-v3';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,6 +22,7 @@ const SERVER_MODULES = [
   'NoiseService',
   'DebugService',
   'SafeAssetImporter',
+  'ChapterRuntime',
 ];
 const CLIENT_MODULES = [
   'InputController',
@@ -29,6 +30,7 @@ const CLIENT_MODULES = [
   'DialogueController',
   'WireController',
   'ScreenEffectsController',
+  'ChapterPresentation',
 ];
 
 async function roblox(url, options = {}) {
@@ -106,8 +108,8 @@ async function moduleStatements(group, names, parentVar) {
 
 async function main() {
   const [template, verify, serverBootstrap, clientBootstrap, sharedStatements, serverStatements, clientStatements] = await Promise.all([
-    fs.readFile(new URL('./foundation-test-install.luau', import.meta.url), 'utf8'),
-    fs.readFile(new URL('./foundation-test-verify.luau', import.meta.url), 'utf8'),
+    fs.readFile(new URL('./chapter-install.luau', import.meta.url), 'utf8'),
+    fs.readFile(new URL('./chapter-validate.luau', import.meta.url), 'utf8'),
     fs.readFile(new URL('./base/server/ServerBootstrap.luau', import.meta.url), 'utf8'),
     fs.readFile(new URL('./base/client/ClientBootstrap.luau', import.meta.url), 'utf8'),
     moduleStatements('shared', SHARED_MODULES, 'sharedFolder'),
@@ -116,6 +118,8 @@ async function main() {
   ]);
 
   let install = template
+    .replace('__CHAPTER_MAP__', await fs.readFile(new URL('./chapter-map.luau', import.meta.url), 'utf8'))
+    .replace('__PREPUBLISH_VALIDATE__', 'local validation = (function()\n' + verify + '\nend)()\nassert(validation.ok, HttpService:JSONEncode(validation))')
     .replace('__SHARED_MODULES__', sharedStatements)
     .replace('__SERVER_MODULES__', serverStatements)
     .replace('__CLIENT_MODULES__', clientStatements)
@@ -132,13 +136,17 @@ async function main() {
   if (leftovers.length) throw new Error('Publisher placeholders remain: ' + leftovers.join(', '));
   if (!install.includes(BUILD_ID)) throw new Error('Build marker missing');
 
-  const installed = await execute(install, 'foundation-install');
+  if (process.argv.includes('--dry-run')) {
+    await fs.writeFile(new URL('./assembled-install.luau',import.meta.url),install);
+    console.log(JSON.stringify({build:BUILD_ID,bytes:install.length,dryRun:true})); return;
+  }
+  const installed = await execute(install, 'chapter-install');
   if (!installed?.ok || !installed?.published || installed.build !== BUILD_ID) {
     throw new Error('Install failed: ' + JSON.stringify(installed));
   }
 
   await sleep(4000);
-  const verified = await execute(verify, 'foundation-verify');
+  const verified = await execute('return game:GetService("HttpService"):JSONEncode((function()\n' + verify + '\nend)())', 'chapter-verify');
   if (!verified?.ok || verified.build !== BUILD_ID) {
     throw new Error('Verification failed: ' + JSON.stringify(verified));
   }
@@ -154,7 +162,7 @@ async function main() {
   }
 
   console.log(JSON.stringify({
-    stage: 'dead-signal-foundation-test-published',
+    stage: 'dead-signal-chapter-published',
     universeId: UNIVERSE_ID,
     placeId: PLACE_ID,
     installed,
@@ -169,3 +177,4 @@ main().catch((error) => {
   console.error(key ? message.split(key).join('[REDACTED]') : message);
   process.exit(1);
 });
+

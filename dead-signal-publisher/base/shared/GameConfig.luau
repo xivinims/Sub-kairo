@@ -1,6 +1,6 @@
 local Config = {}
 
-Config.BuildId = "dead-signal-foundation-v2"
+Config.BuildId = "dead-signal-ch01-signalworks-v3"
 Config.DataVersion = 1
 Config.DefaultChapter = "Chapter01"
 Config.DefaultCheckpoint = "CH01_START"
@@ -77,3 +77,4 @@ Config.Debug = {
 }
 
 return table.freeze(Config)
+
