@@ -2225,6 +2225,11 @@ if player.GetAttributeChangedSignal then
 end
 
 local function squareHud(obj)
+ local parent=obj.Parent
+ while parent and parent~=gui do
+  if parent.Name=="ReferenceSettings" or parent.Name=="KillerShop" then return end
+  parent=parent.Parent
+ end
  if obj.Name=="ReferenceActionArt" or (obj.Parent and (obj.Parent.Name=="ReferenceActionArt" or obj.Parent:GetAttribute("ReferenceActionButton"))) then return end
  if obj:IsA("UICorner") then obj.CornerRadius=UDim.new(0,0)
  elseif obj:IsA("TextButton") then obj.BackgroundColor3=Color3.new(0,0,0)
@@ -2232,6 +2237,7 @@ local function squareHud(obj)
 end
 for _,obj in ipairs(gui:GetDescendants()) do squareHud(obj) end
 gui.DescendantAdded:Connect(function(obj) task.defer(function() if obj.Parent then squareHud(obj) end end) end)
+
 
 
 
