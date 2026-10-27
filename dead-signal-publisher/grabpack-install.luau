@@ -10,8 +10,8 @@ local function handAsset(selection,name,scale,color)
     end
     m.Parent=assets
 end
-handAsset("HandL","BlueHand",0.55,C(44,83,173))
-handAsset("HandL2","RedHand",0.6,C(169,42,39))
+handAsset("HandL2","BlueHand",0.55,C(44,83,173))
+handAsset("HandL","RedHand",0.6,C(169,42,39))
 handAsset("Gunl","RightLauncher",0.45,nil)
 handAsset("Gunl2","LeftLauncher",0.45,nil)
 Importer.ClearSelectionCache()

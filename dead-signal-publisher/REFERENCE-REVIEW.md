@@ -29,3 +29,8 @@ No authenticated, usable original Poppy Playtime footstep recording was obtained
 - Mob fan-content terms: https://www.mobentertainment.com/fan-content
 
 Engine validation is distinct from a rendered client playthrough. No pixel-perfect menu comparison, mobile playtest or finished commercial-game visual quality is claimed.
+
+
+## Follow-up: hand pairing correction (not released)
+
+User reported reversed GrabPack hands. The audited source places HandL2 at X=-140.253 and HandL at X=-136.088; the previous mapping assigned the right-side source mesh to the blue left viewmodel and the left-side source mesh to the red right viewmodel. Corrected the source pairing in grabpack-install.luau. No axis rotation is guessed from the report alone. This change needs rendered inspection before publication; server ray tests do not validate palm-facing direction or hand appearance.
