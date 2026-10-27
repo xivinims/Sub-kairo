@@ -1,0 +1,24 @@
+name: Dead Signal Asset Probe
+
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - "dead-signal-publisher/asset-probe.trigger"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: dead-signal-publisher
+          persist-credentials: false
+      - name: Probe user-selected Roblox assets without saving the place
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/asset-probe.mjs
