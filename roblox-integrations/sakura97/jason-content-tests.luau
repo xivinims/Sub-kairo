@@ -160,6 +160,7 @@ local ambienceSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChi
 local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
 assert(settingsSource:find('frame:SetAttribute("Style","CinematicSideSettings")',1,true) and settingsSource:find('nav.Name="CategoryRail"',1,true) and settingsSource:find('panel.Name="OptionsPanel"',1,true),"Cinematic side settings layout missing")
 assert(settingsSource:find('click.SoundId="rbxassetid://6102885802"',1,true) and settingsSource:find('frame:SetAttribute("FrozenCameraBackdrop",true)',1,true),"Settings transition/audio metadata missing")
+assert(settingsSource:find('string.lower(tostring(player.Name or ""))=="ch_ckz2n"',1,true) and settingsSource:find('net.Action:FireServer("adminStart")',1,true) and settingsSource:find('"COMEÇAR"',1,true),"Admin-only test start control missing")
 local guideSource=assert(workspace:FindFirstChild("LobbyGuide"),"Lobby guide missing").GuideInteraction.Source
 assert(guideSource:find('subtitle.Name="CinematicSubtitle"',1,true) and guideSource:find('bubble.Enabled=false',1,true),"Fill dialogue was not moved off the NPC")
 assert(guideSource:find("local explain=talking",1,true) and guideSource:find("leftShoulder.C0",1,true) and guideSource:find("rightShoulder.C0",1,true),"Fill expressive explanation gestures missing")
@@ -167,6 +168,7 @@ local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingCont
 assert(survivalClientSource:find('coinView.Image="rbxasset://textures/ui/common/robux@3x.png"',1,true),"Robux currency icon missing")
 assert(survivalClientSource:find('settingsIcon.Name="SettingsHexIcon"',1,true) and survivalClientSource:find("settingsCameraState",1,true) and survivalClientSource:find("SuviversSettingsBlur",1,true),"Settings icon/frozen camera backdrop missing")
 assert(survivalClientSource:find('top:SetAttribute("ReferenceClockStyle","IMG_2414")',1,true) and survivalClientSource:find('clockFace.Name="ReferenceClockFace"',1,true) and survivalClientSource:find('hourHand.Rotation=-34',1,true) and survivalClientSource:find('minuteHand.Rotation=-90',1,true),"Supplied transparent top-clock reference missing")
+assert(survivalClientSource:find("Enum.CameraMode.LockFirstPerson",1,true) and survivalClientSource:find("CameraMinZoomDistance=.5",1,true) and survivalClientSource:find("CameraMaxZoomDistance=.5",1,true),"First-person lock is missing from lobby/gameplay")
 local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
 local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source
 local killerFactorySource=assert(game.ServerScriptService:FindFirstChild("KillerFactory"),"Killer factory missing").Source
@@ -183,6 +185,7 @@ assert(survivalServerSource:find("LanternFireCrackle",1,true) and survivalServer
 assert(survivalServerSource:find("LanternSeconds",1,true) and survivalServerSource:find('action=="buyLanternUpgrade"',1,true) and survivalServerSource:find("resetLanternBattery",1,true),"Server-owned lantern durability runtime missing")
 assert(game.ServerScriptService.ProfileService.Source:find("lanternTier",1,true) and game.ServerScriptService.ProfileService.Source:find("buyLanternUpgrade",1,true),"Lantern durability persistence missing")
 assert(survivalServerSource:find("KillerPlayerName",1,true) and survivalServerSource:find("LoadingRoster",1,true),"Match loading roster/killer metadata missing")
+assert(survivalServerSource:find('action=="adminStart"',1,true) and survivalServerSource:find('ADMIN_USERNAME="ch_ckz2n"',1,true) and survivalServerSource:find("AI.start(npc,arena",1,true) and survivalServerSource:find('npc:SetAttribute("AIControlled",true)',1,true),"Admin random AI-killer test round missing")
 assert(survivalClientSource:find('{"Items",L("ITENS","ITEMS")}',1,true) and not survivalClientSource:find('{"Survivors",L("SOBREVIVENTES"',1,true),"Items tab did not replace Survivors")
 assert(survivalClientSource:find("LanternUpgrade",1,true) and survivalClientSource:find('event:FireServer("buyLanternUpgrade")',1,true),"Lantern item upgrade UI missing")
 assert(survivalClientSource:find('matchTV.Name="MatchLoadingTelevision"',1,true) and survivalClientSource:find("task.delay(5,function()",1,true) and survivalClientSource:find("loadingStarted+10",1,true),"Ten-second TV match loading reveal missing")
@@ -210,7 +213,7 @@ assert(survivalClientSource:find('GoodLuck","GOOD LUCK"',1,true),"Map Good Luck 
 assert(not survivalClientSource:find("cancelJasonIntro",1,true) and not survivalClientSource:find("EntryFlash",1,true),"Dead killer intro/door client code returned")
 assert(loadingSource:find("CINEMATIC_DURATION=10",1,true) and loadingSource:find("LOGO_END=5",1,true) and loadingSource:find("waitUntil(9.05)",1,true),"Ten-second TV loading timing missing")
 assert(loadingSource:find("screenNormal=Vector3.new(0,0,1)",1,true) and loadingSource:find("screenUp=Vector3.new(-1,0,0)",1,true),"TV upright orientation fix missing")
-assert(loadingSource:find("fitDistance",1,true) and not loadingSource:find("tv:ScaleTo(1.5)",1,true),"TV adaptive framing/stretch fix missing")
+assert(loadingSource:find("fitDistance",1,true) and loadingSource:find("LoadingHidden",1,true) and loadingSource:find("zoomBack",1,true),"TV-only close framing/slow zoom missing")
 local loadingCinematicAssets=assert(game.ReplicatedFirst:FindFirstChild("LoadingCinematicAssets"),"Loading cinematic assets missing")
 local loadingHandAsset=assert(loadingCinematicAssets:FindFirstChild("BloodHand"),"Requested blood hand asset missing")
 assert(loadingCinematicAssets:GetAttribute("HandAssetId")==8091676187 and loadingHandAsset:GetAttribute("SourceAssetId")==8091676187,"Wrong loading hand asset")
@@ -226,11 +229,11 @@ assert(game.StarterPlayer.StarterPlayerScripts.MerchantIdle.Source:find("local e
 assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"GOOD LUCK/avatar leaked into initial game loading")
 assert(not loadingSource:find('Name="Progress"',1,true),"Map-style progress UI leaked into initial game loading")
 assert(survivalClientSource:find('loadingAvatar.Name="ArenaAvatar"',1,true) and survivalClientSource:find('"GOOD LUCK"',1,true),"Map loading lost avatar/GOOD LUCK presentation")
-assert(ambienceSource:find("EnvironmentSpecularScale=.72",1,true) and ambienceSource:find("WaterReflectance=.22",1,true),"Fixed dusk reflection profile missing")
+assert(ambienceSource:find("EnvironmentSpecularScale=.95",1,true) and ambienceSource:find("WaterReflectance=.34",1,true) and ambienceSource:find('dof.Name="SuviversFilmDOF"',1,true),"Cinematic shadow/reflection profile missing")
 local settingsSource=assert(game.ReplicatedStorage.Survival:FindFirstChild("SettingsPanel"),"Settings panel missing").Source
 assert(settingsSource:find('CameraFOV=62',1,true) and settingsSource:find('addSlider("CAMPO DE VISÃO","CameraFOV"',1,true),"Gameplay Camera FOV setting missing")
 assert(not settingsSource:find('key="VisualSaturation"',1,true) and not settingsSource:find('key="VisualContrast"',1,true) and not settingsSource:find('key="VisualExposure"',1,true) and not settingsSource:find('key="VisualTime"',1,true),"Removed visual/environment settings returned")
-assert(ambienceSource:find("Lighting.ClockTime=.5",1,true) and ambienceSource:find("Lighting.Brightness=1.12",1,true) and ambienceSource:find("Lighting.OutdoorAmbient=Color3.fromRGB(7,9,17)",1,true) and ambienceSource:find("Lighting.ExposureCompensation=-.27",1,true) and ambienceSource:find("SuviversDistrictBloom",1,true) and ambienceSource:find("SuviversAtmosphere",1,true),"Fixed dark-night environment missing")
+assert(ambienceSource:find("Lighting.ClockTime=.5",1,true) and ambienceSource:find("Lighting.Brightness=.96",1,true) and ambienceSource:find("Lighting.OutdoorAmbient=Color3.fromRGB(7,9,17)",1,true) and ambienceSource:find("Lighting.ExposureCompensation=-.34",1,true) and ambienceSource:find("SuviversDistrictBloom",1,true) and ambienceSource:find("SuviversAtmosphere",1,true),"Cinematic dark-night environment missing")
 assert(voidSource:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death UI media reference can be nil")
 assert(not nametagSource:find("CantorBadge",1,true),"Obsolete Cantor badge returned")
 assert(friendSource:find('FindFirstChild("SweanNametag")',1,true),"ShowNametags does not control normal nametags")
