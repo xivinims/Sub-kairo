@@ -333,7 +333,7 @@ assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('top:S
   local previewFolder=assert(game.ReplicatedStorage.Survival:FindFirstChild("KillerPreviews"),"Killer shop previews missing")
   assert(#previewFolder:GetChildren()==5 and not previewFolder:FindFirstChild("Jeff") and not previewFolder:FindFirstChild("Freddy"),"Killer shop preview roster is not five")
   assert(settingsSource:find("GameLanguage",1,true) and settingsSource:find("addLanguage",1,true) and settingsSource:find('key="interface"',1,true),"Game language setting not persisted")
-  assert(clientSource:find('BackgroundTransparency=.82',1,true) and clientSource:find('settingsOverlay.ZIndex=40',1,true),"Readable settings overlay fix not persisted")
+  assert(clientSource:find('settingsOverlay.BackgroundTransparency=.34',1,true) and clientSource:find('settingsOverlay.ZIndex=40',1,true) and clientSource:find("SuviversSettingsBlur",1,true),"Cinematic dark settings overlay was not persisted")
   assert(clientSource:find("GameLanguage",1,true) and clientSource:find('L("PERSEGUIDORES","KILLERS")',1,true),"Settings-driven HUD translations not persisted")
   assert(game.StarterGui.TomiaszMenu.MenuController.Source:find('player:SetAttribute("InMenu",false)',1,true),"Direct-lobby menu controller missing")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source:find('frame.Name="ReferenceSettings"',1,true),"Restored compact settings panel not persisted")
