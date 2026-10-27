@@ -1,1 +1,1 @@
-dead-signal-ch01-grabpack-v6-hand-pairing-fix
+dead-signal-ch01-polish-v7
