@@ -96,6 +96,15 @@ local Assets = {
         measuredParts = 66,
         notes = "Use selected stair geometry and consolidate for mobile performance.",
     },
+    MapItemsKit = {
+        id = 136978268470872,
+        role = "map-props",
+        importMode = "selective-only",
+        stripScripts = true,
+        measuredParts = 16,
+        measuredScripts = 12,
+        notes = "Useful visual props only. Source contains 8 Scripts + 4 LocalScripts and must never be imported wholesale.",
+    },
 }
 
 return table.freeze(Assets)
