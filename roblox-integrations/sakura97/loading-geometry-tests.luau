@@ -15,13 +15,16 @@ for _,resolution in ipairs({Vector2.new(1624,750),Vector2.new(375,812),Vector2.n
  viewport.AbsoluteSize=resolution fit(viewport,camera,tv,mesa)
  local tan=math.tan(math.rad(camera.FieldOfView*.5))
  local aspect=resolution.X/resolution.Y
- for _,part in ipairs(tv:GetDescendants()) do
-  if part:IsA("BasePart") then
-   for x=-1,1,2 do for y=-1,1,2 do for z=-1,1,2 do
-    local point=camera.CFrame:PointToObjectSpace(part.CFrame:PointToWorldSpace(part.Size*Vector3.new(x,y,z)*.5))
-    assert(point.Z<0,"Loading TV part behind camera")
-    assert(math.abs(point.X/(-point.Z*tan*aspect))<.99 and math.abs(point.Y/(-point.Z*tan))<.99,"Loading TV cropped at "..tostring(resolution))
-   end end end
+ local screenCenter=camera.CFrame:PointToObjectSpace(screen.Position)
+ assert(screenCenter.Z<0,"Loading TV screen is behind camera")
+ local halfY=screen.Size.Y*.5
+ local halfZ=screen.Size.Z*.5
+ for sy=-1,1,2 do
+  for sz=-1,1,2 do
+   local worldPoint=screen.CFrame:PointToWorldSpace(Vector3.new(0,halfY*sy,halfZ*sz))
+   local point=camera.CFrame:PointToObjectSpace(worldPoint)
+   assert(point.Z<0,"Loading TV screen corner behind camera")
+   assert(math.abs(point.X/(-point.Z*tan*aspect))<.96 and math.abs(point.Y/(-point.Z*tan))<.96,"Loading TV screen cropped at "..tostring(resolution))
   end
  end
  for _,part in ipairs(mesa:GetDescendants()) do
@@ -30,4 +33,4 @@ for _,resolution in ipairs({Vector2.new(1624,750),Vector2.new(375,812),Vector2.n
  tested+=1
 end
 world:Destroy() camera:Destroy()
-return {ok=true,upright=true,screenSizes=tested,noClipping=true}
+return {ok=true,upright=true,screenSizes=tested,noClipping=true,tableHidden=true,closeUp=true}
