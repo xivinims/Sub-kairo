@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local DoorService = {}
@@ -52,13 +53,32 @@ end
 
 function DoorService:SetOpen(id, shouldOpen, instant)
     local door = assert(self.Doors[id], "Unknown door")
-    if door.busy then return false, "busy" end
 
     if shouldOpen then
         local ok, reason = self:CanOpen(id)
         if not ok then return false, reason end
     end
 
+    door.desiredOpen = shouldOpen
+    if door.busy then return false, "busy" end
+    if not shouldOpen and not instant then
+        for _,player in ipairs(Players:GetPlayers()) do
+            local root=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local pos=door.closedCFrame:PointToObjectSpace(root.Position)
+                if math.abs(pos.X)<door.panel.Size.X/2+1.5 and math.abs(pos.Y)<door.panel.Size.Y/2+2 and math.abs(pos.Z)<door.panel.Size.Z/2+2.5 then
+                    if not door.closeScheduled then
+                        door.closeScheduled=true
+                        task.delay(0.5,function()
+                            door.closeScheduled=false
+                            if door.desiredOpen==false then self:SetOpen(id,false) end
+                        end)
+                    end
+                    return false,"occupied"
+                end
+            end
+        end
+    end
     if door.open == shouldOpen then return true end
     door.busy = true
 
@@ -77,7 +97,9 @@ function DoorService:SetOpen(id, shouldOpen, instant)
     door.busy = false
     door.model:SetAttribute("Open", shouldOpen)
     self.Changed:Fire(id, shouldOpen)
+    if door.desiredOpen~=shouldOpen then task.defer(function() self:SetOpen(id,door.desiredOpen) end) end
     return true
 end
 
 return DoorService
+

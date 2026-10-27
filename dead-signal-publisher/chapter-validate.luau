@@ -144,7 +144,7 @@ for _,m in pairs(doors) do table.insert(excludes,m) end
 local params=RaycastParams.new(); params.FilterType=Enum.RaycastFilterType.Exclude
 params.FilterDescendantsInstances=excludes; params.RespectCanCollide=true
 local route={{0,12},{0,120},{0,153},{0,218},{0,266},{0,316},{7,320},{7,333},{0,340},{0,366},{0,380},{0,387},
-    {4,395},{4,404},{0,411},{0,458},{0,518},{-12,540},{-12,558},{12,566},{12,582},{-12,587},{-12,603},{8,613},{8,631},{0,637},{0,680}}
+    {4,395},{4,404},{0,411},{0,458},{0,518},{-12,540},{-12,558},{12,566},{12,582},{-12,587},{-12,603},{0,603},{0,612},{8,614},{8,631},{0,637},{0,680}}
 for i=1,#route-1 do
     local a=Vector3.new(route[i][1],3.6,route[i][2]); local b=Vector3.new(route[i+1][1],3.6,route[i+1][2])
     local result=workspace:Blockcast(CFrame.new(a),Vector3.new(2.6,5.4,2.6),b-a,params)
