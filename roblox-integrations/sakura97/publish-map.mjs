@@ -750,7 +750,7 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(game.StarterGui.TomiaszMenu:GetAttribute("LegacyMenuWidgetsPurged")==true and not game.StarterGui.TomiaszMenu:FindFirstChild("MenuPrincipal"),"Old menu UI still exists")
   local loadingController=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing")
   local loadingAssets=assert(game.ReplicatedFirst:FindFirstChild("LoadingCinematicAssets"),"TV loading cinematic assets missing")
-  assert(loadingController:GetAttribute("CinematicInitialLoading")==true and loadingController:GetAttribute("CinematicDuration")==8,"Ten-second loading cinematic metadata missing")
+  assert(loadingController:GetAttribute("CinematicInitialLoading")==true and loadingController:GetAttribute("CinematicDuration")==10,"Ten-second loading cinematic metadata missing")
   assert(loadingAssets:GetAttribute("TVAssetId")==421148437 and loadingAssets:GetAttribute("TableAssetId")==397786287,"Wrong loading TV/table assets")
   local loadingTV=assert(loadingAssets:FindFirstChild("TV"),"Requested Old Television model missing")
   local loadingTable=assert(loadingAssets:FindFirstChild("Mesa"),"Requested Mesa model missing")

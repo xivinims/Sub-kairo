@@ -2,6 +2,11 @@ name: Suvivers Validate and Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      verify_only:
+        description: 'Only verify the already published version'
+        type: boolean
+        default: false
   push:
     branches: [roblox-publisher]
     paths:
@@ -26,5 +31,6 @@ jobs:
       - name: Validate Suvivers and publish when enabled
         env:
           SURVIVERS_DRY_RUN: '0'
+          SURVIVERS_VERIFY_ONLY: ${{ inputs.verify_only == true || contains(github.event.head_commit.message, '[verify-only]') }}
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node roblox-integrations/sakura97/publish.mjs
