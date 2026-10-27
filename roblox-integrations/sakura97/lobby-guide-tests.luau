@@ -25,7 +25,10 @@ for _,part in ipairs(character:GetDescendants()) do if part:IsA("BasePart") then
 local render=Instance.new("BindableEvent",host)
 local input=Instance.new("BindableEvent",host)
 local triggered=Instance.new("BindableEvent",host)
-local TEST_PROMPT={Triggered=triggered.Event}
+local promptAttrs={}
+local TEST_PROMPT={Triggered=triggered.Event,Enabled=true,ActionText="",ObjectText="",ClickablePrompt=true}
+function TEST_PROMPT:SetAttribute(name,value) promptAttrs[name]=value end
+function TEST_PROMPT:GetAttribute(name) return promptAttrs[name] end
 local realGame=game
 local proxy={}
 function proxy:GetService(name)
