@@ -190,7 +190,7 @@ local ok,result=xpcall(function()
  camera.CameraType=Enum.CameraType.Scriptable camera.CameraSubject=nil
  char.Humanoid.Health=37 step()
  assert(camera.CameraType==Enum.CameraType.Custom and camera.CameraSubject==char.Humanoid,"Camera did not recover the living lobby character")
- assert(p.CameraMinZoomDistance==4 and p.CameraMaxZoomDistance==24,"Lobby zoom remains locked")
+ assert(p.CameraMode==Enum.CameraMode.LockFirstPerson and p.CameraMinZoomDistance<=.5 and p.CameraMaxZoomDistance<=.5,"Lobby must stay locked in first person")
  assert(gui.Condition.Value.Text=="♥  37","Heart must show real health")
  assert(gui.Profile.XP.Size.Y.Offset==8 and gui.Profile.XP.Level.Size.Y.Offset>=18,"Thin XP bar clipped the level label")
  assert(gui.MapVoting.Visible,"Map voting missing in dedicated six-second voting phase")
