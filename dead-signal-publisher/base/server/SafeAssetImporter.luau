@@ -67,7 +67,7 @@ end
 -- Every selection becomes a fresh geometry-only model with provenance.
 local permitted = {[11961684378]=true,[96103787859080]=true,[9609111841]=true,[8593730677]=true,
     [16551049618]=true,[16592756903]=true,[120661626985584]=true,[16390129962]=true,
-    [136978268470872]=true,[72028919182927]=true}
+    [136978268470872]=true,[72028919182927]=true,[10468403169]=true}
 local cache = {}
 local visualClasses = {Decal=true,Texture=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true}
 function SafeAssetImporter.Select(assetId, exactName)

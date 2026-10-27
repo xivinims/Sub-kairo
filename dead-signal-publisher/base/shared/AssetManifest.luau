@@ -15,13 +15,13 @@ local Assets = {
         measuredParts = 5,
         notes = "Static doorway geometry. Gameplay logic comes from Dead Signal services.",
     },
-    GrabPackReference = {
+    GrabPackGeometry = {
         id = 10468403169,
         role = "reference",
         importMode = "reference-only",
         stripScripts = true,
         measuredScripts = 7,
-        notes = "Reference only. Dead Signal uses physical cables, not a GrabPack.",
+        notes = "Revision 6 user change: extract HandL, HandL2, Gunl and Gunl2 only. Custom GrabPackService owns all behavior.",
     },
     Chapter4IdeaKit = {
         id = 72028919182927,
@@ -108,3 +108,4 @@ local Assets = {
 }
 
 return table.freeze(Assets)
+

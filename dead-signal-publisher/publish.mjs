@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-ch01-scenic-v5';
+const BUILD_ID = 'dead-signal-ch01-grabpack-v6';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -23,6 +23,7 @@ const SERVER_MODULES = [
   'DebugService',
   'SafeAssetImporter',
   'ChapterRuntime',
+  'GrabPackService',
 ];
 const CLIENT_MODULES = [
   'InputController',
@@ -32,6 +33,8 @@ const CLIENT_MODULES = [
   'ScreenEffectsController',
   'ChapterPresentation',
   'SettingsController',
+  'GrabPackController',
+  'FootstepController',
 ];
 
 async function roblox(url, options = {}) {
@@ -119,6 +122,9 @@ async function main() {
   ]);
 
   let install = template
+    .replace('__COLLISION_PASS__', await fs.readFile(new URL('./collision-pass.luau', import.meta.url), 'utf8'))
+    .replace('__GRABPACK_INSTALL__', await fs.readFile(new URL('./grabpack-install.luau', import.meta.url), 'utf8'))
+    .replace('__MENU_STAGE__', await fs.readFile(new URL('./menu-stage.luau', import.meta.url), 'utf8'))
     .replace('__ENVIRONMENT_PASS__', await fs.readFile(new URL('./environment-pass.luau', import.meta.url), 'utf8'))
     .replace('__VISUAL_DRESSING__', await fs.readFile(new URL('./visual-dressing.luau', import.meta.url), 'utf8'))
     .replace('__CHAPTER_MAP__', await fs.readFile(new URL('./chapter-map.luau', import.meta.url), 'utf8'))

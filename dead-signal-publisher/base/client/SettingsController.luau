@@ -11,15 +11,15 @@ function Settings.new(layer,send,onVisibility)
     panel.BackgroundTransparency=1; panel.ZIndex=11; panel.Parent=bg
     local function text(parent,t,pos,size,font)
         local l=Instance.new("TextLabel"); l.Text=t; l.Position=pos; l.Size=size; l.BackgroundTransparency=1
-        l.TextColor3=Color3.fromRGB(225,219,199); l.Font=font or Enum.Font.GothamMedium
+        l.TextColor3=Color3.fromRGB(225,219,199); l.Font=font or Enum.Font.Code
         l.TextSize=18; l.TextXAlignment=Enum.TextXAlignment.Left; l.ZIndex=12; l.Parent=parent; return l
     end
     local function button(parent,t,pos,size,fn)
         local b=Instance.new("TextButton"); b.Text=t; b.Position=pos; b.Size=size; b.BackgroundTransparency=1
-        b.TextColor3=Color3.fromRGB(219,213,191); b.Font=Enum.Font.GothamBold; b.TextSize=18
+        b.TextColor3=Color3.fromRGB(219,213,191); b.Font=Enum.Font.Code; b.TextSize=18
         b.ZIndex=13; b.Modal=true; b.Parent=parent; b.Activated:Connect(fn); return b
     end
-    text(panel,"CONFIGURAÇÕES",UDim2.fromScale(0,0),UDim2.fromScale(0.8,0.09),Enum.Font.GothamBlack).TextSize=30
+    text(panel,"CONFIGURAÇÕES",UDim2.fromScale(0,0),UDim2.fromScale(0.8,0.09),Enum.Font.Code).TextSize=30
     local rule=Instance.new("Frame"); rule.BackgroundColor3=Color3.fromRGB(131,116,79); rule.BorderSizePixel=0
     rule.Position=UDim2.fromScale(0,0.12); rule.Size=UDim2.new(1,0,0,2); rule.ZIndex=12; rule.Parent=panel
     local pages,tabs={},{}
@@ -41,6 +41,8 @@ function Settings.new(layer,send,onVisibility)
         local cc=Lighting:FindFirstChild("PlayerBrightness")
         if not cc then cc=Instance.new("ColorCorrectionEffect"); cc.Name="PlayerBrightness"; cc.Parent=Lighting end
         cc.Brightness=v.brightness
+        layer:SetAttribute("MasterVolume",v.masterVolume)
+        layer:SetAttribute("SfxVolume",v.sfxVolume)
         layer:SetAttribute("Graphics",v.graphics)
         layer:SetAttribute("Subtitles",v.subtitles)
         layer:SetAttribute("ReducedMotion",v.reducedMotion)

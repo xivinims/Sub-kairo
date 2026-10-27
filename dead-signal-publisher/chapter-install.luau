@@ -1,4 +1,4 @@
-local BUILD_ID = "dead-signal-ch01-scenic-v5"
+local BUILD_ID = "dead-signal-ch01-grabpack-v6"
 local UNIVERSE_ID = 9421311218
 local PLACE_ID = 118064584465155
 
@@ -132,6 +132,9 @@ __CLIENT_MODULES__
 __SERVER_MODULES__
 __VISUAL_DRESSING__
 __ENVIRONMENT_PASS__
+__COLLISION_PASS__
+__GRABPACK_INSTALL__
+__MENU_STAGE__
 
 local serverBootstrap = Instance.new("Script")
 serverBootstrap.Name = "ServerBootstrap"

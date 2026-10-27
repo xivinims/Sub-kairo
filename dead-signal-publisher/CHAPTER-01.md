@@ -1,6 +1,6 @@
 # Signalworks — Chapter 1 test build
 
-Build: `dead-signal-ch01-scenic-v5`. Target: universe 9421311218 / place 118064584465155.
+Build: `dead-signal-ch01-grabpack-v6`. Target: universe 9421311218 / place 118064584465155.
 Only branch `dead-signal-publisher` is used. Other game folders and branches are unchanged.
 
 ## Player route
@@ -52,3 +52,12 @@ Remove all Wayfinding objects from the final place, including room-title boards,
 Public rooms receive small coloured floor inserts over the supplied floor, finer texture tiling/grout, aged mural plaster, blue painted contours, a curved reception counter, yellow corridor arches, an indoor atrium garden, suspended scenic clouds and two original playhouse facades. Maintenance and escape rooms receive pale service walls with red stripes, damaged plaster at the edges and a suspended damaged fluorescent fitting. Central progression lanes and all puzzle positions remain unchanged.
 
 The unavailable JPEG attachments were not opened; the scenic direction uses only the inline images visible in the conversation. This remains a technical engine validation, not a verified rendered playthrough.
+
+
+## Revision 6 — GrabPack and collision correction
+
+The user's latest instruction supersedes the former no-GrabPack rule. The game now includes sanitized hand/launcher geometry from 10468403169 with custom server-side ray validation, remote puzzle interactions, retraction, obstructed cart pulling and an eight-second two-hand power bridge. See REFERENCE-REVIEW.md for the reviewed references and exact audio limitations.
+
+Static imported visual assets now have collision/query enabled and mesh collision fidelity appropriate to their role. Door leaves retain the DoorPanel proxy, stairs retain tread colliders, and portable cells retain the CellHandle proxy. The validator sweeps an avatar-sized box along the route and tests GrabPack charging/bridging/releasing in an isolated graph.
+
+The front end follows the uploaded Chapter 3 composition: chapter/title/description at upper left, five outlined buttons below, original red-lit 3D creature stage at right. Credits and exit confirmation are functional. This does not claim a pixel-identical official menu or a rendered client playtest.

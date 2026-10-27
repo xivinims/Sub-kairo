@@ -176,6 +176,8 @@ task.spawn(function()
 end)
 
 input:Start()
-require(clientFolder:WaitForChild("ChapterPresentation")).Start(gui,remotes,Protocol,input)
+local frontend = require(clientFolder:WaitForChild("ChapterPresentation")).Start(gui,remotes,Protocol,input)
+require(clientFolder:WaitForChild("GrabPackController")).Start(frontend,remotes,Protocol,input)
+require(clientFolder:WaitForChild("FootstepController")).Start(frontend)
 foundation:SetAttribute("ClientReady_" .. player.UserId, true)
 

@@ -75,7 +75,7 @@ check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("Dead
 local tests={}
 if root then
     local sf=root:FindFirstChild("Services")
-    for _,name in ipairs({"PowerService","WireService","DoorService","SaveService","ChapterService","CheckpointService","DialogueService","StalkerService","ChapterRuntime"}) do
+    for _,name in ipairs({"PowerService","WireService","DoorService","SaveService","ChapterService","CheckpointService","DialogueService","StalkerService","ChapterRuntime","GrabPackService"}) do
         local m=sf and sf:FindFirstChild(name)
         check(m~=nil,"Missing module: "..name)
         if m then local ok,result=pcall(require,m); check(ok,"Module require failed "..name..": "..tostring(result)) end
@@ -138,9 +138,75 @@ if root and root:FindFirstChild("Services") then
     local logger=Debug.new({Debug={Enabled=true}})
     for _,message in ipairs(errors) do logger:Error("CHAPTER_VALIDATION",message) end
 end
+-- Sweep an avatar-sized volume along the complete traversable route, ignoring only powered door panels.
+local excludes={}
+for _,m in pairs(doors) do table.insert(excludes,m) end
+local params=RaycastParams.new(); params.FilterType=Enum.RaycastFilterType.Exclude
+params.FilterDescendantsInstances=excludes; params.RespectCanCollide=true
+local route={{0,12},{0,120},{0,153},{0,218},{0,266},{0,316},{7,320},{7,333},{0,340},{0,366},{0,380},{0,387},
+    {4,395},{4,404},{0,411},{0,458},{0,518},{-12,540},{-12,558},{12,566},{12,582},{-12,587},{-12,603},{12,613},{12,631},{0,637},{0,680}}
+for i=1,#route-1 do
+    local a=Vector3.new(route[i][1],3.6,route[i][2]); local b=Vector3.new(route[i+1][1],3.6,route[i+1][2])
+    local result=workspace:Blockcast(CFrame.new(a),Vector3.new(2.6,5.4,2.6),b-a,params)
+    check(not result,"Avatar route blocked at segment "..i..": "..(result and result.Instance:GetFullName() or ""))
+end
+local solidImported=0
+if map then
+    for _,m in ipairs(map:GetDescendants()) do
+        if m:IsA("Model") and m:GetAttribute("CollisionRole")=="SolidGeometry" then
+            local solid=false
+            for _,p in ipairs(m:GetDescendants()) do if p:IsA("BasePart") and p.CanCollide and p.CanQuery then solid=true; solidImported+=1 end end
+            check(solid,"Imported solid has no collision: "..m:GetFullName())
+        end
+    end
+end
+local geometry=RS.DeadSignalFoundation:FindFirstChild("GrabPackGeometry")
+check(geometry~=nil,"GrabPack geometry missing")
+if geometry then
+    for _,name in ipairs({"BlueHand","RedHand","LeftLauncher","RightLauncher"}) do check(geometry:FindFirstChild(name)~=nil,"GrabPack part absent: "..name) end
+    for _,d in ipairs(geometry:GetDescendants()) do check(not d:IsA("LuaSourceContainer"),"Third-party code found in GrabPack geometry") end
+end
+check(workspace:FindFirstChild("MenuStage")~=nil,"Missing rendered menu stage")
+check(workspace:GetAttribute("GrabPackEnabled")==true,"GrabPack disabled")
+check(solidImported>200,"Solid geometry pass not applied")
+check(root.Services:FindFirstChild("GrabPackService")~=nil,"GrabPack service missing")
+tests.avatarRoute=#errors==0
+tests.collisionRoles=solidImported>200
+-- Exercise the real GrabPack service with an isolated power graph and a temporary avatar.
+if root and geometry then
+    local config=require(RS.DeadSignalFoundation.Shared.GameConfig)
+    local Power=require(root.Services.PowerService)
+    local Grab=require(root.Services.GrabPackService)
+    local gp=Power.new(config); local temp=Instance.new("Folder")
+    for _,id in ipairs({"GRAB_SOURCE","GRAB_RECEIVER"}) do local n=nodes[id]:Clone(); n.Parent=temp; gp:RegisterNode(n) end
+    gp:Recalculate()
+    local avatar=Instance.new("Model"); avatar.Name="GrabValidationAvatar"
+    local head=Instance.new("Part"); head.Name="Head"; head.Size=Vector3.new(1,1,1); head.Anchored=true; head.Position=Vector3.new(-18,4,5); head.Parent=avatar
+    local hrp=head:Clone(); hrp.Name="HumanoidRootPart"; hrp.Parent=avatar
+    local hum=Instance.new("Humanoid"); hum.RequiresNeck=false; hum.Parent=avatar
+    avatar.Parent=workspace
+    local fake={Character=avatar,UserId=-600}
+    function fake:GetAttribute(key) return key=="DeadSignalPlaying" end
+    local flags={}; local feedback={}
+    local grab=Grab.new({power=gp,chapters={SetFlag=function(_,_,key,value) flags[key]=value end},
+        interactions={Actions={}},noise={Emit=function() end},debug={Error=function(_,_,err) table.insert(errors,tostring(err)) end},
+        remote={FireClient=function(_,_,payload) table.insert(feedback,payload) end}})
+    local ok,payload=grab:Fire(fake,"Left",Vector3.new(0,0,1))
+    check(ok and payload.kind=="charged","GrabPack blue hand failed to latch onto source")
+    head.Position=Vector3.new(17,4,15); hrp.Position=head.Position
+    local connected,out=grab:Fire(fake,"Right",Vector3.new(0,0,1))
+    check(connected and out.kind=="power-bridge" and gp:IsEnergized("GRAB_RECEIVER"),"GrabPack two-hand power bridge failed")
+    check(flags.grabBridge==true,"GrabPack progression flag missing")
+    check(not grab:Fire(fake,"Wrong",Vector3.new(0,0,1)),"GrabPack accepted invalid hand")
+    check(not grab:Fire(fake,"Right",Vector3.new(0,0,100)),"GrabPack accepted forged ray magnitude")
+    grab:Clear(fake)
+    check(not gp:IsEnergized("GRAB_RECEIVER"),"GrabPack did not release temporary power link")
+    avatar:Destroy(); temp:Destroy()
+    tests.grabPack=true
+end
 local function count(t) local n=0; for _ in pairs(t) do n+=1 end; return n end
 return {ok=#errors==0,errors=errors,build=workspace:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,
-    rooms=workspace:GetAttribute("ChapterRoomCount"),parts=parts,importedModels=imported,assetIds=assetIds,firstPerson=game:GetService("StarterPlayer").CameraMode.Name,powerNodes=count(nodes),endpoints=count(ends),wires=count(wires),
+    solidImportedParts=solidImported,grabPack=geometry~=nil,menuRevision=workspace:GetAttribute("MenuRevision"),rooms=workspace:GetAttribute("ChapterRoomCount"),parts=parts,importedModels=imported,assetIds=assetIds,firstPerson=game:GetService("StarterPlayer").CameraMode.Name,powerNodes=count(nodes),endpoints=count(ends),wires=count(wires),
     doors=count(doors),checkpoints=count(cps),npc=#Tags:GetTagged("DeadSignalRadio"),stalkers=#monsters,serviceTests=tests,
     serverBootstrap=root and root:FindFirstChild("ServerBootstrap")~=nil,
     clientBootstrap=game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("DeadSignalFoundationClient")~=nil}

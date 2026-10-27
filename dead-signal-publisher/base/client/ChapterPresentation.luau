@@ -24,10 +24,13 @@ function Presentation.Start(gui,remotes,protocol,input)
     local menu=Instance.new("Frame"); menu.Size=UDim2.fromScale(1,1); menu.BackgroundColor3=Color3.fromRGB(7,12,11)
     menu.BackgroundTransparency=0.32; menu.Parent=layer
     local shade=Instance.new("UIGradient"); shade.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(0.6,0.3),NumberSequenceKeypoint.new(1,0.85)}); shade.Parent=menu
-    label(menu,"DEAD\nSIGNAL",UDim2.fromScale(0.075,0.1),UDim2.fromScale(0.46,0.29),Enum.Font.GothamBlack)
-    label(menu,"CAPÍTULO 01 · A LINHA DE ESCUTA",UDim2.fromScale(0.08,0.405),UDim2.fromScale(0.6,0.045))
-    label(menu,"AURIVANE WORKS / SIGNALWORKS 1978",UDim2.fromScale(0.08,0.91),UDim2.fromScale(0.72,0.027))
-    label(menu,"BUILD 05 · TESTE",UDim2.fromScale(0.73,0.94),UDim2.fromScale(0.25,0.025))
+    local chapterLabel=label(menu,"CAPÍTULO 1",UDim2.fromScale(0.045,0.08),UDim2.fromScale(0.4,0.045),Enum.Font.Code)
+    local titleLabel=label(menu,"‘SINAL MORTO’",UDim2.fromScale(0.045,0.14),UDim2.fromScale(0.43,0.085),Enum.Font.Code)
+    local separator=Instance.new("Frame"); separator.BorderSizePixel=0; separator.BackgroundColor3=Color3.fromRGB(138,137,125)
+    separator.Position=UDim2.fromScale(0.045,0.255); separator.Size=UDim2.new(0.4,0,0,1); separator.Parent=menu
+    local description=label(menu,"Um sinal trouxe você de volta.\nRestaure a energia e encontre\nquem ainda responde à linha.",UDim2.fromScale(0.045,0.29),UDim2.fromScale(0.36,0.13),Enum.Font.Code)
+    description.TextWrapped=true
+    label(menu,"DEAD SIGNAL · AURIVANE WORKS",UDim2.fromScale(0.045,0.94),UDim2.fromScale(0.58,0.025),Enum.Font.Code)
     for i=1,18 do
         local l=Instance.new("Frame"); l.BackgroundColor3=Color3.new(0,0,0); l.BackgroundTransparency=0.85
         l.BorderSizePixel=0; l.Size=UDim2.new(1,0,0,1); l.Position=UDim2.fromScale(0,i/19); l.Parent=menu
@@ -41,7 +44,7 @@ function Presentation.Start(gui,remotes,protocol,input)
     local controls
     task.spawn(function()
         local ok,module=pcall(function() return require(player.PlayerScripts:WaitForChild("PlayerModule")) end)
-        if ok then controls=module:GetControls(); controls:Disable() end
+        if ok then controls=module:GetControls(); if playing then controls:Enable() else controls:Disable() end end
     end)
     local function lockCamera(active)
         player.CameraMode=Enum.CameraMode.LockFirstPerson
@@ -56,6 +59,7 @@ function Presentation.Start(gui,remotes,protocol,input)
     local settings=require(script.Parent.SettingsController).new(layer,function(values)
         remotes[protocol.Events.ChapterAction]:FireServer("settings",values)
     end,function(show)
+        layer:SetAttribute("UIBlocked",show)
         lockCamera(playing and not show)
         gui.Enabled=playing and not show
         remotes[protocol.Events.ChapterAction]:FireServer("pause",show)
@@ -65,23 +69,49 @@ function Presentation.Start(gui,remotes,protocol,input)
         remotes[protocol.Events.ChapterAction]:FireServer(action)
         task.delay(12,function() pending=false end)
     end
-    button(menu,"CONTINUAR",UDim2.fromScale(0.08,0.51),UDim2.fromScale(0.36,0.105),function() start("continue") end)
+    button(menu,"CONTINUAR",UDim2.fromScale(0.045,0.60),UDim2.fromScale(0.24,0.055),function() start("continue") end)
     local confirm=false; local newButton
-    newButton=button(menu,"NOVO JOGO",UDim2.fromScale(0.08,0.64),UDim2.fromScale(0.36,0.105),function()
+    newButton=button(menu,"NOVO JOGO",UDim2.fromScale(0.045,0.66),UDim2.fromScale(0.24,0.055),function()
         if not confirm then
-            confirm=true; newButton.Text="CONFIRMAR NOVO JOGO"
+            confirm=true; newButton.Text="CONFIRMAR?"
             task.delay(5,function() confirm=false; newButton.Text="NOVO JOGO" end)
         else start("new") end
     end)
-    button(menu,"CONFIGURAÇÕES",UDim2.fromScale(0.08,0.77),UDim2.fromScale(0.36,0.08),function() settings:SetVisible(true) end)
+    button(menu,"CONFIGURAÇÕES",UDim2.fromScale(0.045,0.72),UDim2.fromScale(0.24,0.055),function() settings:SetVisible(true) end)
+    local credits=Instance.new("Frame"); credits.Size=UDim2.fromScale(0.84,0.8); credits.Position=UDim2.fromScale(0.08,0.1)
+    credits.BackgroundColor3=Color3.fromRGB(10,12,12); credits.ZIndex=20; credits.Visible=false; credits.Parent=layer
+    local creditsText=label(credits,"DEAD SIGNAL\n\nAurivane Works\n\nReferências: Poppy Playtime / Mob Entertainment e The Mimic.\nGeometria selecionada da Creator Store.\nGrabPack: modelo fornecido pelo jogador; lógica própria.\n\nProjeto de fã independente.",UDim2.fromScale(0.07,0.08),UDim2.fromScale(0.86,0.7),Enum.Font.Code)
+    creditsText.ZIndex=21; creditsText.TextWrapped=true
+    local closeCredits=button(credits,"VOLTAR",UDim2.fromScale(0.07,0.83),UDim2.fromScale(0.35,0.1),function() credits.Visible=false end); closeCredits.ZIndex=22
+    button(menu,"CRÉDITOS",UDim2.fromScale(0.045,0.78),UDim2.fromScale(0.24,0.055),function() credits.Visible=true end)
+    local exitConfirm=false; local exitButton
+    exitButton=button(menu,"SAIR",UDim2.fromScale(0.045,0.84),UDim2.fromScale(0.24,0.055),function()
+        if exitConfirm then remotes[protocol.Events.ChapterAction]:FireServer("leave")
+        else exitConfirm=true; exitButton.Text="SAIR DO SERVIDOR?"; task.delay(4,function() exitConfirm=false; exitButton.Text="SAIR" end) end
+    end)
     for _,b in ipairs(menu:GetChildren()) do
         if b:IsA("TextButton") then
-            b.BackgroundTransparency=1; b.TextXAlignment=Enum.TextXAlignment.Left; b.Font=Enum.Font.GothamBold
-            local stroke=b:FindFirstChildOfClass("UIStroke"); if stroke then stroke:Destroy() end
-            b.MouseEnter:Connect(function() b.TextColor3=Color3.fromRGB(230,183,91) end)
-            b.MouseLeave:Connect(function() b.TextColor3=Color3.fromRGB(228,219,192) end)
+            b.BackgroundTransparency=0.8; b.TextXAlignment=Enum.TextXAlignment.Left; b.Font=Enum.Font.Code
+            b.TextColor3=Color3.fromRGB(221,220,207)
+            local pad=Instance.new("UIPadding"); pad.PaddingLeft=UDim.new(0,8); pad.Parent=b
+            local stroke=b:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Color=Color3.fromRGB(126,126,117); stroke.Transparency=0.25; stroke.Thickness=1 end
+            b.MouseEnter:Connect(function() b.BackgroundTransparency=0.35; b.TextColor3=Color3.fromRGB(255,247,221) end)
+            b.MouseLeave:Connect(function() b.BackgroundTransparency=0.8; b.TextColor3=Color3.fromRGB(221,220,207) end)
         end
     end
+    local portrait=false
+    local function responsiveMenu()
+        local camera=workspace.CurrentCamera; if not camera then return end
+        local nextPortrait=camera.ViewportSize.X<camera.ViewportSize.Y
+        if nextPortrait==portrait then return end; portrait=nextPortrait
+        for _,b in ipairs(menu:GetChildren()) do
+            if b:IsA("TextButton") then b.Size=UDim2.fromScale(portrait and 0.45 or 0.24,0.055) end
+        end
+        description.Size=UDim2.fromScale(portrait and 0.62 or 0.36,0.13)
+        titleLabel.Size=UDim2.fromScale(portrait and 0.68 or 0.43,0.085)
+    end
+    task.spawn(function() pcall(function() player:RequestStreamAroundAsync(Vector3.new(184,8,106),10) end) end)
     local gear=button(layer,"⚙",UDim2.new(1,-62,0,48),UDim2.fromOffset(46,46),function() settings:SetVisible(not settings.visible) end); gear.Visible=false
     local drop=button(layer,"SOLTAR",UDim2.new(1,-225,1,-115),UDim2.fromOffset(94,48),function() remotes[protocol.Events.ChapterAction]:FireServer("drop") end); drop.Visible=false
     remotes[protocol.Events.WireState].OnClientEvent:Connect(function(kind)
@@ -97,7 +127,7 @@ function Presentation.Start(gui,remotes,protocol,input)
     local steps=Instance.new("Sound"); steps.Name="ThreadbareSteps"
     steps.SoundId="rbxasset://sounds/action_footsteps_plastic.mp3"; steps.Looped=true
     steps.PlaybackSpeed=0.65; steps.Volume=0; steps.Parent=SoundService
-    ambient:Play(); steps:Play()
+    steps:Play()
     local token=0
     remotes[protocol.Events.ChapterFeedback].OnClientEvent:Connect(function(text,kind)
         pending=false
@@ -168,7 +198,8 @@ function Presentation.Start(gui,remotes,protocol,input)
         if not playing then
             local camera=workspace.CurrentCamera
             if camera then camera.CameraType=Enum.CameraType.Scriptable
-                local base=CFrame.lookAt(Vector3.new(12,8,66),Vector3.new(-19,7,83))
+                responsiveMenu()
+                local base=CFrame.lookAt(Vector3.new(174,8,84),Vector3.new(180,10,112))
                 camera.CFrame=base*(reduced and CFrame.new() or CFrame.Angles(0,math.sin(elapsed*0.15)*0.025,0))
             end
         end
@@ -201,5 +232,6 @@ function Presentation.Start(gui,remotes,protocol,input)
             end
         end
     end)
+    return layer
 end
 return Presentation

@@ -318,6 +318,9 @@ chapterRuntime = ChapterRuntime.new({save=save,chapters=chapters,checkpoints=che
     interactions=interactions,dialogue=dialogue,stalker=stalker,noise=noise,debug=debug,events=events,
     remotes=eventsByName,protocol=Protocol,config=Config})
 chapterRuntime:Start()
+local grab = require(servicesFolder:WaitForChild("GrabPackService")).new({power=power,chapters=chapters,interactions=interactions,noise=noise,debug=debug,
+    action=eventsByName[Protocol.Events.GrabAction],remote=eventsByName[Protocol.Events.GrabState]})
+grab:Start()
 save:Start()
 events:Start()
 stalker:Start()

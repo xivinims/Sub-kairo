@@ -85,6 +85,7 @@ end
 function Run:Start()
     self.dialogue:RegisterSpeaker("MARA",{displayName="MARA · Canal 04",color=Color3.fromRGB(159,203,177)})
     local lines={
+        maintenanceRecording={"Registro de manutenção: a alimentação de contato dura oito segundos. Uma mão segura a fonte; a outra fecha o circuito.","A linha antiga nunca devia ter sido ligada ao arquivo. Alguém refez a conexão depois do fechamento."},
         intro={"Você voltou pelo sinal? A recepção ainda não sabe que fechamos.","Sou MARA. Estou no arquivo. Primeiro, ligue os dois terminais da indução. O cabo tem limite."},
         battery={"O acumulador está respondendo. Existem duas células. Pode retirar uma do encaixe quando precisar.","As máquinas não dividem a energia por educação. Você vai ter que escolher."},
         production={"Essa linha montava aparelhos que aprendiam vozes. Um deles começou a repetir vozes que nunca gravamos.","Se alguma coisa estiver olhando da passarela... não chame por ela."},
@@ -261,6 +262,7 @@ function Run:Start()
     -- Disable generic auto-open for the interlocked return gate.
     self.doors.Doors.RETURN_GATE.model:SetAttribute("AutoOpenWhenPowered",false)
     self.remotes[self.protocol.Events.ChapterAction].OnServerEvent:Connect(function(p,action,settings)
+        if action=="leave" then p:Kick("Você saiu de Dead Signal."); return end
         if action=="settings" and type(settings)=="table" then
             self.save:Mutate(p,function(d)
                 local bounds={masterVolume={0,1},sfxVolume={0,1},dialogueVolume={0,1},fov={60,100},sensitivity={0.25,2},brightness={-0.1,0.25}}

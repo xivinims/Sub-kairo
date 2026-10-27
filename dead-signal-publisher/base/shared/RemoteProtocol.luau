@@ -1,6 +1,8 @@
 local Protocol = {
     Folder = "DeadSignalGameRemotes",
     Events = {
+        GrabAction = "GrabAction",
+        GrabState = "GrabState",
         ChapterAction = "ChapterAction",
         ChapterFeedback = "ChapterFeedback",
         Interaction = "Interaction",
