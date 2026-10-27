@@ -1,6 +1,8 @@
 local M={}
 local UIS=game:GetService("UserInputService")
 local SoundService=game:GetService("SoundService")
+local RS=game:GetService("ReplicatedStorage")
+local net=RS:WaitForChild("Survival")
 local initialized=setmetatable({},{__mode="k"})
 
 local PANEL=Color3.fromRGB(13,14,17)
@@ -298,6 +300,17 @@ function M.build(parent,player,onClose)
   v.TextColor3=MUTED
   v.TextSize=12
  end
+ local function addAdminStart(order)
+  local row=makeRow("AdminStart",order,58)
+  addLabel(row,"RODADA DE TESTE")
+  local b=button(row,"Start","COMEÇAR",UDim2.fromOffset(126,34),UDim2.new(1,-138,.5,-17),48)
+  b.Font=Enum.Font.GothamBold
+  b.Activated:Connect(function()
+   sound(.92)
+   net.Action:FireServer("adminStart")
+   if onClose then onClose() end
+  end)
+ end
 
  local categories={
   {key="graphics",pt="GRÁFICOS",en="GRAPHICS",build=function()
@@ -323,6 +336,12 @@ function M.build(parent,player,onClose)
    addLanguage(2)
   end},
  }
+ if string.lower(tostring(player.Name or ""))=="ch_ckz2n" then
+  table.insert(categories,{key="admin",pt="ADMIN",en="ADMIN",build=function()
+   addInfo("KILLER","BOT IA ALEATÓRIO",1)
+   addAdminStart(2)
+  end})
+ end
 
  local navButtons={}
  local activeKey="graphics"
