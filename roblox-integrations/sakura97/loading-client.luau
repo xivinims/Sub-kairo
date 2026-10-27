@@ -191,7 +191,7 @@ local function fitLoadingCamera(view,camera,television,tableModel)
  local pixels=view.AbsoluteSize
  local aspect=math.max(.1,pixels.X/math.max(1,pixels.Y))
  local fitDistance=math.max(size.Y,size.X/aspect)*.5/math.tan(math.rad(camera.FieldOfView*.5))
- local closeFitScale=aspect<.7 and 1.08 or (aspect<1 and .96 or .88)
+ local closeFitScale=aspect<.7 and 1.08 or (aspect<1 and 1.06 or .88)
  local cameraDistance=fitDistance*closeFitScale+size.Z*.5
  camera.CFrame=CFrame.lookAt(center+Vector3.new(0,0,cameraDistance),center)
  return camera.CFrame
