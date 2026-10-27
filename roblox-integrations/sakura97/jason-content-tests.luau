@@ -158,12 +158,14 @@ local survivalClientSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFi
 local pursuerAnimationSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("PursuerAnimation"),"Pursuer animation controller missing").Source
 local ambienceSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("ArenaAmbience"),"Arena ambience missing").Source
 local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
-assert(settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('book.Name="BookBackground"',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true),"Red binder settings background missing")
-assert(settingsSource:find("BOOK_PAGE_SOUND_ID=6102885802",1,true) and settingsSource:find('frame:SetAttribute("BookAnimation",true)',1,true),"Book open/page audio animation missing")
+assert(settingsSource:find('frame:SetAttribute("Style","CinematicSideSettings")',1,true) and settingsSource:find('nav.Name="CategoryRail"',1,true) and settingsSource:find('panel.Name="OptionsPanel"',1,true),"Cinematic side settings layout missing")
+assert(settingsSource:find('click.SoundId="rbxassetid://6102885802"',1,true) and settingsSource:find('frame:SetAttribute("FrozenCameraBackdrop",true)',1,true),"Settings transition/audio metadata missing")
 local guideSource=assert(workspace:FindFirstChild("LobbyGuide"),"Lobby guide missing").GuideInteraction.Source
 assert(guideSource:find('subtitle.Name="CinematicSubtitle"',1,true) and guideSource:find('bubble.Enabled=false',1,true),"Fill dialogue was not moved off the NPC")
 assert(guideSource:find("local explain=talking",1,true) and guideSource:find("leftShoulder.C0",1,true) and guideSource:find("rightShoulder.C0",1,true),"Fill expressive explanation gestures missing")
 local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing").Source
+assert(survivalClientSource:find('coinView.Image="rbxasset://textures/ui/common/robux@3x.png"',1,true),"Robux currency icon missing")
+assert(survivalClientSource:find('settingsIcon.Name="SettingsHexIcon"',1,true) and survivalClientSource:find("settingsCameraState",1,true) and survivalClientSource:find("SuviversSettingsBlur",1,true),"Settings icon/frozen camera backdrop missing")
 local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
 local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source
 local killerFactorySource=assert(game.ServerScriptService:FindFirstChild("KillerFactory"),"Killer factory missing").Source
