@@ -38,7 +38,8 @@ for _,service in ipairs({RS,SSS,game:GetService("ReplicatedFirst"),game:GetServi
     for _,d in ipairs(service:GetChildren()) do d:Destroy() end
 end
 for key in pairs(W:GetAttributes()) do W:SetAttribute(key,nil) end
-W.StreamingEnabled=true; W.StreamingMinRadius=128; W.StreamingTargetRadius=192
+W.StreamingEnabled=true
+-- Radius properties are editor-only on this execution-session engine; use the place defaults.
 Lighting.ClockTime=14; Lighting.Brightness=2; Lighting.Ambient=Color3.fromRGB(115,120,126); Lighting.OutdoorAmbient=Color3.fromRGB(140,145,152)
 Lighting.GlobalShadows=true
 local function part(name,size,cf)
