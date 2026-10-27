@@ -1,1 +1,1 @@
-dead-signal-social-lobby-v1
+dead-signal-foundation-test-v2
