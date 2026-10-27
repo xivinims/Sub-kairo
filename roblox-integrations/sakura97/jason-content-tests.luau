@@ -166,6 +166,7 @@ assert(guideSource:find("local explain=talking",1,true) and guideSource:find("le
 local loadingSource=assert(game.ReplicatedFirst:FindFirstChild("SweanLoadingController"),"Initial loading controller missing").Source
 assert(survivalClientSource:find('coinView.Image="rbxasset://textures/ui/common/robux@3x.png"',1,true),"Robux currency icon missing")
 assert(survivalClientSource:find('settingsIcon.Name="SettingsHexIcon"',1,true) and survivalClientSource:find("settingsCameraState",1,true) and survivalClientSource:find("SuviversSettingsBlur",1,true),"Settings icon/frozen camera backdrop missing")
+assert(survivalClientSource:find('top:SetAttribute("ReferenceClockStyle","IMG_2414")',1,true) and survivalClientSource:find('clockFace.Name="ReferenceClockFace"',1,true) and survivalClientSource:find('hourHand.Rotation=-34',1,true) and survivalClientSource:find('minuteHand.Rotation=-90',1,true),"Supplied transparent top-clock reference missing")
 local nametagSource=assert(game.ServerScriptService:FindFirstChild("NametagService"),"Nametag service missing").Source
 local friendSource=assert(game.StarterPlayer.StarterPlayerScripts:FindFirstChild("FriendPresence"),"Friend presence missing").Source
 local killerFactorySource=assert(game.ServerScriptService:FindFirstChild("KillerFactory"),"Killer factory missing").Source
