@@ -31,7 +31,7 @@ end
 function SafeAssetImporter.Load(definition)
     assert(type(definition) == "table", "Asset definition required")
     assert(type(definition.id) == "number", "Asset id required")
-    assert(definition.importMode ~= "reference-only", "Reference-only asset cannot be imported into runtime")
+    assert(definition.importMode ~= "reference-only" and definition.importMode ~= "selective-only", "This asset cannot be imported wholesale into runtime")
 
     local asset = AssetService:LoadAssetAsync(definition.id)
     assert(asset, "AssetService returned nil for " .. tostring(definition.id))
