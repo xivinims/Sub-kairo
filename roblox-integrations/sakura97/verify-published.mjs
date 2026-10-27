@@ -137,7 +137,7 @@ function first(task){
 
 
  const persisted=first(await execute(`
-  assert(game.ReplicatedStorage.Survival:GetAttribute("SettingsBookAssetId")==106878485002176,"Exact uploaded settings image missing")
+  assert((game.ReplicatedStorage.Survival:GetAttribute("SettingsIconImageId") or 0)>0,"Settings hex icon image missing")
   assert(game.ReplicatedStorage.Survival.SettingsPanel.Source==${JSON.stringify(fs.readFileSync('roblox-integrations/sakura97/settings-panel.luau','utf8'))},"Published settings source differs from tested source")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source==${JSON.stringify(fs.readFileSync('roblox-integrations/sakura97/survival-client.luau','utf8'))},"Published HUD differs from tested source")
   assert(workspace.JediLibrary:GetAttribute("SourceAssetId")==110584744116489,"Wrong fixed lobby asset")
@@ -251,10 +251,13 @@ local assets=game.ServerStorage.SurvivalAssets
   assert(not loadingSource:find("GOOD LUCK",1,true) and not loadingSource:find("LoadingAvatar",1,true),"Map loading content leaked into initial loading")
   assert(game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("Lighting.ClockTime=.5",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversDistrictBloom",1,true) and game.StarterPlayer.StarterPlayerScripts.ArenaAmbience.Source:find("SuviversAtmosphere",1,true),"Night lobby ambience missing")
   local settingsSource=game.ReplicatedStorage.Survival.SettingsPanel.Source
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('coinView.Image="rbxasset://textures/ui/common/robux@3x.png"',1,true),"Official Robux HUD icon missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('settingsIcon.Name="SettingsHexIcon"',1,true),"Settings hex HUD icon missing")
+  assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("settingsCameraState",1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find("SuviversSettingsBlur",1,true),"Frozen camera settings backdrop missing")
   assert(settingsSource:find('key="CameraFOV"',1,true) and settingsSource:find('default=62',1,true),"Gameplay FOV setting missing")
   assert(not settingsSource:find('key="visual"',1,true) and not settingsSource:find('VisualSaturation',1,true) and not settingsSource:find('VisualTime',1,true),"Removed visual/environment settings returned")
-  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","RedBinderBook")',1,true) and settingsSource:find('scroll.Name="PageScroll"',1,true) and settingsSource:find('addRibbon("game","JOGO","GAME"',1,true),"Book settings panel missing")
-   assert(settingsSource:find("BOOK_PAGE_SOUND_ID=6102885802",1,true) and settingsSource:find('frame:SetAttribute("BookAudio",true)',1,true) and settingsSource:find("animateBookOpen",1,true),"Book paper audio/open animation missing")
+  assert(not settingsSource:find('key="ReducedMotion"',1,true) and settingsSource:find('frame:SetAttribute("Style","CinematicSideSettings")',1,true) and settingsSource:find('nav.Name="CategoryRail"',1,true) and settingsSource:find('panel.Name="OptionsPanel"',1,true),"Cinematic side settings panel missing")
+   assert(settingsSource:find('click.SoundId="rbxassetid://6102885802"',1,true) and settingsSource:find('frame:SetAttribute("FrozenCameraBackdrop",true)',1,true),"Settings open audio/frozen-camera metadata missing")
   assert(game.StarterPlayer.StarterPlayerScripts.VoidSequence.Source:find('local media=RS:WaitForChild("XNMedia")',1,true),"Death presentation media reference is unsafe")
   assert(game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('shopOverlay.Name="KillerShop"',1,true) and game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source:find('event:FireServer("buyKiller"',1,true),"Killer shop HUD missing")
   local shopSource=game.StarterPlayer.StarterPlayerScripts.SurvivalClient.Source
