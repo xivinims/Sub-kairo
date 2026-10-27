@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-bramble-arena-v1';
+const BUILD_ID = 'dead-signal-bramble-map-v2';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -115,6 +115,7 @@ async function main() {
     ['arena-install.luau','arena-validate.luau','base/server/SafeAssetImporter.luau','arena-animation.luau','arena-server.luau','arena-client.luau'].map(
       path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
   const install=template
+    .replace('__TEST_MAP__',await fs.readFile(new URL('./test-map-install.luau',import.meta.url),'utf8'))
     .replace('__IMPORTER__',luaLongString(importer))
     .replace('__ANIMATION__',luaLongString(animation))
     .replace('__SERVER__',luaLongString(server))

@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-bramble-arena-v1"
+local BUILD_ID="dead-signal-bramble-map-v2"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong Dead Signal target")
 local W=game:GetService("Workspace")
 local RS=game:GetService("ReplicatedStorage")
@@ -12,7 +12,7 @@ local Importer=require(sourceImporter)
 local bundle,report=Importer.Load({id=115602504342753,importMode="rig",stripScripts=true})
 local selected=bundle:FindFirstChild("LiveEntityBramble",true)
 assert(selected and selected:IsA("Model"),"Requested Bramble rig not found")
-local rig=selected:Clone(); bundle:Destroy(); sourceImporter:Destroy()
+local rig=selected:Clone(); bundle:Destroy()
 rig.Name="Bramble"
 local root=rig:FindFirstChild("Root")
 assert(root and root:IsA("BasePart"),"Bramble Root missing")
@@ -40,38 +40,40 @@ end
 for key in pairs(W:GetAttributes()) do W:SetAttribute(key,nil) end
 W.StreamingEnabled=true
 -- Radius properties are editor-only on this execution-session engine; use the place defaults.
-Lighting.ClockTime=14; Lighting.Brightness=2; Lighting.Ambient=Color3.fromRGB(115,120,126); Lighting.OutdoorAmbient=Color3.fromRGB(140,145,152)
+Lighting.ClockTime=0; Lighting.Brightness=0.6; Lighting.Ambient=Color3.fromRGB(45,49,57); Lighting.OutdoorAmbient=Color3.fromRGB(52,58,68)
 Lighting.GlobalShadows=true
 local function part(name,size,cf)
  local p=Instance.new("Part"); p.Name=name; p.Size=size; p.CFrame=cf; p.Anchored=true; p.Material=Enum.Material.Concrete; p.Color=Color3.fromRGB(150,154,158); p.Parent=W; return p
 end
-part("CleanTestFloor",Vector3.new(160,1,160),CFrame.new(0,-0.5,0))
-for _,d in ipairs({{0,-80,160,1},{0,80,160,1},{-80,0,1,160},{80,0,1,160}}) do
- local p=part("ArenaBoundary",Vector3.new(d[3],30,d[4]),CFrame.new(d[1],14,d[2])); p.Transparency=1; p.CanQuery=false
-end
+__TEST_MAP__
+sourceImporter:Destroy()
 rig.Parent=W
 rig.ModelStreamingMode=Enum.ModelStreamingMode.Persistent
 rig:PivotTo(CFrame.new(0,0,0))
 local cf,size=rig:GetBoundingBox()
 local lift=-(cf.Position.Y-size.Y/2)+0.12
-rig:PivotTo(CFrame.new(0,lift,0))
+rig:PivotTo(CFrame.lookAt(monsterPoint+Vector3.new(0,lift,0),Vector3.new(spawnPoint.X,monsterPoint.Y+lift,spawnPoint.Z)))
 rig:SetAttribute("HomePosition",root.Position)
-local spawn=Instance.new("SpawnLocation"); spawn.Name="ArenaSpawn"; spawn.Size=Vector3.new(6,1,6); spawn.CFrame=CFrame.new(0,0.5,48)
+local spawn=Instance.new("SpawnLocation"); spawn.Name="ArenaSpawn"; spawn.Size=Vector3.new(6,1,6); spawn.CFrame=CFrame.lookAt(spawnPoint+Vector3.new(0,0.5,0),Vector3.new(monsterPoint.X,spawnPoint.Y+0.5,monsterPoint.Z))
 spawn.Anchored=true; spawn.CanCollide=false; spawn.Transparency=1; spawn.Neutral=true; spawn.Duration=0; spawn.Parent=W
-SP.CameraMode=Enum.CameraMode.Classic; SP.CameraMinZoomDistance=0.5; SP.CameraMaxZoomDistance=35
+SP.CameraMode=Enum.CameraMode.LockFirstPerson; SP.CameraMinZoomDistance=0.5; SP.CameraMaxZoomDistance=0.5
 SP.CharacterWalkSpeed=18
 local remote=Instance.new("RemoteEvent"); remote.Name="ArenaControl"; remote.Parent=RS
+local event=Instance.new("RemoteEvent"); event.Name="BrambleScare"; event.Parent=RS
 local module=Instance.new("ModuleScript"); module.Name="ArenaAnimation"; module.Source=__ANIMATION__; module.Parent=RS
 local server=Instance.new("Script"); server.Name="BrambleArenaServer"; server.Enabled=false; server.Source=__SERVER__; server.Parent=SSS
 local client=Instance.new("LocalScript"); client.Name="BrambleArenaClient"; client.Source=__CLIENT__; client.Parent=SP.StarterPlayerScripts
 W:SetAttribute("DeadSignalBuildId",BUILD_ID)
-W:SetAttribute("ArenaOnly",true)
+W:SetAttribute("ArenaOnly",false)
 -- Validate executable poses on the actual imported joints before publishing.
 local animation=require(module)
+local savedParts={}
+for _,p in ipairs(rig:GetDescendants()) do if p:IsA("BasePart") then savedParts[p]=p.CFrame end end
 local driver=animation.new(rig)
 assert(#driver.joints>=30,"Incomplete Bramble rig")
 for _,state in ipairs({"Idle","Walk","Run","Attack"}) do animation.Step(driver,state,0.8,0.1,true) end
 for _,record in ipairs(driver.joints) do record.joint.C0=record.base end
+for p,cf in pairs(savedParts) do p.CFrame=cf end
 __PREPUBLISH_VALIDATE__
 server.Enabled=true
 local prior=game.PlaceVersion

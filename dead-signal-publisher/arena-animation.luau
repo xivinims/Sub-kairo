@@ -7,8 +7,8 @@ function Animation.Pose(name,state,t)
     local stride=walk and math.sin(phase) or 0
     local breath=math.sin(t*1.7)
     local attack=state=="Attack"
-    local reach=attack and smooth(0,1,t/0.45) or 0
-    local close=attack and smooth(0,1,(t-0.55)/0.35) or 0
+    local reach=attack and smooth(0,1,(t-0.15)/0.5) or 0
+    local close=attack and smooth(0,1,(t-0.75)/0.35) or 0
     local sway=walk and math.sin(phase*0.5)*0.04 or breath*0.012
     local x,y,z=0,0,0
     if name=="RightShoulder" then z=math.rad(-72+reach*48); x=-stride*0.18-reach*0.65
@@ -29,62 +29,92 @@ function Animation.Pose(name,state,t)
     local offset=name=="LowerTorso" and Vector3.new(0,walk and math.cos(phase*2)*0.07 or breath*0.025,0) or Vector3.zero
     return CFrame.new(offset)*CFrame.Angles(x,y,z)
 end
-function Animation.new(rig)
-    local joints={}
-    for _,d in ipairs(rig:GetDescendants()) do
-        if d:IsA("Motor6D") then table.insert(joints,{joint=d,base=d.C0,current=CFrame.new()}) end
+function Animation.Hold(t)
+    local lift=smooth(-2.7,-0.9,(t-0.55)/0.65)
+    local approach=smooth(-5.0,-3.8,(t-0.6)/0.75)
+    return CFrame.new(0,lift,approach)*CFrame.Angles(0,math.pi,0)
+end
+local function solve(driver)
+    local resolved={[driver.rig.PrimaryPart]=true}
+    for _=1,10 do
+        local changed=false
+        for _,r in ipairs(driver.joints) do
+            local j=r.joint
+            if j.Part0 and j.Part1 and resolved[j.Part0] and not resolved[j.Part1] then
+                j.Part1.CFrame=j.Part0.CFrame*j.C0*j.C1:Inverse()
+                resolved[j.Part1]=true; changed=true
+            end
+        end
+        if not changed then break end
     end
-    return {joints=joints,rig=rig}
+end
+function Animation.new(rig)
+    local joints={}; local byName={}
+    for _,d in ipairs(rig:GetDescendants()) do
+        if d:IsA("Motor6D") then
+            local r={joint=d,base=d.C0,current=CFrame.new()}
+            table.insert(joints,r); byName[d.Name]=r
+        end
+    end
+    local driver={joints=joints,byName=byName,rig=rig,arms={}}
+    for _,side in ipairs({"Right","Left"}) do
+        local u=byName[side.."UpperArm"]; local l=byName[side.."LowerArm"]
+        local finger=byName[side.."Finger2"]
+        if u and l and finger then
+            local shoulder=(u.joint.Part0.CFrame*u.base).Position
+            local elbow=(l.joint.Part0.CFrame*l.base).Position
+            local wrist=(finger.joint.Part0.CFrame*finger.base).Position
+            driver.arms[side]={upper=u,lower=l,a=(elbow-shoulder).Magnitude,b=(wrist-elbow).Magnitude,
+                upperAxis=u.joint.Part1.CFrame:VectorToObjectSpace((elbow-shoulder).Unit),
+                lowerAxis=l.joint.Part1.CFrame:VectorToObjectSpace((wrist-elbow).Unit)}
+        end
+    end
+    return driver
+end
+local function aim(record,target,axis)
+    local joint=record.joint
+    local origin=(joint.Part0.CFrame*joint.C0).Position
+    local delta=target-origin
+    if delta.Magnitude<0.001 then return end
+    local current=joint.Part1.CFrame:VectorToWorldSpace(axis).Unit
+    local desired=delta.Unit
+    local cross=current:Cross(desired)
+    local turn=CFrame.new()
+    if cross.Magnitude>0.0001 then turn=CFrame.fromAxisAngle(cross.Unit,math.acos(math.clamp(current:Dot(desired),-1,1))) end
+    local rotation=turn*joint.Part1.CFrame.Rotation
+    joint.C0=CFrame.new(joint.C0.Position)*joint.Part0.CFrame.Rotation:Inverse()*rotation*joint.C1.Rotation
+end
+function Animation.Grip(driver,t)
+    if t<0.28 then return end
+    local root=driver.rig:GetPivot()
+    local center=driver.gripCenter or (root*Animation.Hold(t)).Position+Vector3.new(0,0.6,0)
+    for side,arm in pairs(driver.arms) do
+        local sign=side=="Right" and 1 or -1
+        local wrist=center+root.RightVector*sign*1.15
+        local shoulder=(arm.upper.joint.Part0.CFrame*arm.upper.joint.C0).Position
+        local delta=wrist-shoulder
+        if delta.Magnitude>0.01 then
+            local a,b=arm.a,arm.b
+            local distance=math.clamp(delta.Magnitude,math.abs(a-b)+0.02,a+b-0.02)
+            local forward=delta.Unit
+            local along=(a*a-b*b+distance*distance)/(2*distance)
+            local bendHint=-root.UpVector+root.RightVector*sign*0.25
+            local bend=bendHint-forward*bendHint:Dot(forward)
+            bend=bend.Magnitude>0.01 and bend.Unit or root.RightVector*sign
+            local elbow=shoulder+forward*along+bend*math.sqrt(math.max(0,a*a-along*along))
+            aim(arm.upper,elbow,arm.upperAxis); solve(driver)
+            aim(arm.lower,wrist,arm.lowerAxis); solve(driver)
+        end
+    end
 end
 function Animation.Step(driver,state,t,dt,instant)
-    local alpha=instant and 1 or 1-math.exp(-dt*12)
+    local alpha=instant and 1 or 1-math.exp(-dt*14)
     for _,r in ipairs(driver.joints) do
         local pose=Animation.Pose(r.joint.Name,state,t)
         r.current=r.current:Lerp(pose,alpha)
-        -- Rotate in the parent-part basis, preserving the source bind orientation.
         r.joint.C0=CFrame.new(r.base.Position)*r.current*r.base.Rotation
     end
-    if state=="Attack" then Animation.Grip(driver,t,alpha) end
-end
-local function aim(joint,target,sign,alpha)
-    if not joint or not joint.Part0 or not joint.Part1 then return end
-    local origin=(joint.Part0.CFrame*joint.C0).Position
-    local direction=target-origin
-    if direction.Magnitude<0.01 then return end
-    local current=joint.Part1.CFrame.RightVector*sign
-    local desired=direction.Unit
-    local cross=current:Cross(desired)
-    local dot=math.clamp(current:Dot(desired),-1,1)
-    local turn=cross.Magnitude>0.0001 and CFrame.fromAxisAngle(cross.Unit,math.acos(dot)) or CFrame.new()
-    local rotation=turn*joint.Part1.CFrame.Rotation
-    local localRotation=joint.Part0.CFrame.Rotation:Inverse()*rotation*joint.C1.Rotation
-    local goal=CFrame.new(joint.C0.Position)*localRotation
-    joint.C0=joint.C0:Lerp(goal,alpha)
-end
-function Animation.Grip(driver,t,alpha)
-    if t<0.25 then return end
-    local root=driver.rig:GetPivot()
-    for _,side in ipairs({"Right","Left"}) do
-        local upper,lower
-        for _,r in ipairs(driver.joints) do
-            if r.joint.Name==side.."UpperArm" then upper=r.joint end
-            if r.joint.Name==side.."LowerArm" then lower=r.joint end
-        end
-        if upper and lower and upper.Part0 and lower.Part0 then
-            local sign=side=="Right" and 1 or -1
-            local wrist=(root*CFrame.new(sign*1.1,0.7,-5.4)).Position
-            local shoulder=(upper.Part0.CFrame*upper.C0).Position
-            local a=3.1; local b=3.0
-            local delta=wrist-shoulder
-            local distance=math.clamp(delta.Magnitude,0.1,a+b-0.02)
-            local forward=delta.Unit
-            local along=(a*a-b*b+distance*distance)/(2*distance)
-            local down=Vector3.new(0,-1,0)
-            local bend=(down-forward*down:Dot(forward)).Unit
-            local elbow=shoulder+forward*along+bend*math.sqrt(math.max(0,a*a-along*along))
-            aim(upper,elbow,sign,alpha)
-            aim(lower,wrist,sign,alpha)
-        end
-    end
+    solve(driver)
+    if state=="Attack" then Animation.Grip(driver,t) end
 end
 return Animation
