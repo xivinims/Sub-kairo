@@ -2271,7 +2271,7 @@ end
 local function squareHud(obj)
  local parent=obj.Parent
  while parent and parent~=gui do
-  if parent.Name=="ReferenceSettings" or parent.Name=="KillerShop" then return end
+  if parent.Name=="ReferenceSettings" or parent.Name=="KillerShop" or parent==top or parent==ring then return end
   parent=parent.Parent
  end
  if obj.Name=="ReferenceActionArt" or (obj.Parent and (obj.Parent.Name=="ReferenceActionArt" or obj.Parent:GetAttribute("ReferenceActionButton"))) then return end
