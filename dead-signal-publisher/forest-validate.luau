@@ -36,4 +36,5 @@ check(game:GetService("StarterPlayer").CameraMode==Enum.CameraMode.Classic,"Came
 check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("AtriumClient")~=nil,"Client missing")
 check(game:GetService("ServerScriptService").AtriumRuntime:FindFirstChild("AtriumServer")~=nil,"Server missing")
 check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-pine-trails-v1","Build mismatch")
-return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,parts=parts,trees=#map.Pines:GetChildren(),trails=3,checkpoints=checkpoints,navigation=navigation,density=fog and fog.Density,defaultFOV=65,terrainGrass=W.Terrain.Decoration}
+local grassAvailable,grass=pcall(function() return W.Terrain.Decoration end)
+return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,parts=parts,trees=#map.Pines:GetChildren(),trails=3,checkpoints=checkpoints,navigation=navigation,density=fog and fog.Density,defaultFOV=65,terrainGrass=grassAvailable and grass or false}
