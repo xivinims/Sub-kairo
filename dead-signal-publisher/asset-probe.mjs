@@ -36,7 +36,13 @@ async function execute(script){
   return value;
 }
 
+const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
+if(trigger.trim().startsWith('spring-convert-')){
+  await import('./conversion/upload-spring.mjs');
+}else{
 const script = await (await import('node:fs/promises')).readFile(new URL('./visual-asset-probe.luau', import.meta.url),'utf8');
 
 const result=await execute(script);
 console.log(JSON.stringify({stage:'dead-signal-asset-probe',result},null,2));
+
+}
