@@ -75,8 +75,8 @@ function V.Create(screen)
    title.TextSize=31
    title.Size=UDim2.fromOffset(490,40)
    desc.Visible=false
-   local rowHeight=math.max(22,38/s)
-   local step=math.max(24,42/s)
+   local rowHeight=math.max(22,44/s)
+   local step=math.max(26,48/s)
    local top=math.min(252,(h-5*rowHeight*s-4*(step-rowHeight)*s-8)/s)
    for i,b in ipairs(buttons) do
     b.Position=UDim2.fromOffset(34,top+(i-1)*step)
