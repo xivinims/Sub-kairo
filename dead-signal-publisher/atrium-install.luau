@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-logo-only-v4"
+local BUILD_ID="dead-signal-menu-recovery-v5"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -173,7 +173,8 @@ for i=1,290 do
   local height=rng:NextNumber(.25,.65)
   for petal=1,4 do
    local a=petal*math.pi/2+rng:NextNumber(-.12,.12)
-   local p=part(foliage,"Moonflower",Vector3.new(.16,.12,.85),CFrame.new(x,height,z)*CFrame.Angles(0,a,0)*CFrame.new(0,.12,.3)*CFrame.Angles(-.45,0,0),Color3.fromRGB(192,207,244),Enum.Material.Neon,false)
+   local p=part(foliage,"Moonflower",Vector3.new(.24,.08,.35),CFrame.new(x,height,z)*CFrame.Angles(0,a,0)*CFrame.new(0,.06,.17)*CFrame.Angles(-.17,0,0),Color3.fromRGB(199,207,229),Enum.Material.SmoothPlastic,false)
+   p.Shape=Enum.PartType.Ball
   end
  end
 end
@@ -225,13 +226,13 @@ marker("Start",Vector3.new(0,3.5,66))
 marker("Garden",Vector3.new(0,3.5,-40))
 local camera=marker("MenuCamera",Vector3.new(24,8,65));camera.CFrame=CFrame.lookAt(camera.Position,Vector3.new(-8,30,-54))
 -- Cool skylight with readable ambient bounce. Native post processing, not an external shader.
-L.ClockTime=9.2;L.GeographicLatitude=35;L.Brightness=2.1;L.GlobalShadows=true;L.Ambient=Color3.fromRGB(45,55,78);L.OutdoorAmbient=Color3.fromRGB(90,111,145);L.ExposureCompensation=-.15;L.EnvironmentDiffuseScale=.65;L.EnvironmentSpecularScale=.7
+L.ClockTime=11.6;L.GeographicLatitude=35;L.Brightness=2.9;L.GlobalShadows=true;L.Ambient=Color3.fromRGB(95,106,128);L.OutdoorAmbient=Color3.fromRGB(135,148,173);L.ExposureCompensation=.16;L.EnvironmentDiffuseScale=.82;L.EnvironmentSpecularScale=.78
 pcall(function() L.LightingStyle=Enum.LightingStyle.Realistic;L.PrioritizeLightingQuality=true end)
 L.ShadowSoftness=.42
-local grade=Instance.new("ColorCorrectionEffect");grade.Name="AtriumGrade";grade.TintColor=Color3.fromRGB(200,218,255);grade.Contrast=.14;grade.Saturation=-.24;grade.Parent=L
+local grade=Instance.new("ColorCorrectionEffect");grade.Name="AtriumGrade";grade.TintColor=Color3.fromRGB(232,239,250);grade.Contrast=.08;grade.Saturation=-.12;grade.Parent=L
 local bloom=Instance.new("BloomEffect");bloom.Name="MoonflowerBloom";bloom.Intensity=.22;bloom.Size=24;bloom.Threshold=1.3;bloom.Parent=L
 local rays=Instance.new("SunRaysEffect");rays.Intensity=.045;rays.Spread=.7;rays.Parent=L
-local fog=Instance.new("Atmosphere");fog.Density=.26;fog.Offset=.1;fog.Color=Color3.fromRGB(131,154,187);fog.Decay=Color3.fromRGB(66,79,107);fog.Haze=1.9;fog.Glare=.1;fog.Parent=L
+local fog=Instance.new("Atmosphere");fog.Density=.15;fog.Offset=.12;fog.Color=Color3.fromRGB(167,184,206);fog.Decay=Color3.fromRGB(96,112,140);fog.Haze=.85;fog.Glare=.06;fog.Parent=L
 for _,z in ipairs({-44,26,65}) do
  local p=box("SkylightBounce",0,48,z,1,1,1,nil,nil,false,details);p.Transparency=1
  local light=Instance.new("PointLight");light.Color=Color3.fromRGB(152,181,235);light.Range=60;light.Brightness=.65;light.Shadows=false;light.Parent=p
