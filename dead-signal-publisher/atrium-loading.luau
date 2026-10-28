@@ -62,7 +62,7 @@ local began=os.clock()
 local intro=TweenService:Create(logo,TweenInfo.new(.45,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{ImageTransparency=0})
 intro:Play()
 
--- IMPORTANT: the old loader used an unbounded while and game.Loaded:Wait().
+-- IMPORTANT: the previous loader blocked indefinitely while awaiting signals.
 -- With a slow or broken client script it could remain on top of the game forever.
 -- Wait for the actual menu, but always dismiss the overlay after a deadline.
 local deadline=began+10
