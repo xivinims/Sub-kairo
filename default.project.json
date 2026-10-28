@@ -1,0 +1,68 @@
+{
+  "name": "BramblesSprout",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "BrambleServer": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CameraMode": "LockFirstPerson",
+        "EnableMouseLockOption": false,
+        "CharacterWalkSpeed": 14,
+        "CharacterJumpPower": 35
+      },
+      "StarterPlayerScripts": {
+        "BrambleClient": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "ReplicatedFirst": {
+      "Presentation": {
+        "$path": "src/loading/Presentation.client.luau"
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "Gravity": 130,
+        "StreamingEnabled": false
+      },
+      "BrambleWorld": {
+        "$path": "assets/world/BramblesWorld.rbxmx"
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "Ambient": [
+          0.08,
+          0.1,
+          0.12
+        ],
+        "Brightness": 1.4,
+        "ClockTime": 0,
+        "FogColor": [
+          0.035,
+          0.055,
+          0.06
+        ],
+        "FogStart": 45,
+        "FogEnd": 240,
+        "GlobalShadows": true
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}

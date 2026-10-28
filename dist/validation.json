@@ -1,0 +1,32 @@
+{
+  "campaignAssertions": 47,
+  "scriptsCompile": true,
+  "placeBuild": true,
+  "classes": {
+    "Lighting": 1,
+    "ReplicatedFirst": 1,
+    "LocalScript": 2,
+    "ReplicatedStorage": 1,
+    "Folder": 13,
+    "ModuleScript": 5,
+    "ServerScriptService": 1,
+    "Script": 1,
+    "SoundService": 1,
+    "StarterPlayer": 1,
+    "StarterPlayerScripts": 1,
+    "Workspace": 1,
+    "ObjectValue": 76,
+    "Part": 1421,
+    "PointLight": 65,
+    "Model": 1,
+    "SpawnLocation": 1,
+    "SurfaceGui": 83,
+    "TextLabel": 83,
+    "UITextSizeConstraint": 83,
+    "ProximityPrompt": 76
+  },
+  "studioPlaytest": false,
+  "androidDeviceTest": false,
+  "durationMeasured": false,
+  "assetsConfigured": false
+}
