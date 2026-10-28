@@ -1,1 +1,1 @@
-dead-signal-gothic-wings-v3
+dead-signal-logo-only-v4
