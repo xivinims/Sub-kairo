@@ -10,6 +10,14 @@ local remote=RS:WaitForChild("AtriumSession")
 local Settings=require(RS:WaitForChild("AtriumSettings"))
 local View=require(RS:WaitForChild("AtriumMenuView"))
 local camera=workspace.CurrentCamera
+if not camera then
+ workspace:GetPropertyChangedSignal("CurrentCamera"):Wait()
+ camera=workspace.CurrentCamera
+end
+local menuCamera=CFrame.lookAt(Vector3.new(24,12,69),Vector3.new(-8,30,-42))
+-- Lock the opening shot BEFORE any optional styling or 3D work.
+camera.CameraType=Enum.CameraType.Scriptable
+camera.CFrame=menuCamera
 local settings=Settings.Clean(nil)
 local state={ready=false}
 local started=false
@@ -19,13 +27,14 @@ local elapsed=0
 local function make(class,props,parent)
  local o=Instance.new(class);for k,v in pairs(props) do o[k]=v end;o.Parent=parent;return o
 end
-local gui=make("ScreenGui",{Name="DeadSignalMenu",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=40,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},player:WaitForChild("PlayerGui"))
+local gui=make("ScreenGui",{Name="DeadSignalMenu",ResetOnSpawn=false,IgnoreGuiInset=false,ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets,DisplayOrder=40,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},player:WaitForChild("PlayerGui"))
 local view=View.Create(gui)
+-- UI is already positioned by View.Create; do not depend on optional 3D stage initialization.
 local safeGui=make("ScreenGui",{Name="DeadSignalMenuAccess",ResetOnSpawn=false,DisplayOrder=41,IgnoreGuiInset=false,ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets},gui.Parent)
 local pause=make("TextButton",{Name="MenuTopRight",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-8,0,4),Size=UDim2.fromOffset(76,44),Text="MENU",Font=Enum.Font.Michroma,TextSize=14,TextColor3=Color3.new(1,1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.30,BorderSizePixel=0,Visible=false},safeGui)
 make("UIStroke",{Thickness=1,Color=Color3.new(1,1,1),Transparency=.45},pause)
 local notice=make("TextLabel",{Name="Notice",AnchorPoint=Vector2.new(.5,1),Position=UDim2.new(.5,0,1,-8),Size=UDim2.new(.9,0,0,28),BackgroundTransparency=1,Text="",TextColor3=Color3.fromRGB(255,208,190),TextSize=13,Font=Enum.Font.Michroma,ZIndex=60},gui)
-local menuGrade=make("ColorCorrectionEffect",{Name="MenuWarmGrade",TintColor=Color3.fromRGB(255,152,135),Saturation=-.15,Contrast=.1,Enabled=true},camera)
+local menuGrade=make("ColorCorrectionEffect",{Name="MenuWarmGrade",TintColor=Color3.fromRGB(235,225,233),Saturation=-.06,Contrast=.03,Enabled=true},camera)
 local brightness=make("ColorCorrectionEffect",{Name="PlayerBrightness",Brightness=0},camera)
 local dof=make("DepthOfFieldEffect",{Name="MenuFocus",FocusDistance=72,InFocusRadius=58,FarIntensity=.12,NearIntensity=0},camera)
 local music=Sound:FindFirstChild("Music") or make("SoundGroup",{Name="Music"},Sound)
@@ -97,39 +106,7 @@ local function apply()
 end
 -- Apply quality to objects arriving with streaming without a frame-by-frame scan.
 workspace.DescendantAdded:Connect(function(d) if d:IsA("ParticleEmitter") and d.Name=="AtriumDust" then dustEmitters[d]=true;d.Enabled=settings.quality>=5 and settings.motion end end)
-local menuCamera=CFrame.lookAt(Vector3.new(24,8,65),Vector3.new(-8,30,-54))
--- An original looming toy silhouette for the 3D menu, local to this player.
--- Never insert it into the published shared map or make it collide with players.
-local stage=Instance.new("Model");stage.Name="AtriumMenuOriginalSilhouette";stage.Parent=camera
-local stageOrigin=menuCamera*CFrame.new(14,-2,-34)
-local function stagePart(name,offset,size,shape,color,angle)
- local p=Instance.new("Part")
- p.Name=name;p.Size=size;p.Shape=shape or Enum.PartType.Block
- p.CFrame=stageOrigin*CFrame.new(offset)*CFrame.Angles(0,0,math.rad(angle or 0))
- p.Color=color or Color3.fromRGB(18,10,24)
- p.Material=Enum.Material.SmoothPlastic;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.CastShadow=false;p.Parent=stage
- p:SetAttribute("DisplayAlpha",0)
- return p
-end
-local torso=stagePart("Torso",Vector3.new(0,-1,0),Vector3.new(6.5,11,4.5),Enum.PartType.Ball)
-stagePart("Head",Vector3.new(0,6,0),Vector3.new(8.8,6.8,5.7),Enum.PartType.Ball)
-stagePart("EarLeft",Vector3.new(-3.1,10.2,0),Vector3.new(1.8,4.6,2),Enum.PartType.Ball,-18)
-stagePart("EarRight",Vector3.new(3.1,10.2,0),Vector3.new(1.8,4.6,2),Enum.PartType.Ball,18)
-stagePart("ArmLeft",Vector3.new(-5.4,-3,0),Vector3.new(2.8,12,2.8),Enum.PartType.Ball,19)
-stagePart("ArmRight",Vector3.new(5.4,-3,0),Vector3.new(2.8,12,2.8),Enum.PartType.Ball,-19)
-stagePart("LegLeft",Vector3.new(-2.1,-10,0),Vector3.new(2.6,10,2.5),Enum.PartType.Ball,-8)
-stagePart("LegRight",Vector3.new(2.1,-10,0),Vector3.new(2.6,10,2.5),Enum.PartType.Ball,8)
-for _,x in ipairs({-2.2,2.2}) do
- local eye=stagePart("GlassEye",Vector3.new(x,6.4,2.75),Vector3.new(.52,.62,.25),Enum.PartType.Ball,Color3.fromRGB(197,188,195))
- eye.Material=Enum.Material.Neon;eye:SetAttribute("DisplayAlpha",.25)
-end
-local rim=Instance.new("PointLight");rim.Name="RedMenuRim";rim.Range=30;rim.Brightness=3;rim.Color=Color3.fromRGB(245,37,23);rim.Parent=torso
-local function showStage(visible)
- for _,v in ipairs(stage:GetDescendants()) do
-  if v:IsA("BasePart") then v.Transparency=visible and (v:GetAttribute("DisplayAlpha") or 0) or 1
-  elseif v:IsA("Light") then v.Enabled=visible end
- end
-end
+-- The artificial camera-anchored toy was removed; the real atrium is the menu scene.
 local savedCamera
 local controls
 task.spawn(function()
@@ -138,7 +115,7 @@ task.spawn(function()
 end)
 local function setMenu(open)
  if open and not menuOpen then savedCamera=camera.CFrame end
- menuOpen=open;showStage(open);if controls then if open then controls:Disable() else controls:Enable() end end;view.Root.Visible=open;pause.Visible=started and not open;menuGrade.Enabled=open;dof.Enabled=open and settings.quality>=7
+ menuOpen=open;if controls then if open then controls:Disable() else controls:Enable() end end;view.Root.Visible=open;pause.Visible=started and not open;menuGrade.Enabled=open;dof.Enabled=open and settings.quality>=7
  if open then camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=menuCamera;UIS.MouseBehavior=Enum.MouseBehavior.Default;UIS.MouseIconEnabled=true
  else
   closeModal();tell("")
@@ -264,7 +241,7 @@ for i,b in ipairs(view.Buttons) do
  b.Activated:Connect(function() if not busy and not modal then actions[i]() end end)
 end
 local function resize()
- local v=camera.ViewportSize;view.Resize(v.X,v.Y,UIS.TouchEnabled)
+ local v=gui.AbsoluteSize;if v.X<320 or v.Y<240 then v=camera.ViewportSize end;view.Resize(v.X,v.Y,UIS.TouchEnabled)
  if modal then local p=modal:FindFirstChild("Panel");if p then p.Size=UDim2.fromOffset(math.min(540,v.X-24),math.min(p:GetAttribute("PreferredHeight"),v.Y-24)) end end
 end
 resize();camera:GetPropertyChangedSignal("ViewportSize"):Connect(resize)
