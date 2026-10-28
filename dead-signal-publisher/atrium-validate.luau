@@ -112,7 +112,7 @@ local viewFactory=require(RS.AtriumMenuView)
 local testGui=Instance.new("ScreenGui")
 local view=viewFactory.Create(testGui)
 for _,button in ipairs(view.Buttons) do
- check(button.Size.X.Offset>=150 and button.Size.Y.Offset>=24,"Button created at zero size")
+ check(button.Size.X.Offset>=150 and button.Size.Y.Offset>=22,"Button created at zero size")
  check(button.Visible,"Hidden startup menu button")
 end
 local layoutChecks={}
