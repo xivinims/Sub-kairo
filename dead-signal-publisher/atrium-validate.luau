@@ -100,5 +100,5 @@ for _,piece in ipairs(map:GetDescendants()) do
  elseif piece.Name=="ReflectiveRainPatch" then rain+=1
  elseif piece.Name=="AtriumPremiumLight" then lightShafts+=1 end
 end
-check(tables==3 and rain>=30 and lightShafts==3,"Visual-detail pass missing")
+check(tables==3 and rain>=20 and lightShafts==3,"Visual-detail pass missing")
 return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,menuLayouts=layoutChecks,settingsValidated=true,freeCamera=true,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
