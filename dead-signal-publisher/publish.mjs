@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-pine-trails-v1';
+const BUILD_ID = 'dead-signal-golden-forest-v3';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,10 +111,11 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template,verify,door,guard,server,client,loading,settings,menuView,forest,menuSceneSource]=await Promise.all(
-    ['forest-install.luau','forest-validate.luau','base/server/DoorService.luau','base/server/MapInteractionGuard.luau','atrium-server.luau','atrium-client.luau','atrium-loading.luau','atrium-settings.luau','atrium-menu-view.luau','forest-world.luau','menu-cinematic-stage.luau'].map(path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
+  const [template,verify,door,guard,server,client,loading,settings,menuView,forest,safeImporter,weatherServer,weatherClient]=await Promise.all(
+    ['forest-install.luau','forest-validate.luau','base/server/DoorService.luau','base/server/MapInteractionGuard.luau','atrium-server.luau','atrium-client.luau','atrium-loading.luau','atrium-settings.luau','atrium-menu-view.luau','forest-world.luau','base/server/SafeAssetImporter.luau','forest-weather-server.luau','forest-weather-client.luau'].map(path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
   const logoId=94878559768864;
   const install=template
+    .replace('__SAFE_IMPORTER__',luaLongString(safeImporter))
     .replace('__DOOR_SERVICE__',luaLongString(door))
     .replace('__INTERACTION_GUARD__',luaLongString(guard))
     .replace('__SERVER__',luaLongString(server))
@@ -123,10 +124,12 @@ async function main() {
     .replace('__SETTINGS__',luaLongString(settings))
     .replace('__MENU_VIEW__',luaLongString(menuView))
     .replace('__FOREST_WORLD__',forest)
-    .replace('__MENU_SCENE__',menuSceneSource)
+    .replace('__WEATHER_SERVER__',luaLongString(weatherServer))
+    .replace('__WEATHER_CLIENT__',luaLongString(weatherClient))
     .replace('__LOGO_ID__',String(logoId))
     .replace('__PREPUBLISH_VALIDATE__','game:GetService("ServerStorage"):SetAttribute("AurivaneLogoAsset",'+logoId+')\nlocal validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
-  if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded map placeholder');
+  const requiredPlaceholders=['__SAFE_IMPORTER__','__DOOR_SERVICE__','__INTERACTION_GUARD__','__SERVER__','__CLIENT__','__LOADING__','__SETTINGS__','__MENU_VIEW__','__FOREST_WORLD__','__WEATHER_SERVER__','__WEATHER_CLIENT__','__LOGO_ID__','__PREPUBLISH_VALIDATE__'];
+  if (requiredPlaceholders.some((token)=>install.includes(token))) throw new Error('Unexpanded map placeholder');
   if (process.argv.includes('--dry-run')) {
     await fs.writeFile(new URL('./assembled-install.luau',import.meta.url),install);
     console.log(JSON.stringify({build:BUILD_ID,bytes:install.length,dryRun:true})); return;

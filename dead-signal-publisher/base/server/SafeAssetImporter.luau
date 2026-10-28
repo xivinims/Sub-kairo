@@ -67,9 +67,18 @@ end
 -- Every selection becomes a fresh geometry-only model with provenance.
 local permitted = {[11961684378]=true,[96103787859080]=true,[9609111841]=true,[8593730677]=true,
     [16551049618]=true,[16592756903]=true,[120661626985584]=true,[16390129962]=true,
-    [136978268470872]=true,[72028919182927]=true,[10468403169]=true}
+    [136978268470872]=true,[72028919182927]=true,[10468403169]=true,
+    [130515502281374]=true,[11730123582]=true,[15482908101]=true,[134979255746081]=true}
 local cache = {}
 local visualClasses = {Decal=true,Texture=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true}
+local function countParts(root)
+    local count = root:IsA("BasePart") and 1 or 0
+    for _, d in ipairs(root:GetDescendants()) do
+        if d:IsA("BasePart") then count += 1 end
+    end
+    return count
+end
+
 function SafeAssetImporter.Select(assetId, exactName)
     assert(permitted[assetId], "Asset not approved for selective geometry import")
     local source=cache[assetId]
@@ -86,6 +95,25 @@ function SafeAssetImporter.Select(assetId, exactName)
     if exactName=="__ALL_STATIC__" then
         assert(assetId==11961684378 or assetId==96103787859080 or assetId==9609111841 or assetId==8593730677,"Whole kit import forbidden")
         selected=source
+    elseif assetId==11730123582 and exactName=="__ROCK_GROVE__" then
+        for _,d in ipairs(source:GetDescendants()) do
+            if d:IsA("Model") and d.Name=="Model" and d.Parent.Name=="Nature Pack" and countParts(d)==16 then
+                selected=d;break
+            end
+        end
+    elseif assetId==134979255746081 and exactName:match("^__FLOWER_GROVE_%d+__$") then
+        local ordinal=tonumber(exactName:match("(%d+)")) or 1
+        for _,container in ipairs(source:GetChildren()) do
+            if container:IsA("Model") then
+                for _,d in ipairs(container:GetChildren()) do
+                    if d:IsA("Model") and countParts(d)==16 then
+                        ordinal-=1
+                        if ordinal==0 then selected=d;break end
+                    end
+                end
+            end
+            if selected then break end
+        end
     else
         for _,d in ipairs(source:GetDescendants()) do
             if d.Name==exactName and (d:IsA("Model") or d:IsA("BasePart")) then selected=d; break end
