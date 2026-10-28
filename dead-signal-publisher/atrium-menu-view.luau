@@ -1,92 +1,99 @@
--- Dead Signal | original live 3D menu, aligned to the supplied 736 x 414 reference.
--- Native Roblox buttons, not a static screenshot. Touch targets grow without breaking desktop proportions.
+-- Dead Signal: reference-composed, live Roblox UI (original text and menu functionality).
+-- Coordinates are authored against the user's 736x414 screenshot, not guessed from screen percentages.
 local V={}
-function V.Create(parent)
- local function make(class,props,p)
-  local v=Instance.new(class)
-  for k,value in pairs(props) do v[k]=value end
-  v.Parent=p
-  return v
+function V.Create(screen)
+ local function make(class,props,parent)
+  local obj=Instance.new(class)
+  for k,v in pairs(props) do obj[k]=v end
+  obj.Parent=parent
+  return obj
  end
- local root=make("Frame",{Name="ReferenceMenu",Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(28,2,4),BackgroundTransparency=.77,BorderSizePixel=0,Active=false},parent)
- local shade=make("Frame",{Name="LeftVignette",Size=UDim2.fromScale(.72,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,Active=false},root)
+ local root=make("Frame",{Name="ReferenceMenu",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,Active=false},screen)
+ local shading=make("Frame",{Name="DarkLeftGradient",Size=UDim2.fromScale(.72,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=0,BorderSizePixel=0,ZIndex=1},root)
  make("UIGradient",{Transparency=NumberSequence.new({
-  NumberSequenceKeypoint.new(0,.09),NumberSequenceKeypoint.new(.48,.27),
-  NumberSequenceKeypoint.new(1,1)
- })},shade)
- local bottom=make("Frame",{Name="LowerVignette",Position=UDim2.fromScale(0,.7),Size=UDim2.fromScale(1,.3),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},root)
- make("UIGradient",{Transparency=NumberSequence.new(1,.5),Rotation=90},bottom)
- local glow=make("Frame",{Name="ChapterBlueSoftGlow",Position=UDim2.fromScale(0,.091),Size=UDim2.new(.48,0,0,16),BackgroundColor3=Color3.fromRGB(77,136,221),BackgroundTransparency=.83,BorderSizePixel=0},root)
- make("UIGradient",{Transparency=NumberSequence.new(0,1)},glow)
- local bar=make("Frame",{Name="ChapterBlueLine",Position=UDim2.fromScale(0,.101),Size=UDim2.new(.40,0,0,3),BackgroundColor3=Color3.fromRGB(119,168,231),BackgroundTransparency=.25,BorderSizePixel=0},root)
- make("UIGradient",{Transparency=NumberSequence.new(0,1)},bar)
- local function label(name,value,pos,size,font,sz)
-  return make("TextLabel",{
-   Name=name,Text=value,Position=pos,Size=size,Font=font,TextSize=sz,
-   TextColor3=Color3.fromRGB(244,243,243),TextXAlignment=Enum.TextXAlignment.Left,
-   TextYAlignment=Enum.TextYAlignment.Top,BackgroundTransparency=1,TextWrapped=false,
-   TextStrokeTransparency=1
-  },root)
+  NumberSequenceKeypoint.new(0,.03),NumberSequenceKeypoint.new(.40,.28),NumberSequenceKeypoint.new(1,1)
+ })},shading)
+ local bottom=make("Frame",{Name="BottomVignette",Position=UDim2.fromScale(0,.82),Size=UDim2.fromScale(1,.18),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.5,BorderSizePixel=0,ZIndex=1},root)
+ make("UIGradient",{Transparency=NumberSequence.new(1,.4),Rotation=90},bottom)
+ local canvas=make("Frame",{Name="ChapterCanvas736x414",Size=UDim2.fromOffset(736,414),Position=UDim2.fromOffset(0,0),BackgroundTransparency=1,BorderSizePixel=0,ZIndex=3},root)
+ local scale=make("UIScale",{Name="ReferenceScale",Scale=1},canvas)
+ local bar=make("Frame",{Name="BlueBeam",Position=UDim2.fromOffset(0,39),Size=UDim2.fromOffset(365,9),BackgroundColor3=Color3.fromRGB(95,157,239),BackgroundTransparency=.72,BorderSizePixel=0,ZIndex=4},canvas)
+ make("UIGradient",{Transparency=NumberSequence.new({
+  NumberSequenceKeypoint.new(0,.36),NumberSequenceKeypoint.new(.65,.82),NumberSequenceKeypoint.new(1,1)
+ })},bar)
+ local barLine=make("Frame",{Name="BlueCore",Position=UDim2.fromOffset(0,44),Size=UDim2.fromOffset(280,2),BackgroundColor3=Color3.fromRGB(158,194,246),BackgroundTransparency=.38,BorderSizePixel=0,ZIndex=5},canvas)
+ make("UIGradient",{Transparency=NumberSequence.new(0,1)},barLine)
+ local function text(name,value,x,y,w,h,sz)
+  return make("TextLabel",{Name=name,Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),TextColor3=Color3.fromRGB(245,243,242),Font=Enum.Font.Code,TextSize=sz,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=false,BackgroundTransparency=1,ZIndex=6},canvas)
  end
- local chapter=label("Chapter","CHAPTER 1",UDim2.fromScale(.041,.098),UDim2.fromScale(.42,.065),Enum.Font.Code,16)
- local title=label("Title","'THE ATRIUM'",UDim2.fromScale(.041,.157),UDim2.fromScale(.60,.10),Enum.Font.Code,31)
- local divider=make("Frame",{Name="Divider",Position=UDim2.fromScale(0,.258),Size=UDim2.new(.442,0,0,1),BackgroundColor3=Color3.fromRGB(241,235,235),BackgroundTransparency=.35,BorderSizePixel=0},root)
- local desc=label("Description","Light still reaches the garden.\nBeyond the empty galleries,\nsomething remains unfinished.",UDim2.fromScale(.043,.307),UDim2.fromScale(.38,.19),Enum.Font.Code,13)
+ local chapter=text("Chapter","CHAPTER 1",30,40,276,25,15)
+ local title=text("Title","'THE ATRIUM'",29,67,440,38,31)
+ local rule=make("Frame",{Name="WhiteHairline",Position=UDim2.fromOffset(0,106),Size=UDim2.fromOffset(326,1),BackgroundColor3=Color3.fromRGB(238,238,238),BackgroundTransparency=.42,BorderSizePixel=0,ZIndex=5},canvas)
+ local desc=text("Description","Light still reaches the garden.\nBeyond the empty galleries,\nsomething remains unfinished.",31,126,275,62,12)
  desc.TextWrapped=true
  local buttons={}
  for i,name in ipairs({"CONTINUE","NEW GAME","SETTINGS","CREDITS","QUIT"}) do
-  local b=make("TextButton",{
-   Name=name,Text=name,Font=Enum.Font.Code,TextSize=14,
-   TextColor3=Color3.fromRGB(248,247,247),TextXAlignment=Enum.TextXAlignment.Left,
-   BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.28,
-   BorderSizePixel=0,AutoButtonColor=false,SelectionOrder=i,ZIndex=15,
-   Size=UDim2.fromOffset(170,28),Position=UDim2.new(.048,0,.57+(i-1)*.065,0),Visible=true
-  },root)
+  local b=make("TextButton",{Name=name,Text=name,Position=UDim2.fromOffset(34,252+(i-1)*24),Size=UDim2.fromOffset(167,22),BackgroundColor3=Color3.fromRGB(5,5,7),BackgroundTransparency=.25,TextColor3=Color3.fromRGB(247,245,243),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Code,TextSize=14,AutoButtonColor=false,BorderSizePixel=0,SelectionOrder=i,ZIndex=15},canvas)
   make("UIPadding",{PaddingLeft=UDim.new(0,9)},b)
-  make("UIStroke",{Name="ThinWhiteOutline",Color=Color3.fromRGB(226,223,223),Thickness=1,Transparency=.26,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
+  make("UIStroke",{Name="ThinWhiteOutline",ApplyStrokeMode=Enum.ApplyStrokeMode.Border,Color=Color3.fromRGB(211,210,208),Thickness=1,Transparency=.22},b)
   buttons[i]=b
  end
- local scan=make("Frame",{Name="Scanlines",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Active=false,ZIndex=8},root)
- for i=0,103 do
-  make("Frame",{Position=UDim2.fromScale(0,i/104),Size=UDim2.new(1,0,0,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.9,BorderSizePixel=0,Active=false},scan)
+ local scan=make("Frame",{Name="Scanlines",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Active=false,ZIndex=21},root)
+ for i=0,74 do
+  make("Frame",{Name="FilmLine",Position=UDim2.fromScale(0,i/75),Size=UDim2.new(1,0,0,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.93,BorderSizePixel=0,Active=false,ZIndex=21},scan)
  end
  local function resize(w,h,touch)
-  w=math.max(w,320);h=math.max(h,240)
-  local unit=math.clamp(math.min(h/414,w/736),.82,1.6)
-  local bh=touch and 44 or math.max(23,22*unit)
-  local gap=touch and 3 or 3*unit
-  local compact=touch or h<460
-  local top
-  if compact then
-   -- Five touch-sized buttons fit below the title, not underneath it.
-   local free=h-92-5*bh-4*gap
-   if free<0 then
-    bh=math.max(34,math.floor((h-102-4*gap)/5))
+  if w<=0 or h<=0 then return end
+  local s=math.min(w/736,h/414)
+  -- Preserve cinematic proportions on landscape. No stretched text or nonuniform layout.
+  s=math.max(.4,math.min(s,2.5))
+  scale.Scale=s
+  canvas.Position=UDim2.fromOffset(0,math.floor(math.max(0,(h-414*s)*.5)))
+  chapter.Position=UDim2.fromOffset(30,40)
+  title.Position=UDim2.fromOffset(29,67)
+  rule.Position=UDim2.fromOffset(0,106)
+  desc.Position=UDim2.fromOffset(31,126)
+  desc.Visible=true
+  local compact=touch and h<520
+  local portrait=touch and h>w
+  if portrait then
+   -- At portrait widths the chapter remains readable and touch controls stay >=44px.
+   local actualWidth=math.min(306,w-30)
+   local rowHeight=46/s
+   local rowStep=50/s
+   local top=(h-5*50-28)/s
+   title.TextSize=math.max(31,27/s)
+   title.Size=UDim2.fromOffset(math.min(650,w/s-20),62)
+   desc.Visible=false
+   for i,b in ipairs(buttons) do
+    b.Position=UDim2.fromOffset(16/s,top+(i-1)*rowStep)
+    b.Size=UDim2.fromOffset(actualWidth/s,rowHeight)
+    b.TextSize=math.max(14,14/s)
    end
-   top=math.max(92,h-5*bh-4*gap-10)
+  elseif compact then
+   -- Landscape mobile has a virtual 736x414 composition but 40px tapping targets.
+   title.TextSize=31
+   title.Size=UDim2.fromOffset(490,40)
+   desc.Visible=false
+   local rowHeight=math.max(22,38/s)
+   local step=math.max(24,42/s)
+   local top=math.min(252,(h-5*rowHeight*s-4*(step-rowHeight)*s-8)/s)
+   for i,b in ipairs(buttons) do
+    b.Position=UDim2.fromOffset(34,top+(i-1)*step)
+    b.Size=UDim2.fromOffset(math.max(167,185/s),rowHeight)
+    b.TextSize=math.max(14,13/s)
+   end
   else
-   top=h*.611
+   title.TextSize=31;title.Size=UDim2.fromOffset(440,38)
+   for i,b in ipairs(buttons) do
+    b.Position=UDim2.fromOffset(34,252+(i-1)*24)
+    b.Size=UDim2.fromOffset(167,22)
+    b.TextSize=14
+   end
   end
-  local width=math.clamp(w*.225,166,335)
-  for index,b in ipairs(buttons) do
-   b.Size=UDim2.fromOffset(math.min(width,w-32),bh)
-   b.Position=UDim2.fromOffset(math.floor(w*.048),math.floor(top+(index-1)*(bh+gap)))
-   b.TextSize=compact and 14 or 14*unit
-   b.Visible=true
-  end
-  chapter.TextSize=compact and 14 or 16*unit
-  title.TextSize=compact and 26 or 31*unit
-  desc.TextSize=compact and 12 or 13*unit
-  desc.Visible=not compact and top>h*.48
-  divider.Visible=not compact and top>h*.3
-  glow.Visible=true
  end
- -- Bootstrap layout IMMEDIATELY: if optional client effects fail later, the
- -- UI is not left with zero-sized invisible buttons.
- local initialCamera=workspace.CurrentCamera
- local initial=initialCamera and initialCamera.ViewportSize or Vector2.new(736,414)
- resize(initial.X,initial.Y,game:GetService("UserInputService").TouchEnabled)
-
- return {Root=root,Buttons=buttons,Scanlines=scan,Resize=resize,Chapter=chapter,Title=title,Description=desc}
+ local viewport=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(736,414)
+ resize(viewport.X,viewport.Y,game:GetService("UserInputService").TouchEnabled)
+ return {Root=root,Buttons=buttons,Scanlines=scan,Resize=resize,Chapter=chapter,Title=title,Description=desc,Canvas=canvas,Scale=scale}
 end
 return V
