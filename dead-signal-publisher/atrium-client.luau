@@ -57,7 +57,7 @@ local function setCameraPreference(onEntry)
   player.CameraMinZoomDistance=mode=="Terceira pessoa" and 4.5 or .5
   if onEntry then
    player.CameraMinZoomDistance=9
-   task.defer(function()
+   task.delay(.45,function()
     if not menuOpen then player.CameraMinZoomDistance=mode=="Terceira pessoa" and 4.5 or .5 end
    end)
   end
