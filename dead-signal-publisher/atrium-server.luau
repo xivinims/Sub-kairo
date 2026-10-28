@@ -9,7 +9,7 @@ local cooldowns={}
 local records={}
 local store=DSS:GetDataStore("DeadSignalAtriumV1")
 local markers=workspace.OvergrownAtrium.RouteMarkers
-local checkpoints={"Start","Garden","Floor1","Floor2","Floor3"}
+local checkpoints={"Start","Garden","Floor1","Floor2","Floor3","VaultedHall","HaloChamber","GlassChapel"}
 local function save(player)
  local r=records[player];if not r or not r.loaded or r.loadFailed then return false end
  while r.saving do task.wait(.05) end
