@@ -159,7 +159,7 @@ do
   local trim=block(chapel,"GrandStairNosing",22,y+.249,z-.56,half*2,.04,.18,pale,Enum.Material.Marble,false)
  end
  local landingHeight=11.76
- block(chapel,"UpperSanctuaryPlatform",22,landingHeight-.5,393,31,1,53,ivory,Enum.Material.Marble)
+ block(chapel,"UpperSanctuaryPlatform",22,landingHeight-.5,397,31,1,46,ivory,Enum.Material.Marble)
  for _,side in ipairs({-1,1}) do
   local previous=nil
   for i=0,12 do
