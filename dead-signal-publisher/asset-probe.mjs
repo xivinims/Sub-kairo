@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('spring-convert-')){
+if(trigger.trim().startsWith('spring-convert-animations')){
+  await import('./conversion/upload-animations.mjs');
+}else if(trigger.trim().startsWith('spring-convert-')){
   await import('./conversion/upload-spring.mjs');
 }else{
 const script = await (await import('node:fs/promises')).readFile(new URL('./visual-asset-probe.luau', import.meta.url),'utf8');
