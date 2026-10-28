@@ -1,9 +1,80 @@
-local m=game:GetService("AssetService"):LoadAssetAsync(98751037263074)
-local r={parts={},bones={},joints={}}
-for _,d in ipairs(m:GetDescendants()) do
- if d:IsA("LuaSourceContainer") then d:Destroy()
- elseif d:IsA("BasePart") then table.insert(r.parts,{name=d.Name,path=d:GetFullName(),size={d.Size.X,d.Size.Y,d.Size.Z},cf={d.CFrame:GetComponents()},mesh=d:IsA("MeshPart") and d.MeshId or nil,texture=d:IsA("MeshPart") and d.TextureID or nil})
- elseif d:IsA("Bone") then table.insert(r.bones,{name=d.Name,parent=d.Parent.Name,cf={d.CFrame:GetComponents()}})
- elseif d:IsA("Motor6D") then table.insert(r.joints,{name=d.Name,p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name}) end
+-- Read-only Creator Store audit. Model scripts are destroyed before the
+-- hierarchy is inspected; nothing is parented to Workspace or executed.
+local AssetService = game:GetService("AssetService")
+local HttpService = game:GetService("HttpService")
+local ids = {
+	130515502281374,
+	11730123582,
+	11946229834,
+	15482908101,
+	134979255746081,
+	2626635090,
+}
+local report = {}
+
+local function partCount(root)
+	local n = 0
+	for _, d in ipairs(root:GetDescendants()) do
+		if d:IsA("BasePart") then n += 1 end
+	end
+	if root:IsA("BasePart") then n += 1 end
+	return n
 end
-m:Destroy();return game:GetService("HttpService"):JSONEncode(r)
+
+for _, id in ipairs(ids) do
+	local entry = { id = id, classes = {}, scriptsRemoved = 0, sounds = {}, candidates = {} }
+	local ok, assetOrError = pcall(function()
+		return AssetService:LoadAssetAsync(id)
+	end)
+	if not ok then
+		entry.error = tostring(assetOrError)
+		table.insert(report, entry)
+		continue
+	end
+	local asset = assetOrError
+	if not asset then
+		entry.error = "LoadAssetAsync returned nil"
+		table.insert(report, entry)
+		continue
+	end
+
+	for _, d in ipairs(asset:GetDescendants()) do
+		if d:IsA("LuaSourceContainer") then
+			entry.scriptsRemoved += 1
+			d:Destroy()
+		elseif d:IsA("Sound") then
+			table.insert(entry.sounds, {name=d.Name, id=d.SoundId, volume=d.Volume})
+		end
+	end
+	entry.rootClass = asset.ClassName
+	entry.rootName = asset.Name
+	for _, d in ipairs(asset:GetDescendants()) do
+		entry.classes[d.ClassName] = (entry.classes[d.ClassName] or 0) + 1
+		if d:IsA("Model") then
+			local n = partCount(d)
+			if n > 0 then
+				local cf, size = d:GetBoundingBox()
+				table.insert(entry.candidates, {
+					name=d.Name, class=d.ClassName, parts=n,
+					size={math.floor(size.X*100)/100, math.floor(size.Y*100)/100, math.floor(size.Z*100)/100},
+					center={math.floor(cf.X*100)/100, math.floor(cf.Y*100)/100, math.floor(cf.Z*100)/100},
+				})
+			end
+		end
+	end
+	entry.rootParts = partCount(asset)
+	for _, d in ipairs(asset:GetDescendants()) do
+		if d:IsA("MeshPart") then
+			table.insert(entry.candidates, {
+				name=d.Name, class=d.ClassName, parts=1,
+				mesh=d.MeshId, texture=d.TextureID,
+				size={math.floor(d.Size.X*100)/100, math.floor(d.Size.Y*100)/100, math.floor(d.Size.Z*100)/100},
+			})
+		end
+	end
+	asset:Destroy()
+	table.insert(report, entry)
+	task.wait(0.5)
+end
+
+return HttpService:JSONEncode(report)
