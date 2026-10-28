@@ -56,7 +56,7 @@ do
  end
  -- Entrance and exit are framed above/around a 12-stud-wide centre opening.
  for _,z in ipairs({123,215}) do
-  for _,x in ipairs({-1,45}) do block(hall,"VaultPorticoWall",x,22,z,44,44,2,limestone) end
+  for _,x in ipairs({1.5,42.5}) do block(hall,"VaultPorticoWall",x,22,z,29,44,2,limestone) end
   block(hall,"VaultPortalHeader",22,37,z,12,17,2,limestone)
   arch(hall,"VaultPortal",22,z-1,13,13,10,pale)
  end
@@ -86,13 +86,15 @@ do
  end
  for _,z in ipairs({144,179,202}) do light(hall,22,49,z,Color3.fromRGB(171,199,231),.9,35) end
  marker("VaultedHall",Vector3.new(22,3.5,166))
+ -- Covered threshold keeps the hall connected to the ceremonial chamber.
+ block(hall,"HallToShrineConnector",22,-.55,219,14,1,10,ivory,Enum.Material.Marble)
  -- ROOM 2: round ceremonial hall. The statue is loaded from the REAL Roblox avatar.
  block(shrine,"ShrineFloor",22,-.57,262,80,1.1,82,Color3.fromRGB(175,181,188),Enum.Material.Marble)
  for _,x in ipairs({-18,62}) do
   block(shrine,"ShrineWall",x,31,262,2,63,82,limestone)
  end
  for _,z in ipairs({221,303}) do
-  for _,x in ipairs({-4,48}) do block(shrine,"ShrineEntranceWall",x,31,z,42,63,1.8,limestone) end
+  for _,x in ipairs({-1.5,45.5}) do block(shrine,"ShrineEntranceWall",x,31,z,33,63,1.8,limestone) end
   block(shrine,"ShrineGateUpper",22,42,z,14,41,1.8,limestone)
   arch(shrine,"ShrineDoorRib",22,z,14,16,13,pale)
  end
