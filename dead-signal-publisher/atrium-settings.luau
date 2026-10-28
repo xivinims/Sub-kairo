@@ -1,5 +1,5 @@
 local S={}
-S.Defaults={master=1,music=.8,sfx=.8,brightness=.5,fov=70,sensitivity=1,quality=7,subtitles=true,scanlines=true,motion=true,cameraMode="Livre"}
+S.Defaults={master=1,music=.8,sfx=.8,brightness=.5,fov=65,sensitivity=1,quality=7,subtitles=true,scanlines=true,motion=true,cameraMode="Livre"}
 local ranges={master={0,1},music={0,1},sfx={0,1},brightness={0,1},fov={50,110},sensitivity={.2,3},quality={1,10}}
 function S.Clean(input)
  input=type(input)=="table" and input or {}
