@@ -1,0 +1,39 @@
+{
+  "stage": "dead-signal-chapter-published",
+  "universeId": "9421311218",
+  "placeId": "118064584465155",
+  "installed": {
+    "ok": true,
+    "sourceVersion": 160,
+    "build": "dead-signal-overgrown-atrium-v2",
+    "published": true
+  },
+  "verified": {
+    "ok": true,
+    "checkpoints": {
+      "Garden": true,
+      "Floor1": true,
+      "Start": true,
+      "Floor3": true,
+      "Floor2": true
+    },
+    "errors": [],
+    "flowers": 1008,
+    "doors": {
+      "ATRIUM_1": true,
+      "ATRIUM_2": true
+    },
+    "stairTreads": 132,
+    "version": 161,
+    "logo": 94878559768864,
+    "parts": 3884,
+    "navigation": {
+      "Start->Garden": true,
+      "Floor1->Floor2": true,
+      "Floor2->Floor3": true,
+      "Garden->Floor1": true
+    },
+    "build": "dead-signal-overgrown-atrium-v2"
+  },
+  "restart": {}
+}
