@@ -90,8 +90,16 @@ for _,model in ipairs(map.Doors:GetChildren()) do
 end
 check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("AtriumClient")~=nil,"Client missing")
 check(game:GetService("ReplicatedFirst"):FindFirstChild("AurivaneLoading")~=nil,"Loading missing")
+local splash=game:GetService("ReplicatedFirst"):FindFirstChild("AurivaneLoading")
+local splashSource=splash and splash.Source or ""
+check(splashSource:find("AurivaneWorksLogo",1,true)~=nil,"Real Aurivane logo splash missing")
+check(splashSource:find("AtriumMenuReady",1,true)~=nil and splashSource:find("began+10",1,true)~=nil,"Unbounded loading wait")
+check(splashSource:find('game.Loaded:Wait()',1,true)==nil,"Old infinite game-loaded wait remains")
+check(splashSource:find('Instance.new("TextLabel")',1,true)==nil,"Loading text must not return")
+check(splashSource:find("loadingBar",1,true)==nil and splashSource:find('Name="ProgressBar"',1,true)==nil,"Progress bar must not return")
+
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-gothic-wings-v3","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-logo-only-v4","Build mismatch")
 local RS=game:GetService("ReplicatedStorage")
 local settings=require(RS.AtriumSettings)
 local clean=settings.Clean({master=99,music=-2,fov=0/0,sensitivity=math.huge,quality="Baixa",scanlines=false,unexpected="discard"})
