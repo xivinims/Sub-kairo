@@ -90,21 +90,22 @@ end
 for level=0,2 do
  local y=level*22
  local sign=level%2==0 and 1 or -1
- local a=Vector3.new(-30*sign,y,-68)
- local b=Vector3.new(30*sign,y+22,-68)
+ local flightZ=level%2==0 and -65 or -51
+ local a=Vector3.new(-30*sign,y,flightZ)
+ local b=Vector3.new(30*sign,y+22,flightZ)
  local count=44
  for i=1,count do
   local v=a:Lerp(b,(i-.5)/count)
   box("StairTread",v.X,y+i*.5-.25,v.Z,60/count+.02,.5,10,Color3.fromRGB(101,111,121),Enum.Material.Concrete)
   box("TreadNosing",v.X,y+i*.5+.015,v.Z,60/count,.03,9.8,Color3.fromRGB(135,147,155),Enum.Material.Metal,false)
  end
- for _,z in ipairs({-73.3,-62.7}) do
+ for _,z in ipairs({flightZ-5.3,flightZ+5.3}) do
   rail(Vector3.new(a.X,y,z),Vector3.new(b.X,y+22,z))
   rod(architecture,"StairStringer",Vector3.new(a.X,y-1,z),Vector3.new(b.X,y+21,z),.8,metal,Enum.Material.Metal,true)
  end
  -- Side landings connect to galleries; no jump at either end.
  for _,v in ipairs({a,b}) do
-  box("FlightLanding",v.X,v.Y-.5,-72,18,1,18,stone)
+  box("FlightLanding",v.X<0 and -35 or 35,v.Y-.5,-64,10,1,36,stone)
  end
  marker("Floor"..(level+1),Vector3.new(b.X,y+25,-79))
 end

@@ -31,7 +31,7 @@ end
 for level=0,2 do
  local sign=level%2==0 and 1 or -1
  for i=0,44 do
-  local t=i/44;local v=Vector3.new((-30+60*t)*sign,level*22+22*t+3,-68)
+  local t=i/44;local v=Vector3.new((-30+60*t)*sign,level*22+22*t+3,level%2==0 and -65 or -51)
   check(W:Raycast(v,Vector3.new(0,-5,0),params)~=nil,"Unsupported stair "..level..":"..i)
  end
 end
