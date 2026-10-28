@@ -17,7 +17,7 @@ local spawn=map:FindFirstChild("AtriumSpawn")
 check(spawn~=nil,"Spawn missing")
 local markers=map.RouteMarkers
 local floorChecks={}
-for _,name in ipairs({"Start","Garden","Floor1","Floor2","Floor3"}) do
+for _,name in ipairs({"Start","Garden","Floor1","Floor2","Floor3","VaultedHall","HaloChamber","GlassChapel"}) do
  local p=markers:FindFirstChild(name)
  local hit=p and W:Raycast(p.Position,Vector3.new(0,-7,0),params)
  floorChecks[name]=hit~=nil;check(hit~=nil,"Checkpoint lacks floor "..name)
@@ -47,6 +47,38 @@ for i=1,#chain-1 do
 end
 local runtime=game:GetService("ServerScriptService"):FindFirstChild("AtriumRuntime")
 check(runtime and runtime:FindFirstChild("AtriumServer")~=nil,"Server absent")
+local statueLoader=runtime and runtime:FindFirstChild("AvatarStatueLoader")
+check(statueLoader and statueLoader:IsA("Script"),"Avatar loader missing")
+if statueLoader then
+ check(statueLoader.Source:find("CreateHumanoidModelFromUserIdAsync",1,true)~=nil,"Avatar API not used")
+ check(statueLoader.Source:find("ch_ckz2n",1,true)~=nil,"Wrong username for monument")
+end
+local wing=map:FindFirstChild("CathedralWing")
+check(wing~=nil,"Gothic wing missing")
+if wing then
+ for _,name in ipairs({"01_FloodedVault","02_HaloChamber","03_GlassChapel"}) do
+  check(wing:FindFirstChild(name)~=nil,"Missing chamber "..name)
+ end
+ check(wing:GetAttribute("StatueUsername")=="ch_ckz2n","Incorrect statue username")
+ local anchor=wing:FindFirstChild("AvatarStatueAnchor",true)
+ check(anchor and anchor:GetAttribute("Username")=="ch_ckz2n","Avatar pedestal is missing a valid user anchor")
+end
+local wingStats={arches=0,stainedGlass=0,grandStairs=0,channels=0}
+if wing then for _,piece in ipairs(wing:GetDescendants()) do
+ if piece.Name=="NaveRibL" then wingStats.arches+=1 end
+ if piece.Name=="FrostedBlueStainedGlass" then wingStats.stainedGlass+=1 end
+ if piece.Name=="GrandStairTread" then wingStats.grandStairs+=1 end
+ if piece.Name=="WaterChannelBed" then wingStats.channels+=1 end
+end end
+check(wingStats.arches>=5 and wingStats.stainedGlass==9 and wingStats.grandStairs==24 and wingStats.channels==2,"Missing Gothic room construction")
+-- The rear of the right service vestibule must open directly into the new wing.
+for _,piece in ipairs(map.Architecture:GetChildren()) do
+ if piece.Name=="VestibuleRear" and math.abs(piece.Position.X-22)<1 and math.abs(piece.Position.Z-115)<1 then
+  check(false,"Right vestibule still blocked")
+ end
+end
+local serverSource=runtime and runtime:FindFirstChild("AtriumServer")
+check(serverSource and serverSource.Source:find("GlassChapel",1,true)~=nil,"New checkpoints not saved")
 local DS=require(runtime.DoorService);local service=DS.new(nil)
 local doorChecks={}
 for _,model in ipairs(map.Doors:GetChildren()) do
@@ -101,4 +133,4 @@ for _,piece in ipairs(map:GetDescendants()) do
  elseif piece.Name=="AtriumPremiumLight" then lightShafts+=1 end
 end
 check(tables==3 and rain>=20 and lightShafts==3,"Visual-detail pass missing")
-return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,menuLayouts=layoutChecks,settingsValidated=true,freeCamera=true,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
+return {ok=#errors==0,errors=errors,wing=wingStats,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,menuLayouts=layoutChecks,settingsValidated=true,freeCamera=true,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
