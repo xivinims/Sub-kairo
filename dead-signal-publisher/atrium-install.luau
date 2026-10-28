@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-menu-recovery-v5"
+local BUILD_ID="dead-signal-reference-red-stage-v6"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -41,9 +41,9 @@ end
 box("ContinuousFoundation",0,-1,0,116,2,196)
 -- Flush mosaic joints, bounded worn colour variation, no trip hazards.
 for x=-48,48,6 do for z=-90,90,6 do
- local c=rng:NextInteger(96,127)
+ local c=rng:NextInteger(117,126)
  local t=box("LimestoneTile",x,.035,z,5.91,.07,5.91,Color3.fromRGB(c,c+6,c+13),Enum.Material.Slate,true)
- if rng:NextNumber()<.10 then t.Color=Color3.fromRGB(59,72,77) end
+ if rng:NextNumber()<.025 then t.Color=Color3.fromRGB(94,105,110) end
 end end
 for _,x in ipairs({-57,57}) do
  box("ExteriorShell",x,43,0,2,86,196,dark)
@@ -167,7 +167,7 @@ for i=1,125 do
  end
 end
 -- White four-petal ground flowers. No per-flower light or emitter.
-for i=1,290 do
+for i=1,220 do
  local x=rng:NextNumber(-35,35);local z=rng:NextNumber(-52,75)
  if math.abs(x)>6 or rng:NextNumber()<.16 then
   local height=rng:NextNumber(.25,.65)
@@ -293,6 +293,8 @@ for _,pos in ipairs({Vector3.new(-22,77,-38),Vector3.new(17,78,10),Vector3.new(-
  light.Color=Color3.fromRGB(182,205,235);light.Brightness=.85;light.Range=68;light.Angle=75;light.Shadows=false;light.Parent=fixture
 end
 __WINGS_SOURCE__
+__SCENIC_REFINEMENT__
+__MENU_SCENE__
 local root=Instance.new("Folder");root.Name="AtriumRuntime";root.Parent=SSS
 local function module(name,source) local m=Instance.new("ModuleScript");m.Name=name;m.Source=source;m.Parent=root end
 module("DoorService",__DOOR_SERVICE__);module("MapInteractionGuard",__INTERACTION_GUARD__)
