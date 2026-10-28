@@ -7,7 +7,7 @@ if not source then
  source:PivotTo(CFrame.new(-Vector3.new(24.8521824,141.9106909,1.5578613))*source:GetPivot())
  source.Name="ProbeMap"; source.Parent=workspace
 end
-local r={current=current,version=game.PlaceVersion,doors={},named={},bays={},lights={},meshProbe={},cells={}}
+local r={current=current,version=game.PlaceVersion,doors={},named={},bays={},lights={},meshProbe={},cells={},geometry={}}
 local function round(v) return math.floor(v*100+0.5)/100 end
 local function vector(v) return {round(v.X),round(v.Y),round(v.Z)} end
 local function rec(d)
@@ -20,9 +20,10 @@ for _,d in ipairs(source:GetDescendants()) do
  if d:IsA("BasePart") then
   local n=d.Name:lower()
   names[d.Name]=(names[d.Name] or 0)+1
+  if math.abs(d.Position.Y)<100 then table.insert(r.geometry,{d.Name,vector(d.Position),vector(d.Size),vector(Vector3.new(d.CFrame:ToOrientation())),vector(Vector3.new(d.Color.R,d.Color.G,d.Color.B)),round(d.Transparency),d.CanCollide}) end
   if n:find("door") or n:find("gate") or n:find("window") or n:find("entrance") then table.insert(r.doors,rec(d)) end
   if d.Size.Y>3 and d.Size.Y<70 and math.abs(d.Position.Y)<40 and #r.bays<220 then table.insert(r.bays,rec(d)) end
-  if not sample and d:IsA("MeshPart") then sample=d end
+  
  elseif d:IsA("Light") then table.insert(r.lights,{name=d.Name,parent=d.Parent.Name}) end
 end
 for n,count in pairs(names) do table.insert(r.named,{name=n,count=count}) end
