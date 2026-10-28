@@ -226,7 +226,8 @@ marker("Garden",Vector3.new(0,3.5,-40))
 local camera=marker("MenuCamera",Vector3.new(24,8,65));camera.CFrame=CFrame.lookAt(camera.Position,Vector3.new(-8,30,-54))
 -- Cool skylight with readable ambient bounce. Native post processing, not an external shader.
 L.ClockTime=9.2;L.GeographicLatitude=35;L.Brightness=2.1;L.GlobalShadows=true;L.Ambient=Color3.fromRGB(45,55,78);L.OutdoorAmbient=Color3.fromRGB(90,111,145);L.ExposureCompensation=-.15;L.EnvironmentDiffuseScale=.65;L.EnvironmentSpecularScale=.7
-pcall(function() L.Technology=Enum.Technology.Future end)
+pcall(function() L.LightingStyle=Enum.LightingStyle.Realistic;L.PrioritizeLightingQuality=true end)
+L.ShadowSoftness=.42
 local grade=Instance.new("ColorCorrectionEffect");grade.Name="AtriumGrade";grade.TintColor=Color3.fromRGB(200,218,255);grade.Contrast=.14;grade.Saturation=-.24;grade.Parent=L
 local bloom=Instance.new("BloomEffect");bloom.Name="MoonflowerBloom";bloom.Intensity=.22;bloom.Size=24;bloom.Threshold=1.3;bloom.Parent=L
 local rays=Instance.new("SunRaysEffect");rays.Intensity=.045;rays.Spread=.7;rays.Parent=L
@@ -237,6 +238,59 @@ for _,z in ipairs({-44,26,65}) do
 end
 local dust=box("DriftingDust",0,28,10,60,30,120,nil,nil,false,details);dust.Transparency=1
 local emitter=Instance.new("ParticleEmitter");emitter.Name="AtriumDust";emitter.Texture="rbxasset://textures/particles/sparkles_main.dds";emitter.Rate=4;emitter.Lifetime=NumberRange.new(9,14);emitter.Speed=NumberRange.new(.1,.35);emitter.Size=NumberSequence.new(.045);emitter.Transparency=NumberSequence.new(.75);emitter.LightEmission=.35;emitter.SpreadAngle=Vector2.new(180,180);emitter.Parent=dust
+-- Visual-detail pass, photographed atrium: abandoned furniture, worn floors, skylight shafts.
+-- Visual pieces are non-blocking and bounded so the validated stairs/corridors remain reachable.
+local accent=Color3.fromRGB(76,91,103)
+local warmStone=Color3.fromRGB(116,123,128)
+for _,setting in ipairs({{-28,43},{29,43},{-34,-6}}) do
+ local x,z=setting[1],setting[2]
+ local tableTop=box("AbandonedCafeTable",x,2.65,z,5,.26,3,Color3.fromRGB(78,83,88),Enum.Material.Metal,false,details)
+ tableTop.CFrame*=CFrame.Angles(0,math.rad(x<0 and 13 or -9),0)
+ for _,dx in ipairs({-1.9,1.9}) do
+  local stand=box("CafeTableLeg",x+dx,1.32,z,.19,2.55,.19,metal,Enum.Material.Metal,false,details)
+  stand.CFrame=tableTop.CFrame*CFrame.new(dx,-1.34,0)
+ end
+ for _,side in ipairs({-1,1}) do
+  local cx=x+side*3.75
+  box("ForgottenChairSeat",cx,1.55,z,1.7,.2,1.8,accent,Enum.Material.Metal,false,details)
+  box("ForgottenChairBack",cx+side*.77,2.7,z,.16,2.4,1.8,accent,Enum.Material.Metal,false,details)
+  for _,dz in ipairs({-.65,.65}) do
+   box("ChairFrame",cx,0.75,z+dz,.13,1.5,.13,metal,Enum.Material.Metal,false,details)
+  end
+ end
+end
+-- Broken roof glazing: slight reflective puddles catch the diffuse skylight below.
+for i=1,48 do
+ local x=rng:NextNumber(-43,43)
+ local z=rng:NextNumber(-78,75)
+ if math.abs(x)>12 then
+  local patch=box("ReflectiveRainPatch",x,.084,z,rng:NextNumber(.7,2.3),.01,rng:NextNumber(1,3.8),Color3.fromRGB(95,126,145),Enum.Material.Glass,false,details)
+  patch.Transparency=.65;patch.Reflectance=.09
+  patch.CFrame*=CFrame.Angles(0,rng:NextNumber(-3.14,3.14),0)
+ end
+end
+-- Cracked tile infill and lightly raised botanical clusters around the side galleries.
+for i=1,90 do
+ local x=rng:NextNumber(-46,46)
+ local z=rng:NextNumber(-81,78)
+ if math.abs(x)>13 then
+  local scar=box("HairlineTileFracture",x,.08,z,rng:NextNumber(.02,.045),.008,rng:NextNumber(.3,1.6),Color3.fromRGB(35,43,49),Enum.Material.Slate,false,details)
+  scar.CFrame*=CFrame.Angles(0,rng:NextNumber(-3.14,3.14),0)
+ end
+end
+for i=1,65 do
+ local side=i%2==0 and 1 or -1
+ local x=side*rng:NextNumber(37,45)
+ local z=rng:NextNumber(-77,78)
+ local f=box("WildFern",x,rng:NextNumber(.4,.9),z,rng:NextNumber(.12,.4),rng:NextNumber(.8,1.7),rng:NextNumber(.5,1.5),Color3.fromRGB(31,65,47),Enum.Material.Grass,false,foliage)
+ f.CFrame*=CFrame.Angles(rng:NextNumber(-.4,.4),rng:NextNumber(-3.14,3.14),rng:NextNumber(-.35,.35))
+end
+-- Restrained cinematic skylight bounce. Native Roblox post-processing, not an external shader.
+for _,pos in ipairs({Vector3.new(-22,77,-38),Vector3.new(17,78,10),Vector3.new(-10,80,58)}) do
+ local fixture=box("RoofLightShaft",pos.X,pos.Y,pos.Z,.25,.25,.25,nil,nil,false,details);fixture.Transparency=1
+ local light=Instance.new("SpotLight");light.Name="AtriumPremiumLight";light.Face=Enum.NormalId.Bottom
+ light.Color=Color3.fromRGB(182,205,235);light.Brightness=.85;light.Range=68;light.Angle=75;light.Shadows=false;light.Parent=fixture
+end
 local root=Instance.new("Folder");root.Name="AtriumRuntime";root.Parent=SSS
 local function module(name,source) local m=Instance.new("ModuleScript");m.Name=name;m.Source=source;m.Parent=root end
 module("DoorService",__DOOR_SERVICE__);module("MapInteractionGuard",__INTERACTION_GUARD__)
