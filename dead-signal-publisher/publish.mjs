@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-runtime-quality-v4';
+const BUILD_ID = 'dead-signal-overgrown-atrium-v1';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,19 +111,32 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template,verify,importer,door,power,debug,guard,dressing,server,client]=await Promise.all(
-    ['map-install.luau','map-validate.luau','base/server/SafeAssetImporter.luau','base/server/DoorService.luau','base/server/PowerService.luau','base/server/DebugService.luau','base/server/MapInteractionGuard.luau','map-dressing.luau','map-server.luau','map-client.luau'].map(
-      path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
+  const [template,verify,door,guard,server,client,loading]=await Promise.all(
+    ['atrium-install.luau','atrium-validate.luau','base/server/DoorService.luau','base/server/MapInteractionGuard.luau','atrium-server.luau','atrium-client.luau','atrium-loading.luau'].map(path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
+  let logoId=1;
+  if (!process.argv.includes('--dry-run')) {
+    const existing=await execute('return game:GetService("HttpService"):JSONEncode({logo=game:GetService("ServerStorage"):GetAttribute("AurivaneLogoAsset")})','logo-query');
+    logoId=existing?.logo;
+    if (!logoId) {
+      const bytes=Buffer.from(await fs.readFile(new URL('./aurivane-logo.base64',import.meta.url),'utf8'),'base64');
+      const form=new FormData();
+      form.set('request',JSON.stringify({assetType:'Decal',displayName:'Aurivane Works - loading logo',description:'User supplied Aurivane Works studio logo',creationContext:{creator:{userId:'8344738123'}}}));
+      form.set('fileContent',new Blob([bytes],{type:'image/jpeg'}),'aurivane.jpg');
+      const response=await fetch('https://apis.roblox.com/assets/v1/assets',{method:'POST',headers:{'x-api-key':process.env.ROBLOX_API_KEY},body:form});
+      let operation=await response.json();if(!response.ok)throw new Error('Logo upload: '+JSON.stringify(operation));
+      for(let i=0;i<120&&!operation.done;i++){await sleep(1500);const r=await fetch('https://apis.roblox.com/assets/v1/'+operation.path,{headers:{'x-api-key':process.env.ROBLOX_API_KEY}});operation=await r.json();}
+      if(operation.error||!operation.done)throw new Error('Logo upload processing failed '+JSON.stringify(operation));
+      logoId=Number(operation.response.assetId);console.log('Aurivane logo asset: '+logoId);
+    }
+  }
   const install=template
-    .replace('__IMPORTER__',luaLongString(importer))
     .replace('__DOOR_SERVICE__',luaLongString(door))
-    .replace('__POWER_SERVICE__',luaLongString(power))
-    .replace('__DEBUG_SERVICE__',luaLongString(debug))
     .replace('__INTERACTION_GUARD__',luaLongString(guard))
-    .replace('__MAP_DRESSING__',dressing)
     .replace('__SERVER__',luaLongString(server))
     .replace('__CLIENT__',luaLongString(client))
-    .replace('__PREPUBLISH_VALIDATE__','local validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
+    .replace('__LOADING__',luaLongString(loading))
+    .replace('__LOGO_ID__',String(logoId))
+    .replace('__PREPUBLISH_VALIDATE__','game:GetService("ServerStorage"):SetAttribute("AurivaneLogoAsset",'+logoId+')\nlocal validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
   if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded map placeholder');
   if (process.argv.includes('--dry-run')) {
     await fs.writeFile(new URL('./assembled-install.luau',import.meta.url),install);
