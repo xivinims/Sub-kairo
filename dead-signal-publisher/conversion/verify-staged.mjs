@@ -16,9 +16,12 @@ for _,name in ipairs({"walk","jumpscare"}) do
  local deadline=os.clock()+8
  while track.Length==0 and os.clock()<deadline do task.wait(0.2) end
  task.wait(0.4)
+ local stepped,stepError=pcall(function() animator:StepAnimations(0.4) end)
+ local targetCount=0
+ pcall(function() targetCount=#track:GetTargetNames() end)
  local moving=0
  for _,b in ipairs(m:GetDescendants()) do if b:IsA("Bone") and b.Transform~=CFrame.new() then moving+=1 end end
- result.clips[name]={length=track.Length,playing=track.IsPlaying,movingBones=moving}
+ result.clips[name]={length=track.Length,playing=track.IsPlaying,movingBones=moving,manualStep=stepped,stepError=not stepped and tostring(stepError) or nil,targets=targetCount}
  track:Stop(0);track:Destroy()
 end
 m:Destroy();return game:GetService("HttpService"):JSONEncode(result)`;
