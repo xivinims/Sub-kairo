@@ -35,3 +35,7 @@ Asset solicitado: https://create.roblox.com/store/asset/77713813527653/Doors-out
 Não está embutido no pacote. No Studio, em modo de edição, execute o conteúdo de `studio/ImportBramble.command.luau` na Command Bar. O Roblox precisa permitir a importação. O script remove código executável do contêiner antes de adicioná-lo ao `ServerStorage` e nunca publica a experiência. Confira orientação/escala no Play Test. O servidor usa `BrambleTemplate` se ele existir; caso contrário mostra a criatura procedural, identificada como placeholder.
 
 A importação do modelo não garante direitos de publicação nem inclui automaticamente o rig/animações do jogo original. Não há conteúdo extraído de Poppy Playtime neste port; suas marcas e o conteúdo de terceiros permanecem de seus respectivos titulares.
+# Áudio da versão base
+
+Os IDs de ambiente `4745539237` (Winteran), perseguição `9039697342` — Much Fear (APMOfficial) e estática `8028069841` (NoobMatthew3) foram localizados no Creator Store. Reprodução no cliente Roblox ainda precisa ser verificada. Esses arquivos não são apresentados como trilha oficial de Poppy Playtime. As falas Marcus e as imagens ainda exigem upload e configuração de IDs.
+

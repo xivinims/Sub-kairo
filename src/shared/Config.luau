@@ -9,7 +9,7 @@ Config.InteractionCooldown = 0.4
 -- 0 deliberately disables an unconfigured asset; GitHub URLs are not Roblox content IDs.
 Config.Assets = {
  StudioLogo = 0, ChapterLogo = 0,
- Ambient = 0, Pursuit = 0, Radio = 0, Relay = 0, OpeningVoice = 0,
+ Ambient = 4745539237, Pursuit = 9039697342, Radio = 8028069841, Relay = 0, OpeningVoice = 0,
  Voices = {},
 }
 Config.Sectors = {
