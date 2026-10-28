@@ -47,6 +47,8 @@ for ix=1,128 do
  end
 end
 W.Terrain:WriteVoxels(region,4,materials,occupancy)
+-- Terrain collision meshes are built asynchronously after voxel edits.
+task.wait(2)
 W.Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(81,100,46));W.Terrain:SetMaterialColor(Enum.Material.Ground,Color3.fromRGB(111,100,73))
 pcall(function() W.Terrain.Decoration=true;W.Terrain.GrassLength=.85 end)
 local query=RaycastParams.new();query.FilterType=Enum.RaycastFilterType.Include;query.FilterDescendantsInstances={W.Terrain}

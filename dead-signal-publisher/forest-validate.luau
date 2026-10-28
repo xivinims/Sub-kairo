@@ -11,7 +11,7 @@ local checkpoints={}
 for _,p in ipairs(map.RouteMarkers:GetChildren()) do
  local hit=W:Raycast(p.Position,Vector3.new(0,-9,0),params)
  checkpoints[p.Name]=hit~=nil and (hit.Material==Enum.Material.Grass or hit.Material==Enum.Material.Ground)
- check(checkpoints[p.Name],"Checkpoint without terrain "..p.Name)
+ check(checkpoints[p.Name],"Checkpoint without terrain "..p.Name.." pos="..tostring(p.Position).." hit="..tostring(hit and hit.Material))
  local overlap=OverlapParams.new();overlap.RespectCanCollide=true
  check(#W:GetPartBoundsInBox(CFrame.new(p.Position),Vector3.new(3,4,3),overlap)==0,"Spawn or checkpoint intersects object "..p.Name)
 end
