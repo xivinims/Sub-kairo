@@ -91,14 +91,14 @@ local function apply()
  player:SetAttribute("SubtitlesEnabled",settings.subtitles)
  local atriumGrade=L:FindFirstChild("AtriumGrade")
  if atriumGrade then
-  atriumGrade.Contrast=settings.quality>=5 and .16 or .11
-  atriumGrade.Saturation=settings.quality>=6 and -.19 or -.27
-  atriumGrade.TintColor=Color3.fromRGB(207,222,246)
+  atriumGrade.Contrast=settings.quality>=5 and .09 or .06
+  atriumGrade.Saturation=settings.quality>=6 and -.10 or -.13
+  atriumGrade.TintColor=Color3.fromRGB(234,240,250)
  end
  local atmosphere=L:FindFirstChildOfClass("Atmosphere")
  if atmosphere then
-  atmosphere.Density=settings.quality>=6 and .26 or .19
-  atmosphere.Haze=settings.quality>=6 and 1.9 or 1.1
+  atmosphere.Density=settings.quality>=6 and .15 or .1
+  atmosphere.Haze=settings.quality>=6 and .85 or .45
  end
  for d in pairs(dustEmitters) do
   if d.Parent then d.Enabled=settings.quality>=5 and settings.motion;d.Rate=settings.quality>=8 and 5 or 2 else dustEmitters[d]=nil end
