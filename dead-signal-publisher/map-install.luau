@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-map-focus-v3"
+local BUILD_ID="dead-signal-runtime-quality-v4"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong Dead Signal target")
 local W=game:GetService("Workspace")
 local RS=game:GetService("ReplicatedStorage")
@@ -45,6 +45,7 @@ end
 module("DoorService",__DOOR_SERVICE__)
 module("PowerService",__POWER_SERVICE__)
 module("DebugService",__DEBUG_SERVICE__)
+module("MapInteractionGuard",__INTERACTION_GUARD__)
 local function part(parent,name,size,cf,color,material,collide)
  local p=Instance.new("Part"); p.Name=name; p.Size=size; p.CFrame=cf; p.Anchored=true; p.CanTouch=false
  p.CanCollide=collide~=false; p.CanQuery=p.CanCollide; p.Color=color or Color3.fromRGB(76,87,83); p.Material=material or Enum.Material.Metal

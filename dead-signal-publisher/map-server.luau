@@ -12,16 +12,9 @@ power:Recalculate()
 for _,model in ipairs(Tags:GetTagged("DeadSignalMapDoor")) do doors:Register(model) end
 local prompts={}
 local throttle={}
+local Guard=require(script.Parent.MapInteractionGuard)
 local function canUse(player,prompt)
- local char=player.Character
- local root=char and char:FindFirstChild("HumanoidRootPart")
- local hum=char and char:FindFirstChildOfClass("Humanoid")
- local parent=prompt.Parent
- if not root or not hum or hum.Health<=0 or not parent or not parent:IsA("BasePart") or (root.Position-parent.Position).Magnitude>10 then return false end
- local key=player.UserId..":"..parent:GetFullName()
- if os.clock()-(throttle[key] or 0)<0.35 then return false end
- throttle[key]=os.clock()
- return true
+ return Guard.CanUse(player,prompt,os.clock(),throttle,workspace)
 end
 local function syncSector(id)
  local on=power:IsEnergized(id.."_LIGHTS")
@@ -50,11 +43,18 @@ for _,control in ipairs(Tags:GetTagged("DeadSignalDoorControl")) do
     audio=Instance.new("Sound"); audio.Name="DoorLatchSound"; audio.SoundId="rbxasset://sounds/action_jump_land.mp3"; audio.Volume=0.14; audio.PlaybackSpeed=0.75; audio.RollOffMaxDistance=34; audio.Parent=door.panel
    end
    audio:Play()
-   local ok,reason=doors:SetOpen(id,not door.open)
+   local target=door.state=="Waiting" or not door.open
+   local ok,reason=doors:SetOpen(id,target)
    if not ok and reason~="occupied" and reason~="busy" then debug:Warn("MAP_DOOR",tostring(reason),{door=id}) end
   end)
  end
 end
+doors.StateChanged.Event:Connect(function(id,state)
+ for _,prompt in ipairs(prompts[id] or {}) do
+  prompt.Enabled=state~="Opening" and state~="Closing"
+  if state=="Waiting" then prompt.ActionText="Manter aberta" end
+ end
+end)
 doors.Changed.Event:Connect(function(id,opened)
  for _,prompt in ipairs(prompts[id] or {}) do prompt.ActionText=opened and "Fechar" or "Abrir" end
 end)

@@ -4,7 +4,7 @@ local Tags=game:GetService("CollectionService")
 local errors={}
 local function check(ok,message) if not ok then table.insert(errors,message) end end
 check(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-map-focus-v3","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-runtime-quality-v4","Build mismatch")
 check(W:GetAttribute("MapFocus")==true and W:GetAttribute("StalkerPaused")==true,"Map review mode not active")
 check(not W:FindFirstChild("Bramble") and not W:FindFirstChild("BrambleWorld"),"Stalker/test world still active")
 local map=W:FindFirstChild("PoppyTestMap")
@@ -97,6 +97,48 @@ if root and dressing then
   end
  end
 end
+local safety={}
+if root then
+ local Door=require(root.DoorService)
+ local Guard=require(root.MapInteractionGuard)
+ local test=Instance.new("Model");test.Name="DoorSafetyValidation";test.Parent=W
+ test:SetAttribute("DoorId","SAFETY_VALIDATION");test:SetAttribute("OpenOffset",Vector3.new(7,0,0));test:SetAttribute("OpenDuration",0.3)
+ local panel=Instance.new("Part");panel.Name="DoorPanel";panel.Anchored=true;panel.Size=Vector3.new(6,8,0.4);panel.CFrame=CFrame.new(10000,5,10000);panel.Parent=test
+ local occupied=false
+ local ds=Door.new({IsEnergized=function()return true end},{IsOccupied=function()return occupied end})
+ local record=ds:Register(test)
+ check(not pcall(function()ds:Register(test)end),"Duplicate door registration accepted")
+ ds:SetOpen("SAFETY_VALIDATION",true,true)
+ task.delay(0.05,function()occupied=true end)
+ local closed,reason=ds:SetOpen("SAFETY_VALIDATION",false)
+ safety.midCloseProtection=not closed and reason=="occupied" and record.open and record.state=="Waiting"
+ check(safety.midCloseProtection,"Door did not reverse for player entering during close")
+ ds:SetOpen("SAFETY_VALIDATION",true)
+ task.wait(0.5)
+ safety.cancelPendingClose=record.open and record.state=="Open"
+ check(safety.cancelPendingClose,"Pending close was not cancelled by reopen request")
+ occupied=false;ds:SetOpen("SAFETY_VALIDATION",false)
+ safety.recovery=not record.open
+ check(safety.recovery,"Door did not close after occupancy cleared")
+ test:Destroy()
+ local char=Instance.new("Model");char.Name="GuardValidation";char.Parent=W
+ local hrp=Instance.new("Part");hrp.Name="HumanoidRootPart";hrp.Anchored=true;hrp.CFrame=CFrame.new(10000,5,10000);hrp.Parent=char
+ local head=hrp:Clone();head.Name="Head";head.Parent=char
+ local hum=Instance.new("Humanoid");hum.RequiresNeck=false;hum.Parent=char
+ local control=Instance.new("Part");control.Anchored=true;control.CFrame=CFrame.new(10000,5,10004);control.Parent=char
+ local prompt=Instance.new("ProximityPrompt");prompt.MaxActivationDistance=8;prompt.Parent=control
+ local player={Character=char,UserId=-1400};local clocks={};local wall=false
+ local world={Raycast=function()return wall and {Instance=control} or nil end}
+ check(Guard.CanUse(player,prompt,10,clocks,world),"Guard rejected valid nearby interaction")
+ check(not Guard.CanUse(player,prompt,10.1,clocks,world),"Interaction spam accepted")
+ wall=true;check(not Guard.CanUse(player,prompt,11,clocks,world),"Interaction through wall accepted")
+ wall=false;hrp.Position+=Vector3.new(50,0,0);check(not Guard.CanUse(player,prompt,12,clocks,world),"Out-of-range interaction accepted")
+ hrp.Position=head.Position;prompt.Enabled=false;check(not Guard.CanUse(player,prompt,13,clocks,world),"Disabled interaction accepted")
+ safety.interactionGuard=true;char:Destroy()
+ local converted=game:GetService("ServerStorage"):FindFirstChild("SpringSourceConverted")
+ check(converted and converted:FindFirstChild("MissDelightSource") and #converted.SourceAnimations:GetChildren()==5,"Converted source resources were not preserved")
+ safety.convertedAssetsPreserved=converted~=nil
+end
 local lights=#Tags:GetTagged("DeadSignalMapLight")
 check(lights>=20,"Lighting not distributed through map")
-return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,mapAssetId=W:GetAttribute("MapSourceAssetId"),parts=parts,importedParts=importedParts,doors=doorCount,lightingControls=switchCount,lights=lights,externalScripts=external,invalidTransforms=mirrored,stalkerPaused=W:GetAttribute("StalkerPaused"),routes=routes,hubs=hubData,benchCount=W:GetAttribute("MapBenchCount")}
+return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,mapAssetId=W:GetAttribute("MapSourceAssetId"),parts=parts,importedParts=importedParts,doors=doorCount,lightingControls=switchCount,lights=lights,externalScripts=external,invalidTransforms=mirrored,stalkerPaused=W:GetAttribute("StalkerPaused"),routes=routes,hubs=hubData,functionTests=safety,benchCount=W:GetAttribute("MapBenchCount")}

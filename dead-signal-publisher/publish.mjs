@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-map-focus-v3';
+const BUILD_ID = 'dead-signal-runtime-quality-v4';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,14 +111,15 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template,verify,importer,door,power,debug,dressing,server,client]=await Promise.all(
-    ['map-install.luau','map-validate.luau','base/server/SafeAssetImporter.luau','base/server/DoorService.luau','base/server/PowerService.luau','base/server/DebugService.luau','map-dressing.luau','map-server.luau','map-client.luau'].map(
+  const [template,verify,importer,door,power,debug,guard,dressing,server,client]=await Promise.all(
+    ['map-install.luau','map-validate.luau','base/server/SafeAssetImporter.luau','base/server/DoorService.luau','base/server/PowerService.luau','base/server/DebugService.luau','base/server/MapInteractionGuard.luau','map-dressing.luau','map-server.luau','map-client.luau'].map(
       path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
   const install=template
     .replace('__IMPORTER__',luaLongString(importer))
     .replace('__DOOR_SERVICE__',luaLongString(door))
     .replace('__POWER_SERVICE__',luaLongString(power))
     .replace('__DEBUG_SERVICE__',luaLongString(debug))
+    .replace('__INTERACTION_GUARD__',luaLongString(guard))
     .replace('__MAP_DRESSING__',dressing)
     .replace('__SERVER__',luaLongString(server))
     .replace('__CLIENT__',luaLongString(client))
