@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-bramble-map-v2';
+const BUILD_ID = 'dead-signal-map-focus-v3';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,17 +111,19 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template, verify, importer, animation, server, client] = await Promise.all(
-    ['arena-install.luau','arena-validate.luau','base/server/SafeAssetImporter.luau','arena-animation.luau','arena-server.luau','arena-client.luau'].map(
+  const [template,verify,importer,door,power,debug,dressing,server,client]=await Promise.all(
+    ['map-install.luau','map-validate.luau','base/server/SafeAssetImporter.luau','base/server/DoorService.luau','base/server/PowerService.luau','base/server/DebugService.luau','map-dressing.luau','map-server.luau','map-client.luau'].map(
       path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
   const install=template
-    .replace('__TEST_MAP__',await fs.readFile(new URL('./test-map-install.luau',import.meta.url),'utf8'))
     .replace('__IMPORTER__',luaLongString(importer))
-    .replace('__ANIMATION__',luaLongString(animation))
+    .replace('__DOOR_SERVICE__',luaLongString(door))
+    .replace('__POWER_SERVICE__',luaLongString(power))
+    .replace('__DEBUG_SERVICE__',luaLongString(debug))
+    .replace('__MAP_DRESSING__',dressing)
     .replace('__SERVER__',luaLongString(server))
     .replace('__CLIENT__',luaLongString(client))
     .replace('__PREPUBLISH_VALIDATE__','local validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
-  if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded arena placeholder');
+  if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded map placeholder');
   if (process.argv.includes('--dry-run')) {
     await fs.writeFile(new URL('./assembled-install.luau',import.meta.url),install);
     console.log(JSON.stringify({build:BUILD_ID,bytes:install.length,dryRun:true})); return;
