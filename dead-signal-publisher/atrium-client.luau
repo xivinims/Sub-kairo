@@ -14,7 +14,14 @@ if not camera then
  workspace:GetPropertyChangedSignal("CurrentCamera"):Wait()
  camera=workspace.CurrentCamera
 end
-local menuCamera=CFrame.lookAt(Vector3.new(24,12,69),Vector3.new(-8,30,-42))
+-- The opening camera is in the original red-lit set, never at the player's spawn.
+local sceneFocus=Vector3.new(328,19,-337)
+local menuCamera=CFrame.lookAt(Vector3.new(320,16,-258),sceneFocus)
+task.spawn(function()
+ local scene=workspace:WaitForChild("DeadSignalCinematicSet",5)
+ local marker=scene and scene:FindFirstChild("MenuSceneCamera")
+ if marker then menuCamera=marker.CFrame end
+end)
 -- Lock the opening shot BEFORE any optional styling or 3D work.
 camera.CameraType=Enum.CameraType.Scriptable
 camera.CFrame=menuCamera
@@ -34,9 +41,9 @@ local safeGui=make("ScreenGui",{Name="DeadSignalMenuAccess",ResetOnSpawn=false,D
 local pause=make("TextButton",{Name="MenuTopRight",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-8,0,4),Size=UDim2.fromOffset(76,44),Text="MENU",Font=Enum.Font.Michroma,TextSize=14,TextColor3=Color3.new(1,1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.30,BorderSizePixel=0,Visible=false},safeGui)
 make("UIStroke",{Thickness=1,Color=Color3.new(1,1,1),Transparency=.45},pause)
 local notice=make("TextLabel",{Name="Notice",AnchorPoint=Vector2.new(.5,1),Position=UDim2.new(.5,0,1,-8),Size=UDim2.new(.9,0,0,28),BackgroundTransparency=1,Text="",TextColor3=Color3.fromRGB(255,208,190),TextSize=13,Font=Enum.Font.Michroma,ZIndex=60},gui)
-local menuGrade=make("ColorCorrectionEffect",{Name="MenuWarmGrade",TintColor=Color3.fromRGB(235,225,233),Saturation=-.06,Contrast=.03,Enabled=true},camera)
+local menuGrade=make("ColorCorrectionEffect",{Name="MenuWarmGrade",TintColor=Color3.fromRGB(255,215,208),Saturation=-.12,Contrast=.15,Enabled=true},camera)
 local brightness=make("ColorCorrectionEffect",{Name="PlayerBrightness",Brightness=0},camera)
-local dof=make("DepthOfFieldEffect",{Name="MenuFocus",FocusDistance=72,InFocusRadius=58,FarIntensity=.12,NearIntensity=0},camera)
+local dof=make("DepthOfFieldEffect",{Name="MenuFocus",FocusDistance=72,InFocusRadius=58,FarIntensity=.10,NearIntensity=0},camera)
 local music=Sound:FindFirstChild("Music") or make("SoundGroup",{Name="Music"},Sound)
 local sfx=Sound:FindFirstChild("SFX") or make("SoundGroup",{Name="SFX"},Sound)
 local modal
@@ -251,7 +258,10 @@ UIS.InputBegan:Connect(function(input,processed) if not processed and started an
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt
  if menuOpen then
-  camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=menuCamera*(settings.motion and CFrame.Angles(math.sin(elapsed*.13)*.006,math.sin(elapsed*.09)*.018,0) or CFrame.new())
+  camera.CameraType=Enum.CameraType.Scriptable
+  camera.FieldOfView=68
+  camera.CFrame=menuCamera*(settings.motion and CFrame.Angles(math.sin(elapsed*.13)*.003,math.sin(elapsed*.09)*.007,0) or CFrame.new())
+  camera.Focus=CFrame.new(sceneFocus)
   UIS.MouseBehavior=Enum.MouseBehavior.Default;UIS.MouseIconEnabled=true
  end
 end)
