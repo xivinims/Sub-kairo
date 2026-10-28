@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-overgrown-atrium-v2"
+local BUILD_ID="dead-signal-reference-menu-v1"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -240,6 +240,8 @@ local emitter=Instance.new("ParticleEmitter");emitter.Name="AtriumDust";emitter.
 local root=Instance.new("Folder");root.Name="AtriumRuntime";root.Parent=SSS
 local function module(name,source) local m=Instance.new("ModuleScript");m.Name=name;m.Source=source;m.Parent=root end
 module("DoorService",__DOOR_SERVICE__);module("MapInteractionGuard",__INTERACTION_GUARD__)
+local settingsModule=Instance.new("ModuleScript");settingsModule.Name="AtriumSettings";settingsModule.Source=__SETTINGS__;settingsModule.Parent=RS
+local viewModule=Instance.new("ModuleScript");viewModule.Name="AtriumMenuView";viewModule.Source=__MENU_VIEW__;viewModule.Parent=RS
 local remote=Instance.new("RemoteFunction");remote.Name="AtriumSession";remote.Parent=RS
 local s=Instance.new("Script");s.Name="AtriumServer";s.Source=__SERVER__;s.Enabled=false;s.Parent=root
 local client=Instance.new("LocalScript");client.Name="AtriumClient";client.Source=__CLIENT__;client.Parent=SP.StarterPlayerScripts
@@ -251,7 +253,7 @@ if okLogo and logoModel then
  if decal then RS:SetAttribute("AurivaneLogoTexture",decal.Texture) end
  logoModel:Destroy()
 end
-SP.CameraMode=Enum.CameraMode.LockFirstPerson;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=.5;SP.CharacterWalkSpeed=16
+SP.CameraMode=Enum.CameraMode.Classic;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=24;SP.CharacterWalkSpeed=16
 W:SetAttribute("DeadSignalBuildId",BUILD_ID);W:SetAttribute("MapSource","Original geometry from user photo");W:SetAttribute("StalkerPaused",true)
 __PREPUBLISH_VALIDATE__
 s.Enabled=true

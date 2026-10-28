@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-overgrown-atrium-v2';
+const BUILD_ID = 'dead-signal-reference-menu-v1';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -111,8 +111,8 @@ async function moduleStatements(group, names, parentVar) {
 }
 
 async function main() {
-  const [template,verify,door,guard,server,client,loading]=await Promise.all(
-    ['atrium-install.luau','atrium-validate.luau','base/server/DoorService.luau','base/server/MapInteractionGuard.luau','atrium-server.luau','atrium-client.luau','atrium-loading.luau'].map(path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
+  const [template,verify,door,guard,server,client,loading,settings,menuView]=await Promise.all(
+    ['atrium-install.luau','atrium-validate.luau','base/server/DoorService.luau','base/server/MapInteractionGuard.luau','atrium-server.luau','atrium-client.luau','atrium-loading.luau','atrium-settings.luau','atrium-menu-view.luau'].map(path=>fs.readFile(new URL('./'+path,import.meta.url),'utf8')));
   let logoId=1;
   if (!process.argv.includes('--dry-run')) {
     const existing=await execute('return game:GetService("HttpService"):JSONEncode({logo=game:GetService("ServerStorage"):GetAttribute("AurivaneLogoAsset")})','logo-query');
@@ -135,6 +135,8 @@ async function main() {
     .replace('__SERVER__',luaLongString(server))
     .replace('__CLIENT__',luaLongString(client))
     .replace('__LOADING__',luaLongString(loading))
+    .replace('__SETTINGS__',luaLongString(settings))
+    .replace('__MENU_VIEW__',luaLongString(menuView))
     .replace('__LOGO_ID__',String(logoId))
     .replace('__PREPUBLISH_VALIDATE__','game:GetService("ServerStorage"):SetAttribute("AurivaneLogoAsset",'+logoId+')\nlocal validation=(function()\n'+verify+'\nend)()\nassert(validation.ok,Http:JSONEncode(validation))');
   if (/__[A-Z_]+__/.test(install.replaceAll('__ALL_STATIC__',''))) throw new Error('Unexpanded map placeholder');

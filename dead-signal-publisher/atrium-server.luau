@@ -3,6 +3,7 @@ local DSS=game:GetService("DataStoreService")
 local remote=game:GetService("ReplicatedStorage"):WaitForChild("AtriumSession")
 local DoorService=require(script.Parent.DoorService)
 local Guard=require(script.Parent.MapInteractionGuard)
+local Settings=require(game:GetService("ReplicatedStorage").AtriumSettings)
 local doors=DoorService.new(nil)
 local cooldowns={}
 local records={}
@@ -10,19 +11,24 @@ local store=DSS:GetDataStore("DeadSignalAtriumV1")
 local markers=workspace.OvergrownAtrium.RouteMarkers
 local checkpoints={"Start","Garden","Floor1","Floor2","Floor3"}
 local function save(player)
- local r=records[player];if not r or not r.started then return end
- local snapshot={checkpoint=r.checkpoint,settings=r.settings}
+ local r=records[player];if not r or not r.loaded or r.loadFailed then return false end
+ while r.saving do task.wait(.05) end
+ r.saving=true
+ local snapshot={settings=Settings.Clean(r.settings)}
+ if r.hasSave then snapshot.checkpoint=r.checkpoint end
  local ok,err=pcall(function() store:UpdateAsync(tostring(player.UserId),function() return snapshot end) end)
+ r.saving=false
  if not ok then warn("[AtriumSave] "..tostring(err)) end
+ return ok
 end
 local function load(player)
  if records[player] then return end
- local r={checkpoint="Start",settings={quality="Alta",motion=true},started=false,loaded=false,busy=false,last=0};records[player]=r
+ local r={checkpoint="Start",settings=Settings.Clean(nil),started=false,loaded=false,busy=false,last=0};records[player]=r
  local ok,data=pcall(function() return store:GetAsync(tostring(player.UserId)) end)
  if ok and type(data)=="table" then
   if type(data.checkpoint)=="string" and markers:FindFirstChild(data.checkpoint) then r.checkpoint=data.checkpoint;r.hasSave=true end
-  if type(data.settings)=="table" then r.settings={quality=data.settings.quality=="Baixa" and "Baixa" or "Alta",motion=data.settings.motion~=false} end
- elseif not ok then warn("[AtriumSave] load failed: "..tostring(data)) end
+  if type(data.settings)=="table" then r.settings=Settings.Clean(data.settings) end
+ elseif not ok then r.loadFailed=true;warn("[AtriumSave] load failed: "..tostring(data)) end
  r.loaded=true
 end
 local function spawnAt(player)
@@ -41,7 +47,8 @@ Players.PlayerAdded:Connect(join);for _,p in ipairs(Players:GetPlayers()) do joi
 Players.PlayerRemoving:Connect(function(p) save(p);records[p]=nil;cooldowns[p.UserId]=nil end)
 remote.OnServerInvoke=function(player,action,payload)
  local r=records[player];if not r or not r.loaded then return {ready=false} end
- if action=="status" then return {ready=true,hasSave=r.hasSave==true,settings=r.settings} end
+ if action=="status" then return {ready=true,hasSave=r.hasSave==true,settings=r.settings,loadFailed=r.loadFailed==true} end
+ if r.loadFailed then return {ok=false,error="Save data unavailable; rejoin to retry."} end
  if r.busy or os.clock()-r.last<.4 then return {ok=false} end
  r.last=os.clock();r.busy=true
  local result={ok=false}
@@ -49,7 +56,7 @@ remote.OnServerInvoke=function(player,action,payload)
   if action=="new" then r.checkpoint="Start" end
   r.started=true;r.hasSave=true;spawnAt(player);task.spawn(save,player);result={ok=true,checkpoint=r.checkpoint}
  elseif action=="settings" and type(payload)=="table" then
-  r.settings={quality=payload.quality=="Baixa" and "Baixa" or "Alta",motion=payload.motion~=false};task.spawn(save,player);result={ok=true}
+  r.settings=Settings.Clean(payload);result={ok=save(player)}
  end
  r.busy=false;return result
 end
