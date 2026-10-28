@@ -1,0 +1,150 @@
+{
+  "stage": "spring-interchange-import",
+  "sourceCommit": "344abbe7eb26fcd6b3510858d749584f25f4cc67",
+  "creator": {
+    "id": 8344738123,
+    "type": "User",
+    "version": 157
+  },
+  "assets": [
+    {
+      "source": "Content/Project/KHH/source/Delight.fbx",
+      "assetId": "98751037263074",
+      "result": {
+        "path": "assets/98751037263074",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:04.688Z",
+        "assetId": "98751037263074",
+        "displayName": "Dead Signal - Source Miss Delight",
+        "description": "################################################################################################################",
+        "assetType": "Model",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    },
+    {
+      "source": "Content/Project/KHH/start_UI/imge/img2.png",
+      "assetId": "74705923507132",
+      "result": {
+        "path": "assets/74705923507132",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:07.079Z",
+        "assetId": "74705923507132",
+        "displayName": "Dead Signal - Source UI img2.png",
+        "description": "################################################################################################################",
+        "assetType": "Decal",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    },
+    {
+      "source": "Content/Project/KHH/start_UI/imge/img3.png",
+      "assetId": "79180356563966",
+      "result": {
+        "path": "assets/79180356563966",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:09.108Z",
+        "assetId": "79180356563966",
+        "displayName": "Dead Signal - Source UI img3.png",
+        "description": "################################################################################################################",
+        "assetType": "Decal",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    },
+    {
+      "source": "Content/Project/KHH/start_UI/imge/img5.png",
+      "assetId": "87976092983541",
+      "result": {
+        "path": "assets/87976092983541",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:10.723Z",
+        "assetId": "87976092983541",
+        "displayName": "Dead Signal - Source UI img5.png",
+        "description": "################################################################################################################",
+        "assetType": "Decal",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    },
+    {
+      "source": "Content/Project/KHH/start_UI/imge/imge4.png",
+      "assetId": "71772991499984",
+      "result": {
+        "path": "assets/71772991499984",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:12.554Z",
+        "assetId": "71772991499984",
+        "displayName": "Dead Signal - Source UI imge4.png",
+        "description": "################################################################################################################",
+        "assetType": "Decal",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    },
+    {
+      "source": "Content/Project/KHH/start_UI/imge/start_UI.png",
+      "assetId": "108765595449601",
+      "result": {
+        "path": "assets/108765595449601",
+        "revisionId": "1",
+        "revisionCreateTime": "2026-10-28T18:35:14.505Z",
+        "assetId": "108765595449601",
+        "displayName": "Dead Signal - Source UI start_UI.png",
+        "description": "################################################################################################################",
+        "assetType": "Decal",
+        "creationContext": {
+          "creator": {
+            "userId": "8344738123"
+          }
+        },
+        "moderationResult": {
+          "moderationState": "Approved"
+        },
+        "state": "Active"
+      }
+    }
+  ],
+  "published": false,
+  "modelInspection": {
+    "bones": 124,
+    "animations": [],
+    "joints": 2,
+    "parts": 3
+  }
+}

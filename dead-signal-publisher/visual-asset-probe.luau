@@ -1,46 +1,9 @@
-local source=workspace:FindFirstChild("PoppyTestMap")
-local current={build=workspace:GetAttribute("DeadSignalBuildId"),objects={}}
-for _,d in ipairs(workspace:GetChildren()) do table.insert(current.objects,d.Name) end
-if not source then
- source=game:GetService("AssetService"):LoadAssetAsync(18509954401)
- for _,d in ipairs(source:GetDescendants()) do if d:IsA("LuaSourceContainer") then d:Destroy() end end
- source:PivotTo(CFrame.new(-Vector3.new(24.8521824,141.9106909,1.5578613))*source:GetPivot())
- source.Name="ProbeMap"; source.Parent=workspace
+local m=game:GetService("AssetService"):LoadAssetAsync(98751037263074)
+local r={parts={},bones={},joints={}}
+for _,d in ipairs(m:GetDescendants()) do
+ if d:IsA("LuaSourceContainer") then d:Destroy()
+ elseif d:IsA("BasePart") then table.insert(r.parts,{name=d.Name,path=d:GetFullName(),size={d.Size.X,d.Size.Y,d.Size.Z},cf={d.CFrame:GetComponents()},mesh=d:IsA("MeshPart") and d.MeshId or nil,texture=d:IsA("MeshPart") and d.TextureID or nil})
+ elseif d:IsA("Bone") then table.insert(r.bones,{name=d.Name,parent=d.Parent.Name,cf={d.CFrame:GetComponents()}})
+ elseif d:IsA("Motor6D") then table.insert(r.joints,{name=d.Name,p0=d.Part0 and d.Part0.Name,p1=d.Part1 and d.Part1.Name}) end
 end
-local r={current=current,version=game.PlaceVersion,doors={},named={},bays={},lights={},meshProbe={},cells={},geometry={}}
-local function round(v) return math.floor(v*100+0.5)/100 end
-local function vector(v) return {round(v.X),round(v.Y),round(v.Z)} end
-local function rec(d)
- local rx,ry,rz=d.CFrame:ToOrientation()
- return {n=d.Name,p=vector(d.Position),s=vector(d.Size),r=vector(Vector3.new(rx,ry,rz)),c=vector(Vector3.new(d.Color.R,d.Color.G,d.Color.B)),t=round(d.Transparency),collide=d.CanCollide,cls=d.ClassName}
-end
-local names={}
-local sample
-for _,d in ipairs(source:GetDescendants()) do
- if d:IsA("BasePart") then
-  local n=d.Name:lower()
-  names[d.Name]=(names[d.Name] or 0)+1
-  if math.abs(d.Position.Y)<100 then table.insert(r.geometry,{d.Name,vector(d.Position),vector(d.Size),vector(Vector3.new(d.CFrame:ToOrientation())),vector(Vector3.new(d.Color.R,d.Color.G,d.Color.B)),round(d.Transparency),d.CanCollide}) end
-  if n:find("door") or n:find("gate") or n:find("window") or n:find("entrance") then table.insert(r.doors,rec(d)) end
-  if d.Size.Y>3 and d.Size.Y<70 and math.abs(d.Position.Y)<40 and #r.bays<220 then table.insert(r.bays,rec(d)) end
-  
- elseif d:IsA("Light") then table.insert(r.lights,{name=d.Name,parent=d.Parent.Name}) end
-end
-for n,count in pairs(names) do table.insert(r.named,{name=n,count=count}) end
-table.sort(r.named,function(a,b) return a.count>b.count end)
-if sample then
- local ok,mesh=pcall(function() return game:GetService("AssetService"):CreateEditableMeshAsync(Content.fromUri(sample.MeshId)) end)
- r.meshProbe={ok=ok,part=sample.Name,meshId=sample.MeshId,result=ok and #mesh:GetVertices() or tostring(mesh)}
- if ok then mesh:Destroy() end
-end
-local params=RaycastParams.new(); params.FilterType=Enum.RaycastFilterType.Include; params.FilterDescendantsInstances={source}; params.RespectCanCollide=true
-for x=-550,550,20 do
- for z=-600,500,20 do
-  local hit=workspace:Raycast(Vector3.new(x,8,z),Vector3.new(0,-17,0),params)
-  if hit and hit.Normal.Y>0.85 then
-   local block=workspace:Blockcast(CFrame.new(hit.Position+Vector3.new(0,0.3,0)),Vector3.new(2.6,0.2,2.6),Vector3.new(0,5.8,0),params)
-   if not block then table.insert(r.cells,{x,round(hit.Position.Y),z}) end
-  end
- end
-end
-return game:GetService("HttpService"):JSONEncode(r)
+m:Destroy();return game:GetService("HttpService"):JSONEncode(r)
