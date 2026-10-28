@@ -127,7 +127,7 @@ for _,dims in ipairs({{736,414,false},{1920,1080,false},{844,390,true},{390,844,
   local top=view.Canvas.Position.Y.Offset+pos.Y.Offset*scale
   local width=size.X.Offset*scale
   local height=size.Y.Offset*scale
-  check(top+height>lastBottom,"Menu buttons overlap")
+  check(top>=lastBottom-1,"Menu buttons overlap")
   check(left>=0 and top>=0 and left+width<=dims[1]+2 and top+height<=dims[2]+2,"Menu button outside safe viewport")
   if dims[3] then check(height>=42,"Touch target too short") end
   check(b.Font==Enum.Font.Code and b:FindFirstChildOfClass("UIStroke").Thickness==1,"Reference button style mismatch")
