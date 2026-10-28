@@ -99,7 +99,7 @@ check(splashSource:find('Instance.new("TextLabel")',1,true)==nil,"Loading text m
 check(splashSource:find("loadingBar",1,true)==nil and splashSource:find('Name="ProgressBar"',1,true)==nil,"Progress bar must not return")
 
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-menu-recovery-v5","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-reference-red-stage-v6","Build mismatch")
 local RS=game:GetService("ReplicatedStorage")
 local settings=require(RS.AtriumSettings)
 local clean=settings.Clean({master=99,music=-2,fov=0/0,sensitivity=math.huge,quality="Baixa",scanlines=false,unexpected="discard"})
@@ -119,15 +119,21 @@ local layoutChecks={}
 for _,dims in ipairs({{736,414,false},{1920,1080,false},{844,390,true},{390,844,true}}) do
  view.Resize(dims[1],dims[2],dims[3])
  local lastBottom=-1
+ local scale=view.Scale.Scale
+ check(scale>0 and scale<=2.5,"Reference canvas scale invalid")
  for i,b in ipairs(view.Buttons) do
   local pos=b.Position;local size=b.Size
-  check(pos.Y.Offset>lastBottom,"Menu buttons overlap")
-  check(pos.X.Offset+size.X.Offset<=dims[1] and pos.Y.Offset+size.Y.Offset<=dims[2],"Menu button outside viewport")
-  if dims[3] then check(size.Y.Offset>=44,"Touch target too short") end
+  local left=view.Canvas.Position.X.Offset+pos.X.Offset*scale
+  local top=view.Canvas.Position.Y.Offset+pos.Y.Offset*scale
+  local width=size.X.Offset*scale
+  local height=size.Y.Offset*scale
+  check(top+height>lastBottom,"Menu buttons overlap")
+  check(left>=0 and top>=0 and left+width<=dims[1]+2 and top+height<=dims[2]+2,"Menu button outside safe viewport")
+  if dims[3] then check(height>=42,"Touch target too short") end
   check(b.Font==Enum.Font.Code and b:FindFirstChildOfClass("UIStroke").Thickness==1,"Reference button style mismatch")
-  lastBottom=pos.Y.Offset+size.Y.Offset
+  lastBottom=top+height
  end
- layoutChecks[tostring(dims[1]).."x"..tostring(dims[2])]=true
+  layoutChecks[tostring(dims[1]).."x"..tostring(dims[2])]=true
 end
 check(view.Buttons[1].Text=="CONTINUE" and view.Buttons[5].Text=="QUIT","Menu actions incomplete")
 testGui:Destroy()
@@ -136,7 +142,18 @@ check(starter.CameraMode==Enum.CameraMode.Classic and starter.CameraMinZoomDista
 local clientScript=starter.StarterPlayerScripts:FindFirstChild("AtriumClient")
 local source=clientScript and clientScript.Source or ""
 check(source:find("CoreUISafeInsets",1,true)~=nil,"Top-right menu is not safe-area aware")
-check(source:find("AtriumMenuOriginalSilhouette",1,true)==nil,"Temporary 3D toy must be removed")
+check(source:find("AtriumMenuOriginalSilhouette",1,true)==nil,"Temporary toy must stay removed")
+check(source:find("DeadSignalCinematicSet",1,true)~=nil,"Menu is not connected to red-lit 3D stage")
+local stage=W:FindFirstChild("DeadSignalCinematicSet")
+check(stage and stage:IsA("Model"),"Red cinematic menu stage missing")
+if stage then
+ check(stage.ModelStreamingMode==Enum.ModelStreamingMode.Persistent,"Cinematic set must load with StreamingEnabled")
+ check(stage:FindFirstChild("MenuSceneCamera")~=nil,"Scene camera missing")
+ check(stage:FindFirstChild("TheSignalKeeper")~=nil,"Original creature missing")
+ local sceneParts=0
+ for _,p in ipairs(stage:GetDescendants()) do if p:IsA("BasePart") then sceneParts+=1 end end
+ check(sceneParts>=70 and sceneParts<=230,"Cinematic scene size outside performance budget")
+end
 check(source:find("camera.CameraType=Enum.CameraType.Scriptable",1,true)~=nil,"Menu camera must initialize early")
 check(source:find("IgnoreGuiInset=false",1,true)~=nil,"Menu must not cover Roblox top-bar buttons")
 check(source:find("ScreenInsets.CoreUISafeInsets",1,true)~=nil,"Menu safe-area setting missing")
@@ -148,6 +165,11 @@ for _,piece in ipairs(map:GetDescendants()) do
  elseif piece.Name=="AtriumPremiumLight" then lightShafts+=1 end
 end
 check(tables==3 and rain>=20 and lightShafts==3,"Visual-detail pass missing")
+local newDecor=0
+for _,piece in ipairs(map:GetDescendants()) do
+ if piece.Name=="FernFoliage" or piece.Name=="GalleryArchRib" or piece.Name=="PeelingWallPaint" then newDecor+=1 end
+end
+check(newDecor>=150,"Natural decor refinement missing")
 local flowersOK=0
 for _,obj in ipairs(map.BotanicalReclamation:GetChildren()) do
  if obj.Name=="Moonflower" and obj:IsA("BasePart") then
