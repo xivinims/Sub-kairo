@@ -99,7 +99,7 @@ check(splashSource:find('Instance.new("TextLabel")',1,true)==nil,"Loading text m
 check(splashSource:find("loadingBar",1,true)==nil and splashSource:find('Name="ProgressBar"',1,true)==nil,"Progress bar must not return")
 
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-logo-only-v4","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-menu-recovery-v5","Build mismatch")
 local RS=game:GetService("ReplicatedStorage")
 local settings=require(RS.AtriumSettings)
 local clean=settings.Clean({master=99,music=-2,fov=0/0,sensitivity=math.huge,quality="Baixa",scanlines=false,unexpected="discard"})
@@ -111,6 +111,10 @@ check(settings.Clean({cameraMode="anything else"}).cameraMode=="Livre","Invalid 
 local viewFactory=require(RS.AtriumMenuView)
 local testGui=Instance.new("ScreenGui")
 local view=viewFactory.Create(testGui)
+for _,button in ipairs(view.Buttons) do
+ check(button.Size.X.Offset>=150 and button.Size.Y.Offset>=24,"Button created at zero size")
+ check(button.Visible,"Hidden startup menu button")
+end
 local layoutChecks={}
 for _,dims in ipairs({{736,414,false},{1920,1080,false},{844,390,true},{390,844,true}}) do
  view.Resize(dims[1],dims[2],dims[3])
@@ -132,7 +136,10 @@ check(starter.CameraMode==Enum.CameraMode.Classic and starter.CameraMinZoomDista
 local clientScript=starter.StarterPlayerScripts:FindFirstChild("AtriumClient")
 local source=clientScript and clientScript.Source or ""
 check(source:find("CoreUISafeInsets",1,true)~=nil,"Top-right menu is not safe-area aware")
-check(source:find("OriginalSilhouette",1,true)~=nil,"Menu's 3D character stage missing")
+check(source:find("AtriumMenuOriginalSilhouette",1,true)==nil,"Temporary 3D toy must be removed")
+check(source:find("camera.CameraType=Enum.CameraType.Scriptable",1,true)~=nil,"Menu camera must initialize early")
+check(source:find("IgnoreGuiInset=false",1,true)~=nil,"Menu must not cover Roblox top-bar buttons")
+check(source:find("ScreenInsets.CoreUISafeInsets",1,true)~=nil,"Menu safe-area setting missing")
 check(source:find("setCameraPreference",1,true)~=nil,"Camera modes not connected to game")
 local tables=0;local rain=0;local lightShafts=0
 for _,piece in ipairs(map:GetDescendants()) do
@@ -141,4 +148,12 @@ for _,piece in ipairs(map:GetDescendants()) do
  elseif piece.Name=="AtriumPremiumLight" then lightShafts+=1 end
 end
 check(tables==3 and rain>=20 and lightShafts==3,"Visual-detail pass missing")
+local flowersOK=0
+for _,obj in ipairs(map.BotanicalReclamation:GetChildren()) do
+ if obj.Name=="Moonflower" and obj:IsA("BasePart") then
+  if obj.Material==Enum.Material.SmoothPlastic and obj.Shape==Enum.PartType.Ball then flowersOK+=1 end
+ end
+end
+check(flowersOK>=600,"Overbright neon flowers were not corrected")
+check(game:GetService("Lighting").ExposureCompensation>=0,"Atrium still underexposed")
 return {ok=#errors==0,errors=errors,wing=wingStats,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,menuLayouts=layoutChecks,settingsValidated=true,freeCamera=true,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
