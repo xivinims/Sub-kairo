@@ -21,8 +21,8 @@ local function make(class,props,parent)
 end
 local gui=make("ScreenGui",{Name="DeadSignalMenu",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=40,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},player:WaitForChild("PlayerGui"))
 local view=View.Create(gui)
-local safeGui=make("ScreenGui",{Name="DeadSignalMenuAccess",ResetOnSpawn=false,DisplayOrder=41,IgnoreGuiInset=false},gui.Parent)
-local pause=make("TextButton",{Name="MenuTopRight",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-4,0,4),Size=UDim2.fromOffset(66,44),Text="MENU",Font=Enum.Font.Michroma,TextSize=12,TextColor3=Color3.new(1,1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.35,BorderSizePixel=0,Visible=false},safeGui)
+local safeGui=make("ScreenGui",{Name="DeadSignalMenuAccess",ResetOnSpawn=false,DisplayOrder=41,IgnoreGuiInset=false,ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets},gui.Parent)
+local pause=make("TextButton",{Name="MenuTopRight",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-8,0,4),Size=UDim2.fromOffset(76,44),Text="MENU",Font=Enum.Font.Michroma,TextSize=14,TextColor3=Color3.new(1,1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.30,BorderSizePixel=0,Visible=false},safeGui)
 make("UIStroke",{Thickness=1,Color=Color3.new(1,1,1),Transparency=.45},pause)
 local notice=make("TextLabel",{Name="Notice",AnchorPoint=Vector2.new(.5,1),Position=UDim2.new(.5,0,1,-8),Size=UDim2.new(.9,0,0,28),BackgroundTransparency=1,Text="",TextColor3=Color3.fromRGB(255,208,190),TextSize=13,Font=Enum.Font.Michroma,ZIndex=60},gui)
 local menuGrade=make("ColorCorrectionEffect",{Name="MenuWarmGrade",TintColor=Color3.fromRGB(255,152,135),Saturation=-.15,Contrast=.1,Enabled=true},camera)
@@ -46,12 +46,30 @@ local function invoke(action,payload)
  if not ok then warn("[AtriumMenu] "..tostring(result));return nil end
  return result
 end
+local function setCameraPreference(onEntry)
+ local mode=settings.cameraMode
+ if mode=="Primeira pessoa" then
+  player.CameraMode=Enum.CameraMode.LockFirstPerson
+  player.CameraMinZoomDistance=.5;player.CameraMaxZoomDistance=.5
+ else
+  player.CameraMode=Enum.CameraMode.Classic
+  player.CameraMaxZoomDistance=32
+  player.CameraMinZoomDistance=mode=="Terceira pessoa" and 4.5 or .5
+  if onEntry then
+   player.CameraMinZoomDistance=9
+   task.defer(function()
+    if not menuOpen then player.CameraMinZoomDistance=mode=="Terceira pessoa" and 4.5 or .5 end
+   end)
+  end
+ end
+end
 local dustEmitters={}
 for _,d in ipairs(workspace:GetDescendants()) do if d:IsA("ParticleEmitter") and d.Name=="AtriumDust" then dustEmitters[d]=true end end
 local function apply()
  settings=Settings.Clean(settings)
  music.Volume=settings.master*settings.music;sfx.Volume=settings.master*settings.sfx
  camera.FieldOfView=settings.fov;brightness.Brightness=(settings.brightness-.5)*.4
+ if not menuOpen then setCameraPreference(false) end
  pcall(function() UserSettings():GetService("UserGameSettings").MouseSensitivity=settings.sensitivity end)
  -- This controls our effects, independently of the platform's quality ceiling.
  L.GlobalShadows=settings.quality>=4
@@ -62,7 +80,20 @@ local function apply()
  dof.Enabled=menuOpen and settings.quality>=7
  view.Scanlines.Visible=settings.scanlines
  player:SetAttribute("SubtitlesEnabled",settings.subtitles)
- for d in pairs(dustEmitters) do if d.Parent then d.Enabled=settings.quality>=5 and settings.motion else dustEmitters[d]=nil end end
+ local atriumGrade=L:FindFirstChild("AtriumGrade")
+ if atriumGrade then
+  atriumGrade.Contrast=settings.quality>=5 and .16 or .11
+  atriumGrade.Saturation=settings.quality>=6 and -.19 or -.27
+  atriumGrade.TintColor=Color3.fromRGB(207,222,246)
+ end
+ local atmosphere=L:FindFirstChildOfClass("Atmosphere")
+ if atmosphere then
+  atmosphere.Density=settings.quality>=6 and .26 or .19
+  atmosphere.Haze=settings.quality>=6 and 1.9 or 1.1
+ end
+ for d in pairs(dustEmitters) do
+  if d.Parent then d.Enabled=settings.quality>=5 and settings.motion;d.Rate=settings.quality>=8 and 5 or 2 else dustEmitters[d]=nil end
+ end
 end
 -- Apply quality to objects arriving with streaming without a frame-by-frame scan.
 workspace.DescendantAdded:Connect(function(d) if d:IsA("ParticleEmitter") and d.Name=="AtriumDust" then dustEmitters[d]=true;d.Enabled=settings.quality>=5 and settings.motion end end)
@@ -79,7 +110,7 @@ local function setMenu(open)
  if open then camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=menuCamera;UIS.MouseBehavior=Enum.MouseBehavior.Default;UIS.MouseIconEnabled=true
  else
   closeModal();tell("")
-  player.CameraMode=Enum.CameraMode.Classic;player.CameraMinZoomDistance=.5;player.CameraMaxZoomDistance=24
+  setCameraPreference(true)
   local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
   if hum then camera.CameraSubject=hum end
   if savedCamera then camera.CFrame=savedCamera end
@@ -153,14 +184,23 @@ local function slider(parent,index,name,key,low,high,step,percent)
 end
 showSettings=function()
  local p=panel("SETTINGS",570)
- local scroll=make("ScrollingFrame",{Position=UDim2.fromOffset(16,52),Size=UDim2.new(1,-32,1,-120),CanvasSize=UDim2.fromOffset(0,616),ScrollBarThickness=4,BackgroundTransparency=1,BorderSizePixel=0},p)
+ local scroll=make("ScrollingFrame",{Position=UDim2.fromOffset(16,52),Size=UDim2.new(1,-32,1,-120),CanvasSize=UDim2.fromOffset(0,680),ScrollBarThickness=4,BackgroundTransparency=1,BorderSizePixel=0},p)
  local rows={{"MASTER VOLUME","master",0,1,.01,true},{"MUSIC VOLUME","music",0,1,.01,true},{"SFX VOLUME","sfx",0,1,.01,true},{"BRIGHTNESS","brightness",0,1,.01,true},{"FIELD OF VIEW","fov",50,110,1,false},{"EFFECTS QUALITY","quality",1,10,1,false},{"MOUSE SENSITIVITY","sensitivity",.2,3,.1,false}}
  for i,r in ipairs(rows) do slider(scroll,i-1,r[1],r[2],r[3],r[4],r[5],r[6]) end
  for i,r in ipairs({{"SUBTITLES","subtitles"},{"SCANLINES (CRT)","scanlines"},{"CAMERA MOTION / DUST","motion"}}) do
   local b
   b=outlined(scroll,r[1]..": "..(settings[r[2]] and "ON" or "OFF"),UDim2.fromOffset(0,392+(i-1)*52),UDim2.new(1,-8,0,44),function() settings[r[2]]=not settings[r[2]];b.Text=r[1]..": "..(settings[r[2]] and "ON" or "OFF");apply() end)
  end
- text(scroll,"Effects quality adjusts this scene's lighting and particles.",UDim2.fromOffset(0,554),UDim2.new(1,-12,0,50),10)
+ local cameraModes={"Livre","Terceira pessoa","Primeira pessoa"}
+ local cameraNames={["Livre"]="FREE",["Terceira pessoa"]="THIRD PERSON",["Primeira pessoa"]="FIRST PERSON"}
+ local cameraButton
+ cameraButton=outlined(scroll,"CAMERA: "..cameraNames[settings.cameraMode],UDim2.fromOffset(0,548),UDim2.new(1,-8,0,44),function()
+  local i=table.find(cameraModes,settings.cameraMode) or 1
+  settings.cameraMode=cameraModes[i%#cameraModes+1]
+  cameraButton.Text="CAMERA: "..cameraNames[settings.cameraMode]
+  apply()
+ end)
+ text(scroll,"Native lighting quality and particles adjust without overriding Roblox's graphics setting.",UDim2.fromOffset(0,608),UDim2.new(1,-12,0,54),10)
  outlined(p,"SAVE & BACK",UDim2.new(0,16,1,-58),UDim2.new(.5,-24,0,44),function()
   busy=true;local result=invoke("settings",settings);busy=false
   if result and result.ok then closeModal();tell("") else tell("SETTINGS APPLIED; SAVE FAILED. TRY AGAIN.") end
