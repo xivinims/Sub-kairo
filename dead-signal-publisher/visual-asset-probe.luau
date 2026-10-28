@@ -1,6 +1,13 @@
 local source=workspace:FindFirstChild("PoppyTestMap")
-assert(source,"Current map missing")
-local r={version=game.PlaceVersion,doors={},named={},bays={},lights={},meshProbe={},cells={}}
+local current={build=workspace:GetAttribute("DeadSignalBuildId"),objects={}}
+for _,d in ipairs(workspace:GetChildren()) do table.insert(current.objects,d.Name) end
+if not source then
+ source=game:GetService("AssetService"):LoadAssetAsync(18509954401)
+ for _,d in ipairs(source:GetDescendants()) do if d:IsA("LuaSourceContainer") then d:Destroy() end end
+ source:PivotTo(CFrame.new(-Vector3.new(24.8521824,141.9106909,1.5578613))*source:GetPivot())
+ source.Name="ProbeMap"; source.Parent=workspace
+end
+local r={current=current,version=game.PlaceVersion,doors={},named={},bays={},lights={},meshProbe={},cells={}}
 local function round(v) return math.floor(v*100+0.5)/100 end
 local function vector(v) return {round(v.X),round(v.Y),round(v.Z)} end
 local function rec(d)
