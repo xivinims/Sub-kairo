@@ -38,8 +38,9 @@ function V.Create(parent)
   local b=make("TextButton",{
    Name=name,Text=name,Font=Enum.Font.Code,TextSize=14,
    TextColor3=Color3.fromRGB(248,247,247),TextXAlignment=Enum.TextXAlignment.Left,
-   BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.48,
-   BorderSizePixel=0,AutoButtonColor=false,SelectionOrder=i,ZIndex=7
+   BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.28,
+   BorderSizePixel=0,AutoButtonColor=false,SelectionOrder=i,ZIndex=15,
+   Size=UDim2.fromOffset(170,28),Position=UDim2.new(.048,0,.57+(i-1)*.065,0),Visible=true
   },root)
   make("UIPadding",{PaddingLeft=UDim.new(0,9)},b)
   make("UIStroke",{Name="ThinWhiteOutline",Color=Color3.fromRGB(226,223,223),Thickness=1,Transparency=.26,ApplyStrokeMode=Enum.ApplyStrokeMode.Border},b)
@@ -50,24 +51,42 @@ function V.Create(parent)
   make("Frame",{Position=UDim2.fromScale(0,i/104),Size=UDim2.new(1,0,0,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.9,BorderSizePixel=0,Active=false},scan)
  end
  local function resize(w,h,touch)
-  local unit=math.clamp(math.min(h/414,w/736),.9,1.6)
-  local bh=touch and 44 or math.max(22,22*unit)
-  local gap=touch and 4 or 3*unit
-  local top=math.min(h*.611,h-5*bh-4*gap-13)
-  local width=touch and math.max(166,w*.225) or w*.225
-  for i,b in ipairs(buttons) do
-   b.Size=UDim2.fromOffset(math.min(width,w-32),bh)
-   b.Position=UDim2.fromOffset(w*.048,top+(i-1)*(bh+gap))
-   b.TextSize=touch and 16 or 14*unit
+  w=math.max(w,320);h=math.max(h,240)
+  local unit=math.clamp(math.min(h/414,w/736),.82,1.6)
+  local bh=touch and 44 or math.max(23,22*unit)
+  local gap=touch and 3 or 3*unit
+  local compact=touch or h<460
+  local top
+  if compact then
+   -- Five touch-sized buttons fit below the title, not underneath it.
+   local free=h-92-5*bh-4*gap
+   if free<0 then
+    bh=math.max(34,math.floor((h-102-4*gap)/5))
+   end
+   top=math.max(92,h-5*bh-4*gap-10)
+  else
+   top=h*.611
   end
-  chapter.TextSize=16*unit
-  title.TextSize=31*unit
-  desc.TextSize=13*unit
-  -- On low landscape screens the description yields space to touch-sized buttons.
-  desc.Visible=top>h*.48
-  divider.Visible=top>h*.30
+  local width=math.clamp(w*.225,166,335)
+  for index,b in ipairs(buttons) do
+   b.Size=UDim2.fromOffset(math.min(width,w-32),bh)
+   b.Position=UDim2.fromOffset(math.floor(w*.048),math.floor(top+(index-1)*(bh+gap)))
+   b.TextSize=compact and 14 or 14*unit
+   b.Visible=true
+  end
+  chapter.TextSize=compact and 14 or 16*unit
+  title.TextSize=compact and 26 or 31*unit
+  desc.TextSize=compact and 12 or 13*unit
+  desc.Visible=not compact and top>h*.48
+  divider.Visible=not compact and top>h*.3
   glow.Visible=true
  end
+ -- Bootstrap layout IMMEDIATELY: if optional client effects fail later, the
+ -- UI is not left with zero-sized invisible buttons.
+ local initialCamera=workspace.CurrentCamera
+ local initial=initialCamera and initialCamera.ViewportSize or Vector2.new(736,414)
+ resize(initial.X,initial.Y,game:GetService("UserInputService").TouchEnabled)
+
  return {Root=root,Buttons=buttons,Scanlines=scan,Resize=resize,Chapter=chapter,Title=title,Description=desc}
 end
 return V
