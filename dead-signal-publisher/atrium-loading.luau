@@ -14,7 +14,7 @@ local fill=Instance.new("Frame");fill.Size=UDim2.fromScale(.1,1);fill.BorderSize
 local start=os.clock()
 while not RS:GetAttribute("AurivaneLogo") and os.clock()-start<20 do task.wait(.1) end
 local id=RS:GetAttribute("AurivaneLogo")
-if id then logo.Image="rbxassetid://"..tostring(id);task.spawn(function() pcall(function() Content:PreloadAsync({logo}) end) end) end
+if id then logo.Image=RS:GetAttribute("AurivaneLogoTexture") or "rbxassetid://"..tostring(id);task.spawn(function() pcall(function() Content:PreloadAsync({logo}) end) end) end
 Tween:Create(logo,TweenInfo.new(.7),{ImageTransparency=0}):Play()
 fill.Size=UDim2.fromScale(.3,1)
 if not game:IsLoaded() then game.Loaded:Wait() end

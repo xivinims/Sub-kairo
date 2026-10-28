@@ -60,7 +60,7 @@ end
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(touchLayout)
 panel.ChildAdded:Connect(function() task.defer(touchLayout) end)
 task.defer(touchLayout)
-local function clearPanel() for _,v in ipairs(panel:GetChildren()) do v:Destroy() end;panel.Visible=true;main.Visible=false;subtitle.Visible=false end
+local function clearPanel() for _,v in ipairs(panel:GetChildren()) do if not v:IsA("UIScale") then v:Destroy() end end;panel.Visible=true;main.Visible=false;subtitle.Visible=false end
 local function home() panel.Visible=false;main.Visible=true;subtitle.Visible=true end
 local function invoke(action,payload)
  local ok,result=pcall(function() return remote:InvokeServer(action,payload) end)

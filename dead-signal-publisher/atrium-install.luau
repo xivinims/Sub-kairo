@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-overgrown-atrium-v1"
+local BUILD_ID="dead-signal-overgrown-atrium-v2"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -64,7 +64,14 @@ for _,x in ipairs({-57,57}) do
   end
  end
 end
-box("EntranceUpperWall",0,44,97,116,68,2,stone)
+for _,x in ipairs({-33,33}) do box("EntranceUpperWall",x,44,97,50,68,2,stone) end
+-- Towering glazed opening from the additional reverse-angle reference.
+for row=0,9 do for col=-1,1 do
+ local pane=box("ClerestoryPane",col*5.2,14+row*6.4,97,4.9,6.05,.22,Color3.fromRGB(146,171,192),Enum.Material.Glass,false)
+ pane.Transparency=.35;pane.CastShadow=false
+end end
+for x=-8,8,5.33 do box("ClerestoryMullion",x,44,96.6,.22,68,.35,metal,Enum.Material.Metal) end
+for y=10,78,6.4 do box("ClerestoryTransom",0,y,96.6,16,.2,.35,metal,Enum.Material.Metal) end
 for _,v in ipairs({{-42,32},{0,36},{42,32}}) do box("EntranceWallPier",v[1],5,97,v[2],10,2,stone) end
 for _,x in ipairs({-22,22}) do
  box("VestibuleFloor",x,-.5,106,14,1,18,stone)
@@ -180,6 +187,20 @@ for i=1,32 do
   local p=box("MasonryFragment",x,.15,z,rng:NextNumber(.3,1.2),.3,rng:NextNumber(.3,.9),stone,Enum.Material.Concrete,false,details);p.CFrame*=CFrame.Angles(0,rng:NextNumber()*6,0)
  end
 end
+-- Flaking pale plaster exposes dark substrate on the structural piers.
+for _,side in ipairs({-1,1}) do for z=-88,88,22 do
+ for i=1,9 do
+  local y=rng:NextNumber(5,77)
+  local p=box("ExposedPierSubstrate",side*48.43,y,z+rng:NextNumber(-1.1,1.1),.025,rng:NextNumber(.7,3.8),rng:NextNumber(.3,1.3),Color3.fromRGB(45,55,68),Enum.Material.Slate,false,details)
+  p.CFrame*=CFrame.Angles(rng:NextNumber(-.2,.2),0,0)
+ end
+end end
+-- Teal remnants of the original floor pattern, flush with the surviving stone.
+for x=-24,24,12 do for z=-84,72,12 do
+ if rng:NextNumber()<.45 then
+  box("FadedTealInlay",x,.078,z,5.87,.012,5.87,Color3.fromRGB(66,108,105),Enum.Material.Slate,false,details)
+ end
+end end
 -- Cable catenaries below the broken roof.
 for _,z in ipairs({-48,25,61}) do
  local last=Vector3.new(-45,78,z)
@@ -223,6 +244,12 @@ local s=Instance.new("Script");s.Name="AtriumServer";s.Source=__SERVER__;s.Enabl
 local client=Instance.new("LocalScript");client.Name="AtriumClient";client.Source=__CLIENT__;client.Parent=SP.StarterPlayerScripts
 local loading=Instance.new("LocalScript");loading.Name="AurivaneLoading";loading.Source=__LOADING__;loading.Parent=game:GetService("ReplicatedFirst")
 RS:SetAttribute("AurivaneLogo",__LOGO_ID__)
+local okLogo,logoModel=pcall(function() return game:GetService("AssetService"):LoadAssetAsync(RS:GetAttribute("AurivaneLogo")) end)
+if okLogo and logoModel then
+ local decal=logoModel:FindFirstChildWhichIsA("Decal",true)
+ if decal then RS:SetAttribute("AurivaneLogoTexture",decal.Texture) end
+ logoModel:Destroy()
+end
 SP.CameraMode=Enum.CameraMode.LockFirstPerson;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=.5;SP.CharacterWalkSpeed=16
 W:SetAttribute("DeadSignalBuildId",BUILD_ID);W:SetAttribute("MapSource","Original geometry from user photo");W:SetAttribute("StalkerPaused",true)
 __PREPUBLISH_VALIDATE__

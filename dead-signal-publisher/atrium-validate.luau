@@ -35,6 +35,16 @@ for level=0,2 do
   check(W:Raycast(v,Vector3.new(0,-5,0),params)~=nil,"Unsupported stair "..level..":"..i)
  end
 end
+local navigation={}
+local pathService=game:GetService("PathfindingService")
+local chain={"Start","Garden","Floor1","Floor2","Floor3"}
+for i=1,#chain-1 do
+ local path=pathService:CreatePath({AgentRadius=1.5,AgentHeight=5,AgentCanJump=true,WaypointSpacing=4})
+ local success,err=pcall(function() path:ComputeAsync(markers[chain[i]].Position,markers[chain[i+1]].Position) end)
+ local key=chain[i].."->"..chain[i+1]
+ navigation[key]=success and path.Status==Enum.PathStatus.Success
+ check(navigation[key],"Unreachable route "..key..":"..tostring(err or path.Status))
+end
 local runtime=game:GetService("ServerScriptService"):FindFirstChild("AtriumRuntime")
 check(runtime and runtime:FindFirstChild("AtriumServer")~=nil,"Server absent")
 local DS=require(runtime.DoorService);local service=DS.new(nil)
@@ -49,5 +59,5 @@ end
 check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("AtriumClient")~=nil,"Client missing")
 check(game:GetService("ReplicatedFirst"):FindFirstChild("AurivaneLoading")~=nil,"Loading missing")
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-overgrown-atrium-v1","Build mismatch")
-return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-overgrown-atrium-v2","Build mismatch")
+return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
