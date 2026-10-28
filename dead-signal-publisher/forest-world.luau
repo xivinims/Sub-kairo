@@ -142,6 +142,9 @@ local function treeTrunk(partInstance)
  end
  return false
 end
+local function verticalHalf(box,size)
+ return math.abs(box.RightVector.Y)*size.X/2+math.abs(box.UpVector.Y)*size.Y/2+math.abs(box.LookVector.Y)*size.Z/2
+end
 
 local function placeModel(template,parent,name,x,z,yaw,scale,solidTrunk)
  local model=template:Clone();model.Name=name;model.Parent=parent
@@ -149,10 +152,13 @@ local function placeModel(template,parent,name,x,z,yaw,scale,solidTrunk)
  local pivot=model:GetPivot();local rotation=pivot-pivot.Position
  model:PivotTo(rotation)
  local box,size=model:GetBoundingBox()
- local halfY=math.abs(box.RightVector.Y)*size.X/2+math.abs(box.UpVector.Y)*size.Y/2+math.abs(box.LookVector.Y)*size.Z/2
+ local halfY=verticalHalf(box,size)
  local bottom=box.Position.Y-halfY
  local y=ground(x,z)-bottom
  model:PivotTo(CFrame.new(x,y,z)*CFrame.Angles(0,yaw,0)*rotation)
+ local finalBox,finalSize=model:GetBoundingBox()
+ local correction=ground(x,z)-(finalBox.Position.Y-verticalHalf(finalBox,finalSize))
+ if math.abs(correction)>.001 then model:PivotTo(model:GetPivot()+Vector3.new(0,correction,0)) end
  for _,p in ipairs(model:GetDescendants()) do
   if p:IsA("BasePart") then
    p.Anchored=true;p.CanTouch=false;p.CanQuery=false;p.CanCollide=false;p.Massless=true
@@ -192,7 +198,7 @@ for gx=-1000,1000,28 do
    local model=placeModel(variant.template,trees,"ForestTree_"..(treeCount+1),x,z,rng:NextNumber(0,math.pi*2),scale,false)
    local treeBox,treeSize=model:GetBoundingBox()
    local trunkHeight=math.clamp(treeSize.Y*.54,10,28)
-   local trunkBottom=treeBox.Position.Y-treeSize.Y*.5
+   local trunkBottom=treeBox.Position.Y-verticalHalf(treeBox,treeSize)
    local collider=part(model,"TreeCollisionTrunk",Vector3.new(2.35,trunkHeight,2.35),CFrame.new(x,trunkBottom+trunkHeight*.5,z),Color3.new(),Enum.Material.SmoothPlastic,true)
    collider.Transparency=1;collider.CastShadow=false
    model:SetAttribute("ForestSpecies",variant.species);model:SetAttribute("AuditedAssetGeometry",true)

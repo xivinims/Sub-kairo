@@ -39,10 +39,9 @@ for _,tree in ipairs(map.Pines:GetChildren()) do
  local collider=tree:FindFirstChild("TreeCollisionTrunk")
  if collider and collider:IsA("BasePart") and collider.CanCollide and collider.Transparency==1 then treeColliders+=1 end
  if trees%17==0 then
-  local box,size=tree:GetBoundingBox()
-  local bottom=box.Position.Y-size.Y*.5
-  local hit=W:Raycast(Vector3.new(box.Position.X,bottom+1.5,box.Position.Z),Vector3.new(0,-5,0),params)
-  check(hit~=nil,"Floating tree geometry "..tree.Name)
+  local bottom=collider and collider.Position.Y-collider.Size.Y*.5 or math.huge
+  local hit=collider and W:Raycast(Vector3.new(collider.Position.X,bottom+5,collider.Position.Z),Vector3.new(0,-10,0),params)
+  check(hit~=nil and math.abs(hit.Position.Y-bottom)<1.5,"Floating tree geometry "..tree.Name)
  end
 end
 check(treeColliders==trees,"Tree collision trunk missing")
@@ -67,7 +66,7 @@ check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("Fore
 local runtime=game:GetService("ServerScriptService"):FindFirstChild("AtriumRuntime")
 check(runtime and runtime:FindFirstChild("AtriumServer")~=nil,"Server missing")
 check(runtime and runtime:FindFirstChild("ForestWeatherServer")~=nil,"Weather cycle missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-golden-forest-v3","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-golden-forest-v4","Build mismatch")
 local grassAvailable,grass=pcall(function() return W.Terrain.Decoration end)
 return {
  ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,

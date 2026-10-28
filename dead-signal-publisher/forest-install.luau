@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-golden-forest-v3"
+local BUILD_ID="dead-signal-golden-forest-v4"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
