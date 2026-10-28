@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-cinematic-atrium-v2"
+local BUILD_ID="dead-signal-gothic-wings-v3"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -291,6 +291,7 @@ for _,pos in ipairs({Vector3.new(-22,77,-38),Vector3.new(17,78,10),Vector3.new(-
  local light=Instance.new("SpotLight");light.Name="AtriumPremiumLight";light.Face=Enum.NormalId.Bottom
  light.Color=Color3.fromRGB(182,205,235);light.Brightness=.85;light.Range=68;light.Angle=75;light.Shadows=false;light.Parent=fixture
 end
+__WINGS_SOURCE__
 local root=Instance.new("Folder");root.Name="AtriumRuntime";root.Parent=SSS
 local function module(name,source) local m=Instance.new("ModuleScript");m.Name=name;m.Source=source;m.Parent=root end
 module("DoorService",__DOOR_SERVICE__);module("MapInteractionGuard",__INTERACTION_GUARD__)
@@ -298,6 +299,7 @@ local settingsModule=Instance.new("ModuleScript");settingsModule.Name="AtriumSet
 local viewModule=Instance.new("ModuleScript");viewModule.Name="AtriumMenuView";viewModule.Source=__MENU_VIEW__;viewModule.Parent=RS
 local remote=Instance.new("RemoteFunction");remote.Name="AtriumSession";remote.Parent=RS
 local s=Instance.new("Script");s.Name="AtriumServer";s.Source=__SERVER__;s.Enabled=false;s.Parent=root
+local statueScript=Instance.new("Script");statueScript.Name="AvatarStatueLoader";statueScript.Source=__STATUE_SOURCE__;statueScript.Enabled=false;statueScript.Parent=root
 local client=Instance.new("LocalScript");client.Name="AtriumClient";client.Source=__CLIENT__;client.Parent=SP.StarterPlayerScripts
 local loading=Instance.new("LocalScript");loading.Name="AurivaneLoading";loading.Source=__LOADING__;loading.Parent=game:GetService("ReplicatedFirst")
 RS:SetAttribute("AurivaneLogo",__LOGO_ID__)
@@ -310,7 +312,7 @@ end
 SP.CameraMode=Enum.CameraMode.Classic;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=32;SP.CharacterWalkSpeed=16
 W:SetAttribute("DeadSignalBuildId",BUILD_ID);W:SetAttribute("MapSource","Original geometry from user photo");W:SetAttribute("StalkerPaused",true)
 __PREPUBLISH_VALIDATE__
-s.Enabled=true
+s.Enabled=true;statueScript.Enabled=true
 local prior=game.PlaceVersion
 game:GetService("AssetService"):SavePlaceAsync({PlaceId=game.PlaceId,SaveWithoutPublish=false})
 return Http:JSONEncode({ok=true,published=true,build=BUILD_ID,sourceVersion=prior})
