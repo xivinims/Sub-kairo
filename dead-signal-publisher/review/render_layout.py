@@ -20,6 +20,15 @@ for name,pos,size,rot,color,trans,col in parts:
  for a,b in [(-.5,-.5),(.5,-.5),(.5,.5),(-.5,.5)]:
   x,z=a*size[0],b*size[2];pts.append((pos[0]+x*co-z*si,pos[2]+x*si+z*co))
  ax.add_patch(Polygon(pts,facecolor=color,edgecolor='#273038',linewidth=.25,alpha=.75))
+verification=root/'map-focus-verification.json'
+if verification.exists():
+ v=json.loads(verification.read_text())['verified']
+ labels={'RECEPTION':'Recepção','WORKSHOP':'Oficina','POWER':'Subestação','STORAGE':'Depósito','OBSERVATION':'Observação'}
+ for hub in v['hubs']:
+  x,y,z=hub['centre'];ex,ey,ez=hub['entry']
+  ax.scatter([x],[z],s=100,marker='s',c='#e1af67',edgecolors='#19212a',zorder=10)
+  ax.plot([x,ex],[z,ez],color='#e1af67',linewidth=2,zorder=10)
+  ax.annotate(labels[hub['id']],(x,z),xytext=(8,-16),textcoords='offset points',color='#fff2d9',fontsize=10,zorder=11,bbox=dict(facecolor='#17242a',edgecolor='none',alpha=.85,pad=3))
 ax.set_xlim(-600,600);ax.set_ylim(550,-650);ax.set_aspect('equal');ax.tick_params(colors='#cdd2cd');ax.grid(alpha=.12)
 ax.set_xlabel('X · studs',color='#cdd2cd');ax.set_ylabel('Z · studs',color='#cdd2cd')
 ax.set_title('DEAD SIGNAL · planta técnica do asset 18509954401\nVolumes aproximados; não é uma captura do Roblox',color='white',pad=18)
