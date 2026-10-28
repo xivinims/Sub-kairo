@@ -1,7 +1,7 @@
 -- Original, live 3D cinematic set. Inspired by the supplied composition, not an official Poppy character.
 -- Lives far from the explorable atrium and has no collisions. No player can interact with it.
 do
- local scene=Instance.new("Model");scene.Name="DeadSignalCinematicSet";scene.Parent=W
+ local scene=Instance.new("Model");scene.Name="DeadSignalCinematicSet";scene.ModelStreamingMode=Enum.ModelStreamingMode.Persistent;scene.Parent=W
  local origin=Vector3.new(320,0,-318)
  local function setpart(name,x,y,z,sx,sy,sz,color,mat,shape,angle,transparency)
   local p=Instance.new("Part")
