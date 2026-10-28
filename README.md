@@ -2,7 +2,7 @@
 
 Port nativo em **Luau** do capítulo 1, com projeto Rojo e um arquivo de experiência para abrir no Roblox Studio. Esta branch foi substituída por este projeto a pedido do proprietário. O commit anterior continua no histórico do Git.
 
-**Estado: primeira versão do port.** A campanha e a construção foram verificadas fora do Studio. Ainda não houve Play Test no Roblox Studio, teste em celular ou medição de duração. Não há garantia de uma hora, acabamento cinematográfico ou equivalência visual com Poppy Playtime. Nenhuma experiência ao vivo foi alterada por este commit.
+**Estado: versão base publicada.** A versão Roblox 155 foi publicada em 28/10/2026 no universo `9421311218`, place `118064584465155`, a experiência Dead Signal indicada pelo proprietário. Comprovante: https://github.com/xivinims/Sub-kairo/actions/runs/40710483531. Ainda não houve Play Test no Roblox Studio, teste em celular ou medição de duração. Não há garantia de uma hora, acabamento cinematográfico ou equivalência visual com Poppy Playtime.
 
 ## Abrir o jogo
 
@@ -12,7 +12,7 @@ Port nativo em **Luau** do capítulo 1, com projeto Rojo e um arquivo de experi�
 4. Para salvar progresso entre sessões, publique em uma experiência sua e habilite o acesso a DataStores no ambiente de teste. Sem isso, os checkpoints permanecem nesta sessão e a interface informa a limitação.
 5. Importe os áudios/logos e preencha os IDs em `ReplicatedStorage.Shared.Config`. Veja [ASSETS.md](ASSETS.md). O jogo usa texto quando esses IDs não estão configurados.
 
-O GitHub armazena o projeto; enviar arquivos para esta branch não publica o jogo no Roblox. O workflow novo somente valida e gera um artefato de Studio.
+O workflow `roblox-build.yml` valida e gera o arquivo atualizado de Studio. `roblox-publish-base.yml` publica somente no destino acima quando seu script/workflow é alterado ou quando executado manualmente. A credencial permanece no secret `ROBLOX_API_KEY`. O `.rbxlx` versionado é o pacote inicial; os artefatos dos workflows contêm o build atualizado a partir dos fontes.
 
 ## O que está implementado
 
