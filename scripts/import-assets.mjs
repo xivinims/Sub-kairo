@@ -3,6 +3,9 @@ const key=process.env.ROBLOX_API_KEY;if(!key)throw new Error('Missing ROBLOX_API
 const revision='8c453e7731866e34a0986e3f2c12e64dd9f8c703';
 const root=`https://raw.githubusercontent.com/DetectivePikaC2/PlaytimeStarterKit/${revision}/`;
 const assets=[
+ ["ScannerTextured","Model","dist/source-models/ScannerTextured.glb","model/gltf-binary"],
+ ["PanelsTextured","Model","dist/source-models/PanelsTextured.glb","model/gltf-binary"],
+ ["BatteryTextured","Model","dist/source-models/BatteryTextured.glb","model/gltf-binary"],
  ['WallColor','Image',root+'Decoration/Materials/Textures/Concrete/T_ConcreteWallRough_BC.png','image/png'],
  ['WallNormal','Image',root+'Decoration/Materials/Textures/Concrete/T_ConcreteWallRough_N.png','image/png'],
  ['FloorColor','Image','https://raw.githubusercontent.com/TheDevvDude/GrabPack-Unity-Project-1.1/44d8f7a52b632dea8c554da62cee63fd5e4b59f7/Assets/Story_2/Area2/CustomTextures/FactoryTiles.png','image/png'],
