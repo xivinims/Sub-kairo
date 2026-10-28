@@ -59,7 +59,7 @@ end
 check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("AtriumClient")~=nil,"Client missing")
 check(game:GetService("ReplicatedFirst"):FindFirstChild("AurivaneLoading")~=nil,"Loading missing")
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-cinematic-atrium-v2","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-gothic-wings-v3","Build mismatch")
 local RS=game:GetService("ReplicatedStorage")
 local settings=require(RS.AtriumSettings)
 local clean=settings.Clean({master=99,music=-2,fov=0/0,sensitivity=math.huge,quality="Baixa",scanlines=false,unexpected="discard"})
