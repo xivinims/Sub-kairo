@@ -1,0 +1,40 @@
+{
+  "stage": "dead-signal-chapter-published",
+  "universeId": "9421311218",
+  "placeId": "118064584465155",
+  "installed": {
+    "ok": true,
+    "sourceVersion": 166,
+    "build": "dead-signal-pine-trails-v1",
+    "published": true
+  },
+  "verified": {
+    "ok": true,
+    "trees": 145,
+    "errors": [],
+    "defaultFOV": 65,
+    "density": 0.33000001311302185,
+    "parts": 5737,
+    "version": 167,
+    "navigation": {
+      "Garden": true,
+      "Floor3": true,
+      "Floor2": true,
+      "Floor1": true
+    },
+    "checkpoints": {
+      "Garden": true,
+      "VaultedHall": true,
+      "HaloChamber": true,
+      "Floor1": true,
+      "Start": true,
+      "GlassChapel": true,
+      "Floor3": true,
+      "Floor2": true
+    },
+    "trails": 3,
+    "terrainGrass": false,
+    "build": "dead-signal-pine-trails-v1"
+  },
+  "restart": {}
+}
