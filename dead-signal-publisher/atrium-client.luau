@@ -98,6 +98,38 @@ end
 -- Apply quality to objects arriving with streaming without a frame-by-frame scan.
 workspace.DescendantAdded:Connect(function(d) if d:IsA("ParticleEmitter") and d.Name=="AtriumDust" then dustEmitters[d]=true;d.Enabled=settings.quality>=5 and settings.motion end end)
 local menuCamera=CFrame.lookAt(Vector3.new(24,8,65),Vector3.new(-8,30,-54))
+-- An original looming toy silhouette for the 3D menu, local to this player.
+-- Never insert it into the published shared map or make it collide with players.
+local stage=Instance.new("Model");stage.Name="AtriumMenuOriginalSilhouette";stage.Parent=camera
+local stageOrigin=menuCamera*CFrame.new(14,-2,-34)
+local function stagePart(name,offset,size,shape,color,angle)
+ local p=Instance.new("Part")
+ p.Name=name;p.Size=size;p.Shape=shape or Enum.PartType.Block
+ p.CFrame=stageOrigin*CFrame.new(offset)*CFrame.Angles(0,0,math.rad(angle or 0))
+ p.Color=color or Color3.fromRGB(18,10,24)
+ p.Material=Enum.Material.SmoothPlastic;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.CastShadow=false;p.Parent=stage
+ p:SetAttribute("DisplayAlpha",0)
+ return p
+end
+local torso=stagePart("Torso",Vector3.new(0,-1,0),Vector3.new(6.5,11,4.5),Enum.PartType.Ball)
+stagePart("Head",Vector3.new(0,6,0),Vector3.new(8.8,6.8,5.7),Enum.PartType.Ball)
+stagePart("EarLeft",Vector3.new(-3.1,10.2,0),Vector3.new(1.8,4.6,2),Enum.PartType.Ball,-18)
+stagePart("EarRight",Vector3.new(3.1,10.2,0),Vector3.new(1.8,4.6,2),Enum.PartType.Ball,18)
+stagePart("ArmLeft",Vector3.new(-5.4,-3,0),Vector3.new(2.8,12,2.8),Enum.PartType.Ball,19)
+stagePart("ArmRight",Vector3.new(5.4,-3,0),Vector3.new(2.8,12,2.8),Enum.PartType.Ball,-19)
+stagePart("LegLeft",Vector3.new(-2.1,-10,0),Vector3.new(2.6,10,2.5),Enum.PartType.Ball,-8)
+stagePart("LegRight",Vector3.new(2.1,-10,0),Vector3.new(2.6,10,2.5),Enum.PartType.Ball,8)
+for _,x in ipairs({-2.2,2.2}) do
+ local eye=stagePart("GlassEye",Vector3.new(x,6.4,2.75),Vector3.new(.52,.62,.25),Enum.PartType.Ball,Color3.fromRGB(197,188,195))
+ eye.Material=Enum.Material.Neon;eye:SetAttribute("DisplayAlpha",.25)
+end
+local rim=Instance.new("PointLight");rim.Name="RedMenuRim";rim.Range=30;rim.Brightness=3;rim.Color=Color3.fromRGB(245,37,23);rim.Parent=torso
+local function showStage(visible)
+ for _,v in ipairs(stage:GetDescendants()) do
+  if v:IsA("BasePart") then v.Transparency=visible and (v:GetAttribute("DisplayAlpha") or 0) or 1
+  elseif v:IsA("Light") then v.Enabled=visible end
+ end
+end
 local savedCamera
 local controls
 task.spawn(function()
@@ -106,7 +138,7 @@ task.spawn(function()
 end)
 local function setMenu(open)
  if open and not menuOpen then savedCamera=camera.CFrame end
- menuOpen=open;if controls then if open then controls:Disable() else controls:Enable() end end;view.Root.Visible=open;pause.Visible=started and not open;menuGrade.Enabled=open;dof.Enabled=open and settings.quality>=7
+ menuOpen=open;showStage(open);if controls then if open then controls:Disable() else controls:Enable() end end;view.Root.Visible=open;pause.Visible=started and not open;menuGrade.Enabled=open;dof.Enabled=open and settings.quality>=7
  if open then camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=menuCamera;UIS.MouseBehavior=Enum.MouseBehavior.Default;UIS.MouseIconEnabled=true
  else
   closeModal();tell("")
