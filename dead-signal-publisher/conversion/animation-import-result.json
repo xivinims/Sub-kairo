@@ -1,0 +1,83 @@
+{
+  "stage": "spring-animation-conversion",
+  "animations": [
+    {
+      "name": "doorkick",
+      "duration": 1.875,
+      "frames": 46,
+      "file": "doorkick.rbxmx",
+      "bytes": 2200144,
+      "bones": 124,
+      "rootMotion": false,
+      "translations": false,
+      "assetId": "95129109923210"
+    },
+    {
+      "name": "jumpscare",
+      "duration": 1.4583333333333333,
+      "frames": 36,
+      "file": "jumpscare.rbxmx",
+      "bytes": 1721344,
+      "bones": 124,
+      "rootMotion": false,
+      "translations": false,
+      "assetId": "73053040272676"
+    },
+    {
+      "name": "ref",
+      "duration": 0.041666666666666664,
+      "frames": 2,
+      "file": "ref.rbxmx",
+      "bytes": 95834,
+      "bones": 124,
+      "rootMotion": false,
+      "translations": false,
+      "assetId": "113277101943291"
+    },
+    {
+      "name": "smash",
+      "duration": 1.875,
+      "frames": 46,
+      "file": "smash.rbxmx",
+      "bytes": 2200042,
+      "bones": 124,
+      "rootMotion": false,
+      "translations": false,
+      "assetId": "123865487538256"
+    },
+    {
+      "name": "walk",
+      "duration": 1.5,
+      "frames": 37,
+      "file": "walk.rbxmx",
+      "bytes": 1769571,
+      "bones": 124,
+      "rootMotion": false,
+      "translations": false,
+      "assetId": "83841843276273"
+    }
+  ],
+  "published": true,
+  "install": {
+    "ok": true,
+    "animations": {
+      "jumpscare": 36,
+      "smash": 46,
+      "ref": 2,
+      "doorkick": 46,
+      "walk": 37
+    },
+    "build": "dead-signal-source-port-assets-v1",
+    "bones": 124,
+    "published": true
+  },
+  "verified": {
+    "gamePortComplete": false,
+    "version": 158,
+    "model": true,
+    "animations": 5,
+    "menuImages": 5,
+    "missingTextures": true,
+    "build": "dead-signal-source-port-assets-v1"
+  }
+}
