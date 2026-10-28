@@ -22,7 +22,7 @@ local function partCount(root)
 end
 
 for _, id in ipairs(ids) do
-	local entry = { id = id, classes = {}, scriptsRemoved = 0, sounds = {}, candidates = {} }
+	local entry = { id = id, classes = {}, scriptsRemoved = 0, sounds = {}, candidates = {}, topLevel = {} }
 	local ok, assetOrError = pcall(function()
 		return AssetService:LoadAssetAsync(id)
 	end)
@@ -48,17 +48,27 @@ for _, id in ipairs(ids) do
 	end
 	entry.rootClass = asset.ClassName
 	entry.rootName = asset.Name
+	for _, child in ipairs(asset:GetChildren()) do
+		table.insert(entry.topLevel, { name=child.Name, class=child.ClassName, parts=partCount(child) })
+	end
 	for _, d in ipairs(asset:GetDescendants()) do
 		entry.classes[d.ClassName] = (entry.classes[d.ClassName] or 0) + 1
 		if d:IsA("Model") then
 			local n = partCount(d)
 			if n > 0 then
 				local cf, size = d:GetBoundingBox()
-				table.insert(entry.candidates, {
-					name=d.Name, class=d.ClassName, parts=n,
-					size={math.floor(size.X*100)/100, math.floor(size.Y*100)/100, math.floor(size.Z*100)/100},
-					center={math.floor(cf.X*100)/100, math.floor(cf.Y*100)/100, math.floor(cf.Z*100)/100},
-				})
+				if n <= 24 and size.Magnitude < 220 then
+					local candidate = {
+						name=d.Name, path=d:GetFullName():gsub("^"..asset.Name.."%.?", ""), parts=n,
+						size={math.floor(size.X*100)/100, math.floor(size.Y*100)/100, math.floor(size.Z*100)/100},
+						center={math.floor(cf.X*100)/100, math.floor(cf.Y*100)/100, math.floor(cf.Z*100)/100},
+						pivot={d:GetPivot():GetComponents()}, partNames={},
+					}
+					for _, part in ipairs(d:GetDescendants()) do
+						if part:IsA("BasePart") and #candidate.partNames < 12 then table.insert(candidate.partNames, part.Name) end
+					end
+					table.insert(entry.candidates, candidate)
+				end
 			end
 		end
 	end
