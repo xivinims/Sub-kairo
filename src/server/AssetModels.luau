@@ -52,12 +52,19 @@ function AssetModels.place(template,parent,cf,height,name)
 end
 function AssetModels.decorate(world)
  local templates=RS:FindFirstChild("BrambleAssets");if not templates then return end
+ local built=workspace:FindFirstChild("BrambleWorld")
+ if built then
+  for _,part in ipairs(built:GetDescendants()) do
+   if part:IsA("BasePart") and (part.Name=="Wall" or part.Name=="EndWall" or part.Name=="EntryWall" or part.Name=="Partition" or part.Name=="BackWall") then part.Material=Enum.Material.Concrete;part.MaterialVariant="KitConcrete";part.Color=Color3.fromRGB(190,196,186)
+   elseif part:IsA("BasePart") and (part.Name=="Floor" or part.Name=="Stage") then part.Material=Enum.Material.Concrete;part.MaterialVariant="KitFactoryTiles";part.Color=Color3.fromRGB(225,225,220) end
+  end
+ end
  for _,target in pairs(world.Targets) do
   local id=target:GetAttribute("Action")
-  local name=if string.match(id,"^fuse") or string.match(id,"^cell") then "Battery" else if string.match(id,"^socket") then "Scanner" else nil
+  local name=if string.match(id,"^fuse") or string.match(id,"^cell") then "Battery" else if string.match(id,"^socket") then "Scanner" else if id=="exit" then "Doors" else if id=="power" or id=="master" or id=="start" then "BatteryHolder" else nil
   local template=name and templates:FindFirstChild(name)
   if template and not target:FindFirstChild("ImportedVisual") then
-   local m=AssetModels.place(template,target,target.CFrame*CFrame.new(0,0,.7),if name=="Battery" then 1.5 else 2.5,"ImportedVisual")
+   local m=AssetModels.place(template,target,target.CFrame*CFrame.new(0,0,.7),if name=="Battery" then 1.5 else if name=="Doors" then 9 else 2.5,"ImportedVisual")
    target.Transparency=1
    local indicator=target:FindFirstChild("Indicator");if indicator then indicator.Transparency=1 end
    for _,p in ipairs(m:GetDescendants()) do if p:IsA("BasePart") then p:SetAttribute("TargetId",target:GetAttribute("TargetId"));p:SetAttribute("Sector",target:GetAttribute("Sector")) end end

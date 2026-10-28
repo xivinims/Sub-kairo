@@ -21,6 +21,10 @@ jobs:
         run: python3 scripts/install-tools.py
       - name: Compile, test and build
         run: python3 scripts/check.py --luau .tools/luau/luau --compiler .tools/luau/luau-compile --rojo .tools/rojo/rojo
+      - name: Verify imported models in the Roblox engine before publishing
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node scripts/verify-published.mjs
       - name: Publish base to the verified Dead Signal place
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}

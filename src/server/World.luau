@@ -60,7 +60,7 @@ function World.build()
   for sector=1,7 do local o=Vector3.new((sector-1)*650,0,-100);World.Origins[sector]=o;World.Spawns[sector]=o+Vector3.new(0,4,0);World.EnemySpawns[sector]=o+Vector3.new(0,5,-210) end
   World.Spawns[4]=World.Origins[4]+Vector3.new(-63,4,-15);World.EnemySpawns[4]=World.Origins[4]+Vector3.new(-63,5,-15)
   World.Index=previous:FindFirstChild("TargetIndex")
-  for _,item in ipairs(previous:GetDescendants()) do local id=item:GetAttribute("TargetId");if id then World.Targets[id]=item end end
+  for _,item in ipairs(previous:GetDescendants()) do local id=item:GetAttribute("TargetId");if id and item:FindFirstChildOfClass("ProximityPrompt") then World.Targets[id]=item end end
   workspace:SetAttribute("BrambleWorldReady",true);return World
  end
  if previous then previous:Destroy() end

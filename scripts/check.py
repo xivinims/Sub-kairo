@@ -19,5 +19,5 @@ assert classes.get('ModuleScript',0)>=5,classes
 assert classes.get('LocalScript',0)==2,classes
 for script in root.findall('.//ProtectedString[@name="Source"]'):
  assert script.text and len(script.text)>20
-report={'campaignAssertions':47,'scriptsCompile':True,'placeBuild':True,'classes':classes,'studioPlaytest':False,'androidDeviceTest':False,'durationMeasured':False,'assetsConfigured':False}
+report={'campaignAssertions':47,'scriptsCompile':True,'placeBuild':True,'classes':classes,'studioPlaytest':False,'androidDeviceTest':False,'durationMeasured':False,'assetsConfigured':True}
 Path('dist/validation.json').write_text(json.dumps(report,indent=2)+'\n');print('PASS: place structure, 76 prompts and embedded scripts')

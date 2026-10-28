@@ -63,6 +63,27 @@
       "$properties": {
         "RespectFilteringEnabled": true
       }
+    },
+    "MaterialService": {
+      "$className": "MaterialService",
+      "KitConcrete": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://89418201347788",
+          "NormalMap": "rbxassetid://120909798654444",
+          "StudsPerTile": 8
+        }
+      },
+      "KitFactoryTiles": {
+        "$className": "MaterialVariant",
+        "$properties": {
+          "BaseMaterial": "Concrete",
+          "ColorMap": "rbxassetid://80722342970231",
+          "NormalMap": "rbxassetid://136412898735045",
+          "StudsPerTile": 16
+        }
+      }
     }
   }
 }

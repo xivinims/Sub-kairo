@@ -36,6 +36,7 @@ end
 local World=(function() ${worldSource} end)()
 World.build()
 AssetModels.decorate(World)
+World.build() -- Rehydration must preserve original targets, not their decorative MeshParts.
 assert(workspace:GetAttribute("BrambleWorldReady")==true,"World not ready")
 local targets=0
 for id,part in pairs(World.Targets) do

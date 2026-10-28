@@ -51,7 +51,7 @@ function Hands.new(camera)
 end
 function Hands:launch(point,right) self.flights[if right then 2 else 1]={point=point,start=os.clock(),travel=math.clamp((point-self.camera.CFrame.Position).Magnitude/100,.08,.65)} end
 function Hands:hold(part,right) if typeof(part)=="Instance" and part:IsA("BasePart") then self.flights[if right then 2 else 1]={held=part,point=part.Position,start=os.clock(),travel=.1} end end
-function Hands:release(right) local side=if right then 2 else 1;local flight=self.flights[side];if flight then self:launch(if flight.held and flight.held.Parent then flight.held.Position else flight.point,right) end end
+function Hands:release(right) local side=if right then 2 else 1;local flight=self.flights[side];if flight then local point=if flight.held and flight.held.Parent then flight.held.Position else flight.point;local travel=math.clamp((point-self.camera.CFrame.Position).Magnitude/100,.08,.65);self.flights[side]={point=point,start=os.clock()-travel-.12,travel=travel} end end
 function Hands:setEnabled(enabled) self.enabled=enabled;if not enabled then self.flights={} end end
 function Hands:destroy() self.connection:Disconnect();self.root:Destroy() end
 return Hands

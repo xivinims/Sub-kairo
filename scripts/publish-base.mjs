@@ -1,3 +1,4 @@
+// Asset correction release: exact supplied logos, imported starter kit meshes and free GrabPack firing.
 import {readFile, writeFile} from 'node:fs/promises';
 
 // Verified from the owner's Dead Signal share link. Never fall back to another place.

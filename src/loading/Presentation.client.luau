@@ -22,7 +22,7 @@ if Config.Assets.StudioLogo>0 then
  studio:Destroy();studio=Instance.new("ImageLabel");studio.Size=UDim2.fromScale(.75,.75);studio.AnchorPoint=Vector2.new(.5,.5);studio.Position=UDim2.fromScale(.5,.47);studio.BackgroundTransparency=1;studio.Image="rbxassetid://"..Config.Assets.StudioLogo;studio.ScaleType=Enum.ScaleType.Fit;studio.ImageTransparency=1;studio.Parent=black
 end
 if Config.Assets.ChapterLogo>0 then
- chapter:Destroy();chapter=Instance.new("ImageLabel");chapter.Size=UDim2.fromScale(.84,.25);chapter.AnchorPoint=Vector2.new(.5,.5);chapter.Position=UDim2.fromScale(.5,.62);chapter.BackgroundTransparency=1;chapter.Image="rbxassetid://"..Config.Assets.ChapterLogo;chapter.ScaleType=Enum.ScaleType.Fit;chapter.ImageTransparency=1;chapter.Parent=black
+ title.Position=UDim2.fromScale(.5,.32);chapter:Destroy();chapter=Instance.new("ImageLabel");chapter.Size=UDim2.fromScale(.84,.25);chapter.AnchorPoint=Vector2.new(.5,.5);chapter.Position=UDim2.fromScale(.5,.62);chapter.BackgroundTransparency=1;chapter.Image="rbxassetid://"..Config.Assets.ChapterLogo;chapter.ScaleType=Enum.ScaleType.Fit;chapter.ImageTransparency=1;chapter.Parent=black
 end
 local function chapterAlpha(alpha) if chapter:IsA("ImageLabel") then chapter.ImageTransparency=alpha else chapter.TextTransparency=alpha end end
 local function fade(item,alpha,duration)
@@ -34,6 +34,8 @@ local assets={};for _,key in ipairs({"StudioLogo","ChapterLogo","Ambient","Pursu
 for _,id in pairs(Config.Assets.Voices) do if id>0 then table.insert(assets,"rbxassetid://"..id) end end
 task.spawn(function()
  local n=0
+ local templates=RS:WaitForChild("BrambleAssets",30)
+ if templates then local untilTime=os.clock()+30;while not templates:GetAttribute("Ready") and os.clock()<untilTime do task.wait(.1) end;table.insert(assets,templates) end
  local ok=pcall(function() ContentProvider:PreloadAsync(assets,function() n+=1;status.Text="CARREGANDO RECURSOS / "..math.min(n,#assets).." / "..#assets end) end)
  preloadDone=true;if not ok then status.Text="Alguns recursos estão indisponíveis. Continuando com texto." end
 end)

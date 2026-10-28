@@ -114,7 +114,7 @@ local function fireHand(p,s,direction,right)
  local side=if right then 2 else 1
  s.handClocks=s.handClocks or {0,0};s.held=s.held or {}
  if os.clock()-s.handClocks[side]<.4 then return end
- s.handClocks[side]=os.clock()
+ s.handClocks[side]=os.clock();local launchClock=s.handClocks[side]
  if s.held[side] then releaseHeld(s,side);return end
  local character=p.Character;local head=character and character:FindFirstChild("Head")
  if not head then return end
@@ -132,7 +132,7 @@ local function fireHand(p,s,direction,right)
  local part=hit.Instance
  if part:IsA("BasePart") and part:GetAttribute("GrabMovable")==true and not part.Anchored and part.AssemblyMass<35 then
   task.delay((point-head.Position).Magnitude/100,function()
-   if sessions[p]~=s or not s.active or s.scene or s.dead or not part.Parent or not head.Parent or (part.Position-head.Position).Magnitude>Config.MaxReach+4 then return end
+   if sessions[p]~=s or s.handClocks[side]~=launchClock or not s.active or s.scene or s.dead or not part.Parent or not head.Parent or (part.Position-head.Position).Magnitude>Config.MaxReach+4 then return end
    if part:GetAttribute("HeldBy") then return end
    part:SetAttribute("HeldBy",p.UserId)
    local attachment=Instance.new("Attachment");attachment.Parent=part

@@ -2,7 +2,7 @@
 
 Port nativo em **Luau** do capítulo 1, com projeto Rojo e um arquivo de experiência para abrir no Roblox Studio. Esta branch foi substituída por este projeto a pedido do proprietário. O commit anterior continua no histórico do Git.
 
-**Estado: versão base publicada.** A versão Roblox 155 foi publicada em 28/10/2026 no universo `9421311218`, place `118064584465155`, a experiência Dead Signal indicada pelo proprietário. Comprovante: https://github.com/xivinims/Sub-kairo/actions/runs/40710483531. Ainda não houve Play Test no Roblox Studio, teste em celular ou medição de duração. Não há garantia de uma hora, acabamento cinematográfico ou equivalência visual com Poppy Playtime.
+**Estado: base publicada; correção de assets em implantação.** A versão Roblox 155 foi publicada em 28/10/2026 no universo `9421311218`, place `118064584465155`, a experiência Dead Signal indicada pelo proprietário. Comprovante: https://github.com/xivinims/Sub-kairo/actions/runs/40710483531. Ainda não houve Play Test no Roblox Studio, teste em celular ou medição de duração. Não há garantia de uma hora, acabamento cinematográfico ou equivalência visual com Poppy Playtime.
 
 ## Abrir o jogo
 
@@ -23,7 +23,7 @@ O workflow `roblox-build.yml` valida e gera o arquivo atualizado de Studio. `rob
 - Sete setores com checkpoints individuais: conservatório; arquivo de botânica; máquinas; labirinto; ecos; raízes; estação de transmissão.
 - Crachá/fusível, terminais em ordem, poda, páginas/cofre, válvulas/pressão/células, seis sementes, sequência de tons, matriz de luzes, isolamento/corte e alinhamento das antenas.
 - Labirinto determinístico com 160 salas conectadas e seis pontas mortas distintas para as sementes.
-- Perseguidor por jogador: pathfinding, visão, audição da corrida, memória da última posição e captura. A criatura padrão é um modelo procedural provisório.
+- Perseguidor por jogador: pathfinding, visão, audição da corrida, memória da última posição e captura. A configuração agora importa o Bramble do asset 77713813527653; o carregamento foi confirmado no motor Roblox.
 - Cenas de entrada dos setores e encerramento com câmera móvel, legendas e botão de pular. O áudio configurado pode estender o plano para não ser cortado.
 - Camadas de ambiente/perseguição e fala com redução da música quando os áudios estiverem configurados.
 
@@ -75,4 +75,12 @@ A reconstrução refaz `assets/world/BramblesWorld.rbxmx`; alterações manuais 
 - Rojo gerou o `.rbxlx`; o pacote foi inspecionado para confirmar os scripts e alvos interativos.
 - `dist/validation.json` e `dist/world-audit.json` registram o que foi conferido.
 - As configurações de áudio, logo e sensibilidade são de sessão; o progresso da campanha é persistido quando DataStore estiver disponível.
-- O mapa é original e simplificado. O modelo exato de Bramble, seus movimentos próprios e os áudios Marcus não estão importados nesta experiência. Os arquivos-fonte disponíveis estão em `assets/`; os IDs Roblox ainda precisam ser cadastrados.
+- O mapa é original e simplificado. Os modelos de mãos, baterias, portas, painéis e cenário vêm dos kits indicados pelo proprietário, com IDs cadastrados. O Bramble solicitado é importado sem scripts de terceiros. Movimentos originais completos, falas Marcus e reprodução do layout das referências ainda não estão finalizados.
+
+## Correção de assets e GrabPack
+
+As imagens Aurivane Works e Dead Signal foram importadas sem alteração, com IDs 119097868099668 e 104036635112721. A apresentação usa ImageLabels e um flash branco entre as logos. As mãos usam as malhas ch4handsblue e SM_SimpleHand e suas texturas. O disparo usa raycast do servidor em qualquer direção, até 65 studs, incluindo paredes e espaço vazio; objetos marcados GrabMovable podem ser puxados e soltos com a mesma mão. Os prompts de proximidade ficam desativados.
+
+`src/server/AssetModels.luau` importa modelos na conta proprietária, remove LuaSourceContainers antes de parentear e coloca as malhas no cenário. As superfícies recebem materiais de concreto e azulejo dos kits. As importações são verificadas no motor Roblox antes da publicação. Isso não comprova aparência, controles ou desempenho no cliente Android.
+
+Os IDs estão em `assets/imported-asset-ids.json`. Origem: DetectivePikaC2/PlaytimeStarterKit em 8c453e7731866e34a0986e3f2c12e64dd9f8c703; TheDevvDude/GrabPack-Unity-Project-1.1 em 44d8f7a52b632dea8c554da62cee63fd5e4b59f7. Esses são assets disponíveis nos kits de terceiros, sem afirmação de autoria oficial da MOB. A licença MIT do starter kit está em assets/provenance. Não foi republicado o projeto Unity inteiro.
