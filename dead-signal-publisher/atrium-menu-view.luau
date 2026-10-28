@@ -50,7 +50,7 @@ function V.Create(parent)
   make("Frame",{Position=UDim2.fromScale(0,i/104),Size=UDim2.new(1,0,0,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.9,BorderSizePixel=0,Active=false},scan)
  end
  local function resize(w,h,touch)
-  local unit=math.clamp(h/414,.76,1.6)
+  local unit=math.clamp(math.min(h/414,w/736),.9,1.6)
   local bh=touch and 44 or math.max(22,22*unit)
   local gap=touch and 4 or 3*unit
   local top=math.min(h*.611,h-5*bh-4*gap-13)
