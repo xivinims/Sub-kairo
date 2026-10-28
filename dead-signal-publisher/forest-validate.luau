@@ -6,11 +6,11 @@ if not map then return {ok=false,errors={"Forest missing"}} end
 check(map:GetAttribute("Environment")=="PineForest","Wrong map")
 check(#map.Pines:GetChildren()>=100,"Insufficient trees")
 check(W:GetAttribute("ForestTrailCount")==3,"Missing trail loops")
-local params=RaycastParams.new();params.RespectCanCollide=true
+local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={W.Terrain}
 local checkpoints={}
 for _,p in ipairs(map.RouteMarkers:GetChildren()) do
  local hit=W:Raycast(p.Position,Vector3.new(0,-9,0),params)
- checkpoints[p.Name]=hit and hit.Instance==W.Terrain or false
+ checkpoints[p.Name]=hit~=nil and (hit.Material==Enum.Material.Grass or hit.Material==Enum.Material.Ground)
  check(checkpoints[p.Name],"Checkpoint without terrain "..p.Name)
  local overlap=OverlapParams.new();overlap.RespectCanCollide=true
  check(#W:GetPartBoundsInBox(CFrame.new(p.Position),Vector3.new(3,4,3),overlap)==0,"Spawn or checkpoint intersects object "..p.Name)
