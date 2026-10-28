@@ -89,6 +89,13 @@ local function findSite(target)
      local support=W:Raycast(v+V(0,3,0),V(0,-6,0),mapParams)
      if not support or math.abs(support.Position.Y-position.Y)>0.35 then flat=false end
     end
+    local lane=W:Blockcast(cf*CFrame.new(0,3.5,0),V(2.6,5.4,2.6),cf:VectorToWorldSpace(V(0,0,21)),mapParams)
+    if lane then blocked=true end
+    for _,z in ipairs({14,17,20}) do
+     local point=(cf*CFrame.new(0,0,z)).Position
+     local support=W:Raycast(point+V(0,3,0),V(0,-6,0),mapParams)
+     if not support or support.Normal.Y<0.85 or math.abs(support.Position.Y-position.Y)>0.35 then flat=false end
+    end
     if not blocked and flat then return cf end
    end
   end
