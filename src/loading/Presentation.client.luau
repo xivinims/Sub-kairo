@@ -21,6 +21,10 @@ local chapter=text("CAPÍTULO 1 / DEAD SIGNAL",.60,22);chapter.TextColor3=Color3
 if Config.Assets.StudioLogo>0 then
  studio:Destroy();studio=Instance.new("ImageLabel");studio.Size=UDim2.fromScale(.75,.75);studio.AnchorPoint=Vector2.new(.5,.5);studio.Position=UDim2.fromScale(.5,.47);studio.BackgroundTransparency=1;studio.Image="rbxassetid://"..Config.Assets.StudioLogo;studio.ScaleType=Enum.ScaleType.Fit;studio.ImageTransparency=1;studio.Parent=black
 end
+if Config.Assets.ChapterLogo>0 then
+ chapter:Destroy();chapter=Instance.new("ImageLabel");chapter.Size=UDim2.fromScale(.84,.25);chapter.AnchorPoint=Vector2.new(.5,.5);chapter.Position=UDim2.fromScale(.5,.62);chapter.BackgroundTransparency=1;chapter.Image="rbxassetid://"..Config.Assets.ChapterLogo;chapter.ScaleType=Enum.ScaleType.Fit;chapter.ImageTransparency=1;chapter.Parent=black
+end
+local function chapterAlpha(alpha) if chapter:IsA("ImageLabel") then chapter.ImageTransparency=alpha else chapter.TextTransparency=alpha end end
 local function fade(item,alpha,duration)
  local goal=if item:IsA("ImageLabel") then {ImageTransparency=alpha} else {TextTransparency=alpha}
  local t=TweenService:Create(item,TweenInfo.new(duration),goal);t:Play();t.Completed:Wait()
@@ -35,8 +39,10 @@ task.spawn(function()
 end)
 status.Visible=false
 task.wait(.9);fade(studio,0,.8);task.wait(2)
+local flash=Instance.new("Frame");flash.Size=UDim2.fromScale(1,1);flash.BackgroundColor3=Color3.new(1,1,1);flash.BackgroundTransparency=1;flash.BorderSizePixel=0;flash.ZIndex=10;flash.Parent=black
+local flashIn=TweenService:Create(flash,TweenInfo.new(.12),{BackgroundTransparency=.12});flashIn:Play();flashIn.Completed:Wait();local flashOut=TweenService:Create(flash,TweenInfo.new(.4),{BackgroundTransparency=1});flashOut:Play()
 local whiten=TweenService:Create(studio,TweenInfo.new(.35),if studio:IsA("ImageLabel") then {ImageColor3=Color3.new(1,1,1)} else {TextColor3=Color3.new(1,1,1)});whiten:Play();whiten.Completed:Wait();fade(studio,1,.7)
-chapter.TextTransparency=0;fade(title,0,.8);task.wait(2);fade(title,1,.7);chapter.TextTransparency=1
+chapterAlpha(0);fade(title,0,.8);task.wait(2);fade(title,1,.7);chapterAlpha(1)
 status.Visible=true
 local deadline=os.clock()+40
 while not preloadDone or not workspace:GetAttribute("BrambleWorldReady") do

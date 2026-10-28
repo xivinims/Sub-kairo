@@ -1,0 +1,88 @@
+local RS=game:GetService("ReplicatedStorage")
+local Config=require(RS.Shared.Config)
+local AssetModels={}
+function AssetModels.load()
+ local folder=RS:FindFirstChild("BrambleAssets")
+ if folder and folder:GetAttribute("Ready") then return folder end
+ if not folder then folder=Instance.new("Folder");folder.Name="BrambleAssets";folder.Parent=RS end
+ local remaining=0
+ for name,id in pairs(Config.Models or {}) do
+  if id>0 and not folder:FindFirstChild(name) then
+   remaining+=1
+   task.spawn(function()
+    local ok,container=pcall(function() return game:GetService("InsertService"):LoadAsset(id) end)
+    if ok then
+     -- Nothing from a catalog model is parented to the DataModel until all executable code is removed.
+     for _,item in ipairs(container:GetDescendants()) do if item:IsA("LuaSourceContainer") then item:Destroy() end end
+     local model=Instance.new("Model");model.Name=name
+     for _,child in ipairs(container:GetChildren()) do if not child:IsA("PackageLink") then child.Parent=model end end
+     container:Destroy()
+     local part=model:FindFirstChildWhichIsA("BasePart",true)
+     if part then
+      for _,p in ipairs(model:GetDescendants()) do
+       if p:IsA("BasePart") then
+        p.Anchored=true;p.CanCollide=false;p.CanTouch=false
+        if name=="BlueHand" or name=="RedHand" then
+         p.Color=Color3.new(1,1,1)
+         local texture=Config.Assets[name.."Texture"]
+         if p:IsA("MeshPart") and texture and texture>0 then
+          for _,a in ipairs(p:GetChildren()) do if a:IsA("SurfaceAppearance") then a:Destroy() end end
+          p.TextureID="rbxassetid://"..texture
+         end
+        end
+       end
+      end
+      model.WorldPivot=model:GetBoundingBox();model.Parent=folder
+     else model:Destroy();warn("Empty imported model: "..name) end
+    else warn("Import unavailable: "..name.." / "..tostring(container)) end
+    remaining-=1
+   end)
+  end
+ end
+ local deadline=os.clock()+28
+ while remaining>0 and os.clock()<deadline do task.wait(.1) end
+ folder:SetAttribute("Ready",true)
+ return folder
+end
+function AssetModels.place(template,parent,cf,height,name)
+ local m=template:Clone();m.Name=name or template.Name
+ local size=m:GetExtentsSize()
+ m:ScaleTo(m:GetScale()*height/math.max(size.Y,.01));m.WorldPivot=m:GetBoundingBox();m:PivotTo(cf);m.Parent=parent
+ return m
+end
+function AssetModels.decorate(world)
+ local templates=RS:FindFirstChild("BrambleAssets");if not templates then return end
+ for _,target in pairs(world.Targets) do
+  local id=target:GetAttribute("Action")
+  local name=if string.match(id,"^fuse") or string.match(id,"^cell") then "Battery" else if string.match(id,"^socket") then "Scanner" else nil
+  local template=name and templates:FindFirstChild(name)
+  if template and not target:FindFirstChild("ImportedVisual") then
+   local m=AssetModels.place(template,target,target.CFrame*CFrame.new(0,0,.7),if name=="Battery" then 1.5 else 2.5,"ImportedVisual")
+   target.Transparency=1
+   local indicator=target:FindFirstChild("Indicator");if indicator then indicator.Transparency=1 end
+   for _,p in ipairs(m:GetDescendants()) do if p:IsA("BasePart") then p:SetAttribute("TargetId",target:GetAttribute("TargetId"));p:SetAttribute("Sector",target:GetAttribute("Sector")) end end
+  end
+  local prompt=target:FindFirstChildOfClass("ProximityPrompt");if prompt then prompt.Enabled=false end
+ end
+ local root=workspace:FindFirstChild("BrambleWorld");if not root or root:FindFirstChild("ImportedKitScenery") then return end
+ local scenery=Instance.new("Folder");scenery.Name="ImportedKitScenery";scenery.Parent=root
+ for sector=1,7 do
+  local origin=world.Origins[sector]
+  for _,spec in ipairs({{"Panels",Vector3.new(-40,3,-120),6},{"Storage",Vector3.new(45,4,-155),9},{"Pipes",Vector3.new(-55,10,-80),8},{"BrickWalls",Vector3.new(40,3,-60),7}}) do
+   local template=templates:FindFirstChild(spec[1]);if template then AssetModels.place(template,scenery,CFrame.new(origin+spec[2]),spec[3]) end
+  end
+ end
+ local bramble=templates:FindFirstChild("BrambleTemplate")
+ if bramble then local menu=root:FindFirstChild("MenuSet");local old=menu and menu:FindFirstChild("Bramble_Placeholder");if old then old:Destroy();world.createEnemy(menu,Vector3.new(6,6,67)) end end
+ local battery=templates:FindFirstChild("Battery")
+ if battery then
+  for sector=1,7 do
+   local prop=AssetModels.place(battery,scenery,CFrame.new(world.Origins[sector]+Vector3.new(12,3,-24)),1.5,"LoosePowerCube")
+   local rootPart=prop:FindFirstChildWhichIsA("BasePart",true)
+   for _,part in ipairs(prop:GetDescendants()) do if part:IsA("BasePart") then part.Anchored=false;part.CanCollide=true;part.CanQuery=true;part:SetAttribute("GrabMovable",true);if part~=rootPart then local weld=Instance.new("WeldConstraint");weld.Part0=rootPart;weld.Part1=part;weld.Parent=rootPart end end end
+  end
+ end
+ local pack=templates:FindFirstChild("GrabPack")
+ if pack then AssetModels.place(pack,scenery,CFrame.new(world.Origins[1]+Vector3.new(-20,4,-12)),3,"GrabPack_Equipment") end
+end
+return AssetModels

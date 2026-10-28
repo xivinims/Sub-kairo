@@ -8,10 +8,12 @@ Config.InteractionCooldown = 0.4
 -- Upload the supplied files to the owning Roblox experience, then put the IDs here.
 -- 0 deliberately disables an unconfigured asset; GitHub URLs are not Roblox content IDs.
 Config.Assets = {
- StudioLogo = 0, ChapterLogo = 0,
+ StudioLogo = 119097868099668, ChapterLogo = 104036635112721,
+ BlueHandTexture = 91503834655118, RedHandTexture = 71928482940714,
  Ambient = 4745539237, Pursuit = 9039697342, Radio = 8028069841, Relay = 0, OpeningVoice = 0,
  Voices = {},
 }
+Config.Models = {BlueHand=106685530024334, RedHand=73307129756896, GrabPack=127866338455898, Battery=96614464641201, BatteryHolder=119471653066199, Scanner=91248917035498, Doors=98019191482287, Panels=79633239505367, Pipes=97487909095388, Storage=104425828717767, BrickWalls=85368010675651, BrambleTemplate=77713813527653}
 Config.Sectors = {
  {Name="CONSERVATÓRIO", Goal="Encontre o crachá e o fusível. Restaure o circuito.", Protocol="Crachá e fusível na recepção. Ligue o quadro. Terminal 1: azul. Terminal 2: vermelha. Pode três flores, ligue 3 com azul. Libere a saída com a vermelha.", Lines={"23:17 / CONSERVATÓRIO AURORA", "SEGURANÇA: Não responda às vozes do rádio.", "VOCÊ: Eu só vim desligar a transmissão."}},
  {Name="ARQUIVO DE BOTÂNICA", Goal="Recupere três páginas e abra o cofre.", Protocol="O primeiro viveiro abriu em 1784. O cofre conserva esse ano. Recupere as três páginas antes de abrir.", Lines={"ARQUIVO DE BOTÂNICA", "ARQUIVISTA: Os nomes foram apagados. As páginas ainda lembram.", "VOCÊ: Mil setecentos e oitenta e quatro… o primeiro viveiro."}},

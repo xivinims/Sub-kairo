@@ -6,12 +6,16 @@ local RunService=game:GetService("RunService")
 local Config=require(RS.Shared.Config)
 local Campaign=require(RS.Shared.Campaign)
 local World=require(script.Parent.World)
+local AssetModels=require(script.Parent.AssetModels)
 local folder=Instance.new("Folder");folder.Name="BrambleRemotes";folder.Parent=RS
 local action=Instance.new("RemoteEvent");action.Name="Action";action.Parent=folder
 local update=Instance.new("RemoteEvent");update.Name="Update";update.Parent=folder
 local sessions={}
+local releaseHeld
 local store=DataStoreService:GetDataStore(Config.SaveKey)
+AssetModels.load()
 World.build()
+AssetModels.decorate(World)
 local function snapshot(p,s,kind,message)
  update:FireClient(p,kind or "State",{state=s.state,active=s.active,scene=s.scene,dead=s.dead,stamina=s.stamina,message=message,saveStatus=s.saveStatus or "Sessão local",elapsed=s.elapsed,origin=World.Origins[s.state.sector]})
 end
@@ -53,7 +57,7 @@ local function characterReady(p,c)
  snapshot(p,s)
 end
 local function join(p)
- local s={state=Campaign.new(),active=false,scene=false,sceneToken=0,dead=false,stamina=100,elapsed=0,lastAction=0,lastMove=0,run=false,crouch=false,loaded=false,dirty=false,memory=0,pathClock=0}
+ local s={owner=p,state=Campaign.new(),active=false,scene=false,sceneToken=0,dead=false,stamina=100,elapsed=0,lastAction=0,lastMove=0,run=false,crouch=false,loaded=false,dirty=false,memory=0,pathClock=0}
  sessions[p]=s
  p.CharacterAdded:Connect(function(c) characterReady(p,c) end)
  if p.Character then task.spawn(characterReady,p,p.Character) end
@@ -66,8 +70,8 @@ local function join(p)
  end)
 end
 Players.PlayerAdded:Connect(join);for _,p in ipairs(Players:GetPlayers()) do join(p) end
-Players.PlayerRemoving:Connect(function(p) local s=sessions[p];if s then save(p,s);removeEnemy(s) end;sessions[p]=nil end)
-local function interact(p,s,id,right)
+Players.PlayerRemoving:Connect(function(p) local s=sessions[p];if s then save(p,s);removeEnemy(s);if s.held then for side in pairs(s.held) do releaseHeld(s,side) end end end;sessions[p]=nil end)
+local function interact(p,s,id,right,handAlreadyLaunched)
  if type(id)~="string" or #id>60 or type(right)~="boolean" then return end
  if not s.active or s.scene or s.dead or os.clock()-s.lastAction<Config.InteractionCooldown then return end
  local target=World.Targets[id];local root=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
@@ -79,7 +83,7 @@ local function interact(p,s,id,right)
  local hit=workspace:Raycast(head.Position,target.Position-head.Position,params)
  if hit and hit.Instance~=target and not hit.Instance:IsDescendantOf(target) then return end
  s.lastAction=os.clock()
- update:FireClient(p,"Hand",{point=target.Position,right=right})
+ if not handAlreadyLaunched then update:FireClient(p,"Hand",{point=target.Position,right=right}) end
  local sector=s.state.sector
  task.delay(distance/100,function()
   if sessions[p]~=s or not s.active or s.scene or s.dead or sector~=s.state.sector or not root.Parent or (root.Position-target.Position).Magnitude>Config.MaxReach+4 then return end
@@ -94,6 +98,51 @@ local function interact(p,s,id,right)
   else snapshot(p,s,"State",message) end
  end)
 end
+releaseHeld=function(s,side)
+ local held=s.held and s.held[side]
+ if held then
+  if held.align then held.align:Destroy() end
+  if held.attachment then held.attachment:Destroy() end
+  if held.part and held.part.Parent then held.part:SetAttribute("HeldBy",nil);pcall(function() held.part:SetNetworkOwnershipAuto() end) end
+  s.held[side]=nil
+  if s.owner and s.owner.Parent then update:FireClient(s.owner,"HandRelease",{right=side==2}) end
+ end
+end
+local function fireHand(p,s,direction,right)
+ if not s.active or s.scene or s.dead or type(right)~="boolean" or typeof(direction)~="Vector3" then return end
+ if direction.X~=direction.X or direction.Y~=direction.Y or direction.Z~=direction.Z or direction.Magnitude<.5 or direction.Magnitude>2 then return end
+ local side=if right then 2 else 1
+ s.handClocks=s.handClocks or {0,0};s.held=s.held or {}
+ if os.clock()-s.handClocks[side]<.4 then return end
+ s.handClocks[side]=os.clock()
+ if s.held[side] then releaseHeld(s,side);return end
+ local character=p.Character;local head=character and character:FindFirstChild("Head")
+ if not head then return end
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={character}
+ local hit=workspace:Raycast(head.Position,direction.Unit*Config.MaxReach,params)
+ local point=if hit then hit.Position else head.Position+direction.Unit*Config.MaxReach
+ update:FireClient(p,"Hand",{point=point,right=right})
+ if not hit then return end
+ local target=hit.Instance
+ while target and target~=workspace do
+  local id=target:GetAttribute("TargetId")
+  if id then interact(p,s,id,right,true);return end
+  target=target.Parent
+ end
+ local part=hit.Instance
+ if part:IsA("BasePart") and part:GetAttribute("GrabMovable")==true and not part.Anchored and part.AssemblyMass<35 then
+  task.delay((point-head.Position).Magnitude/100,function()
+   if sessions[p]~=s or not s.active or s.scene or s.dead or not part.Parent or not head.Parent or (part.Position-head.Position).Magnitude>Config.MaxReach+4 then return end
+   if part:GetAttribute("HeldBy") then return end
+   part:SetAttribute("HeldBy",p.UserId)
+   local attachment=Instance.new("Attachment");attachment.Parent=part
+   local align=Instance.new("AlignPosition");align.Mode=Enum.PositionAlignmentMode.OneAttachment;align.Attachment0=attachment;align.MaxForce=12000;align.MaxVelocity=25;align.Responsiveness=18;align.Position=head.Position+direction.Unit*6;align.Parent=part
+   pcall(function() part:SetNetworkOwner(nil) end)
+   s.held[side]={part=part,attachment=attachment,align=align}
+   update:FireClient(p,"HandHold",{part=part,right=right})
+  end)
+ end
+end
 for id,target in pairs(World.Targets) do target:FindFirstChildOfClass("ProximityPrompt").Triggered:Connect(function(p) local s=sessions[p];if s then interact(p,s,id,false) end end) end
 -- Remote requests never accept a client-provided state, position, inventory or completion flag.
 action.OnServerEvent:Connect(function(p,verb,arg,extra)
@@ -104,6 +153,7 @@ action.OnServerEvent:Connect(function(p,verb,arg,extra)
   if type(arg)=="table" then s.run=arg.run==true;s.crouch=arg.crouch==true end;return
  end
  if verb=="Interact" then interact(p,s,arg,extra);return end
+ if verb=="FireHand" then fireHand(p,s,arg,extra);return end
  if verb=="SceneDone" then
   if not s.scene then return end;s.scene=false
   if s.state.finished then s.active=false;freeze(p,true);snapshot(p,s,"Won") else freeze(p,false);snapshot(p,s) end;return
@@ -127,6 +177,14 @@ RunService.Heartbeat:Connect(function(dt)
  tickClock+=dt;saveClock+=dt
  local broadcast=tickClock>=.25;if broadcast then tickClock=0 end
  for p,s in pairs(sessions) do
+  if s.held then
+   for side,held in pairs(s.held) do
+    local head=p.Character and p.Character:FindFirstChild("Head")
+    if not s.active or s.scene or s.dead or not head or not held.part.Parent or (head.Position-held.part.Position).Magnitude>Config.MaxReach+5 then
+     if held.part.Parent then held.part:SetAttribute("HeldBy",nil) end;releaseHeld(s,side)
+    else held.align.Position=head.Position+head.CFrame.LookVector*6+head.CFrame.RightVector*(if side==1 then -1 else 1) end
+   end
+  end
   if s.active and not s.scene and not s.dead then
    s.elapsed+=dt
    local character=p.Character;local humanoid=character and character:FindFirstChildOfClass("Humanoid");local root=character and character:FindFirstChild("HumanoidRootPart")

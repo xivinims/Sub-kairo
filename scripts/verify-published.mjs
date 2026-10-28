@@ -1,4 +1,4 @@
-import {writeFile} from 'node:fs/promises';
+import {readFile,writeFile} from 'node:fs/promises';
 const base='https://apis.roblox.com/cloud/v2/';
 const target='universes/9421311218/places/118064584465155/';
 const key=process.env.ROBLOX_API_KEY;
@@ -8,15 +8,34 @@ async function api(path,body) {
  if(!r.ok) throw new Error(`Roblox engine verification HTTP ${r.status}`);
  return r.json();
 }
+const configSource=await readFile("src/shared/Config.luau","utf8");
+const modelSource=await readFile("src/server/AssetModels.luau","utf8");
+const worldSource=await readFile("src/server/World.luau","utf8");
 const script=`
 assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Wrong place")
 local RS=game:GetService("ReplicatedStorage")
 local Config=require(RS.Shared.Config)
+local desired=(function() ${configSource} end)()
+for key,value in pairs(desired) do Config[key]=value end
 local Campaign=require(RS.Shared.Campaign)
 assert(Config.Chapter=="DEAD SIGNAL")
 assert(#Config.Sectors==7)
-local World=require(game:GetService("ServerScriptService").BrambleServer.World)
+local AssetModels=(function() ${modelSource} end)()
+local templates=AssetModels.load()
+local imports={}
+for name,id in pairs(Config.Models) do
+ local model=templates:FindFirstChild(name);assert(model,"Missing imported model: "..name)
+ local meshes=0
+ for _,item in ipairs(model:GetDescendants()) do
+  assert(not item:IsA("LuaSourceContainer"),"Third party executable code: "..name)
+  if item:IsA("MeshPart") or item:IsA("SpecialMesh") or item:IsA("UnionOperation") then meshes+=1 end
+ end
+ assert(meshes>0,"No mesh geometry: "..name)
+ local size=model:GetExtentsSize();imports[name]={id=id,meshes=meshes,size={size.X,size.Y,size.Z}}
+end
+local World=(function() ${worldSource} end)()
 World.build()
+AssetModels.decorate(World)
 assert(workspace:GetAttribute("BrambleWorldReady")==true,"World not ready")
 local targets=0
 for id,part in pairs(World.Targets) do
@@ -34,7 +53,7 @@ assert(enemy:IsA("Model") and enemy:FindFirstChildWhichIsA("BasePart",true),"Ene
 enemy:Destroy()
 local state=Campaign.new()
 assert(state.sector==1 and not state.finished)
-return game:GetService("HttpService"):JSONEncode({ok=true,placeVersion=game.PlaceVersion,targets=targets,sectors=#Config.Sectors,worldReady=true,enemyConstructed=true,clientPlaytested=false})
+return game:GetService("HttpService"):JSONEncode({ok=true,placeVersion=game.PlaceVersion,targets=targets,sectors=#Config.Sectors,worldReady=true,enemyConstructed=true,imports=imports,clientPlaytested=false})
 `;
 let task=await api(target+'luau-execution-session-tasks',{timeout:'120s',script});
 const deadline=Date.now()+180000;

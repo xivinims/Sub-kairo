@@ -20,7 +20,7 @@ function World.target(folder,sector,id,pos,title,color)
  local lamp=block(p,"Indicator",pos+Vector3.new(0,-0.6,0.5),Vector3.new(1,0.45,0.12),color or Color3.fromRGB(63,174,189),Enum.Material.Neon,false)
  lamp.CastShadow=false
  local display=World.label(p,title,28);display.Name="Readout"
- local prompt=Instance.new("ProximityPrompt");prompt.ActionText="Mão azul / E";prompt.ObjectText=title;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=true;prompt.HoldDuration=0.3;prompt.Parent=p
+ local prompt=Instance.new("ProximityPrompt");prompt.Enabled=false;prompt.ActionText="Mão azul / E";prompt.ObjectText=title;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=true;prompt.HoldDuration=0.3;prompt.Parent=p
  World.Targets[sector..":"..id]=p
  if World.Index then local ref=Instance.new("ObjectValue");ref.Name=sector..":"..id;ref.Value=p;ref.Parent=World.Index end
  return p
@@ -31,8 +31,9 @@ function World.light(folder,pos,color)
  return fixture
 end
 function World.createEnemy(parent,at)
- local template=game:GetService("ServerStorage"):FindFirstChild("BrambleTemplate")
- if template and template:IsA("Model") and template.PrimaryPart then
+ local assets=RS:FindFirstChild("BrambleAssets")
+ local template=game:GetService("ServerStorage"):FindFirstChild("BrambleTemplate") or (assets and assets:FindFirstChild("BrambleTemplate"))
+ if template and template:IsA("Model") then
   local imported=template:Clone();imported.Name="Bramble_Imported"
   for _,item in ipairs(imported:GetDescendants()) do
    if item:IsA("LuaSourceContainer") then item:Destroy()

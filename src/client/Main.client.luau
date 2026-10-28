@@ -12,6 +12,8 @@ local remotes=RS:WaitForChild("BrambleRemotes")
 local action,update=remotes:WaitForChild("Action"),remotes:WaitForChild("Update")
 local Hands=require(script.Parent.Hands)
 local camera=workspace.CurrentCamera
+local assets=RS:WaitForChild("BrambleAssets",30)
+if assets then local deadline=os.clock()+30;while not assets:GetAttribute("Ready") and os.clock()<deadline do task.wait(.1) end end
 local hands=Hands.new(camera)
 local gui=Instance.new("ScreenGui");gui.Name="BramblesSprout";gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.Enabled=false;gui.Parent=player:WaitForChild("PlayerGui")
 local root=Instance.new("Frame");root.Size=UDim2.fromOffset(1280,720);root.AnchorPoint=Vector2.new(.5,.5);root.Position=UDim2.fromScale(.5,.5);root.BackgroundTransparency=1;root.Parent=gui
@@ -129,7 +131,8 @@ local function targetAtCrosshair()
 end
 local function use(right)
  if mode~="playing" then return end
- local target=targetAtCrosshair();if target then action:FireServer("Interact",target:GetAttribute("TargetId"),right) else message="Aponte para um terminal ou objeto.";messageUntil=os.clock()+2 end
+ local ray=camera:ViewportPointToRay(camera.ViewportSize.X/2,camera.ViewportSize.Y/2)
+ action:FireServer("FireHand",ray.Direction,right)
 end
 local lamp
 local function movement() action:FireServer("Move",{run=run,crouch=crouch}) end
@@ -167,8 +170,8 @@ local function refreshWorld()
   if target and target:GetAttribute("Sector")==st.sector then
    local id=target:GetAttribute("Action");local collected=st.flags[id] and (string.match(id,"^page") or string.match(id,"^seed") or string.match(id,"^cell") or string.match(id,"^fuse") or id=="card" or string.match(id,"^bloom"))
    target.LocalTransparencyModifier=if collected then 1 else 0
-   for _,item in ipairs(target:GetChildren()) do if item:IsA("BasePart") then item.LocalTransparencyModifier=if collected then 1 else 0 end end
-   local pro=target:FindFirstChildOfClass("ProximityPrompt");if pro then pro.Enabled=not collected end
+   for _,item in ipairs(target:GetDescendants()) do if item:IsA("BasePart") then item.LocalTransparencyModifier=if collected then 1 else 0 end end
+   local pro=target:FindFirstChildOfClass("ProximityPrompt");if pro then pro.Enabled=false end
    local surface=target:FindFirstChildOfClass("SurfaceGui");local readout=surface and surface:FindFirstChild("Readout")
    local value=target:GetAttribute("Title")
    if string.match(id,"^digit[1234]$") then value=tostring(st.digits[tonumber(string.sub(id,-1))])
@@ -183,6 +186,8 @@ local function refreshWorld()
 end
 update.OnClientEvent:Connect(function(kind,payload)
  if kind=="Hand" then hands:launch(payload.point,payload.right);return end
+ if kind=="HandHold" then hands:hold(payload.part,payload.right);return end
+ if kind=="HandRelease" then hands:release(payload.right);return end
  if payload.state then data=payload;refreshWorld() end
  status.Text=payload.saveStatus or ""
  if payload.message then message=payload.message;messageUntil=os.clock()+4 end
