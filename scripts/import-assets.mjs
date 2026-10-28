@@ -3,6 +3,10 @@ const key=process.env.ROBLOX_API_KEY;if(!key)throw new Error('Missing ROBLOX_API
 const revision='8c453e7731866e34a0986e3f2c12e64dd9f8c703';
 const root=`https://raw.githubusercontent.com/DetectivePikaC2/PlaytimeStarterKit/${revision}/`;
 const assets=[
+ ['WallColor','Image',root+'Decoration/Materials/Textures/Concrete/T_ConcreteWallRough_BC.png','image/png'],
+ ['WallNormal','Image',root+'Decoration/Materials/Textures/Concrete/T_ConcreteWallRough_N.png','image/png'],
+ ['FloorColor','Image','https://raw.githubusercontent.com/TheDevvDude/GrabPack-Unity-Project-1.1/44d8f7a52b632dea8c554da62cee63fd5e4b59f7/Assets/Story_2/Area2/CustomTextures/FactoryTiles.png','image/png'],
+ ['FloorNormal','Image',root+'Decoration/Materials/Textures/Tiles/T_Tiles_N.png','image/png'],
  ['StudioLogo','Image','assets/branding/aurivane-works.png','image/png'],
  ['ChapterLogo','Image','assets/branding/dead-signal.png','image/png'],
  ['BlueHand','Model',root+'Player/Grabpack/Models/Hands/ch4handsblue.glb','model/gltf-binary'],
@@ -19,6 +23,7 @@ const assets=[
  ['Storage','Model',root+'Decoration/Mesh/ch4storagepack.glb','model/gltf-binary'],
  ['BrickWalls','Model','https://raw.githubusercontent.com/TheDevvDude/GrabPack-Unity-Project-1.1/44d8f7a52b632dea8c554da62cee63fd5e4b59f7/Assets/Models/bricks.fbx','model/fbx'],
 ];
+const existing=JSON.parse(await readFile('assets/imported-asset-ids.json','utf8'));
 const manifest={creatorId:'8344738123',sourceRevision:revision,assets:{},errors:{}};
 await mkdir('dist',{recursive:true});
 async function request(url,options={}){
@@ -28,6 +33,7 @@ async function request(url,options={}){
 }
 for(const [name,assetType,source,type] of assets){
  try{
+  if(existing[name]){manifest.assets[name]={id:existing[name],assetType,source,cached:true};continue;}
   const bytes=source.startsWith('https:')?new Uint8Array(await (await fetch(encodeURI(source))).arrayBuffer()):await readFile(source);
   if(bytes.length>20*1024*1024||bytes.length<500)throw new Error('Invalid source size');
   const form=new FormData();form.append('request',JSON.stringify({assetType,displayName:`Bramble Sprout - ${name}`,description:`Imported for Bramble's Sprout. Source: ${source}`,creationContext:{creator:{userId:'8344738123'}}}));
