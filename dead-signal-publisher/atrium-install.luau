@@ -1,4 +1,4 @@
-local BUILD_ID="dead-signal-reference-menu-v1"
+local BUILD_ID="dead-signal-cinematic-atrium-v2"
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,"Wrong target")
 local W=workspace
 local SSS=game:GetService("ServerScriptService")
@@ -307,7 +307,7 @@ if okLogo and logoModel then
  if decal then RS:SetAttribute("AurivaneLogoTexture",decal.Texture) end
  logoModel:Destroy()
 end
-SP.CameraMode=Enum.CameraMode.Classic;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=24;SP.CharacterWalkSpeed=16
+SP.CameraMode=Enum.CameraMode.Classic;SP.CameraMinZoomDistance=.5;SP.CameraMaxZoomDistance=32;SP.CharacterWalkSpeed=16
 W:SetAttribute("DeadSignalBuildId",BUILD_ID);W:SetAttribute("MapSource","Original geometry from user photo");W:SetAttribute("StalkerPaused",true)
 __PREPUBLISH_VALIDATE__
 s.Enabled=true
