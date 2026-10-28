@@ -59,12 +59,15 @@ end
 check(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("AtriumClient")~=nil,"Client missing")
 check(game:GetService("ReplicatedFirst"):FindFirstChild("AurivaneLoading")~=nil,"Loading missing")
 check(game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")~=nil,"Logo missing")
-check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-reference-menu-v1","Build mismatch")
+check(W:GetAttribute("DeadSignalBuildId")=="dead-signal-cinematic-atrium-v2","Build mismatch")
 local RS=game:GetService("ReplicatedStorage")
 local settings=require(RS.AtriumSettings)
 local clean=settings.Clean({master=99,music=-2,fov=0/0,sensitivity=math.huge,quality="Baixa",scanlines=false,unexpected="discard"})
 check(clean.master==1 and clean.music==0 and clean.fov==70 and clean.sensitivity==1 and clean.quality==2 and clean.scanlines==false and clean.unexpected==nil,"Settings validation failed")
 check(settings.Percent(.8)=="80%","Volume percentage failed")
+check(settings.Clean({cameraMode="Terceira pessoa"}).cameraMode=="Terceira pessoa","Third-person camera setting rejected")
+check(settings.Clean({cameraMode="Primeira pessoa"}).cameraMode=="Primeira pessoa","First-person camera setting rejected")
+check(settings.Clean({cameraMode="anything else"}).cameraMode=="Livre","Invalid camera mode must fall back")
 local viewFactory=require(RS.AtriumMenuView)
 local testGui=Instance.new("ScreenGui")
 local view=viewFactory.Create(testGui)
@@ -77,7 +80,7 @@ for _,dims in ipairs({{736,414,false},{1920,1080,false},{844,390,true},{390,844,
   check(pos.Y.Offset>lastBottom,"Menu buttons overlap")
   check(pos.X.Offset+size.X.Offset<=dims[1] and pos.Y.Offset+size.Y.Offset<=dims[2],"Menu button outside viewport")
   if dims[3] then check(size.Y.Offset>=44,"Touch target too short") end
-  check(b.Font==Enum.Font.Michroma and b:FindFirstChildOfClass("UIStroke").Thickness==1,"Reference button style mismatch")
+  check(b.Font==Enum.Font.Code and b:FindFirstChildOfClass("UIStroke").Thickness==1,"Reference button style mismatch")
   lastBottom=pos.Y.Offset+size.Y.Offset
  end
  layoutChecks[tostring(dims[1]).."x"..tostring(dims[2])]=true
@@ -85,5 +88,17 @@ end
 check(view.Buttons[1].Text=="CONTINUE" and view.Buttons[5].Text=="QUIT","Menu actions incomplete")
 testGui:Destroy()
 local starter=game:GetService("StarterPlayer")
-check(starter.CameraMode==Enum.CameraMode.Classic and starter.CameraMinZoomDistance==.5 and starter.CameraMaxZoomDistance==24,"Free camera configuration missing")
+check(starter.CameraMode==Enum.CameraMode.Classic and starter.CameraMinZoomDistance==.5 and starter.CameraMaxZoomDistance==32,"Free camera configuration missing")
+local clientScript=starter.StarterPlayerScripts:FindFirstChild("AtriumClient")
+local source=clientScript and clientScript.Source or ""
+check(source:find("CoreUISafeInsets",1,true)~=nil,"Top-right menu is not safe-area aware")
+check(source:find("OriginalSilhouette",1,true)~=nil,"Menu's 3D character stage missing")
+check(source:find("setCameraPreference",1,true)~=nil,"Camera modes not connected to game")
+local tables=0;local rain=0;local lightShafts=0
+for _,piece in ipairs(map:GetDescendants()) do
+ if piece.Name=="AbandonedCafeTable" then tables+=1
+ elseif piece.Name=="ReflectiveRainPatch" then rain+=1
+ elseif piece.Name=="AtriumPremiumLight" then lightShafts+=1 end
+end
+check(tables==3 and rain>=30 and lightShafts==3,"Visual-detail pass missing")
 return {ok=#errors==0,errors=errors,build=W:GetAttribute("DeadSignalBuildId"),version=game.PlaceVersion,menuLayouts=layoutChecks,settingsValidated=true,freeCamera=true,navigation=navigation,parts=parts,flowers=flowers,stairTreads=treads,checkpoints=floorChecks,doors=doorChecks,logo=game:GetService("ReplicatedStorage"):GetAttribute("AurivaneLogo")}
