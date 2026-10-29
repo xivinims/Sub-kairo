@@ -55,9 +55,18 @@ let verify=await fs.readFile(new URL('./islands-verify.luau',import.meta.url),'u
 verify=verify.replace('return H:JSONEncode(', 'return H:JSONEncode(');
 let script=await fs.readFile(new URL('./islands-native-install.luau',import.meta.url),'utf8');
 script=script.replace('__FINALIZE__',finalize).replace('__VERIFY__',verify);
-const installed=await execute(script,187,input.path);console.log(JSON.stringify({nativeInstalled:installed}));await pause(5000);
-const verified=await execute(verify);console.log(JSON.stringify({liveVerified:verified}));
-await download('/tmp/still-here-verified.rbxl',verified.version);
-execFileSync('/tmp/islands-lune/lune',['run','islands-file-verify.luau'],{cwd,stdio:'inherit'});
-await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});
-console.log(JSON.stringify({published:true,verified,restarted:true}));
+const installed=await execute(script,187,input.path);console.log(JSON.stringify({nativePreflight:installed}));
+let published;
+try{
+ published=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-islands.rbxl')});
+ console.log(JSON.stringify({publishedCandidate:published}));
+ const waitReady="local deadline=os.clock()+240;while workspace:GetAttribute('IslandWorldReady')~=true and not workspace:GetAttribute('IslandWorldError') and os.clock()<deadline do task.wait(.25) end;assert(workspace:GetAttribute('IslandWorldReady')==true,workspace:GetAttribute('IslandWorldError') or 'Initializer timeout');\n";
+ const verified=await execute(waitReady+verify,published.versionNumber);console.log(JSON.stringify({liveVerified:verified}));
+ await download('/tmp/still-here-verified.rbxl',verified.version);
+ execFileSync('/tmp/islands-lune/lune',['run','islands-file-verify.luau'],{cwd,stdio:'inherit'});
+ await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});
+ console.log(JSON.stringify({published:true,verified,restarted:true}));
+}catch(error){
+ if(published){const rollback=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-source.rbxl')});console.log(JSON.stringify({restoredKnownGood:rollback}));await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});}
+ throw error;
+}

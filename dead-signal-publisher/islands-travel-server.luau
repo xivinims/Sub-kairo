@@ -17,7 +17,7 @@ local function travel(p,id,reply)
  local spawn=arrival(id);local char=p.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
  local root=char and char:FindFirstChild('HumanoidRootPart')
  if not spawn or not root or not hum or hum.Health<=0 then if reply then remote:FireClient(p,false,'Espera seu personagem aparecer.');end;return end
- busy[p]=true;last[p]=os.clock();p.RespawnLocation=spawn
+ busy[p]=true;last[p]=os.clock();p.RespawnLocation=spawn;root.Anchored=true
  local ok,err=pcall(function()
   Chunks.Warm(id,spawn.Position,128)
   p:RequestStreamAroundAsync(spawn.Position,4)
@@ -28,6 +28,7 @@ local function travel(p,id,reply)
   p:SetAttribute('IslandDestination',id)
  end)
  busy[p]=nil
+ if root.Parent then root.Anchored=false end
  if reply and p.Parent==Players then remote:FireClient(p,ok,ok and id or 'Não deu para viajar agora. Tenta de novo.') end
  if not ok then warn('[IslandTravel] '..p.UserId..': '..tostring(err)) end
 end
@@ -39,7 +40,7 @@ local function added(p)
   if root then
    root.Anchored=true
    while char.Parent and workspace:GetAttribute('IslandWorldReady')~=true and not workspace:GetAttribute('IslandWorldError') do task.wait(.25) end
-   if root.Parent then root.Anchored=false end
+   if workspace:GetAttribute('IslandWorldError') and root.Parent then root.Anchored=false end
    if p.Character==char then task.defer(travel,p,p:GetAttribute('IslandDestination') or 'forestCurrent',true) end
   end
  end)

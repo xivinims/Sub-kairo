@@ -1,7 +1,10 @@
 local Players=game:GetService('Players')
 local Tween=game:GetService('TweenService')
 local Debris=game:GetService('Debris')
+local recent=setmetatable({},{__mode='k'})
 local function pulse(char)
+ if os.clock()-(recent[char] or -10)<1 then return end
+ recent[char]=os.clock()
  if workspace:GetAttribute("IslandWorldReady")==false then return end
  local hrp=char:WaitForChild('HumanoidRootPart',10);if not hrp then return end
  task.wait(.2)

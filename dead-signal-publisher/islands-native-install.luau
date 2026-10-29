@@ -35,5 +35,5 @@ local validation=(function()
 __VERIFY__
 end)()
 assert(validation,'Validation missing')
-game:GetService('AssetService'):SavePlaceAsync({PlaceId=game.PlaceId,SaveWithoutPublish=false})
-return game:GetService('HttpService'):JSONEncode({ok=true,published=true,sourceVersion=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId')})
+-- Validated in this isolated execution; the file publisher performs the atomic release.
+return game:GetService('HttpService'):JSONEncode({ok=true,validated=true,sourceVersion=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId')})
