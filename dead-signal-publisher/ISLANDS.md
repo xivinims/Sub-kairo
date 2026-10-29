@@ -43,3 +43,7 @@ No rendered Roblox client screenshot or phone FPS measurement has been obtained.
 ## Verified release
 
 PlaceVersion 192 was published on 2026-10-29 by run 40824601864. Native published-version checks confirmed three separated destinations and spawns, original source geometry counts (city 46,716; forest 1 15,348; current forest 22,425), streaming target 128, native terrain grass, and lighting source 17835285085. Black hole source 7208091524 retained 61 parts, 27 beams and 162 bones with our client renderer. The exact published RBXL was downloaded and checked independently. Old servers were restarted successfully. No rendered-client visual or phone FPS claim is implied by these checks.
+
+### Atmosphere correction — version 193
+
+Run 40878130298 published and verified PlaceVersion 193, then restarted old servers. Persistent overcast replaces the clear inter-storm state. Dusk is baked into Lighting; cloud density and cool aerial perspective remain between showers. The trusted weather server is installed explicitly. Source ancestry is inspected before flattening for foliage classification (6,566 wind-tagged parts), with stronger bounded local wind. Safe visual imports now retain original Light and Attachment data (411 lights across all three source catalogs), no shadow casting, maximum range 32 and brightness 2.5. Source scripts remain excluded. Streaming stays 64/128. These checks confirm data and code presence, not a rendered appearance or phone FPS measurement. City traffic/NPC simulation is outside this correction.
