@@ -1,3 +1,5 @@
+> Archived meadow implementation. Current islands, source assets and verified publication are documented in [ISLANDS.md](ISLANDS.md).
+
 # Still Here — native grass meadow
 
 Exclusive universe 9421311218 / place 118064584465155 and branch dead-signal-publisher.

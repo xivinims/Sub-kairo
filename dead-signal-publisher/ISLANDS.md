@@ -39,3 +39,7 @@ Native voxel grids are carried as passive TerrainRegion snapshots. Trusted `Isla
 Current entry point is `publish.mjs`; `publisher-legacy.mjs` retains the former generated-meadow publisher for history. Do not run it for current releases. `release-state.json` pins the setup template, preflight baseline, and verified rollback file.
 
 No rendered Roblox client screenshot or phone FPS measurement has been obtained. Headless geometry/file checks verify structure and clearance; they do not establish visual fidelity or measured client performance.
+
+## Verified release
+
+PlaceVersion 192 was published on 2026-10-29 by run 40824601864. Native published-version checks confirmed three separated destinations and spawns, original source geometry counts (city 46,716; forest 1 15,348; current forest 22,425), streaming target 128, native terrain grass, and lighting source 17835285085. Black hole source 7208091524 retained 61 parts, 27 beams and 162 bones with our client renderer. The exact published RBXL was downloaded and checked independently. Old servers were restarted successfully. No rendered-client visual or phone FPS claim is implied by these checks.
