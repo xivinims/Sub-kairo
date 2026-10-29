@@ -1,11 +1,10 @@
 local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@lune/serde')
-for _,id in ipairs({'7902470429','15864801103'}) do
- local dm=R.deserializePlace(fs.readFile('/tmp/asset-'..id..'.rbxl'))
- local index={id=id,scripts={},roots={}}
- for _,service in ipairs(dm:GetChildren()) do local children={};for _,c in ipairs(service:GetChildren()) do table.insert(children,c.Name..':'..c.ClassName) end;table.insert(index.roots,{name=service.Name,children=children}) end
- for _,d in ipairs(dm:GetDescendants()) do if d:IsA('LuaSourceContainer') then
- local path=d:GetFullName();table.insert(index.scripts,{path=path,class=d.ClassName,length=#d.Source})
- print('ORIGINAL_SCRIPT '..J.encode('json',{asset=id,path=path,class=d.ClassName,source=d.Source}))
- end end
- print('ORIGINAL_INDEX '..J.encode('json',index))
+local dm=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'))
+for _,d in ipairs(dm:GetService('Workspace'):GetDescendants()) do
+ local n=d.Name:lower()
+ if n:find('car',1,true) and not n:find('card',1,true) and not n:find('carpet',1,true) or n:find('vehicle',1,true) or n:find('crash',1,true) then
+ print('CAR_AUDIT '..J.encode('json',{path=d:GetFullName(),class=d.ClassName}))
+ end
 end
+local sp=dm:GetService('StarterPlayer')
+for _,n in ipairs({'CharacterJumpHeight','CharacterJumpPower','CharacterUseJumpPower','CharacterWalkSpeed'}) do local ok,v=pcall(function() return sp[n] end);print(n..' '..tostring(ok and v or 'default')) end
