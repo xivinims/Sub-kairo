@@ -21,7 +21,18 @@ local function pivot(object,cf)
  if object:IsA('Model') then object:PivotTo(cf) else object.CFrame=cf end
 end
 local field=model:FindFirstChild('DebrisField')
-if field then
+local spinner;local shardBones={}
+if field and field:FindFirstChildWhichIsA('Bone',true) then
+ -- The original debris is one skinned mesh: retain its authored bones and shapes.
+ local _,size=field:GetBoundingBox();local maximum=math.max(size.X,size.Y,size.Z)
+ if maximum>420 then field:ScaleTo(field:GetScale()*420/maximum) end
+ local orientation=base:ToObjectSpace(field:GetPivot()).Rotation
+ field:PivotTo(base*orientation)
+ spinner=field:FindFirstChild('spinner',true)
+ for _,d in ipairs(field:GetDescendants()) do
+  if d:IsA('Bone') and d.Name:match('^%d+$') and #shardBones<(touch and 12 or 32) then table.insert(shardBones,d) end
+ end
+elseif field then
  local index=0
  for _,object in ipairs(field:GetChildren()) do
   if object:IsA('Model') or object:IsA('BasePart') then
@@ -40,6 +51,7 @@ if field then
   end
  end
 end
+
 for _,d in ipairs(model:GetDescendants()) do
  if d:IsA('BasePart') then d.CanCollide=false;d.CanTouch=false;d.CanQuery=false;d.CastShadow=false end
  if d:IsA('ParticleEmitter') then d.Rate=math.min(d.Rate,touch and 24 or 60) end
@@ -55,6 +67,8 @@ Run.RenderStepped:Connect(function(dt)
  local center=camera.CFrame.Position+offset
  base=CFrame.lookAt(center,camera.CFrame.Position)
  model:PivotTo(base)
+ if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*.018,0) end
+ for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*(.018+i%4*.003),time*.012,time*.009) end
  for _,state in ipairs(orbit) do if state.animated then
   local spin=CFrame.Angles(0,time*state.speed,0)
   pivot(state.object,base*spin*state.cf*CFrame.Angles(time*.018,0,time*.012))

@@ -36,8 +36,9 @@ async function external(id){
  await fs.writeFile('/tmp/asset-'+id+'.rbxl',Buffer.from(await r.arrayBuffer()));
 }
 
-await download('/tmp/still-here-source.rbxl',177);
-await download('/tmp/still-here-rollback.rbxl',190);
+const releaseState=JSON.parse(await fs.readFile(new URL('./release-state.json',import.meta.url),'utf8'));
+await download('/tmp/still-here-source.rbxl',releaseState.templateVersion);
+await download('/tmp/still-here-rollback.rbxl',releaseState.rollbackVersion);
 for(const id of ['186677844','5326950832','88883160098456','17835285085','7208091524'])await external(id);
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
 const zip=Buffer.from(await binary.arrayBuffer());
@@ -56,7 +57,7 @@ let verify=await fs.readFile(new URL('./islands-verify.luau',import.meta.url),'u
 verify=verify.replace('return H:JSONEncode(', 'return H:JSONEncode(');
 let script=await fs.readFile(new URL('./islands-native-install.luau',import.meta.url),'utf8');
 script=script.replace('__FINALIZE__',finalize).replace('__VERIFY__',verify);
-const installed=await execute(script,187,input.path);console.log(JSON.stringify({nativePreflight:installed}));
+const installed=await execute(script,releaseState.preflightVersion,input.path);console.log(JSON.stringify({nativePreflight:installed}));
 let published;
 try{
  published=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-islands.rbxl')});

@@ -30,15 +30,16 @@ if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')
  assert(template and template:GetAttribute('SourceAsset')=='7208091524','Original black hole template missing')
  assert(SP.SkyBlackHoleClient.Enabled,'Sky renderer missing')
- local parts,beams=0,0
+ local parts,beams,bones=0,0,0
  for _,d in ipairs(template:GetDescendants()) do
   assert(not d:IsA('LuaSourceContainer') and not d:IsA('Sound') and not d:IsA('Terrain'),'Unsafe celestial data')
   if d:IsA('BasePart') then parts+=1;assert(d.Anchored and not d.CanCollide and not d.CanQuery,'Sky collider present') end
   if d:IsA('Beam') then beams+=1 end
+  if d:IsA('Bone') then bones+=1 end
  end
- assert(parts>50 and beams>10,'Incomplete original black hole')
+ assert(parts>50 and beams>10 and bones>=100,'Incomplete original black hole or debris rig')
  local probe=template:Clone();probe.WorldPivot=CFrame.lookAt(template:GetAttribute('SourceOrigin'),template:GetAttribute('SourceOrigin')+Vector3.new(1,0,0))
  probe:ScaleTo(math.clamp(450/template:GetAttribute('ReferenceDistance'),.12,.7));probe:PivotTo(CFrame.lookAt(Vector3.new(0,350,-450),Vector3.new(0,100,0)));probe:Destroy()
- blackHole={asset='7208091524',parts=parts,beams=beams,clientRenderer=true}
+ blackHole={asset='7208091524',parts=parts,beams=beams,bones=bones,clientRenderer=true}
 end
 return H:JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})
