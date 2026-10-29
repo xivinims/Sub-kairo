@@ -23,6 +23,7 @@ fps:GetService('ServerScriptService').Other.Parent=SSS
 for _,name in ipairs({'Debris','WeaponToolsRespawn','Dummies'}) do local o=fps:GetService('Workspace'):FindFirstChild(name);if o then o.Parent=W end end
 -- Retain the original dummy script but not the shooting range's dummy models.
 for _,c in ipairs(W.Dummies:GetChildren()) do c:Destroy() end
+for _,c in ipairs(W.WeaponToolsRespawn:GetChildren()) do c:Destroy() end
 transfer(fps:GetService('SoundService'),dm:GetService('SoundService'))
 transfer(fps:GetService('StarterPlayer').StarterPlayerScripts,SP.StarterPlayerScripts)
 transfer(fps:GetService('StarterPlayer').StarterCharacterScripts,SP.StarterCharacterScripts)

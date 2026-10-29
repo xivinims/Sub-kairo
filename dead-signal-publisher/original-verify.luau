@@ -18,4 +18,11 @@ assert(RS.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Hitscan and SS.Library.We
 assert(RS.SkyBlackHoleTemplate:GetAttribute('SourceAsset')=='7208091524','Black hole missing')
 -- Run the original config/door setup, not an imitation of the source controller.
 require(SSS.DoorManager).Init()
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,originalHUD=true,originalFPS=true})
+local fpsLoaded=false
+if game:GetService('RunService'):IsServer() then
+ local lib=require(RS.Library);local deadline=os.clock()+40
+ repeat task.wait(.1) until lib.Loaded or os.clock()>deadline
+ assert(lib.Loaded,'Original FPS server library initialization timed out')
+ assert(lib.WeaponsHandler.CreateWeapon,'Original weapon factory missing');fpsLoaded=true
+end
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
