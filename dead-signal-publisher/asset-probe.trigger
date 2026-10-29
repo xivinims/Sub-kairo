@@ -1,1 +1,1 @@
-islands-smoke177-v1
+islands-smoke-default-v1
