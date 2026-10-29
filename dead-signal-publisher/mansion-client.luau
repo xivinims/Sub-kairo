@@ -35,5 +35,9 @@ Run:BindToRenderStep('MansionWeightedCamera',Enum.RenderPriority.Camera.Value+1,
  if visitor then
   local head=visitor:FindFirstChild('Head');local neck=visitor:FindFirstChild('Neck',true)
   if neck and neck:IsA('Motor6D') then neck.Transform=CFrame.Angles(math.sin(t*.7)*.08,math.sin(t*.4)*.2,.1) end
+  local walking=visitor:GetAttribute('Walking');local stride=walking and math.sin(t*9)*.4 or 0
+  local left=visitor:FindFirstChild('LeftHip',true);local right=visitor:FindFirstChild('RightHip',true)
+  if left and left:IsA('Motor6D') then left.Transform=CFrame.Angles(stride,0,0) end
+  if right and right:IsA('Motor6D') then right.Transform=CFrame.Angles(-stride,0,0) end
  end
 end)

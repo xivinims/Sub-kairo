@@ -22,10 +22,10 @@ local function mount(part)
   other.Anchored=false;other.CanCollide=false;local weld=Instance.new('WeldConstraint');weld.Part0=part;weld.Part1=other;weld.Parent=part
  end end end
  local original=part.CFrame;local open,busy=false,false
- local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Abrir / fechar';prompt.ObjectText='Porta';prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=false;prompt.Parent=part
+ local prompt=Instance.new('ProximityPrompt');prompt.UIOffset=Vector2.new(0,-18);prompt.ActionText='Abrir / fechar';prompt.ObjectText='Porta';prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=false;prompt.Parent=part
  if part:GetAttribute('FrontEntrance') then
  frontDoor=part
- local record=Instance.new('ProximityPrompt');record.ActionText='Consultar registro';record.ObjectText='Antiga proprietária';record.KeyboardKeyCode=Enum.KeyCode.F;record.MaxActivationDistance=7;record.RequiresLineOfSight=false;record.Parent=part
+ local record=Instance.new('ProximityPrompt');record.UIOffset=Vector2.new(0,42);record.ActionText='Consultar registro';record.ObjectText='Antiga proprietária';record.KeyboardKeyCode=Enum.KeyCode.F;record.MaxActivationDistance=7;record.RequiresLineOfSight=false;record.Parent=part
  record.Triggered:Connect(function(p) local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if root and (root.Position-part.Position).Magnitude<10 then event:FireClient(p,'record') end end)
  end
  prompt.Triggered:Connect(function(p)
@@ -61,17 +61,25 @@ while true do
  local ground=workspace:Raycast(outside+Vector3.new(0,20,0),Vector3.new(0,-50,0),rp)
  local position=(ground and ground.Position or outside)+Vector3.new(0,rig.Humanoid.HipHeight+1,0)
  rig:PivotTo(CFrame.lookAt(position,Vector3.new(entrance.X,position.Y,entrance.Z)));rig.Parent=workspace;rig.HumanoidRootPart.Anchored=true
- for knock=1,3 do event:FireAllClients('knock',entrance);task.wait(.6) end
+ local shoulder=rig:FindFirstChild('RightShoulder',true);local rest=shoulder and shoulder.C0
+ if shoulder then local raise=Tween:Create(shoulder,TweenInfo.new(.7,Enum.EasingStyle.Sine),{C0=rest*CFrame.Angles(-1.8,0,.18)});raise:Play();raise.Completed:Wait() end
+ for knock=1,3 do
+  if shoulder then Tween:Create(shoulder,TweenInfo.new(.15),{C0=rest*CFrame.Angles(-2.05,0,.18)}):Play() end
+  task.wait(.15);event:FireAllClients('knock',entrance)
+  if shoulder then Tween:Create(shoulder,TweenInfo.new(.22),{C0=rest*CFrame.Angles(-1.8,0,.18)}):Play() end
+  task.wait(.45)
+ end
+ if shoulder then Tween:Create(shoulder,TweenInfo.new(.7,Enum.EasingStyle.Sine),{C0=rest}):Play() end
  event:FireAllClients('visitor',rig,'Oi, aqui é minha casa. O que vocês fazem aqui???')
  local start=os.clock()
  while rig.Parent and os.clock()-start<24 do
-  local root=rig.HumanoidRootPart
+  local root=rig.HumanoidRootPart;rig:SetAttribute('Walking',false)
   for _,p in ipairs(Players:GetPlayers()) do local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local hum=p.Character and p.Character:FindFirstChildOfClass('Humanoid')
    if r and hum and hum.Health>0 and not Chunks.Inside(r.Position) and (r.Position-root.Position).Magnitude<80 then
     local direction=Vector3.new(r.Position.X-root.Position.X,0,r.Position.Z-root.Position.Z)
     if direction.Magnitude>4 then
      local step=direction.Unit*1.8
-     local nextPos=root.Position+step;local floor=workspace:Raycast(nextPos+Vector3.new(0,20,0),Vector3.new(0,-55,0),rp);if floor and not workspace:Raycast(root.Position,step*2,rp) then nextPos=Vector3.new(nextPos.X,floor.Position.Y+rig.Humanoid.HipHeight+1,nextPos.Z);rig:PivotTo(CFrame.lookAt(nextPos,Vector3.new(r.Position.X,nextPos.Y,r.Position.Z))) end
+     local nextPos=root.Position+step;local floor=workspace:Raycast(nextPos+Vector3.new(0,20,0),Vector3.new(0,-55,0),rp);if floor and not workspace:Raycast(root.Position,step*2,rp) then nextPos=Vector3.new(nextPos.X,floor.Position.Y+rig.Humanoid.HipHeight+1,nextPos.Z);rig:SetAttribute('Walking',true);rig:PivotTo(CFrame.lookAt(nextPos,Vector3.new(r.Position.X,nextPos.Y,r.Position.Z))) end
     else hum:TakeDamage(6) end
    end
   end
