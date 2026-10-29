@@ -44,6 +44,7 @@ if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 const cwd=new URL('.',import.meta.url);
 const mode=process.argv[1].endsWith('asset-probe.mjs') ? await fs.readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8') : 'islands-release';
+if(mode.includes('light-audit')){execFileSync('/tmp/islands-lune/lune',['run','islands-light-audit.luau'],{cwd,stdio:'inherit'});process.exit(0);}
 if(mode.includes('smoke')){console.log(JSON.stringify({smoke:await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,stage=workspace:GetAttribute('IslandStageAsset')})",mode.includes('default')?undefined:(mode.includes('177')?177:180))}));process.exit(0);}
 if(mode.includes('release')){
  const checkpoints=JSON.parse(await fs.readFile(new URL('./islands-sources.json',import.meta.url),'utf8'));
