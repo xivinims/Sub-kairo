@@ -11,9 +11,22 @@ local islands=R.Instance.new('Folder');islands.Name='Islands';islands.Parent=W
 local destinations=R.Instance.new('Folder');destinations.Name='IslandDestinations';destinations.Parent=W
 local input={}
 for _,id in ipairs({'5326950832','88883160098456','186677844'}) do
- local staged=R.deserializePlace(fs.readFile('/tmp/captured-'..id..'.rbxl'))
+ local path='/tmp/captured-'..id..'.rbxl'
+ if not fs.isFile(path) then path='/tmp/stage-'..id..'.rbxl' end
+ local staged=R.deserializePlace(fs.readFile(path))
  local sw=staged:GetService('Workspace');local meta=serde.decode('json',sw:GetAttribute('IslandStageMeta'));assert(meta.id==id,'Wrong captured source version')
- input[id]={dm=staged,meta=meta,geo=staged:GetService('ServerStorage').SourceGeometry,region=staged:GetService('ServerStorage').IslandTerrainRegion}
+ local storage=staged:GetService('ServerStorage')
+ local region=storage:FindFirstChild('IslandTerrainRegion')
+ if not region then
+  local raw=assert(storage:FindFirstChild('RawSourceTerrain'),'Raw terrain missing')
+  region=R.Instance.new('Folder');region.Name='IslandTerrainRegion'
+  raw.Name='Tile_0';raw:SetAttribute('SourceCornerCells',V.new(raw.ExtentsMin.X,raw.ExtentsMin.Y,raw.ExtentsMin.Z));raw.Parent=region
+  meta.corner={raw.ExtentsMin.X,raw.ExtentsMin.Y,raw.ExtentsMin.Z}
+  meta.cells={raw.ExtentsMax.X-raw.ExtentsMin.X+1,raw.ExtentsMax.Y-raw.ExtentsMin.Y+1,raw.ExtentsMax.Z-raw.ExtentsMin.Z+1}
+  meta.spawn=meta.preferred[1] or {(meta.lo[1]+meta.hi[1])/2,0,(meta.lo[3]+meta.hi[3])/2}
+ end
+ input[id]={dm=staged,meta=meta,geo=storage.SourceGeometry,region=region}
+
 end
 local widthCurrent=input['88883160098456'].meta.hi[1]-input['88883160098456'].meta.lo[1]
 local defs={{id='forestCurrent',asset='88883160098456',name='Floresta (atual)',center=0},{id='forest1',asset='5326950832',name='Floresta (1)'},{id='city',asset='186677844',name='Cidade'}}
@@ -98,6 +111,12 @@ install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
+local initSource=fs.readFile('islands-finalize.luau')
+initSource=initSource:sub(1,assert(initSource:find("game:GetService('AssetService'):SavePlaceAsync",1,true))-1)
+initSource="if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
+luau.load(initSource,{debugName='IslandInitializer'})
+local initializer=R.Instance.new('Script');initializer.Name='IslandInitializer';initializer.Source=initSource;initializer.Disabled=false;initializer.Parent=runtime
+dm:GetService('Players').CharacterAutoLoads=false
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')

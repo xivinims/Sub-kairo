@@ -10,6 +10,13 @@ local function load(id,x,z)
  if not source or not parent then return end
  local name='Cell_'..x..'_'..z
  local template=source:FindFirstChild(name);if not template then return end
+ if id~='city' then
+  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain};rp.IgnoreWater=true
+  local hit=workspace:Raycast(Vector3.new((x+.5)*128,2400,(z+.5)*128),Vector3.new(0,-4800,0),rp)
+  if hit then
+   workspace.Terrain:ReplaceMaterial(Region3.new(Vector3.new(x*128,hit.Position.Y-96,z*128),Vector3.new((x+1)*128,hit.Position.Y+96,(z+1)*128)):ExpandToGrid(4),4,Enum.Material.LeafyGrass,Enum.Material.Grass)
+  end
+ end
  local clone=parent:FindFirstChild(name)
  if not clone then clone=template:Clone();clone.Parent=parent end
  loaded[key]=clone

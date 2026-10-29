@@ -1,1 +1,1 @@
-islands-stage-passive-v7
+islands-direct-release-v1

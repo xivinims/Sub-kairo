@@ -10,10 +10,7 @@ for _,meta in ipairs(manifest) do
  for _,tile in ipairs(region:GetChildren()) do
   local c=tile:GetAttribute('SourceCornerCells')+offset
   T:PasteRegion(tile,Vector3int16.new(c.X,c.Y,c.Z),true)
-  if meta.id~='city' then
-   local minPoint=c*4;local maxPoint=minPoint+tile.SizeInCells*4
-   T:ReplaceMaterial(Region3.new(minPoint,maxPoint):ExpandToGrid(4),4,Enum.Material.LeafyGrass,Enum.Material.Grass)
-  end
+
  end
  local min=Vector3.new(meta.corner[1]*4,meta.corner[2]*4,meta.corner[3]*4)
  local max=min+Vector3.new(unpack(meta.cells))*4
@@ -34,14 +31,19 @@ for _,meta in ipairs(manifest) do
  local spawn=destinations[meta.id];local source=W.Islands[meta.id]
  local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={T,source};params.IgnoreWater=true
  local hit=W:Raycast(spawn.Position+Vector3.new(0,3,0),Vector3.new(0,-24,0),params)
+ if not hit or hit.Normal.Y<.7 then
+  local tp=RaycastParams.new();tp.FilterType=Enum.RaycastFilterType.Include;tp.FilterDescendantsInstances={T};tp.IgnoreWater=true
+  hit=W:Raycast(Vector3.new(spawn.Position.X,meta.hi[2]+64,spawn.Position.Z),Vector3.new(0,meta.lo[2]-meta.hi[2]-200,0),tp)
+ end
  assert(hit and hit.Normal.Y>.7,'Invalid arrival floor for '..meta.id)
  spawn.CFrame=CFrame.lookAt(hit.Position+Vector3.new(0,.15,0),hit.Position+Vector3.new(0,.15,-10))
  local altar=source:FindFirstChild('ArrivalAltar')
  if altar then
   -- Use the existing altar's actual floor, not a guessed platform height.
+  local before,sizeBefore=altar:GetBoundingBox();altar:PivotTo(altar:GetPivot()+Vector3.new(0,hit.Position.Y-.35-(before.Y-sizeBefore.Y/2),0))
   local p=RaycastParams.new();p.FilterType=Enum.RaycastFilterType.Include;p.FilterDescendantsInstances={altar}
   local cf,size=altar:GetBoundingBox()
-  local floor=W:Raycast(spawn.Position+Vector3.new(0,.7,0),Vector3.new(0,-12,0),p)
+  local floor=W:Raycast(spawn.Position+Vector3.new(0,8,0),Vector3.new(0,-16,0),p)
   assert(floor,'Altar floor missing');spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,.15,0),floor.Position+Vector3.new(0,.15,-10))
   local removed=0
   local clearList=source:GetDescendants()
