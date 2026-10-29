@@ -37,8 +37,8 @@ end end
 local sourceTerrain=assert(W:FindFirstChildOfClass('Terrain'),'Source terrain missing'):Clone()
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-source.rbxl'))
 W=dm:GetService('Workspace')
-for _,c in ipairs(W:GetChildren()) do c:Destroy() end
-sourceTerrain.Parent=W
+local targetTerrain=W:FindFirstChildOfClass('Terrain')
+for _,c in ipairs(W:GetChildren()) do if c~=targetTerrain then c:Destroy() end end
 -- Strip every service, source GUI and script outside the selected static geometry.
 for _,name in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService'}) do
  local service=dm:GetService(name);for _,c in ipairs(service:GetChildren()) do c:Destroy() end
@@ -48,6 +48,12 @@ for _,c in ipairs(SP:GetChildren()) do
  if c.Name=='StarterPlayerScripts' or c.Name=='StarterCharacterScripts' then for _,d in ipairs(c:GetChildren()) do d:Destroy() end else c:Destroy() end
 end
 local all=dm:GetDescendants();for i=#all,1,-1 do local d=all[i];if d:IsA('LuaSourceContainer') or d:IsA('Sound') then d:Destroy() end end
+local raw=R.Instance.new('TerrainRegion');raw.Name='RawSourceTerrain'
+raw.SmoothGrid=sourceTerrain.SmoothGrid
+raw.ExtentsMin=R.Vector3int16.new(math.floor((lo.X-64)/4),math.floor((lo.Y-64)/4),math.floor((lo.Z-64)/4))
+raw.ExtentsMax=R.Vector3int16.new(math.ceil((hi.X+64)/4),math.ceil((hi.Y+32)/4),math.ceil((hi.Z+64)/4))
+raw.Parent=dm:GetService('ServerStorage')
+print('PASSIVE TERRAIN REGION: '..#sourceTerrain.SmoothGrid..' bytes')
 geo.Parent=dm:GetService('ServerStorage')
 local terrain=assert(W:FindFirstChildOfClass('Terrain'),'Source terrain missing');terrain.Decoration=true;terrain.GrassLength=.85
 W:SetAttribute('IslandStageAsset',id)

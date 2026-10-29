@@ -10,6 +10,9 @@ end
 local low,high=Vector3.new(unpack(meta.lo)),Vector3.new(unpack(meta.hi))
 local min=Vector3int16.new(math.floor((low.X-64)/4),math.floor((low.Y-64)/4),math.floor((low.Z-64)/4))
 local max=Vector3int16.new(math.ceil((high.X+64)/4),math.ceil((high.Y+32)/4),math.ceil((high.Z+64)/4))
+local raw=game:GetService('ServerStorage').RawSourceTerrain
+T:Clear();T:PasteRegion(raw,min,true);raw:Destroy()
+print('SOURCE TERRAIN PASTED',T:CountCells())
 local regions=Instance.new('Folder');regions.Name='IslandTerrainRegion';regions.Parent=game:GetService('ServerStorage')
 local scan=RaycastParams.new();scan.FilterType=Enum.RaycastFilterType.Include;scan.FilterDescendantsInstances={T}
 local tiles=0
