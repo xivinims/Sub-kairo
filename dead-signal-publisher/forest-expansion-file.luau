@@ -26,7 +26,9 @@ end
 local altarSource=R.deserializeModel(fs.readFile('/tmp/asset-76722373571113.rbxl'))[1]
 assert(altarSource,'Altar model missing')
 -- Discard the 3D text meshes, imported emitters and stock spawn decorations.
-for _,d in ipairs(altarSource:GetDescendants()) do if d.Name=='ThreeDTextObject' then d:Destroy() end end
+local textModels={}
+for _,d in ipairs(altarSource:GetDescendants()) do if d.Name=='ThreeDTextObject' then table.insert(textModels,d) end end
+for _,d in ipairs(textModels) do d:Destroy() end
 local sourceSpawn=altarSource:FindFirstChildWhichIsA('SpawnLocation',true)
 assert(sourceSpawn,'Altar spawn missing')
 local altar,n=Safe.Parts(altarSource,'76722373571113',24);altar.Name='AltarSpawn';altar.Parent=expansion

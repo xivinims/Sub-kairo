@@ -11,7 +11,8 @@ function SafeAssetImporter.Parts(root,id,limit)
  for _,p in ipairs(list) do
   if p:IsA('BasePart') and not p:IsA('SpawnLocation') and p.Transparency<1 then
    local c=p:Clone()
-   for _,d in ipairs(c:GetDescendants()) do if not visual[d.ClassName] then d:Destroy() end end
+   local descendants=c:GetDescendants()
+   for i=#descendants,1,-1 do local d=descendants[i];if not visual[d.ClassName] then d:Destroy() end end
    c.Anchored=true;c.CanTouch=false
    c.Parent=out;n+=1
   end
