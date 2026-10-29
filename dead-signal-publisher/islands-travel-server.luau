@@ -11,6 +11,7 @@ local function arrival(id)
  return spawn and spawn:IsA('SpawnLocation') and spawn.Enabled and spawn or nil
 end
 local function travel(p,id,reply)
+ if workspace:GetAttribute('IslandWorldReady')~=true then if reply then remote:FireClient(p,false,'O mundo ainda está carregando.') end;return end
  if not valid[id] or busy[p] then return end
  if reply and os.clock()-(last[p] or -10)<2 then remote:FireClient(p,false,'Aguarda um instante.');return end
  local spawn=arrival(id);local char=p.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
@@ -35,7 +36,12 @@ local function added(p)
  p:SetAttribute('IslandDestination','forestCurrent');p.RespawnLocation=assert(arrival('forestCurrent'),'Default spawn unavailable')
  p.CharacterAdded:Connect(function(char)
   local root=char:WaitForChild('HumanoidRootPart',15)
-  if root then task.defer(travel,p,p:GetAttribute('IslandDestination') or 'forestCurrent',false) end
+  if root then
+   root.Anchored=true
+   while char.Parent and workspace:GetAttribute('IslandWorldReady')~=true and not workspace:GetAttribute('IslandWorldError') do task.wait(.25) end
+   if root.Parent then root.Anchored=false end
+   if p.Character==char then task.defer(travel,p,p:GetAttribute('IslandDestination') or 'forestCurrent',true) end
+  end
  end)
  if p.Character then task.defer(travel,p,'forestCurrent',false) end
 end

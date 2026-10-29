@@ -6,6 +6,8 @@ end
 local old=p.PlayerGui:FindFirstChild('IslandMap');if old then old:Destroy() end
 local gui=make('ScreenGui',{Name='IslandMap',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=30,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},p.PlayerGui)
 local icon=make('TextButton',{Name='MapButton',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-16,0,12),Size=UDim2.fromOffset(52,52),Text='🗺️',TextSize=29,Font=Enum.Font.Gotham,BackgroundColor3=Color3.fromRGB(24,31,25),BackgroundTransparency=.18,TextColor3=Color3.new(1,1,1),AutoButtonColor=true},gui)
+icon.Visible=workspace:GetAttribute('IslandWorldReady')==true
+workspace:GetAttributeChangedSignal('IslandWorldReady'):Connect(function() icon.Visible=workspace:GetAttribute('IslandWorldReady')==true end)
 make('UICorner',{CornerRadius=UDim.new(0,15)},icon);make('UIStroke',{Color=Color3.fromRGB(176,189,155),Transparency=.5},icon)
 local panel=make('Frame',{Name='Destinations',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-16,0,74),Size=UDim2.fromOffset(258,246),BackgroundColor3=Color3.fromRGB(20,28,23),BackgroundTransparency=.08,Visible=false},gui)
 make('UICorner',{CornerRadius=UDim.new(0,14)},panel);make('UIStroke',{Color=Color3.fromRGB(175,187,153),Transparency=.55},panel)

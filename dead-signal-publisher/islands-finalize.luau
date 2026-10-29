@@ -9,9 +9,10 @@ for _,meta in ipairs(manifest) do
  local offset=Vector3.new(unpack(meta.offset))/4
  for _,tile in ipairs(region:GetChildren()) do
   local c=tile:GetAttribute('SourceCornerCells')+offset
-  T:PasteRegion(tile,Vector3int16.new(c.X,c.Y,c.Z),true)
+  T:PasteRegion(tile,Vector3int16.new(c.X,c.Y,c.Z),false)
 
  end
+ task.wait()
  local min=Vector3.new(meta.corner[1]*4,meta.corner[2]*4,meta.corner[3]*4)
  local max=min+Vector3.new(unpack(meta.cells))*4
  -- Ocean surrounds each independent landmass, not the entire world.

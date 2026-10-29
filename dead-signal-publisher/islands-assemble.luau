@@ -21,6 +21,7 @@ for _,id in ipairs({'5326950832','88883160098456','186677844'}) do
   local raw=assert(storage:FindFirstChild('RawSourceTerrain'),'Raw terrain missing')
   region=R.Instance.new('Folder');region.Name='IslandTerrainRegion'
   raw.Name='Tile_0';raw:SetAttribute('SourceCornerCells',V.new(raw.ExtentsMin.X,raw.ExtentsMin.Y,raw.ExtentsMin.Z));raw.Parent=region
+  if #raw.SmoothGrid<=2 then raw.Parent=nil end
   meta.corner={raw.ExtentsMin.X,raw.ExtentsMin.Y,raw.ExtentsMin.Z}
   meta.cells={raw.ExtentsMax.X-raw.ExtentsMin.X+1,raw.ExtentsMax.Y-raw.ExtentsMin.Y+1,raw.ExtentsMax.Z-raw.ExtentsMin.Z+1}
   meta.spawn=meta.preferred[1] or {(meta.lo[1]+meta.hi[1])/2,0,(meta.lo[3]+meta.hi[3])/2}
@@ -113,10 +114,10 @@ remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
 local initSource=fs.readFile('islands-finalize.luau')
 initSource=initSource:sub(1,assert(initSource:find("game:GetService('AssetService'):SavePlaceAsync",1,true))-1)
-initSource="if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
+initSource="if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\ntask.wait(.25)\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
 luau.load(initSource,{debugName='IslandInitializer'})
 local initializer=R.Instance.new('Script');initializer.Name='IslandInitializer';initializer.Source=initSource;initializer.Disabled=false;initializer.Parent=runtime
-dm:GetService('Players').CharacterAutoLoads=false
+dm:GetService('Players').CharacterAutoLoads=true
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')

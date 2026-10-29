@@ -1,1 +1,1 @@
-islands-direct-release-v1
+islands-direct-release-v2

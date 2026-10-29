@@ -2,6 +2,7 @@ local Players=game:GetService('Players')
 local Tween=game:GetService('TweenService')
 local Debris=game:GetService('Debris')
 local function pulse(char)
+ if workspace:GetAttribute("IslandWorldReady")==false then return end
  local hrp=char:WaitForChild('HumanoidRootPart',10);if not hrp then return end
  task.wait(.2)
  local cam=workspace.CurrentCamera
