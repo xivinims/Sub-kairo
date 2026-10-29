@@ -16,7 +16,7 @@ for _,id in ipairs({'15864801103','14817965191','13037825880','9426919197'}) do
    table.insert(result.objects,{path=d:GetFullName(),class=d.ClassName,count=#d:GetDescendants(),children=names})
   end
  end
- local L=dm:GetService('Lighting');result.lighting={clock=L.ClockTime,brightness=L.Brightness,exposure=L.ExposureCompensation,ambient=tostring(L.Ambient),outdoor=tostring(L.OutdoorAmbient)}
+ local L=dm:GetService('Lighting');result.lighting={clock=get(L,'ClockTime'),time=get(L,'TimeOfDay'),brightness=get(L,'Brightness'),exposure=get(L,'ExposureCompensation'),ambient=get(L,'Ambient'),outdoor=get(L,'OutdoorAmbient')}
  print('WEAPON HORROR AUDIT '..J.encode('json',result))
  end
 end
