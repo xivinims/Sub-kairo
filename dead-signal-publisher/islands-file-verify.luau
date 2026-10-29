@@ -25,8 +25,8 @@ if W:GetAttribute('BlackHoleAsset') then
 end
 assert(W.StreamingTargetRadius==W:GetAttribute('IslandStreamingTarget'),'Streaming metadata differs from file')
 
-assert(W:GetAttribute('IslandAtmosphereRevision')=='storm-dusk-v1','Atmosphere missing')
-assert(dm:GetService('Lighting').ClockTime>17.5,'Dusk not applied')
+assert(W:GetAttribute('IslandAtmosphereRevision')=='storm-night-v2','Atmosphere missing')
+assert(dm:GetService('Lighting').ClockTime>=20,'Dusk not applied')
 assert(SP.ForestWindClient.Source==fs.readFile('forest-wind-client.luau'),'Wind mismatch')
 assert(SP.ForestWeatherClient.Source==fs.readFile('forest-weather-client.luau'),'Weather mismatch')
 assert(dm:GetService('ServerScriptService').AtriumRuntime.ForestWeatherServer.Source==fs.readFile('forest-weather-server.luau'),'Weather server mismatch')
@@ -37,3 +37,20 @@ for _,d in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog:GetDescen
 end
 assert(wind>100,'Canopy wind classification failed')
 print('ATMOSPHERE VERIFIED: dusk, persistent overcast, wind parts='..wind..', original lights='..lights)
+
+assert(dm:GetService('ReplicatedFirst').IslandLoadingClient.Source==fs.readFile('islands-loading-client.luau'),'Loading client mismatch')
+
+local groups={};local doorParts=0
+for _,p in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog.city:GetDescendants()) do
+ if p:IsA('BasePart') and p:GetAttribute('IslandDoorId') then
+  local id=p:GetAttribute('IslandDoorId');local pivot=p:GetAttribute('IslandDoorPivot')
+  assert(typeof(pivot)=='CFrame','Door pivot missing')
+  if groups[id] then assert(groups[id].cell==p.Parent and groups[id].pivot==pivot,'Split/inconsistent door group')
+  else groups[id]={cell=p.Parent,pivot=pivot} end
+  doorParts+=1
+ end
+end
+local doorCount=0;for _ in pairs(groups) do doorCount+=1 end
+assert(doorCount>=20 and doorParts>100,'Interactive doors were not extracted')
+assert(dm:GetService('ServerScriptService').AtriumRuntime.IslandDoors.Source==fs.readFile('islands-doors-server.luau'),'Door controller mismatch')
+print('DOORS/LOADING VERIFIED: groups='..doorCount..', parts='..doorParts..', early readiness overlay, closer sky renderer')

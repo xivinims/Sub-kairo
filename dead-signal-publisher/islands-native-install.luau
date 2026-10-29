@@ -24,6 +24,7 @@ local runtime=bundle.IslandRuntime;runtime.Name='AtriumRuntime'
 local initializer=runtime:FindFirstChild('IslandInitializer');if initializer then initializer:Destroy() end
 runtime.Parent=SSS
 for _,c in ipairs(bundle.IslandClients:GetChildren()) do c.Parent=SP end
+local early=bundle:FindFirstChild('IslandEarlyClients');if early then for _,c in ipairs(early:GetChildren()) do c.Parent=game:GetService('ReplicatedFirst') end end
 local L=game:GetService('Lighting');for _,c in ipairs(L:GetChildren()) do c:Destroy() end
 for _,c in ipairs(bundle.IslandLighting:GetChildren()) do c.Parent=L end
 bundle:Destroy()

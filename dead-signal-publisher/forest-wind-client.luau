@@ -5,12 +5,13 @@ local UIS=game:GetService("UserInputService")
 local Shake=require(script.WindShake)
 local Lines=require(script.WindLines)
 while not W.CurrentCamera do W:GetPropertyChangedSignal("CurrentCamera"):Wait() end
-Shake:SetDefaultSettings({WindDirection=Vector3.new(1,0,.3),WindSpeed=10,WindPower=.28})
+Shake:SetDefaultSettings({WindDirection=Vector3.new(1,0,.3),WindSpeed=10,WindPower=1.4})
 Shake:Init()
-Lines:Init({Direction=Vector3.new(1,0,.3),Speed=9,Lifetime=1.4,SpawnRate=UIS.TouchEnabled and 1.5 or 3})
+Lines:Init({Direction=Vector3.new(1,0,.3),Speed=9,Lifetime=1.4,SpawnRate=UIS.TouchEnabled and 4 or 7})
 local function mount(p)
  if not p:IsA("BasePart") or p.Name=="TreeCollisionTrunk" then return end
- if p:GetAttribute("IslandWind") then Shake:AddObjectShake(p,{WindPower=.28});return end
+ if p:GetAttribute("IslandWind") then Shake:AddObjectShake(p,{WindPower=1.4});return end
+ if Shake.ObjectMetadata[p] then return end
  local model=p.Parent
  if not model or not model:IsA("Model") then return end
  local tree=model:GetAttribute("ForestSpecies")~=nil
@@ -42,3 +43,12 @@ local function windChanged()
 end
 W:GetPropertyChangedSignal("GlobalWind"):Connect(windChanged)
 windChanged()
+
+-- Streaming can deliver attributes after the part. Retry registration without duplicates.
+task.spawn(function() while task.wait(5) do
+ local camera=W.CurrentCamera
+ if camera then for _,p in ipairs(W:GetDescendants()) do
+  if p:IsA('BasePart') and p:GetAttribute('IslandWind') and not Shake.ObjectMetadata[p] then mount(p) end
+ end end
+ W:SetAttribute('WindActiveLocal',Shake.Active);W:SetAttribute('WindRegisteredLocal',Shake.Handled)
+end end)

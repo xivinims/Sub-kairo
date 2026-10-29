@@ -10,7 +10,7 @@ task.spawn(function()
   local storm=Workspace:GetAttribute("ForestWeather")=="Storm"
   local t=Workspace:GetServerTimeNow()
   local gust=math.sin(t/13)*2.2+math.noise(t/18,0,2)*1.8
-  local base=storm and 12 or 7
+  local base=storm and 17 or 12
   Workspace.GlobalWind=Vector3.new(base+gust,0,1.1+math.cos(t/17)*1.6)
  end
 end)

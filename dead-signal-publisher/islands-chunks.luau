@@ -1,7 +1,7 @@
 local Players=game:GetService('Players')
 local catalog=game:GetService('ServerStorage'):WaitForChild('IslandGeometryCatalog')
 local world=workspace:WaitForChild('Islands')
-local M={};local loaded={};local started=false
+local M={};local loaded={};local started=false;local converted={}
 local function cellKey(id,x,z) return id..':'..x..':'..z end
 local function load(id,x,z)
  local key=cellKey(id,x,z);local existing=loaded[key]
@@ -10,7 +10,8 @@ local function load(id,x,z)
  if not source or not parent then return end
  local name='Cell_'..x..'_'..z
  local template=source:FindFirstChild(name);if not template then return end
- if id~='city' then
+ if id~='city' and not converted[key] then
+  converted[key]=true
   local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain};rp.IgnoreWater=true
   local hit=workspace:Raycast(Vector3.new((x+.5)*128,2400,(z+.5)*128),Vector3.new(0,-4800,0),rp)
   if hit then
@@ -24,7 +25,7 @@ end
 function M.Warm(id,position,radius)
  local span=math.ceil((radius or 128)/128)
  local x,z=math.floor(position.X/128),math.floor(position.Z/128)
- for dx=-span,span do for dz=-span,span do load(id,x+dx,z+dz) end end
+ for dx=-span,span do for dz=-span,span do load(id,x+dx,z+dz);task.wait() end end
 end
 local function addDesired(desired,id,pos,radius)
  local x,z=math.floor(pos.X/128),math.floor(pos.Z/128);local span=math.ceil(radius/128)

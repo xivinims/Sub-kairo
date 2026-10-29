@@ -7,10 +7,31 @@ function SafeAssetImporter.Parts(root,id,limit,predicate)
  assert(approved[id],'Unapproved source')
  local out=R.Instance.new('Model');out.Name=root.Name
  local list=root:IsA('BasePart') and {root} or root:GetDescendants()
- local n=0
+ local n=0;local doorIds={};local doorCount=0;local helpers=0
+ local function doorRoot(p)
+  local a=p.Parent
+  while a and a~=root.Parent do
+   if a:IsA('Model') and a:FindFirstChild('middle') and a:FindFirstChild('Hinges') and a:FindFirstChild('Weld (Read)') then return a end
+   a=a.Parent
+  end
+ end
  for _,p in ipairs(list) do
   if p:IsA('BasePart') and not p:IsA('Terrain') and not p:IsA('SpawnLocation') and p.Transparency<1 and (not predicate or predicate(p)) then
+   local helper=false
+   for _,child in ipairs(p:GetChildren()) do
+    if child:IsA('Script') and child.Source:gsub('%s','')=='script.Parent.Transparency=1script.Parent.CanCollide=false' then helper=true end
+   end
+   local door= id=='186677844' and doorRoot(p) or nil
+   if door and p:IsDescendantOf(door.Hinges) then helper=true end
+   if helper then helpers+=1;continue end
    local c=p:Clone()
+   if door then
+    if not doorIds[door] then doorCount+=1;doorIds[door]=doorCount end
+    local hinge=door.Hinges:FindFirstChildWhichIsA('BasePart',true)
+    assert(hinge and door.middle:IsA('BasePart'),'Malformed source door')
+    c:SetAttribute('IslandDoorId',doorIds[door])
+    c:SetAttribute('IslandDoorPivot',R.CFrame.new(hinge.Position.X,door.middle.Position.Y,hinge.Position.Z)*door.middle.CFrame.Rotation)
+   end
    local descendants=c:GetDescendants()
    for i=#descendants,1,-1 do local d=descendants[i];if not visual[d.ClassName] then d:Destroy() end end
    -- Inspect original ancestry before flattening it: many canopy meshes have generic names.
@@ -32,6 +53,7 @@ function SafeAssetImporter.Parts(root,id,limit,predicate)
  assert(n>0 and n<=limit,'Geometry budget exceeded: '..n)
  out:SetAttribute('DeadSignalSourceAssetId',id);out:SetAttribute('DeadSignalGeometryOnly',true)
  for _,d in ipairs(out:GetDescendants()) do assert(not d:IsA('LuaSourceContainer'),'Unsafe geometry') end
+ print('SAFE IMPORT '..id..': doorGroups='..doorCount..', removedHelpers='..helpers)
  return out,n
 end
 return SafeAssetImporter

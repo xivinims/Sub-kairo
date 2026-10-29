@@ -47,7 +47,8 @@ for _,def in ipairs(defs) do
   local windName=string.lower(p.Name)
   if windName:find('leaf',1,true) or windName:find('leav',1,true) or windName:find('foliage',1,true) or windName:find('fern',1,true) then p:SetAttribute('IslandWind',true);p.CanCollide=false end
   p.CFrame=p.CFrame+offset
-  local pos=p.CFrame.Position;local key=math.floor(pos.X/128)..'_'..math.floor(pos.Z/128)
+  local doorPivot=p:GetAttribute('IslandDoorPivot');if doorPivot then p:SetAttribute('IslandDoorPivot',doorPivot+offset) end
+  local pos=doorPivot and (doorPivot.Position+offset) or p.CFrame.Position;local key=math.floor(pos.X/128)..'_'..math.floor(pos.Z/128)
   local bucket=chunks[key]
   if not bucket then bucket=R.Instance.new('Model');bucket.Name='Cell_'..key;bucket.Parent=library;chunks[key]=bucket end
   if math.max(p.Size.X,p.Size.Z)>192 then p.Parent=backdrops else p.Parent=bucket end;parts+=1
@@ -96,14 +97,32 @@ for class,source in pairs(selected) do
 end
 assert(#applied>0,'No usable lighting data in provided pack')
 -- Stormy dusk, readable ground and cool aerial perspective, never a black fog wall.
-L.ClockTime=18.1;L.Brightness=1.6;L.ExposureCompensation=-.25
-L.Ambient=R.Color3.fromRGB(69,80,101);L.OutdoorAmbient=R.Color3.fromRGB(104,119,143)
+L.ClockTime=20;L.Brightness=1.15;L.ExposureCompensation=-.45
+L.Ambient=R.Color3.fromRGB(48,59,80);L.OutdoorAmbient=R.Color3.fromRGB(76,91,119)
 local atmosphere=L:FindFirstChild('ForestAerialPerspective') or R.Instance.new('Atmosphere')
 atmosphere.Name='ForestAerialPerspective';atmosphere.Density=.29;atmosphere.Haze=1.8;atmosphere.Glare=.08
 atmosphere.Color=R.Color3.fromRGB(185,198,214);atmosphere.Decay=R.Color3.fromRGB(138,156,181);atmosphere.Parent=L
 local clouds=W.Terrain:FindFirstChildOfClass('Clouds') or R.Instance.new('Clouds')
 clouds.Name='WoodlandCloudDeck';clouds.Cover=.86;clouds.Density=.88;clouds.Color=R.Color3.fromRGB(111,123,143);clouds.Parent=W.Terrain
-W.GlobalWind=V.new(7,0,2);W:SetAttribute('ForestWeather','Overcast');W:SetAttribute('IslandAtmosphereRevision','storm-dusk-v1')
+local grade=L:FindFirstChild('ForestGoldenGrade') or R.Instance.new('ColorCorrectionEffect')
+grade.Name='ForestGoldenGrade';grade.Contrast=.16;grade.Saturation=-.14;grade.TintColor=R.Color3.fromRGB(204,220,245);grade.Parent=L
+for _,effect in ipairs(L:GetChildren()) do
+ if effect:IsA('BloomEffect') then effect.Intensity=.28;effect.Threshold=1.15;effect.Size=28 end
+ if effect:IsA('SunRaysEffect') then effect.Intensity=.025 end
+end
+L.EnvironmentDiffuseScale=.65;L.EnvironmentSpecularScale=1
+local citySource=R.deserializePlace(fs.readFile('/tmp/asset-186677844.rbxl'))
+local night=citySource:GetService('Workspace'):FindFirstChild('nightsky')
+local sky=L:FindFirstChildOfClass('Sky')
+if night and sky then
+ for i,key in ipairs({'SkyboxBk','SkyboxDn','SkyboxFt','SkyboxLf','SkyboxRt','SkyboxUp'}) do
+  local face=night:FindFirstChild(tostring(i))
+  if face then local ok,texture=pcall(function() return face.Texture end);if ok and type(texture)=='string' and #texture>0 then sky[key]=texture end end
+ end
+ sky.CelestialBodiesShown=true;sky.StarCount=1200;sky.MoonAngularSize=11
+end
+
+W.GlobalWind=V.new(12,0,4);W:SetAttribute('ForestWeather','Overcast');W:SetAttribute('IslandAtmosphereRevision','storm-night-v2')
 
 print('LIGHTING AUDIT '..serde.encode('json',{counts=lightingCounts,applied=applied}))
 local SSS=dm:GetService('ServerScriptService');local runtime=SSS.AtriumRuntime
@@ -115,12 +134,14 @@ local function install(parent,name,class,file)
 end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
+install(runtime,'IslandDoors','Script','islands-doors-server.luau')
 install(runtime,'IslandTravelServer','Script','islands-travel-server.luau')
 install(SP,'IslandTravelClient','LocalScript','islands-travel-client.luau')
 install(SP,'ForestSpawnClient','LocalScript','forest-spawn-client.luau')
 -- Retain already audited nested wind modules while updating its bootstrap only.
 luau.load(fs.readFile('forest-wind-client.luau'),{debugName='forest-wind-client'});SP.ForestWindClient.Source=fs.readFile('forest-wind-client.luau')
 install(runtime,'ForestWeatherServer','Script','forest-weather-server.luau')
+install(dm:GetService('ReplicatedFirst'),'IslandLoadingClient','LocalScript','islands-loading-client.luau')
 install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
@@ -152,6 +173,8 @@ for _,c in ipairs(RS:GetChildren()) do if c.Name~='IslandTravel' then c.Parent=r
 runtime.Name='IslandRuntime';runtime.Parent=bundle
 local clientBundle=R.Instance.new('Folder');clientBundle.Name='IslandClients';clientBundle.Parent=bundle
 for _,c in ipairs(SP:GetChildren()) do c.Parent=clientBundle end
+local early=R.Instance.new('Folder');early.Name='IslandEarlyClients';early.Parent=bundle
+for _,c in ipairs(dm:GetService('ReplicatedFirst'):GetChildren()) do c.Parent=early end
 local lightBundle=R.Instance.new('Folder');lightBundle.Name='IslandLighting';lightBundle.Parent=bundle
 for _,c in ipairs(L:GetChildren()) do c.Parent=lightBundle end
 for _,d in ipairs(bundle:GetDescendants()) do assert(not d:IsA('Terrain'),'Nested Terrain in bundle') end

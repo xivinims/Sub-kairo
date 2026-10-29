@@ -25,6 +25,8 @@ assert(game:GetService('ReplicatedStorage').IslandTravel:IsA('RemoteEvent'),'Tra
 assert((W:GetAttribute('IslandStreamingTarget') or 192)<=192,'Streaming metadata changed')
 assert(game:GetService('Lighting'):FindFirstChildOfClass('BloomEffect'),'Bloom missing')
 assert(#game:GetService('StarterGui'):GetChildren()==0,'Old menu remains')
+assert(game:GetService('ReplicatedFirst').IslandLoadingClient.Enabled,'Early loading missing')
+assert(game:GetService('ServerScriptService').AtriumRuntime.IslandDoors.Enabled,'Door runtime missing')
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')
