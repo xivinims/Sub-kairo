@@ -67,3 +67,7 @@ Native post effects now use bloom 0.45/threshold 0.95/size 36, stronger weather-
 ### Sea and resident identities — version 197
 
 Run 40882837028 published PlaceVersion 197, constructed and validated all six catalog-dressed R15 appearances in the published-version engine, checked dry ground and avatar clearance with the same placement function used at runtime, asserted city native Water by raycast, downloaded and verified the exact file, and restarted old servers. Resident identities, catalog IDs, behavior and limitations are documented in [RESIDENTS.md](RESIDENTS.md). This verifies appearance construction and placement, not a rendered client walkthrough or frame rate.
+
+### Reserved disaster sessions — version 201
+
+Run 40885713028 published and verified PlaceVersion 201, downloaded and checked the exact file, and restarted old servers. Public Workspace has no maps; geometry and arrivals are held in ServerStorage.MatchWorld until reserved match initialization. Menu supports solo, private groups up to six and a virtual-credit inventory shop. Five disaster modes, NPC escorts/roof seeking, travel lockdown, controlled building destruction and return-to-menu flow are included. Engine checks confirmed four city roof candidates and exact-file checks confirmed 37 destructible spatial building groups. See [SESSIONS-AND-DISASTERS.md](SESSIONS-AND-DISASTERS.md) for behavior, economy, implementation boundaries and live-client validation gaps.
