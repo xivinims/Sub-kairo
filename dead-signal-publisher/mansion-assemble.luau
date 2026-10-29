@@ -43,7 +43,8 @@ local function add(part,section,offset)
  end
  local clone=part:Clone();local list=clone:GetDescendants()
  for i=#list,1,-1 do if not childVisual[list[i].ClassName] then list[i]:Destroy() end end
- clone.Anchored=true;clone.CanTouch=false;clone.CFrame+=offset or V.zero;clone:SetAttribute('MansionSource',section=='Forest' and '13037825880' or '7902470429')
+ clone.Anchored=true;clone.CanTouch=false;clone.CFrame+=offset or V.zero;clone:SetAttribute('MansionGrabbable',part.Size.Magnitude<5 and (part.Name:lower():find('book')~=nil or part.Name:lower():find('cup')~=nil or part.Name:lower():find('vase')~=nil))
+ clone:SetAttribute('MansionSource',section=='Forest' and '13037825880' or '7902470429')
  for _,light in ipairs(clone:GetDescendants()) do if light:IsA('Light') then light.Shadows=false;light.Range=math.min(light.Range,30);light.Brightness=math.min(light.Brightness,2.5) end end
  local root=section~='Forest' and doorRoot(part)
  if root then
@@ -81,6 +82,15 @@ local function install(parent,name,class,file)
 end
 install(runtime,'MansionChunks','ModuleScript','mansion-chunks.luau');install(runtime,'MansionRuntime','Script','mansion-runtime.luau');install(runtime,'ResidentAppearance','ModuleScript','mansion-appearance.luau')
 install(runtime,'SessionProfile','ModuleScript','session-profile.luau');install(runtime,'SessionRuntime','Script','session-server.luau');install(RF,'SessionMenuClient','LocalScript','session-menu-client.luau')
+require('./mansion-ui-extract')(base,original,orderly)
+require('./combat-extract')(base)
+install(RS.CombatAssets,'FPSMotion','ModuleScript','fps-motion.luau')
+install(runtime,'CombatRules','ModuleScript','combat-rules.luau')
+install(runtime,'CombatRuntime','Script','combat-server.luau')
+install(runtime,'MansionForestAI','Script','mansion-forest-ai.luau')
+install(SP,'CombatClient','LocalScript','combat-client.luau')
+install(SP,'MansionUIClient','LocalScript','mansion-ui-client.luau')
+local combatEvent=R.Instance.new('RemoteEvent');combatEvent.Name='CombatEvent';combatEvent.Parent=RS
 install(SP,'MansionClient','LocalScript','mansion-client.luau');install(RF,'IslandLoadingClient','LocalScript','islands-loading-client.luau')
 for _,entry in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'MansionEvent','RemoteEvent'}}) do local e=R.Instance.new(entry[2]);e.Name=entry[1];e.Parent=RS end
 for _,sound in ipairs(original:GetDescendants()) do if sound:IsA('Sound') and sound.Name:lower():find('knock',1,true) then
@@ -92,7 +102,7 @@ local init=fs.readFile('mansion-initialize.luau');luau.load(init,{debugName='man
 local boot="local mode=game.PrivateServerId=='' and 'Menu' or 'Match';workspace:SetAttribute('GameMode',mode);if mode=='Menu' then script:Destroy();return end\nlocal SS=game:GetService('ServerStorage');for _,c in ipairs(SS.MatchWorld:GetChildren()) do c.Parent=workspace end\nlocal ok,err=xpcall(function()\n"..init.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then p:LoadCharacterAsync() end end;script:Destroy()"
 luau.load(boot,{debugName='MansionInitializer'});local script=R.Instance.new('Script');script.Name='MansionInitializer';script.Source=boot;script.Parent=runtime
 for _,d in ipairs(orderly:GetService('Lighting'):GetChildren()) do if d:IsA('Sky') then local sky=d:Clone();for _,c in ipairs(sky:GetChildren()) do c:Destroy() end;sky.Parent=L;break end end
-L.ClockTime=.25;L.Brightness=1.3;L.Ambient=R.Color3.fromRGB(35,39,43);L.OutdoorAmbient=R.Color3.fromRGB(56,65,73);L.ExposureCompensation=-.2;L.GlobalShadows=true
+L.ClockTime=0;L.Brightness=.65;L.Ambient=R.Color3.fromRGB(17,20,26);L.OutdoorAmbient=R.Color3.fromRGB(28,34,42);L.ExposureCompensation=-.6;L.GlobalShadows=true
 local atmosphere=R.Instance.new('Atmosphere');atmosphere.Density=.27;atmosphere.Haze=1.7;atmosphere.Color=R.Color3.fromRGB(165,181,185);atmosphere.Decay=R.Color3.fromRGB(103,123,136);atmosphere.Parent=L
 local grade=R.Instance.new('ColorCorrectionEffect');grade.Name='MansionGrade';grade.Saturation=-.28;grade.Contrast=.16;grade.TintColor=R.Color3.fromRGB(219,227,223);grade.Parent=L
 local bloom=R.Instance.new('BloomEffect');bloom.Intensity=.22;bloom.Size=25;bloom.Threshold=1.15;bloom.Parent=L

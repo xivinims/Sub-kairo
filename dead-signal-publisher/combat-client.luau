@@ -19,7 +19,7 @@ local recoil=0;local magazine=0;local tracks={};local originPivot
 local function clear()
  held=false;motion=nil;if model then model:Destroy();model=nil end
  for _,track in pairs(tracks) do track:Stop() end;table.clear(tracks)
- cross.Visible=false;ammo.Text='';p.CameraMode=Enum.CameraMode.Classic
+ cross.Visible=false;ammo.Text='';p.CameraMode=Enum.CameraMode.LockFirstPerson
 end
 local function equip(name)
  clear();id=name;local template=assets.PlayerWeapons:FindFirstChild(name);if not template then return end
@@ -64,7 +64,7 @@ Input.InputBegan:Connect(function(i,processed)
 end)
 Input.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then held=false elseif i.UserInputType==Enum.UserInputType.MouseButton2 then aiming=false end end)
 event.OnClientEvent:Connect(function(kind,a,b,c)
- if kind=='armory' then armory.Visible=true;p.CameraMode=Enum.CameraMode.Classic;p.CameraMinZoomDistance=6;Input.MouseBehavior=Enum.MouseBehavior.Default
+ if kind=='armory' then armory.Visible=true;p.CameraMode=Enum.CameraMode.LockFirstPerson;p.CameraMinZoomDistance=6;Input.MouseBehavior=Enum.MouseBehavior.Default
  elseif kind=='state' then if id~=a or not model then equip(a) end;magazine=b;reloadUntil=c;ammo.Text=a..' · '..b;shoot.Visible=Input.TouchEnabled;rb.Visible=Input.TouchEnabled;ab.Visible=Input.TouchEnabled
  elseif kind=='clear' then clear();id=nil;shoot.Visible=false;rb.Visible=false;ab.Visible=false
  elseif kind=='hit' then cross.Text='×';task.delay(.15,function() cross.Text='+' end)

@@ -14,9 +14,9 @@ if not W:Raycast(Vector3.new(400,300,400),Vector3.new(0,-600,0),checkParams) the
  for _,strip in ipairs({{Vector3.new(-432,-22,-20),Vector3.new(434,24,1300)},{Vector3.new(432,-22,-20),Vector3.new(434,24,1300)},{Vector3.new(0,-22,392),Vector3.new(430,24,514)},{Vector3.new(0,-22,-460),Vector3.new(430,24,380)}}) do W.Terrain:FillBlock(CFrame.new(strip[1]),strip[2],Enum.Material.Grass) end
 end
 local terrainParams=RaycastParams.new();terrainParams.FilterType=Enum.RaycastFilterType.Include;terrainParams.FilterDescendantsInstances={W.Terrain};terrainParams.IgnoreWater=false
-for x=-6,6 do for z=-7,6 do
- local px,pz=x*80+rng:NextNumber(-24,24),z*80+rng:NextNumber(-24,24)
- if not (math.abs(px)<215 and pz> -270 and pz<135) then
+for x=-9,9 do for z=-10,9 do
+ local px,pz=x*56+rng:NextNumber(-15,15),z*56+rng:NextNumber(-15,15)
+ if not (math.abs(px)<155 and pz> -190 and pz<65) then
   local ground=W:Raycast(Vector3.new(px,350,pz),Vector3.new(0,-650,0),terrainParams)
   if ground and ground.Material~=Enum.Material.Water and ground.Normal.Y>.65 then
    local tree=template:Clone();tree.Name='OrderlyTree';tree:ScaleTo(rng:NextNumber(60,95)/height)

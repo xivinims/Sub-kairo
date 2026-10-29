@@ -8,28 +8,32 @@ local function added(p)
  p.RespawnLocation=spawn
  local function character(char)
   local root=char:WaitForChild('HumanoidRootPart',15);if not root then return end
-  root.Anchored=true;Chunks.Warm(spawn.Position,150);char:PivotTo(spawn.CFrame+Vector3.new(0,4,0));p:SetAttribute('IslandDestination','forestCurrent');p:SetAttribute('HasIslandArrival',true);root.Anchored=false
+  root.Anchored=true;Chunks.Warm(spawn.Position,150);char:PivotTo(spawn.CFrame+Vector3.new(0,4,0));p:SetAttribute('IslandDestination','forestCurrent');p:SetAttribute('HasIslandArrival',true);root.Anchored=false;local hum=char:FindFirstChildOfClass('Humanoid');if hum then hum.WalkSpeed=11 end
  end
  p.CharacterAdded:Connect(character);if p.Character then task.spawn(character,p.Character) end
 end
 Players.PlayerAdded:Connect(added);for _,p in ipairs(Players:GetPlayers()) do added(p) end
 task.spawn(function() while task.wait(2) do for _,p in ipairs(Players:GetPlayers()) do local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if r and r.Position.Y< -450 then p:LoadCharacterAsync() end end end end)
+workspace:SetAttribute('MansionDoorLocked',true)
+local missionEvent=RS:WaitForChild('MissionLogicEvent')
+local function objective(p,text) p:SetAttribute('MansionMission',text);missionEvent:FireClient(p,{1,text});missionEvent:FireClient(p,{2,0,15});event:FireClient(p,'objective',text) end
+local doors={}
 local mounted=setmetatable({},{__mode='k'});local frontDoor
 local function mount(part)
- if not part:IsA('BasePart') or not part:GetAttribute('MansionDoor') or mounted[part] then return end;mounted[part]=true
+ if not part:IsA('BasePart') or not part:GetAttribute('MansionDoor') or mounted[part] then return end;mounted[part]=true;doors[part]=true
  local group=part:GetAttribute('MansionDoorId')
  if group then for _,other in ipairs(part.Parent:GetDescendants()) do if other:IsA('BasePart') and other~=part and other:GetAttribute('MansionDoorId')==group then
   other.Anchored=false;other.CanCollide=false;local weld=Instance.new('WeldConstraint');weld.Part0=part;weld.Part1=other;weld.Parent=part
  end end end
- local original=part.CFrame;local open,busy=false,false
+ local original=part.CFrame;local open,busy=false,false;part:SetAttribute('DoorLocked',part:GetAttribute('FrontEntrance')==true)
  local prompt=Instance.new('ProximityPrompt');prompt.UIOffset=Vector2.new(0,-18);prompt.ActionText='Abrir / fechar';prompt.ObjectText='Porta';prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=false;prompt.Parent=part
  if part:GetAttribute('FrontEntrance') then
  frontDoor=part
- local record=Instance.new('ProximityPrompt');record.UIOffset=Vector2.new(0,42);record.ActionText='Consultar registro';record.ObjectText='Antiga proprietária';record.KeyboardKeyCode=Enum.KeyCode.F;record.MaxActivationDistance=7;record.RequiresLineOfSight=false;record.Parent=part
- record.Triggered:Connect(function(p) local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if root and (root.Position-part.Position).Magnitude<10 then event:FireClient(p,'record') end end)
+
  end
  prompt.Triggered:Connect(function(p)
   local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if not root or (root.Position-part.Position).Magnitude>12 or busy then return end
+  if part:GetAttribute('DoorLocked') then event:FireClient(p,'objective','Missão: destranque a porta antes de abrir.');return end
   busy=true;open=not open;part.CanCollide=false
   local hinge=original*CFrame.new(-part.Size.X*.5,0,0)
   local target=open and hinge*CFrame.Angles(0,math.rad(95),0)*CFrame.new(part.Size.X*.5,0,0) or original
@@ -39,6 +43,25 @@ local function mount(part)
 end
 for _,part in ipairs(workspace.Islands.mansion:GetDescendants()) do mount(part) end
 workspace.Islands.mansion.DescendantAdded:Connect(mount)
+event.OnServerEvent:Connect(function(p,action,value)
+ if action=='sprint' and typeof(value)=='boolean' then local hum=p.Character and p.Character:FindFirstChildOfClass('Humanoid');if hum and hum.Health>0 then hum.WalkSpeed=value and 21 or 11 end end
+end)
+local lastAction={} 
+event.OnServerEvent:Connect(function(p,action)
+ local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local entrance=workspace:GetAttribute('EntrancePosition')
+ if action=='missionState' then objective(p,p:GetAttribute('MansionMission') or 'Missão: explorar a mansão.');return end
+ if not root or not entrance or (root.Position-entrance).Magnitude>14 then return end
+ if os.clock()-(lastAction[p] or 0)<.35 then return end;lastAction[p]=os.clock()
+ if action=='lock' then
+  local locked=true
+  for door in pairs(doors) do if door.Parent and door:GetAttribute('FrontEntrance') then if door:GetAttribute('DoorOpen') then event:FireClient(p,'objective','Missão: feche a porta antes de trancar.');return end;locked=door:GetAttribute('DoorLocked') end end
+  for door in pairs(doors) do if door.Parent and door:GetAttribute('FrontEntrance') then door:SetAttribute('DoorLocked',not locked) end end;workspace:SetAttribute('MansionDoorLocked',not locked)
+  objective(p,locked and 'Missão: explorar a mansão.' or 'Missão: encontre uma arma para se defender.')
+ elseif action=='peek' then
+  objective(p,'Missão: tranque a porta e investigue os cômodos.');event:FireClient(p,'peek',CFrame.lookAt(entrance+Vector3.new(0,1.3,2),entrance+Vector3.new(0,1.3,22)))
+ elseif action=='sprint' then
+ end
+end)
 -- One creature, changing its borrowed identity; never multiple simultaneous visitors.
 local builder=require(script.Parent.ResidentAppearance)
 local faces={
@@ -46,6 +69,15 @@ local faces={
  {id='Visitor',name='Visitante',role='',male=true,hair=62234425,shirt=144076358,pants=144076760,height=1.1,width=.88,skin=Color3.fromRGB(177,139,108)},
  {id='Visitor',name='Visitante',role='',male=false,hair=63690008,shirt=398633584,pants=398633812,height=.95,width=.76,skin=Color3.fromRGB(126,106,92)},
 }
+local held={};local owned=setmetatable({},{__mode='k'})
+event.OnServerEvent:Connect(function(p,action,item)
+ local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
+ if action=='grab' and root and typeof(item)=='Instance' and item:IsA('BasePart') and item:IsDescendantOf(workspace.Islands.mansion) and item:GetAttribute('MansionGrabbable') and (item.Position-root.Position).Magnitude<=10 and not owned[item] and not held[p] then
+  held[p]={part=item,parent=item.Parent,cf=item.CFrame,collide=item.CanCollide};owned[item]=p;item.Parent=workspace;item.CanCollide=false
+ elseif action=='release' and held[p] then local state=held[p];held[p]=nil;owned[state.part]=nil;if state.part.Parent then state.part.CFrame=state.cf;state.part.CanCollide=state.collide;if state.parent.Parent then state.part.Parent=state.parent else state.part:Destroy() end end end
+end)
+Players.PlayerRemoving:Connect(function(p) local state=held[p];if state then state.part:Destroy();held[p]=nil end end)
+task.spawn(function() while task.wait(.1) do for p,state in pairs(held) do local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if root and state.part.Parent then state.part.CFrame=root.CFrame*CFrame.new(0,1,-4) end end end end)
 local visitor;local index=0
 while true do
  task.wait(math.random(35,55))
@@ -70,7 +102,7 @@ while true do
   task.wait(.45)
  end
  if shoulder then Tween:Create(shoulder,TweenInfo.new(.7,Enum.EasingStyle.Sine),{C0=rest}):Play() end
- event:FireAllClients('visitor',rig,'Oi, aqui é minha casa. O que vocês fazem aqui???')
+ event:FireAllClients('visitor',rig,'Oi, aqui é minha casa. O que vocês fazem aqui???');for _,p in ipairs(Players:GetPlayers()) do objective(p,'Missão: observe a visitante pelo olho mágico.') end
  local start=os.clock()
  while rig.Parent and os.clock()-start<24 do
   local root=rig.HumanoidRootPart;rig:SetAttribute('Walking',false)
@@ -91,3 +123,4 @@ while true do
   task.wait(2);rig:Destroy()
  end
 end
+

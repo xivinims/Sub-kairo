@@ -39,7 +39,7 @@ async function external(id){
 const releaseState=JSON.parse(await fs.readFile(new URL('./release-state.json',import.meta.url),'utf8'));
 await download('/tmp/still-here-source.rbxl',177);
 await download('/tmp/still-here-rollback.rbxl',releaseState.rollbackVersion);
-for(const id of ['7902470429','13037825880','7208091524','186677844'])await external(id);
+for(const id of ['7902470429','13037825880','7208091524','186677844','15864801103','14817965191'])await external(id);
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
 const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);

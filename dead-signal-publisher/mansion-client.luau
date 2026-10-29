@@ -2,9 +2,9 @@ while not workspace:GetAttribute('GameMode') do task.wait(.1) end
 if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage');local Run=game:GetService('RunService');local Tween=game:GetService('TweenService');local Input=game:GetService('UserInputService')
 local p=Players.LocalPlayer;local event=RS:WaitForChild('MansionEvent')
-p.CameraMinZoomDistance=.5;p.CameraMaxZoomDistance=14;p.CameraMode=Enum.CameraMode.Classic
+p.CameraMinZoomDistance=.5;p.CameraMaxZoomDistance=.5;p.CameraMode=Enum.CameraMode.LockFirstPerson
 local gui=Instance.new('ScreenGui');gui.Name='MansionAtmosphere';gui.ResetOnSpawn=false;gui.DisplayOrder=45;gui.Parent=p:WaitForChild('PlayerGui')
-local text=Instance.new('TextLabel');text.AnchorPoint=Vector2.new(.5,1);text.Position=UDim2.fromScale(.5,.9);text.Size=UDim2.new(.85,0,0,85);text.BackgroundTransparency=1;text.Font=Enum.Font.Code;text.TextSize=18;text.TextColor3=Color3.fromRGB(231,225,212);text.TextStrokeTransparency=.45;text.TextWrapped=true;text.Text='Entre na mansão. Observe antes de abrir a porta.';text.Parent=gui
+local text=Instance.new('TextLabel');text.AnchorPoint=Vector2.new(.5,1);text.Position=UDim2.fromScale(.5,.9);text.Size=UDim2.new(.85,0,0,85);text.BackgroundTransparency=1;text.Font=Enum.Font.Code;text.TextSize=18;text.TextColor3=Color3.fromRGB(231,225,212);text.TextStrokeTransparency=.45;text.TextWrapped=true;text.Text='';text.Parent=gui
 task.delay(8,function() text.Text='' end)
 -- An authored story cue; the changing visitor is impersonating a deceased owner.
 local function memoir()

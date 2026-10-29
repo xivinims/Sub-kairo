@@ -6,9 +6,9 @@ while workspace:GetAttribute('IslandWorldReady')~=true do task.wait(.2) end
 local function config(id) local model=assets.PlayerWeapons:FindFirstChild(id);if not model then return end;return {interval=model:GetAttribute('FireInterval') or .2,damage=model:GetAttribute('Damage') or 18,mag=model:GetAttribute('Magazine') or 20,reload=model:GetAttribute('ReloadTime') or 2.2,range=350} end
 local function notify(p) local s=states[p];if s then event:FireClient(p,'state',s.id,s.ammo,s.reloadingUntil or 0) end end
 local function selectWeapon(p,id)
- local center=workspace:GetAttribute('VillageCenter');local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
- local residents=workspace:FindFirstChild('IslandResidents');local npc=residents and residents:FindFirstChild('Tomas');local head=npc and npc:FindFirstChild('Head')
- if not root or not head or (root.Position-head.Position).Magnitude>14 or os.clock()-(lastSelect[p] or 0)<1 then return end
+ local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
+ local pickups=workspace:FindFirstChild('MansionWeaponPickups');local pickup=pickups and pickups:FindFirstChild(id)
+ if not root or not pickup or (root.Position-pickup:GetPivot().Position).Magnitude>12 or os.clock()-(lastSelect[p] or 0)<1 then return end
  local c=config(id);if not c then return end
  local old=p.Character:FindFirstChild('EquippedWorldWeapon');if old then old:Destroy() end
  local hand=p.Character:FindFirstChild('RightHand') or p.Character:FindFirstChild('Right Arm')
@@ -19,6 +19,20 @@ local function selectWeapon(p,id)
  end
  lastSelect[p]=os.clock();states[p]={id=id,ammo=c.mag,nextShot=0,reloadingUntil=0};selection[p]=id;p:SetAttribute('EquippedWeapon',id);notify(p)
 end
+task.spawn(function()
+ for index,id in ipairs({'M4A1','Deagle'}) do
+  local position=index==1 and Vector3.new(-62,16,-127) or Vector3.new(65,17,-100)
+  require(script.Parent.MansionChunks).Warm(position,96)
+  local model=assets.PlayerWeapons[id].Weapon:Clone();model.Name=id;model:ScaleTo(.8);model:PivotTo(CFrame.new(position))
+  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Islands.mansion,workspace.Terrain};rp.RespectCanCollide=true
+  local surface=workspace:Raycast(position+Vector3.new(0,10,0),Vector3.new(0,-30,0),rp)
+  if surface then local box,size=model:GetBoundingBox();model:PivotTo(model:GetPivot()+Vector3.new(0,surface.Position.Y+.08-(box.Y-size.Y/2),0)) end
+  for _,part in ipairs(model:GetDescendants()) do if part:IsA('BasePart') then part.Anchored=true;part.CanCollide=false;part.CanQuery=false end end
+  local folder=workspace:FindFirstChild('MansionWeaponPickups') or Instance.new('Folder');folder.Name='MansionWeaponPickups';folder.Parent=workspace;model.Parent=folder
+  local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Pegar '..id;prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=false;prompt.Parent=model.PrimaryPart
+  prompt.Triggered:Connect(function(p) selectWeapon(p,id);p:SetAttribute('MansionMission','Missão: investigue a floresta e volte em segurança.');RS.MissionLogicEvent:FireClient(p,{1,p:GetAttribute('MansionMission')}) end)
+ end
+end)
 local opener=Instance.new('BindableEvent');opener.Name='OpenArmory';opener.Parent=script.Parent
 opener.Event:Connect(function(p,npc)
  local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local head=npc:FindFirstChild('Head')
