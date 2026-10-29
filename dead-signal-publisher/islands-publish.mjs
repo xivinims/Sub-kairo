@@ -50,6 +50,7 @@ if(mode.includes('release')){
 }else{
 for(const id of ['5326950832','88883160098456','186677844']){
  execFileSync('/tmp/islands-lune/lune',['run','islands-stage.luau',id],{cwd,stdio:'inherit'});
+ if(mode.includes('audit'))continue;
  const staged=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Saved',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/stage-'+id+'.rbxl')});
  console.log(JSON.stringify({staged,id,published:false}));
  const captured=await execute(await fs.readFile(new URL('./islands-capture.luau',import.meta.url),'utf8'),staged.versionNumber);

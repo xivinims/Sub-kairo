@@ -27,6 +27,8 @@ for _,def in ipairs(defs) do
  local chunks={};local parts=0
  for _,p in ipairs(src.geo:GetChildren()) do
   assert(p:IsA('BasePart'),'Unexpected source geometry')
+  local windName=string.lower(p.Name)
+  if windName:find('leaf',1,true) or windName:find('leav',1,true) or windName:find('foliage',1,true) or windName:find('fern',1,true) then p:SetAttribute('IslandWind',true);p.CanCollide=false end
   p.CFrame=p.CFrame+offset
   local pos=p.CFrame.Position;local key=math.floor(pos.X/128)..'_'..math.floor(pos.Z/128)
   local bucket=chunks[key]

@@ -24,11 +24,11 @@ local spawn
 local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Include;overlap.FilterDescendantsInstances={W.SourceGeometry};overlap.RespectCanCollide=true
 for _,v in ipairs(candidates) do
  local pos=Vector3.new(unpack(v));local hit=W:Raycast(Vector3.new(pos.X,high.Y+64,pos.Z),Vector3.new(0,low.Y-high.Y-160,0),params)
- if hit then
-  local surface=hit.Position
+ local surface=hit and hit.Position
+ if pos.Y<high.Y or hit then
   -- Original spawns may stand on a built floor above terrain.
-  if pos.Y<high.Y then local f=W:Raycast(pos+Vector3.new(0,2,0),Vector3.new(0,-16,0),geom);if f and f.Normal.Y>.75 and f.Position.Y>=surface.Y then surface=f.Position end end
-  if #W:GetPartBoundsInBox(CFrame.new(surface+Vector3.new(0,3.2,0)),Vector3.new(4,5.5,4),overlap)==0 then spawn=surface;break end
+  if pos.Y<high.Y then local f=W:Raycast(pos+Vector3.new(0,2,0),Vector3.new(0,-16,0),geom);if f and f.Normal.Y>.75 and (not surface or f.Position.Y>=surface.Y) then surface=f.Position end end
+  if surface and #W:GetPartBoundsInBox(CFrame.new(surface+Vector3.new(0,3.2,0)),Vector3.new(4,5.5,4),overlap)==0 then spawn=surface;break end
  end
 end
 assert(spawn,'No unobstructed arrival position in source')
