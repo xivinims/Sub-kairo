@@ -16,7 +16,7 @@ end
 local terrainParams=RaycastParams.new();terrainParams.FilterType=Enum.RaycastFilterType.Include;terrainParams.FilterDescendantsInstances={W.Terrain};terrainParams.IgnoreWater=false
 for x=-9,9 do for z=-10,9 do
  local px,pz=x*56+rng:NextNumber(-15,15),z*56+rng:NextNumber(-15,15)
- if not (math.abs(px)<155 and pz> -190 and pz<65) then
+ if not (math.abs(px)<190 and pz> -220 and pz<90) then
   local ground=W:Raycast(Vector3.new(px,350,pz),Vector3.new(0,-650,0),terrainParams)
   if ground and ground.Material~=Enum.Material.Water and ground.Normal.Y>.65 then
    local tree=template:Clone();tree.Name='OrderlyTree';tree:ScaleTo(rng:NextNumber(60,95)/height)

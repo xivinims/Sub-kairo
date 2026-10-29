@@ -41,3 +41,14 @@ Run:BindToRenderStep('MansionWeightedCamera',Enum.RenderPriority.Camera.Value+1,
   if right and right:IsA('Motor6D') then right.Transform=CFrame.Angles(-stride,0,0) end
  end
 end)
+
+Run.PreSimulation:Connect(function()
+ local rig=workspace:FindFirstChild('ForestStalker');if not rig then return end
+ local root=rig:FindFirstChild('HumanoidRootPart');if not root then return end
+ local t=os.clock();local moving=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude>1
+ local stride=moving and math.sin(t*8)*.45 or 0
+ for _,spec in ipairs({{'LeftHip',stride},{'RightHip',-stride},{'LeftShoulder',-stride*.7},{'RightShoulder',stride*.7}}) do
+  local joint=rig:FindFirstChild(spec[1],true);if joint and joint:IsA('Motor6D') then joint.Transform=CFrame.Angles(spec[2],0,0) end
+ end
+ local neck=rig:FindFirstChild('Neck',true);if neck and neck:IsA('Motor6D') then neck.Transform=CFrame.Angles(math.sin(t*.5)*.04,math.sin(t*.35)*.12,.04) end
+end)

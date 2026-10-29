@@ -25,7 +25,7 @@ local function mount(part)
  if group then for _,other in ipairs(part.Parent:GetDescendants()) do if other:IsA('BasePart') and other~=part and other:GetAttribute('MansionDoorId')==group then
   other.Anchored=false;other.CanCollide=false;local weld=Instance.new('WeldConstraint');weld.Part0=part;weld.Part1=other;weld.Parent=part
  end end end
- local original=part.CFrame;local open,busy=false,false;part:SetAttribute('DoorLocked',part:GetAttribute('FrontEntrance')==true)
+ local original=part.CFrame;local open,busy=false,false;part:SetAttribute('DoorLocked',part:GetAttribute('FrontEntrance')==true and workspace:GetAttribute('MansionDoorLocked')~=false)
  local prompt=Instance.new('ProximityPrompt');prompt.UIOffset=Vector2.new(0,-18);prompt.ActionText='Abrir / fechar';prompt.ObjectText='Porta';prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=false;prompt.Parent=part
  if part:GetAttribute('FrontEntrance') then
  frontDoor=part

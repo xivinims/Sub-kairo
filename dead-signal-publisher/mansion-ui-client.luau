@@ -22,9 +22,11 @@ local function actionButton(name,text,x,callback)
 end
 local sprint=false;actionButton('Sprint','CORRER',20,function() sprint=not sprint;event:FireServer('sprint',sprint) end)
 local lock=actionButton('DoorLock','TRANCAR',130,function() event:FireServer('lock') end)
+local function lockLabel() lock.Text=workspace:GetAttribute('MansionDoorLocked')~=false and 'DESTRANCAR' or 'TRANCAR' end
+workspace:GetAttributeChangedSignal('MansionDoorLocked'):Connect(lockLabel);lockLabel()
 local peekButton
 local function exitPeek()
- if not peeking then return end;peeking=false;local camera=workspace.CurrentCamera;camera.CameraType=Enum.CameraType.Custom;camera.FieldOfView=restoreFov or 68;local vignette=pg:FindFirstChild('Screenspace_Vignette');if vignette then local image=vignette:FindFirstChildWhichIsA('ImageLabel',true);if image then image.ImageTransparency=.45 end end
+ if not peeking then return end;peeking=false;Input.MouseBehavior=Enum.MouseBehavior.LockCenter;local camera=workspace.CurrentCamera;camera.CameraType=Enum.CameraType.Custom;camera.FieldOfView=restoreFov or 68;local vignette=pg:FindFirstChild('Screenspace_Vignette');if vignette then local image=vignette:FindFirstChildWhichIsA('ImageLabel',true);if image then image.ImageTransparency=.45 end end
 end
 peekButton=actionButton('Peephole','OLHO MÁGICO',240,function() if peeking then exitPeek() else event:FireServer('peek') end end)
 local fade=Instance.new('Frame');fade.Name='OutsideFade';fade.Size=UDim2.fromScale(1,1);fade.BackgroundColor3=Color3.new(0,0,0);fade.BackgroundTransparency=1;fade.BorderSizePixel=0;fade.ZIndex=0;fade.Active=false;fade.Parent=hud
@@ -34,7 +36,7 @@ end
 p:GetAttributeChangedSignal('InsideMansion'):Connect(outside)
 event.OnClientEvent:Connect(function(kind,value)
  if kind=='peek' and typeof(value)=='CFrame' then
-  local camera=workspace.CurrentCamera;restoreCF=camera.CFrame;restoreFov=camera.FieldOfView;peeking=true;local vignette=pg:FindFirstChild('Screenspace_Vignette');if vignette then local image=vignette:FindFirstChildWhichIsA('ImageLabel',true);if image then image.ImageTransparency=0 end end;camera.CameraType=Enum.CameraType.Scriptable
+  local camera=workspace.CurrentCamera;restoreCF=camera.CFrame;restoreFov=camera.FieldOfView;peeking=true;Input.MouseBehavior=Enum.MouseBehavior.Default;local vignette=pg:FindFirstChild('Screenspace_Vignette');if vignette then local image=vignette:FindFirstChildWhichIsA('ImageLabel',true);if image then image.ImageTransparency=0 end end;camera.CameraType=Enum.CameraType.Scriptable
   Tween:Create(camera,TweenInfo.new(.45,Enum.EasingStyle.Sine),{CFrame=value,FieldOfView=100}):Play()
  elseif kind=='objective' then local text=frame:FindFirstChild('MissionCounterText');if text then text.Text=value;text.Visible=true end end
 end)
