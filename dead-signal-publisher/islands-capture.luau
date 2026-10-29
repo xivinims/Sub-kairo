@@ -4,13 +4,22 @@ local low,high=Vector3.new(unpack(meta.lo)),Vector3.new(unpack(meta.hi))
 local min=Vector3int16.new(math.floor((low.X-64)/4),math.floor((low.Y-64)/4),math.floor((low.Z-64)/4))
 local max=Vector3int16.new(math.ceil((high.X+64)/4),math.ceil((high.Y+32)/4),math.ceil((high.Z+64)/4))
 local regions=Instance.new('Folder');regions.Name='IslandTerrainRegion';regions.Parent=game:GetService('ServerStorage')
+local scan=RaycastParams.new();scan.FilterType=Enum.RaycastFilterType.Include;scan.FilterDescendantsInstances={T}
 local tiles=0
 for x=min.X,max.X,64 do for z=min.Z,max.Z,64 do
- local corner=Vector3int16.new(x,min.Y,z)
- local upper=Vector3int16.new(math.min(x+63,max.X),max.Y,math.min(z+63,max.Z))
- local region=T:CopyRegion(Region3int16.new(corner,upper));region.Name='Tile_'..tiles
- region:SetAttribute('SourceCornerCells',Vector3.new(x,min.Y,z));region.Parent=regions;tiles+=1
- if tiles%8==0 then task.wait() end
+ local upperX,upperZ=math.min(x+63,max.X),math.min(z+63,max.Z)
+ local bottom,top=math.huge,-math.huge
+ for sx=x,upperX,8 do for sz=z,upperZ,8 do
+  local hit=W:Raycast(Vector3.new(sx*4,high.Y+64,sz*4),Vector3.new(0,low.Y-high.Y-160,0),scan)
+  if hit then bottom=math.min(bottom,hit.Position.Y);top=math.max(top,hit.Position.Y) end
+ end end
+ if top>-math.huge then
+  local lowerY=math.max(min.Y,math.floor((bottom-64)/4));local upperY=math.min(max.Y,math.ceil((top+32)/4))
+  local corner=Vector3int16.new(x,lowerY,z);local upper=Vector3int16.new(upperX,upperY,upperZ)
+  local region=T:CopyRegion(Region3int16.new(corner,upper));region.Name='Tile_'..tiles
+  region:SetAttribute('SourceCornerCells',Vector3.new(x,lowerY,z));region.Parent=regions;tiles+=1
+ end
+ if (x-min.X)%256==0 then task.wait() end
 end end
 local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={T};params.IgnoreWater=true
 local geom=RaycastParams.new();geom.FilterType=Enum.RaycastFilterType.Include;geom.FilterDescendantsInstances={W.SourceGeometry};geom.IgnoreWater=true
