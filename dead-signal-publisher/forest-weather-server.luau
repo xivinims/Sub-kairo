@@ -1,7 +1,7 @@
 local Workspace=game:GetService("Workspace")
 local rng=Random.new(71843)
 
-Workspace:SetAttribute("ForestWeather","Clear")
+Workspace:SetAttribute("ForestWeather","Overcast")
 Workspace:SetAttribute("ForestLightningCue",0)
 
 task.spawn(function()
@@ -10,7 +10,7 @@ task.spawn(function()
   local storm=Workspace:GetAttribute("ForestWeather")=="Storm"
   local t=Workspace:GetServerTimeNow()
   local gust=math.sin(t/13)*2.2+math.noise(t/18,0,2)*1.8
-  local base=storm and 8 or 3.4
+  local base=storm and 12 or 7
   Workspace.GlobalWind=Vector3.new(base+gust,0,1.1+math.cos(t/17)*1.6)
  end
 end)
@@ -25,6 +25,6 @@ while true do
    Workspace:SetAttribute("ForestLightningCue",Workspace:GetServerTimeNow())
   end
  end
- Workspace:SetAttribute("ForestWeather","Clear")
+ Workspace:SetAttribute("ForestWeather","Overcast")
  task.wait(110+rng:NextNumber(0,20))
 end

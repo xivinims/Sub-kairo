@@ -24,3 +24,16 @@ if W:GetAttribute('BlackHoleAsset') then
  print('BLACK HOLE VERIFIED: original geometry + beams, safe client renderer')
 end
 assert(W.StreamingTargetRadius==W:GetAttribute('IslandStreamingTarget'),'Streaming metadata differs from file')
+
+assert(W:GetAttribute('IslandAtmosphereRevision')=='storm-dusk-v1','Atmosphere missing')
+assert(dm:GetService('Lighting').ClockTime>17.5,'Dusk not applied')
+assert(SP.ForestWindClient.Source==fs.readFile('forest-wind-client.luau'),'Wind mismatch')
+assert(SP.ForestWeatherClient.Source==fs.readFile('forest-weather-client.luau'),'Weather mismatch')
+assert(dm:GetService('ServerScriptService').AtriumRuntime.ForestWeatherServer.Source==fs.readFile('forest-weather-server.luau'),'Weather server mismatch')
+local wind,lights=0,0
+for _,d in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog:GetDescendants()) do
+ if d:IsA('BasePart') and d:GetAttribute('IslandWind') then wind+=1 end
+ if d:IsA('Light') then lights+=1;assert(d.Shadows==false,'Expensive imported light') end
+end
+assert(wind>100,'Canopy wind classification failed')
+print('ATMOSPHERE VERIFIED: dusk, persistent overcast, wind parts='..wind..', original lights='..lights)

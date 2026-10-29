@@ -95,6 +95,16 @@ for class,source in pairs(selected) do
  effect.Parent=L;table.insert(applied,class)
 end
 assert(#applied>0,'No usable lighting data in provided pack')
+-- Stormy dusk, readable ground and cool aerial perspective, never a black fog wall.
+L.ClockTime=18.1;L.Brightness=1.6;L.ExposureCompensation=-.25
+L.Ambient=R.Color3.fromRGB(69,80,101);L.OutdoorAmbient=R.Color3.fromRGB(104,119,143)
+local atmosphere=L:FindFirstChild('ForestAerialPerspective') or R.Instance.new('Atmosphere')
+atmosphere.Name='ForestAerialPerspective';atmosphere.Density=.29;atmosphere.Haze=1.8;atmosphere.Glare=.08
+atmosphere.Color=R.Color3.fromRGB(185,198,214);atmosphere.Decay=R.Color3.fromRGB(138,156,181);atmosphere.Parent=L
+local clouds=W.Terrain:FindFirstChildOfClass('Clouds') or R.Instance.new('Clouds')
+clouds.Name='WoodlandCloudDeck';clouds.Cover=.86;clouds.Density=.88;clouds.Color=R.Color3.fromRGB(111,123,143);clouds.Parent=W.Terrain
+W.GlobalWind=V.new(7,0,2);W:SetAttribute('ForestWeather','Overcast');W:SetAttribute('IslandAtmosphereRevision','storm-dusk-v1')
+
 print('LIGHTING AUDIT '..serde.encode('json',{counts=lightingCounts,applied=applied}))
 local SSS=dm:GetService('ServerScriptService');local runtime=SSS.AtriumRuntime
 local SP=dm:GetService('StarterPlayer').StarterPlayerScripts
@@ -110,6 +120,7 @@ install(SP,'IslandTravelClient','LocalScript','islands-travel-client.luau')
 install(SP,'ForestSpawnClient','LocalScript','forest-spawn-client.luau')
 -- Retain already audited nested wind modules while updating its bootstrap only.
 luau.load(fs.readFile('forest-wind-client.luau'),{debugName='forest-wind-client'});SP.ForestWindClient.Source=fs.readFile('forest-wind-client.luau')
+install(runtime,'ForestWeatherServer','Script','forest-weather-server.luau')
 install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS

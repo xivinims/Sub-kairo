@@ -5,12 +5,12 @@ local UIS=game:GetService("UserInputService")
 local Shake=require(script.WindShake)
 local Lines=require(script.WindLines)
 while not W.CurrentCamera do W:GetPropertyChangedSignal("CurrentCamera"):Wait() end
-Shake:SetDefaultSettings({WindDirection=Vector3.new(1,0,.3),WindSpeed=10,WindPower=.16})
+Shake:SetDefaultSettings({WindDirection=Vector3.new(1,0,.3),WindSpeed=10,WindPower=.28})
 Shake:Init()
 Lines:Init({Direction=Vector3.new(1,0,.3),Speed=9,Lifetime=1.4,SpawnRate=UIS.TouchEnabled and 1.5 or 3})
 local function mount(p)
  if not p:IsA("BasePart") or p.Name=="TreeCollisionTrunk" then return end
- if p:GetAttribute("IslandWind") then Shake:AddObjectShake(p,{WindPower=.1});return end
+ if p:GetAttribute("IslandWind") then Shake:AddObjectShake(p,{WindPower=.28});return end
  local model=p.Parent
  if not model or not model:IsA("Model") then return end
  local tree=model:GetAttribute("ForestSpecies")~=nil

@@ -55,21 +55,20 @@ local function startRain()
  for i=1,dropCount do addDrop() end
  if not rainBed.IsPlaying then rainBed:Play() end
  local info=TweenInfo.new(7,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
- if atmosphere then TweenService:Create(atmosphere,info,{Density=.25,Haze=1.6,Color=Color3.fromRGB(221,229,232),Decay=Color3.fromRGB(206,214,217)}):Play() end
- if clouds then TweenService:Create(clouds,info,{Cover=.76,Density=.82,Color=Color3.fromRGB(169,180,192)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=-.06,Contrast=.035,TintColor=Color3.fromRGB(234,241,244)}):Play() end
+ if atmosphere then TweenService:Create(atmosphere,info,{Density=.34,Haze=2.1,Color=Color3.fromRGB(166,181,199),Decay=Color3.fromRGB(112,130,155)}):Play() end
+ if clouds then TweenService:Create(clouds,info,{Cover=.94,Density=.92,Color=Color3.fromRGB(82,94,116)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=-.16,Contrast=.10,TintColor=Color3.fromRGB(205,218,238)}):Play() end
 end
 
 local function stopRain()
- if not raining then return end
  raining=false
  for _,drop in ipairs(drops) do drop.part:Destroy() end
  table.clear(drops)
  rainBed:Stop()
  local info=TweenInfo.new(10,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
- if atmosphere then TweenService:Create(atmosphere,info,{Density=.22,Haze=1.3,Color=Color3.fromRGB(242,233,207),Decay=Color3.fromRGB(235,222,185)}):Play() end
- if clouds then TweenService:Create(clouds,info,{Cover=.43,Density=.62,Color=Color3.fromRGB(241,229,202)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=.015,Contrast=.025,TintColor=Color3.fromRGB(255,250,235)}):Play() end
+ if atmosphere then TweenService:Create(atmosphere,info,{Density=.29,Haze=1.8,Color=Color3.fromRGB(185,198,214),Decay=Color3.fromRGB(138,156,181)}):Play() end
+ if clouds then TweenService:Create(clouds,info,{Cover=.86,Density=.88,Color=Color3.fromRGB(111,123,143)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=-.10,Contrast=.08,TintColor=Color3.fromRGB(219,230,247)}):Play() end
 end
 
 local function makeBolt(a,b)
