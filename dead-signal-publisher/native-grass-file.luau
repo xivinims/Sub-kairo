@@ -41,7 +41,7 @@ local function scriptFile(parent,name,class,file)
  local source=fs.readFile(file)
  luau.load(source,{debugName=file})
  local inst=roblox.Instance.new(class);inst.Name=name;inst.Source=source;inst.Parent=parent
- if class=="Script" then inst.Enabled=true end
+ if class=="Script" then inst.Disabled=false end
  return inst
 end
 scriptFile(runtime,"ForestWeatherServer","Script","forest-weather-server.luau")
