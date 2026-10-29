@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('islands-door-audit')){
+if(trigger.trim().startsWith('mansion-native-release')){
+ await import('./mansion-native-publish.mjs');
+}else if(trigger.trim().startsWith('islands-door-audit')){
  await import('./islands-door-audit.mjs');
 }else if(trigger.trim().startsWith('islands-native-release')){
  await import('./islands-native-publish.mjs');

@@ -12,7 +12,7 @@ local model=template:Clone();model.Name='LocalSkyBlackHole'
 local origin=template:GetAttribute('SourceOrigin')
 local reference=template:GetAttribute('ReferenceDistance') or 1028
 model.WorldPivot=CFrame.lookAt(origin,origin+Vector3.new(1,0,0))
-local distance=280
+local distance=900
 model:ScaleTo(math.clamp(500/reference,.12,.7))
 model.Parent=W
 local touch=UIS.TouchEnabled
