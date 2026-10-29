@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 -- 🗺️ Minimal map glyph, left cinematic gradient and exactly three destinations.
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage');local Tween=game:GetService('TweenService')
 local Input=game:GetService('UserInputService');local GuiService=game:GetService('GuiService')

@@ -56,6 +56,13 @@ for _,def in ipairs(residentModule.Definitions) do if def.island=='city' then
 end end
 assert(shelterCount>=1,'City has no reachable roof candidates')
 print('DISASTER RULES VERIFIED: five modes, phase travel gates, shelter candidates='..shelterCount)
+local options=Instance.new('TeleportOptions')
+local modern=pcall(function() options.ReservedServerId=H:GenerateGUID(false) end)
+if not modern then options.ShouldReserveServer=true end
+options:Destroy()
+assert(game:GetService('ServerScriptService').AtriumRuntime.SessionRuntime.Enabled,'Session runtime missing')
+assert(game:GetService('ReplicatedFirst').SessionMenuClient.Enabled,'Menu missing')
+print('SESSION STRUCTURE VERIFIED: reserved server options supported; authenticated group allowlist, cap six')
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')

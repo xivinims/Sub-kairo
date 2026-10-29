@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 -- Original visual data from Roblox asset 7208091524; all runtime code here is ours.
 local W=workspace
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage')

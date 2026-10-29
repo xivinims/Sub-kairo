@@ -3,7 +3,7 @@ local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'));local 
 assert(W:GetAttribute('DeadSignalBuildId')=='still-here-three-islands-v1','Wrong world')
 assert(W.Terrain.Decoration==true and math.abs(W.Terrain.GrassLength-.85)<.001,'Native grass lost')
 assert(not W:FindFirstChild('OvergrownAtrium'),'Old forest remains')
-assert(#W.IslandDestinations:GetChildren()==3,'Missing spawns')
+assert(#dm:GetService('ServerStorage').MatchWorld.IslandDestinations:GetChildren()==3,'Missing spawns')
 if W:GetAttribute('IslandWorldReady')~=true then
  assert(dm:GetService('ServerScriptService').AtriumRuntime.IslandInitializer.Disabled==false,'Runtime initializer missing')
  assert(#dm:GetService('ServerStorage').IslandTerrainSnapshots:GetChildren()==3,'Terrain templates missing')
@@ -75,3 +75,9 @@ for _,part in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog.city:G
 local n=0;for _ in pairs(structures) do n+=1 end
 assert(n>0,'No destructible building groups')
 print('DISASTER FILE VERIFIED: structure groups='..n..', follow/rescue, server travel gates and bounded local effects')
+
+assert(not W:FindFirstChild('Islands'),'Public menu contains maps')
+assert(dm:GetService('Players').CharacterAutoLoads==false,'Menu spawns avatars')
+assert(dm:GetService('ReplicatedFirst').SessionMenuClient.Source==fs.readFile('session-menu-client.luau'),'Menu mismatch')
+assert(runtime.SessionRuntime.Source==fs.readFile('session-server.luau'),'Session rules mismatch')
+print('SESSION FILE VERIFIED: empty public world, server-only maps, solo/private groups and persistent inventory')

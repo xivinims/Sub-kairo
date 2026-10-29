@@ -31,6 +31,7 @@ bundle:Destroy()
 local configured=pcall(function() W.StreamingMinRadius=64;W.StreamingTargetRadius=128 end)
 W:SetAttribute('IslandStreamingTarget',configured and 128 or 192)
 print('ISLAND STREAMING',configured,W:GetAttribute('IslandStreamingTarget'))
+W:SetAttribute('GameMode','Match')
 print('ISLAND TERRAIN INITIALIZATION START')
 __FINALIZE__
 print('ISLAND TERRAIN INITIALIZATION COMPLETE')

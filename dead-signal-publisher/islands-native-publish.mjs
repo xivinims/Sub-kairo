@@ -62,7 +62,7 @@ let published;
 try{
  published=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-islands.rbxl')});
  console.log(JSON.stringify({publishedCandidate:published}));
- const waitReady="if workspace:GetAttribute('IslandWorldReady')~=true then\n"+finalize+"\nend\n";
+ const waitReady="workspace:SetAttribute('GameMode','Match');local archive=game:GetService('ServerStorage'):FindFirstChild('MatchWorld');if archive then for _,c in ipairs(archive:GetChildren()) do c.Parent=workspace end end\nif workspace:GetAttribute('IslandWorldReady')~=true then\n"+finalize+"\nend\n";
 
  const verified=await execute(waitReady+verify,published.versionNumber);console.log(JSON.stringify({liveVerified:verified}));
  await download('/tmp/still-here-verified.rbxl',verified.version);

@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 -- Replaces the source's discarded legacy weld/BodyPosition scripts.
 local Tween=game:GetService('TweenService');local Players=game:GetService('Players')
 local world=workspace:WaitForChild('Islands');local mounted=setmetatable({},{__mode='k'})

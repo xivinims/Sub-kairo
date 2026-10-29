@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players');local Run=game:GetService('RunService');local Tween=game:GetService('TweenService')
 local p=Players.LocalPlayer;local W=workspace;local touch=game:GetService('UserInputService').TouchEnabled
 local labels={Earthquake='TERREMOTO',AcidRain='CHUVA ÁCIDA',Tornado='TORNADO',Meteors='METEOROS',Gale='VENTANIA EXTREMA'}

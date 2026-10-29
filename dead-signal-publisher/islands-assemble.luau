@@ -145,6 +145,9 @@ local function install(parent,name,class,file)
 end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
+install(runtime,'SessionProfile','ModuleScript','session-profile.luau')
+install(runtime,'SessionRuntime','Script','session-server.luau')
+install(dm:GetService('ReplicatedFirst'),'SessionMenuClient','LocalScript','session-menu-client.luau')
 install(runtime,'DisasterService','ModuleScript','disaster-service.luau')
 install(runtime,'DisasterRuntime','Script','disaster-server.luau')
 install(SP,'DisasterClient','LocalScript','disaster-client.luau')
@@ -163,30 +166,40 @@ install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
 local speech=R.Instance.new('RemoteEvent');speech.Name='ResidentDialogue';speech.Parent=RS
+for _,entry in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'}}) do local remote=R.Instance.new(entry[2]);remote.Name=entry[1];remote.Parent=RS end
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
 if fs.isFile('/tmp/asset-7208091524.rbxl') then require('./blackhole-extract')(dm) end
+local modeSource="local mode=game.PrivateServerId=='' and 'Menu' or 'Match';workspace:SetAttribute('GameMode',mode)\nif mode=='Menu' then game:GetService('Players').CharacterAutoLoads=false;script:Destroy();return end\nlocal archive=game:GetService('ServerStorage'):FindFirstChild('MatchWorld');if archive then for _,c in ipairs(archive:GetChildren()) do c.Parent=workspace end end\n"
 local initSource=fs.readFile('islands-finalize.luau')
 initSource=initSource:sub(1,assert(initSource:find("game:GetService('AssetService'):SavePlaceAsync",1,true))-1)
-initSource="if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\ntask.wait(.25)\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
+initSource=modeSource.."if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\ntask.wait(.25)\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
 luau.load(initSource,{debugName='IslandInitializer'})
 local initializer=R.Instance.new('Script');initializer.Name='IslandInitializer';initializer.Source=initSource;initializer.Disabled=false;initializer.Parent=runtime
-dm:GetService('Players').CharacterAutoLoads=true
+dm:GetService('Players').CharacterAutoLoads=false
 W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
 W:SetAttribute('DisasterRevision','rescue-rounds-v1');W:SetAttribute('DisasterPhase','Calm')
+W:SetAttribute('SessionArchitecture','public-menu-reserved-match-v1')
 W:SetAttribute('ResidentsRevision','six-identities-v1');W:SetAttribute('CityWaterRevision','original-sea-native-v1')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')
 W.StreamingMinRadius=64;W.StreamingTargetRadius=128
+W.Terrain.SmoothGrid=citySource:GetService('Workspace').Terrain.SmoothGrid
+for _,entry in ipairs({runtime,SP}) do for _,source in ipairs(entry:GetDescendants()) do
+ if (source:IsA('Script') or source:IsA('LocalScript')) and source.Name~='IslandInitializer' and source.Name~='SessionRuntime' and not source.Source:find("GetAttribute('GameMode')",1,true) then
+  source.Source="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' then return end\n"..source.Source
+ end
+end end
+local archive=R.Instance.new('Folder');archive.Name='MatchWorld';archive.Parent=dm:GetService('ServerStorage');W.Islands.Parent=archive;W.IslandDestinations.Parent=archive
 fs.writeFile('/tmp/still-here-islands.rbxl',R.serializePlace(dm))
 local check=R.deserializePlace(fs.readFile('/tmp/still-here-islands.rbxl'))
 assert(check:GetService('Workspace').Terrain.Decoration==true,'Native grass lost')
-assert(#check:GetService('Workspace').IslandDestinations:GetChildren()==3,'Arrival count incorrect')
+assert(#check:GetService('ServerStorage').MatchWorld.IslandDestinations:GetChildren()==3,'Arrival count incorrect')
 print('ISLAND FILE READY: '..#fs.readFile('/tmp/still-here-islands.rbxl')..' bytes')
 -- Binary input bundle avoids re-encoding DataModel services during installation.
 local bundle=R.Instance.new('Model');bundle.Name='StillHereIslandBundle'
 for key,value in pairs(W:GetAttributes()) do bundle:SetAttribute(key,value) end
-for _,name in ipairs({'Islands','IslandDestinations'}) do W[name].Parent=bundle end
+for _,name in ipairs({'Islands','IslandDestinations'}) do archive[name].Parent=bundle end
 for _,name in ipairs({'IslandGeometryCatalog','IslandTerrainSnapshots'}) do dm:GetService('ServerStorage')[name].Parent=bundle end
 local replicatedAssets=R.Instance.new('Folder');replicatedAssets.Name='ReplicatedAssets';replicatedAssets.Parent=bundle
 for _,c in ipairs(RS:GetChildren()) do if c.Name~='IslandTravel' then c.Parent=replicatedAssets end end

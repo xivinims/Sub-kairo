@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players')
 local function character(player,char)
  local hum=char:WaitForChild('Humanoid',15)

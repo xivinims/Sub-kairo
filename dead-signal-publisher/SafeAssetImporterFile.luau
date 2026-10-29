@@ -75,6 +75,22 @@ function SafeAssetImporter.Parts(root,id,limit,predicate)
    c.Parent=out;n+=1
   end
  end
+ if id=='186677844' and structureCount==0 then
+  -- The legacy city stores walls and doors in separate models: spatially group bounded buildings.
+  local centers={};local budgets={}
+  for _,part in ipairs(out:GetChildren()) do local key=part:GetAttribute('IslandDoorId');if key then centers[key]=part:GetAttribute('IslandDoorPivot').Position end end
+  for _,part in ipairs(out:GetChildren()) do
+   local pos=part.CFrame.Position;local best,bestDistance=nil,math.huge
+   if part.Size.X<60 and part.Size.Z<60 and part.Size.Y<50 then
+    for key,center in pairs(centers) do
+     local distance=R.Vector3.new(pos.X-center.X,0,pos.Z-center.Z).Magnitude
+     if distance<30 and distance<bestDistance and pos.Y>center.Y-4 and pos.Y<center.Y+42 and (budgets[key] or 0)<300 then best=key;bestDistance=distance end
+    end
+   end
+   if best then part:SetAttribute('DisasterStructureId',best);budgets[best]=(budgets[best] or 0)+1 end
+  end
+  for _ in pairs(budgets) do structureCount+=1 end
+ end
  assert(n>0 and n<=limit,'Geometry budget exceeded: '..n)
  out:SetAttribute('DeadSignalSourceAssetId',id);out:SetAttribute('DeadSignalGeometryOnly',true)
  for _,d in ipairs(out:GetDescendants()) do assert(not d:IsA('LuaSourceContainer'),'Unsafe geometry') end

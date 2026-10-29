@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage')
 local Residents=require(script.Parent.IslandResidents);local Chunks=require(script.Parent.IslandChunks)
 while workspace:GetAttribute('IslandWorldReady')~=true do task.wait(.3) end

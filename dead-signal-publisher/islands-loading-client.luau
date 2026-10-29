@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 -- Real world/stream readiness, no fake progress bar or forced minimum delay.
 local Players=game:GetService('Players');local RF=game:GetService('ReplicatedFirst')
 local Tween=game:GetService('TweenService');local W=workspace

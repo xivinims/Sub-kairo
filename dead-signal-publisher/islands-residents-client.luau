@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 local RS=game:GetService('ReplicatedStorage');local Run=game:GetService('RunService')
 local motors=setmetatable({},{__mode='k'});local clock=0
 Run.Heartbeat:Connect(function(dt)

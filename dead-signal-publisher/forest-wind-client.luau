@@ -1,3 +1,5 @@
+while not workspace:GetAttribute('GameMode') do task.wait(.1) end
+if workspace:GetAttribute('GameMode')~='Match' then return end
 -- Integrates audited WindShake / WindLines from user asset 11946229834.
 -- Original modules: boatbomber and CloneTrooper1019; demo UI intentionally omitted.
 local W=workspace
