@@ -76,6 +76,7 @@ local center=(low+high)/2
 local eye=R.Vector3.new(center.X-3,low.Y+6,center.Z+(high.Z-low.Z)*.22)
 backdrop:SetAttribute('CameraCFrame',R.CFrame.lookAt(eye,R.Vector3.new(center.X,low.Y+7,low.Z+2))*R.CFrame.Angles(0,0,math.rad(-3)))
 backdrop:SetAttribute('DesignVersion','horror-reference-v1')
+require('./original-gameplay-fixes')(dm)
 -- Gate source scripts by mode without replacing their bodies.
 for _,s in ipairs(dm:GetDescendants()) do if s:IsA('LuaSourceContainer') and s:GetAttribute('OriginalAsset') then
  local before=s.Source
@@ -90,10 +91,11 @@ local runtime=R.Instance.new('Folder');runtime.Name='StillHereRuntime';runtime.P
 install(runtime,'SessionProfile','ModuleScript','session-profile.luau');install(runtime,'SessionRuntime','Script','session-server.luau')
 install(RF,'SessionMenuClient','LocalScript','session-menu-client.luau')
 install(RF,'OriginalUIBootstrap','LocalScript','original-ui-bootstrap.luau')
+install(RF,'OriginalMissionHUD','LocalScript','original-mission-hud.luau')
 install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
 for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
-W:SetAttribute('DeadSignalBuildId','still-here-original-menu-v2');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
+W:SetAttribute('DeadSignalBuildId','still-here-gameplay-fixes-v3');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
 local manifest=R.Instance.new('StringValue');manifest.Name='OriginalScriptManifest';manifest.Value=J.encode('json',records);manifest.Parent=SS
 local region=R.Instance.new('TerrainRegion');region.Name='OriginalTerrain';region.SmoothGrid=W.Terrain.SmoothGrid;region.ExtentsMin=R.Vector3int16.new(-144,-64,-192);region.ExtentsMax=R.Vector3int16.new(144,100,144);region.Parent=SS
