@@ -11,7 +11,7 @@ local destinations=R.Instance.new('Folder');destinations.Name='IslandDestination
 local input={}
 for _,id in ipairs({'5326950832','88883160098456','186677844'}) do
  local staged=R.deserializePlace(fs.readFile('/tmp/captured-'..id..'.rbxl'))
- local sw=staged:GetService('Workspace');local meta=serde.decode('json',sw:GetAttribute('IslandStageMeta'))
+ local sw=staged:GetService('Workspace');local meta=serde.decode('json',sw:GetAttribute('IslandStageMeta'));assert(meta.id==id,'Wrong captured source version')
  input[id]={dm=staged,meta=meta,geo=sw.SourceGeometry,region=staged:GetService('ServerStorage').IslandTerrainRegion}
 end
 local widthCurrent=input['88883160098456'].meta.hi[1]-input['88883160098456'].meta.lo[1]

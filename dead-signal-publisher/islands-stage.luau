@@ -4,13 +4,13 @@ local Safe=require('./SafeAssetImporterFile');local V=R.Vector3
 local id=process.args[1];local dm=R.deserializePlace(fs.readFile('/tmp/asset-'..id..'.rbxl'));local W=dm:GetService('Workspace')
 local source=W
 if id=='88883160098456' then source=assert(W:FindFirstChild('Forest'),'Forest selection missing'):FindFirstChild('Model');assert(source,'Forest model missing') end
-local forbidden={invisiwalls=true,allgrass=true,minimap=true,playbounds=true,packages=true,vistechdemopackages=true,daysky=true,nightsky=true,ocean=true,boattargets=true,birdtargets=true}
+local forbidden={['group-distantlodtrees']=true,transmittance=true,invisiwalls=true,allgrass=true,minimap=true,playbounds=true,packages=true,vistechdemopackages=true,daysky=true,nightsky=true,ocean=true,boattargets=true,birdtargets=true}
 local function include(p)
  if p:IsA('Seat') or p:IsA('VehicleSeat') then return true end
  local a=p
  while a and a~=W do
   local n=string.lower(a.Name)
-  if forbidden[n] or n:find('grassmesh',1,true) or n:find('grassbunch',1,true) or n:find('weedbunch',1,true) or n:find('invisiblewall',1,true) or n:find('distantfog',1,true) or n:find('artifactfog',1,true) or n:find('butterfl',1,true) or n:find('dragonfl',1,true) or n:find('group-birds',1,true) or n:find('river-fish',1,true) then return false end
+  if forbidden[n] or n:find('grass',1,true) or n:find('grassbunch',1,true) or n:find('weedbunch',1,true) or n:find('invisiblewall',1,true) or n:find('distantfog',1,true) or n:find('artifactfog',1,true) or n:find('butterfl',1,true) or n:find('dragonfl',1,true) or n:find('group-birds',1,true) or n:find('river-fish',1,true) then return false end
   if a:IsA('Model') and a:FindFirstChildOfClass('Humanoid') then return false end
   a=a.Parent
  end
@@ -19,9 +19,11 @@ end
 local geo,count=Safe.Parts(source,id,90000,include);geo.Name='SourceGeometry'
 local lo=V.new(math.huge,math.huge,math.huge);local hi=-lo
 for _,p in ipairs(geo:GetChildren()) do
- local v,s=p.CFrame.Position,p.Size*.5
- lo=V.new(math.min(lo.X,v.X-s.Magnitude),math.min(lo.Y,v.Y-s.Magnitude),math.min(lo.Z,v.Z-s.Magnitude))
- hi=V.new(math.max(hi.X,v.X+s.Magnitude),math.max(hi.Y,v.Y+s.Magnitude),math.max(hi.Z,v.Z+s.Magnitude))
+ local cf,s=p.CFrame,p.Size*.5
+ for _,x in ipairs({-1,1}) do for _,y in ipairs({-1,1}) do for _,z in ipairs({-1,1}) do
+  local v=cf:PointToWorldSpace(V.new(s.X*x,s.Y*y,s.Z*z))
+  lo=V.new(math.min(lo.X,v.X),math.min(lo.Y,v.Y),math.min(lo.Z,v.Z));hi=V.new(math.max(hi.X,v.X),math.max(hi.Y,v.Y),math.max(hi.Z,v.Z))
+ end end end
  -- Mark only canopy / fern meshes for the bounded local wind controller.
  local n=string.lower(p.Name)
  if n:find('leaf',1,true) or n:find('foliage',1,true) or n:find('fern',1,true) then p:SetAttribute('IslandWind',true);p.CanCollide=false end
