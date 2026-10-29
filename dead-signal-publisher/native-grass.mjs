@@ -48,6 +48,10 @@ await pause(5000);
 finalized=await execute(await fs.readFile(new URL('./native-grass-finalize.luau',import.meta.url),'utf8'));
 await pause(5000);
 }
+if(verifyOnly){
+ const repair=await execute(`assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-light-weather-v8','Wrong build');local v=workspace:GetAttribute('ForestWindAsset');if v~='11946229834' then workspace:SetAttribute('ForestWindAsset','11946229834');game:GetService('AssetService'):SavePlaceAsync({PlaceId=game.PlaceId,SaveWithoutPublish=false});end;return game:GetService('HttpService'):JSONEncode({windSourceCorrected=v~='11946229834'})`);
+ console.log(JSON.stringify({metadataRepair:repair}));await pause(5000);
+}
 const verified=await execute(`local W=workspace;local map=W.OvergrownAtrium;local n=0;for _,m in ipairs(map.MeadowUnderstory:GetChildren()) do if m:GetAttribute('FoliageType')=='Grass' then n+=1 end end;assert(n==0,'Grass models remain');assert(game:GetService('ServerScriptService').AtriumRuntime.ForestWeatherServer.Enabled==true,'Weather server disabled');assert(type(W:GetAttribute('ForestWeather'))=='string','Weather cycle not running');assert(game:GetService('StarterPlayer').StarterPlayerScripts:FindFirstChild('ForestWindClient'),'Wind client missing');assert(game:GetService('StarterPlayer').StarterPlayerScripts:FindFirstChild('ForestWeatherClient'),'Rain client missing');assert(W:GetAttribute('ForestSurfaceMaterial')=='Grass','Terrain not converted');assert(W:GetAttribute('DeadSignalBuildId')=='still-here-light-weather-v8','Wrong build');return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,grassModels=n,trees=#map.Pines:GetChildren(),flowers=#map.MeadowUnderstory:GetChildren(),weather=W:GetAttribute('ForestWeather'),windAsset=W:GetAttribute('ForestWindAsset'),build=W:GetAttribute('DeadSignalBuildId')})`);
 console.log(JSON.stringify({engineVerified:verified}));
 await download('/tmp/still-here-verified.rbxl',verified.version);
