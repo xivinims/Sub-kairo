@@ -23,7 +23,7 @@ async function execute(script,version){
  const base='https://apis.roblox.com/cloud/v2/';
  let t=await api(base+target+(version?'versions/'+version+'/':'')+'luau-execution-session-tasks',{method:'POST',body:JSON.stringify({timeout:'300s',script})});
  for(let i=0;['QUEUED','PENDING','PROCESSING'].includes(t.state);i++){
-  if(i>240)throw new Error('Execution timeout');await pause(1500);t=await api(base+t.path);
+  if(i>240){let logs;try{logs=await api(base+t.path+'/logs?view=FLAT')}catch(e){logs=String(e)}throw new Error('Execution timeout '+JSON.stringify({state:t.state,path:t.path,logs}));}await pause(1500);t=await api(base+t.path);
  }
  if(t.state!=='COMPLETE'||t.error)throw new Error(JSON.stringify(t.error||t));
  const v=t.output?.results?.[0];return typeof v==='string'?JSON.parse(v):v;
@@ -43,7 +43,8 @@ const zip=Buffer.from(await binary.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 const cwd=new URL('.',import.meta.url);
-const mode=await fs.readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
+const mode=process.argv[1].endsWith('asset-probe.mjs') ? await fs.readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8') : 'islands-release';
+if(mode.includes('smoke')){console.log(JSON.stringify({smoke:await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,stage=workspace:GetAttribute('IslandStageAsset')})",180)}));process.exit(0);}
 if(mode.includes('release')){
  const checkpoints=JSON.parse(await fs.readFile(new URL('./islands-sources.json',import.meta.url),'utf8'));
  for(const [id,version] of Object.entries(checkpoints))await download('/tmp/captured-'+id+'.rbxl',version);
@@ -70,7 +71,8 @@ if(mode.includes('release')){
  const pre=await execute(await fs.readFile(new URL('./islands-verify.luau',import.meta.url),'utf8'),ready.savedVersion);
  console.log(JSON.stringify({prePublishVerified:pre}));
  const pub=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-verified.rbxl')});
- const verified=await execute(await fs.readFile(new URL('./islands-verify.luau',import.meta.url),'utf8'),pub.versionNumber);
+ const verified=await execute(await fs.readFile(new URL('./islands-verify.luau',import.meta.url),'utf8'));
+ if(verified.version!==pub.versionNumber)throw Error('Live place version differs from published version');
  await download('/tmp/still-here-verified.rbxl',pub.versionNumber);
  execFileSync('/tmp/islands-lune/lune',['run','islands-file-verify.luau'],{cwd,stdio:'inherit'});
  await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});

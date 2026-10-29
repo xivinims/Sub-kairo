@@ -1,1 +1,1 @@
-islands-stage-v4
+islands-smoke-v1
