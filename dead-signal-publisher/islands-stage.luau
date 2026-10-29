@@ -40,8 +40,12 @@ W=dm:GetService('Workspace')
 for _,c in ipairs(W:GetChildren()) do c:Destroy() end
 sourceTerrain.Parent=W
 -- Strip every service, source GUI and script outside the selected static geometry.
-for _,name in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','StarterPlayer','SoundService'}) do
+for _,name in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService'}) do
  local service=dm:GetService(name);for _,c in ipairs(service:GetChildren()) do c:Destroy() end
+end
+local SP=dm:GetService('StarterPlayer')
+for _,c in ipairs(SP:GetChildren()) do
+ if c.Name=='StarterPlayerScripts' or c.Name=='StarterCharacterScripts' then for _,d in ipairs(c:GetChildren()) do d:Destroy() end else c:Destroy() end
 end
 local all=dm:GetDescendants();for i=#all,1,-1 do local d=all[i];if d:IsA('LuaSourceContainer') or d:IsA('Sound') then d:Destroy() end end
 geo.Parent=dm:GetService('ServerStorage')
