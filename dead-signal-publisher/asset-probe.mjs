@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('forest-place-audit')){
+if(trigger.trim().startsWith('forest-expansion-publish')){
+ await import('./forest-expansion.mjs');
+}else if(trigger.trim().startsWith('forest-place-audit')){
  await import('./forest-place-audit.mjs');
 }else if(trigger.trim().startsWith('forest-expansion-audit')){
  const fs=await import('node:fs/promises');console.log(JSON.stringify(await execute(await fs.readFile(new URL('./forest-expansion-audit.luau',import.meta.url),'utf8'))));
