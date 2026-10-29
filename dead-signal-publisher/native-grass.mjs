@@ -1,0 +1,10 @@
+const key=process.env.ROBLOX_API_KEY;
+const r=await fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/118064584465155',{headers:{'x-api-key':key}});
+const j=await r.json();
+if(!r.ok)throw new Error('Asset download access HTTP '+r.status+': '+JSON.stringify(j).slice(0,500));
+const location=j.location||j.locations?.[0]?.location;
+if(!location)throw new Error('Download location unavailable: '+JSON.stringify(j).slice(0,500));
+const file=await fetch(location);if(!file.ok)throw new Error('File download HTTP '+file.status);
+const data=Buffer.from(await file.arrayBuffer());
+await (await import('node:fs/promises')).writeFile('/tmp/still-here-source.rbxl',data);
+console.log(JSON.stringify({downloaded:true,bytes:data.length,header:data.subarray(0,8).toString()}));
