@@ -69,7 +69,7 @@ for _,part in ipairs(W.Content.Interior.Foyer:GetDescendants()) do
 end
 local low=R.Vector3.new(math.huge,math.huge,math.huge);local high=R.Vector3.new(-math.huge,-math.huge,-math.huge)
 for _,p in ipairs(backdrop:GetChildren()) do
- local pos=p.Position;low=R.Vector3.new(math.min(low.X,pos.X-p.Size.X/2),math.min(low.Y,pos.Y-p.Size.Y/2),math.min(low.Z,pos.Z-p.Size.Z/2));high=R.Vector3.new(math.max(high.X,pos.X+p.Size.X/2),math.max(high.Y,pos.Y+p.Size.Y/2),math.max(high.Z,pos.Z+p.Size.Z/2))
+ local pos=p.CFrame.Position;low=R.Vector3.new(math.min(low.X,pos.X-p.Size.X/2),math.min(low.Y,pos.Y-p.Size.Y/2),math.min(low.Z,pos.Z-p.Size.Z/2));high=R.Vector3.new(math.max(high.X,pos.X+p.Size.X/2),math.max(high.Y,pos.Y+p.Size.Y/2),math.max(high.Z,pos.Z+p.Size.Z/2))
 end
 assert(#backdrop:GetChildren()>20,'Menu source room missing')
 local center=(low+high)/2
