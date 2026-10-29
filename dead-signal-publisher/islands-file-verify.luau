@@ -54,3 +54,9 @@ local doorCount=0;for _ in pairs(groups) do doorCount+=1 end
 assert(doorCount>=20 and doorParts>100,'Interactive doors were not extracted')
 assert(dm:GetService('ServerScriptService').AtriumRuntime.IslandDoors.Source==fs.readFile('islands-doors-server.luau'),'Door controller mismatch')
 print('DOORS/LOADING VERIFIED: groups='..doorCount..', parts='..doorParts..', early readiness overlay, closer sky renderer')
+
+assert(W:GetAttribute('IslandVisualRevision')=='cinematic-map-v3','Visual revision missing')
+assert(dm:GetService('Lighting').ForestCinematicDepth.NearIntensity==0,'Near scene blur enabled')
+assert(SP.IslandTravelClient.Source:find("Name='LeftGradient'",1,true),'Gradient menu missing')
+assert(SP.IslandTravelClient.Source:find("Name='MapGlyph'",1,true),'Map glyph missing')
+print('CINEMATIC MAP VERIFIED: transparent glyph, left gradient, three destinations, native post effects')

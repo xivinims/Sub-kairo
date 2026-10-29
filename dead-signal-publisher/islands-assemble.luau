@@ -105,12 +105,14 @@ atmosphere.Color=R.Color3.fromRGB(185,198,214);atmosphere.Decay=R.Color3.fromRGB
 local clouds=W.Terrain:FindFirstChildOfClass('Clouds') or R.Instance.new('Clouds')
 clouds.Name='WoodlandCloudDeck';clouds.Cover=.86;clouds.Density=.88;clouds.Color=R.Color3.fromRGB(111,123,143);clouds.Parent=W.Terrain
 local grade=L:FindFirstChild('ForestGoldenGrade') or R.Instance.new('ColorCorrectionEffect')
-grade.Name='ForestGoldenGrade';grade.Contrast=.16;grade.Saturation=-.14;grade.TintColor=R.Color3.fromRGB(204,220,245);grade.Parent=L
+grade.Name='ForestGoldenGrade';grade.Contrast=.21;grade.Saturation=-.10;grade.TintColor=R.Color3.fromRGB(204,220,245);grade.Parent=L
 for _,effect in ipairs(L:GetChildren()) do
- if effect:IsA('BloomEffect') then effect.Intensity=.28;effect.Threshold=1.15;effect.Size=28 end
+ if effect:IsA('BloomEffect') then effect.Intensity=.45;effect.Threshold=.95;effect.Size=36 end
  if effect:IsA('SunRaysEffect') then effect.Intensity=.025 end
 end
-L.EnvironmentDiffuseScale=.65;L.EnvironmentSpecularScale=1
+L.EnvironmentDiffuseScale=.55;L.EnvironmentSpecularScale=1;L.GlobalShadows=true;L.ShadowSoftness=.3
+local depth=R.Instance.new('DepthOfFieldEffect');depth.Name='ForestCinematicDepth';depth.FocusDistance=85;depth.InFocusRadius=110;depth.NearIntensity=0;depth.FarIntensity=.12;depth.Parent=L
+W:SetAttribute('IslandVisualRevision','cinematic-map-v3')
 local citySource=R.deserializePlace(fs.readFile('/tmp/asset-186677844.rbxl'))
 local night=citySource:GetService('Workspace'):FindFirstChild('nightsky')
 local sky=L:FindFirstChildOfClass('Sky')
