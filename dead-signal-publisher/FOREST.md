@@ -2,7 +2,7 @@
 
 Exclusive universe 9421311218 / place 118064584465155 and branch dead-signal-publisher.
 
-Published build: still-here-native-grass-v7, PlaceVersion 171. The downloaded published file was independently deserialized and checked: Terrain.Decoration=true, Terrain.GrassLength=0.85, zero geometry grass models. 99,490 old grass models were removed; 2,917 trees and 7,562 flower models remain. The file size fell from 23,101,448 bytes to 3,250,516 bytes.
+Published build: still-here-light-weather-v8, PlaceVersion 174. Streaming 64/192, native grass and audited wind/rain scripts were confirmed by fresh engine inspection and an independent download of that exact version. The downloaded published file was independently deserialized and checked: Terrain.Decoration=true, Terrain.GrassLength=0.85, zero geometry grass models. 99,490 old grass models were removed; 2,917 trees and 7,562 flower models remain. The file size fell from 23,101,448 bytes to 3,250,516 bytes.
 
 The meadow has no roads, creek, props, menu, custom loading screen or storm system. Terrain materials were converted to Grass over the full 2,048 × 2,048 stud field. Native blades use Roblox terrain decoration, not imported grass geometry. Trees and flowers remain audited geometry selections.
 
