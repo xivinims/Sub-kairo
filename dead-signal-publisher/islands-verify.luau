@@ -27,6 +27,20 @@ assert(game:GetService('Lighting'):FindFirstChildOfClass('BloomEffect'),'Bloom m
 assert(#game:GetService('StarterGui'):GetChildren()==0,'Old menu remains')
 assert(game:GetService('ReplicatedFirst').IslandLoadingClient.Enabled,'Early loading missing')
 assert(game:GetService('ServerScriptService').AtriumRuntime.IslandDoors.Enabled,'Door runtime missing')
+local residentModule=require(game:GetService('ServerScriptService').AtriumRuntime.IslandResidents)
+local residentReport={}
+for _,def in ipairs(residentModule.Definitions) do
+ local rig=residentModule.Build(def)
+ table.insert(residentReport,{id=def.id,parts=#rig:GetDescendants(),hair=def.hair,shirt=def.shirt,pants=def.pants});rig:Destroy()
+end
+assert(#residentReport==6,'Residents incomplete');print('RESIDENT APPEARANCES VERIFIED '..H:JSONEncode(residentReport))
+for _,meta in ipairs(manifest) do if meta.id=='city' then
+ assert(meta.water and #meta.water>=8,'Sea missing')
+ local volume=meta.water[1];local center=(CFrame.new(unpack(volume.cf))+Vector3.new(unpack(meta.offset))).Position
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={W.Terrain};params.IgnoreWater=false
+ local hit=W:Raycast(center+Vector3.new(0,12,0),Vector3.new(0,-24,0),params)
+ assert(hit and hit.Material==Enum.Material.Water,'City sea not present in terrain');print('CITY WATER VERIFIED '..#meta.water..' original footprints')
+end end
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')

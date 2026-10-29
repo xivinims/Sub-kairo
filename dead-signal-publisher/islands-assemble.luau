@@ -114,6 +114,15 @@ L.EnvironmentDiffuseScale=.55;L.EnvironmentSpecularScale=1;L.GlobalShadows=true;
 local depth=R.Instance.new('DepthOfFieldEffect');depth.Name='ForestCinematicDepth';depth.FocusDistance=85;depth.InFocusRadius=110;depth.NearIntensity=0;depth.FarIntensity=.12;depth.Parent=L
 W:SetAttribute('IslandVisualRevision','cinematic-map-v3')
 local citySource=R.deserializePlace(fs.readFile('/tmp/asset-186677844.rbxl'))
+local cityWater={}
+local seaSource=assert(citySource:GetService('Workspace'):FindFirstChild('ocean'),'Original sea missing')
+for _,part in ipairs(seaSource:GetDescendants()) do
+ if part:IsA('BasePart') and part.Name=='a' and part.Size.Y<1 then
+  table.insert(cityWater,{cf={part.CFrame:GetComponents()},size={part.Size.X,part.Size.Z}})
+ end
+end
+assert(#cityWater>=8,'Incomplete sea footprint')
+for _,meta in ipairs(manifest) do if meta.id=='city' then meta.water=cityWater end end
 local night=citySource:GetService('Workspace'):FindFirstChild('nightsky')
 local sky=L:FindFirstChildOfClass('Sky')
 if night and sky then
@@ -136,6 +145,9 @@ local function install(parent,name,class,file)
 end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
+install(runtime,'IslandResidents','ModuleScript','islands-residents.luau')
+install(runtime,'IslandResidentRuntime','Script','islands-residents-server.luau')
+install(SP,'IslandResidentClient','LocalScript','islands-residents-client.luau')
 install(runtime,'IslandDoors','Script','islands-doors-server.luau')
 install(runtime,'IslandTravelServer','Script','islands-travel-server.luau')
 install(SP,'IslandTravelClient','LocalScript','islands-travel-client.luau')
@@ -147,6 +159,7 @@ install(dm:GetService('ReplicatedFirst'),'IslandLoadingClient','LocalScript','is
 install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
+local speech=R.Instance.new('RemoteEvent');speech.Name='ResidentDialogue';speech.Parent=RS
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
 if fs.isFile('/tmp/asset-7208091524.rbxl') then require('./blackhole-extract')(dm) end
 local initSource=fs.readFile('islands-finalize.luau')
@@ -158,6 +171,7 @@ dm:GetService('Players').CharacterAutoLoads=true
 W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
+W:SetAttribute('ResidentsRevision','six-identities-v1');W:SetAttribute('CityWaterRevision','original-sea-native-v1')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')
 W.StreamingMinRadius=64;W.StreamingTargetRadius=128
 fs.writeFile('/tmp/still-here-islands.rbxl',R.serializePlace(dm))

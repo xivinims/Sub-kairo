@@ -60,3 +60,7 @@ assert(dm:GetService('Lighting').ForestCinematicDepth.NearIntensity==0,'Near sce
 assert(SP.IslandTravelClient.Source:find("Name='LeftGradient'",1,true),'Gradient menu missing')
 assert(SP.IslandTravelClient.Source:find("Name='MapGlyph'",1,true),'Map glyph missing')
 print('CINEMATIC MAP VERIFIED: transparent glyph, left gradient, three destinations, native post effects')
+
+assert(W:GetAttribute('CityWaterRevision')=='original-sea-native-v1','Missing native sea')
+assert(dm:GetService('ServerScriptService').AtriumRuntime.IslandResidents.Source==fs.readFile('islands-residents.luau'),'Resident identities mismatch')
+assert(SP.IslandResidentClient.Source==fs.readFile('islands-residents-client.luau'),'Resident animation missing')

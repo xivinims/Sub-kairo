@@ -12,6 +12,13 @@ for _,meta in ipairs(manifest) do
   T:PasteRegion(tile,Vector3int16.new(c.X,c.Y,c.Z),false)
 
  end
+ if meta.water then
+  local translation=Vector3.new(unpack(meta.offset))
+  for _,volume in ipairs(meta.water) do
+   local cf=CFrame.new(unpack(volume.cf))+translation
+   T:FillBlock(cf*CFrame.new(0,-8,0),Vector3.new(volume.size[1],16,volume.size[2]),Enum.Material.Water)
+  end
+ end
  task.wait()
  local min=Vector3.new(meta.corner[1]*4,meta.corner[2]*4,meta.corner[3]*4)
  local max=min+Vector3.new(unpack(meta.cells))*4
@@ -23,6 +30,7 @@ for _,meta in ipairs(manifest) do
  T:FillBlock(CFrame.new(max.X+pad/2,sea-8,z),Vector3.new(pad,16,max.Z-min.Z),Enum.Material.Water)
 
 end
+T.WaterColor=Color3.fromRGB(28,58,70);T.WaterTransparency=.28;T.WaterReflectance=.35;T.WaterWaveSize=.18;T.WaterWaveSpeed=12
 -- Ground the three distinct arrivals and clear only nearby vegetation at the altar.
 local destinations=W.IslandDestinations
 local Chunks=require(game:GetService('ServerScriptService').AtriumRuntime.IslandChunks)
