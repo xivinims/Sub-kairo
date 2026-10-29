@@ -47,13 +47,7 @@ for chunkX=0,7 do
     local z=minZ+(iz-.5)*4
     local d=trailDistance(x,z);local h=groundHeight(x,z)
     local cx=creekX(z);local creekDistance=cx and math.abs(x-cx) or math.huge
-    local surface
-    if creekDistance<6.3 then surface=Enum.Material.Water
-    elseif d<9 then surface=Enum.Material.Ground
-    elseif d<16 then surface=Enum.Material.LeafyGrass
-    elseif h>42 and math.noise(x/43,z/43,7)>.25 then surface=Enum.Material.Rock
-    elseif math.noise(x/73,z/73,2)>.19 then surface=Enum.Material.LeafyGrass
-    else surface=Enum.Material.Grass end
+    local surface=Enum.Material.Grass
     for iy=1,ny do
      local bottom=-16+(iy-1)*4
      materials[ix][iy][iz]=surface
@@ -65,7 +59,7 @@ for chunkX=0,7 do
  end
 end
 task.wait(3)
-W.Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(104,123,62))
+W.Terrain:SetMaterialColor(Enum.Material.Grass,Color3.fromRGB(128,143,69))
 W.Terrain:SetMaterialColor(Enum.Material.LeafyGrass,Color3.fromRGB(82,112,54))
 W.Terrain:SetMaterialColor(Enum.Material.Ground,Color3.fromRGB(111,91,62))
 W.Terrain:SetMaterialColor(Enum.Material.Rock,Color3.fromRGB(105,104,92))
@@ -108,14 +102,7 @@ local accentTemplates={
  {template=SafeAssetImporter.Select(11730123582,"BroadLeafTree_Var01"),species="Broadleaf",minScale=.78,maxScale=1.08},
  {template=SafeAssetImporter.Select(11730123582,"DogwoodTree_Var01"),species="Dogwood",minScale=1.0,maxScale=1.35},
 }
-local grassTemplate=SafeAssetImporter.Select(11730123582,"Short Unioned Grass")
-local bushTemplate=SafeAssetImporter.Select(11730123582,"Large Bush 5")
-local fernTemplate=SafeAssetImporter.Select(11730123582,"Fern")
-local yellowFlowerTemplate=SafeAssetImporter.Select(11730123582,"Yellow flower")
 local wildflowerTemplate=SafeAssetImporter.Select(15482908101,"Flower")
-local groveTemplates={}
-for i=1,3 do table.insert(groveTemplates,SafeAssetImporter.Select(134979255746081,"__FLOWER_GROVE_"..i.."__")) end
-local stoneTemplate=SafeAssetImporter.Select(11730123582,"__ROCK_GROVE__")
 
 local function treeTrunk(partInstance)
  local name=string.lower(partInstance.Name)
@@ -192,50 +179,28 @@ for gx=-1000,1000,28 do
  end
 end
 
--- Continuous pockets of grasses, ferns, flowers and shrubs along routes and meadow edges.
+-- Native terrain grass is enabled in the serialized place file by native-grass.mjs.
+-- Only flowers are geometry; no grass models are generated.
 local grassCount,flowerCount,fernCount,bushCount=0,0,0,0
-for gx=-1000,1000,6 do
- for gz=-1000,1000,6 do
-  local x=gx+rng:NextNumber(-5,5);local z=gz+rng:NextNumber(-5,5)
-  local d=trailDistance(x,z)
-  local meadow=z>640 and z<990 and math.abs(x-mainX(z))<390
-  local meadowEdge=z>470 and z<990 and math.abs(x-mainX(z))<510
-  local chance=.96
-  if meadow then chance=math.max(chance,.68) elseif meadowEdge and d<235 then chance=math.max(chance,.28) end
-  if rng:NextNumber()<chance then
-   local roll=rng:NextNumber()
-   if roll<.93 then
-    local model=placeModel(grassTemplate,flora,"WildGrass_"..(grassCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.16,.28),false)
-    for _,blade in ipairs(model:GetDescendants()) do
-     if blade:IsA("BasePart") then blade.Size=Vector3.new(blade.Size.X*3,blade.Size.Y,blade.Size.Z*3) end
-    end
-    model:SetAttribute("FoliageType","Grass");grassCount+=1
-   elseif roll<0 then
-    local model=placeModel(bushTemplate,flora,"HeatherBush_"..(bushCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.34,.62),false)
-    model:SetAttribute("FoliageType","Shrub");bushCount+=1;grassCount+=1
-   elseif roll<0 then
-    local model=placeModel(fernTemplate,flora,"Fern_"..(fernCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.42,.82),false)
-    model:SetAttribute("FoliageType","Fern");fernCount+=1;grassCount+=1
-   elseif roll<1 then
-    local template=wildflowerTemplate
-    local model=placeModel(template,flora,"WoodlandFlower_"..(flowerCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.2,.5),false)
-    model:SetAttribute("FoliageType","Wildflower");flowerCount+=1;grassCount+=1
-   else
-    local template=groveTemplates[rng:NextInteger(1,#groveTemplates)]
-    local model=placeModel(template,flora,"FlowerGrove_"..(flowerCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.24,.39),false)
-    model:SetAttribute("FoliageType","FlowerGrove");flowerCount+=1;grassCount+=1
-   end
+for gx=-1000,1000,18 do
+ for gz=-1000,1000,18 do
+  if rng:NextNumber()<.6 then
+   local x=gx+rng:NextNumber(-6,6);local z=gz+rng:NextNumber(-6,6)
+   local model=placeModel(wildflowerTemplate,flora,"WoodlandFlower_"..(flowerCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.2,.5),false)
+   model:SetAttribute("FoliageType","Wildflower");flowerCount+=1
+   if flowerCount%100==0 then task.wait() end
   end
-  if grassCount%100==0 then task.wait() end
  end
 end
 
-local atmosphere=Instance.new("Atmosphere");atmosphere.Name="ForestAerialPerspective";atmosphere.Density=.29;atmosphere.Offset=.08
-atmosphere.Haze=2.25;atmosphere.Glare=.22;atmosphere.Color=Color3.fromRGB(220,207,172);atmosphere.Decay=Color3.fromRGB(140,148,111);atmosphere.Parent=L
-L.ClockTime=16.35;L.GeographicLatitude=34;L.Brightness=2.45;L.GlobalShadows=true;L.Ambient=Color3.fromRGB(96,94,71)
-L.OutdoorAmbient=Color3.fromRGB(138,137,101);L.ExposureCompensation=.08;L.EnvironmentDiffuseScale=.82;L.EnvironmentSpecularScale=.5
+local sky=Instance.new("Sky");sky.Name="MeadowSky";sky.Parent=L
+L.FogColor=Color3.fromRGB(235,222,190);L.FogStart=250;L.FogEnd=2200
+local atmosphere=Instance.new("Atmosphere");atmosphere.Name="ForestAerialPerspective";atmosphere.Density=.22;atmosphere.Offset=.08
+atmosphere.Haze=1.3;atmosphere.Glare=.15;atmosphere.Color=Color3.fromRGB(242,233,207);atmosphere.Decay=Color3.fromRGB(235,222,185);atmosphere.Parent=L
+L.ClockTime=15.2;L.GeographicLatitude=34;L.Brightness=2.7;L.GlobalShadows=true;L.Ambient=Color3.fromRGB(142,143,117)
+L.OutdoorAmbient=Color3.fromRGB(173,174,141);L.ExposureCompensation=.12;L.EnvironmentDiffuseScale=.82;L.EnvironmentSpecularScale=.5
 pcall(function() L.Technology=Enum.Technology.Future end)
-local grade=Instance.new("ColorCorrectionEffect");grade.Name="ForestGoldenGrade";grade.Saturation=-.045;grade.Contrast=.09;grade.TintColor=Color3.fromRGB(255,245,218);grade.Parent=L
+local grade=Instance.new("ColorCorrectionEffect");grade.Name="ForestGoldenGrade";grade.Saturation=.015;grade.Contrast=.025;grade.TintColor=Color3.fromRGB(255,250,235);grade.Parent=L
 local bloom=Instance.new("BloomEffect");bloom.Name="ForestSoftBloom";bloom.Intensity=.19;bloom.Size=24;bloom.Threshold=1.55;bloom.Parent=L
 local rays=Instance.new("SunRaysEffect");rays.Name="ForestCanopyRays";rays.Intensity=.075;rays.Spread=.78;rays.Parent=L
 local clouds=Instance.new("Clouds");clouds.Name="WoodlandCloudDeck";clouds.Cover=.43;clouds.Density=.62;clouds.Color=Color3.fromRGB(241,229,202);clouds.Parent=W.Terrain
@@ -246,12 +211,11 @@ pcall(function()
  W.ModelStreamingBehavior=Enum.ModelStreamingBehavior.Improved
 end)
 W:SetAttribute("ForestTreeCount",treeCount);W:SetAttribute("ForestTrailCount",0);W:SetAttribute("ForestMapSize",2048)
-W:SetAttribute("ForestGrassClusters",grassCount);W:SetAttribute("ForestFlowers",flowerCount);W:SetAttribute("ForestFerns",fernCount)
+W:SetAttribute("ForestNativeGrass",true);W:SetAttribute("ForestGrassModelCount",0);W:SetAttribute("ForestGrassClusters",0);W:SetAttribute("ForestFlowers",flowerCount);W:SetAttribute("ForestFerns",fernCount)
 W:SetAttribute("ForestRockClusters",0);W:SetAttribute("ForestDeadfallLogs",0);W:SetAttribute("ForestStumps",0)
 W:SetAttribute("ForestBranches",0);W:SetAttribute("ForestDefaultFOV",65)
-map:SetAttribute("ReferenceStyle","Warm conifer meadow with misted distance and natural dirt trails")
+map:SetAttribute("ReferenceStyle","Open meadow with native terrain grass and pale golden atmospheric distance")
 SafeAssetImporter.ClearSelectionCache()
 for _,template in ipairs(treeTemplates) do template.template:Destroy() end
 for _,template in ipairs(accentTemplates) do template.template:Destroy() end
-for _,template in ipairs({grassTemplate,bushTemplate,fernTemplate,yellowFlowerTemplate,wildflowerTemplate,stoneTemplate}) do template:Destroy() end
-for _,template in ipairs(groveTemplates) do template:Destroy() end
+wildflowerTemplate:Destroy()

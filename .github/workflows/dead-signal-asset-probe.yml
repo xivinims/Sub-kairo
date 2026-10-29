@@ -18,7 +18,7 @@ jobs:
         with:
           ref: dead-signal-publisher
           persist-credentials: false
-      - name: Probe user-selected Roblox assets without saving the place
+      - name: Run authorized asset inspection or place maintenance
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/asset-probe.mjs

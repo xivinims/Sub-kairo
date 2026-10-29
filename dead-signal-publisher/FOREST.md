@@ -1,13 +1,15 @@
-# Golden pine forest
+# Still Here — native grass meadow
 
-Build `dead-signal-golden-forest-v4`, for universe `9421311218` / place `118064584465155`, on the isolated `dead-signal-publisher` branch.
+Exclusive universe 9421311218 / place 118064584465155 and branch dead-signal-publisher.
 
-The world is an original 2,048 × 2,048 stud continuous terrain field. It uses a winding central dirt path, two joining forest paths, a shallow creek in a lower hollow, a broad open meadow, a distant wooded ridge and authored checkpoints. Terrain is written in bounded 256-stud chunks. Trail corridors are widened and kept clear for player movement and pathfinding.
+Published build: still-here-native-grass-v7, PlaceVersion 171. The downloaded published file was independently deserialized and checked: Terrain.Decoration=true, Terrain.GrassLength=0.85, zero geometry grass models. 99,490 old grass models were removed; 2,917 trees and 7,562 flower models remain. The file size fell from 23,101,448 bytes to 3,250,516 bytes.
 
-The canopy combines audited individual Ponderosa variants with selected pine, redwood, beechwood, broadleaf and dogwood models from the Creator Store packs. Selected grass, fern, shrub, flower, flower-cluster and rock geometry adds the understory. The forest floor also has placed deadfall, broken branches, stumps, rocks and gentle ridge relief. Every selected tree is recalculated against the terrain after rotation and has a simplified invisible collision cylinder, so its roots sit on the slope and players do not walk through trunks. Near-camera trees sway subtly with the wind; Roblox terrain grass and clouds also receive `GlobalWind`.
+The meadow has no roads, creek, props, menu, custom loading screen or storm system. Terrain materials were converted to Grass over the full 2,048 × 2,048 stud field. Native blades use Roblox terrain decoration, not imported grass geometry. Trees and flowers remain audited geometry selections.
 
-Only selected visual geometry is cloned. The importer strips scripts, sounds, animations and interaction objects before making static models. The Wind Effects pack contains only scripts and is not imported. The item listed as Minecraft Shader Panorama is a `Sky` instance rather than a Roblox shader, so the forest uses native Roblox Atmosphere, Clouds, Future lighting, ColorCorrection, Bloom and SunRays instead of injecting a false shader.
+The lighting now has a pale gold Atmosphere decay/color, lower haze and density, brighter ambient fill, reduced contrast, and a normal sky. This removes the former dark horizon treatment.
 
-The forest opens in a warm late-afternoon grade with long shadows, a visible canopy, soft aerial perspective and a cloud deck. A short time after joining, a local rain-and-thunder cycle begins: wind gusts, camera-relative rain streaks, lightning flashes and distant thunder. The cycle then clears back to the golden forest palette. RainPhysics was inspected; its repository contains a large set of repeated modules and actors, so this build reproduces the needed rain, wind and lightning behavior in a compact local effect instead of importing an unrelated code bundle.
+## Publishing
 
-The install validates the checkpoints, walkable routes, tree collision, terrain grounding, selected geometry, atmospheric effects and map scripts before saving. The existing start/continue and checkpoint runtime remains connected to the forest; no menu redesign or factory scene is part of this map pass.
+Terrain.Decoration and GrassLength are NotScriptable. The publisher first performs its normal source assembly, then native-grass.mjs downloads the place using the authorized Asset Delivery API, edits the serialized place with pinned Lune 0.11.1 (SHA-256 checked), verifies those two properties survive serialization, and uploads the edited binary using the official Place Publishing API. A bounded Luau pass converts terrain materials to Grass and saves it. Fresh engine validation confirms trees, flowers and zero grass models; a second download of that exact saved version confirms native terrain properties. Servers restart after these checks.
+
+The downloader requires legacy-asset:manage. Native grass rendering also follows Roblox client graphics quality. No rendered client screenshot was available during this verification.

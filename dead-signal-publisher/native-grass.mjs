@@ -48,4 +48,5 @@ const verified=await execute(`local W=workspace;local map=W.OvergrownAtrium;loca
 await download('/tmp/still-here-verified.rbxl',verified.version);
 execFileSync('/tmp/still-here-lune/lune',['run','native-grass-file-verify.luau'],{cwd,stdio:'inherit',env:{PATH:process.env.PATH}});
 await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});
-console.log(JSON.stringify({stage:'native-grass-published',finalized,verified,nativeGrass:true,grassLength:.85,restarted:true}));
+export const nativeGrassResult={stage:'native-grass-published',finalized,verified,nativeGrass:true,grassLength:.85,restarted:true};
+console.log(JSON.stringify(nativeGrassResult));

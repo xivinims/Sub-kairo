@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-meadow-only-v6';
+const BUILD_ID = 'still-here-native-grass-v7';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -145,6 +145,8 @@ async function main() {
     throw new Error('Verification failed: ' + JSON.stringify(verified));
   }
 
+  const nativeGrass = await import('./native-grass.mjs');
+
   let restart = {};
   try {
     restart = await roblox(CLOUD + 'universes/' + UNIVERSE_ID + ':restartServers', {
@@ -160,7 +162,8 @@ async function main() {
     universeId: UNIVERSE_ID,
     placeId: PLACE_ID,
     installed,
-    verified,
+    verified: nativeGrass.nativeGrassResult.verified,
+    nativeGrass: true,
     restart,
   }, null, 2));
 }
