@@ -29,7 +29,7 @@ return function(dm)
  replace(movement,'while self.humanoid.Health > 0 and self.humanoid:GetState() ~= Enum.HumanoidStateType.Landed do','while self.humanoid.Health > 0 and (self.humanoid:GetState() == Enum.HumanoidStateType.Jumping or self.humanoid:GetState() == Enum.HumanoidStateType.Freefall) do')
  replace(movement,'char:WaitForChild("HumanoidRootPart")','char:WaitForChild("HumanoidRootPart")\n self.__standingHipHeight = self.humanoid.HipHeight\n self.__states.Crouching=false;self.__states.Sliding=false;self.__states.Sprinting=false\n self.humanoid.UseJumpPower=false\n self.humanoid.JumpHeight=library.StarterPlayer.CharacterJumpHeight\n self.humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,true)')
  replace(movement,'"MovementHandlerRenderStep",Enum.RenderPriority.Camera.Value','"MovementHandlerRenderStep",Enum.RenderPriority.Camera.Value+1')
- replace(movement,'self:SetupInputs()','''self:SetupInputs()
+ replace(movement,'self:SetupInputs()',[[self:SetupInputs()
  local function equippedChanged()
   local equipped=library.WeaponsHandler.GetEquippedWeapon() ~= nil
   local button=library.ContextActionUtility:GetButton("Crouch")
@@ -38,7 +38,7 @@ return function(dm)
  end
  library.WeaponsHandler.WeaponEquipped:Connect(function() task.defer(equippedChanged) end)
  library.WeaponsHandler.WeaponUnequipped:Connect(function() task.defer(equippedChanged) end)
- equippedChanged()''')
+ equippedChanged()]])
  local client=RS.OriginalStarterGui.Scripts.Game.ClientHandler
  replace(client,'cameraOffsets:ApplyOffsets(camera)','-- Camera bob/slide/fall removed; original viewmodel animation and recoil remain.')
  replace(client,'runService.RenderStepped:Connect(RenderStepped)','runService:BindToRenderStep("OriginalFPSClient",Enum.RenderPriority.Camera.Value+3,RenderStepped)')
