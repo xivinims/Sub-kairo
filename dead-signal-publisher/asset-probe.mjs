@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('spring-verify-staged')){
+if(trigger.trim().startsWith('still-here-metadata')){
+  await import('./metadata.mjs');
+}else if(trigger.trim().startsWith('spring-verify-staged')){
   await import('./conversion/verify-staged.mjs');
 }else if(trigger.trim().startsWith('spring-convert-animations')){
   await import('./conversion/upload-animations.mjs');
