@@ -5,7 +5,7 @@ async function api(path,method='GET',body){
  const text=await r.text();if(!r.ok)throw new Error('HTTP '+r.status+': '+text.slice(0,900));return text?JSON.parse(text):{};
 }
 for(const path of ['universes/9421311218','universes/9421311218/places/118064584465155']){
- await api(path+'?updateMask=displayName,description','PATCH',{displayName:'Still Here',description:''});
+ await api(path+'?updateMask=display_name,description','PATCH',{displayName:'Still Here',description:''});
  await new Promise(r=>setTimeout(r,2500));
  const v=await api(path);
  console.log(JSON.stringify({response:v}));
