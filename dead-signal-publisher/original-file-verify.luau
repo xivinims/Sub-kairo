@@ -1,0 +1,18 @@
+local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@lune/serde')
+local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'))
+local original=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'));local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
+local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-systems-v1','Wrong live build')
+assert(SS.OriginalWorld.Content.Interior and SS.Corrupt.Grandfather,'Source map hierarchy lost')
+assert(not W:FindFirstChild('Content'),'Public menu contains mansion')
+local function resolve(root,path) for _,name in ipairs(path:split('.')) do root=assert(root:FindFirstChild(name),'Missing source path '..path) end;return root end
+local exact,patched=0,0
+local guard="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' then return end\n"
+for _,d in ipairs(dm:GetDescendants()) do if d:IsA('LuaSourceContainer') and d:GetAttribute('OriginalAsset') then
+ local source=resolve(d:GetAttribute('OriginalAsset')=='7902470429' and original or fps,d:GetAttribute('OriginalPath'))
+ if d:GetAttribute('CompatibilityChange') then patched+=1 else assert(d.Source==source.Source or d.Source==guard..source.Source,'Unmarked source modification '..d:GetFullName());exact+=1 end
+end end
+assert(exact>250,'Too few preserved original source bodies')
+assert(RS.OriginalStarterGui.HUD.Frame.HeadlampButton and RS.OriginalStarterGui.MainHud.Main.CombatHud,'Source HUD lost')
+assert(SSS.GameStateManager.Enabled and SSS.Weapons.WeaponsServer.Enabled,'Original runtime not enabled')
+print('ORIGINAL EXACT FILE VERIFIED '..J.encode('json',{exactOriginalBodies=exact,markedCompatibilityChanges=patched,sourceMansion='7902470429',sourceFPS='15864801103',menuIsolated=true}))

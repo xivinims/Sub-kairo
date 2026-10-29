@@ -1,0 +1,21 @@
+local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-systems-v1','Wrong build')
+assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
+assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
+assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
+assert(RS.OriginalStarterGui.HUD and RS.OriginalStarterGui.MainHud and RS.OriginalStarterGui.MobileButtons,'Source GUI incomplete')
+assert(SP.StarterPlayerScripts.GameStateClient.Enabled and SP.StarterPlayerScripts.EventManagerClient.Enabled,'Original UI controllers missing')
+assert(SP.StarterCharacterScripts.GrabSystem.GrabClient.Enabled,'Original grab control missing')
+assert(not SP.StarterPlayerScripts:FindFirstChild('MansionUIClient') and not SSS:FindFirstChild('AtriumRuntime'),'Adapted controllers still active')
+local cfg=require(game:GetService('ReplicatedFirst').DemoConfig)
+local missions=0;for name,mission in pairs(cfg.Missions) do assert(mission.MissionRoot,'Mission root missing '..name);missions+=1 end
+local parts,tagged=0,0;for _,d in ipairs(W.Content:GetDescendants()) do if d:IsA('BasePart') then parts+=1 end;if #game:GetService('CollectionService'):GetTags(d)>0 then tagged+=1 end end
+assert(parts>13000 and tagged>10,'Original geometry/tags incomplete')
+local sources=0;for _,d in ipairs(game:GetDescendants()) do if d:IsA('LuaSourceContainer') and d:GetAttribute('OriginalAsset') then sources+=1 end end
+assert(sources>250,'Original scripts incomplete')
+assert(RS.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Hitscan and SS.Library.WeaponsServerModule,'Original FPS dependency tree missing')
+assert(RS.SkyBlackHoleTemplate:GetAttribute('SourceAsset')=='7208091524','Black hole missing')
+-- Run the original config/door setup, not an imitation of the source controller.
+require(SSS.DoorManager).Init()
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,originalHUD=true,originalFPS=true})
