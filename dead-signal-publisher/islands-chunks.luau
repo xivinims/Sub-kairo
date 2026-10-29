@@ -9,7 +9,11 @@ local function load(id,x,z)
  local source=catalog:FindFirstChild(id);local parent=world:FindFirstChild(id)
  if not source or not parent then return end
  local name='Cell_'..x..'_'..z
- local template=source:FindFirstChild(name);if not template then return end
+ local template=source:FindFirstChild(name)
+ if not template then
+  if id=='forestCurrent' then local clone=require(script.Parent.AdventureForest).Cell(x,z,parent);if clone then loaded[key]=clone end end
+  return
+ end
  if id~='city' and not converted[key] then
   converted[key]=true
   local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain};rp.IgnoreWater=true

@@ -68,8 +68,8 @@ assert(SP.IslandResidentClient.Source==fs.readFile('islands-residents-client.lua
 assert(W:GetAttribute('DisasterRevision')=='rescue-rounds-v1','Disaster revision missing')
 local runtime=dm:GetService('ServerScriptService').AtriumRuntime
 assert(runtime.DisasterService.Source==fs.readFile('disaster-service.luau'),'Disaster rules mismatch')
-assert(runtime.DisasterRuntime.Source==fs.readFile('disaster-server.luau'),'Disaster runtime mismatch')
-assert(SP.DisasterClient.Source==fs.readFile('disaster-client.luau'),'Disaster client mismatch')
+assert(not runtime:FindFirstChild('DisasterRuntime'),'Disasters still active')
+assert(not SP:FindFirstChild('DisasterClient'),'Disaster UI still active')
 local structures={}
 for _,part in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog.city:GetDescendants()) do if part:IsA('BasePart') and part:GetAttribute('DisasterStructureId') then structures[part:GetAttribute('DisasterStructureId')]=true end end
 local n=0;for _ in pairs(structures) do n+=1 end
@@ -81,3 +81,7 @@ assert(dm:GetService('Players').CharacterAutoLoads==false,'Menu spawns avatars')
 assert(dm:GetService('ReplicatedFirst').SessionMenuClient.Source==fs.readFile('session-menu-client.luau'),'Menu mismatch')
 assert(runtime.SessionRuntime.Source==fs.readFile('session-server.luau'),'Session rules mismatch')
 print('SESSION FILE VERIFIED: empty public world, server-only maps, solo/private groups and persistent inventory')
+
+assert(W:GetAttribute('AdventureRevision')=='village-ufo-v1','Adventure missing')
+assert(runtime.AdventureRuntime.Source==fs.readFile('adventure-server.luau'),'Threat/quest code mismatch')
+assert(SP.AdventureClient.Source==fs.readFile('adventure-client.luau'),'Mission/sneak UI mismatch')

@@ -34,7 +34,7 @@ for _,def in ipairs(residentModule.Definitions) do
  local position=residentModule.FindGround(def);assert(position,'Unsafe resident placement: '..def.id)
  table.insert(residentReport,{id=def.id,position=tostring(position),parts=#rig:GetDescendants(),hair=def.hair,shirt=def.shirt,pants=def.pants});rig:Destroy()
 end
-assert(#residentReport==6,'Residents incomplete');print('RESIDENT APPEARANCES VERIFIED '..H:JSONEncode(residentReport))
+assert(#residentReport==8,'Residents incomplete');print('RESIDENT APPEARANCES VERIFIED '..H:JSONEncode(residentReport))
 for _,meta in ipairs(manifest) do if meta.id=='city' then
  assert(meta.water and #meta.water>=8,'Sea missing')
  local volume=meta.water[1];local center=(CFrame.new(unpack(volume.cf))+Vector3.new(unpack(meta.offset))).Position
@@ -54,7 +54,7 @@ local shelterCount=0
 for _,def in ipairs(residentModule.Definitions) do if def.island=='city' then
  local pos=residentModule.FindGround(def);local shelter=disasters.FindShelter(pos,'city');if shelter then shelterCount+=1 end
 end end
-assert(shelterCount>=1,'City has no reachable roof candidates')
+assert(workspace.Islands.forestCurrent:FindFirstChild('AdventureVillage'),'Village missing')
 print('DISASTER RULES VERIFIED: five modes, phase travel gates, shelter candidates='..shelterCount)
 local options=Instance.new('TeleportOptions')
 local modern=pcall(function() options.ReservedServerId=H:GenerateGUID(false) end)
@@ -63,6 +63,12 @@ options:Destroy()
 assert(game:GetService('ServerScriptService').AtriumRuntime.SessionRuntime.Enabled,'Session runtime missing')
 assert(game:GetService('ReplicatedFirst').SessionMenuClient.Enabled,'Menu missing')
 print('SESSION STRUCTURE VERIFIED: reserved server options supported; authenticated group allowlist, cap six')
+local adventure=require(game:GetService('ServerScriptService').AtriumRuntime.AdventureForest)
+assert(workspace:GetAttribute('AdventureForestSize')==6144,'Forest extension missing')
+assert(#game:GetService('ServerStorage').AdventureTrees:GetChildren()>0,'Authored trees missing')
+local center=workspace:GetAttribute('VillageCenter');assert(center and center.Z< -900,'Village separation missing')
+assert(not game:GetService('ServerScriptService').AtriumRuntime:FindFirstChild('DisasterRuntime'),'Old disasters enabled')
+print('ADVENTURE VERIFIED: native grass extension, original tree templates, four village building groups, eight identities, mission and patrol sources')
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')

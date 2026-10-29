@@ -145,12 +145,16 @@ local function install(parent,name,class,file)
 end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
+require('./adventure-extract')(dm)
+install(runtime,'AdventureForest','ModuleScript','adventure-forest.luau')
+install(runtime,'AdventureRuntime','Script','adventure-server.luau')
+install(SP,'AdventureClient','LocalScript','adventure-client.luau')
 install(runtime,'SessionProfile','ModuleScript','session-profile.luau')
 install(runtime,'SessionRuntime','Script','session-server.luau')
 install(dm:GetService('ReplicatedFirst'),'SessionMenuClient','LocalScript','session-menu-client.luau')
 install(runtime,'DisasterService','ModuleScript','disaster-service.luau')
-install(runtime,'DisasterRuntime','Script','disaster-server.luau')
-install(SP,'DisasterClient','LocalScript','disaster-client.luau')
+-- Disasters replaced by exploration and alien patrols.
+
 install(runtime,'IslandResidents','ModuleScript','islands-residents.luau')
 install(runtime,'IslandResidentRuntime','Script','islands-residents-server.luau')
 install(SP,'IslandResidentClient','LocalScript','islands-residents-client.luau')
@@ -165,6 +169,7 @@ install(dm:GetService('ReplicatedFirst'),'IslandLoadingClient','LocalScript','is
 install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
+local adventure=R.Instance.new('RemoteEvent');adventure.Name='AdventureEvent';adventure.Parent=RS
 local speech=R.Instance.new('RemoteEvent');speech.Name='ResidentDialogue';speech.Parent=RS
 for _,entry in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'}}) do local remote=R.Instance.new(entry[2]);remote.Name=entry[1];remote.Parent=RS end
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
@@ -179,6 +184,7 @@ dm:GetService('Players').CharacterAutoLoads=false
 W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
+W:SetAttribute('AdventureRevision','village-ufo-v1')
 W:SetAttribute('DisasterRevision','rescue-rounds-v1');W:SetAttribute('DisasterPhase','Calm')
 W:SetAttribute('SessionArchitecture','public-menu-reserved-match-v1')
 W:SetAttribute('ResidentsRevision','six-identities-v1');W:SetAttribute('CityWaterRevision','original-sea-native-v1')
@@ -201,6 +207,7 @@ local bundle=R.Instance.new('Model');bundle.Name='StillHereIslandBundle'
 for key,value in pairs(W:GetAttributes()) do bundle:SetAttribute(key,value) end
 for _,name in ipairs({'Islands','IslandDestinations'}) do archive[name].Parent=bundle end
 for _,name in ipairs({'IslandGeometryCatalog','IslandTerrainSnapshots'}) do dm:GetService('ServerStorage')[name].Parent=bundle end
+dm:GetService('ServerStorage').AdventureTrees.Parent=bundle
 local replicatedAssets=R.Instance.new('Folder');replicatedAssets.Name='ReplicatedAssets';replicatedAssets.Parent=bundle
 for _,c in ipairs(RS:GetChildren()) do if c.Name~='IslandTravel' then c.Parent=replicatedAssets end end
 runtime.Name='IslandRuntime';runtime.Parent=bundle

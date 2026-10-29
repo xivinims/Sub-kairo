@@ -84,6 +84,7 @@ for _,meta in ipairs(manifest) do
  table.insert(checks,{id=meta.id,floor=hit.Instance.Name,position={spawn.Position.X,spawn.Position.Y,spawn.Position.Z}})
 end
 for _,d in ipairs(W.Islands:GetDescendants()) do assert(not d:IsA('LuaSourceContainer') and not d:IsA('Sound'),'External runtime content found') end
+require(game:GetService('ServerScriptService').AtriumRuntime.AdventureForest).BuildVillage()
 snapshots:Destroy()
 W:SetAttribute('IslandWorldReady',true)
 W:SetAttribute('ForestSurfaceMaterial','Grass')

@@ -8,7 +8,7 @@ local function near(position,distance)
  return false
 end
 local function mount(cell)
- if mounted[cell] or not cell.Name:match('^Cell_') then return end;mounted[cell]=true
+ if mounted[cell] or not (cell.Name:match('^Cell_') or cell.Name:match('^VillageHouse_')) then return end;mounted[cell]=true
  local groups={}
  for _,p in ipairs(cell:GetDescendants()) do if p:IsA('BasePart') and p:GetAttribute('IslandDoorId') then
   local id=p:GetAttribute('IslandDoorId');groups[id]=groups[id] or {};table.insert(groups[id],p)
@@ -58,3 +58,5 @@ for _,island in ipairs(world:GetChildren()) do
  for _,cell in ipairs(island:GetChildren()) do mount(cell) end
  island.ChildAdded:Connect(function(cell) task.defer(mount,cell) end)
 end
+
+world.DescendantAdded:Connect(function(model) if model:IsA('Model') and model.Name:match('^VillageHouse_') then task.defer(mount,model) end end)

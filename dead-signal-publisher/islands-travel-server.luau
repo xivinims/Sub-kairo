@@ -16,6 +16,7 @@ end
 local function travel(p,id,reply)
  if workspace:GetAttribute('IslandWorldReady')~=true then if reply then remote:FireClient(p,false,'O mundo ainda está carregando.') end;return end
  if not valid[id] or busy[p] then return end
+ if reply and workspace:GetAttribute('AdventureRevision') and (p:GetAttribute('ThreatDetectedUntil') or 0)>workspace:GetServerTimeNow() then remote:FireClient(p,false,'Você está sendo procurado. Esconda-se antes de viajar.');return end
  if p:GetAttribute('HasIslandArrival') and reply and not Disaster.CanTravel() then remote:FireClient(p,false,'Teleporte bloqueado durante o desastre. Procure abrigo!');return end
  if reply and os.clock()-(last[p] or -10)<2 then remote:FireClient(p,false,'Aguarda um instante.');return end
  local spawn=arrival(id);local char=p.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')

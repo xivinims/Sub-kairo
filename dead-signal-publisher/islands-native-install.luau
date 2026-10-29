@@ -16,6 +16,7 @@ for k in pairs(W:GetAttributes()) do W:SetAttribute(k,nil) end
 for k,v in pairs(bundle:GetAttributes()) do W:SetAttribute(k,v) end
 bundle.Islands.Parent=W;bundle.IslandDestinations.Parent=W
 for _,c in ipairs(game:GetService('ServerStorage'):GetChildren()) do c:Destroy() end
+bundle.AdventureTrees.Parent=game:GetService('ServerStorage')
 bundle.IslandGeometryCatalog.Parent=game:GetService('ServerStorage')
 bundle.IslandTerrainSnapshots.Parent=game:GetService('ServerStorage')
 local assets=bundle:FindFirstChild('ReplicatedAssets');if assets then for _,c in ipairs(assets:GetChildren()) do c.Parent=game:GetService('ReplicatedStorage') end end
