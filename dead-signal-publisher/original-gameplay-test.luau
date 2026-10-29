@@ -1,7 +1,7 @@
 local fs=require('@lune/fs');local R=require('@lune/roblox');local luau=require('@lune/luau')
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-original.rbxl'))
 local RS=dm:GetService('ReplicatedStorage');local SP=dm:GetService('StarterPlayer')
-assert(SP.CharacterJumpHeight==7.2 and SP.CharacterUseJumpPower==false,'Jump defaults not installed')
+assert(math.abs(SP.CharacterJumpHeight-7.2)<.001 and SP.CharacterUseJumpPower==false,'Jump defaults not installed')
 local source=RS.Library.Client.MovementHandler.Source
 -- Execute the shipped movement methods against a deterministic avatar/service harness.
 source=source:gsub('local library = require%(game.ReplicatedStorage:WaitForChild%("Library"%)%)','')
