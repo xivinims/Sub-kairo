@@ -32,7 +32,7 @@ local function equip(name)
   local ok,track=pcall(function() return animator:LoadAnimation(animation) end)
   if ok then tracks[animation.Name:lower()]=track else warn('[WeaponAnimation] '..animation.Name..': '..tostring(track)) end
  end end end
- motion=Motion.new(model);motion:Play('equip');p.CameraMinZoomDistance=.5;p.CameraMode=Enum.CameraMode.LockFirstPerson;cross.Visible=true
+ motion=Motion.new(model,function(name) local sounds=model and model:FindFirstChild('WeaponSounds');local sound=sounds and sounds:FindFirstChild(name,true);if sound and sound:IsA('Sound') then sound:Play() end end);motion:Play('equip');p.CameraMinZoomDistance=.5;p.CameraMode=Enum.CameraMode.LockFirstPerson;cross.Visible=true
 end
 local function play(kind)
  if model then local sounds=model:FindFirstChild('WeaponSounds');if sounds then for _,sound in ipairs(sounds:GetDescendants()) do if sound:IsA('Sound') and (sound.Name:lower():find(kind,1,true) or (kind=='fire' and sound.Name:lower():find('shoot',1,true))) then sound:Stop();sound:Play();break end end end end

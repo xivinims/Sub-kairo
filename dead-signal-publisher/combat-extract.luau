@@ -6,14 +6,19 @@ local function sanitize(source)
  for _,p in ipairs(clone:GetDescendants()) do if p:IsA('BasePart') then p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.Massless=true;p.CastShadow=false end end
  return clone
 end
+local function pivot(model,cf)
+ local before=model.PrimaryPart.CFrame;local delta=cf*before:Inverse()
+ for _,part in ipairs(model:GetDescendants()) do if part:IsA('BasePart') then part.CFrame=delta*part.CFrame end end
+ model.WorldPivot=cf
+end
 return function(dm)
  local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'));local RS=fps:GetService('ReplicatedStorage')
  local assets=R.Instance.new('Folder');assets.Name='CombatAssets';assets.Parent=dm:GetService('ReplicatedStorage')
  local weapons=R.Instance.new('Folder');weapons.Name='PlayerWeapons';weapons.Parent=assets
  for _,spec in ipairs({{name='M4A1',model='M4',mag=30,damage=23,interval=.0885,reload=2.6,sequence='M4a1vm'},{name='Deagle',model='Deagle',mag=10,damage=30,interval=.42,reload=2.2,sequence='Deagle'}}) do
   local vm=sanitize(RS.Assets.Models.Viewmodels.Tactical);vm.Name=spec.name
-  local root=assert(vm:FindFirstChild('HumanoidRootPart'));vm.PrimaryPart=root;vm:PivotTo(R.CFrame.new())
-  local gun=sanitize(RS.Game.Weapons[spec.name][spec.model]);gun.Name='Weapon';gun:SetAttribute('SourceModelName',spec.model);gun.PrimaryPart=assert(gun:FindFirstChild('Handle'));gun:PivotTo(R.CFrame.new(.45,-.8,-1.25));gun.Parent=vm
+  local root=assert(vm:FindFirstChild('HumanoidRootPart'));vm.PrimaryPart=root;pivot(vm,R.CFrame.new())
+  local gun=sanitize(RS.Game.Weapons[spec.name][spec.model]);gun.Name='Weapon';gun:SetAttribute('SourceModelName',spec.model);gun.PrimaryPart=assert(gun:FindFirstChild('Handle'));pivot(gun,R.CFrame.new(.45,-.8,-1.25));gun.Parent=vm
   local joint=R.Instance.new('Motor6D');joint.Name='ViewmodelJoint';joint.Part0=root;joint.Part1=gun.PrimaryPart;joint.C0=R.CFrame.new(.45,-.8,-1.25);joint.Parent=root
   for _,p in ipairs(vm:GetDescendants()) do if p:IsA('BasePart') then p.Anchored=p==root end end
   local sequences=R.Instance.new('Folder');sequences.Name='OriginalSequences';sequences.Parent=vm
@@ -25,8 +30,9 @@ return function(dm)
   end
   for _,pose in ipairs(sequences:GetDescendants()) do if pose:IsA('Pose') and (pose.Name=='Handle' or pose.Name==spec.model) then joint.C0=R.CFrame.new();break end end
   assert(sequences:FindFirstChild('Shoot') and sequences:FindFirstChild('Reload'),'Missing original animations: '..spec.name)
-  local soundRoot=fps:GetService('SoundService'):FindFirstChild('ClientSounds')
-  local sourceSounds=soundRoot and soundRoot:FindFirstChild('Weapons') and soundRoot.Weapons:FindFirstChild(spec.name)
+  local soundRoot=RS.Assets:FindFirstChild('Sounds')
+  local soundWeapons=soundRoot and soundRoot:FindFirstChild('Weapons')
+  local sourceSounds=soundWeapons and (soundWeapons:FindFirstChild(spec.name=='M4A1' and 'M4A1 MW' or spec.name))
   if sourceSounds then local sounds=sanitize(sourceSounds);sounds.Name='WeaponSounds';sounds.Parent=vm;for _,s in ipairs(sounds:GetDescendants()) do if s:IsA('Sound') then s.PlayOnRemove=false;s.Volume=math.min(s.Volume,.65) end end end
   vm:SetAttribute('SourceAsset','15864801103');vm:SetAttribute('FireInterval',spec.interval);vm:SetAttribute('Damage',spec.damage);vm:SetAttribute('Magazine',spec.mag);vm:SetAttribute('ReloadTime',spec.reload);vm.Parent=weapons
  end

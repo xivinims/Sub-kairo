@@ -1,7 +1,7 @@
 -- Reads the source's saved pose data; does not load external animation scripts or asset IDs.
 local M={};M.__index=M
-function M.new(rig)
- local self=setmetatable({rig=rig,joints={},clips={},clock=0},M)
+function M.new(rig,onMarker)
+ local self=setmetatable({rig=rig,joints={},clips={},clock=0,onMarker=onMarker},M)
  for _,joint in ipairs(rig:GetDescendants()) do if joint:IsA('Motor6D') and joint.Part1 then self.joints[joint.Part1.Name]=joint end end
  local weapon=rig:FindFirstChild('Weapon');local joint=rig:FindFirstChild('ViewmodelJoint',true);if weapon and joint then self.joints[weapon:GetAttribute('SourceModelName') or 'Weapon']=joint end
  local folder=rig:FindFirstChild('OriginalSequences')
@@ -20,7 +20,8 @@ local function poses(frame)
 end
 function M:Step(dt)
  local clip=self.current;if not clip or #clip.frames==0 then return end
- self.clock+=dt
+ local previous=self.clock;self.clock+=dt
+ if self.onMarker then for _,frame in ipairs(clip.frames) do if frame.Time>previous and frame.Time<=self.clock then for _,marker in ipairs(frame:GetMarkers()) do if marker.Name=='Sound' then self.onMarker(marker.Value) end end end end end
  if self.clock>clip.length and clip.length>0 then if self.name=='idle' then self.clock%=clip.length else self:Play('idle');return end end
  local a,b=clip.frames[1],clip.frames[#clip.frames]
  for i=1,#clip.frames-1 do if self.clock>=clip.frames[i].Time and self.clock<=clip.frames[i+1].Time then a=clip.frames[i];b=clip.frames[i+1];break end end

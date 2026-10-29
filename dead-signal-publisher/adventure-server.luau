@@ -74,7 +74,7 @@ local function hunter(pos,tall)
   local gun=combatAssets.AlienBlaster:Clone();gun.Name='AlienWeapon';gun:ScaleTo(.8);gun:PivotTo(CFrame.new(pos+Vector3.new(.8,.2,-1.1)));gun.Parent=model
   for _,p in ipairs(gun:GetDescendants()) do if p:IsA('BasePart') then p.Anchored=true;p.CanQuery=false;p.CanCollide=false end end
  end
- table.insert(hunters,{model=model,pos=pos,lastSeen=0,tall=tall,nextPath=0,waypoints={}})
+ table.insert(hunters,{model=model,pos=pos,lastSeen=0,tall=tall,nextFire=os.clock()+1.5,nextPath=0,waypoints={}})
 end
 hunter(center+Vector3.new(150,8,580),true)
 local clock=0
@@ -136,7 +136,7 @@ while task.wait(.25) do
     local hit=workspace:Raycast(origin,(target.Position-origin).Unit*120,rp)
     local endpoint=hit and hit.Position or origin+(target.Position-origin).Unit*120
     combatEvent:FireAllClients('alienShot',origin,endpoint)
-    if hit and hit.Instance:IsDescendantOf(target.Parent) then local h=target.Parent:FindFirstChildOfClass('Humanoid');if h then h:TakeDamage(7) end end
+    if hit and hit.Instance:IsDescendantOf(target.Parent) then local h=target.Parent:FindFirstChildOfClass('Humanoid');if h then h:TakeDamage(4) end end
    end
    if target and (target.Position-enemy.pos).Magnitude<6 then local h=target.Parent:FindFirstChildOfClass('Humanoid');if h then h:TakeDamage(9) end end
   end
