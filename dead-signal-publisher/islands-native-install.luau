@@ -26,7 +26,8 @@ local L=game:GetService('Lighting');for _,c in ipairs(L:GetChildren()) do c:Dest
 for _,c in ipairs(bundle.IslandLighting:GetChildren()) do c.Parent=L end
 bundle:Destroy()
 local configured=pcall(function() W.StreamingMinRadius=64;W.StreamingTargetRadius=128 end)
-print('ISLAND STREAMING',configured,W.StreamingTargetRadius)
+W:SetAttribute('IslandStreamingTarget',configured and 128 or 192)
+print('ISLAND STREAMING',configured,W:GetAttribute('IslandStreamingTarget'))
 print('ISLAND TERRAIN INITIALIZATION START')
 __FINALIZE__
 print('ISLAND TERRAIN INITIALIZATION COMPLETE')
