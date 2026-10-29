@@ -1,3 +1,7 @@
+## Menu reference update — version 217
+
+Build `still-here-original-menu-v2`: title and borderless navigation on the right, muted serif typography, script-free original foyer in a ViewportFrame, dark edge gradients. Solo/group/shop remote actions remain unchanged. Decorative tags are removed before campaign initialization. Native verification and exact original-source comparison passed; servers restarted. Client-rendered appearance and touch interaction have not been visually tested; pixel-identical reproduction is not claimed.
+
 # Original systems restoration
 
 Published and independently verified: **PlaceVersion 216**, build `still-here-original-systems-v1`, run 40946132355. Old servers restarted. Engine checks: 390 original source containers visible to the runtime, seven mission roots, 22,670 content parts, 3,999 tagged content instances, original door setup, original FPS server library initialization, and original M4A1/Deagle factories. Downloaded-file comparison: 383 preserved original source bodies plus eight explicitly marked compatibility changes. The serialized file also retains one Studio analytics module outside the runtime bundle.
