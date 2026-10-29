@@ -16,5 +16,7 @@ local SP=game:GetService("StarterPlayer").StarterPlayerScripts
 assert(SP:FindFirstChild("ForestWindClient") and SP:FindFirstChild("ForestWeatherClient"),"Weather clients missing")
 assert(SP.ForestWindClient:FindFirstChild("WindLines") and SP.ForestWindClient.WindShake:FindFirstChild("Octree"),"Wind modules missing")
 assert(game:GetService("ServerScriptService").AtriumRuntime.ForestWeatherServer.Disabled==false,"Weather server disabled")
-assert(W:GetAttribute("ForestWindAsset")==11946229834,"Wrong wind pack")
+local sourceId=tonumber(W:GetAttribute("ForestWindAsset")) or 0
+-- Existing numeric file attributes may round through Float32 serialization.
+assert(math.abs(sourceId-11946229834)<512,"Wrong wind pack: "..tostring(sourceId))
 print("PUBLISHED WEATHER VERIFIED: streaming=64/192; wind asset=11946229834; rain+lightning installed")
