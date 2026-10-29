@@ -22,11 +22,16 @@ for _,s in ipairs(states) do
  if pos then
   s.origin=pos;local root=s.rig.HumanoidRootPart;local hum=s.rig.Humanoid
   s.rig:PivotTo(CFrame.new(pos+Vector3.new(0,hum.HipHeight+root.Size.Y/2,0)));s.placed=true
+  if s.def.id=='Tomas' then
+   local mark=Instance.new('BillboardGui');mark.Name='ArmoryMarker';mark.Size=UDim2.fromOffset(32,42);mark.StudsOffset=Vector3.new(0,3,0);mark.MaxDistance=110;mark.AlwaysOnTop=false;mark.Parent=s.rig.Head
+   local glyph=Instance.new('TextLabel');glyph.Size=UDim2.fromScale(1,1);glyph.BackgroundTransparency=1;glyph.Text='!';glyph.Font=Enum.Font.Code;glyph.TextSize=34;glyph.TextColor3=Color3.fromRGB(230,222,182);glyph.Parent=mark
+  end
   local prompt=Instance.new('ProximityPrompt');s.prompt=prompt;prompt.ActionText='Conversar';prompt.ObjectText=s.def.name..' · '..s.def.role;prompt.MaxActivationDistance=9;prompt.RequiresLineOfSight=false;prompt.Parent=s.rig.Head
   local last={}
   prompt.Triggered:Connect(function(p)
    local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
    if r and (r.Position-root.Position).Magnitude<12 and os.clock()-(last[p.UserId] or 0)>2 then last[p.UserId]=os.clock()
+    local armory=script.Parent:FindFirstChild('OpenArmory');if s.def.id=='Tomas' and armory then armory:Fire(p,s.rig);return end
     local story=script.Parent:FindFirstChild('AdventureTalk');if story then story:Fire(p,s);if s.def.id=='Lia' and p:GetAttribute('AdventureMission')==5 then s.leader=p;event:FireClient(p,s.rig,'Eu vou com você. Não me deixa sozinha.');return end;event:FireClient(p,s.rig,s.def.line);return end
     if s.leader and s.leader~=p then event:FireClient(p,s.rig,'Já estou acompanhando alguém.');return end
     s.leader=s.leader==p and nil or p;s.cancelPath=true;task.delay(.3,function() s.cancelPath=false end)

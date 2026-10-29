@@ -1,7 +1,7 @@
 local Players=game:GetService('Players')
 local M={}
 M.Definitions={
- {id='Tomas',name='Tomás',role='Carpinteiro da vila',island='forestCurrent',offset=Vector3.new(20,0,8),hair=62234425,shirt=144076358,pants=144076760,male=true,height=1.08,width=.95,skin=Color3.fromRGB(173,122,86),line='As portas estão reforçadas. Não saia da vila sem avisar alguém.'},
+ {id='Tomas',name='Tomás',role='Vigia e armeiro',island='forestCurrent',offset=Vector3.new(20,0,8),hair=62234425,shirt=144076358,pants=144076760,male=true,height=1.08,width=.95,skin=Color3.fromRGB(173,122,86),line='Pegue uma arma antes de sair. As criaturas não vêm mais sozinhas.'},
  {id='Helena',name='Helena',role='Dona da hospedaria',island='forestCurrent',offset=Vector3.new(-24,0,12),hair=62724852,shirt=144076436,pants=398633812,male=false,height=.97,width=.83,skin=Color3.fromRGB(112,76,57),line='Precisamos dos remédios guardados na estação da floresta. E a Lia ainda não voltou. Pode nos ajudar?'},
  {id='Caio',name='Caio',role='Entregador',island='forestCurrent',offset=Vector3.new(12,0,-30),hair=16630147,shirt=607785314,pants=398633812,male=true,height=1.02,width=.85,skin=Color3.fromRGB(222,174,135),line='Eu devia entregar uma carta aqui. O endereço existe, mas a pessoa diz que nunca morou lá.'},
  {id='Irene',name='Irene',role='Observadora do céu',island='forestCurrent',offset=Vector3.new(-36,0,-22),hair=63690008,shirt=398633584,pants=144076760,male=false,height=1.04,width=.8,skin=Color3.fromRGB(229,194,162),line='Não é uma estrela. E ontem ele parecia menor.'},

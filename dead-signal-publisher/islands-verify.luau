@@ -84,6 +84,19 @@ for _,tree in ipairs(cell:GetChildren()) do
 end
 cell:Destroy()
 print('ADVENTURE VERIFIED: native grass extension, original tree templates, four village building groups, eight identities, mission and patrol sources')
+local rules=require(game:GetService('ServerScriptService').AtriumRuntime.CombatRules)
+assert(not rules.ValidVector(Vector3.new(0/0,0,0)),'NaN aim accepted')
+local state={ammo=2,nextShot=0,reloadingUntil=0};local config={interval=.3}
+assert(rules.SpendShot(state,config,1),'First shot blocked');assert(not rules.SpendShot(state,config,1.1),'Fire rate bypass');assert(rules.SpendShot(state,config,1.4),'Second shot blocked');assert(not rules.SpendShot(state,config,2),'Empty magazine bypass')
+state.ammo=2;state.reloadingUntil=5;assert(not rules.CanShoot(state,4),'Reload bypass')
+local assets=game:GetService('ReplicatedStorage').CombatAssets;local motion=require(assets.FPSMotion)
+for _,template in ipairs(assets.PlayerWeapons:GetChildren()) do
+ local rig=template:Clone();rig.Parent=W
+ local player=motion.new(rig);player:Play('reload');player:Step(.1)
+ assert(player.current and #player.current.frames>1,'Original keyframes not readable');rig:Destroy()
+end
+assert(assets.AlienBlaster:FindFirstChildWhichIsA('MeshPart',true),'Original alien gun missing')
+print('COMBAT RULES VERIFIED: finite aim, cadence, ammo, reload and original saved pose playback')
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')

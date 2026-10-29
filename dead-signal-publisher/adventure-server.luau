@@ -54,6 +54,8 @@ local function visible(from,root)
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Exclude;rp.FilterDescendantsInstances={actors,root.Parent};rp.RespectCanCollide=true
  return workspace:Raycast(from,root.Position-from,rp)==nil
 end
+local combatAssets=RS:WaitForChild('CombatAssets')
+local combatEvent=RS:WaitForChild('CombatEvent')
 local hunters={}
 local function hunter(pos,tall)
  if #hunters>=7 then return end
@@ -66,7 +68,13 @@ local function hunter(pos,tall)
   part(model,'Arm',Vector3.new(.45,height*.58,.45),Color3.fromRGB(89,104,96),CFrame.new(pos+Vector3.new(sign*1.3,0,0)))
   part(model,'Leg',Vector3.new(.5,height*.48,.5),Color3.fromRGB(71,83,78),CFrame.new(pos+Vector3.new(sign*.55,-height*.32,0)))
  end
- model.PrimaryPart=root;table.insert(hunters,{model=model,pos=pos,lastSeen=0,tall=tall,nextPath=0,waypoints={}})
+ model.PrimaryPart=root;model:SetAttribute('AlienCombatant',true);model:SetAttribute('AlienHealth',tall and 200 or 90)
+ for _,p in ipairs(model:GetDescendants()) do if p:IsA('BasePart') and p~=root then p.CanQuery=true end end
+ if not tall then
+  local gun=combatAssets.AlienBlaster:Clone();gun.Name='AlienWeapon';gun:ScaleTo(.8);gun:PivotTo(CFrame.new(pos+Vector3.new(.8,.2,-1.1)));gun.Parent=model
+  for _,p in ipairs(gun:GetDescendants()) do if p:IsA('BasePart') then p.Anchored=true;p.CanQuery=false;p.CanCollide=false end end
+ end
+ table.insert(hunters,{model=model,pos=pos,lastSeen=0,tall=tall,nextPath=0,waypoints={}})
 end
 hunter(center+Vector3.new(150,8,580),true)
 local clock=0
@@ -85,12 +93,14 @@ while task.wait(.25) do
     local speed=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
     if horizontal<110 and (horizontal<20 or speed>7) and visible(pos,root) and os.clock()>(cooldown[p] or 0) then
      p:SetAttribute('ThreatDetectedUntil',workspace:GetServerTimeNow()+12);cooldown[p]=os.clock()+28;Chunks.Warm('forestCurrent',root.Position,64)
-     hunter(root.Position+Vector3.new(25,5,25),false);event:FireClient(p,'detected','Eles te viram. Quebre a linha de visão!')
+     local amount=math.random()<.4 and 5 or 2;for i=1,amount do local angle=i*math.pi*2/amount;hunter(root.Position+Vector3.new(math.cos(angle)*28,5,math.sin(angle)*28),false) end;event:FireClient(p,'detected','Eles te viram. Quebre a linha de visão!')
     end
    end
   end
  end
+ for i=#hunters,1,-1 do if not hunters[i].model.Parent then table.remove(hunters,i) end end
  for _,enemy in ipairs(hunters) do
+  if not enemy.model.Parent or enemy.model:GetAttribute('Defeated') then continue end
   local target
   for _,p in ipairs(Players:GetPlayers()) do
    local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local hum=p.Character and p.Character:FindFirstChildOfClass('Humanoid')
@@ -118,6 +128,15 @@ while task.wait(.25) do
     local floor=workspace:Raycast(enemy.pos+Vector3.new(0,25,0),Vector3.new(0,-60,0),rp);if floor then enemy.pos=Vector3.new(enemy.pos.X,floor.Position.Y+4,enemy.pos.Z) end
     enemy.model:SetAttribute('MotionTarget',CFrame.lookAt(enemy.pos,enemy.pos+delta.Unit));enemy.model:PivotTo(CFrame.lookAt(enemy.pos,enemy.pos+delta.Unit))
     if delta.Magnitude<4 and wp then enemy.waypoint=(enemy.waypoint or 2)+1 end
+   end
+   if target and not enemy.tall and os.clock()>(enemy.nextFire or 0) then
+    enemy.burst=(enemy.burst or 0)+1;enemy.nextFire=os.clock()+(enemy.burst>=3 and 4.5 or .3);if enemy.burst>=3 then enemy.burst=0 end
+    local origin=enemy.pos+Vector3.new(0,2,0)
+    local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Exclude;rp.FilterDescendantsInstances={actors}
+    local hit=workspace:Raycast(origin,(target.Position-origin).Unit*120,rp)
+    local endpoint=hit and hit.Position or origin+(target.Position-origin).Unit*120
+    combatEvent:FireAllClients('alienShot',origin,endpoint)
+    if hit and hit.Instance:IsDescendantOf(target.Parent) then local h=target.Parent:FindFirstChildOfClass('Humanoid');if h then h:TakeDamage(7) end end
    end
    if target and (target.Position-enemy.pos).Magnitude<6 then local h=target.Parent:FindFirstChildOfClass('Humanoid');if h then h:TakeDamage(9) end end
   end

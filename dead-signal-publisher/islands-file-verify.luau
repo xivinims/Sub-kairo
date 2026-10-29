@@ -26,7 +26,7 @@ end
 assert(W.StreamingTargetRadius==W:GetAttribute('IslandStreamingTarget'),'Streaming metadata differs from file')
 
 assert(W:GetAttribute('IslandAtmosphereRevision')=='storm-night-v2','Atmosphere missing')
-assert(dm:GetService('Lighting').ClockTime>=20,'Dusk not applied')
+assert(dm:GetService('Lighting').ClockTime<1,'Dusk not applied')
 assert(SP.ForestWindClient.Source==fs.readFile('forest-wind-client.luau'),'Wind mismatch')
 assert(SP.ForestWeatherClient.Source==fs.readFile('forest-weather-client.luau'),'Weather mismatch')
 assert(dm:GetService('ServerScriptService').AtriumRuntime.ForestWeatherServer.Source==fs.readFile('forest-weather-server.luau'),'Weather server mismatch')
@@ -85,3 +85,16 @@ print('SESSION FILE VERIFIED: empty public world, server-only maps, solo/private
 assert(W:GetAttribute('AdventureRevision')=='village-ufo-v1','Adventure missing')
 assert(runtime.AdventureRuntime.Source==fs.readFile('adventure-server.luau'),'Threat/quest code mismatch')
 assert(SP.AdventureClient.Source==fs.readFile('adventure-client.luau'),'Mission/sneak UI mismatch')
+
+local combat=dm:GetService('ReplicatedStorage').CombatAssets
+assert(#combat.PlayerWeapons:GetChildren()==2,'Weapon choices missing')
+for _,gun in ipairs(combat.PlayerWeapons:GetChildren()) do
+ assert(gun:GetAttribute('SourceAsset')=='15864801103','Wrong FPS source')
+ assert(gun.OriginalSequences:FindFirstChild('Shoot') and gun.OriginalSequences:FindFirstChild('Reload'),'Authored keyframes missing')
+end
+assert(combat.AlienBlaster:GetAttribute('SourceAsset')=='14817965191','Wrong alien weapon')
+assert(combat.HorrorEntrance.LogoFrame.Logo.LogoText.Text:find('By Ch_ckz2n',1,true),'Credit missing')
+for _,d in ipairs(combat:GetDescendants()) do assert(not d:IsA('LuaSourceContainer') or d==combat.FPSMotion,'Unreviewed FPS/horror code') end
+assert(SP.CombatClient.Source==fs.readFile('combat-client.luau'),'Combat client mismatch')
+assert(runtime.CombatRuntime.Source==fs.readFile('combat-server.luau'),'Combat server mismatch')
+print('COMBAT FILE VERIFIED: original two FPS rigs/keyframes, original alien blaster, adapted safe logic and source entrance layout')

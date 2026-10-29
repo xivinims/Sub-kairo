@@ -59,7 +59,7 @@ local function startRain()
  local info=TweenInfo.new(7,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
  if atmosphere then TweenService:Create(atmosphere,info,{Density=.34,Haze=2.1,Color=Color3.fromRGB(166,181,199),Decay=Color3.fromRGB(112,130,155)}):Play() end
  if clouds then TweenService:Create(clouds,info,{Cover=.94,Density=.92,Color=Color3.fromRGB(82,94,116)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=-.16,Contrast=.23,TintColor=Color3.fromRGB(185,204,231)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=-.28,Contrast=.26,TintColor=Color3.fromRGB(185,204,231)}):Play() end
 end
 
 local function stopRain()
@@ -70,7 +70,7 @@ local function stopRain()
  local info=TweenInfo.new(10,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
  if atmosphere then TweenService:Create(atmosphere,info,{Density=.29,Haze=1.8,Color=Color3.fromRGB(185,198,214),Decay=Color3.fromRGB(138,156,181)}):Play() end
  if clouds then TweenService:Create(clouds,info,{Cover=.86,Density=.88,Color=Color3.fromRGB(111,123,143)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=-.10,Contrast=.21,TintColor=Color3.fromRGB(204,220,245)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=-.24,Contrast=.24,TintColor=Color3.fromRGB(204,220,245)}):Play() end
 end
 
 local function makeBolt(a,b)

@@ -97,7 +97,7 @@ for class,source in pairs(selected) do
 end
 assert(#applied>0,'No usable lighting data in provided pack')
 -- Stormy dusk, readable ground and cool aerial perspective, never a black fog wall.
-L.ClockTime=20;L.Brightness=1.15;L.ExposureCompensation=-.45
+L.ClockTime=0.25;L.Brightness=1.1;L.ExposureCompensation=-.4
 L.Ambient=R.Color3.fromRGB(48,59,80);L.OutdoorAmbient=R.Color3.fromRGB(76,91,119)
 local atmosphere=L:FindFirstChild('ForestAerialPerspective') or R.Instance.new('Atmosphere')
 atmosphere.Name='ForestAerialPerspective';atmosphere.Density=.29;atmosphere.Haze=1.8;atmosphere.Glare=.08
@@ -105,7 +105,7 @@ atmosphere.Color=R.Color3.fromRGB(185,198,214);atmosphere.Decay=R.Color3.fromRGB
 local clouds=W.Terrain:FindFirstChildOfClass('Clouds') or R.Instance.new('Clouds')
 clouds.Name='WoodlandCloudDeck';clouds.Cover=.86;clouds.Density=.88;clouds.Color=R.Color3.fromRGB(111,123,143);clouds.Parent=W.Terrain
 local grade=L:FindFirstChild('ForestGoldenGrade') or R.Instance.new('ColorCorrectionEffect')
-grade.Name='ForestGoldenGrade';grade.Contrast=.21;grade.Saturation=-.10;grade.TintColor=R.Color3.fromRGB(204,220,245);grade.Parent=L
+grade.Name='ForestGoldenGrade';grade.Contrast=.24;grade.Saturation=-.24;grade.TintColor=R.Color3.fromRGB(208,220,225);grade.Parent=L
 for _,effect in ipairs(L:GetChildren()) do
  if effect:IsA('BloomEffect') then effect.Intensity=.45;effect.Threshold=.95;effect.Size=36 end
  if effect:IsA('SunRaysEffect') then effect.Intensity=.025 end
@@ -146,6 +146,12 @@ end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
 require('./adventure-extract')(dm)
+require('./combat-extract')(dm)
+install(runtime,'CombatRules','ModuleScript','combat-rules.luau')
+install(runtime,'CombatRuntime','Script','combat-server.luau')
+install(SP,'CombatClient','LocalScript','combat-client.luau')
+install(dm:GetService('ReplicatedStorage').CombatAssets,'FPSMotion','ModuleScript','fps-motion.luau')
+install(dm:GetService('ReplicatedFirst'),'HorrorEntry','LocalScript','horror-entry-client.luau')
 install(runtime,'AdventureForest','ModuleScript','adventure-forest.luau')
 install(runtime,'AdventureRuntime','Script','adventure-server.luau')
 install(SP,'AdventureClient','LocalScript','adventure-client.luau')
@@ -169,6 +175,7 @@ install(dm:GetService('ReplicatedFirst'),'IslandLoadingClient','LocalScript','is
 install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
+local combat=R.Instance.new('RemoteEvent');combat.Name='CombatEvent';combat.Parent=RS
 local adventure=R.Instance.new('RemoteEvent');adventure.Name='AdventureEvent';adventure.Parent=RS
 local speech=R.Instance.new('RemoteEvent');speech.Name='ResidentDialogue';speech.Parent=RS
 for _,entry in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'}}) do local remote=R.Instance.new(entry[2]);remote.Name=entry[1];remote.Parent=RS end
@@ -184,6 +191,7 @@ dm:GetService('Players').CharacterAutoLoads=false
 W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
+W:SetAttribute('CombatRevision','original-fps-alien-v1');W:SetAttribute('HorrorDirection','Orderly Independence / Frontpage Horror')
 W:SetAttribute('AdventureRevision','village-ufo-v1')
 W:SetAttribute('DisasterRevision','rescue-rounds-v1');W:SetAttribute('DisasterPhase','Calm')
 W:SetAttribute('SessionArchitecture','public-menu-reserved-match-v1')
