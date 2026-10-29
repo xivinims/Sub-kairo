@@ -9,4 +9,15 @@ for _,d in ipairs(W:GetDescendants()) do
  end
 end
 local top={};for _,d in ipairs(W:GetChildren()) do if #top<80 then table.insert(top,{name=d.Name,class=d.ClassName,descendants=#d:GetDescendants()}) end end
-print('BLACK HOLE AUDIT '..serde.encode('json',{counts=classes,matches=matches,top=top}))
+local bh=W.Skybox.BlackHole
+local detail={}
+for _,d in ipairs(bh:GetDescendants()) do
+ if d:IsA('BasePart') then table.insert(detail,{name=d.Name,class=d.ClassName,size={d.Size.X,d.Size.Y,d.Size.Z},position={d.CFrame.X,d.CFrame.Y,d.CFrame.Z}}) end
+end
+local controls={}
+for _,d in ipairs(dm:GetDescendants()) do if d:IsA('LuaSourceContainer') then
+ local source=d.Source
+ local pos=source:find('DebrisField',1,true) or source:find('AccretionDisc',1,true) or source:find('BlackHole',1,true)
+ if pos and #controls<8 then table.insert(controls,{path=d:GetFullName(),source=source:sub(math.max(1,pos-800),pos+8000)}) end
+end end
+print('BLACK HOLE DETAILS '..serde.encode('json',{parts=detail,controls=controls}))
