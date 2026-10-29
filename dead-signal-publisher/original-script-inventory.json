@@ -1,0 +1,4075 @@
+{
+  "status": "inventory-only-not-restored",
+  "run": 40917678605,
+  "scripts": [
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedFirst.AudioUtils",
+      "class": "ModuleScript",
+      "bytes": 1914,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedFirst.GrabUtil",
+      "class": "ModuleScript",
+      "bytes": 1921,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedFirst.LinkedList",
+      "class": "ModuleScript",
+      "bytes": 2724,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedFirst.DemoUtils",
+      "class": "ModuleScript",
+      "bytes": 12944,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedFirst.DemoConfig",
+      "class": "ModuleScript",
+      "bytes": 12863,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "AnalyticsService.RobloxLSP_Settings",
+      "class": "ModuleScript",
+      "bytes": 104,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SpawnLocations",
+      "class": "Script",
+      "bytes": 790,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.HeadlampManager",
+      "class": "Script",
+      "bytes": 3217,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.KillVolumes",
+      "class": "Script",
+      "bytes": 749,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.PianoManager",
+      "class": "Script",
+      "bytes": 1366,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.TreeFallServer",
+      "class": "Script",
+      "bytes": 773,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.RitualSupport",
+      "class": "ModuleScript",
+      "bytes": 632,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.RestorableManager",
+      "class": "ModuleScript",
+      "bytes": 2631,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.PlayerMissionRespawn",
+      "class": "Script",
+      "bytes": 1689,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.UseManager",
+      "class": "ModuleScript",
+      "bytes": 3004,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.GrabServer2",
+      "class": "Script",
+      "bytes": 6872,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.EventManager",
+      "class": "Script",
+      "bytes": 9241,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SeatManager",
+      "class": "Script",
+      "bytes": 1281,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.MissionsLogic",
+      "class": "Script",
+      "bytes": 25031,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.DrawerManager",
+      "class": "Script",
+      "bytes": 1864,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.MiscGameLogic",
+      "class": "Script",
+      "bytes": 2548,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.DoorManager",
+      "class": "ModuleScript",
+      "bytes": 6850,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.GameStateManager",
+      "class": "Script",
+      "bytes": 45379,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.EventManagerDemo",
+      "class": "ModuleScript",
+      "bytes": 110670,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.EventManagerModule",
+      "class": "ModuleScript",
+      "bytes": 21586,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.EventManagerConfig",
+      "class": "ModuleScript",
+      "bytes": 1077,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.DemoGlobalSettings",
+      "class": "ModuleScript",
+      "bytes": 878,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterCharacterScripts.HighlightItems",
+      "class": "LocalScript",
+      "bytes": 3387,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterCharacterScripts.CharacterInit",
+      "class": "LocalScript",
+      "bytes": 713,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterCharacterScripts.OnItemIndicator",
+      "class": "LocalScript",
+      "bytes": 4287,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterCharacterScripts.BodyVisible",
+      "class": "LocalScript",
+      "bytes": 831,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.RandomPlayback",
+      "class": "LocalScript",
+      "bytes": 1590,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.HeadlampManagerLocal",
+      "class": "LocalScript",
+      "bytes": 3511,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.ThoughtBubbleManager",
+      "class": "LocalScript",
+      "bytes": 4525,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.LoreManager",
+      "class": "LocalScript",
+      "bytes": 4045,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.LocalSpaceAnimations",
+      "class": "LocalScript",
+      "bytes": 6097,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.InVolumeChecker",
+      "class": "LocalScript",
+      "bytes": 2131,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.MissionsLogicClient",
+      "class": "LocalScript",
+      "bytes": 1783,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.AudioManager",
+      "class": "LocalScript",
+      "bytes": 2925,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.RbxCharacterSounds",
+      "class": "LocalScript",
+      "bytes": 8747,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.LightningVFXClient",
+      "class": "LocalScript",
+      "bytes": 3505,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.HapticsManager",
+      "class": "LocalScript",
+      "bytes": 22,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.MasterAnimator",
+      "class": "LocalScript",
+      "bytes": 3505,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.DisableResetCharacter",
+      "class": "LocalScript",
+      "bytes": 342,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.FoliageAnimManager",
+      "class": "LocalScript",
+      "bytes": 2672,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.GameStateClient",
+      "class": "LocalScript",
+      "bytes": 11507,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.EventManagerClient",
+      "class": "LocalScript",
+      "bytes": 10634,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterPlayerScripts.LightColorControl",
+      "class": "LocalScript",
+      "bytes": 10276,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.README",
+      "class": "ModuleScript",
+      "bytes": 4811,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install",
+      "class": "Script",
+      "bytes": 105,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.CameraShaker.CameraShaker",
+      "class": "ModuleScript",
+      "bytes": 6027,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "StarterPlayer.StarterCharacterScripts.GrabSystem.GrabClient",
+      "class": "LocalScript",
+      "bytes": 6822,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ServerScriptService.SocialInteractionsServer",
+      "class": "Script",
+      "bytes": 544,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions",
+      "class": "ModuleScript",
+      "bytes": 415,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install.DevModuleInstaller",
+      "class": "ModuleScript",
+      "bytes": 506,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ReplicatedStorage.CameraShaker.CameraShaker.CameraShakeInstance",
+      "class": "ModuleScript",
+      "bytes": 3710,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Player_VFX.RainSystem.Scripts.RainCurtain",
+      "class": "Script",
+      "bytes": 1698,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.StarterPlayer.StarterPlayerScripts.SocialInteractionsClient",
+      "class": "LocalScript",
+      "bytes": 618,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.packages.spec",
+      "class": "ModuleScript",
+      "bytes": 529,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.init.spec",
+      "class": "ModuleScript",
+      "bytes": 157,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.events",
+      "class": "ModuleScript",
+      "bytes": 90,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.config",
+      "class": "ModuleScript",
+      "bytes": 1219,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Constants",
+      "class": "ModuleScript",
+      "bytes": 173,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install.DevModuleInstaller.packageRef",
+      "class": "ModuleScript",
+      "bytes": 414,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install.DevModuleInstaller.install",
+      "class": "ModuleScript",
+      "bytes": 7303,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install.DevModuleInstaller.events",
+      "class": "ModuleScript",
+      "bytes": 129,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.Install.DevModuleInstaller.constants",
+      "class": "ModuleScript",
+      "bytes": 1598,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Player_VFX.RainSystem.Scripts._Olde.CFrameUpdate",
+      "class": "Script",
+      "bytes": 562,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Player_VFX.RainSystem.Scripts._Olde.AttachRainToPlayer",
+      "class": "Script",
+      "bytes": 1384,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Room.Location",
+      "class": "Script",
+      "bytes": 22,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Roadway.Tree_Floating_GRP.Script",
+      "class": "Script",
+      "bytes": 1038,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.t",
+      "class": "ModuleScript",
+      "bytes": 26281,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact",
+      "class": "ModuleScript",
+      "bytes": 1589,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter",
+      "class": "ModuleScript",
+      "bytes": 190,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo",
+      "class": "ModuleScript",
+      "bytes": 148,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Modules.OrientableBody",
+      "class": "ModuleScript",
+      "bytes": 5087,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Modules.ChatEmotes",
+      "class": "ModuleScript",
+      "bytes": 5404,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Modules.BodyOrientation",
+      "class": "ModuleScript",
+      "bytes": 2537,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration",
+      "class": "ModuleScript",
+      "bytes": 121,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.CentralCorruption.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.CentralCorruption.ShellA.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.CentralCorruption.GlowyCore.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.CentralCorruption.GlowyCore.Pulse",
+      "class": "Script",
+      "bytes": 451,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Ritual-DemoVersion.CentralOrb.Wander",
+      "class": "Script",
+      "bytes": 906,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.CentralSpin.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Starfield.Falling Debris.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Starfield.Starfield_Top.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Starfield.Starfield_Near.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Starfield.Starfield_Deep.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Starfield.Starfield_Middle.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.LightBlockers.CentralSpin.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.Starfield.Falling Debris_Tighter.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.Starfield.Starfield_Top.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.Starfield.Starfield_Near.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.Starfield.Starfield_Deep.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.t.ts",
+      "class": "ModuleScript",
+      "bytes": 23680,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.t.init.spec",
+      "class": "ModuleScript",
+      "bytes": 14746,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Binding",
+      "class": "ModuleScript",
+      "bytes": 3470,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Binding.spec",
+      "class": "ModuleScript",
+      "bytes": 6731,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component",
+      "class": "ModuleScript",
+      "bytes": 15377,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.ComponentLifecyclePhase",
+      "class": "ModuleScript",
+      "bytes": 621,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Config",
+      "class": "ModuleScript",
+      "bytes": 3055,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Config.spec",
+      "class": "ModuleScript",
+      "bytes": 1088,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.ElementKind",
+      "class": "ModuleScript",
+      "bytes": 1159,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.ElementKind.spec",
+      "class": "ModuleScript",
+      "bytes": 1571,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.ElementUtils",
+      "class": "ModuleScript",
+      "bytes": 2434,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.ElementUtils.spec",
+      "class": "ModuleScript",
+      "bytes": 2996,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.GlobalConfig",
+      "class": "ModuleScript",
+      "bytes": 146,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.GlobalConfig.spec",
+      "class": "ModuleScript",
+      "bytes": 247,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Logging",
+      "class": "ModuleScript",
+      "bytes": 4057,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.None",
+      "class": "ModuleScript",
+      "bytes": 189,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.NoopRenderer",
+      "class": "ModuleScript",
+      "bytes": 560,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Portal",
+      "class": "ModuleScript",
+      "bytes": 99,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PureComponent",
+      "class": "ModuleScript",
+      "bytes": 943,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PureComponent.spec",
+      "class": "ModuleScript",
+      "bytes": 1541,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.RobloxRenderer",
+      "class": "ModuleScript",
+      "bytes": 7137,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.RobloxRenderer.spec",
+      "class": "ModuleScript",
+      "bytes": 34209,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.SingleEventManager",
+      "class": "ModuleScript",
+      "bytes": 4077,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.SingleEventManager.spec",
+      "class": "ModuleScript",
+      "bytes": 6472,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Symbol",
+      "class": "ModuleScript",
+      "bytes": 617,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Symbol.spec",
+      "class": "ModuleScript",
+      "bytes": 569,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Type",
+      "class": "ModuleScript",
+      "bytes": 892,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Type.spec",
+      "class": "ModuleScript",
+      "bytes": 591,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.assertDeepEqual",
+      "class": "ModuleScript",
+      "bytes": 1564,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.assertDeepEqual.spec",
+      "class": "ModuleScript",
+      "bytes": 2132,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.assign",
+      "class": "ModuleScript",
+      "bytes": 573,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.assign.spec",
+      "class": "ModuleScript",
+      "bytes": 1114,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createContext",
+      "class": "ModuleScript",
+      "bytes": 4286,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createContext.spec",
+      "class": "ModuleScript",
+      "bytes": 11077,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createElement",
+      "class": "ModuleScript",
+      "bytes": 2090,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createElement.spec",
+      "class": "ModuleScript",
+      "bytes": 3130,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createFragment",
+      "class": "ModuleScript",
+      "bytes": 265,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createFragment.spec",
+      "class": "ModuleScript",
+      "bytes": 632,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createReconciler",
+      "class": "ModuleScript",
+      "bytes": 15976,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createReconciler.spec",
+      "class": "ModuleScript",
+      "bytes": 9751,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createReconcilerCompat",
+      "class": "ModuleScript",
+      "bytes": 1132,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createReconcilerCompat.spec",
+      "class": "ModuleScript",
+      "bytes": 3005,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createRef",
+      "class": "ModuleScript",
+      "bytes": 800,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createRef.spec",
+      "class": "ModuleScript",
+      "bytes": 1349,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createSignal",
+      "class": "ModuleScript",
+      "bytes": 1499,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createSignal.spec",
+      "class": "ModuleScript",
+      "bytes": 3272,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createSpy",
+      "class": "ModuleScript",
+      "bytes": 1738,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.createSpy.spec",
+      "class": "ModuleScript",
+      "bytes": 2059,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.forwardRef",
+      "class": "ModuleScript",
+      "bytes": 697,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.forwardRef.spec",
+      "class": "ModuleScript",
+      "bytes": 10366,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.getDefaultInstanceProperty",
+      "class": "ModuleScript",
+      "bytes": 1312,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.getDefaultInstanceProperty.spec",
+      "class": "ModuleScript",
+      "bytes": 974,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.init.spec",
+      "class": "ModuleScript",
+      "bytes": 1508,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.internalAssert",
+      "class": "ModuleScript",
+      "bytes": 166,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.invalidSetStateMessages",
+      "class": "ModuleScript",
+      "bytes": 1639,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.oneChild",
+      "class": "ModuleScript",
+      "bytes": 483,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.oneChild.spec",
+      "class": "ModuleScript",
+      "bytes": 747,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.strict",
+      "class": "ModuleScript",
+      "bytes": 458,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.strict.spec",
+      "class": "ModuleScript",
+      "bytes": 401,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.assign",
+      "class": "ModuleScript",
+      "bytes": 205,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createGroupMotor",
+      "class": "ModuleScript",
+      "bytes": 2694,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createGroupMotor.spec",
+      "class": "ModuleScript",
+      "bytes": 4382,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createSignal",
+      "class": "ModuleScript",
+      "bytes": 1109,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createSignal.spec",
+      "class": "ModuleScript",
+      "bytes": 1918,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createSingleMotor",
+      "class": "ModuleScript",
+      "bytes": 1752,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createSingleMotor.spec",
+      "class": "ModuleScript",
+      "bytes": 3394,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.createSpy",
+      "class": "ModuleScript",
+      "bytes": 727,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.init.spec",
+      "class": "ModuleScript",
+      "bytes": 95,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.instant",
+      "class": "ModuleScript",
+      "bytes": 218,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.instant.spec",
+      "class": "ModuleScript",
+      "bytes": 782,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.spring",
+      "class": "ModuleScript",
+      "bytes": 4131,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.spring.spec",
+      "class": "ModuleScript",
+      "bytes": 4090,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Otter.validateMotor",
+      "class": "ModuleScript",
+      "bytes": 404,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List",
+      "class": "ModuleScript",
+      "bytes": 669,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.None",
+      "class": "ModuleScript",
+      "bytes": 288,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.None.spec",
+      "class": "ModuleScript",
+      "bytes": 331,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.isEmpty",
+      "class": "ModuleScript",
+      "bytes": 78,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.init.spec",
+      "class": "ModuleScript",
+      "bytes": 82,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary",
+      "class": "ModuleScript",
+      "bytes": 278,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Modules.ChatEmotes.init.spec",
+      "class": "ModuleScript",
+      "bytes": 4500,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Modules.ChatEmotes.emotesList",
+      "class": "ModuleScript",
+      "bytes": 1377,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.init.spec",
+      "class": "ModuleScript",
+      "bytes": 156,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.createConfiguration.spec",
+      "class": "ModuleScript",
+      "bytes": 8447,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.createConfiguration",
+      "class": "ModuleScript",
+      "bytes": 2061,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.MockRemoteEvent.spec",
+      "class": "ModuleScript",
+      "bytes": 1248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.MockRemoteEvent",
+      "class": "ModuleScript",
+      "bytes": 732,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.ConfigurationContext.spec",
+      "class": "ModuleScript",
+      "bytes": 3068,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.ConfigurationContext",
+      "class": "ModuleScript",
+      "bytes": 2324,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.Configuration.spec",
+      "class": "ModuleScript",
+      "bytes": 170,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Libraries.Configuration.Configuration",
+      "class": "ModuleScript",
+      "bytes": 370,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Street.Road_Intersection_T_01_A.Sand_Traffic_Light_01.LightStateChanger",
+      "class": "Script",
+      "bytes": 3248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Street.Road_Intersection_T_01_A.Sand_Traffic_Light_01.LightStateChanger",
+      "class": "Script",
+      "bytes": 3248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Street.Road_Intersection_T_01_A.Sand_Traffic_Light_01.LightStateChanger",
+      "class": "Script",
+      "bytes": 3248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Street.Road_Intersection_T_01_A.Sand_Traffic_Light_01.LightStateChanger",
+      "class": "Script",
+      "bytes": 3248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Livingroom.Props.GrandfatherClock.Pendulum.PendulumSwinging",
+      "class": "Script",
+      "bytes": 997,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Dining_Room.Props.GrandfatherClock.Pendulum.PendulumSwinging",
+      "class": "Script",
+      "bytes": 997,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Ritual-DemoVersion.CentralOrb.ShellA.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Ritual-DemoVersion.CentralOrb.GlowCard.PulseCard",
+      "class": "Script",
+      "bytes": 450,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Ritual-DemoVersion.CentralOrb.GlowCard.Billboard",
+      "class": "Script",
+      "bytes": 427,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Ritual-DemoVersion.CentralOrb.GlowyCore.PulseCore",
+      "class": "Script",
+      "bytes": 744,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Foyer.Props.Telephone.ClickBox.Script",
+      "class": "Script",
+      "bytes": 503,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Nebulae_Outer.CentralEmit.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.Rim.Cogs.BigCog_B_01.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.EdgeCog.EdgeCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.EdgeCog.EdgeCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.EdgeCog.EdgeCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.EdgeCog.EdgeCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.EdgeCog.EdgeCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.LightBlockers.CentralCog.CentralCog.CogSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.ShellA.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.GlowCard.Pulse",
+      "class": "Script",
+      "bytes": 449,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.GlowCard.Billboard",
+      "class": "Script",
+      "bytes": 427,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.GlowyCore.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CentralCorruption.GlowyCore.Pulse",
+      "class": "Script",
+      "bytes": 451,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Global.CorruptedRoom_Skybox_A.CelestialBodies.CelestialBody_Large_A.CentralSphere_NeonInside.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.Event_SkyPortal.Rim.Nebulae_Outer.CentralEmit.GeneralSpin_Slow_A",
+      "class": "Script",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.VFX.LightningVFX.StormEyeLightning.BeamPart.LightningVFX",
+      "class": "Script",
+      "bytes": 1298,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.context.spec",
+      "class": "ModuleScript",
+      "bytes": 7277,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.defaultProps.spec",
+      "class": "ModuleScript",
+      "bytes": 2566,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.didMount.spec",
+      "class": "ModuleScript",
+      "bytes": 1016,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.didUpdate.spec",
+      "class": "ModuleScript",
+      "bytes": 2466,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.extend.spec",
+      "class": "ModuleScript",
+      "bytes": 729,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.getDerivedStateFromProps.spec",
+      "class": "ModuleScript",
+      "bytes": 7162,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.getElementTraceback.spec",
+      "class": "ModuleScript",
+      "bytes": 1667,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.init.spec",
+      "class": "ModuleScript",
+      "bytes": 1228,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.legacyContext.spec",
+      "class": "ModuleScript",
+      "bytes": 5053,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.render.spec",
+      "class": "ModuleScript",
+      "bytes": 4406,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.setState.spec",
+      "class": "ModuleScript",
+      "bytes": 14488,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.shouldUpdate.spec",
+      "class": "ModuleScript",
+      "bytes": 4345,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.validateProps.spec",
+      "class": "ModuleScript",
+      "bytes": 6467,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.willUnmount.spec",
+      "class": "ModuleScript",
+      "bytes": 1088,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.Component.spec.willUpdate.spec",
+      "class": "ModuleScript",
+      "bytes": 2446,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Change",
+      "class": "ModuleScript",
+      "bytes": 797,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Change.spec",
+      "class": "ModuleScript",
+      "bytes": 525,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Children",
+      "class": "ModuleScript",
+      "bytes": 112,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Event",
+      "class": "ModuleScript",
+      "bytes": 680,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Event.spec",
+      "class": "ModuleScript",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Roact.PropMarkers.Ref",
+      "class": "ModuleScript",
+      "bytes": 97,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.findWhere",
+      "class": "ModuleScript",
+      "bytes": 264,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.getRange",
+      "class": "ModuleScript",
+      "bytes": 398,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.reverse.spec",
+      "class": "ModuleScript",
+      "bytes": 858,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.getRange.spec",
+      "class": "ModuleScript",
+      "bytes": 1358,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.foldLeft",
+      "class": "ModuleScript",
+      "bytes": 267,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.filterMap",
+      "class": "ModuleScript",
+      "bytes": 464,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.foldRight.spec",
+      "class": "ModuleScript",
+      "bytes": 1226,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.findWhere.spec",
+      "class": "ModuleScript",
+      "bytes": 1540,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.foldRight",
+      "class": "ModuleScript",
+      "bytes": 274,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.filter.spec",
+      "class": "ModuleScript",
+      "bytes": 1545,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.foldLeft.spec",
+      "class": "ModuleScript",
+      "bytes": 1219,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.init.spec",
+      "class": "ModuleScript",
+      "bytes": 82,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeIndex.spec",
+      "class": "ModuleScript",
+      "bytes": 962,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.replaceIndex",
+      "class": "ModuleScript",
+      "bytes": 369,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeValue.spec",
+      "class": "ModuleScript",
+      "bytes": 955,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeValue",
+      "class": "ModuleScript",
+      "bytes": 286,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.join",
+      "class": "ModuleScript",
+      "bytes": 418,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.map.spec",
+      "class": "ModuleScript",
+      "bytes": 1216,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.find",
+      "class": "ModuleScript",
+      "bytes": 206,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.find.spec",
+      "class": "ModuleScript",
+      "bytes": 721,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.sort.spec",
+      "class": "ModuleScript",
+      "bytes": 1431,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.toSet.spec",
+      "class": "ModuleScript",
+      "bytes": 896,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeIndex",
+      "class": "ModuleScript",
+      "bytes": 265,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.toSet",
+      "class": "ModuleScript",
+      "bytes": 248,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeRange.spec",
+      "class": "ModuleScript",
+      "bytes": 1712,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.sort",
+      "class": "ModuleScript",
+      "bytes": 286,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.filter",
+      "class": "ModuleScript",
+      "bytes": 357,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.reverse",
+      "class": "ModuleScript",
+      "bytes": 238,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.replaceIndex.spec",
+      "class": "ModuleScript",
+      "bytes": 1341,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.map",
+      "class": "ModuleScript",
+      "bytes": 217,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.removeRange",
+      "class": "ModuleScript",
+      "bytes": 452,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.filterMap.spec",
+      "class": "ModuleScript",
+      "bytes": 1847,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.List.join.spec",
+      "class": "ModuleScript",
+      "bytes": 799,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.join",
+      "class": "ModuleScript",
+      "bytes": 625,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.keys",
+      "class": "ModuleScript",
+      "bytes": 235,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.keys.spec",
+      "class": "ModuleScript",
+      "bytes": 1441,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.join.spec",
+      "class": "ModuleScript",
+      "bytes": 1547,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.init.spec",
+      "class": "ModuleScript",
+      "bytes": 82,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.values.spec",
+      "class": "ModuleScript",
+      "bytes": 1981,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerScriptService.SocialInteractions.ReplicatedStorage.SocialInteractions.Packages.Cryo.Dictionary.values",
+      "class": "ModuleScript",
+      "bytes": 247,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Growing_Pantry.Teleports.Portal_Script",
+      "class": "Script",
+      "bytes": 1403,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Daughter.Corrupt.Center_Balcony_Props.Madam Pompadour.PictureFrameA.InitRotatingPart",
+      "class": "Script",
+      "bytes": 198,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Daughter.Corrupt.Center_Balcony_Props.Hallway_Rotating_B.Floor_HingeDriver.InitRotatingPart",
+      "class": "Script",
+      "bytes": 198,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Daughter.Corrupt.Center_Balcony_Props.Merahi metua no Tehamana.PictureFrameC.InitRotatingPart",
+      "class": "Script",
+      "bytes": 198,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Daughter.Corrupt.Center_Balcony_Props.Meekness.PictureFrameA.InitRotatingPart",
+      "class": "Script",
+      "bytes": 198,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Lobby.Lobby.Room.Props.Desk_Bell.ClickBox.FrontDeskBell",
+      "class": "Script",
+      "bytes": 497,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Attic.Normal_Addons.Furniture.Object_Trigger_RockingChair_GRP.Object_Trigger_RockingChair.Rocking",
+      "class": "Script",
+      "bytes": 1784,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.House.Front.Props.Driveway_Light_Post_Flicker.Object_Trigger_Light_Flicker.Light_Flicker",
+      "class": "Script",
+      "bytes": 2288,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Exterior.House.Front.Props.Driveway_Light_Post_Flicker.Object_Trigger_Light_Flicker.Light_Flicker",
+      "class": "Script",
+      "bytes": 2287,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Rotating Hallway.Pantry_Items.Script_Unanchor",
+      "class": "Script",
+      "bytes": 155,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Growing_Pantry.Moving_Grp.End_Grp.Weld",
+      "class": "Script",
+      "bytes": 289,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Growing_Pantry.Moving_Grp.Grow_Wall.Door_Script",
+      "class": "Script",
+      "bytes": 2922,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Father_Mini.TeleportGroup.Teleport5.Portal_Script",
+      "class": "Script",
+      "bytes": 378,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Father_Mini.TeleportGroup.Teleport3.Portal_Script",
+      "class": "Script",
+      "bytes": 379,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Father_Mini.TeleportGroup.Teleport4.Portal_Script",
+      "class": "Script",
+      "bytes": 378,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Father_Mini.TeleportGroup.Teleport2.Portal_Script",
+      "class": "Script",
+      "bytes": 378,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Father_Mini.TeleportGroup.Teleport1.Portal_Script",
+      "class": "Script",
+      "bytes": 378,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Daughter_Mini.Hallway_Rotating_B.Props.Weld",
+      "class": "Script",
+      "bytes": 318,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Daughter_Mini.Hallway_Rotating_B.Props.Weld",
+      "class": "Script",
+      "bytes": 318,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Daughter_Mini.Hallway_Rotating_A.Props.Weld",
+      "class": "Script",
+      "bytes": 318,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Antichamber.Ceiling.Ceiling.Grow_Wall.Grow_Wall_Script",
+      "class": "Script",
+      "bytes": 3042,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Mother.Attic.Corrupt_Addons.Furniture.Object_Trigger_RockingChair_GRP.Object_Trigger_RockingChair.Rocking",
+      "class": "Script",
+      "bytes": 1784,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Media_Room.Normal.BaseRoom.Props.TV-ScreenSwap.ScreenSwap.PopInOut",
+      "class": "Script",
+      "bytes": 1048,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Kitchen.Props.Additions.GrandfatherClock.Pendulum.PendulumSwinging",
+      "class": "Script",
+      "bytes": 997,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Water Hallway.Lower.Pantry_Items.Script_Unanchor",
+      "class": "Script",
+      "bytes": 155,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Design.Furniture_Kitchen_Fridge_Corrupt.Fridge_Base.Door_Left.DoorBody.Fridge_Door_Script",
+      "class": "Script",
+      "bytes": 1530,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Design.Furniture_Kitchen_Fridge_Corrupt.Corrupt_Addons.Fridge_Backwall_Moving_Group.Grow_Wall.Fridge_Backwall_Script",
+      "class": "Script",
+      "bytes": 2844,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Son_Mini.Funiture.Bookshelf_wBooks_Tall_B_Floating.Meshes/Furniture_Study_BookshelfTall_B.InitRotatingPart",
+      "class": "Script",
+      "bytes": 0,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandfather.Corrupt.Basement.Son_Mini.Funiture.Bookshelf_wBooks_Tall_B_Floating.Meshes/Furniture_Study_BookshelfTall_B.InitRotatingPart",
+      "class": "Script",
+      "bytes": 0,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.Firepit.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.Firepit.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.Firepit.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.Firepit.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.Firepit.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_large_floating.Rock_Pillars_large.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.EyeGarden_Rocks.Rock_Pillars_large_floating.Rock_Pillars_large.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.HerbGarden.HerbGardenBrick_TriangleLarge_Floating.Brick_TriangleLarge.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.HerbGarden.HerbGardenBrick_TriangleLarge_Floating.Brick_TriangleLarge.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.HerbGarden.HerbGardenBrick_TriangleLarge_Floating.Brick_TriangleLarge.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.HerbGarden.HerbGardenBrick_TriangleLarge_Floating.Brick_TriangleLarge.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Medium_floating.Rock_Pillars_Medium.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Grandmother.Corrupt.Backyard.Corrupt.FlowerGarden.Rock_Pillars_Small_floating.Rock_Pillars_Small.FloatingScript",
+      "class": "Script",
+      "bytes": 533,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Media_Room.Normal.BaseRoom.Props.TV-ScreenSwap.ScreenSwap.Static.Animator",
+      "class": "ModuleScript",
+      "bytes": 646,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Media_Room.Normal.BaseRoom.Props.TV-ScreenSwap.ScreenSwap.Static_Corrupt.Animator",
+      "class": "ModuleScript",
+      "bytes": 675,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Kitchen.Normal.Kitchen.Props.Additions.GrandfatherClock.Pendulum.PendulumSwinging",
+      "class": "Script",
+      "bytes": 997,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "Workspace.Content.Interior.Kitchen.Normal.Design.Furniture_Kitchen_Fridge_Normal.Fridge_Base.Door_Left.DoorBody.Fridge_Door_Script",
+      "class": "Script",
+      "bytes": 1530,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.DebrisField.Script",
+      "class": "Script",
+      "bytes": 363,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.ShellA.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.GlowCard.Pulse",
+      "class": "Script",
+      "bytes": 449,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.GlowCard.Billboard",
+      "class": "Script",
+      "bytes": 427,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.GlowyCore.Spin",
+      "class": "Script",
+      "bytes": 168,
+      "externalLoads": []
+    },
+    {
+      "asset": "7902470429",
+      "path": "ServerStorage.Corrupt.Father.Corrupt.Corrupt_AddOns.Wing_Pantries.Void.Void_Ball.CentralCorruption.GlowyCore.Pulse",
+      "class": "Script",
+      "bytes": 451,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedFirst.LoadingScreen",
+      "class": "LocalScript",
+      "bytes": 1634,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.GuiModule",
+      "class": "ModuleScript",
+      "bytes": 3945,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library",
+      "class": "ModuleScript",
+      "bytes": 5084,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library",
+      "class": "ModuleScript",
+      "bytes": 496,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.AnimateOldR15",
+      "class": "LocalScript",
+      "bytes": 24480,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Get Animations",
+      "class": "LocalScript",
+      "bytes": 738,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.weapon system plugin",
+      "class": "LocalScript",
+      "bytes": 3098,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Damage.Script",
+      "class": "Script",
+      "bytes": 140,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Heal.Script",
+      "class": "Script",
+      "bytes": 138,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Damage.Script",
+      "class": "Script",
+      "bytes": 139,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterCharacterScripts.Animate",
+      "class": "LocalScript",
+      "bytes": 24386,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterCharacterScripts.Movement",
+      "class": "LocalScript",
+      "bytes": 2362,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterCharacterScripts.Health",
+      "class": "Script",
+      "bytes": 0,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterCharacterScripts.Footsteps",
+      "class": "LocalScript",
+      "bytes": 1266,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterCharacterScripts.Debris",
+      "class": "LocalScript",
+      "bytes": 176,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterPlayerScripts.InitMovement",
+      "class": "LocalScript",
+      "bytes": 142,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterPlayer.StarterPlayerScripts.LocalSounds",
+      "class": "LocalScript",
+      "bytes": 286,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.ScreenGui.sc",
+      "class": "LocalScript",
+      "bytes": 29,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.libinit",
+      "class": "LocalScript",
+      "bytes": 55,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Signal",
+      "class": "ModuleScript",
+      "bytes": 1049,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client",
+      "class": "ModuleScript",
+      "bytes": 471,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared",
+      "class": "ModuleScript",
+      "bytes": 631,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Other.Gamemode",
+      "class": "Script",
+      "bytes": 1643,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Other.Dummies",
+      "class": "Script",
+      "bytes": 814,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Other.libInit",
+      "class": "Script",
+      "bytes": 39,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Weapons.givecmd",
+      "class": "Script",
+      "bytes": 284,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Weapons.WeaponRespawn",
+      "class": "Script",
+      "bytes": 414,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Weapons.AmmoRefillKillThing",
+      "class": "Script",
+      "bytes": 1435,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Weapons.StarterWeapons",
+      "class": "Script",
+      "bytes": 2116,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerScriptService.Weapons.WeaponsServer",
+      "class": "Script",
+      "bytes": 7543,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.CommandsHandlerServer",
+      "class": "ModuleScript",
+      "bytes": 1575,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.ReplicateSound",
+      "class": "ModuleScript",
+      "bytes": 224,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.ServerHandler",
+      "class": "ModuleScript",
+      "bytes": 2490,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.WeaponsServerModule",
+      "class": "ModuleScript",
+      "bytes": 1692,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.IsAdmin",
+      "class": "ModuleScript",
+      "bytes": 150,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.DatastoreHandler",
+      "class": "ModuleScript",
+      "bytes": 987,
+      "externalLoads": [
+        "\t\tdata = dss:GetDataStore(dataStoreName):GetAsync(playerDataModule.GetDatastoreKey(player))"
+      ]
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Rigs.RavenclawHermitKrab.Health",
+      "class": "Script",
+      "bytes": 0,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Rigs.RavenclawHermitKrab.Health",
+      "class": "Script",
+      "bytes": 0,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Rigs.deagle rig.Health",
+      "class": "Script",
+      "bytes": 703,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Folder.Jackson.Animate",
+      "class": "Script",
+      "bytes": 445,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.MobileButtons.ButtonPlacement.LocalScript",
+      "class": "LocalScript",
+      "bytes": 29,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.unlockCursor.TextButton.LocalScript",
+      "class": "LocalScript",
+      "bytes": 210,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Intro.Intro",
+      "class": "LocalScript",
+      "bytes": 7645,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Intro.PlayIntro",
+      "class": "LocalScript",
+      "bytes": 230,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.GiveWeaponFrame",
+      "class": "LocalScript",
+      "bytes": 1183,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.FPS",
+      "class": "LocalScript",
+      "bytes": 305,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.DamageVignette",
+      "class": "LocalScript",
+      "bytes": 861,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.DamageIndicator",
+      "class": "LocalScript",
+      "bytes": 2277,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.Gamemode",
+      "class": "LocalScript",
+      "bytes": 1463,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.LocalScript",
+      "class": "LocalScript",
+      "bytes": 285,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Gui.HealthBar",
+      "class": "LocalScript",
+      "bytes": 1519,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Game.MouseTilt",
+      "class": "LocalScript",
+      "bytes": 1830,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Game.MouseIcon",
+      "class": "LocalScript",
+      "bytes": 783,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Game.ClientHandler",
+      "class": "LocalScript",
+      "bytes": 21868,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.MainHud.LevelUp.LocalScript",
+      "class": "LocalScript",
+      "bytes": 1833,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.MovementHandler2",
+      "class": "ModuleScript",
+      "bytes": 13053,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.IsMobile",
+      "class": "ModuleScript",
+      "bytes": 338,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.GetDevice",
+      "class": "ModuleScript",
+      "bytes": 656,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.FOVHandler",
+      "class": "ModuleScript",
+      "bytes": 3313,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.MovementHandler",
+      "class": "ModuleScript",
+      "bytes": 11958,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ContextActionUtility",
+      "class": "ModuleScript",
+      "bytes": 15795,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CommandsHandlerClient",
+      "class": "ModuleScript",
+      "bytes": 22098,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.AimOffsetLoader",
+      "class": "ModuleScript",
+      "bytes": 1693,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.RecoilHandler",
+      "class": "ModuleScript",
+      "bytes": 2359,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.HudController",
+      "class": "ModuleScript",
+      "bytes": 1882,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CrosshairHandler",
+      "class": "ModuleScript",
+      "bytes": 6912,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ViewmodelHandler",
+      "class": "ModuleScript",
+      "bytes": 531,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ScopeParallax",
+      "class": "ModuleScript",
+      "bytes": 2260,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.Recoil2",
+      "class": "ModuleScript",
+      "bytes": 1014,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.Recoil",
+      "class": "ModuleScript",
+      "bytes": 919,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.Mouse",
+      "class": "ModuleScript",
+      "bytes": 8435,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.GetWeaponAimOffset",
+      "class": "ModuleScript",
+      "bytes": 622,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.FootstepModule",
+      "class": "ModuleScript",
+      "bytes": 11011,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.DefaultAimOffset",
+      "class": "ModuleScript",
+      "bytes": 637,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CameraShaker",
+      "class": "ModuleScript",
+      "bytes": 6235,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Offset",
+      "class": "ModuleScript",
+      "bytes": 3438,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler",
+      "class": "ModuleScript",
+      "bytes": 2484,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler",
+      "class": "ModuleScript",
+      "bytes": 2906,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Network",
+      "class": "ModuleScript",
+      "bytes": 25856,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler",
+      "class": "ModuleScript",
+      "bytes": 5874,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX",
+      "class": "ModuleScript",
+      "bytes": 15217,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility",
+      "class": "ModuleScript",
+      "bytes": 91,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Ragdoll",
+      "class": "ModuleScript",
+      "bytes": 1844,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.PenetrationLoss",
+      "class": "ModuleScript",
+      "bytes": 695,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ParticleModule",
+      "class": "ModuleScript",
+      "bytes": 2276,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.HealthBarHandler",
+      "class": "ModuleScript",
+      "bytes": 1987,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Debug",
+      "class": "ModuleScript",
+      "bytes": 1245,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.AnimationModule",
+      "class": "ModuleScript",
+      "bytes": 1859,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.AnimationGroup",
+      "class": "ModuleScript",
+      "bytes": 2807,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions",
+      "class": "ModuleScript",
+      "bytes": 91,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Directory",
+      "class": "ModuleScript",
+      "bytes": 892,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Variables",
+      "class": "ModuleScript",
+      "bytes": 85,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.CommandsHandlerServer.Ranks",
+      "class": "ModuleScript",
+      "bytes": 276,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ServerStorage.Library.IsAdmin.Admins",
+      "class": "ModuleScript",
+      "bytes": 24,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.MapPoop.Maxwell.maxwell.Script",
+      "class": "Script",
+      "bytes": 111,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Map.Platform.Button.Script",
+      "class": "Script",
+      "bytes": 173,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Dummies.DummySpawner.Dummy.Script",
+      "class": "Script",
+      "bytes": 166,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Dummies.DummySpawner.Dummy.Script",
+      "class": "Script",
+      "bytes": 166,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.MovementHandler.Config",
+      "class": "ModuleScript",
+      "bytes": 216,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.MovementHandler.Multiplier",
+      "class": "ModuleScript",
+      "bytes": 724,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CommandsHandlerClient.MatchAlgorithm",
+      "class": "ModuleScript",
+      "bytes": 2386,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CrosshairHandler.CreateHitmarker",
+      "class": "ModuleScript",
+      "bytes": 158,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ViewmodelHandler.Viewmodel",
+      "class": "ModuleScript",
+      "bytes": 21040,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.Recoil2.PhysicsModule",
+      "class": "ModuleScript",
+      "bytes": 1174,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.Recoil.Spring",
+      "class": "ModuleScript",
+      "bytes": 5089,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.GetWeaponAimOffset.DefaultAimOffset",
+      "class": "ModuleScript",
+      "bytes": 636,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CameraShaker.CameraShakePresets",
+      "class": "ModuleScript",
+      "bytes": 2473,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CameraShaker.CameraShakeInstance",
+      "class": "ModuleScript",
+      "bytes": 3890,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler.TriggerFunction",
+      "class": "ModuleScript",
+      "bytes": 121,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler.BaseProjectile",
+      "class": "ModuleScript",
+      "bytes": 4172,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.FormatParamType",
+      "class": "ModuleScript",
+      "bytes": 150,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.SplitCommandText",
+      "class": "ModuleScript",
+      "bytes": 1451,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseTypeMultiple",
+      "class": "ModuleScript",
+      "bytes": 559,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.TODO",
+      "class": "LocalScript",
+      "bytes": 74,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances",
+      "class": "ModuleScript",
+      "bytes": 66,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType",
+      "class": "ModuleScript",
+      "bytes": 73,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands",
+      "class": "ModuleScript",
+      "bytes": 216,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon",
+      "class": "ModuleScript",
+      "bytes": 11831,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.TracerEffects",
+      "class": "ModuleScript",
+      "bytes": 164,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.KillEffects",
+      "class": "ModuleScript",
+      "bytes": 265,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.ClampTable",
+      "class": "ModuleScript",
+      "bytes": 178,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetRayFromVector2",
+      "class": "ModuleScript",
+      "bytes": 311,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.AddNumberSequence",
+      "class": "ModuleScript",
+      "bytes": 289,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.MultiplyNumberSequence",
+      "class": "ModuleScript",
+      "bytes": 295,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.WorldToScreen",
+      "class": "ModuleScript",
+      "bytes": 485,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.Tween",
+      "class": "ModuleScript",
+      "bytes": 143,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.ClearAllChildrenOfClassName",
+      "class": "ModuleScript",
+      "bytes": 248,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetRandomChild",
+      "class": "ModuleScript",
+      "bytes": 131,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetWorldOrientedSurface",
+      "class": "ModuleScript",
+      "bytes": 2907,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.NormalFromFace",
+      "class": "ModuleScript",
+      "bytes": 108,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.NormalToFace",
+      "class": "ModuleScript",
+      "bytes": 1069,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.Signal",
+      "class": "ModuleScript",
+      "bytes": 3658,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.Spring",
+      "class": "ModuleScript",
+      "bytes": 4466,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.Maid",
+      "class": "ModuleScript",
+      "bytes": 3178,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.PartCache",
+      "class": "ModuleScript",
+      "bytes": 7462,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.ClampPointToBoundingBox",
+      "class": "ModuleScript",
+      "bytes": 610,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.PlaySoundAtPosition",
+      "class": "ModuleScript",
+      "bytes": 704,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.MergeTables",
+      "class": "ModuleScript",
+      "bytes": 162,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetDictSize",
+      "class": "ModuleScript",
+      "bytes": 89,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.MultiplyUdim2",
+      "class": "ModuleScript",
+      "bytes": 139,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.IsNan",
+      "class": "ModuleScript",
+      "bytes": 59,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.IsInf",
+      "class": "ModuleScript",
+      "bytes": 62,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.RandomVector3",
+      "class": "ModuleScript",
+      "bytes": 226,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.TweenChildren",
+      "class": "ModuleScript",
+      "bytes": 640,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.FireAllClientsExcept",
+      "class": "ModuleScript",
+      "bytes": 265,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.DegVector3",
+      "class": "ModuleScript",
+      "bytes": 117,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.FindFirstChildMatch",
+      "class": "ModuleScript",
+      "bytes": 148,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.IsStudio",
+      "class": "ModuleScript",
+      "bytes": 100,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.IsServer",
+      "class": "ModuleScript",
+      "bytes": 77,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.ClampVector3",
+      "class": "ModuleScript",
+      "bytes": 163,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.CopyTable",
+      "class": "ModuleScript",
+      "bytes": 193,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.WaitForDescendant",
+      "class": "ModuleScript",
+      "bytes": 643,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.RoundVector3",
+      "class": "ModuleScript",
+      "bytes": 170,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.RadVector3",
+      "class": "ModuleScript",
+      "bytes": 117,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.PlaySound",
+      "class": "ModuleScript",
+      "bytes": 687,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.Lerp",
+      "class": "ModuleScript",
+      "bytes": 52,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.IsChar",
+      "class": "ModuleScript",
+      "bytes": 203,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetVectorUnit",
+      "class": "ModuleScript",
+      "bytes": 128,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetModelMass",
+      "class": "ModuleScript",
+      "bytes": 252,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.GetChar",
+      "class": "ModuleScript",
+      "bytes": 176,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.BindToCharacterAdded",
+      "class": "ModuleScript",
+      "bytes": 1591,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.SphereCast",
+      "class": "ModuleScript",
+      "bytes": 3988,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.Cast",
+      "class": "ModuleScript",
+      "bytes": 5476,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.GetFPS",
+      "class": "ModuleScript",
+      "bytes": 679,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.CreateRagdoll",
+      "class": "ModuleScript",
+      "bytes": 1458,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Functions.GetItemInfo",
+      "class": "ModuleScript",
+      "bytes": 361,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Fists.WeaponInfo (Fists)",
+      "class": "ModuleScript",
+      "bytes": 1191,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Bow.WeaponInfo (Bow)",
+      "class": "ModuleScript",
+      "bytes": 1837,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.MP5.WeaponInfo (MP5)",
+      "class": "ModuleScript",
+      "bytes": 1640,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Glock 17.WeaponInfo (Glock 17)",
+      "class": "ModuleScript",
+      "bytes": 1579,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Kar98k.WeaponInfo (Kar98k)",
+      "class": "ModuleScript",
+      "bytes": 1546,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Kar98k.GetAimOffset2",
+      "class": "ModuleScript",
+      "bytes": 684,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.M4A1.WeaponInfo (M4A1)",
+      "class": "ModuleScript",
+      "bytes": 2014,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Ak47.WeaponInfo (Ak47)",
+      "class": "ModuleScript",
+      "bytes": 1798,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Rocket Launcher.GetAimOffset",
+      "class": "ModuleScript",
+      "bytes": 687,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Rocket Launcher.WeaponInfo (Rocket Launcher)",
+      "class": "ModuleScript",
+      "bytes": 1824,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Deagle.WeaponInfo (Deagle )",
+      "class": "ModuleScript",
+      "bytes": 1587,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Shotgun.WeaponInfo (Shotgun)",
+      "class": "ModuleScript",
+      "bytes": 1955,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Sniper.GetAimOffset",
+      "class": "ModuleScript",
+      "bytes": 616,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Sniper.WeaponInfo (Sniper)",
+      "class": "ModuleScript",
+      "bytes": 1569,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Assets.Gui.DamageIndicator.LocalScript",
+      "class": "LocalScript",
+      "bytes": 600,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "Workspace.Map.LongRamp.Button.ClickDetector.Script",
+      "class": "Script",
+      "bytes": 140,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.Scripts.Game.ClientHandler.PickupHighlight.LocalScript",
+      "class": "LocalScript",
+      "bytes": 341,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CrosshairHandler.CreateHitmarker.Shotgun2",
+      "class": "ModuleScript",
+      "bytes": 1680,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CrosshairHandler.CreateHitmarker.Default",
+      "class": "ModuleScript",
+      "bytes": 4038,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.CrosshairHandler.CreateHitmarker.Shotgun",
+      "class": "ModuleScript",
+      "bytes": 1569,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ViewmodelHandler.Viewmodel.GetSwayOffset",
+      "class": "ModuleScript",
+      "bytes": 370,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ViewmodelHandler.Viewmodel.GetIdleOffset",
+      "class": "ModuleScript",
+      "bytes": 944,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Client.ViewmodelHandler.Viewmodel.GetMovementOffset",
+      "class": "ModuleScript",
+      "bytes": 482,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler.TriggerFunction.Damage",
+      "class": "ModuleScript",
+      "bytes": 2678,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler.TriggerFunction.Explode",
+      "class": "ModuleScript",
+      "bytes": 3365,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.ProjectilesHandler.BaseProjectile.Constant",
+      "class": "ModuleScript",
+      "bytes": 5850,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Weapon",
+      "class": "ModuleScript",
+      "bytes": 181,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.DataKey",
+      "class": "ModuleScript",
+      "bytes": 66,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Command",
+      "class": "ModuleScript",
+      "bytes": 231,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.String",
+      "class": "ModuleScript",
+      "bytes": 33,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Boolean",
+      "class": "ModuleScript",
+      "bytes": 46,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Item",
+      "class": "ModuleScript",
+      "bytes": 174,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Player",
+      "class": "ModuleScript",
+      "bytes": 138,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.GetTypeInstances.Number",
+      "class": "ModuleScript",
+      "bytes": 33,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Weapon",
+      "class": "ModuleScript",
+      "bytes": 41,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.DataKey",
+      "class": "ModuleScript",
+      "bytes": 41,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.String",
+      "class": "ModuleScript",
+      "bytes": 41,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Command",
+      "class": "ModuleScript",
+      "bytes": 592,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Boolean",
+      "class": "ModuleScript",
+      "bytes": 208,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Item",
+      "class": "ModuleScript",
+      "bytes": 466,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Number",
+      "class": "ModuleScript",
+      "bytes": 95,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.ParseType.Player",
+      "class": "ModuleScript",
+      "bytes": 624,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Throwable",
+      "class": "ModuleScript",
+      "bytes": 33,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Melee",
+      "class": "ModuleScript",
+      "bytes": 7034,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Gun",
+      "class": "ModuleScript",
+      "bytes": 26131,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.TracerEffects.Default",
+      "class": "ModuleScript",
+      "bytes": 23,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.TracerEffects.Sniper",
+      "class": "ModuleScript",
+      "bytes": 1257,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.KillEffects.Ragdoll",
+      "class": "ModuleScript",
+      "bytes": 2074,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.KillEffects.Explode",
+      "class": "ModuleScript",
+      "bytes": 2614,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.VFX.KillEffects.Default",
+      "class": "ModuleScript",
+      "bytes": 226,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.Utility.PartCache.Table",
+      "class": "ModuleScript",
+      "bytes": 4034,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Game.Weapons.Sniper.GetAimOffset.GetAimOffset",
+      "class": "ModuleScript",
+      "bytes": 684,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Kill",
+      "class": "ModuleScript",
+      "bytes": 547,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Respawn",
+      "class": "ModuleScript",
+      "bytes": 466,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.GetRank",
+      "class": "ModuleScript",
+      "bytes": 517,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.GetServerInfo",
+      "class": "ModuleScript",
+      "bytes": 911,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.UnForceField",
+      "class": "ModuleScript",
+      "bytes": 561,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Teleport",
+      "class": "ModuleScript",
+      "bytes": 640,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Kick",
+      "class": "ModuleScript",
+      "bytes": 579,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Heal",
+      "class": "ModuleScript",
+      "bytes": 614,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.GiveWeapon",
+      "class": "ModuleScript",
+      "bytes": 601,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.ForceField",
+      "class": "ModuleScript",
+      "bytes": 610,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.General.Damage",
+      "class": "ModuleScript",
+      "bytes": 609,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.ClientSided.Help",
+      "class": "ModuleScript",
+      "bytes": 1680,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.ClientSided.Echo",
+      "class": "ModuleScript",
+      "bytes": 429,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.CommandsHandler.Commands.ClientSided.Clear",
+      "class": "ModuleScript",
+      "bytes": 379,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Projectile",
+      "class": "ModuleScript",
+      "bytes": 3243,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Hitscan",
+      "class": "ModuleScript",
+      "bytes": 14042,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "StarterGui.MainHud.Main.PlayerHud.CharacterDisplay.WorldModel.RavenclawHermitKrab.Health",
+      "class": "Script",
+      "bytes": 703,
+      "externalLoads": []
+    },
+    {
+      "asset": "15864801103",
+      "path": "ReplicatedStorage.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Hitscan.Cast",
+      "class": "ModuleScript",
+      "bytes": 4701,
+      "externalLoads": []
+    }
+  ]
+}

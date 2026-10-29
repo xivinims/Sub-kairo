@@ -18,7 +18,7 @@ local function grab()
 end
 frame.GrabReleaseButton.Activated:Connect(grab)
 local function actionButton(name,text,x,callback)
- local button=Instance.new('TextButton');button.Name=name;button.AnchorPoint=Vector2.new(1,1);button.Size=UDim2.fromOffset(100,42);button.Position=UDim2.new(1,-x,1,-110);button.Text=text;button.TextSize=12;button.Font=Enum.Font.Code;button.TextColor3=Color3.fromRGB(231,231,218);button.BackgroundColor3=Color3.fromRGB(18,22,24);button.BackgroundTransparency=.3;if name=='Sprint' then button.AnchorPoint=Vector2.new(.5,1);button.Position=UDim2.new(.5,0,1,-22) else button.AnchorPoint=Vector2.new(1,0);button.Position=UDim2.new(1,-x,0,84) end;button.Parent=hud;button.Activated:Connect(callback);return button
+ local button=Instance.new('TextButton');button.Name=name;button.AnchorPoint=Vector2.new(1,1);button.Size=UDim2.fromOffset(100,42);button.Position=UDim2.new(1,-x,1,-110);button.Text=text;button.TextSize=12;button.Font=Enum.Font.Code;button.TextColor3=Color3.fromRGB(231,231,218);button.BackgroundColor3=Color3.fromRGB(18,22,24);button.BackgroundTransparency=.3;if name=='Sprint' then button.AnchorPoint=Vector2.new(1,1);button.Position=UDim2.new(1,-24,1,-230) else button.AnchorPoint=Vector2.new(1,0);button.Position=UDim2.new(1,-x,0,84) end;button.Parent=hud;button.Activated:Connect(callback);return button
 end
 local sprint=false;actionButton('Sprint','CORRER',20,function() sprint=not sprint;event:FireServer('sprint',sprint) end)
 local lock=actionButton('DoorLock','TRANCAR',130,function() event:FireServer('lock') end)
