@@ -1,5 +1,7 @@
 # Original systems restoration
 
+Published and independently verified: **PlaceVersion 216**, build `still-here-original-systems-v1`, run 40946132355. Old servers restarted. Engine checks: 390 original source containers visible to the runtime, seven mission roots, 22,670 content parts, 3,999 tagged content instances, original door setup, original FPS server library initialization, and original M4A1/Deagle factories. Downloaded-file comparison: 383 preserved original source bodies plus eight explicitly marked compatibility changes. The serialized file also retains one Studio analytics module outside the runtime bundle.
+
 This release uses asset 7902470429 as the place base, retaining Workspace.Content, all original room hierarchy/tags/triggers, source ServerStorage.Corrupt rooms and props, ReplicatedFirst modules, event/mission/state controllers, seven source GUI templates, original character interaction scripts, audio and authored animation data. The previous flattened map and MansionRuntime/MansionUIClient/CombatRuntime/CombatClient controllers are absent.
 
 Asset 15864801103 contributes ReplicatedStorage.Library, Game, Assets and Remotes, ServerStorage.Library, original Weapons/Other server scripts, MainHud, MobileButtons, GuiModule, client gameplay controllers and character scripts. The shooting range map is excluded. Original modules create the mansion pickups and handle equipping, aiming, recoil, viewmodel animation, reload and shooting. New touch proximity prompts only route pickup into the original tool workflow.

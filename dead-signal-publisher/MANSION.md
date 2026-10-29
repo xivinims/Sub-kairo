@@ -1,3 +1,5 @@
+> Superseded by the original-system restoration in PlaceVersion 216. See ORIGINAL-RESTORATION.md. The adapted MansionRuntime/CombatRuntime described below are historical and are absent from the current build.
+
 > Current release: PlaceVersion 211, run 40914351994. The restoration below supersedes older statements that weapons/original HUD are absent or that only a changing visitor exists.
 
 # Still Here — Duvall mansion and Orderly forest
