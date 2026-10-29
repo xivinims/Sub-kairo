@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('wind-audit')){
+if(trigger.trim().startsWith('forest-expansion-audit')){
+ const fs=await import('node:fs/promises');console.log(JSON.stringify(await execute(await fs.readFile(new URL('./forest-expansion-audit.luau',import.meta.url),'utf8'))));
+}else if(trigger.trim().startsWith('wind-audit')){
  const fs=await import('node:fs/promises');console.log(JSON.stringify(await execute(await fs.readFile(new URL('./wind-audit.luau',import.meta.url),'utf8'))));
 }else if(trigger.trim().startsWith('native-grass')){
   await import('./native-grass.mjs');
