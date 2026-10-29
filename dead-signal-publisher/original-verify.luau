@@ -1,6 +1,6 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-systems-v1','Wrong build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-menu-v2','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
@@ -8,6 +8,9 @@ assert(RS.OriginalStarterGui.HUD and RS.OriginalStarterGui.MainHud and RS.Origin
 assert(SP.StarterPlayerScripts.GameStateClient.Enabled and SP.StarterPlayerScripts.EventManagerClient.Enabled,'Original UI controllers missing')
 assert(SP.StarterCharacterScripts.GrabSystem.GrabClient.Enabled,'Original grab control missing')
 assert(not SP.StarterPlayerScripts:FindFirstChild('MansionUIClient') and not SSS:FindFirstChild('AtriumRuntime'),'Adapted controllers still active')
+assert(RS.MenuBackdrop:GetAttribute('DesignVersion')=='horror-reference-v1','Menu design missing')
+assert(#RS.MenuBackdrop:GetChildren()>20,'Menu scene empty')
+for _,d in ipairs(RS.MenuBackdrop:GetDescendants()) do assert(not d:IsA('LuaSourceContainer'),'Menu scene contains executable code') end
 local cfg=require(game:GetService('ReplicatedFirst').DemoConfig)
 local missions=0;for name,mission in pairs(cfg.Missions) do assert(mission.MissionRoot,'Mission root missing '..name);missions+=1 end
 local parts,tagged=0,0;for _,d in ipairs(W.Content:GetDescendants()) do if d:IsA('BasePart') then parts+=1 end;if #game:GetService('CollectionService'):GetTags(d)>0 then tagged+=1 end end
@@ -28,4 +31,4 @@ if game:GetService('RunService'):IsServer() then
  for _,name in ipairs({'M4A1','Deagle'}) do local tool=lib.WeaponsHandler.CreateWeapon(name);assert(tool and tool.Weapon.PrimaryPart,'Original weapon factory failed '..name);tool:Destroy() end
  fpsLoaded=true
 end
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,menuDesign=RS.MenuBackdrop:GetAttribute('DesignVersion'),originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
