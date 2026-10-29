@@ -19,5 +19,5 @@ for _,d in ipairs(dm:GetDescendants()) do if d:IsA('LuaSourceContainer') and d:G
 end end
 assert(exact>250,'Too few preserved original source bodies')
 assert(RS.OriginalStarterGui.HUD.Frame.HeadlampButton and RS.OriginalStarterGui.MainHud.Main.CombatHud,'Source HUD lost')
-assert(SSS.GameStateManager.Enabled and SSS.Weapons.WeaponsServer.Enabled,'Original runtime not enabled')
+assert(not SSS.GameStateManager.Disabled and not SSS.Weapons.WeaponsServer.Disabled,'Original runtime not enabled')
 print('ORIGINAL EXACT FILE VERIFIED '..J.encode('json',{exactOriginalBodies=exact,markedCompatibilityChanges=patched,sourceMansion='7902470429',sourceFPS='15864801103',menuIsolated=true}))

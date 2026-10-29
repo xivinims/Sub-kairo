@@ -45,6 +45,8 @@ const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['run','original-assemble.luau'],{cwd,stdio:'inherit'});
 
+await fs.copyFile('/tmp/still-here-original.rbxl','/tmp/still-here-verified.rbxl');
+execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
 const payload=await fs.readFile('/tmp/original-payload.rbxm');
 const input=await api('https://apis.roblox.com/cloud/v2/universes/9421311218/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:payload.length})});
 const upload=await fetch(input.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:payload});if(!upload.ok)throw Error('Binary upload '+upload.status);

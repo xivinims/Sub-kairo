@@ -23,6 +23,9 @@ if game:GetService('RunService'):IsServer() then
  local lib=require(RS.Library);local deadline=os.clock()+40
  repeat task.wait(.1) until lib.Loaded or os.clock()>deadline
  assert(lib.Loaded,'Original FPS server library initialization timed out')
- assert(lib.WeaponsHandler.CreateWeapon,'Original weapon factory missing');fpsLoaded=true
+ assert(lib.WeaponsHandler.CreateWeapon,'Original weapon factory missing')
+ for _,group in ipairs({'Player','NonPlayer'}) do pcall(function() game:GetService('PhysicsService'):RegisterCollisionGroup(group) end) end
+ for _,name in ipairs({'M4A1','Deagle'}) do local tool=lib.WeaponsHandler.CreateWeapon(name);assert(tool and tool.Weapon.PrimaryPart,'Original weapon factory failed '..name);tool:Destroy() end
+ fpsLoaded=true
 end
 return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
