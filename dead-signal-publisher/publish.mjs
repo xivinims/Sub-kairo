@@ -146,7 +146,7 @@ async function main() {
   }
 
   const nativeGrass = await import('./native-grass.mjs');
-  await import('./forest-expansion.mjs');
+  const expansion = await import('./forest-expansion.mjs');
 
   let restart = {};
   try {
@@ -163,7 +163,7 @@ async function main() {
     universeId: UNIVERSE_ID,
     placeId: PLACE_ID,
     installed,
-    verified: nativeGrass.nativeGrassResult.verified,
+    verified: expansion.expansionResult.verified,
     nativeGrass: true,
     restart,
   }, null, 2));

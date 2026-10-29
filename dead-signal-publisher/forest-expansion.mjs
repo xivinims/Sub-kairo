@@ -58,4 +58,5 @@ await download('/tmp/still-here-verified.rbxl',verified.version);
 execFileSync('/tmp/forest-lune/lune',['run','native-grass-file-verify.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/forest-lune/lune',['run','forest-expansion-file-verify.luau'],{cwd,stdio:'inherit'});
 await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});
-console.log(JSON.stringify({published:true,verified,restarted:true}));
+export const expansionResult={published:true,verified,restarted:true};
+console.log(JSON.stringify(expansionResult));

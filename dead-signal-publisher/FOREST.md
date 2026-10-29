@@ -24,7 +24,7 @@ Rain is camera-local at 30 Hz with 90 streaks on touch / 180 on desktop, plus a 
 
 ## Altar and distant landmark expansion
 
-`still-here-altar-botanical-v1` extends the existing forest without replacing its terrain, lighting, wind, or weather. The published version 176 was verified in the engine and downloaded back for serialized native grass/script verification.
+`still-here-altar-botanical-v1` extends the existing forest without replacing its terrain, lighting, wind, or weather. The published version 177 was verified in the engine and downloaded back for serialized native grass/script verification.
 
 - Altar Spawn 76722373571113: source has 37 meshes and no scripts. Removed all 28 text meshes, stock particle/decal decorations, and imported spawn behavior; retained nine architectural meshes. Only one neutral spawn remains, with a raycast-confirmed mesh floor and six studs of overhead clearance.
 - Own client arrival animation: temporary occluded character highlight and a 32-segment expanding ring; no remote and no persistent effect. Own server creates distance-limited display name / username tags after each character spawn.
@@ -35,3 +35,5 @@ Rain is camera-local at 30 Hz with 90 streaks on touch / 180 on desktop, plus a 
 - Expansion sources are retained in `forest-expansion-*` and integrated into `publish.mjs` after native terrain repair. `asset-probe.trigger` can run expansion publish or a trusted client source patch. Verification checks the current Roblox PlaceVersion, native grass, exact client/server sources and the distant landmark, then restarts old servers.
 
 Visual client appearance and phone FPS still require an actual Roblox client session; the engine/file checks do not substitute for a screenshot or FPS measurement.
+
+Latest verified release: PlaceVersion 177; expansion `still-here-altar-botanical-v1`; engine verification, exact saved file checks and server restart succeeded in workflow 40800268786. The final arrival client excludes the local player from the remote-distance cull and waits briefly for initial character placement.
