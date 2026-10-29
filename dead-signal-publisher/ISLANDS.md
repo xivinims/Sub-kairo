@@ -71,3 +71,7 @@ Run 40882837028 published PlaceVersion 197, constructed and validated all six ca
 ### Reserved disaster sessions — version 201
 
 Run 40885713028 published and verified PlaceVersion 201, downloaded and checked the exact file, and restarted old servers. Public Workspace has no maps; geometry and arrivals are held in ServerStorage.MatchWorld until reserved match initialization. Menu supports solo, private groups up to six and a virtual-credit inventory shop. Five disaster modes, NPC escorts/roof seeking, travel lockdown, controlled building destruction and return-to-menu flow are included. Engine checks confirmed four city roof candidates and exact-file checks confirmed 37 destructible spatial building groups. See [SESSIONS-AND-DISASTERS.md](SESSIONS-AND-DISASTERS.md) for behavior, economy, implementation boundaries and live-client validation gaps.
+
+### Forest village adventure — version 205
+
+Run 40897494886 published and verified PlaceVersion 205, downloaded and checked the exact file, and restarted old servers. AdventureForest provides a 6,144-square-stud bounded streamed extension, eight original tree templates with grounded-cover validation, four village building groups, eight named residents, the medicine/missing-child introduction, slow-walk controls, three UFO patrols and original procedural ground threats. Disaster runtime/UI are removed. The black hole, public menu and reserved sessions remain. See [ADVENTURE.md](ADVENTURE.md) for actual content, rendering/runtime boundaries and unverified client playthrough details.
