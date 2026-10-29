@@ -43,3 +43,6 @@ const zip=Buffer.from(await binary.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 execFileSync('/tmp/islands-lune/lune',['run','islands-door-audit.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
+
+const ids=[86500008,86500036,86500054,86500064,86500078,86499666,86499716,86499753,86499793,86499840,86498048,86487766,86487700,62234425,16630147,48474313,16627494,144076358,144076436,607785314,398633812,144076760,398633584];
+console.log('CATALOG AUDIT '+JSON.stringify(await execute(`local M=game:GetService('MarketplaceService');local r={} for _,id in ipairs({${ids.join(',')}}) do local ok,v=pcall(function() return M:GetProductInfo(id) end);table.insert(r,{id=id,ok=ok,name=ok and v.Name or tostring(v),type=ok and v.AssetTypeId or 0}) end return game:GetService('HttpService'):JSONEncode(r)`)));
