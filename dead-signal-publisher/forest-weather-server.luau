@@ -16,9 +16,9 @@ task.spawn(function()
 end)
 
 while true do
- task.wait(32+rng:NextNumber(0,22))
+ task.wait(22+rng:NextNumber(0,8))
  Workspace:SetAttribute("ForestWeather","Storm")
- local stormEnds=os.clock()+92
+ local stormEnds=os.clock()+75
  while os.clock()<stormEnds do
   task.wait(rng:NextNumber(23,39))
   if Workspace:GetAttribute("ForestWeather")=="Storm" then
@@ -26,5 +26,5 @@ while true do
   end
  end
  Workspace:SetAttribute("ForestWeather","Clear")
- task.wait(118+rng:NextNumber(0,24))
+ task.wait(110+rng:NextNumber(0,20))
 end

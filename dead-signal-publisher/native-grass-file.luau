@@ -1,11 +1,17 @@
 local fs=require("@lune/fs")
 local roblox=require("@lune/roblox")
+local luau=require("@lune/luau")
 local game=roblox.deserializePlace(fs.readFile("/tmp/still-here-source.rbxl"))
 local W=game:GetService("Workspace")
 local terrain=W:FindFirstChildOfClass("Terrain")
 assert(terrain,"Terrain missing")
 terrain.Decoration=true
 terrain.GrassLength=.85
+W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=192
+W.StreamOutBehavior=roblox.Enum.StreamOutBehavior.Opportunistic
+W.ModelStreamingBehavior=roblox.Enum.ModelStreamingBehavior.Improved
+W.StreamingIntegrityMode=roblox.Enum.StreamingIntegrityMode.PauseOutsideLoadedArea
+W.GlobalWind=roblox.Vector3.new(4,0,1.2)
 local map=W:FindFirstChild("OvergrownAtrium")
 assert(map and #map.Pines:GetChildren()>1900,"Unexpected source map")
 local removed=0
@@ -26,7 +32,30 @@ if grade then grade.Contrast=.025;grade.Saturation=.015;grade.TintColor=C.fromRG
 if not L:FindFirstChildOfClass("Sky") then
  local sky=roblox.Instance.new("Sky");sky.Name="MeadowSky";sky.Parent=L
 end
-W:SetAttribute("DeadSignalBuildId","still-here-native-grass-v7")
+local SSS=game:GetService("ServerScriptService")
+local runtime=SSS:FindFirstChild("AtriumRuntime")
+assert(runtime,"Runtime missing")
+local SP=game:GetService("StarterPlayer").StarterPlayerScripts
+local function scriptFile(parent,name,class,file)
+ local old=parent:FindFirstChild(name);if old then old:Destroy() end
+ local source=fs.readFile(file)
+ luau.load(source,{debugName=file})
+ local inst=roblox.Instance.new(class);inst.Name=name;inst.Source=source;inst.Parent=parent
+ if class=="Script" then inst.Enabled=true end
+ return inst
+end
+scriptFile(runtime,"ForestWeatherServer","Script","forest-weather-server.luau")
+scriptFile(SP,"ForestWeatherClient","LocalScript","forest-weather-client.luau")
+local wind=scriptFile(SP,"ForestWindClient","LocalScript","forest-wind-client.luau")
+scriptFile(wind,"WindLines","ModuleScript","vendor/wind/WindLines.luau")
+local shake=scriptFile(wind,"WindShake","ModuleScript","vendor/wind/WindShake.luau")
+scriptFile(shake,"Settings","ModuleScript","vendor/wind/Settings.luau")
+local octree=scriptFile(shake,"Octree","ModuleScript","vendor/wind/Octree.luau")
+scriptFile(octree,"OctreeNode","ModuleScript","vendor/wind/OctreeNode.luau")
+scriptFile(octree,"OctreeRegionUtils","ModuleScript","vendor/wind/OctreeRegionUtils.luau")
+W:SetAttribute("ForestWindAsset",11946229834)
+W:SetAttribute("ForestWeather","Clear")
+W:SetAttribute("DeadSignalBuildId","still-here-light-weather-v8")
 W:SetAttribute("ForestNativeGrass",true)
 W:SetAttribute("ForestGrassClusters",0)
 W:SetAttribute("ForestGrassModelCount",0)

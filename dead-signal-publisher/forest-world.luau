@@ -206,7 +206,7 @@ local rays=Instance.new("SunRaysEffect");rays.Name="ForestCanopyRays";rays.Inten
 local clouds=Instance.new("Clouds");clouds.Name="WoodlandCloudDeck";clouds.Cover=.43;clouds.Density=.62;clouds.Color=Color3.fromRGB(241,229,202);clouds.Parent=W.Terrain
 W.GlobalWind=Vector3.new(3.6,0,1.2)
 pcall(function()
- W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=1024
+ W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=192
  W.StreamOutBehavior=Enum.StreamOutBehavior.Opportunistic
  W.ModelStreamingBehavior=Enum.ModelStreamingBehavior.Improved
 end)

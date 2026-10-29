@@ -4,35 +4,19 @@ local TweenService=game:GetService("TweenService")
 local SoundService=game:GetService("SoundService")
 local Workspace=game:GetService("Workspace")
 local rng=Random.new()
+local touch=game:GetService("UserInputService").TouchEnabled
+local rainClock=0
 
 local effects=Instance.new("Folder");effects.Name="ForestWeatherLocal"
 effects.Parent=Workspace.CurrentCamera or Workspace
 local drops={}
-local swayTrees={}
-local swayClock=0
-local function trackTree(tree)
- if not tree:IsA("Model") or swayTrees[tree] then return end
- local trunk=tree:FindFirstChild("TreeCollisionTrunk")
- if not trunk then return end
- local pivot=tree:GetPivot()
- local bottom=Vector3.new(trunk.Position.X,trunk.Position.Y-trunk.Size.Y*.5,trunk.Position.Z)
- local base=CFrame.new(bottom)
- swayTrees[tree]={pivot=pivot,base=base,relative=base:ToObjectSpace(pivot),phase=rng:NextNumber(0,math.pi*2),moving=false}
-end
-task.spawn(function()
- local map=Workspace:WaitForChild("OvergrownAtrium",45)
- local pines=map and map:WaitForChild("Pines",15)
- if not pines then return end
- for _,tree in ipairs(pines:GetChildren()) do trackTree(tree) end
- pines.ChildAdded:Connect(function(tree) task.defer(trackTree,tree) end)
-end)
 local raining=false
 local lastCamera=Workspace.CurrentCamera
-local dropCount=560
+local dropCount=touch and 90 or 180
 local atmosphere=Lighting:FindFirstChild("ForestAerialPerspective")
 local grade=Lighting:FindFirstChild("ForestGoldenGrade")
 local clouds=Workspace.Terrain:FindFirstChild("WoodlandCloudDeck")
-local flash=Instance.new("ColorCorrectionEffect");flash.Name="ForestLightningFlash";flash.Brightness=0;flash.Contrast=.08;flash.TintColor=Color3.fromRGB(229,239,255);flash.Parent=Lighting
+local flash=Instance.new("ColorCorrectionEffect");flash.Name="ForestLightningFlash";flash.Brightness=0;flash.Contrast=0;flash.TintColor=Color3.fromRGB(229,239,255);flash.Parent=Lighting
 
 local rainBed=Instance.new("Sound");rainBed.Name="ForestRainAndThunder";rainBed.SoundId="rbxassetid://9120020741"
 rainBed.Volume=.27;rainBed.Looped=true;rainBed.Parent=SoundService
@@ -42,7 +26,7 @@ local sfx=SoundService:FindFirstChild("SFX")
 if sfx and sfx:IsA("SoundGroup") then rainBed.SoundGroup=sfx;thunder.SoundGroup=sfx end
 
 local function randomOffset()
- return Vector3.new(rng:NextNumber(-100,100),rng:NextNumber(18,94),rng:NextNumber(-100,100))
+ return Vector3.new(rng:NextNumber(-38,38),rng:NextNumber(10,45),rng:NextNumber(-38,38))
 end
 
 local function addDrop()
@@ -54,11 +38,11 @@ end
 
 local function positionDrop(drop,camera,dt)
  local wind=Workspace.GlobalWind
- local velocity=Vector3.new(-wind.X*.38,-118,-wind.Z*.38)
+ local velocity=Vector3.new(-wind.X*.38,-85,-wind.Z*.38)
  drop.offset+=velocity*dt
- if drop.offset.Y < -26 then drop.offset=randomOffset() end
- if math.abs(drop.offset.X)>112 or math.abs(drop.offset.Z)>112 then
-  drop.offset=Vector3.new(rng:NextNumber(-100,100),rng:NextNumber(28,92),rng:NextNumber(-100,100))
+ if drop.offset.Y < -10 then drop.offset=randomOffset() end
+ if math.abs(drop.offset.X)>48 or math.abs(drop.offset.Z)>48 then
+  drop.offset=Vector3.new(rng:NextNumber(-38,38),rng:NextNumber(16,45),rng:NextNumber(-38,38))
  end
  local center=camera.CFrame.Position+drop.offset
  drop.part.CFrame=CFrame.lookAt(center,center+velocity)*CFrame.Angles(-math.pi/2,0,0)
@@ -71,9 +55,9 @@ local function startRain()
  for i=1,dropCount do addDrop() end
  if not rainBed.IsPlaying then rainBed:Play() end
  local info=TweenInfo.new(7,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
- if atmosphere then TweenService:Create(atmosphere,info,{Density=.36,Haze=3.1,Color=Color3.fromRGB(185,198,211),Decay=Color3.fromRGB(103,117,130)}):Play() end
+ if atmosphere then TweenService:Create(atmosphere,info,{Density=.25,Haze=1.6,Color=Color3.fromRGB(221,229,232),Decay=Color3.fromRGB(206,214,217)}):Play() end
  if clouds then TweenService:Create(clouds,info,{Cover=.76,Density=.82,Color=Color3.fromRGB(169,180,192)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=-.17,Contrast=.11,TintColor=Color3.fromRGB(211,220,232)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=-.06,Contrast=.035,TintColor=Color3.fromRGB(234,241,244)}):Play() end
 end
 
 local function stopRain()
@@ -83,9 +67,9 @@ local function stopRain()
  table.clear(drops)
  rainBed:Stop()
  local info=TweenInfo.new(10,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
- if atmosphere then TweenService:Create(atmosphere,info,{Density=.29,Haze=2.25,Color=Color3.fromRGB(220,207,172),Decay=Color3.fromRGB(140,148,111)}):Play() end
+ if atmosphere then TweenService:Create(atmosphere,info,{Density=.22,Haze=1.3,Color=Color3.fromRGB(242,233,207),Decay=Color3.fromRGB(235,222,185)}):Play() end
  if clouds then TweenService:Create(clouds,info,{Cover=.43,Density=.62,Color=Color3.fromRGB(241,229,202)}):Play() end
- if grade then TweenService:Create(grade,info,{Saturation=-.045,Contrast=.09,TintColor=Color3.fromRGB(255,245,218)}):Play() end
+ if grade then TweenService:Create(grade,info,{Saturation=.015,Contrast=.025,TintColor=Color3.fromRGB(255,250,235)}):Play() end
 end
 
 local function makeBolt(a,b)
@@ -107,8 +91,8 @@ local function lightningStrike()
  if not raining then return end
  local camera=Workspace.CurrentCamera
  if not camera then return end
- local lateral=rng:NextNumber(-110,110)
- local distance=rng:NextNumber(205,390)
+ local lateral=rng:NextNumber(-45,45)
+ local distance=rng:NextNumber(120,175)
  local aim=camera.CFrame.Position+camera.CFrame.LookVector*distance+camera.CFrame.RightVector*lateral
  local x=math.clamp(aim.X,-940,940);local z=math.clamp(aim.Z,-940,940)
  local rayParams=RaycastParams.new();rayParams.FilterType=Enum.RaycastFilterType.Include;rayParams.FilterDescendantsInstances={Workspace.Terrain}
@@ -148,35 +132,16 @@ Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
  effects.Parent=lastCamera or Workspace
 end)
 RunService.Heartbeat:Connect(function(dt)
- if raining then
+ rainClock+=dt
+ if raining and rainClock>=1/30 then
   local camera=Workspace.CurrentCamera
   if camera~=lastCamera then lastCamera=camera;effects.Parent=camera or Workspace end
   if camera then
-   local step=math.min(dt,.05)
+   local step=math.min(rainClock,.08)
+   rainClock=0
    for _,drop in ipairs(drops) do positionDrop(drop,camera,step) end
   end
  end
- swayClock+=dt
- if swayClock>=.2 then
-  local camera=Workspace.CurrentCamera
-  if camera then
-   local wind=Workspace.GlobalWind
-   local horizontal=Vector3.new(wind.X,0,wind.Z)
-   local axis=horizontal.Magnitude>.05 and Vector3.new(-horizontal.Z,0,horizontal.X).Unit or Vector3.new(1,0,0)
-   local strength=.004+math.clamp(horizontal.Magnitude/10,0,1.4)*.008
-   local time=os.clock()
-   for tree,state in pairs(swayTrees) do
-    if not tree.Parent then swayTrees[tree]=nil
-    elseif (tree:GetPivot().Position-camera.CFrame.Position).Magnitude<460 then
-     local angle=math.sin(time*.72+state.phase)*strength
-     tree:PivotTo(state.base*CFrame.fromAxisAngle(axis,angle)*state.relative)
-     state.moving=true
-    elseif state.moving then
-     tree:PivotTo(state.pivot);state.moving=false
-    end
-   end
-  end
-  swayClock=0
- end
+
 end)
 applyWeather()
