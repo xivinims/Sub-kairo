@@ -37,7 +37,8 @@ async function external(id){
 }
 
 await download('/tmp/still-here-source.rbxl',177);
-for(const id of ['186677844','5326950832','88883160098456','17835285085'])await external(id);
+await download('/tmp/still-here-rollback.rbxl',190);
+for(const id of ['186677844','5326950832','88883160098456','17835285085','7208091524'])await external(id);
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
 const zip=Buffer.from(await binary.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
@@ -68,6 +69,6 @@ try{
  await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});
  console.log(JSON.stringify({published:true,verified,restarted:true}));
 }catch(error){
- if(published){const rollback=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-source.rbxl')});console.log(JSON.stringify({restoredKnownGood:rollback}));await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});}
+ if(published){const rollback=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-rollback.rbxl')});console.log(JSON.stringify({restoredKnownGood:rollback}));await api('https://apis.roblox.com/cloud/v2/universes/9421311218:restartServers',{method:'POST',body:'{}'});}
  throw error;
 }

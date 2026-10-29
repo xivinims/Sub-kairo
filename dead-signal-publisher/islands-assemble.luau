@@ -114,12 +114,14 @@ install(SP,'ForestWeatherClient','LocalScript','forest-weather-client.luau')
 local RS=dm:GetService('ReplicatedStorage');local remote=RS:FindFirstChild('IslandTravel');if remote then remote:Destroy() end
 remote=R.Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=RS
 for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestPortDistance' then W:SetAttribute(k,nil) end end
+if fs.isFile('/tmp/asset-7208091524.rbxl') then require('./blackhole-extract')(dm) end
 local initSource=fs.readFile('islands-finalize.luau')
 initSource=initSource:sub(1,assert(initSource:find("game:GetService('AssetService'):SavePlaceAsync",1,true))-1)
 initSource="if workspace:GetAttribute('IslandWorldReady')==true then script:Destroy();return end\ntask.wait(.25)\nlocal ok,err=xpcall(function()\n"..initSource.."\nend,debug.traceback);if not ok then workspace:SetAttribute('IslandWorldError',tostring(err));error(err) end\nlocal P=game:GetService('Players');P.CharacterAutoLoads=true;for _,p in ipairs(P:GetPlayers()) do if not p.Character then task.spawn(function() p:LoadCharacterAsync() end) end end;script:Destroy()\n"
 luau.load(initSource,{debugName='IslandInitializer'})
 local initializer=R.Instance.new('Script');initializer.Name='IslandInitializer';initializer.Source=initSource;initializer.Disabled=false;initializer.Parent=runtime
 dm:GetService('Players').CharacterAutoLoads=true
+W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')
@@ -134,6 +136,8 @@ local bundle=R.Instance.new('Model');bundle.Name='StillHereIslandBundle'
 for key,value in pairs(W:GetAttributes()) do bundle:SetAttribute(key,value) end
 for _,name in ipairs({'Islands','IslandDestinations'}) do W[name].Parent=bundle end
 for _,name in ipairs({'IslandGeometryCatalog','IslandTerrainSnapshots'}) do dm:GetService('ServerStorage')[name].Parent=bundle end
+local replicatedAssets=R.Instance.new('Folder');replicatedAssets.Name='ReplicatedAssets';replicatedAssets.Parent=bundle
+for _,c in ipairs(RS:GetChildren()) do if c.Name~='IslandTravel' then c.Parent=replicatedAssets end end
 runtime.Name='IslandRuntime';runtime.Parent=bundle
 local clientBundle=R.Instance.new('Folder');clientBundle.Name='IslandClients';clientBundle.Parent=bundle
 for _,c in ipairs(SP:GetChildren()) do c.Parent=clientBundle end

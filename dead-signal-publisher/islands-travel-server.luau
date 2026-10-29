@@ -35,7 +35,7 @@ end
 remote.OnServerEvent:Connect(function(p,id) if typeof(id)=='string' then travel(p,id,true) end end)
 local function added(p)
  p:SetAttribute('IslandDestination','forestCurrent');p.RespawnLocation=assert(arrival('forestCurrent'),'Default spawn unavailable')
- p.CharacterAdded:Connect(function(char)
+ local function onCharacter(char)
   local root=char:WaitForChild('HumanoidRootPart',15)
   if root then
    root.Anchored=true
@@ -43,8 +43,9 @@ local function added(p)
    if workspace:GetAttribute('IslandWorldError') and root.Parent then root.Anchored=false end
    if p.Character==char then task.defer(travel,p,p:GetAttribute('IslandDestination') or 'forestCurrent',true) end
   end
- end)
- if p.Character then task.defer(travel,p,'forestCurrent',false) end
+ end
+ p.CharacterAdded:Connect(onCharacter)
+ if p.Character then task.spawn(onCharacter,p.Character) end
 end
 Players.PlayerAdded:Connect(added)
 Players.PlayerRemoving:Connect(function(p) busy[p]=nil;last[p]=nil end)

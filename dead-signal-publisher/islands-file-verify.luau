@@ -15,3 +15,12 @@ for _,d in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog:GetDescen
 assert(W.StreamingMinRadius==64 and W.StreamingTargetRadius<=192,'Wrong streaming')
 local terrains=0;for _,d in ipairs(dm:GetDescendants()) do if d:IsA('Terrain') then terrains+=1;assert(d.Parent==W,'Nested terrain') end end;assert(terrains==1,'Duplicate terrain')
 print('ISLANDS VERIFIED: exact sources, native grass, three spawns, streaming, no old forest or imported scripts')
+
+if W:GetAttribute('BlackHoleAsset') then
+ local template=dm:GetService('ReplicatedStorage').SkyBlackHoleTemplate
+ assert(template:GetAttribute('SourceAsset')=='7208091524','Wrong black hole provenance')
+ assert(SP.SkyBlackHoleClient.Source==fs.readFile('blackhole-client.luau'),'Sky renderer source mismatch')
+ for _,d in ipairs(template:GetDescendants()) do assert(not d:IsA('LuaSourceContainer') and not d:IsA('Sound'),'Imported sky code/audio present') end
+ print('BLACK HOLE VERIFIED: original geometry + beams, safe client renderer')
+end
+assert(W.StreamingTargetRadius==W:GetAttribute('IslandStreamingTarget'),'Streaming metadata differs from file')

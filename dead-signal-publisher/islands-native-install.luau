@@ -17,6 +17,7 @@ for k,v in pairs(bundle:GetAttributes()) do W:SetAttribute(k,v) end
 bundle.Islands.Parent=W;bundle.IslandDestinations.Parent=W
 bundle.IslandGeometryCatalog.Parent=game:GetService('ServerStorage')
 bundle.IslandTerrainSnapshots.Parent=game:GetService('ServerStorage')
+local assets=bundle:FindFirstChild('ReplicatedAssets');if assets then for _,c in ipairs(assets:GetChildren()) do c.Parent=game:GetService('ReplicatedStorage') end end
 local remote=Instance.new('RemoteEvent');remote.Name='IslandTravel';remote.Parent=game:GetService('ReplicatedStorage')
 local runtime=bundle.IslandRuntime;runtime.Name='AtriumRuntime'
 local initializer=runtime:FindFirstChild('IslandInitializer');if initializer then initializer:Destroy() end
