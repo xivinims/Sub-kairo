@@ -1,3 +1,5 @@
+> Archived islands/adventure architecture. The current mansion build is documented in [MANSION.md](MANSION.md).
+
 # Still Here — three islands and original Beyond the Dark sky effect
 
 Target: universe `9421311218`, place `118064584465155`. Only branch `dead-signal-publisher` is used. The former generated meadow is removed. There is no chapter menu, GrabPack, stalker, or old loading screen.
