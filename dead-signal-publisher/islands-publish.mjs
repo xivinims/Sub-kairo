@@ -50,7 +50,7 @@ if(mode.includes('control')){
  const fixture=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Saved',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-source.rbxl')});
  console.log(JSON.stringify({fixture}));console.log(JSON.stringify({controlSaved:await execute(script,fixture.versionNumber)}));process.exit(0);
 }
-if(mode.includes('blackhole-audit')){await external('7208091524');execFileSync('/tmp/islands-lune/lune',['run','blackhole-audit.luau'],{cwd,stdio:'inherit'});process.exit(0);}
+if(mode.includes('blackhole-audit')){await external('7208091524');execFileSync('/tmp/islands-lune/lune',['run',mode.includes('debris')?'blackhole-debris-audit.luau':'blackhole-audit.luau'],{cwd,stdio:'inherit'});process.exit(0);}
 if(mode.includes('light-audit')){execFileSync('/tmp/islands-lune/lune',['run','islands-light-audit.luau'],{cwd,stdio:'inherit'});process.exit(0);}
 if(mode.includes('smoke')){console.log(JSON.stringify({smoke:await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,stage=workspace:GetAttribute('IslandStageAsset')})",mode.includes('default')?undefined:(mode.includes('177')?177:180))}));process.exit(0);}
 if(mode.includes('direct-release')){
