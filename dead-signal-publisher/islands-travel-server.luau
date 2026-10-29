@@ -4,6 +4,7 @@ local destinations=workspace:WaitForChild('IslandDestinations')
 local remote=RS:WaitForChild('IslandTravel')
 local Chunks=require(script.Parent.IslandChunks)
 Chunks.Start()
+local Disaster=require(script.Parent.DisasterService)
 local valid={city=true,forest1=true,forestCurrent=true}
 local busy,last={},{}
 local function arrival(id)
@@ -13,19 +14,23 @@ end
 local function travel(p,id,reply)
  if workspace:GetAttribute('IslandWorldReady')~=true then if reply then remote:FireClient(p,false,'O mundo ainda está carregando.') end;return end
  if not valid[id] or busy[p] then return end
+ if p:GetAttribute('HasIslandArrival') and reply and not Disaster.CanTravel() then remote:FireClient(p,false,'Teleporte bloqueado durante o desastre. Procure abrigo!');return end
  if reply and os.clock()-(last[p] or -10)<2 then remote:FireClient(p,false,'Aguarda um instante.');return end
  local spawn=arrival(id);local char=p.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
  local root=char and char:FindFirstChild('HumanoidRootPart')
  if not spawn or not root or not hum or hum.Health<=0 then if reply then remote:FireClient(p,false,'Espera seu personagem aparecer.');end;return end
- busy[p]=true;p:SetAttribute('IslandTravelPending',true);last[p]=os.clock();p.RespawnLocation=spawn;root.Anchored=true
+ busy[p]=true;p:SetAttribute('IslandTravelPending',true);last[p]=os.clock();root.Anchored=true
  local ok,err=pcall(function()
   Chunks.Warm(id,spawn.Position,128)
   if p.Character~=char or not char.Parent or hum.Health<=0 then error('Personagem mudou durante a viagem') end
+  if p:GetAttribute('HasIslandArrival') and reply and not Disaster.CanTravel() then error('Desastre começou durante a viagem') end
   hum.Sit=false
   char:PivotTo(spawn.CFrame+Vector3.new(0,4,0))
-  p:RequestStreamAroundAsync(spawn.Position,6)
+
   root.AssemblyLinearVelocity=Vector3.zero;root.AssemblyAngularVelocity=Vector3.zero
-  p:SetAttribute('IslandDestination',id)
+  p:SetAttribute('IslandDestination',id);p.RespawnLocation=spawn;p:SetAttribute('HasIslandArrival',true)
+  Disaster.Evacuate(p,id,spawn.CFrame)
+  p:RequestStreamAroundAsync(spawn.Position,6)
  end)
  busy[p]=nil;p:SetAttribute('IslandTravelPending',false)
  if root.Parent then root.Anchored=false end

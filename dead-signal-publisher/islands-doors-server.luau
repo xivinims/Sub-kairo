@@ -37,6 +37,15 @@ local function mount(cell)
     end
    end) end
   end
+  task.spawn(function() while cell.Parent do
+   local residents=workspace:FindFirstChild('IslandResidents')
+   if residents and not opened and not busy then
+    for _,rig in ipairs(residents:GetChildren()) do local root=rig:FindFirstChild('HumanoidRootPart')
+     if root and (root.Position-pivot.Position).Magnitude<12 then change(true);break end
+    end
+   end
+   task.wait(1)
+  end end)
   prompt.Triggered:Connect(function(player)
    local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart');local hum=player.Character and player.Character:FindFirstChildOfClass('Humanoid')
    if root and hum and hum.Health>0 and (root.Position-anchor.Position).Magnitude<=12 then change(not opened) end

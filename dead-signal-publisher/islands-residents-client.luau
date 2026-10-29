@@ -9,10 +9,14 @@ Run.Heartbeat:Connect(function(dt)
   if root and (root.Position-camera.CFrame.Position).Magnitude<100 then
    if not motors[rig] then local list={} for _,v in ipairs(rig:GetDescendants()) do if v:IsA('Motor6D') then list[v.Name]=v end end;motors[rig]=list end
    local m=motors[rig];local phase=t+index*1.9
+   local speed=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
+   local stride=math.sin(t*math.clamp(speed,3,12)*1.2)*math.min(speed/12,.8)
+   if m.LeftHip then m.LeftHip.Transform=CFrame.Angles(stride,0,0) end
+   if m.RightHip then m.RightHip.Transform=CFrame.Angles(-stride,0,0) end
    if m.Waist then m.Waist.Transform=CFrame.Angles(math.sin(phase*.8)*.018,math.sin(phase*.23)*.04,0) end
    if m.Neck then m.Neck.Transform=CFrame.Angles(math.sin(phase*.44)*.045,math.sin(phase*.31)*.16,0) end
-   if m.LeftShoulder then m.LeftShoulder.Transform=CFrame.Angles(math.sin(phase*.65)*.035,0,-.035) end
-   if m.RightShoulder then m.RightShoulder.Transform=CFrame.Angles(math.sin(phase*.65+1)*.04,0,.035) end
+   if m.LeftShoulder then m.LeftShoulder.Transform=CFrame.Angles(math.sin(phase*.65)*.035-stride*.7,0,-.035) end
+   if m.RightShoulder then m.RightShoulder.Transform=CFrame.Angles(math.sin(phase*.65+1)*.04+stride*.7,0,.035) end
   end
  end
 end)

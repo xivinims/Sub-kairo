@@ -54,6 +54,11 @@ function M.Start()
     local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local id=p:GetAttribute('IslandDestination')
     if root and typeof(id)=='string' then addDesired(desired,id,root.Position,192) end
    end
+   local residents=workspace:FindFirstChild('IslandResidents')
+   if residents then for _,rig in ipairs(residents:GetChildren()) do
+    local root=rig:FindFirstChild('HumanoidRootPart');local id=rig:GetAttribute('ResidentIsland')
+    if root and id then addDesired(desired,id,root.Position,96) end
+   end end
    local count=0
    for _,spec in pairs(desired) do load(unpack(spec));count+=1;if count%3==0 then task.wait() end end
    for key,m in pairs(loaded) do if not desired[key] then m:Destroy();loaded[key]=nil end end

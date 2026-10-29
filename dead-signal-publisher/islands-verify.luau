@@ -42,6 +42,20 @@ for _,meta in ipairs(manifest) do if meta.id=='city' then
  local hit=W:Raycast(center+Vector3.new(0,12,0),Vector3.new(0,-24,0),params)
  assert(hit and hit.Material==Enum.Material.Water,'City sea not present in terrain');print('CITY WATER VERIFIED '..#meta.water..' original footprints')
 end end
+local disasters=require(game:GetService('ServerScriptService').AtriumRuntime.DisasterService)
+assert(#disasters.Types==5,'Disaster set incomplete')
+for _,kind in ipairs(disasters.Types) do
+ disasters.SetPhase('Warning',kind,'city',25);assert(disasters.CanTravel(),'Warning evacuation blocked')
+ disasters.SetPhase('Active',kind,'city',70);assert(not disasters.CanTravel(),'Active travel exploit')
+ disasters.SetPhase('Recovery',kind,'city',15);assert(disasters.CanTravel(),'Recovery travel blocked')
+end
+disasters.SetPhase('Calm','','city',90)
+local shelterCount=0
+for _,def in ipairs(residentModule.Definitions) do if def.island=='city' then
+ local pos=residentModule.FindGround(def);local shelter=disasters.FindShelter(pos,'city');if shelter then shelterCount+=1 end
+end end
+assert(shelterCount>=1,'City has no reachable roof candidates')
+print('DISASTER RULES VERIFIED: five modes, phase travel gates, shelter candidates='..shelterCount)
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
  local template=game:GetService('ReplicatedStorage'):FindFirstChild('SkyBlackHoleTemplate')
@@ -59,4 +73,4 @@ if W:GetAttribute('BlackHoleAsset') then
  probe:ScaleTo(math.clamp(450/template:GetAttribute('ReferenceDistance'),.12,.7));probe:PivotTo(CFrame.lookAt(Vector3.new(0,350,-450),Vector3.new(0,100,0)));probe:Destroy()
  blackHole={asset='7208091524',parts=parts,beams=beams,bones=bones,clientRenderer=true}
 end
-return H:JSONEncode({residents=residentReport,cityWater=true,ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})
+return H:JSONEncode({disasters=5,shelters=shelterCount,residents=residentReport,cityWater=true,ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})

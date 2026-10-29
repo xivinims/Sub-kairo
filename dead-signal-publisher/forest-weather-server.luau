@@ -11,7 +11,9 @@ task.spawn(function()
   local t=Workspace:GetServerTimeNow()
   local gust=math.sin(t/13)*2.2+math.noise(t/18,0,2)*1.8
   local base=storm and 17 or 12
-  Workspace.GlobalWind=Vector3.new(base+gust,0,1.1+math.cos(t/17)*1.6)
+  local kind=Workspace:GetAttribute('DisasterKind')
+  local extreme=Workspace:GetAttribute('DisasterPhase')=='Active' and (kind=='Gale' or kind=='Tornado')
+  Workspace.GlobalWind=Vector3.new((extreme and 35 or base)+gust,0,1.1+math.cos(t/17)*1.6)
  end
 end)
 

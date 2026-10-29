@@ -145,6 +145,9 @@ local function install(parent,name,class,file)
 end
 install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
 install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
+install(runtime,'DisasterService','ModuleScript','disaster-service.luau')
+install(runtime,'DisasterRuntime','Script','disaster-server.luau')
+install(SP,'DisasterClient','LocalScript','disaster-client.luau')
 install(runtime,'IslandResidents','ModuleScript','islands-residents.luau')
 install(runtime,'IslandResidentRuntime','Script','islands-residents-server.luau')
 install(SP,'IslandResidentClient','LocalScript','islands-residents-client.luau')
@@ -171,6 +174,7 @@ dm:GetService('Players').CharacterAutoLoads=true
 W:SetAttribute('IslandStreamingTarget',128)
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
+W:SetAttribute('DisasterRevision','rescue-rounds-v1');W:SetAttribute('DisasterPhase','Calm')
 W:SetAttribute('ResidentsRevision','six-identities-v1');W:SetAttribute('CityWaterRevision','original-sea-native-v1')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')
 W.StreamingMinRadius=64;W.StreamingTargetRadius=128

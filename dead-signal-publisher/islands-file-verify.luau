@@ -64,3 +64,14 @@ print('CINEMATIC MAP VERIFIED: transparent glyph, left gradient, three destinati
 assert(W:GetAttribute('CityWaterRevision')=='original-sea-native-v1','Missing native sea')
 assert(dm:GetService('ServerScriptService').AtriumRuntime.IslandResidents.Source==fs.readFile('islands-residents.luau'),'Resident identities mismatch')
 assert(SP.IslandResidentClient.Source==fs.readFile('islands-residents-client.luau'),'Resident animation missing')
+
+assert(W:GetAttribute('DisasterRevision')=='rescue-rounds-v1','Disaster revision missing')
+local runtime=dm:GetService('ServerScriptService').AtriumRuntime
+assert(runtime.DisasterService.Source==fs.readFile('disaster-service.luau'),'Disaster rules mismatch')
+assert(runtime.DisasterRuntime.Source==fs.readFile('disaster-server.luau'),'Disaster runtime mismatch')
+assert(SP.DisasterClient.Source==fs.readFile('disaster-client.luau'),'Disaster client mismatch')
+local structures={}
+for _,part in ipairs(dm:GetService('ServerStorage').IslandGeometryCatalog.city:GetDescendants()) do if part:IsA('BasePart') and part:GetAttribute('DisasterStructureId') then structures[part:GetAttribute('DisasterStructureId')]=true end end
+local n=0;for _ in pairs(structures) do n+=1 end
+assert(n>0,'No destructible building groups')
+print('DISASTER FILE VERIFIED: structure groups='..n..', follow/rescue, server travel gates and bounded local effects')
