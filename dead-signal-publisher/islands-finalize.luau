@@ -41,10 +41,25 @@ for _,meta in ipairs(manifest) do
  local altar=source:FindFirstChild('ArrivalAltar')
  if altar then
   -- Use the existing altar's actual floor, not a guessed platform height.
-  local before,sizeBefore=altar:GetBoundingBox();altar:PivotTo(altar:GetPivot()+Vector3.new(0,hit.Position.Y-.35-(before.Y-sizeBefore.Y/2),0))
+  local groundParams=RaycastParams.new();groundParams.FilterType=Enum.RaycastFilterType.Include;groundParams.FilterDescendantsInstances={T}
+  local landing
+  for ring=0,6 do
+   for j=1,math.max(1,ring*8) do
+    local angle=j/math.max(1,ring*8)*math.pi*2
+    local x=spawn.Position.X+math.cos(angle)*ring*16;local z=spawn.Position.Z+math.sin(angle)*ring*16
+    local g=W:Raycast(Vector3.new(x,meta.hi[2]+64,z),Vector3.new(0,meta.lo[2]-meta.hi[2]-200,0),groundParams)
+    if g and g.Material~=Enum.Material.Water and g.Normal.Y>.75 then landing=g;break end
+   end
+   if landing then break end
+  end
+  assert(landing,'No dry terrain for altar arrival')
+  local before,sizeBefore=altar:GetBoundingBox()
+  altar:PivotTo(altar:GetPivot()+Vector3.new(landing.Position.X-spawn.Position.X,landing.Position.Y-.35-(before.Y-sizeBefore.Y/2),landing.Position.Z-spawn.Position.Z))
+  spawn.CFrame=CFrame.new(landing.Position+Vector3.new(0,(altar:GetAttribute('AltarLandingHeight') or 3)-.35,0))
+  Chunks.Warm(meta.id,spawn.Position,128)
   local p=RaycastParams.new();p.FilterType=Enum.RaycastFilterType.Include;p.FilterDescendantsInstances={altar}
   local cf,size=altar:GetBoundingBox()
-  local floor=W:Raycast(spawn.Position+Vector3.new(0,8,0),Vector3.new(0,-16,0),p)
+  local floor=W:Raycast(spawn.Position+Vector3.new(0,.75,0),Vector3.new(0,-12,0),p)
   assert(floor,'Altar floor missing');spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,.15,0),floor.Position+Vector3.new(0,.15,-10))
   local removed=0
   local clearList=source:GetDescendants()
@@ -55,7 +70,8 @@ for _,meta in ipairs(manifest) do
   end end
  end
  local op=OverlapParams.new();op.FilterType=Enum.RaycastFilterType.Include;op.FilterDescendantsInstances={source};op.RespectCanCollide=true
- local blockers=W:GetPartBoundsInBox(CFrame.new(spawn.Position+Vector3.new(0,3.3,0)),Vector3.new(3.5,5.5,3.5),op)
+ local probe=Instance.new('Part');probe.Name='ArrivalClearanceProbe';probe.Size=Vector3.new(3.5,5.5,3.5);probe.CFrame=CFrame.new(spawn.Position+Vector3.new(0,3.3,0));probe.Anchored=true;probe.CanCollide=false;probe.CanTouch=false;probe.Transparency=1;probe.Parent=W
+ local blockers=W:GetPartsInPart(probe,op);probe:Destroy()
  assert(#blockers==0,'Arrival blocked: '..meta.id..' / '..(#blockers>0 and blockers[1]:GetFullName() or ''))
  table.insert(checks,{id=meta.id,floor=hit.Instance.Name,position={spawn.Position.X,spawn.Position.Y,spawn.Position.Z}})
 end

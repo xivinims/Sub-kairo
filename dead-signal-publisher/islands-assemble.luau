@@ -66,6 +66,7 @@ for _,def in ipairs(defs) do
   end end
   local old=template.AltarArrival;local delta=V.new(point.X-old.CFrame.X,point.Y-.35-lo.Y,point.Z-old.CFrame.Z)
   spawn.CFrame=C.new(old.CFrame.Position+delta)
+  template:SetAttribute('AltarLandingHeight',old.CFrame.Y-lo.Y)
   old:Destroy()
   for _,p in ipairs(template:GetDescendants()) do if p:IsA('BasePart') then p.CFrame=p.CFrame+delta end end
   template.Name='ArrivalAltar';template.Parent=folder
