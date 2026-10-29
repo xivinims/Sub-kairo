@@ -6,7 +6,9 @@ async function api(path,method='GET',body){
 }
 for(const path of ['universes/9421311218','universes/9421311218/places/118064584465155']){
  await api(path+'?updateMask=displayName,description','PATCH',{displayName:'Still Here',description:''});
+ await new Promise(r=>setTimeout(r,2500));
  const v=await api(path);
+ console.log(JSON.stringify({response:v}));
  if(v.displayName!=='Still Here'||(v.description||'')!=='')throw new Error('Metadata verification failed');
  console.log(JSON.stringify({path,displayName:v.displayName,description:v.description||'',verified:true}));
 }

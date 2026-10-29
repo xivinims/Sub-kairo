@@ -1,1 +1,1 @@
-still-here-metadata-v1
+still-here-metadata-v2
