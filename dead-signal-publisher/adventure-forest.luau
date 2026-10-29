@@ -16,7 +16,7 @@ function M.Cell(x,z,parent)
   local pos=Vector3.new(x*128+rng:NextNumber(8,120),y,z*128+rng:NextNumber(8,120))
   if (Vector3.new(pos.X,0,pos.Z)-Vector3.new(M.Village.X,0,M.Village.Z)).Magnitude>190 then
    local tree=templates[rng:NextInteger(1,#templates)]:Clone();tree:ScaleTo(rng:NextNumber(.8,1.2))
-   tree:PivotTo(CFrame.new(pos)*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0));tree.Parent=cell
+   tree:PivotTo(CFrame.new(pos)*CFrame.Angles(0,rng:NextNumber(0,math.pi*2),0));local bounds,size=tree:GetBoundingBox();tree:PivotTo(tree:GetPivot()+Vector3.new(0,y-(bounds.Y-size.Y/2),0));tree.Parent=cell
   end
  end
  cell.Parent=parent;return cell

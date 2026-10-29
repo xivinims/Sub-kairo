@@ -21,7 +21,7 @@ event.OnServerEvent:Connect(function(p,action,value)
   sneaking[p]=value;local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid');if h then h.WalkSpeed=value and 5 or 14 end
  end
 end)
-local medicine=center+Vector3.new(460,0,950);Chunks.Warm('forestCurrent',medicine,64)
+local medicine=center+Vector3.new(700,0,950);Chunks.Warm('forestCurrent',medicine,64)
 local box=Instance.new('Part');box.Name='MedicineSupplies';box.Size=Vector3.new(3,2,2);box.Color=Color3.fromRGB(154,153,117);box.Material=Enum.Material.Wood;box.Anchored=true;local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain};local ground=assert(workspace:Raycast(medicine+Vector3.new(0,150,0),Vector3.new(0,-350,0),rp),'Medicine floor missing');box.Position=ground.Position+Vector3.new(0,1,0);box.Parent=workspace.Islands.forestCurrent
 local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Pegar remédios';prompt.ObjectText='Suprimentos';prompt.MaxActivationDistance=9;prompt.Parent=box
 prompt.Triggered:Connect(function(p) local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if r and (r.Position-box.Position).Magnitude<12 and quests[p]==2 then update(p,3) end end)
@@ -43,9 +43,9 @@ local ships={};for i=1,3 do
  local hull=part(ship,'Hull',Vector3.new(32,5,32),Color3.fromRGB(52,64,75),CFrame.new());hull.Shape=Enum.PartType.Ball
  local dome=part(ship,'Dome',Vector3.new(13,7,13),Color3.fromRGB(143,180,194),CFrame.new(0,4,0));dome.Shape=Enum.PartType.Ball;dome.Material=Enum.Material.Glass;dome.Transparency=.25
  local a=Instance.new('Attachment');a.Position=Vector3.new(0,-2,0);a.Parent=hull
- local target=part(ship,'SearchTarget',Vector3.new(1,1,1),Color3.new(),CFrame.new(0,-95,0));target.Transparency=1
+ local target=part(ship,'SearchTarget',Vector3.new(1,1,1),Color3.new(),CFrame.new(0,-130,0));target.Transparency=1
  local b=Instance.new('Attachment');b.Parent=target
- local beam=Instance.new('Beam');beam.Attachment0=a;beam.Attachment1=b;beam.Width0=3;beam.Width1=24;beam.FaceCamera=true;beam.Transparency=NumberSequence.new(.8);beam.Color=ColorSequence.new(Color3.fromRGB(172,212,222));beam.Parent=hull
+ local beam=Instance.new('Beam');beam.Attachment0=a;beam.Attachment1=b;beam.Width0=3;beam.Width1=180;beam.FaceCamera=true;beam.Transparency=NumberSequence.new(.8);beam.Color=ColorSequence.new(Color3.fromRGB(172,212,222));beam.Parent=hull
  ship.PrimaryPart=hull;table.insert(ships,{model=ship,phase=i*2.1})
 end
 local function visible(from,root)
@@ -74,7 +74,7 @@ while task.wait(.25) do
   if q==5 then for _,s in ipairs(D.Residents) do if s.def.id=='Lia' and s.leader==p and (s.rig.HumanoidRootPart.Position-center).Magnitude<130 then s.leader=nil;update(p,6);D.Say(s,'Cheguei! Eu achei que ninguém vinha me buscar.');break end end end
  end
  for _,ship in ipairs(ships) do
-  local angle=clock*.014+ship.phase;local pos=center+Vector3.new(math.cos(angle)*900,130,math.sin(angle)*600+700)
+  local angle=clock*.014+ship.phase;local pos=center+Vector3.new(math.cos(angle)*800,130,math.sin(angle)*500+1150)
   ship.model:PivotTo(CFrame.new(pos))
   for _,p in ipairs(Players:GetPlayers()) do
    local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')

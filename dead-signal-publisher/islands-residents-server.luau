@@ -27,7 +27,7 @@ for _,s in ipairs(states) do
   prompt.Triggered:Connect(function(p)
    local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
    if r and (r.Position-root.Position).Magnitude<12 and os.clock()-(last[p.UserId] or 0)>2 then last[p.UserId]=os.clock()
-    local story=script.Parent:FindFirstChild('AdventureTalk');if story then story:Fire(p,s) end
+    local story=script.Parent:FindFirstChild('AdventureTalk');if story then story:Fire(p,s);if s.def.id=='Lia' and p:GetAttribute('AdventureMission')==5 then s.leader=p;event:FireClient(p,s.rig,'Eu vou com você. Não me deixa sozinha.');return end;event:FireClient(p,s.rig,s.def.line);return end
     if s.leader and s.leader~=p then event:FireClient(p,s.rig,'Já estou acompanhando alguém.');return end
     s.leader=s.leader==p and nil or p;s.cancelPath=true;task.delay(.3,function() s.cancelPath=false end)
     event:FireClient(p,s.rig,s.leader and (D.Phase=='Active' and 'ME TIRA DAQUI! Eu vou com você!' or 'Eu vou com você. Me leva para um lugar seguro.') or s.def.line) end

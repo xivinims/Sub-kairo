@@ -68,6 +68,13 @@ assert(workspace:GetAttribute('AdventureForestSize')==6144,'Forest extension mis
 assert(#game:GetService('ServerStorage').AdventureTrees:GetChildren()>0,'Authored trees missing')
 local center=workspace:GetAttribute('VillageCenter');assert(center and center.Z< -900,'Village separation missing')
 assert(not game:GetService('ServerScriptService').AtriumRuntime:FindFirstChild('DisasterRuntime'),'Old disasters enabled')
+local cell=adventure.Cell(12,12,W.Islands.forestCurrent)
+assert(cell and #cell:GetChildren()>0,'Outer forest cell empty')
+for _,tree in ipairs(cell:GetChildren()) do
+ local bounds,size=tree:GetBoundingBox();local bottom=bounds.Y-size.Y/2
+ assert(math.abs(bottom-adventure.Height(1600,1600))<.1,'Floating generated tree')
+end
+cell:Destroy()
 print('ADVENTURE VERIFIED: native grass extension, original tree templates, four village building groups, eight identities, mission and patrol sources')
 local blackHole
 if W:GetAttribute('BlackHoleAsset') then
@@ -86,4 +93,4 @@ if W:GetAttribute('BlackHoleAsset') then
  probe:ScaleTo(math.clamp(450/template:GetAttribute('ReferenceDistance'),.12,.7));probe:PivotTo(CFrame.lookAt(Vector3.new(0,350,-450),Vector3.new(0,100,0)));probe:Destroy()
  blackHole={asset='7208091524',parts=parts,beams=beams,bones=bones,clientRenderer=true}
 end
-return H:JSONEncode({disasters=5,shelters=shelterCount,residents=residentReport,cityWater=true,ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})
+return H:JSONEncode({adventure=true,forestSize=6144,villageHouses=4,residents=residentReport,cityWater=true,ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})
