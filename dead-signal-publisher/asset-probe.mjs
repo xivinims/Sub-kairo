@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('islands-')){
+if(trigger.trim().startsWith('islands-native-release')){
+ await import('./islands-native-publish.mjs');
+}else if(trigger.trim().startsWith('islands-')){
  await import('./islands-publish.mjs');
 }else if(trigger.trim().startsWith('forest-expansion-publish')){
  await import('./forest-expansion.mjs');

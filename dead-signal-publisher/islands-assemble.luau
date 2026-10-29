@@ -40,6 +40,7 @@ for _,def in ipairs(defs) do
  local offset=V.new(math.floor((desired-centerX)/4)*4,math.floor((128-meta.spawn[2])/4)*4,math.floor(-centerZ/4)*4)
  local folder=R.Instance.new('Folder');folder.Name=def.id;folder:SetAttribute('SourceAsset',def.asset);folder.Parent=islands
  local library=R.Instance.new('Folder');library.Name=def.id;library.Parent=catalog
+ local backdrops=R.Instance.new('Folder');backdrops.Name='Backdrops';backdrops.Parent=folder
  local chunks={};local parts=0
  for _,p in ipairs(src.geo:GetChildren()) do
   assert(p:IsA('BasePart'),'Unexpected source geometry')
@@ -49,7 +50,7 @@ for _,def in ipairs(defs) do
   local pos=p.CFrame.Position;local key=math.floor(pos.X/128)..'_'..math.floor(pos.Z/128)
   local bucket=chunks[key]
   if not bucket then bucket=R.Instance.new('Model');bucket.Name='Cell_'..key;bucket.Parent=library;chunks[key]=bucket end
-  p.Parent=bucket;parts+=1
+  if math.max(p.Size.X,p.Size.Z)>192 then p.Parent=backdrops else p.Parent=bucket end;parts+=1
  end
  src.region.Name=def.id;src.region.Parent=regions
  local point=V.new(unpack(meta.spawn))+offset
@@ -127,3 +128,15 @@ local check=R.deserializePlace(fs.readFile('/tmp/still-here-islands.rbxl'))
 assert(check:GetService('Workspace').Terrain.Decoration==true,'Native grass lost')
 assert(#check:GetService('Workspace').IslandDestinations:GetChildren()==3,'Arrival count incorrect')
 print('ISLAND FILE READY: '..#fs.readFile('/tmp/still-here-islands.rbxl')..' bytes')
+-- Binary input bundle avoids re-encoding DataModel services during installation.
+local bundle=R.Instance.new('Model');bundle.Name='StillHereIslandBundle'
+for key,value in pairs(W:GetAttributes()) do bundle:SetAttribute(key,value) end
+for _,name in ipairs({'Islands','IslandDestinations'}) do W[name].Parent=bundle end
+for _,name in ipairs({'IslandGeometryCatalog','IslandTerrainSnapshots'}) do dm:GetService('ServerStorage')[name].Parent=bundle end
+runtime.Name='IslandRuntime';runtime.Parent=bundle
+local clientBundle=R.Instance.new('Folder');clientBundle.Name='IslandClients';clientBundle.Parent=bundle
+for _,c in ipairs(SP:GetChildren()) do c.Parent=clientBundle end
+local lightBundle=R.Instance.new('Folder');lightBundle.Name='IslandLighting';lightBundle.Parent=bundle
+for _,c in ipairs(L:GetChildren()) do c.Parent=lightBundle end
+fs.writeFile('/tmp/island-payload.rbxm',R.serializeModel({bundle}))
+print('BINARY MODEL PAYLOAD READY: '..#fs.readFile('/tmp/island-payload.rbxm')..' bytes')
