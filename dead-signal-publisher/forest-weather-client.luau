@@ -94,9 +94,9 @@ local function lightningStrike()
  local lateral=rng:NextNumber(-45,45)
  local distance=rng:NextNumber(120,175)
  local aim=camera.CFrame.Position+camera.CFrame.LookVector*distance+camera.CFrame.RightVector*lateral
- local x=math.clamp(aim.X,-940,940);local z=math.clamp(aim.Z,-940,940)
+ local x=aim.X;local z=aim.Z
  local rayParams=RaycastParams.new();rayParams.FilterType=Enum.RaycastFilterType.Include;rayParams.FilterDescendantsInstances={Workspace.Terrain}
- local hit=Workspace:Raycast(Vector3.new(x,150,z),Vector3.new(0,-280,0),rayParams)
+ local hit=Workspace:Raycast(Vector3.new(x,camera.CFrame.Y+180,z),Vector3.new(0,-500,0),rayParams)
  if not hit then return end
  local top=hit.Position+Vector3.new(0,rng:NextNumber(115,165),0)
  local points={top}

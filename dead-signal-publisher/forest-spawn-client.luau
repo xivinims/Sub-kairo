@@ -30,3 +30,6 @@ local function watch(p)
 end
 Players.PlayerAdded:Connect(watch)
 for _,p in ipairs(Players:GetPlayers()) do watch(p) end
+
+local travelFx=Instance.new("BindableEvent");travelFx.Name="ForestTravelFx";travelFx.Parent=Players.LocalPlayer.PlayerScripts
+travelFx.Event:Connect(function() local c=Players.LocalPlayer.Character;if c then task.spawn(pulse,c) end end)
