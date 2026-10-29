@@ -43,7 +43,8 @@ local function add(part,section,offset)
  end
  local clone=part:Clone();local list=clone:GetDescendants()
  for i=#list,1,-1 do if not childVisual[list[i].ClassName] then list[i]:Destroy() end end
- clone.Anchored=true;clone.CanTouch=false;clone.CFrame+=offset or V.zero;clone:SetAttribute('MansionGrabbable',part.Size.Magnitude<5 and (part.Name:lower():find('book')~=nil or part.Name:lower():find('cup')~=nil or part.Name:lower():find('vase')~=nil))
+ clone.Anchored=true;clone.CanTouch=false;clone.CFrame+=offset or V.zero;clone:SetAttribute('MansionRoom',part:GetFullName():match('Content%.Interior%.([^%.]+)'))
+ clone:SetAttribute('MansionGrabbable',part.Size.Magnitude<5 and (part.Name:lower():find('book')~=nil or part.Name:lower():find('cup')~=nil or part.Name:lower():find('vase')~=nil))
  clone:SetAttribute('MansionSource',section=='Forest' and '13037825880' or '7902470429')
  for _,light in ipairs(clone:GetDescendants()) do if light:IsA('Light') then light.Shadows=false;light.Range=math.min(light.Range,30);light.Brightness=math.min(light.Brightness,2.5) end end
  local root=section~='Forest' and doorRoot(part)

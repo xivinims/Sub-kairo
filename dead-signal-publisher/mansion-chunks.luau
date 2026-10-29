@@ -1,5 +1,5 @@
 local Players=game:GetService('Players');local SS=game:GetService('ServerStorage')
-local M={};local active={};local started=false
+local M={};local active={};local started=false;local visited={}
 function M.Inside(pos)
  return pos.X> -140 and pos.X<140 and pos.Z> -180 and pos.Z< -27 and pos.Y> -190 and pos.Y<90
 end
@@ -21,6 +21,15 @@ function M.Start()
     local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
     if root then
      local inside=M.Inside(root.Position);p:SetAttribute('InsideMansion',inside)
+     if inside then
+      local op=OverlapParams.new();op.FilterType=Enum.RaycastFilterType.Include;op.FilterDescendantsInstances={workspace.Islands.mansion};op.RespectCanCollide=true
+      local nearest,dist=nil,math.huge
+      for _,part in ipairs(workspace:GetPartBoundsInBox(root.CFrame,Vector3.new(10,8,10),op)) do local room=part:GetAttribute('MansionRoom');local distance=(part.Position-root.Position).Magnitude;if room and distance<dist then nearest=room;dist=distance end end
+      if nearest then
+       visited[p.UserId]=visited[p.UserId] or {};local list=visited[p.UserId]
+       if not list[nearest] then list[nearest]=true;local count=0;for _ in pairs(list) do count+=1 end;p:SetAttribute('MansionRoomsVisited',count);local event=game:GetService('ReplicatedStorage'):FindFirstChild('MissionLogicEvent');if event then event:FireClient(p,{2,count,15}) end end
+      end
+     end
      for _,cell in ipairs(catalog:GetChildren()) do
       local center=cell:GetAttribute('CellCenter');local exterior=cell:GetAttribute('Section')=='Forest'
       local distance=Vector2.new(center.X-root.Position.X,center.Z-root.Position.Z).Magnitude

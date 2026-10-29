@@ -16,7 +16,7 @@ Players.PlayerAdded:Connect(added);for _,p in ipairs(Players:GetPlayers()) do ad
 task.spawn(function() while task.wait(2) do for _,p in ipairs(Players:GetPlayers()) do local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if r and r.Position.Y< -450 then p:LoadCharacterAsync() end end end end)
 workspace:SetAttribute('MansionDoorLocked',true)
 local missionEvent=RS:WaitForChild('MissionLogicEvent')
-local function objective(p,text) p:SetAttribute('MansionMission',text);missionEvent:FireClient(p,{1,text});missionEvent:FireClient(p,{2,0,15});event:FireClient(p,'objective',text) end
+local function objective(p,text) p:SetAttribute('MansionMission',text);missionEvent:FireClient(p,{1,text});missionEvent:FireClient(p,{2,p:GetAttribute('MansionRoomsVisited') or 0,15});event:FireClient(p,'objective',text) end
 local doors={}
 local mounted=setmetatable({},{__mode='k'});local frontDoor
 local function mount(part)

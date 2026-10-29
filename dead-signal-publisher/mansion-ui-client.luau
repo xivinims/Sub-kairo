@@ -3,7 +3,7 @@ if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage');local Input=game:GetService('UserInputService');local Tween=game:GetService('TweenService');local Run=game:GetService('RunService')
 local p=Players.LocalPlayer;local pg=p:WaitForChild('PlayerGui');local event=RS:WaitForChild('MansionEvent')
 for _,template in ipairs(RS:WaitForChild('MansionOriginalUI'):GetChildren()) do local old=pg:FindFirstChild(template.Name);if old then old:Destroy() end;template:Clone().Parent=pg end
-local hud=pg:WaitForChild('HUD');hud.Enabled=true;local frame=hud:WaitForChild('Frame')
+local hud=pg:WaitForChild('HUD');hud.Enabled=true;local frame=hud:WaitForChild('Frame');frame.HeadlampButton.Visible=true;frame.GrabReleaseButton.Visible=true;frame.HeadlampButton.Active=true;frame.GrabReleaseButton.Active=true
 local lightOn=false;local held=false;local peeking=false;local restoreCF;local restoreFov
 local function lamp()
  lightOn=not lightOn;local head=p.Character and p.Character:FindFirstChild('Head');if not head then return end
@@ -18,7 +18,7 @@ local function grab()
 end
 frame.GrabReleaseButton.Activated:Connect(grab)
 local function actionButton(name,text,x,callback)
- local button=Instance.new('TextButton');button.Name=name;button.AnchorPoint=Vector2.new(1,1);button.Size=UDim2.fromOffset(100,42);button.Position=UDim2.new(1,-x,1,-110);button.Text=text;button.TextSize=12;button.Font=Enum.Font.Code;button.TextColor3=Color3.fromRGB(231,231,218);button.BackgroundColor3=Color3.fromRGB(18,22,24);button.BackgroundTransparency=.3;button.Parent=hud;button.Activated:Connect(callback);return button
+ local button=Instance.new('TextButton');button.Name=name;button.AnchorPoint=Vector2.new(1,1);button.Size=UDim2.fromOffset(100,42);button.Position=UDim2.new(1,-x,1,-110);button.Text=text;button.TextSize=12;button.Font=Enum.Font.Code;button.TextColor3=Color3.fromRGB(231,231,218);button.BackgroundColor3=Color3.fromRGB(18,22,24);button.BackgroundTransparency=.3;if name=='Sprint' then button.AnchorPoint=Vector2.new(.5,1);button.Position=UDim2.new(.5,0,1,-22) else button.AnchorPoint=Vector2.new(1,0);button.Position=UDim2.new(1,-x,0,84) end;button.Parent=hud;button.Activated:Connect(callback);return button
 end
 local sprint=false;actionButton('Sprint','CORRER',20,function() sprint=not sprint;event:FireServer('sprint',sprint) end)
 local lock=actionButton('DoorLock','TRANCAR',130,function() event:FireServer('lock') end)
@@ -55,6 +55,7 @@ Run.Heartbeat:Connect(function(dt)
  local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local entrance=workspace:GetAttribute('EntrancePosition')
  local near=root and entrance and (root.Position-entrance).Magnitude<13
  lock.Visible=near==true;peekButton.Visible=near==true
+ local indicator=pg:FindFirstChild('OnItemIndicator2');if indicator then local camera=workspace.CurrentCamera;local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Islands.mansion};local hit=workspace:Raycast(camera.CFrame.Position,camera.CFrame.LookVector*9,rp);indicator.Enabled=near==true or (hit and hit.Instance:GetAttribute('MansionGrabbable')==true) or false end
  if peeking and not near then exitPeek() end
 end)
 p.CharacterAdded:Connect(function() exitPeek();held=false;sprint=false end)
