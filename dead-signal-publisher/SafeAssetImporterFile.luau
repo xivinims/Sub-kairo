@@ -30,7 +30,7 @@ function SafeAssetImporter.Parts(root,id,limit,predicate)
     local hinge=door.Hinges:FindFirstChildWhichIsA('BasePart',true)
     assert(hinge and door.middle:IsA('BasePart'),'Malformed source door')
     c:SetAttribute('IslandDoorId',doorIds[door])
-    c:SetAttribute('IslandDoorPivot',R.CFrame.new(hinge.Position.X,door.middle.Position.Y,hinge.Position.Z)*door.middle.CFrame.Rotation)
+    c:SetAttribute('IslandDoorPivot',R.CFrame.new(hinge.CFrame.Position.X,door.middle.CFrame.Position.Y,hinge.CFrame.Position.Z)*door.middle.CFrame.Rotation)
    end
    local descendants=c:GetDescendants()
    for i=#descendants,1,-1 do local d=descendants[i];if not visual[d.ClassName] then d:Destroy() end end
