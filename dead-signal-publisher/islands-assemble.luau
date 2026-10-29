@@ -138,5 +138,7 @@ local clientBundle=R.Instance.new('Folder');clientBundle.Name='IslandClients';cl
 for _,c in ipairs(SP:GetChildren()) do c.Parent=clientBundle end
 local lightBundle=R.Instance.new('Folder');lightBundle.Name='IslandLighting';lightBundle.Parent=bundle
 for _,c in ipairs(L:GetChildren()) do c.Parent=lightBundle end
+for _,d in ipairs(bundle:GetDescendants()) do assert(not d:IsA('Terrain'),'Nested Terrain in bundle') end
 fs.writeFile('/tmp/island-payload.rbxm',R.serializeModel({bundle}))
+for _,d in ipairs(bundle:GetDescendants()) do assert(not d:IsA('Terrain'),'Nested Terrain in bundle') end
 print('BINARY MODEL PAYLOAD READY: '..#fs.readFile('/tmp/island-payload.rbxm')..' bytes')

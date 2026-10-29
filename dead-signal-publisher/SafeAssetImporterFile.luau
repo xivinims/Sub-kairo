@@ -9,7 +9,7 @@ function SafeAssetImporter.Parts(root,id,limit,predicate)
  local list=root:IsA('BasePart') and {root} or root:GetDescendants()
  local n=0
  for _,p in ipairs(list) do
-  if p:IsA('BasePart') and not p:IsA('SpawnLocation') and p.Transparency<1 and (not predicate or predicate(p)) then
+  if p:IsA('BasePart') and not p:IsA('Terrain') and not p:IsA('SpawnLocation') and p.Transparency<1 and (not predicate or predicate(p)) then
    local c=p:Clone()
    local descendants=c:GetDescendants()
    for i=#descendants,1,-1 do local d=descendants[i];if not visual[d.ClassName] then d:Destroy() end end
