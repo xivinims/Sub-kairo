@@ -1,9 +1,21 @@
 local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@lune/serde')
-local dm=R.deserializePlace(fs.readFile('/tmp/asset-186677844.rbxl'));local W=dm:GetService('Workspace');local rows={}
-for _,d in ipairs(W:GetDescendants()) do
- if d:IsA('BasePart') and (d.Name:lower():find('water') or d.Name:lower():find('ocean')) then table.insert(rows,{path=d:GetFullName(),cf={d.CFrame:GetComponents()},size={d.Size.X,d.Size.Y,d.Size.Z}}) end
+for _,id in ipairs({'15864801103','14817965191','13037825880','9426919197'}) do
+ local file='/tmp/asset-'..id..'.rbxl'
+ if fs.isFile(file) then
+ local ok,dm=pcall(R.deserializePlace,fs.readFile(file))
+ if not ok then print('AUDIT FAILED '..id..' '..tostring(dm));continue end
+ local result={id=id,counts={},objects={},sources={},animations={},sounds={}}
+ for _,d in ipairs(dm:GetDescendants()) do
+  result.counts[d.ClassName]=(result.counts[d.ClassName] or 0)+1
+  if d:IsA('LuaSourceContainer') then table.insert(result.sources,{path=d:GetFullName(),source=d.Source:sub(1,22000)}) end
+  if d:IsA('Animation') then table.insert(result.animations,{path=d:GetFullName(),id=d.AnimationId}) end
+  if d:IsA('Sound') then table.insert(result.sounds,{path=d:GetFullName(),id=d.SoundId}) end
+  if d:IsA('Tool') or (d:IsA('Model') and (d.Name:lower():find('gun') or d.Name:lower():find('view') or d.Name:lower():find('rifle') or d.Name:lower():find('pistol') or d.Name:lower():find('blaster'))) then
+   local names={};for _,c in ipairs(d:GetChildren()) do table.insert(names,c.Name..':'..c.ClassName) end
+   table.insert(result.objects,{path=d:GetFullName(),class=d.ClassName,count=#d:GetDescendants(),children=names})
+  end
+ end
+ local L=dm:GetService('Lighting');result.lighting={clock=L.ClockTime,brightness=L.Brightness,exposure=L.ExposureCompensation,ambient=tostring(L.Ambient),outdoor=tostring(L.OutdoorAmbient)}
+ print('WEAPON HORROR AUDIT '..J.encode('json',result))
+ end
 end
-print('WATER AUDIT '..J.encode('json',rows))
-
-for _,d in ipairs(W:GetChildren()) do print('SOURCE ROOT '..d.Name..' '..d.ClassName..' '..#d:GetDescendants()) end
-local o=W:FindFirstChild('ocean');if o then for _,d in ipairs(o:GetDescendants()) do if d:IsA('BasePart') then print('SEA PART '..J.encode('json',{name=d.Name,cf={d.CFrame:GetComponents()},size={d.Size.X,d.Size.Y,d.Size.Z},material=tostring(d.Material)})) end end end
