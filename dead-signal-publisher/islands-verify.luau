@@ -2,12 +2,14 @@ local W=workspace;local H=game:GetService('HttpService')
 assert(W:GetAttribute('DeadSignalBuildId')=='still-here-three-islands-v1' and W:GetAttribute('IslandWorldReady')==true,'Wrong or incomplete world')
 assert(not W:FindFirstChild('OvergrownAtrium') and not W:FindFirstChild('ForestExpansion'),'Old forest remains')
 assert(#W.IslandDestinations:GetChildren()==3,'Exactly three arrivals required')
+local Chunks=require(game:GetService('ServerScriptService').AtriumRuntime.IslandChunks)
 local manifest=H:JSONDecode(W:GetAttribute('IslandWorldMeta'));local positions={};local counts={}
 for _,meta in ipairs(manifest) do
  local spawn=W.IslandDestinations[meta.id];assert(spawn.Enabled and spawn.Neutral,'Arrival disabled')
+ Chunks.Warm(meta.id,spawn.Position,128)
  table.insert(positions,spawn.Position)
  local n=0
- for _,d in ipairs(W.Islands[meta.id]:GetDescendants()) do
+ for _,d in ipairs(game:GetService('ServerStorage').IslandGeometryCatalog[meta.id]:GetDescendants()) do
   assert(not d:IsA('LuaSourceContainer') and not d:IsA('Sound'),'Unsafe imported content')
   if d:IsA('BasePart') then assert(d.Anchored,'Unanchored scenery');n+=1 end
  end

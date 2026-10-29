@@ -27,6 +27,8 @@ for _,meta in ipairs(manifest) do
 end
 -- Ground the three distinct arrivals and clear only nearby vegetation at the altar.
 local destinations=W.IslandDestinations
+local Chunks=require(game:GetService('ServerScriptService').AtriumRuntime.IslandChunks)
+for _,s in ipairs(destinations:GetChildren()) do Chunks.Warm(s.Name,s.Position,128) end
 local checks={}
 for _,meta in ipairs(manifest) do
  local spawn=destinations[meta.id];local source=W.Islands[meta.id]
@@ -42,7 +44,9 @@ for _,meta in ipairs(manifest) do
   local floor=W:Raycast(spawn.Position+Vector3.new(0,.7,0),Vector3.new(0,-12,0),p)
   assert(floor,'Altar floor missing');spawn.CFrame=CFrame.lookAt(floor.Position+Vector3.new(0,.15,0),floor.Position+Vector3.new(0,.15,-10))
   local removed=0
-  for _,d in ipairs(source:GetDescendants()) do if d:IsA('BasePart') and not d:IsDescendantOf(altar) then
+  local clearList=source:GetDescendants()
+  for _,d in ipairs(game:GetService('ServerStorage').IslandGeometryCatalog[meta.id]:GetDescendants()) do table.insert(clearList,d) end
+  for _,d in ipairs(clearList) do if d:IsA('BasePart') and not d:IsDescendantOf(altar) then
    local v=d.Position-spawn.Position
    if Vector3.new(v.X,0,v.Z).Magnitude<18 and (d:GetAttribute('IslandWind') or d:IsA('MeshPart')) then d:Destroy();removed+=1 end
   end end

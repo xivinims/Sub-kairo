@@ -6,6 +6,7 @@ for _,c in ipairs(W:GetChildren()) do if not c:IsA('Terrain') and not c:IsA('Cam
 local T=W:FindFirstChildOfClass('Terrain');T.Decoration=true;T.GrassLength=.85
 for _,c in ipairs(dm:GetService('ServerStorage'):GetChildren()) do c:Destroy() end
 local regions=R.Instance.new('Folder');regions.Name='IslandTerrainSnapshots';regions.Parent=dm:GetService('ServerStorage')
+local catalog=R.Instance.new('Folder');catalog.Name='IslandGeometryCatalog';catalog.Parent=dm:GetService('ServerStorage')
 local islands=R.Instance.new('Folder');islands.Name='Islands';islands.Parent=W
 local destinations=R.Instance.new('Folder');destinations.Name='IslandDestinations';destinations.Parent=W
 local input={}
@@ -24,6 +25,7 @@ for _,def in ipairs(defs) do
  local centerX=(meta.lo[1]+meta.hi[1])/2;local centerZ=(meta.lo[3]+meta.hi[3])/2
  local offset=V.new(math.floor((desired-centerX)/4)*4,math.floor((128-meta.spawn[2])/4)*4,math.floor(-centerZ/4)*4)
  local folder=R.Instance.new('Folder');folder.Name=def.id;folder:SetAttribute('SourceAsset',def.asset);folder.Parent=islands
+ local library=R.Instance.new('Folder');library.Name=def.id;library.Parent=catalog
  local chunks={};local parts=0
  for _,p in ipairs(src.geo:GetChildren()) do
   assert(p:IsA('BasePart'),'Unexpected source geometry')
@@ -32,7 +34,7 @@ for _,def in ipairs(defs) do
   p.CFrame=p.CFrame+offset
   local pos=p.CFrame.Position;local key=math.floor(pos.X/128)..'_'..math.floor(pos.Z/128)
   local bucket=chunks[key]
-  if not bucket then bucket=R.Instance.new('Model');bucket.Name='Cell_'..key;bucket.Parent=folder;chunks[key]=bucket end
+  if not bucket then bucket=R.Instance.new('Model');bucket.Name='Cell_'..key;bucket.Parent=library;chunks[key]=bucket end
   p.Parent=bucket;parts+=1
  end
  src.region.Name=def.id;src.region.Parent=regions
@@ -83,8 +85,10 @@ local SP=dm:GetService('StarterPlayer').StarterPlayerScripts
 local function install(parent,name,class,file)
  local old=parent:FindFirstChild(name);if old then old:Destroy() end
  local source=fs.readFile(file);luau.load(source,{debugName=file})
- local s=R.Instance.new(class);s.Name=name;s.Source=source;s.Disabled=false;s.Parent=parent;return s
+ local s=R.Instance.new(class);s.Name=name;s.Source=source;if class~='ModuleScript' then s.Disabled=false end;s.Parent=parent;return s
 end
+install(runtime,'IslandChunks','ModuleScript','islands-chunks.luau')
+install(runtime,'IslandChunkRuntime','Script','islands-chunks-server.luau')
 install(runtime,'IslandTravelServer','Script','islands-travel-server.luau')
 install(SP,'IslandTravelClient','LocalScript','islands-travel-client.luau')
 install(SP,'ForestSpawnClient','LocalScript','forest-spawn-client.luau')

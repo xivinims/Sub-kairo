@@ -2,6 +2,8 @@ local Players=game:GetService('Players')
 local RS=game:GetService('ReplicatedStorage')
 local destinations=workspace:WaitForChild('IslandDestinations')
 local remote=RS:WaitForChild('IslandTravel')
+local Chunks=require(script.Parent.IslandChunks)
+Chunks.Start()
 local valid={city=true,forest1=true,forestCurrent=true}
 local busy,last={},{}
 local function arrival(id)
@@ -16,6 +18,7 @@ local function travel(p,id,reply)
  if not spawn or not root or not hum or hum.Health<=0 then if reply then remote:FireClient(p,false,'Espera seu personagem aparecer.');end;return end
  busy[p]=true;last[p]=os.clock();p.RespawnLocation=spawn
  local ok,err=pcall(function()
+  Chunks.Warm(id,spawn.Position,128)
   p:RequestStreamAroundAsync(spawn.Position,4)
   if p.Character~=char or not char.Parent or hum.Health<=0 then error('Personagem mudou durante a viagem') end
   hum.Sit=false
