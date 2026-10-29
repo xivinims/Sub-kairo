@@ -32,7 +32,15 @@ local function launch(members)
  return true,'Entrando na partida…'
 end
 remote.OnServerInvoke=function(p,action,value)
- if mode~='Menu' then return {ok=false,message='Disponível no menu.'} end
+ if mode~='Menu' then
+  if action~='return' then return {ok=false,message='Disponível no menu.'} end
+  if workspace:GetAttribute('DisasterPhase')=='Active' then return {ok=false,message='Espere o desastre acabar para voltar ao menu.'} end
+  if os.clock()-(last[p] or 0)<2 then return {ok=false,message='Aguarde.'} end;last[p]=os.clock()
+  Profile.Reward(p,p:GetAttribute('NPCRescues') or 0)
+  local ok,err=pcall(function() TS:TeleportAsync(game.PlaceId,{p}) end)
+  if not ok then warn('[ReturnMenu] '..tostring(err)) end
+  return {ok=ok,message=ok and 'Voltando ao menu…' or 'Falhou. Tenta novamente.'}
+ end
  if typeof(action)~='string' or typeof(value)=='table' then return {ok=false,message='Pedido inválido.'} end
  if os.clock()-(last[p] or 0)<.35 then return {ok=false,message='Aguarde um instante.'} end;last[p]=os.clock()
  if action=='state' then if not Profile.Cache[p] then Profile.Load(p) end;return {ok=true,data=snapshot(p)} end

@@ -1,6 +1,17 @@
 local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
-if W:GetAttribute('GameMode')~='Menu' then return end
+if W:GetAttribute('GameMode')~='Menu' then
+ local p=game:GetService('Players').LocalPlayer;local rs=game:GetService('ReplicatedStorage')
+ local gui=Instance.new('ScreenGui');gui.Name='ReturnToMenu';gui.ResetOnSpawn=false;gui.Parent=p:WaitForChild('PlayerGui')
+ local b=Instance.new('TextButton');b.Position=UDim2.fromOffset(16,65);b.Size=UDim2.fromOffset(64,44);b.BackgroundTransparency=1;b.Text='MENU';b.TextSize=13;b.Font=Enum.Font.Code;b.TextColor3=Color3.new(1,1,1);b.Parent=gui
+ local text=Instance.new('TextLabel');text.Position=UDim2.fromOffset(16,110);text.Size=UDim2.fromOffset(230,48);text.TextWrapped=true;text.TextSize=12;text.Font=Enum.Font.Code;text.TextColor3=Color3.new(1,1,1);text.BackgroundTransparency=1;text.Text='';text.Parent=gui
+ local busy=false
+ b.Activated:Connect(function() if busy then return end;busy=true
+  local ok,result=pcall(function() return rs:WaitForChild('SessionMenu'):InvokeServer('return') end)
+  text.Text=ok and result.message or 'Falha na conexão.';busy=false
+ end)
+ return
+end
 local p=game:GetService('Players').LocalPlayer;local RS=game:GetService('ReplicatedStorage');local RF=game:GetService('ReplicatedFirst')
 local remote=RS:WaitForChild('SessionMenu');local gui=Instance.new('ScreenGui');gui.Name='StillHereMenu';gui.IgnoreGuiInset=true;gui.ResetOnSpawn=false;gui.DisplayOrder=1000;gui.Parent=p:WaitForChild('PlayerGui')
 local function make(class,props,parent) local o=Instance.new(class);for k,v in pairs(props) do o[k]=v end;o.Parent=parent;return o end
