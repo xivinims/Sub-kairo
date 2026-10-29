@@ -36,7 +36,7 @@ async function external(id){
  await fs.writeFile('/tmp/asset-'+id+'.rbxl',Buffer.from(await r.arrayBuffer()));
 }
 
-for(const id of ['15864801103','14817965191','13037825880','9426919197']){try{await external(id)}catch(error){console.log('ASSET UNAVAILABLE '+id+' '+String(error))}}
+for(const id of ['7902470429','13037825880']){try{await external(id)}catch(error){console.log('ASSET UNAVAILABLE '+id+' '+String(error))}}
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
 const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
