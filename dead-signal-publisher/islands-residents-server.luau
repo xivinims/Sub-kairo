@@ -13,23 +13,9 @@ for _,def in ipairs(Residents.Definitions) do
  end
  task.wait(.1)
 end
-local function ground(state)
- Chunks.Warm(state.def.island,state.origin,64)
- local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain,workspace.Islands[state.def.island]};rp.IgnoreWater=false
- local spawn=workspace.IslandDestinations[state.def.island]
- for ring=0,4 do for i=1,8 do
-  local pos=state.origin+Vector3.new(math.cos(i*math.pi/4)*ring*5,0,math.sin(i*math.pi/4)*ring*5)
-  local hit=workspace:Raycast(pos+Vector3.new(0,14,0),Vector3.new(0,-32,0),rp)
-  if hit and hit.Material~=Enum.Material.Water and hit.Normal.Y>.85 and math.abs(hit.Position.Y-spawn.Position.Y)<10 then
-   local probe=Instance.new('Part');probe.Size=Vector3.new(3,5.5,3);probe.CFrame=CFrame.new(hit.Position+Vector3.new(0,3,0));probe.Anchored=true;probe.Transparency=1;probe.CanCollide=false;probe.Parent=workspace
-   local op=OverlapParams.new();op.FilterType=Enum.RaycastFilterType.Include;op.FilterDescendantsInstances={workspace.Islands[state.def.island]};op.RespectCanCollide=true
-   local clear=#workspace:GetPartsInPart(probe,op)==0;probe:Destroy()
-   if clear then return hit.Position end
-  end
- end end
-end
+
 for _,s in ipairs(states) do
- local pos=ground(s)
+ local pos=Residents.FindGround(s.def)
  if pos then
   s.origin=pos;local root=s.rig.HumanoidRootPart;local hum=s.rig.Humanoid
   s.rig:PivotTo(CFrame.new(pos+Vector3.new(0,hum.HipHeight+root.Size.Y/2,0)));s.placed=true

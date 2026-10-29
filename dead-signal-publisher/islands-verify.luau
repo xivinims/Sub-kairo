@@ -31,7 +31,8 @@ local residentModule=require(game:GetService('ServerScriptService').AtriumRuntim
 local residentReport={}
 for _,def in ipairs(residentModule.Definitions) do
  local rig=residentModule.Build(def)
- table.insert(residentReport,{id=def.id,parts=#rig:GetDescendants(),hair=def.hair,shirt=def.shirt,pants=def.pants});rig:Destroy()
+ local position=residentModule.FindGround(def);assert(position,'Unsafe resident placement: '..def.id)
+ table.insert(residentReport,{id=def.id,position=tostring(position),parts=#rig:GetDescendants(),hair=def.hair,shirt=def.shirt,pants=def.pants});rig:Destroy()
 end
 assert(#residentReport==6,'Residents incomplete');print('RESIDENT APPEARANCES VERIFIED '..H:JSONEncode(residentReport))
 for _,meta in ipairs(manifest) do if meta.id=='city' then
@@ -58,4 +59,4 @@ if W:GetAttribute('BlackHoleAsset') then
  probe:ScaleTo(math.clamp(450/template:GetAttribute('ReferenceDistance'),.12,.7));probe:PivotTo(CFrame.lookAt(Vector3.new(0,350,-450),Vector3.new(0,100,0)));probe:Destroy()
  blackHole={asset='7208091524',parts=parts,beams=beams,bones=bones,clientRenderer=true}
 end
-return H:JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})
+return H:JSONEncode({residents=residentReport,cityWater=true,ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),maps=counts,spawns=3,lightAsset=W:GetAttribute('ForestLightAsset'),streaming=W:GetAttribute('IslandStreamingTarget') or 192,oldForestRemoved=true,blackHole=blackHole})

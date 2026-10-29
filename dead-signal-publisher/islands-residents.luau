@@ -30,4 +30,21 @@ function M.Build(def)
  local desc=hum:GetAppliedDescription();assert(desc.Torso>0 and desc.LeftArm>0 and desc.RightLeg>0,'Missing authored body');desc:Destroy()
  return rig
 end
+function M.FindGround(def)
+ local state={def=def,origin=workspace.IslandDestinations[def.island].Position+def.offset}
+ local Chunks=require(script.Parent.IslandChunks)
+ Chunks.Warm(state.def.island,state.origin,64)
+ local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain,workspace.Islands[state.def.island]};rp.IgnoreWater=false
+ local spawn=workspace.IslandDestinations[state.def.island]
+ for ring=0,4 do for i=1,8 do
+  local pos=state.origin+Vector3.new(math.cos(i*math.pi/4)*ring*5,0,math.sin(i*math.pi/4)*ring*5)
+  local hit=workspace:Raycast(pos+Vector3.new(0,14,0),Vector3.new(0,-32,0),rp)
+  if hit and hit.Material~=Enum.Material.Water and hit.Normal.Y>.85 and math.abs(hit.Position.Y-spawn.Position.Y)<10 then
+   local probe=Instance.new('Part');probe.Size=Vector3.new(3,5.5,3);probe.CFrame=CFrame.new(hit.Position+Vector3.new(0,3,0));probe.Anchored=true;probe.Transparency=1;probe.CanCollide=false;probe.Parent=workspace
+   local op=OverlapParams.new();op.FilterType=Enum.RaycastFilterType.Include;op.FilterDescendantsInstances={workspace.Islands[state.def.island]};op.RespectCanCollide=true
+   local clear=#workspace:GetPartsInPart(probe,op)==0;probe:Destroy()
+   if clear then return hit.Position end
+  end
+ end end
+end
 return M
