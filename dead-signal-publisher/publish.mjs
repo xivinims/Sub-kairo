@@ -146,6 +146,7 @@ async function main() {
   }
 
   const nativeGrass = await import('./native-grass.mjs');
+  await import('./forest-expansion.mjs');
 
   let restart = {};
   try {

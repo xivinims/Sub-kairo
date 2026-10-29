@@ -3,8 +3,9 @@ local Tween=game:GetService('TweenService')
 local Debris=game:GetService('Debris')
 local function pulse(char)
  local hrp=char:WaitForChild('HumanoidRootPart',10);if not hrp then return end
+ task.wait(.2)
  local cam=workspace.CurrentCamera
- if cam and (cam.CFrame.Position-hrp.Position).Magnitude>120 then return end
+ if char~=Players.LocalPlayer.Character and cam and (cam.CFrame.Position-hrp.Position).Magnitude>120 then return end
  local glow=Instance.new('Highlight');glow.Name='ArrivalGlow';glow.Adornee=char
  glow.FillColor=Color3.fromRGB(224,237,173);glow.OutlineColor=Color3.fromRGB(255,240,182)
  glow.FillTransparency=.55;glow.OutlineTransparency=.15;glow.DepthMode=Enum.HighlightDepthMode.Occluded;glow.Parent=char

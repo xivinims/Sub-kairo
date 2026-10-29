@@ -35,6 +35,7 @@ async function external(id){
  const r=await fetch(url);if(!r.ok)throw Error('Source download '+r.status);
  await fs.writeFile('/tmp/asset-'+id+'.rbxl',Buffer.from(await r.arrayBuffer()));
 }
+const patch=process.argv[1].endsWith('asset-probe.mjs') && (await fs.readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8')).includes('patch');
 await download('/tmp/still-here-source.rbxl');
 for(const id of ['76722373571113','186677844','5326950832'])await external(id);
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
@@ -42,10 +43,16 @@ const zip=Buffer.from(await binary.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/forest-lune.zip',zip);execFileSync('unzip',['-o','/tmp/forest-lune.zip','-d','/tmp/forest-lune']);await fs.chmod('/tmp/forest-lune/lune',0o755);
 const cwd=new URL('.',import.meta.url);
+if(patch){
+ const source=await fs.readFile(new URL('./forest-spawn-client.luau',import.meta.url),'utf8');
+ const script="assert(workspace:GetAttribute('ForestExpansionReady')==true,'Expansion missing');local s=game:GetService('StarterPlayer').StarterPlayerScripts.ForestSpawnClient;s.Source="+JSON.stringify(source)+";game:GetService('AssetService'):SavePlaceAsync({PlaceId=game.PlaceId,SaveWithoutPublish=false});return game:GetService('HttpService'):JSONEncode({patched=true})";
+ console.log(JSON.stringify(await execute(script)));await pause(5000);
+}else{
 execFileSync('/tmp/forest-lune/lune',['run','forest-expansion-file.luau'],{cwd,stdio:'inherit'});
 const uploaded=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-expansion.rbxl')});
 console.log(JSON.stringify({uploaded}));await pause(5000);
 console.log(JSON.stringify({finalized:await execute(await fs.readFile(new URL('./forest-expansion-finalize.luau',import.meta.url),'utf8'))}));await pause(5000);
+}
 const verified=await execute(await fs.readFile(new URL('./forest-expansion-verify.luau',import.meta.url),'utf8'));console.log(JSON.stringify({verified}));
 await download('/tmp/still-here-verified.rbxl',verified.version);
 execFileSync('/tmp/forest-lune/lune',['run','native-grass-file-verify.luau'],{cwd,stdio:'inherit'});

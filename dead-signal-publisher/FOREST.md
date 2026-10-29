@@ -21,3 +21,17 @@ Build still-here-light-weather-v8 lowers StreamingTargetRadius from 1024 to 192,
 Wind comes from selected, audited modules of user asset 11946229834 (WindShake, WindLines and local dependencies), integrated without its demo GUI. Animation limits are 32 nearby objects on touch / 64 on desktop, within 96 studs, with 20 Hz movement. GlobalWind animates native terrain grass and clouds.
 
 Rain is camera-local at 30 Hz with 90 streaks on touch / 180 on desktop, plus a short distant lightning bolt and thunder. The storm cycle starts roughly 22–30 seconds after a server starts, then alternates with clear periods. Storm colors remain pale grey; clear periods restore the brighter golden palette. Native Bloom, SunRays and ColorCorrection provide the requested graphics effects without an external shader injector.
+
+## Altar and distant landmark expansion
+
+`still-here-altar-botanical-v1` extends the existing forest without replacing its terrain, lighting, wind, or weather. The published version 176 was verified in the engine and downloaded back for serialized native grass/script verification.
+
+- Altar Spawn 76722373571113: source has 37 meshes and no scripts. Removed all 28 text meshes, stock particle/decal decorations, and imported spawn behavior; retained nine architectural meshes. Only one neutral spawn remains, with a raycast-confirmed mesh floor and six studs of overhead clearance.
+- Own client arrival animation: temporary occluded character highlight and a 32-segment expanding ring; no remote and no persistent effect. Own server creates distance-limited display name / username tags after each character spawn.
+- Port Gloom 186677844 is a place, not an insertable model. Offline audit found 57,000+ parts and 230 scripts/local scripts. Only the complete `ShipWreck` selection (334 static parts, 380 total visual instances) is copied. Located 1,657 studs from arrival within the existing terrain; overlaps removed. The full port, NPCs, sounds and scripts are excluded.
+- Roblox Realistic Forest Demo 5326950832: selected individual fern / flowering models only, placed as 154 small botanical groups and grounded individually with terrain raycasts. No grass meshes, demo terrain, scripts, interfaces, animals or weather are imported.
+- Realistic Forest 88883160098456 was inspected but not imported: contains 564 workspace scripts, 37 modules, night club, shops and other unrelated content.
+- `SafeAssetImporterFile.luau` is the offline companion to `base/server/SafeAssetImporter.luau`: explicit approved IDs and visual child whitelist, strips all runtime content before geometry reaches the destination DataModel. Lune deserializes source places without executing their code.
+- Expansion sources are retained in `forest-expansion-*` and integrated into `publish.mjs` after native terrain repair. `asset-probe.trigger` can run expansion publish or a trusted client source patch. Verification checks the current Roblox PlaceVersion, native grass, exact client/server sources and the distant landmark, then restarts old servers.
+
+Visual client appearance and phone FPS still require an actual Roblox client session; the engine/file checks do not substitute for a screenshot or FPS measurement.
