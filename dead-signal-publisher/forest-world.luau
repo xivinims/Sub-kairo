@@ -187,6 +187,7 @@ for gx=-1000,1000,28 do
    collider.Transparency=1;collider.CastShadow=false
    model:SetAttribute("ForestSpecies",variant.species);model:SetAttribute("AuditedAssetGeometry",true)
    treeCount+=1
+   if treeCount%100==0 then task.wait() end
   end
  end
 end
@@ -205,6 +206,9 @@ for gx=-1000,1000,6 do
    local roll=rng:NextNumber()
    if roll<.93 then
     local model=placeModel(grassTemplate,flora,"WildGrass_"..(grassCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.16,.28),false)
+    for _,blade in ipairs(model:GetDescendants()) do
+     if blade:IsA("BasePart") then blade.Size=Vector3.new(blade.Size.X*3,blade.Size.Y,blade.Size.Z*3) end
+    end
     model:SetAttribute("FoliageType","Grass");grassCount+=1
    elseif roll<0 then
     local model=placeModel(bushTemplate,flora,"HeatherBush_"..(bushCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.34,.62),false)
@@ -222,6 +226,7 @@ for gx=-1000,1000,6 do
     model:SetAttribute("FoliageType","FlowerGrove");flowerCount+=1;grassCount+=1
    end
   end
+  if grassCount%100==0 then task.wait() end
  end
 end
 

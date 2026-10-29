@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 
 const UNIVERSE_ID = '9421311218';
 const PLACE_ID = '118064584465155';
-const BUILD_ID = 'dead-signal-meadow-only-v5';
+const BUILD_ID = 'dead-signal-meadow-only-v6';
 const CLOUD = 'https://apis.roblox.com/cloud/v2/';
 const TARGET = 'universes/' + UNIVERSE_ID + '/places/' + PLACE_ID + '/';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
