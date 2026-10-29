@@ -73,6 +73,11 @@ assert(cell and #cell:GetChildren()>0,'Outer forest cell empty')
 for _,tree in ipairs(cell:GetChildren()) do
  local bounds,size=tree:GetBoundingBox();local bottom=bounds.Y-size.Y/2
  assert(math.abs(bottom-adventure.Height(1600,1600))<.1,'Floating generated tree')
+ local collider
+ for _,part in ipairs(tree:GetDescendants()) do if part:IsA('BasePart') and part.CanCollide and part.CanQuery then collider=part;break end end
+ assert(collider,'Tree cannot provide cover')
+ local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={tree};rp.RespectCanCollide=true
+ assert(W:Raycast(collider.Position-collider.CFrame.RightVector*(collider.Size.X+3),collider.CFrame.RightVector*(collider.Size.X*2+6),rp),'Tree does not block sight')
 end
 cell:Destroy()
 print('ADVENTURE VERIFIED: native grass extension, original tree templates, four village building groups, eight identities, mission and patrol sources')

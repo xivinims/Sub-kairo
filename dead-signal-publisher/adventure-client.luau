@@ -8,9 +8,12 @@ local notice=label:Clone();notice.Position=UDim2.new(.14,0,.72,0);notice.TextCol
 local sneak=Instance.new('TextButton');sneak.AnchorPoint=Vector2.new(1,1);sneak.Position=UDim2.new(1,-24,1,-160);sneak.Size=UDim2.fromOffset(100,48);sneak.Text='FURTIVO';sneak.Font=Enum.Font.Code;sneak.TextSize=14;sneak.TextColor3=Color3.new(1,1,1);sneak.BackgroundColor3=Color3.fromRGB(26,38,41);sneak.BackgroundTransparency=.25;sneak.Parent=gui
 local enabled=false;local function toggle() enabled=not enabled;sneak.Text=enabled and 'FURTIVO ✓' or 'FURTIVO';event:FireServer('sneak',enabled) end
 sneak.Activated:Connect(toggle);Input.InputBegan:Connect(function(i,processed) if not processed and i.KeyCode==Enum.KeyCode.LeftControl then toggle() end end)
+local direction=label:Clone();direction.Position=UDim2.new(.14,0,0,80);direction.TextSize=12;direction.Text='';direction.Parent=gui
+local objectiveTarget
 local ticket=0
-event.OnClientEvent:Connect(function(kind,index,text)
+event.OnClientEvent:Connect(function(kind,index,text,target)
  if kind=='mission' then
+  objectiveTarget=index<=6 and target or nil
   ticket+=1;local id=ticket;label.TextTransparency=1;label.Text='Nova missão: '..text;Tween:Create(label,TweenInfo.new(.45),{TextTransparency=0}):Play()
   task.delay(5,function() if id==ticket then label.Text='Missão: '..text end end)
  elseif kind=='detected' then notice.Text=index;task.delay(5,function() notice.Text='' end) end
@@ -18,6 +21,8 @@ end)
 event:FireServer('state')
 local poses=setmetatable({},{__mode='k'})
 Run.RenderStepped:Connect(function(dt)
+ local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local camera=workspace.CurrentCamera
+ if objectiveTarget and root and camera then local delta=objectiveTarget-root.Position;local localDelta=camera.CFrame:VectorToObjectSpace(delta);direction.Text=math.floor(Vector3.new(delta.X,0,delta.Z).Magnitude)..' studs · '..(math.abs(localDelta.X)>math.abs(localDelta.Z) and (localDelta.X>0 and 'à direita' or 'à esquerda') or (localDelta.Z<0 and 'à frente' or 'atrás')) else direction.Text='' end
  local actors=workspace:FindFirstChild('AdventureThreats');if not actors then return end
  for _,model in ipairs(actors:GetChildren()) do if model.PrimaryPart then
   local target=model:GetAttribute('MotionTarget')

@@ -6,7 +6,8 @@ while workspace:GetAttribute('IslandWorldReady')~=true do task.wait(.2) end
 local center=workspace:GetAttribute('VillageCenter');local event=RS:WaitForChild('AdventureEvent');local quests={};local sneaking={};local cooldown={}
 local objectives={'Fale com Helena na vila.','Busque os remédios na estação da floresta.','Entregue os remédios a Helena.','Encontre Lia perto das pedras antigas.','Leve Lia de volta à vila.','Fale com Irene sobre a luz no céu.'}
 local function update(p,index)
- quests[p]=index;event:FireClient(p,'mission',index,objectives[index] or 'Você ajudou a vila. Explore com cuidado.')
+ quests[p]=index;local target=(index==2 and center+Vector3.new(700,0,950)) or (index==4 and center+Vector3.new(760,0,680)) or center
+ event:FireClient(p,'mission',index,objectives[index] or 'Você ajudou a vila. Explore com cuidado.',target)
  p:SetAttribute('AdventureMission',index)
 end
 local function setup(p)
@@ -39,7 +40,7 @@ local function part(parent,name,size,color,cf)
  local p=Instance.new('Part');p.Name=name;p.Size=size;p.Color=color;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.Material=Enum.Material.Metal;p.CFrame=cf;p.Parent=parent;return p
 end
 local ships={};for i=1,3 do
- local ship=Instance.new('Model');ship.Name='Observer_'..i;ship.Parent=actors
+ local ship=Instance.new('Model');ship.Name='Observer_'..i;ship.ModelStreamingMode=Enum.ModelStreamingMode.Persistent;ship.Parent=actors
  local hull=part(ship,'Hull',Vector3.new(32,5,32),Color3.fromRGB(52,64,75),CFrame.new());hull.Shape=Enum.PartType.Ball
  local dome=part(ship,'Dome',Vector3.new(13,7,13),Color3.fromRGB(143,180,194),CFrame.new(0,4,0));dome.Shape=Enum.PartType.Ball;dome.Material=Enum.Material.Glass;dome.Transparency=.25
  local a=Instance.new('Attachment');a.Position=Vector3.new(0,-2,0);a.Parent=hull
@@ -94,7 +95,8 @@ while task.wait(.25) do
    local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local hum=p.Character and p.Character:FindFirstChildOfClass('Humanoid')
    if root and hum and hum.Health>0 and p:GetAttribute('IslandDestination')=='forestCurrent' and (root.Position-center).Magnitude>210 then
     local distance=(root.Position-enemy.pos).Magnitude;local speed=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
-    if distance<110 and (not enemy.tall or speed>1.2 or distance<14) and visible(enemy.pos+Vector3.new(0,3,0),root) then target=root;p:SetAttribute('ThreatDetectedUntil',workspace:GetServerTimeNow()+12);if os.clock()-enemy.lastSeen>9 then enemy.alertUntil=os.clock()+.8;event:FireClient(p,'detected','Ele percebeu seu movimento…') end;enemy.lastSeen=os.clock();enemy.goal=root.Position;break end
+    local facing=(root.Position-enemy.pos).Magnitude>0 and enemy.model:GetPivot().LookVector:Dot((root.Position-enemy.pos).Unit)>.1
+    if facing and distance<110 and (not enemy.tall or speed>1.2 or distance<14) and visible(enemy.pos+Vector3.new(0,3,0),root) then target=root;p:SetAttribute('ThreatDetectedUntil',workspace:GetServerTimeNow()+12);if os.clock()-enemy.lastSeen>9 then enemy.alertUntil=os.clock()+.8;event:FireClient(p,'detected','Ele percebeu seu movimento…') end;enemy.lastSeen=os.clock();enemy.goal=root.Position;break end
    end
   end
   if not target and os.clock()-enemy.lastSeen>9 then enemy.goal=center+Vector3.new(math.sin(clock*.025)*500,0,600+math.cos(clock*.025)*450) end

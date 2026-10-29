@@ -16,6 +16,13 @@ return function(dm)
   local row=candidates[i];local tree=Safe.Parts(row.model,'5326950832',180);tree.Name='Tree_'..i
   local base=R.Vector3.new((row.lo.X+row.hi.X)/2,row.lo.Y,(row.lo.Z+row.hi.Z)/2)
   for _,p in ipairs(tree:GetChildren()) do p.CFrame=p.CFrame-base end
+  local cover=false
+  for _,p in ipairs(tree:GetChildren()) do
+   if p:IsA('BasePart') and not p:GetAttribute('IslandWind') and p.Size.Y>p.Size.X*1.8 then p.CanCollide=true;p.CanQuery=true;cover=true end
+  end
+  if not cover then
+   local trunk=R.Instance.new('Part');trunk.Name='TrunkCover';trunk.Size=R.Vector3.new(1.8,(row.hi.Y-row.lo.Y)*.55,1.8);trunk.CFrame=R.CFrame.new(0,trunk.Size.Y/2,0);trunk.Transparency=1;trunk.Anchored=true;trunk.CanCollide=true;trunk.CanQuery=true;trunk.CanTouch=false;trunk.Parent=tree
+  end
   tree.WorldPivot=R.CFrame.new();tree:SetAttribute('GroundedTemplate',true);tree.Parent=trees
  end
  assert(#trees:GetChildren()>0,'No authored tree templates found')

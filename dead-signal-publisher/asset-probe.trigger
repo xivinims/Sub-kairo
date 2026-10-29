@@ -1,1 +1,1 @@
-islands-native-release-adventure-polish-v19
+islands-native-release-adventure-cover-v20
