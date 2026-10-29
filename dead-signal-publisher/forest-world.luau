@@ -21,18 +21,8 @@ local function sideX(side,z)
  local t=math.clamp((620-z)/1390,0,1)
  return mainX(z)+side*(245*math.sin(math.pi*t)+20*math.sin(3*math.pi*t))
 end
-local function trailDistance(x,z)
- local best=math.abs(x-mainX(z))
- for _,side in ipairs({-1,1}) do
-  local sx=sideX(side,z)
-  if sx then best=math.min(best,math.abs(x-sx)) end
- end
- return best
-end
-local function creekX(z)
- if z< -210 or z>70 then return nil end
- return sideX(1,z)+42+16*math.sin((z+210)/78)
-end
+local function trailDistance(x,z) return 100 end
+local function creekX(z) return nil end
 local function rawHeight(x,z)
  local edge=math.max(math.abs(x),math.abs(z))
  local rim=math.clamp((edge-760)/265,0,1)
@@ -40,13 +30,7 @@ local function rawHeight(x,z)
  hill+=rim*rim*26
  return hill
 end
-local function groundHeight(x,z)
- local d=trailDistance(x,z)
- local inset=math.max(0,1-d/15)*.9
- local cx=creekX(z)
- local channel=cx and math.max(0,1-math.abs(x-cx)/10)*5.2 or 0
- return rawHeight(x,z)-inset-channel
-end
+local function groundHeight(x,z) return rawHeight(x,z) end
 
 -- One continuous hilly terrain field with three winding paths and soft wooded ridges.
 local ny=24
@@ -157,7 +141,7 @@ local function placeModel(template,parent,name,x,z,yaw,scale,solidTrunk)
  local y=ground(x,z)-bottom
  model:PivotTo(CFrame.new(x,y,z)*CFrame.Angles(0,yaw,0)*rotation)
  local finalBox,finalSize=model:GetBoundingBox()
- local correction=ground(x,z)-(finalBox.Position.Y-verticalHalf(finalBox,finalSize))
+ local correction=ground(x,z)-(finalBox.Position.Y-verticalHalf(finalBox,finalSize))-.6
  if math.abs(correction)>.001 then model:PivotTo(model:GetPivot()+Vector3.new(0,correction,0)) end
  for _,p in ipairs(model:GetDescendants()) do
   if p:IsA("BasePart") then
@@ -166,7 +150,7 @@ local function placeModel(template,parent,name,x,z,yaw,scale,solidTrunk)
     p.CanCollide=true;p.CanQuery=true
     if p:IsA("MeshPart") then p.CollisionFidelity=Enum.CollisionFidelity.Box end
    end
-   if p:IsA("MeshPart") then p.RenderFidelity=Enum.RenderFidelity.Performance end
+   if p:IsA("MeshPart") then p.RenderFidelity=Enum.RenderFidelity.Precise end
   end
  end
  return model
@@ -209,27 +193,27 @@ end
 
 -- Continuous pockets of grasses, ferns, flowers and shrubs along routes and meadow edges.
 local grassCount,flowerCount,fernCount,bushCount=0,0,0,0
-for gx=-1000,1000,13 do
- for gz=-1000,1000,13 do
+for gx=-1000,1000,6 do
+ for gz=-1000,1000,6 do
   local x=gx+rng:NextNumber(-5,5);local z=gz+rng:NextNumber(-5,5)
   local d=trailDistance(x,z)
   local meadow=z>640 and z<990 and math.abs(x-mainX(z))<390
   local meadowEdge=z>470 and z<990 and math.abs(x-mainX(z))<510
-  local chance=(d>8 and d<165) and .62 or 0
+  local chance=.96
   if meadow then chance=math.max(chance,.68) elseif meadowEdge and d<235 then chance=math.max(chance,.28) end
   if rng:NextNumber()<chance then
    local roll=rng:NextNumber()
-   if roll<.43 then
-    local model=placeModel(grassTemplate,flora,"WildGrass_"..(grassCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.22,.43),false)
+   if roll<.93 then
+    local model=placeModel(grassTemplate,flora,"WildGrass_"..(grassCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.16,.28),false)
     model:SetAttribute("FoliageType","Grass");grassCount+=1
-   elseif roll<.60 and bushCount<390 then
+   elseif roll<0 then
     local model=placeModel(bushTemplate,flora,"HeatherBush_"..(bushCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.34,.62),false)
     model:SetAttribute("FoliageType","Shrub");bushCount+=1;grassCount+=1
-   elseif roll<.75 and fernCount<420 then
+   elseif roll<0 then
     local model=placeModel(fernTemplate,flora,"Fern_"..(fernCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.42,.82),false)
     model:SetAttribute("FoliageType","Fern");fernCount+=1;grassCount+=1
-   elseif roll<.91 and flowerCount<980 then
-    local template=roll<.85 and wildflowerTemplate or yellowFlowerTemplate
+   elseif roll<1 then
+    local template=wildflowerTemplate
     local model=placeModel(template,flora,"WoodlandFlower_"..(flowerCount+1),x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.2,.5),false)
     model:SetAttribute("FoliageType","Wildflower");flowerCount+=1;grassCount+=1
    else
@@ -238,59 +222,6 @@ for gx=-1000,1000,13 do
     model:SetAttribute("FoliageType","FlowerGrove");flowerCount+=1;grassCount+=1
    end
   end
- end
-end
-
--- Rock clusters settle into slopes; split trunks and boulder shelves define landmarks.
-local rockCount=0
- for i=1,88 do
- local x=rng:NextNumber(-900,900);local z=rng:NextNumber(-920,920)
- if trailDistance(x,z)>18 then
-  local model=placeModel(stoneTemplate,rocks,"MossyStoneCluster_"..i,x,z,rng:NextNumber(0,math.pi*2),rng:NextNumber(.25,.48),false)
-  for _,p in ipairs(model:GetDescendants()) do
-   if p:IsA("BasePart") then p.CanCollide=true;p.CanQuery=true;if p:IsA("MeshPart") then p.CollisionFidelity=Enum.CollisionFidelity.Hull end end
-  end
-  rockCount+=1
- end
-end
-local logCount=0
-for i=1,68 do
- local x=rng:NextNumber(-920,920);local z=rng:NextNumber(-940,940)
- if trailDistance(x,z)>36 then
-  local y=ground(x,z);local length=rng:NextNumber(15,34);local angle=rng:NextNumber(0,math.pi*2)
-  local axis=Vector3.new(math.cos(angle),0,math.sin(angle));local center=Vector3.new(x,y+1.05,z)
-  local frame=CFrame.lookAt(center,center+axis)*CFrame.Angles(0,math.pi/2,0)
-  local log=part(rocks,"FallenPineTrunk_"..i,Vector3.new(length,2.1,2.1),frame,Color3.fromRGB(91,69,48),Enum.Material.Wood,true)
-  log.Shape=Enum.PartType.Cylinder;logCount+=1
-  for side=-1,1,2 do
-   local cap=part(rocks,"PaleBrokenHeartwood",Vector3.new(.12,1.8,1.8),frame*CFrame.new(side*(length/2-.06),0,0),Color3.fromRGB(154,133,100),Enum.Material.Wood,false)
-   cap.Shape=Enum.PartType.Cylinder
-  end
- end
-end
-
--- Stumps and branch fall keep the woodland floor varied between the large landmarks.
-local stumpCount=0
-for i=1,92 do
- local x=rng:NextNumber(-950,950);local z=rng:NextNumber(-950,950)
- if trailDistance(x,z)>20 then
-  local y=ground(x,z);local height=rng:NextNumber(1.5,4.4);local diameter=rng:NextNumber(2.1,4.8)
-  local upright=CFrame.new(x,y+height*.5,z)*CFrame.Angles(0,0,math.pi/2)
-  local stump=part(rocks,"WeatheredPineStump_"..i,Vector3.new(height,diameter,diameter),upright,Color3.fromRGB(91,72,52),Enum.Material.Wood,true)
-  stump.Shape=Enum.PartType.Cylinder
-  local cut=part(rocks,"FreshHeartwoodCut",Vector3.new(.12,diameter*.84,diameter*.84),CFrame.new(x,y+height-.025,z)*CFrame.Angles(0,0,math.pi/2),Color3.fromRGB(159,137,104),Enum.Material.Wood,false)
-  cut.Shape=Enum.PartType.Cylinder;stumpCount+=1
- end
-end
-local branchCount=0
-for i=1,138 do
- local x=rng:NextNumber(-940,940);local z=rng:NextNumber(-940,940)
- if trailDistance(x,z)>16 then
-  local y=ground(x,z)+.38;local length=rng:NextNumber(5,15);local angle=rng:NextNumber(0,math.pi*2)
-  local axis=Vector3.new(math.cos(angle),0,math.sin(angle));local center=Vector3.new(x,y,z)
-  local frame=CFrame.lookAt(center,center+axis)*CFrame.Angles(0,math.pi/2,0)
-  local twig=part(rocks,"RainFallenBranch_"..i,Vector3.new(length,rng:NextNumber(.22,.48),rng:NextNumber(.24,.58)),frame,Color3.fromRGB(84,67,48),Enum.Material.Wood,false)
-  twig.Shape=Enum.PartType.Cylinder;branchCount+=1
  end
 end
 
@@ -309,10 +240,10 @@ pcall(function()
  W.StreamOutBehavior=Enum.StreamOutBehavior.Opportunistic
  W.ModelStreamingBehavior=Enum.ModelStreamingBehavior.Improved
 end)
-W:SetAttribute("ForestTreeCount",treeCount);W:SetAttribute("ForestTrailCount",3);W:SetAttribute("ForestMapSize",2048)
+W:SetAttribute("ForestTreeCount",treeCount);W:SetAttribute("ForestTrailCount",0);W:SetAttribute("ForestMapSize",2048)
 W:SetAttribute("ForestGrassClusters",grassCount);W:SetAttribute("ForestFlowers",flowerCount);W:SetAttribute("ForestFerns",fernCount)
-W:SetAttribute("ForestRockClusters",rockCount);W:SetAttribute("ForestDeadfallLogs",logCount);W:SetAttribute("ForestStumps",stumpCount)
-W:SetAttribute("ForestBranches",branchCount);W:SetAttribute("ForestDefaultFOV",65)
+W:SetAttribute("ForestRockClusters",0);W:SetAttribute("ForestDeadfallLogs",0);W:SetAttribute("ForestStumps",0)
+W:SetAttribute("ForestBranches",0);W:SetAttribute("ForestDefaultFOV",65)
 map:SetAttribute("ReferenceStyle","Warm conifer meadow with misted distance and natural dirt trails")
 SafeAssetImporter.ClearSelectionCache()
 for _,template in ipairs(treeTemplates) do template.template:Destroy() end
