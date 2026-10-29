@@ -3,7 +3,7 @@ M.Limit=3072;M.Village=Vector3.new(0,128,-1120)
 function M.Height(x,z) return 124+math.floor(math.noise(x/850,z/850,13)*2)*4 end
 function M.Cell(x,z,parent)
  local cx,cz=(x+.5)*128,(z+.5)*128
- if math.abs(cx)>M.Limit or math.abs(cz)>M.Limit or (math.abs(cx)<760 and math.abs(cz)<850) then return nil end
+ if math.abs(cx)>M.Limit or math.abs(cz)>M.Limit or (math.abs(cx)<512 and math.abs(cz)<640) then return nil end
  local key=x..'_'..z;local y=M.Height(cx,cz)
  if not built[key] then
   workspace.Terrain:FillBlock(CFrame.new(cx,y-24,cz),Vector3.new(128,40,128),Enum.Material.Rock)

@@ -68,6 +68,9 @@ assert(workspace:GetAttribute('AdventureForestSize')==6144,'Forest extension mis
 assert(#game:GetService('ServerStorage').AdventureTrees:GetChildren()>0,'Authored trees missing')
 local center=workspace:GetAttribute('VillageCenter');assert(center and center.Z< -900,'Village separation missing')
 assert(not game:GetService('ServerScriptService').AtriumRuntime:FindFirstChild('DisasterRuntime'),'Old disasters enabled')
+local supply=center+Vector3.new(780,0,950);Chunks.Warm('forestCurrent',supply,64)
+local terrainParams=RaycastParams.new();terrainParams.FilterType=Enum.RaycastFilterType.Include;terrainParams.FilterDescendantsInstances={W.Terrain}
+assert(W:Raycast(supply+Vector3.new(0,150,0),Vector3.new(0,-350,0),terrainParams),'Mission supply has no ground')
 local cell=adventure.Cell(12,12,W.Islands.forestCurrent)
 assert(cell and #cell:GetChildren()>0,'Outer forest cell empty')
 for _,tree in ipairs(cell:GetChildren()) do

@@ -3,15 +3,16 @@ if workspace:GetAttribute('GameMode')~='Match' then return end
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage');local Path=game:GetService('PathfindingService')
 local D=require(script.Parent.DisasterService);local Chunks=require(script.Parent.IslandChunks)
 while workspace:GetAttribute('IslandWorldReady')~=true do task.wait(.2) end
+local Profile=require(script.Parent.SessionProfile)
 local center=workspace:GetAttribute('VillageCenter');local event=RS:WaitForChild('AdventureEvent');local quests={};local sneaking={};local cooldown={}
 local objectives={'Fale com Helena na vila.','Busque os remédios na estação da floresta.','Entregue os remédios a Helena.','Encontre Lia perto das pedras antigas.','Leve Lia de volta à vila.','Fale com Irene sobre a luz no céu.'}
 local function update(p,index)
- quests[p]=index;local target=(index==2 and center+Vector3.new(700,0,950)) or (index==4 and center+Vector3.new(760,0,680)) or center
+ local changed=quests[p]~=index;quests[p]=index;if changed then Profile.SaveAdventure(p,index) end;local target=(index==2 and center+Vector3.new(780,0,950)) or (index==4 and center+Vector3.new(760,0,680)) or center
  event:FireClient(p,'mission',index,objectives[index] or 'Você ajudou a vila. Explore com cuidado.',target)
  p:SetAttribute('AdventureMission',index)
 end
 local function setup(p)
- update(p,1)
+ local data=Profile.Cache[p] or Profile.Load(p);local index=data and data.adventureMission or 1;if index==5 then index=4 end;update(p,index)
  p.CharacterAdded:Connect(function() sneaking[p]=nil end)
 end
 Players.PlayerAdded:Connect(setup);for _,p in ipairs(Players:GetPlayers()) do setup(p) end
@@ -22,7 +23,7 @@ event.OnServerEvent:Connect(function(p,action,value)
   sneaking[p]=value;local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid');if h then h.WalkSpeed=value and 5 or 14 end
  end
 end)
-local medicine=center+Vector3.new(700,0,950);Chunks.Warm('forestCurrent',medicine,64)
+local medicine=center+Vector3.new(780,0,950);Chunks.Warm('forestCurrent',medicine,64)
 local box=Instance.new('Part');box.Name='MedicineSupplies';box.Size=Vector3.new(3,2,2);box.Color=Color3.fromRGB(154,153,117);box.Material=Enum.Material.Wood;box.Anchored=true;local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Terrain};local ground=assert(workspace:Raycast(medicine+Vector3.new(0,150,0),Vector3.new(0,-350,0),rp),'Medicine floor missing');box.Position=ground.Position+Vector3.new(0,1,0);box.Parent=workspace.Islands.forestCurrent
 local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Pegar remédios';prompt.ObjectText='Suprimentos';prompt.MaxActivationDistance=9;prompt.Parent=box
 prompt.Triggered:Connect(function(p) local r=p.Character and p.Character:FindFirstChild('HumanoidRootPart');if r and (r.Position-box.Position).Magnitude<12 and quests[p]==2 then update(p,3) end end)
@@ -72,7 +73,7 @@ local clock=0
 while task.wait(.25) do
  clock+=.25
  for p,q in pairs(quests) do
-  if q==5 then for _,s in ipairs(D.Residents) do if s.def.id=='Lia' and s.leader==p and (s.rig.HumanoidRootPart.Position-center).Magnitude<130 then s.leader=nil;update(p,6);D.Say(s,'Cheguei! Eu achei que ninguém vinha me buscar.');break end end end
+  if q==5 then for _,s in ipairs(D.Residents) do if s.def.id=='Lia' and s.leader==p and (s.rig.HumanoidRootPart.Position-center).Magnitude<130 then s.leader=nil;p:SetAttribute('NPCRescues',(p:GetAttribute('NPCRescues') or 0)+1);update(p,6);D.Say(s,'Cheguei! Eu achei que ninguém vinha me buscar.');break end end end
  end
  for _,ship in ipairs(ships) do
   local angle=clock*.014+ship.phase;local pos=center+Vector3.new(math.cos(angle)*800,130,math.sin(angle)*500+1150)

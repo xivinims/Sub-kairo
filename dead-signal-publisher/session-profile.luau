@@ -39,4 +39,11 @@ function M.Reward(p,count)
  local ok,err=pcall(function() Data:UpdateAsync('u'..p.UserId,function(old) if not old then return nil end;if old.lastAward~=game.JobId then old.coins=(old.coins or 0)+count*5;old.lastAward=game.JobId end;return old end) end)
  if not ok then warn('[ProfileReward] '..tostring(err)) end
 end
+function M.SaveAdventure(p,index)
+ local data=M.Cache[p];if data then data.adventureMission=math.max(data.adventureMission or 1,index) end
+ task.spawn(function()
+  local ok,err=pcall(function() Data:UpdateAsync('u'..p.UserId,function(old) if not old then return nil end;old.adventureMission=math.max(old.adventureMission or 1,index);return old end) end)
+  if not ok then warn('[AdventureSave] '..tostring(err)) end
+ end)
+end
 return M
