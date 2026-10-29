@@ -36,4 +36,4 @@ __VERIFY__
 end)()
 assert(validation,'Validation missing')
 -- Validated in this isolated execution; the file publisher performs the atomic release.
-return game:GetService('HttpService'):JSONEncode({ok=true,validated=true,sourceVersion=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId')})
+return game:GetService('HttpService'):JSONEncode({ok=true,validated=true,sourceVersion=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),simulationRunning=game:GetService('RunService'):IsRunning()})

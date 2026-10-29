@@ -60,7 +60,8 @@ let published;
 try{
  published=await api('https://apis.roblox.com/universes/v1/9421311218/places/118064584465155/versions?versionType=Published',{method:'POST',type:'application/octet-stream',body:await fs.readFile('/tmp/still-here-islands.rbxl')});
  console.log(JSON.stringify({publishedCandidate:published}));
- const waitReady="local deadline=os.clock()+240;while workspace:GetAttribute('IslandWorldReady')~=true and not workspace:GetAttribute('IslandWorldError') and os.clock()<deadline do task.wait(.25) end;assert(workspace:GetAttribute('IslandWorldReady')==true,workspace:GetAttribute('IslandWorldError') or 'Initializer timeout');\n";
+ const waitReady="if workspace:GetAttribute('IslandWorldReady')~=true then\n"+finalize+"\nend\n";
+
  const verified=await execute(waitReady+verify,published.versionNumber);console.log(JSON.stringify({liveVerified:verified}));
  await download('/tmp/still-here-verified.rbxl',verified.version);
  execFileSync('/tmp/islands-lune/lune',['run','islands-file-verify.luau'],{cwd,stdio:'inherit'});
