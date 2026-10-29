@@ -10,6 +10,10 @@ for _,meta in ipairs(manifest) do
  for _,tile in ipairs(region:GetChildren()) do
   local c=tile:GetAttribute('SourceCornerCells')+offset
   T:PasteRegion(tile,Vector3int16.new(c.X,c.Y,c.Z),true)
+  if meta.id~='city' then
+   local minPoint=c*4;local maxPoint=minPoint+tile.SizeInCells*4
+   T:ReplaceMaterial(Region3.new(minPoint,maxPoint):ExpandToGrid(4),4,Enum.Material.LeafyGrass,Enum.Material.Grass)
+  end
  end
  local min=Vector3.new(meta.corner[1]*4,meta.corner[2]*4,meta.corner[3]*4)
  local max=min+Vector3.new(unpack(meta.cells))*4
@@ -19,13 +23,7 @@ for _,meta in ipairs(manifest) do
  T:FillBlock(CFrame.new(x,sea-8,max.Z+pad/2),Vector3.new(max.X-min.X+pad*2,16,pad),Enum.Material.Water)
  T:FillBlock(CFrame.new(min.X-pad/2,sea-8,z),Vector3.new(pad,16,max.Z-min.Z),Enum.Material.Water)
  T:FillBlock(CFrame.new(max.X+pad/2,sea-8,z),Vector3.new(pad,16,max.Z-min.Z),Enum.Material.Water)
- if meta.id~='city' then
-  -- Bounded chunks avoid the ReplaceMaterial region volume limit.
-  for ax=min.X,max.X-1,128 do for az=min.Z,max.Z-1,128 do
-   local r=Region3.new(Vector3.new(ax,min.Y,az),Vector3.new(math.min(ax+128,max.X),max.Y,math.min(az+128,max.Z))):ExpandToGrid(4)
-   T:ReplaceMaterial(r,4,Enum.Material.LeafyGrass,Enum.Material.Grass)
-  end end
- end
+
 end
 -- Ground the three distinct arrivals and clear only nearby vegetation at the altar.
 local destinations=W.IslandDestinations

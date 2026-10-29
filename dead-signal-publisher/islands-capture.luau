@@ -1,5 +1,12 @@
 local W=workspace;local T=W.Terrain;local H=game:GetService('HttpService')
+print('CAPTURE BOOT',game.PlaceVersion)
 local meta=H:JSONDecode(W:GetAttribute('IslandStageMeta'))
+local geometry=game:GetService('ServerStorage').SourceGeometry
+local probe=Instance.new('Folder');probe.Name='SpawnProbe';probe.Parent=W
+if meta.id=='186677844' and meta.preferred[1] then
+ local point=Vector3.new(unpack(meta.preferred[1]))
+ for _,p in ipairs(geometry:GetChildren()) do if (p.Position-point).Magnitude<64 then p:Clone().Parent=probe end end
+end
 local low,high=Vector3.new(unpack(meta.lo)),Vector3.new(unpack(meta.hi))
 local min=Vector3int16.new(math.floor((low.X-64)/4),math.floor((low.Y-64)/4),math.floor((low.Z-64)/4))
 local max=Vector3int16.new(math.ceil((high.X+64)/4),math.ceil((high.Y+32)/4),math.ceil((high.Z+64)/4))
@@ -21,8 +28,9 @@ for x=min.X,max.X,64 do for z=min.Z,max.Z,64 do
  end
  if (x-min.X)%256==0 then task.wait() end
 end end
+print('TERRAIN TILES CAPTURED',tiles)
 local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Include;params.FilterDescendantsInstances={T};params.IgnoreWater=true
-local geom=RaycastParams.new();geom.FilterType=Enum.RaycastFilterType.Include;geom.FilterDescendantsInstances={W.SourceGeometry};geom.IgnoreWater=true
+local geom=RaycastParams.new();geom.FilterType=Enum.RaycastFilterType.Include;geom.FilterDescendantsInstances={probe};geom.IgnoreWater=true
 local candidates=meta.preferred
 local center=(low+high)*.5
 for r=0,12 do for j=1,math.max(1,r*8) do
@@ -30,7 +38,7 @@ for r=0,12 do for j=1,math.max(1,r*8) do
  table.insert(candidates,{center.X+math.cos(a)*r*16,high.Y+10,center.Z+math.sin(a)*r*16})
 end end
 local spawn
-local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Include;overlap.FilterDescendantsInstances={W.SourceGeometry};overlap.RespectCanCollide=true
+local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Include;overlap.FilterDescendantsInstances={probe};overlap.RespectCanCollide=true
 for _,v in ipairs(candidates) do
  local pos=Vector3.new(unpack(v));local hit=W:Raycast(Vector3.new(pos.X,high.Y+64,pos.Z),Vector3.new(0,low.Y-high.Y-160,0),params)
  local surface=hit and hit.Position
@@ -43,5 +51,7 @@ end
 assert(spawn,'No unobstructed arrival position in source')
 meta.spawn={spawn.X,spawn.Y,spawn.Z};meta.corner={min.X,min.Y,min.Z};meta.cells={max.X-min.X+1,max.Y-min.Y+1,max.Z-min.Z+1};meta.tiles=tiles
 W:SetAttribute('IslandStageMeta',H:JSONEncode(meta))
+probe:Destroy()
+print('SAVING CAPTURE',tiles)
 game:GetService('AssetService'):SavePlaceAsync({PlaceId=game.PlaceId,SaveWithoutPublish=true})
 return H:JSONEncode({captured=true,sourceVersion=game.PlaceVersion,savedVersion=game.PlaceVersion+1,meta=meta})

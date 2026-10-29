@@ -12,7 +12,7 @@ local input={}
 for _,id in ipairs({'5326950832','88883160098456','186677844'}) do
  local staged=R.deserializePlace(fs.readFile('/tmp/captured-'..id..'.rbxl'))
  local sw=staged:GetService('Workspace');local meta=serde.decode('json',sw:GetAttribute('IslandStageMeta'));assert(meta.id==id,'Wrong captured source version')
- input[id]={dm=staged,meta=meta,geo=sw.SourceGeometry,region=staged:GetService('ServerStorage').IslandTerrainRegion}
+ input[id]={dm=staged,meta=meta,geo=staged:GetService('ServerStorage').SourceGeometry,region=staged:GetService('ServerStorage').IslandTerrainRegion}
 end
 local widthCurrent=input['88883160098456'].meta.hi[1]-input['88883160098456'].meta.lo[1]
 local defs={{id='forestCurrent',asset='88883160098456',name='Floresta (atual)',center=0},{id='forest1',asset='5326950832',name='Floresta (1)'},{id='city',asset='186677844',name='Cidade'}}
@@ -97,7 +97,7 @@ for k in pairs(W:GetAttributes()) do if k:find('ForestExpansion') or k=='ForestP
 W:SetAttribute('IslandWorldMeta',serde.encode('json',manifest));W:SetAttribute('IslandWorldReady',false)
 W:SetAttribute('DeadSignalBuildId','still-here-three-islands-v1');W:SetAttribute('ForestLightAsset','17835285085')
 W:SetAttribute('MapSource','Sanitized original forest demos and Port Gloom on separate islands')
-W.StreamingMinRadius=64;W.StreamingTargetRadius=192
+W.StreamingMinRadius=64;W.StreamingTargetRadius=128
 fs.writeFile('/tmp/still-here-islands.rbxl',R.serializePlace(dm))
 local check=R.deserializePlace(fs.readFile('/tmp/still-here-islands.rbxl'))
 assert(check:GetService('Workspace').Terrain.Decoration==true,'Native grass lost')

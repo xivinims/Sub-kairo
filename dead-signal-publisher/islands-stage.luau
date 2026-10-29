@@ -1,7 +1,7 @@
 -- Offline sanitized source extraction. No imported source code is executed.
 local fs=require('@lune/fs');local R=require('@lune/roblox');local serde=require('@lune/serde');local process=require('@lune/process')
 local Safe=require('./SafeAssetImporterFile');local V=R.Vector3
-local id=process.args[1];local dm=R.deserializePlace(fs.readFile('/tmp/asset-'..id..'.rbxl'));local W=dm:GetService('Workspace')
+local id=process.args[1];local original=R.deserializePlace(fs.readFile('/tmp/asset-'..id..'.rbxl'));local W=original:GetService('Workspace')
 local source=W
 if id=='88883160098456' then source=assert(W:FindFirstChild('Forest'),'Forest selection missing'):FindFirstChild('Model');assert(source,'Forest model missing') end
 local forbidden={['group-distantlodtrees']=true,transmittance=true,invisiwalls=true,allgrass=true,minimap=true,playbounds=true,packages=true,vistechdemopackages=true,daysky=true,nightsky=true,ocean=true,boattargets=true,birdtargets=true}
@@ -34,13 +34,17 @@ for _,p in ipairs(W:GetDescendants()) do if p:IsA('SpawnLocation') then
  local v=p.CFrame.Position
  if v.X>=lo.X and v.X<=hi.X and v.Z>=lo.Z and v.Z<=hi.Z then table.insert(preferred,{v.X,v.Y,v.Z}) end
 end end
-for _,c in ipairs(W:GetChildren()) do if not c:IsA('Terrain') then c:Destroy() end end
-geo.Parent=W
+local sourceTerrain=assert(W:FindFirstChildOfClass('Terrain'),'Source terrain missing'):Clone()
+local dm=R.deserializePlace(fs.readFile('/tmp/still-here-source.rbxl'))
+W=dm:GetService('Workspace')
+for _,c in ipairs(W:GetChildren()) do c:Destroy() end
+sourceTerrain.Parent=W
 -- Strip every service, source GUI and script outside the selected static geometry.
 for _,name in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','StarterPlayer','SoundService'}) do
  local service=dm:GetService(name);for _,c in ipairs(service:GetChildren()) do c:Destroy() end
 end
 local all=dm:GetDescendants();for i=#all,1,-1 do local d=all[i];if d:IsA('LuaSourceContainer') or d:IsA('Sound') then d:Destroy() end end
+geo.Parent=dm:GetService('ServerStorage')
 local terrain=assert(W:FindFirstChildOfClass('Terrain'),'Source terrain missing');terrain.Decoration=true;terrain.GrassLength=.85
 W:SetAttribute('IslandStageAsset',id)
 local meta={id=id,parts=count,lo={lo.X,lo.Y,lo.Z},hi={hi.X,hi.Y,hi.Z},preferred=preferred}
