@@ -12,19 +12,32 @@ local model=template:Clone();model.Name='LocalSkyBlackHole'
 local origin=template:GetAttribute('SourceOrigin')
 local reference=template:GetAttribute('ReferenceDistance') or 1028
 model.WorldPivot=CFrame.lookAt(origin,origin+Vector3.new(1,0,0))
-local distance=menu and 850 or 900
+local distance=menu and 600 or 900
 -- Source halo diameter is 220 studs and the beam lattice extends much farther.
 -- Scale according to the actual halo, NOT the spawn distance or the full sky.
 local haloDiameter=template:GetAttribute('SourceHaloDiameter') or 220
-local scale=menu and math.clamp(100/haloDiameter,.38,.52) or math.clamp(500/reference,.12,.7)
+local scale=menu and math.clamp(145/haloDiameter,.60,.70) or math.clamp(500/reference,.12,.7)
 model:ScaleTo(scale)
 model.Parent=W
 local touch=UIS.TouchEnabled
-local sourceSky=RS:FindFirstChild('OriginalBlackHoleSky')
-if menu and sourceSky then
- local lighting=game:GetService('Lighting')
- for _,s in ipairs(lighting:GetChildren()) do if s:IsA('Sky') then s:Destroy() end end
- sourceSky:Clone().Parent=lighting
+-- The player requested a near-black void, not the original asset's bright
+-- orange skybox. Only replace the local menu background; keep the authored
+-- BlackHole/AccretionDisc, beams and source-space geometry unmodified.
+local voidBackdrop
+if menu then
+ local previousBackdrop=W:FindFirstChild('LocalBlackVoidBackdrop')
+ if previousBackdrop then previousBackdrop:Destroy() end
+ voidBackdrop=Instance.new('Part')
+ voidBackdrop.Name='LocalBlackVoidBackdrop'
+ voidBackdrop.Anchored=true
+ voidBackdrop.CanCollide=false;voidBackdrop.CanTouch=false;voidBackdrop.CanQuery=false
+ voidBackdrop.CastShadow=false
+ voidBackdrop.Material=Enum.Material.Neon
+ voidBackdrop.Color=Color3.fromRGB(0,0,2)
+ voidBackdrop.Size=Vector3.new(16000,12000,5)
+ -- Beyond the entire local singularity and close foreground, but before the skybox.
+ voidBackdrop.CFrame=CFrame.new(0,5000,-3200)
+ voidBackdrop.Parent=W
 end
 -- View the original singularity from its AUTHORED observer direction (+X with
 -- a slight downward angle). The previous code aimed Halo.LookVector (-Z) at
