@@ -1,1 +1,1 @@
-cassette-image-upload-chapter-tapes
+logo-image-upload
