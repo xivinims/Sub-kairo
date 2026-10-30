@@ -16,7 +16,7 @@ local distance=900
 model:ScaleTo(math.clamp(500/reference,.12,.7))
 model.Parent=W
 local touch=UIS.TouchEnabled
--- In menus, reserve the upper-left sky for the actual accretion disk.
+-- In menus, reserve the visible center-right sky for the actual accretion disk.
 -- This is a real mesh from the original asset, not a painted halo or a UI picture.
 -- Right-side menus and the floating avatar are separate UI layers.
 local offset=Vector3.new(-.36,.49,-.79).Unit*distance
@@ -97,8 +97,8 @@ Run.RenderStepped:Connect(function(dt)
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   -camera.CFrame.RightVector*(x*.38)
-   +camera.CFrame.UpVector*(y*.40)
+   +camera.CFrame.RightVector*(x*.17)
+   +camera.CFrame.UpVector*(y*.33)
   -- Force the original Halo mesh to face the menu camera so its dark
   -- singularity and accretion disc stay visible instead of edge-on glare.
   local targetHalo=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
