@@ -2,7 +2,7 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@l
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'))
 local original=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'));local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
 local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-creator-credits-v15','Wrong live build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-story-cinematic-menu-v16','Wrong live build')
 assert(SS.OriginalWorld.Content.Interior and SS.Corrupt.Grandfather,'Source map hierarchy lost')
 assert(not W:FindFirstChild('Content'),'Public menu contains mansion')
 assert(dm:GetService('ReplicatedFirst').MenuAvatarClient.Source:find('CreateHumanoidModelFromUserIdAsync',1,true),'Actual player portrait missing')
@@ -22,6 +22,21 @@ assert(not sceneSource:find('507784897',1,true),'Old swimming animation still pa
 assert(sceneSource:find('CameraZoom',1,true),'Cinematic zoom not packaged')
 local menuSource=dm:GetService('ReplicatedFirst').SessionMenuClient.Source
 assert(menuSource:find("Name='CreditsInfoButton'",1,true),'Credits info corner button missing from published game')
+assert(menuSource:find("Name='CinematicLeftMenu'",1,true),'Cinematic menu not left-aligned in packaged game')
+assert(menuSource:find("Name='StoryStyleNavigation'",1,true),'Reference-style story navigation not packaged')
+assert(menuSource:find("Name='RedSelectionMarker'",1,true),'Photo-style highlighted selection missing')
+assert(menuSource:find("Name='OperatorBriefing'",1,true),'Bottom-left message of the day panel missing')
+assert(menuSource:find("Name='BriefingPreview'",1,true),'Real Roblox source asset thumbnails missing')
+assert(menuSource:find("addNavigation('JOGAR (SOLO)'",1,true),'Clickable play action missing')
+assert(menuSource:find("addNavigation('MULTIPLAYER',groups)",1,true),'Multiplayer broken in new layout')
+assert(menuSource:find("addNavigation('CONFIGURAÇÕES',UI.OpenSettings)",1,true),'Settings broken in new layout')
+assert(not menuSource:find("Position=UDim2.fromScale(.95,.07)",1,true),'Previous right-screen menu still present')
+local bhSource=dm:GetService('StarterPlayer').StarterPlayerScripts.SkyBlackHoleClient.Source
+assert(bhSource:find("+camera.CFrame.RightVector*(x*.37)",1,true),'Original singularity is not composed to the right')
+local envSource=dm:GetService('ReplicatedFirst').CinematicEnvironmentClient.Source
+assert(envSource:find("Color3.fromRGB(95,157,230),.95,22",1,true),'Avatar key light is too bright')
+assert(sceneSource:find("track:Play(.15,1,.74)",1,true),'Slow Low Gravity menu playback missing')
+
 assert(menuSource:find("Name='ModelCreditsOverlay'",1,true),'Attribution overlay missing')
 assert(menuSource:find('Alpha Strike Group',1,true),'Original Roblox showcase author credit missing')
 assert(menuSource:find('Bobbity Games',1,true),'Original gameplay-system author credit missing')
