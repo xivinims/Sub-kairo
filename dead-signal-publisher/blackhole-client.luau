@@ -5,6 +5,7 @@ local W=workspace
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage')
 local Run=game:GetService('RunService');local UIS=game:GetService('UserInputService')
 local player=Players.LocalPlayer
+if menu then player:SetAttribute('MenuBlackHoleReady',false) end
 local template=RS:WaitForChild('SkyBlackHoleTemplate',30)
 if not template then warn('[SkyBlackHole] Visual template missing');return end
 local previous=W:FindFirstChild('LocalSkyBlackHole');if previous then previous:Destroy() end
@@ -161,6 +162,11 @@ Run.RenderStepped:Connect(function(dt)
   base=CFrame.lookAt(center,camera.CFrame.Position)
  end
  model:PivotTo(base)
+ -- Signal only after the original black-hole geometry has been positioned at
+ -- the real menu camera for its first frame, never merely when cloned.
+ if menu and not player:GetAttribute('MenuBlackHoleReady') then
+  player:SetAttribute('MenuBlackHoleReady',true)
+ end
  if menu and blastStarted then
   local progress=math.clamp((os.clock()-blastStarted)/1.25,0,1)
   if blastBall then
