@@ -19,6 +19,6 @@ end
 local skyChildren={}
 for _,c in ipairs(W.Skybox:GetChildren()) do table.insert(skyChildren,{name=c.Name,class=c.ClassName,count=#c:GetDescendants()}) end
 local sky=dm:GetService('Lighting'):FindFirstChildWhichIsA('Sky')
-local skyInfo=sky and {back=sky.SkyboxBk,front=sky.SkyboxFt} or nil
+local skyInfo=sky and {name=sky.Name,class=sky.ClassName} or nil
 local spawn=W:FindFirstChildWhichIsA('SpawnLocation',true)
 print('SOURCE_BLACK_HOLE_GEOMETRY '..serde.encode('json',{haloSize={halo.Size.X,halo.Size.Y,halo.Size.Z},haloPosition={halo.Position.X,halo.Position.Y,halo.Position.Z},haloLook={halo.CFrame.LookVector.X,halo.CFrame.LookVector.Y,halo.CFrame.LookVector.Z},spawnPosition=spawn and {spawn.Position.X,spawn.Position.Y,spawn.Position.Z} or nil,parts=rows,groups=group,sky=skyInfo,skyChildren=skyChildren}))
