@@ -44,10 +44,14 @@ startLabel.TextXAlignment=Enum.TextXAlignment.Center
 startLabel.Visible=false
 make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
 local starting=false
+local infoButton
+local creditsGui
 local busy=false;local current;local panel;local redraw
 local function startPresentation()
  starting=true
  p:SetAttribute('MenuCameraMode','starting')
+ if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
+ if infoButton then infoButton.Visible=false end
  composition.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
  startLabel.Visible=true
@@ -59,9 +63,12 @@ local function restorePresentation()
  startLabel.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
  composition.Visible=not p:GetAttribute('InterfaceOpen')
+ if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
- composition.Visible=not starting and not p:GetAttribute('InterfaceOpen')
+ local visible=not starting and not p:GetAttribute('InterfaceOpen')
+ composition.Visible=visible
+ if infoButton then infoButton.Visible=visible end
 end)
 local function request(action,value)
  if busy then return end
@@ -132,12 +139,88 @@ end
 UI.Button(list,'Jogar (solo)',function() request('solo') end)
 UI.Button(list,'Multiplayer',groups)
 UI.Button(list,'Configurações',UI.OpenSettings)
-UI.Button(list,'Créditos',function()
- local credits=UI.Panel('CRÉDITOS');local scroll=UI.List(credits.Content)
- UI.Label(scroll,'STILL HERE\nBy ch_ckz2n',90)
- UI.Label(scroll,'Mansão e sistemas originais: The Mystery of Duvall Drive — Roblox.\nArmas: FPS System Demo (asset 15864801103).\nCéu: Beyond the Dark — Roblox.',150)
- UI.Label(scroll,'ContextActionUtility: PseudoPerson · CC BY.\nObrigado por jogar.',90)
-end)
+-- An unobtrusive information icon, anchored to the lower-left safe area.
+-- It replaces the old full-size 'Créditos' entry in the main menu.
+infoButton=make('TextButton',{
+ Name='CreditsInfoButton',AnchorPoint=Vector2.new(0,1),
+ Position=UDim2.new(0,18,1,-22),Size=UDim2.fromOffset(40,40),
+ BackgroundColor3=Color3.fromRGB(7,17,22),BackgroundTransparency=.28,
+ BorderSizePixel=0,Text='i',Font=Enum.Font.GothamBold,TextSize=22,
+ TextColor3=Color3.fromRGB(225,231,232),AutoButtonColor=true,ZIndex=5
+},bg)
+make('UICorner',{CornerRadius=UDim.new(1,0)},infoButton)
+make('UIStroke',{Color=Color3.fromRGB(123,151,166),Thickness=1,Transparency=.33},infoButton)
+
+local function openModelCredits()
+ if starting then return end
+ if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil;return end
+ local overlay=make('ScreenGui',{Name='ModelCreditsOverlay',ResetOnSpawn=false,
+  IgnoreGuiInset=false,DisplayOrder=1600,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},p:WaitForChild('PlayerGui'))
+ creditsGui=overlay
+ local dim=make('TextButton',{Name='CloseOutside',Size=UDim2.fromScale(1,1),
+  Text='',AutoButtonColor=false,BorderSizePixel=0,
+  BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.48},overlay)
+ local card=make('Frame',{Name='ModelCreditsCard',AnchorPoint=Vector2.new(.5,.5),
+  Position=UDim2.fromScale(.5,.5),Size=UDim2.fromScale(.88,.77),
+  BackgroundColor3=Color3.fromRGB(8,15,20),BackgroundTransparency=.05,
+  BorderSizePixel=0,ClipsDescendants=true},overlay)
+ make('UISizeConstraint',{MaxSize=Vector2.new(520,640),MinSize=Vector2.new(255,300)},card)
+ make('UICorner',{CornerRadius=UDim.new(0,12)},card)
+ make('UIStroke',{Color=Color3.fromRGB(100,137,150),Thickness=1,Transparency=.4},card)
+ make('TextLabel',{Name='CreditsTitle',BackgroundTransparency=1,
+  Position=UDim2.new(0,18,0,16),Size=UDim2.new(1,-80,0,39),
+  Text='MODEL CREDITS',TextXAlignment=Enum.TextXAlignment.Left,
+  Font=Enum.Font.Oswald,TextSize=30,TextColor3=Color3.fromRGB(231,233,233)},card)
+ local close=make('TextButton',{Name='CloseCredits',AnchorPoint=Vector2.new(1,0),
+  Position=UDim2.new(1,-14,0,15),Size=UDim2.fromOffset(37,37),
+  Text='×',Font=Enum.Font.GothamBold,TextSize=26,
+  TextColor3=Color3.fromRGB(233,240,239),
+  BackgroundColor3=Color3.fromRGB(27,43,51),BackgroundTransparency=.3,
+  BorderSizePixel=0},card)
+ make('UICorner',{CornerRadius=UDim.new(0,8)},close)
+ local scroll=UI.List(card)
+ scroll.Name='ModelCreditsScroll'
+ scroll.Position=UDim2.new(0,15,0,71)
+ scroll.Size=UDim2.new(1,-30,1,-85)
+ scroll.ScrollBarThickness=2
+ local function addSource(section,project,author,extra)
+  local block=make('Frame',{Name='CreditEntry',Size=UDim2.new(1,-8,0,extra and 96 or 75),
+   BackgroundColor3=Color3.fromRGB(20,33,41),BackgroundTransparency=.37,BorderSizePixel=0},scroll)
+  make('UICorner',{CornerRadius=UDim.new(0,7)},block)
+  local category=UI.Label(block,string.upper(section),18)
+  category.Position=UDim2.new(0,12,0,5);category.Size=UDim2.new(1,-24,0,18)
+  category.Font=Enum.Font.GothamBold;category.TextSize=10;category.TextColor3=Color3.fromRGB(132,168,185)
+  local name=UI.Label(block,project,22)
+  name.Position=UDim2.new(0,12,0,23);name.Size=UDim2.new(1,-24,0,23)
+  name.TextSize=19;name.TextColor3=Color3.fromRGB(235,239,240)
+  local creator=UI.Label(block,'Criador: '..author,19)
+  creator.Position=UDim2.new(0,12,0,49);creator.Size=UDim2.new(1,-24,0,18)
+  creator.Font=Enum.Font.Gotham;creator.TextSize=12;creator.TextColor3=Color3.fromRGB(179,201,208)
+  if extra then
+   local detail=UI.Label(block,extra,18)
+   detail.Position=UDim2.new(0,12,0,71);detail.Size=UDim2.new(1,-24,0,18)
+   detail.TextSize=11;detail.Font=Enum.Font.Gotham
+   detail.TextColor3=Color3.fromRGB(149,170,177)
+  end
+ end
+ -- Creator names confirmed via Roblox MarketplaceService on 2026-10-30.
+ addSource('Mansão','The Mystery of Duvall Drive','Alpha Strike Group')
+ addSource('Buraco negro','Beyond the Dark','Alpha Strike Group','Efeitos do buraco negro: Chad Foxglove')
+ addSource('Sistemas','FPS System Demo','Bobbity Games')
+ addSource('Áudio ambiente','Massive Black Hole','APMOfficial')
+ addSource('Emote','Low Gravity','Matching Anime Outfits')
+ local note=UI.Label(scroll,'Interface e adaptação: CH_CKZ2N.\\nContextActionUtility: PseudoPerson (CC BY).\\nProjeto independente, sem afiliação oficial com os criadores citados.',98)
+ note.Name='CreditsDisclaimer';note.Font=Enum.Font.Gotham;note.TextSize=11
+ note.TextColor3=Color3.fromRGB(150,170,178)
+ note.TextXAlignment=Enum.TextXAlignment.Center
+ local function dismiss()
+  if creditsGui==overlay then creditsGui=nil end
+  if overlay.Parent then overlay:Destroy() end
+ end
+ dim.Activated:Connect(dismiss)
+ close.Activated:Connect(dismiss)
+end
+infoButton.Activated:Connect(openModelCredits)
 p:SetAttribute('MenuReady',true)
 task.spawn(function() UI.Load();request('state') end)
 RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message)
