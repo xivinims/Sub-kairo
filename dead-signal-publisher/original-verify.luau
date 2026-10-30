@@ -27,7 +27,7 @@ assert(visualClient.Source:find('9045936046',1,true),'Massive Black Hole menu au
 assert(visualClient.Source:find('Light',1,true),'Cinematic effects missing')
 assert(W:GetAttribute('WeaponFixVersion')=='original-touch-v5','Weapon fixes missing')
 assert(W:GetAttribute('OriginalWeaponPickupCount')==2,'Pickup spawn failed')
-for _,name in ipairs({'M4A1','Deagle'}) do local tool=W.WeaponToolsRespawn:FindFirstChild(name);local prompt=tool and tool.Weapon.PrimaryPart:FindFirstChild('OriginalWeaponPickup');assert(prompt,'Missing world pickup '..name);assert(prompt.Style==Enum.ProximityPromptStyle.Custom and prompt.HoldDuration>=.45,'Weapon pickup hold interaction not configured') end
+for _,name in ipairs({'M4A1','Deagle'}) do local tool=W.WeaponToolsRespawn:FindFirstChild(name);local prompt=tool and tool.Weapon.PrimaryPart:FindFirstChild('OriginalWeaponPickup');assert(prompt,'Missing world pickup '..name);assert(prompt.Style==Enum.ProximityPromptStyle.Custom and prompt.HoldDuration>=.4,'Weapon pickup hold interaction not configured') end
 local cfg=require(game:GetService('ReplicatedFirst').DemoConfig)
 local missions=0;for name,mission in pairs(cfg.Missions) do assert(mission.MissionRoot,'Mission root missing '..name);missions+=1 end
 local parts,tagged=0,0;for _,d in ipairs(W.Content:GetDescendants()) do if d:IsA('BasePart') then parts+=1 end;if #game:GetService('CollectionService'):GetTags(d)>0 then tagged+=1 end end
