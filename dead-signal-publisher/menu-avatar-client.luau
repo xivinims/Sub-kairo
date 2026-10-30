@@ -1,78 +1,137 @@
--- Local-only menu portrait: the player's own Roblox avatar, afloat in front of the real sky.
--- Viewport background is transparent, so the 7208091524 black hole remains visible.
+-- The actual player avatar swims in 3D before the original Beyond the Dark black hole.
+-- The menu camera zooms toward the face for panels and game launch.
+-- Local-only objects never affect match maps, player physics, or server-owned gameplay.
 local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
 if W:GetAttribute('GameMode')~='Menu' then return end
-local Players=game:GetService('Players')
-local Run=game:GetService('RunService')
-local player=Players.LocalPlayer
-local gui=Instance.new('ScreenGui')
-gui.Name='StillHereFloatingAvatar';gui.ResetOnSpawn=false
-gui.IgnoreGuiInset=false;gui.DisplayOrder=1010;gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-gui.Parent=player:WaitForChild('PlayerGui')
-local viewport=Instance.new('ViewportFrame')
-viewport.Name='FloatingTorso';viewport.BackgroundTransparency=1;viewport.BorderSizePixel=0
-viewport.Size=UDim2.fromScale(.48,.87);viewport.Position=UDim2.fromScale(.01,.13)
-viewport.Active=false;viewport.Selectable=false;viewport.Ambient=Color3.fromRGB(115,150,163)
-viewport.LightColor=Color3.fromRGB(208,221,227)
-viewport.LightDirection=Vector3.new(-.4,-1,-.5)
-viewport.Parent=gui
-local world=Instance.new('WorldModel');world.Parent=viewport
-local cam=Instance.new('Camera');cam.FieldOfView=34;cam.CFrame=CFrame.lookAt(Vector3.new(0,.9,10),Vector3.new(0,1.0,0))
-cam.Parent=viewport;viewport.CurrentCamera=cam
 
-local function fallback()
- local m=Instance.new('Model');m.Name='AvatarLoading'
- local function part(name,position,size,color,shape)
-  local p=Instance.new('Part');p.Name=name;p.Anchored=true;p.CanCollide=false
-  p.Size=size;p.Color=color;p.Material=Enum.Material.SmoothPlastic
-  if shape then p.Shape=shape end
-  p.CFrame=CFrame.new(position);p.Parent=m;return p
- end
- part('Torso',Vector3.new(0,.25,0),Vector3.new(2.2,2.4,1.1),Color3.fromRGB(60,72,84))
- part('Head',Vector3.new(0,2,0),Vector3.new(1.2,1.25,1.15),Color3.fromRGB(177,155,139),Enum.PartType.Ball)
- part('LeftArm',Vector3.new(-1.75,.15,0),Vector3.new(.8,2.4,.95),Color3.fromRGB(65,77,87))
- part('RightArm',Vector3.new(1.75,.15,0),Vector3.new(.8,2.4,.95),Color3.fromRGB(65,77,87))
- part('LowerBody',Vector3.new(0,-1.45,0),Vector3.new(2.1,1.5,1),Color3.fromRGB(34,41,50))
- m.PrimaryPart=m.Torso;m.Parent=world;return m
+local Players=game:GetService('Players')
+local TweenService=game:GetService('TweenService')
+local RunService=game:GetService('RunService')
+local UIS=game:GetService('UserInputService')
+local player=Players.LocalPlayer
+local camera=W.CurrentCamera
+local anchor=Vector3.new(-1.3,5000,-8.4)
+local menuRoot=Instance.new('Folder')
+menuRoot.Name='LocalMenuCinematic'
+menuRoot.Parent=W
+local zoom=Instance.new('NumberValue');zoom.Name='CameraZoom';zoom.Value=0;zoom.Parent=menuRoot
+local zoomTween
+local function modeChanged()
+ local state=player:GetAttribute('MenuCameraMode')
+ local to=(state=='close' or state=='starting') and 1 or 0
+ if zoomTween then zoomTween:Cancel() end
+ zoomTween=TweenService:Create(zoom,TweenInfo.new(state=='starting' and 1.05 or .86,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Value=to})
+ zoomTween:Play()
 end
-local avatar=fallback()
-local shoulders={}
-local function install(model)
- if not gui.Parent then model:Destroy();return end
+player:GetAttributeChangedSignal('MenuCameraMode'):Connect(modeChanged)
+modeChanged()
+
+-- Actual Roblox R15 swimming animation, not handmade limb motion.
+local avatar
+local swimTrack
+local function installAvatar(model)
+ if not menuRoot.Parent then model:Destroy();return end
  for _,d in ipairs(model:GetDescendants()) do
   if d:IsA('BaseScript') then d:Destroy()
+  elseif d:IsA('Sound') then d:Destroy()
   elseif d:IsA('BasePart') then
    d.CanCollide=false;d.CanTouch=false;d.CanQuery=false;d.CastShadow=false
+   d.Massless=true
    if d.Name=='HumanoidRootPart' then d.Anchored=true;d.Transparency=1 end
-  elseif d:IsA('Sound') then d:Destroy() end
- end
- model.Name='PlayerFloatingPortrait'
- model:PivotTo(CFrame.new())
- model.Parent=world
- avatar:Destroy();avatar=model
- shoulders={}
- for _,d in ipairs(model:GetDescendants()) do
-  if d:IsA('Motor6D') and (d.Name=='LeftShoulder' or d.Name=='RightShoulder' or d.Name=='Left Shoulder' or d.Name=='Right Shoulder') then
-   table.insert(shoulders,{motor=d,left=d.Name:find('Left',1,true)~=nil})
   end
  end
+ local humanoid=model:FindFirstChildOfClass('Humanoid')
+ local root=model:FindFirstChild('HumanoidRootPart')
+ if not humanoid or not root then model:Destroy();warn('[MenuCinematic] Avatar rig incomplete');return end
+ model.Name='SwimmingPlayerAvatar'
+ model.Parent=menuRoot
+ model:PivotTo(CFrame.new(anchor)*CFrame.Angles(math.rad(-8),math.pi,0))
+ avatar=model
+ local animator=humanoid:FindFirstChildOfClass('Animator') or Instance.new('Animator',humanoid)
+ local swim=Instance.new('Animation')
+ swim.Name='RobloxDefaultR15Swim'
+ swim.AnimationId='rbxassetid://507784897'
+ swim.Parent=model
+ local ok,track=pcall(function() return animator:LoadAnimation(swim) end)
+ if ok and track then
+  swimTrack=track
+  swimTrack.Looped=true
+  swimTrack.Priority=Enum.AnimationPriority.Movement
+  swimTrack:Play(.25,1,.74)
+ else warn('[MenuCinematic] Roblox default swim track unavailable') end
+ player:SetAttribute('MenuAvatarReady',true)
 end
 task.spawn(function()
  local ok,model=pcall(function() return Players:CreateHumanoidModelFromUserIdAsync(player.UserId) end)
- if ok and model and model:IsA('Model') then install(model)
- else warn('[StillHereMenu] Avatar portrait unavailable; using a temporary mannequin') end
+ if ok and model and model:IsA('Model') then installAvatar(model)
+ else warn('[MenuCinematic] Could not load real player avatar') end
 end)
-local t=0
+
+-- Slow atmospheric stones, in distinct depth planes, deliberately orbiting
+-- OUTSIDE the avatar's personal space. The genuine asset debris field is also
+-- still rendered by SkyBlackHoleClient; these add close parallax for the camera.
+local stones={}
+local numStones=UIS.TouchEnabled and 8 or 13
+local colors={Color3.fromRGB(46,51,55),Color3.fromRGB(64,66,69),Color3.fromRGB(38,48,53)}
+for i=1,numStones do
+ local rock=Instance.new('Model');rock.Name='PassingStone'..i;rock.Parent=menuRoot
+ local scale=.65+(i%5)*.21
+ local function piece(kind,size,localCF,color)
+  local p=Instance.new(kind)
+  p.Name='RockFragment';p.Size=size;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false
+  p.Material=Enum.Material.Slate;p.Color=color;p.CastShadow=false;p.CFrame=localCF
+  p.Parent=rock
+ end
+ piece('WedgePart',Vector3.new(1.4,1.0,1.8)*scale,CFrame.new(0,0,0),colors[i%3+1])
+ piece('WedgePart',Vector3.new(.9,.7,1.1)*scale,CFrame.new(.33,.3,-.24)*CFrame.Angles(0,math.rad(155),math.rad(32)),colors[(i+1)%3+1])
+ piece('Part',Vector3.new(.55,.35,.88)*scale,CFrame.new(-.3,-.24,.22)*CFrame.Angles(math.rad(15),0,math.rad(-30)),colors[i%3+1])
+ local phase=i*2.399963229728653
+ local radius=3.9+(i%4)*.68
+ local inFront=i%2==0
+ local z=inFront and 2.4+(i%3)*.48 or -3.4-(i%3)*1.1
+ local center=anchor+Vector3.new(math.cos(phase)*radius,math.sin(phase)*radius*.78,z)
+ rock:PivotTo(CFrame.new(center))
+ table.insert(stones,{model=rock,phase=phase,radius=radius,depth=z,speed=(i%3+2)*.005,spin=i*.14})
+end
+
+local elapsed=0
+local stoneAccum=0
 local connection
-connection=Run.RenderStepped:Connect(function(dt)
- if not gui.Parent or not avatar.Parent then if connection then connection:Disconnect() end;return end
- t+=math.min(dt,.1)
- -- Float gently in the lower-left foreground; legs stay outside the camera crop.
- local bob=math.sin(t*1.12)*.14
- avatar:PivotTo(CFrame.new(0,-.36+bob,0)*CFrame.Angles(math.rad(5)+math.sin(t*.72)*.04,math.pi+math.sin(t*.43)*.14,math.rad(-10)+math.sin(t*.81)*.05))
- for _,joint in ipairs(shoulders) do
-  local direction=joint.left and 1 or -1
-  joint.motor.Transform=CFrame.Angles(math.sin(t*1.2+direction)*.20,0,direction*(.10+math.sin(t*.85)*.10))
+connection=RunService.RenderStepped:Connect(function(dt)
+ if not menuRoot.Parent or W:GetAttribute('GameMode')~='Menu' then
+  if connection then connection:Disconnect() end
+  if swimTrack then swimTrack:Stop() end
+  menuRoot:Destroy()
+  return
+ end
+ elapsed+=math.min(dt,.08)
+ local bob=math.sin(elapsed*.8)*.17
+ local headPosition=anchor+Vector3.new(0,1.65+bob,0)
+ if avatar then
+  avatar:PivotTo(CFrame.new(anchor+Vector3.new(0,bob,0))*CFrame.Angles(math.rad(-8)+math.sin(elapsed*.42)*.025,math.pi+math.sin(elapsed*.31)*.08,math.rad(6)+math.sin(elapsed*.4)*.03))
+  local head=avatar:FindFirstChild('Head')
+  if head and head:IsA('BasePart') then headPosition=head.Position end
+ end
+ local wideEye=Vector3.new(0,5001.05,1.3)
+ local wideTarget=Vector3.new(-.65,5001.05,-12)
+ local closeEye=headPosition+Vector3.new(1.25,.15,2.8)
+ -- Aim just right of the face, so the face stays at the LEFT of the panel.
+ local closeTarget=headPosition+Vector3.new(1.10,0,-.15)
+ local t=math.clamp(zoom.Value,0,1)
+ camera.CameraType=Enum.CameraType.Scriptable
+ camera.FieldOfView=60-t*8
+ camera.CFrame=CFrame.lookAt(wideEye:Lerp(closeEye,t),wideTarget:Lerp(closeTarget,t))
+ stoneAccum+=dt
+ if stoneAccum>1/24 then
+  stoneAccum=0
+  for _,stone in ipairs(stones) do
+   local theta=stone.phase+elapsed*stone.speed
+   local r=stone.radius
+   -- X/Y radial clearance is at least 3.9 studs, even when a stone is in front.
+   local center=anchor+Vector3.new(math.cos(theta)*r,math.sin(theta)*r*.78+math.sin(elapsed*.19+stone.spin)*.26,stone.depth)
+   local tilt=CFrame.Angles(elapsed*.033+stone.spin,theta*.44,elapsed*.018)
+   stone.model:PivotTo(CFrame.new(center)*tilt)
+  end
  end
 end)
