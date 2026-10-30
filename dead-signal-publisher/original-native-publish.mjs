@@ -45,12 +45,12 @@ const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 const artBytes=await fs.readFile(new URL('./chapter-2-hero.jpg',import.meta.url));
 const artForm=new FormData();
-artForm.set('request',new Blob([JSON.stringify({
+artForm.set('request',JSON.stringify({
  assetType:'Image',
  displayName:'Still Here Chapter 2',
  description:'Generated greenhouse key art for the Chapter 2 message of the day.',
  creationContext:{creator:{userId:8344738123}}
-})],{type:'application/json'}));
+}));
 artForm.set('fileContent',new Blob([artBytes],{type:'image/jpeg'}),'still-here-chapter-2.jpg');
 const artResponse=await fetch('https://apis.roblox.com/assets/v1/assets',{
  method:'POST',headers:{'x-api-key':key},body:artForm,signal:AbortSignal.timeout(45000)
