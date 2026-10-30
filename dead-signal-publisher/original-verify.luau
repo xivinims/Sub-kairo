@@ -1,6 +1,6 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-gameplay-fixes-v3','Wrong build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-interface-v4','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
@@ -16,6 +16,9 @@ assert(not W.Content.Exterior.Props.Vechicles:FindFirstChild('SUV_Damaged'),'Wre
 assert(not SP.StarterCharacterScripts.Movement.Enabled and not SP.StarterCharacterScripts.BodyVisible.Enabled,'Competing locomotion/body scripts enabled')
 assert(not RS.OriginalStarterGui.Scripts.Game.MouseTilt.Enabled,'R6 joint writer active')
 assert(game:GetService('ReplicatedFirst').OriginalMissionHUD.Enabled,'Top mission HUD missing')
+assert(RS.PlayerSettings:IsA('RemoteFunction') and RS.SessionInterface and RS.SettingsSchema,'Preferences infrastructure missing')
+assert(require(RS.DemoGlobalSettings).skipStartingEvent,'Imported title sequence still enabled')
+assert(game:GetService('ReplicatedFirst').SessionLoadingClient.Enabled,'Unified loading missing')
 local cfg=require(game:GetService('ReplicatedFirst').DemoConfig)
 local missions=0;for name,mission in pairs(cfg.Missions) do assert(mission.MissionRoot,'Mission root missing '..name);missions+=1 end
 local parts,tagged=0,0;for _,d in ipairs(W.Content:GetDescendants()) do if d:IsA('BasePart') then parts+=1 end;if #game:GetService('CollectionService'):GetTags(d)>0 then tagged+=1 end end
@@ -36,4 +39,4 @@ if game:GetService('RunService'):IsServer() then
  for _,name in ipairs({'M4A1','Deagle'}) do local tool=lib.WeaponsHandler.CreateWeapon(name);assert(tool and tool.Weapon.PrimaryPart,'Original weapon factory failed '..name);tool:Destroy() end
  fpsLoaded=true
 end
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,gameplayFixes=W:GetAttribute('GameplayFixVersion'),wreckRemoved=true,menuDesign=RS.MenuBackdrop:GetAttribute('DesignVersion'),originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,gameplayFixes=W:GetAttribute('GameplayFixVersion'),wreckRemoved=true,preferences=true,importedIntroDisabled=true,menuDesign=RS.MenuBackdrop:GetAttribute('DesignVersion'),originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})

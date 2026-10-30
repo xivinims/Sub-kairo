@@ -31,3 +31,6 @@ end
 W:GetAttributeChangedSignal('OriginalMissionState'):Connect(refresh)
 W:GetAttributeChangedSignal('OriginalMissionName'):Connect(function() task.defer(refresh) end)
 refresh()
+
+local function visibility() gui.Enabled=player:GetAttribute("ShowObjectives")~=false end
+player:GetAttributeChangedSignal("ShowObjectives"):Connect(visibility);visibility()

@@ -44,6 +44,7 @@ return function(dm)
  replace(client,'runService.RenderStepped:Connect(RenderStepped)','runService:BindToRenderStep("OriginalFPSClient",Enum.RenderPriority.Camera.Value+3,RenderStepped)')
  local fov=RS.Library.Client.FOVHandler
  replace(fov,'function handler:Update(dt)','function handler:Update(dt)\n if workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable then return end')
+ replace(fov,'self.FOVSpring.Target = self:GetTarget()','self.FOVSpring.Target = self:GetTarget() + ((library.LocalPlayer:GetAttribute("PreferredFOV") or 70)-70)')
  replace(fov,'"FOVSpring",Enum.RenderPriority.Camera.Value','"FOVSpring",Enum.RenderPriority.Camera.Value+2')
  local recoil=RS.Library.Client.RecoilHandler
  replace(recoil,'function handler:Update(dt)','function handler:Update(dt)\n if workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable then self.PreviousValue=self.RecoilValue.Value;return end')

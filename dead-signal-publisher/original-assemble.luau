@@ -43,7 +43,7 @@ for _,s in ipairs(dm:GetDescendants()) do if s:IsA('LuaSourceContainer') and s:G
 end end
 -- Demo place-id checks otherwise enable cheats in every copied game.
 local settings=RS.DemoGlobalSettings
-change(settings,"return {gameplayEnabled=true,cheatsEnabled=false,skipGameCountdown=true,skipStartingEvent=false,forceSpawnInTheLobby=false,missionCompleteCheatEnabled=false,unlockFinalMissionEarly=false}",'Production settings for this universe; original campaign active')
+change(settings,"return {gameplayEnabled=true,cheatsEnabled=false,skipGameCountdown=true,skipStartingEvent=true,forceSpawnInTheLobby=false,missionCompleteCheatEnabled=false,unlockFinalMissionEarly=false}",'Production settings for this universe; original campaign active')
 -- Source game creates a second reserved lobby; this universe already has its own session menu.
 local utils=RF.DemoUtils
 change(utils,utils.Source:gsub('return game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0','return workspace:GetAttribute("GameMode") == "Match"'),'Use current reserved match for original campaign')
@@ -56,6 +56,15 @@ for _,s in ipairs(dm:GetService('StarterGui'):GetDescendants()) do if s:IsA('Loc
 local anim=SP.StarterCharacterScripts:FindFirstChild('Animate');if anim then anim.Disabled=true;anim.Name='FPSAnimateR6Archive';anim:SetAttribute('DisabledReason','R6 locomotion conflicts with mansion R15; source retained') end
 local originalGui=R.Instance.new('Folder');originalGui.Name='OriginalStarterGui';originalGui.Parent=RS
 for _,c in ipairs(dm:GetService('StarterGui'):GetChildren()) do c.Parent=originalGui end
+-- Keep transition targets for source scripts, but suppress the imported title/white arrival.
+local blackout=originalGui:FindFirstChild('Screenspace_Blackout')
+if blackout then for _,d in ipairs(blackout:GetDescendants()) do
+ if d.Name=='Title_01' or d.Name=='Quote_01' or d.Name=='Credits_01' then if d:IsA('GuiObject') then d.Visible=false end end
+ if d.Name=='Black_Screen_A' then
+  if d:IsA('GuiObject') then d.BackgroundColor3=R.Color3.new(0,0,0);d.BackgroundTransparency=1 end
+  if d:IsA('ImageLabel') then d.ImageColor3=R.Color3.new(0,0,0);d.ImageTransparency=1 end
+ end
+end end
 -- Static, script-free source foyer for the menu; no campaign geometry is changed.
 local backdrop=R.Instance.new('Model');backdrop.Name='MenuBackdrop';backdrop.Parent=RS
 for _,part in ipairs(W.Content.Interior.Foyer:GetDescendants()) do
@@ -89,13 +98,17 @@ local function install(parent,name,class,file)
 end
 local runtime=R.Instance.new('Folder');runtime.Name='StillHereRuntime';runtime.Parent=SSS
 install(runtime,'SessionProfile','ModuleScript','session-profile.luau');install(runtime,'SessionRuntime','Script','session-server.luau')
+install(RS,'SettingsSchema','ModuleScript','settings-schema.luau')
+install(RS,'SessionInterface','ModuleScript','session-interface.luau')
+install(runtime,'PlayerSettings','Script','settings-server.luau')
+install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'SessionMenuClient','LocalScript','session-menu-client.luau')
 install(RF,'OriginalUIBootstrap','LocalScript','original-ui-bootstrap.luau')
 install(RF,'OriginalMissionHUD','LocalScript','original-mission-hud.luau')
 install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
-for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
+for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
-W:SetAttribute('DeadSignalBuildId','still-here-gameplay-fixes-v3');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
+W:SetAttribute('DeadSignalBuildId','still-here-interface-v4');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
 local manifest=R.Instance.new('StringValue');manifest.Name='OriginalScriptManifest';manifest.Value=J.encode('json',records);manifest.Parent=SS
 local region=R.Instance.new('TerrainRegion');region.Name='OriginalTerrain';region.SmoothGrid=W.Terrain.SmoothGrid;region.ExtentsMin=R.Vector3int16.new(-144,-64,-192);region.ExtentsMax=R.Vector3int16.new(144,100,144);region.Parent=SS

@@ -14,7 +14,12 @@ end
 local function snapshot(p)
  local code=membership[p];local party=code and parties[code];local members={}
  if party then for _,member in ipairs(party.members) do table.insert(members,{id=member.UserId,name=member.DisplayName}) end end
- return {profile=Profile.Cache[p],catalog=Profile.Catalog,party=party and {code=code,members=members,leader=party.leader.UserId} or nil}
+ local groups={}
+ for groupCode,group in pairs(parties) do
+  if not launching[group.leader] then table.insert(groups,{code=groupCode,name=group.leader.DisplayName,count=#group.members,capacity=group.capacity or 6,friendsOnly=group.friendsOnly==true}) end
+ end
+ table.sort(groups,function(a,b) return a.code<b.code end)
+ return {profile=Profile.Cache[p],groups=groups,party=party and {code=code,members=members,leader=party.leader.UserId,capacity=party.capacity or 6,friendsOnly=party.friendsOnly==true} or nil}
 end
 local function launch(members)
  if #members<1 or #members>6 then return false,'O grupo precisa ter de 1 a 6 pessoas.' end
@@ -41,7 +46,7 @@ remote.OnServerInvoke=function(p,action,value)
   if not ok then warn('[ReturnMenu] '..tostring(err)) end
   return {ok=ok,message=ok and 'Voltando ao menu…' or 'Falhou. Tenta novamente.'}
  end
- if typeof(action)~='string' or typeof(value)=='table' then return {ok=false,message='Pedido inválido.'} end
+ if typeof(action)~='string' or (typeof(value)=='table' and action~='create') then return {ok=false,message='Pedido inválido.'} end
  if os.clock()-(last[p] or 0)<.35 then return {ok=false,message='Aguarde um instante.'} end;last[p]=os.clock()
  if action=='state' then if not Profile.Cache[p] then Profile.Load(p) end;return {ok=true,data=snapshot(p)} end
  if launching[p] then return {ok=false,message='A partida já está iniciando.'} end
@@ -50,14 +55,18 @@ remote.OnServerInvoke=function(p,action,value)
  elseif action=='create' then
   leave(p);local code=H:GenerateGUID(false):gsub('-',''):sub(1,6):upper()
   while parties[code] do code=H:GenerateGUID(false):sub(1,6):upper() end
-  parties[code]={leader=p,members={p}};membership[p]=code
+  local options=typeof(value)=='table' and value or {};local n=tonumber(options.capacity) or 6;if n~=n or math.abs(n)==math.huge then n=6 end
+  parties[code]={leader=p,members={p},capacity=math.clamp(math.floor(n),2,6),friendsOnly=options.friendsOnly==true};membership[p]=code
  elseif action=='join' then
   local code=typeof(value)=='string' and value:upper():sub(1,6) or '';local party=parties[code]
-  if not party or #party.members>=6 then ok=false;message='Grupo não encontrado neste lobby ou está cheio.'
+  local allowed=true
+  if party and party.friendsOnly and party.leader~=p then local checked,isFriend=pcall(function() return p:IsFriendsWith(party.leader.UserId) end);allowed=checked and isFriend end
+  if not allowed then ok=false;message='Este grupo é somente para amigos do líder.'
+  elseif not party or #party.members>=(party.capacity or 6) or launching[party.leader] then ok=false;message='Grupo não encontrado neste lobby ou está cheio.'
   else leave(p);membership[p]=code;table.insert(party.members,p) end
  elseif action=='leave' then leave(p)
  elseif action=='start' then
-  local party=parties[membership[p]];if not party or party.leader~=p then ok=false;message='Só o líder pode iniciar.' else ok,message=launch(party.members) end
+  local party=parties[membership[p]];if not party or party.leader~=p then ok=false;message='Só o líder pode iniciar.' else ok,message=launch(table.clone(party.members)) end
  elseif action=='buy' then ok,message=Profile.Buy(p,value);if typeof(message)=='table' then message=ok and 'Compra salva. Será aplicada na partida.' or 'Créditos insuficientes.' end
  else ok=false;message='Pedido inválido.' end
  return {ok=ok,message=message,data=snapshot(p)}
