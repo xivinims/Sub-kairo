@@ -12,10 +12,12 @@ local model=template:Clone();model.Name='LocalSkyBlackHole'
 local origin=template:GetAttribute('SourceOrigin')
 local reference=template:GetAttribute('ReferenceDistance') or 1028
 model.WorldPivot=CFrame.lookAt(origin,origin+Vector3.new(1,0,0))
-local distance=menu and 460 or 900
--- Source's disc was nearly invisible because the extracted scene was shrunken
--- and moved too far from the menu camera. Keep its authored geometry.
-model:ScaleTo(math.clamp((menu and 900 or 500)/reference,menu and .5 or .12,menu and 1.0 or .7))
+local distance=menu and 660 or 900
+-- Source halo diameter is 220 studs and the beam lattice extends much farther.
+-- Scale according to the actual halo, NOT the spawn distance or the full sky.
+local haloDiameter=template:GetAttribute('SourceHaloDiameter') or 220
+local scale=menu and math.clamp(42/haloDiameter,.14,.24) or math.clamp(500/reference,.12,.7)
+model:ScaleTo(scale)
 model.Parent=W
 local touch=UIS.TouchEnabled
 local sourceSky=RS:FindFirstChild('OriginalBlackHoleSky')
@@ -24,13 +26,15 @@ if menu and sourceSky then
  for _,s in ipairs(lighting:GetChildren()) do if s:IsA('Sky') then s:Destroy() end end
  sourceSky:Clone().Parent=lighting
 end
--- In menus, reserve the visible center-right sky for the actual accretion disk.
--- This is a real mesh from the original asset, not a painted halo or a UI picture.
--- Right-side menus and the floating avatar are separate UI layers.
+-- View the original singularity from its AUTHORED observer direction (+X with
+-- a slight downward angle). The previous code aimed Halo.LookVector (-Z) at
+-- the camera, which turned the accretion disc into a giant edge-on stripe.
 local offset=Vector3.new(-.36,.49,-.79).Unit*distance
 local base=model:GetPivot()
 local halo=assert(model:FindFirstChild('Halo',true),'Original black-hole singularity halo missing')
-local haloToPivot=halo.CFrame:ToObjectSpace(base)
+local sourceDirection=template:GetAttribute('SourceViewDirection') or Vector3.new(1,-.09,0)
+local sourceObservation=CFrame.lookAt(halo.CFrame.Position,halo.CFrame.Position+sourceDirection)
+local observationToPivot=sourceObservation:ToObjectSpace(base)
 local orbit={};local flares={}
 local function pivot(object,cf)
  if object:IsA('Model') then object:PivotTo(cf) else object.CFrame=cf end
@@ -40,7 +44,7 @@ local spinner;local shardBones={}
 if field and field:FindFirstChildWhichIsA('Bone',true) then
  -- The original debris is one skinned mesh: retain its authored bones and shapes.
  local _,size=field:GetBoundingBox();local maximum=math.max(size.X,size.Y,size.Z)
- local maxDebris=menu and 140 or 420
+ local maxDebris=menu and 85 or 420
  if maximum>maxDebris then field:ScaleTo(field:GetScale()*maxDebris/maximum) end
  local orientation=base:ToObjectSpace(field:GetPivot()).Rotation
  field:PivotTo(base*orientation)
@@ -58,7 +62,7 @@ elseif field then
     local original=object:IsA('Model') and object:GetPivot() or object.CFrame
     local rotation=base:ToObjectSpace(original).Rotation
     local angle=index*2.399963
-    local radius=(menu and 55 or 140)+(index*37)%(menu and 45 or 90)
+    local radius=(menu and 35 or 140)+(index*37)%(menu and 30 or 90)
     local pos=Vector3.new(math.cos(angle)*radius,math.sin(index*1.7)*48,math.sin(angle)*radius)
     local localCF=CFrame.new(pos)*rotation
     pivot(object,base*localCF)
@@ -120,18 +124,17 @@ Run.RenderStepped:Connect(function(dt)
  local center
  if menu then
   local aspect=math.max(camera.ViewportSize.X,1)/math.max(camera.ViewportSize.Y,1)
-  -- Keep the authored disc visually behind the avatar and away from the right panel.
+  -- Compose the original hole just left of the swimmer. Keep its beams/disk
+  -- at their original angles relative to the viewer from the source place.
   local fov=math.rad(camera.FieldOfView)
   local y=math.tan(fov*.5)*distance
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   -camera.CFrame.RightVector*(x*.17)
+   -camera.CFrame.RightVector*(x*.20)
    +camera.CFrame.UpVector*(y*.10)
-  -- Force the original Halo mesh to face the menu camera so its dark
-  -- singularity and accretion disc stay visible instead of edge-on glare.
-  local targetHalo=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
-  base=targetHalo*haloToPivot
+  local targetObservation=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
+  base=targetObservation*observationToPivot
  else
   center=camera.CFrame.Position+offset
   base=CFrame.lookAt(center,camera.CFrame.Position)
