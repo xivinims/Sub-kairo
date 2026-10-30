@@ -38,7 +38,10 @@ local description=label(menu,"Hora de podar.\nAs flores murcharam. O sinal conti
 local controls=frame(menu,"Buttons",Vector2.new(55,425),Vector2.new(405,280),nil,1)
 local hud=frame(root,"HUD",Vector2.zero,Vector2.new(1280,720),nil,1);hud.Visible=false
 local objective=label(hud,"",Vector2.new(24,25),Vector2.new(940,100),22)
-local stamina=label(hud,"",Vector2.new(24,135),Vector2.new(460,35),18)
+local staminaBg=frame(hud,"StaminaBg",Vector2.new(24,135),Vector2.new(260,18),Color3.fromRGB(18,24,20),.4)
+frame(staminaBg,"StaminaBorder",Vector2.new(-1,-1),Vector2.new(262,20),Color3.fromRGB(80,95,85),.7)
+local staminaBar=frame(staminaBg,"StaminaBar",Vector2.zero,Vector2.new(260,18),Color3.fromRGB(80,200,120),.1)
+local stamina=label(hud,"",Vector2.new(24,158),Vector2.new(460,35),16)
 local prompt=label(hud,"",Vector2.new(220,470),Vector2.new(850,70),21);prompt.TextXAlignment=Enum.TextXAlignment.Center
 local crosshair=label(hud,"·",Vector2.new(627,332),Vector2.new(28,35),30)
 local status=label(menu,"Conectando ao servidor…",Vector2.new(55,685),Vector2.new(1050,30),16)
@@ -52,10 +55,15 @@ local messageUntil=0;local message="";local function sound(id,loop,vol)
  if type(id)~="number" or id<=0 then return nil end
  local s=Instance.new("Sound");s.SoundId="rbxassetid://"..id;s.Looped=loop;s.Volume=vol or .4;s.Parent=SoundService;return s
 end
-local ambience=sound(Config.Assets.Ambient,true,.25);local pursuit=sound(Config.Assets.Pursuit,true,0);local voice
+local ambience=sound(Config.Assets.Ambient,true,.25);local pursuit=sound(Config.Assets.Pursuit,true,0);local voice;local radioSfx
 if ambience then ambience:Play() end;if pursuit then pursuit:Play() end
 local function stopVoice() if voice then voice:Stop();voice:Destroy();voice=nil end end
 local function playVoice(id) stopVoice();voice=sound(id,false,.9*volume);if voice then voice:Play() end end
+local function playRadioTape()
+ if radioSfx then radioSfx:Destroy() end
+ radioSfx=sound(Config.Assets.Radio,false,.6*volume)
+ if radioSfx then radioSfx:Play() end
+end
 local function clearButtons() for _,b in ipairs(controls:GetChildren()) do b:Destroy() end end
 local function add(text,index,fn) return button(controls,text,Vector2.new(0,(index-1)*46),Vector2.new(330,39),fn) end
 local function mouse(free) UIS.MouseBehavior=if free then Enum.MouseBehavior.Default else Enum.MouseBehavior.LockCenter;UIS.MouseIconEnabled=free end
@@ -123,7 +131,9 @@ local function scene(payload,ending)
 end
 local function targetAtCrosshair()
  local ray=camera:ViewportPointToRay(camera.ViewportSize.X/2,camera.ViewportSize.Y/2)
- local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={player.Character,hands.root}
+ local filter={player.Character,hands.root}
+ if hands.flights then for _,f in pairs(hands.flights) do if f.held and f.held.Parent then table.insert(filter,f.held) end end end
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances=filter
  local hit=workspace:Raycast(ray.Origin,ray.Direction*Config.MaxReach,params)
  local obj=hit and hit.Instance
  while obj and obj~=workspace do if obj:GetAttribute("TargetId") then return obj end;obj=obj.Parent end
@@ -197,7 +207,7 @@ update.OnClientEvent:Connect(function(kind,payload)
  elseif kind=="Won" then mainMenu();heading.Text="O SINAL NÃO MORREU";description.Text="FIM DO CAPÍTULO 1 / DEAD SIGNAL\nVocê saiu. A transmissão foi junto."
  elseif kind=="Paused" then mainMenu();mode="paused";heading.Text="PAUSADO";clearButtons();add("CONTINUAR",1,function() action:FireServer("Resume") end);add("CONFIGURAÇÕES",2,settings);add("MENU PRINCIPAL",3,mainMenu)
  elseif kind=="Document" then
-  mode="reading";menu.Visible=true;hud.Visible=false;hands:setEnabled(false);mouse(true);heading.Text="PROTOCOLO";description.Text=payload.message or "";clearButtons();add("FECHAR",1,gameplay)
+  mode="reading";menu.Visible=true;hud.Visible=false;hands:setEnabled(false);mouse(true);heading.Text="PROTOCOLO";description.Text=payload.message or "";clearButtons();add("FECHAR",1,gameplay);playRadioTape()
  elseif data.active and not data.scene and not data.dead and mode~="reading" and mode~="cinema" then gameplay()
  elseif data.active and not data.scene and mode=="cinema" then gameplay() end
 end)
@@ -205,7 +215,10 @@ RunService.RenderStepped:Connect(function()
  if mode=="playing" then
   local info=Config.Sectors[data.state.sector]
   objective.Text="DEAD SIGNAL / "..info.Name.."\n"..info.Goal.."\n"..Campaign.progress(data.state)
-  stamina.Text="FÔLEGO "..math.floor(data.stamina or 100).."%"
+  local stamVal=math.clamp(data.stamina or 100,0,100)
+  stamina.Text="FÔLEGO "..math.floor(stamVal).."%"
+  staminaBar.Size=UDim2.fromOffset(math.floor(260*(stamVal/100)),18)
+  staminaBar.BackgroundColor3=if stamVal<25 then Color3.fromRGB(220,60,50) else Color3.fromRGB(80,200,120)
   local target=targetAtCrosshair();prompt.Text=if os.clock()<messageUntil then message else if target then target:GetAttribute("Title").."  •  E / AZUL   Q / VERMELHA" else ""
  end
  local danger=Campaign.danger(data.state) and mode=="playing"

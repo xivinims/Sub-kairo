@@ -103,7 +103,11 @@ releaseHeld=function(s,side)
  if held then
   if held.align then held.align:Destroy() end
   if held.attachment then held.attachment:Destroy() end
-  if held.part and held.part.Parent then held.part:SetAttribute("HeldBy",nil);pcall(function() held.part:SetNetworkOwnershipAuto() end) end
+  if held.part and held.part.Parent then
+   held.part:SetAttribute("HeldBy",nil)
+   if held.canCollideOriginal~=nil then pcall(function() held.part.CanCollide=held.canCollideOriginal end) end
+   pcall(function() held.part:SetNetworkOwnershipAuto() end)
+  end
   s.held[side]=nil
   if s.owner and s.owner.Parent then update:FireClient(s.owner,"HandRelease",{right=side==2}) end
  end
@@ -118,7 +122,9 @@ local function fireHand(p,s,direction,right)
  if s.held[side] then releaseHeld(s,side);return end
  local character=p.Character;local head=character and character:FindFirstChild("Head")
  if not head then return end
- local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={character}
+ local filter={p.Character,s.enemy}
+ if s.held then for _,h in pairs(s.held) do if h.part and h.part.Parent then table.insert(filter,h.part) end end end
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances=filter
  local hit=workspace:Raycast(head.Position,direction.Unit*Config.MaxReach,params)
  local point=if hit then hit.Position else head.Position+direction.Unit*Config.MaxReach
  update:FireClient(p,"Hand",{point=point,right=right})
@@ -135,10 +141,12 @@ local function fireHand(p,s,direction,right)
    if sessions[p]~=s or s.handClocks[side]~=launchClock or not s.active or s.scene or s.dead or not part.Parent or not head.Parent or (part.Position-head.Position).Magnitude>Config.MaxReach+4 then return end
    if part:GetAttribute("HeldBy") then return end
    part:SetAttribute("HeldBy",p.UserId)
+   local origCollide=part.CanCollide
+   pcall(function() part.CanCollide=false end)
    local attachment=Instance.new("Attachment");attachment.Parent=part
    local align=Instance.new("AlignPosition");align.Mode=Enum.PositionAlignmentMode.OneAttachment;align.Attachment0=attachment;align.MaxForce=12000;align.MaxVelocity=25;align.Responsiveness=18;align.Position=head.Position+direction.Unit*6;align.Parent=part
    pcall(function() part:SetNetworkOwner(nil) end)
-   s.held[side]={part=part,attachment=attachment,align=align}
+   s.held[side]={part=part,attachment=attachment,align=align,canCollideOriginal=origCollide}
    update:FireClient(p,"HandHold",{part=part,right=right})
   end)
  end
