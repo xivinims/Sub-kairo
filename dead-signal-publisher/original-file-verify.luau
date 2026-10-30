@@ -2,9 +2,10 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@l
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'))
 local original=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'));local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
 local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v3','Wrong live build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v4','Wrong live build')
 assert(SS.OriginalWorld.Content.Interior and SS.Corrupt.Grandfather,'Source map hierarchy lost')
 assert(not W:FindFirstChild('Content'),'Public menu contains mansion')
+assert(dm:GetService('ReplicatedFirst').MenuAvatarClient.Source:find('CreateHumanoidModelFromUserIdAsync',1,true),'Actual player portrait missing')
 local function resolve(root,path) for _,name in ipairs(path:split('.')) do root=assert(root:FindFirstChild(name),'Missing source path '..path) end;return root end
 local exact,patched=0,0
 local originals={}
