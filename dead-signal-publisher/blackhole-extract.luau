@@ -43,6 +43,13 @@ return function(dm)
  assert(n>50 and beams>10,'Incomplete original sky effect')
  template:SetAttribute('SourceAsset','7208091524');template:SetAttribute('SourcePaths','Workspace.Skybox.BlackHole + Workspace.Skybox.DebrisField')
  template:SetAttribute('SourceOrigin',halo.CFrame.Position);template:SetAttribute('ReferenceDistance',distance)
+ -- The scene was authored for observation from the source spawn toward -X,
+ -- NOT with Halo.LookVector (-Z) facing the player. Preserve that view.
+ local observer=spawn and spawn.CFrame.Position or (halo.CFrame.Position+Vector3.new(1200,-110,0))
+ local direction=(observer-halo.CFrame.Position).Unit
+ template:SetAttribute('SourceViewDirection',direction)
+ template:SetAttribute('SourceHaloDiameter',math.max(halo.Size.X,halo.Size.Y,halo.Size.Z))
+ print('SOURCE VIEW DIRECTION '..tostring(direction)..' / original halo diameter '..tostring(math.max(halo.Size.X,halo.Size.Y,halo.Size.Z)))
  template:SetAttribute('GeometryOnly',true);template:SetAttribute('OriginalPartCount',n)
  local RS=dm:GetService('ReplicatedStorage');local old=RS:FindFirstChild(template.Name);if old then old:Destroy() end
  template.Parent=RS
