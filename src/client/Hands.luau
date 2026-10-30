@@ -41,7 +41,7 @@ function Hands.new(camera)
     local position=base.Position:Lerp(flight.point,t)
     if flight.held and flight.held.Parent then position=flight.held.Position end
     at=CFrame.new(position)*base.Rotation
-    if not flight.held and age>travel*2+.12 then self.flights[side]=nil end
+    if (not flight.held or not flight.held.Parent) and age>travel*2+.12 then self.flights[side]=nil end
    end
    item.model:PivotTo(at);item.from.CFrame=base*CFrame.new(0,-.45,.2);item.beam.Enabled=self.enabled and self.flights[side]~=nil
    for _,p in ipairs(item.model:GetDescendants()) do if p:IsA("BasePart") then p.LocalTransparencyModifier=if self.enabled then 0 else 1 end end
