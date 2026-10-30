@@ -162,13 +162,6 @@ function M.OpenSettings()
  tabs.Name='SettingsCategoryScroll'
  tabs.ScrollBarThickness=2
  tabs.UIListLayout.Padding=UDim.new(0,7)
- local caption=M.Label(tabs,'',28)
- caption.Name='OptionsPath'
- caption.LayoutOrder=-5
- caption.TextXAlignment=Enum.TextXAlignment.Left
- caption.Font=Enum.Font.RobotoCondensed
- caption.TextSize=11
- caption.TextColor3=Color3.fromRGB(167,181,188)
  local right=make('Frame',{
   Name='OptionsHalf',
   Position=UDim2.fromScale(.30,0),
@@ -251,7 +244,6 @@ function M.OpenSettings()
   else
    panel.Status.Text='Changes apply when the mission starts.'
   end
-  caption.Text=''
   sectionHeading.Text=group[1]
   for name,tab in pairs(tabsByName) do
    local active=name==selected

@@ -220,7 +220,7 @@ local function layout()
  local size=bg.AbsoluteSize
  local landscape=size.X>=size.Y
  local compact=size.X<900
- local mobile=UIS.TouchEnabled
+ local mobile=UIS.TouchEnabled and not UIS.MouseEnabled
  composition.Position=UDim2.fromScale(landscape and .047 or .065,.075)
  composition.Size=UDim2.fromScale(mobile and (landscape and .40 or .39) or (landscape and (compact and .43 or .32) or .86),landscape and .58 or .45)
  title.Size=UDim2.fromOffset(mobile and 52 or 60,mobile and 52 or 60)
@@ -242,6 +242,9 @@ local function layout()
  end
  heading.TextSize=mobile and 10 or 12
  motdText.TextSize=mobile and 10 or 12
+ chapterTitle.TextSize=mobile and 23 or 31
+ chapterDetail.TextSize=mobile and 12 or 15
+ chapterUnavailable.TextSize=mobile and 10 or 12
  preview.Position=UDim2.new(0,0,0,44)
  preview.Size=UDim2.new(1,0,1,-67)
  footer.Position=UDim2.new(0,0,1,-18)
