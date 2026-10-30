@@ -53,7 +53,7 @@ elseif field then
     local pos=Vector3.new(math.cos(angle)*radius,math.sin(index*1.7)*48,math.sin(angle)*radius)
     local localCF=CFrame.new(pos)*rotation
     pivot(object,base*localCF)
-    table.insert(orbit,{object=object,cf=localCF,speed=.012+(index%7)*.003,phase=angle,animated=index<=(touch and 24 or 48)})
+    table.insert(orbit,{object=object,cf=localCF,speed=(menu and .004 or .012)+(index%7)*(menu and .001 or .003),phase=angle,animated=index<=(touch and 24 or 48)})
    end
   end
  end
@@ -97,8 +97,8 @@ Run.RenderStepped:Connect(function(dt)
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   +camera.CFrame.RightVector*(x*.17)
-   +camera.CFrame.UpVector*(y*.33)
+   -camera.CFrame.RightVector*(x*.14)
+   +camera.CFrame.UpVector*(y*.12)
   -- Force the original Halo mesh to face the menu camera so its dark
   -- singularity and accretion disc stay visible instead of edge-on glare.
   local targetHalo=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
@@ -108,11 +108,11 @@ Run.RenderStepped:Connect(function(dt)
   base=CFrame.lookAt(center,camera.CFrame.Position)
  end
  model:PivotTo(base)
- if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*.018,0) end
- for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*(.018+i%4*.003),time*.012,time*.009) end
+ if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*(menu and .005 or .018),0) end
+ for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*((menu and .004 or .018)+i%4*(menu and .001 or .003)),time*(menu and .004 or .012),time*(menu and .003 or .009)) end
  for _,state in ipairs(orbit) do if state.animated then
   local spin=CFrame.Angles(0,time*state.speed,0)
-  pivot(state.object,base*spin*state.cf*CFrame.Angles(time*.018,0,time*.012))
+  pivot(state.object,base*spin*state.cf*CFrame.Angles(time*(menu and .006 or .018),0,time*(menu and .004 or .012)))
  end end
  if occlusion>.25 then
   occlusion=0
