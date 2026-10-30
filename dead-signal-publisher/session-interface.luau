@@ -81,13 +81,14 @@ end
 function M.OpenSettings()
  local original=M.Loaded and table.clone(M.Settings) or nil
  local panel=M.Panel('OPÇÕES')
- local categories=make('Frame',{Position=UDim2.fromScale(0,0),Size=UDim2.fromScale(.405,1),BackgroundTransparency=1},panel.Content)
+ local categories=make('Frame',{Name='OptionCategoryStack',Position=UDim2.fromScale(.27,0),Size=UDim2.fromScale(.405,1),BackgroundTransparency=1},panel.Content)
  local tabs=M.List(categories);tabs.ScrollBarThickness=0
- local caption=M.Label(tabs,'OPÇÕES / GAMEPLAY',24);caption.Font=Enum.Font.RobotoCondensed;caption.TextSize=11;caption.TextXAlignment=Enum.TextXAlignment.Right;caption.TextColor3=Color3.fromRGB(182,200,201)
- local right=make('Frame',{Name='OptionsHalf',Position=UDim2.fromScale(.43,0),Size=UDim2.fromScale(.57,1),BackgroundColor3=Color3.fromRGB(6,19,26),BackgroundTransparency=.13,BorderSizePixel=0,ClipsDescendants=true},panel.Content)
+ local caption=M.Label(tabs,'OPÇÕES',24);caption.Name='OptionsPath';caption.LayoutOrder=-5
+ caption.Font=Enum.Font.RobotoCondensed;caption.TextSize=11;caption.TextXAlignment=Enum.TextXAlignment.Right
+ caption.TextColor3=Color3.fromRGB(182,200,201)
+ local right=make('Frame',{Name='OptionsHalf',Position=UDim2.fromScale(1.08,0),Size=UDim2.fromScale(.57,1),BackgroundColor3=Color3.fromRGB(6,19,26),BackgroundTransparency=.13,BorderSizePixel=0,ClipsDescendants=true},panel.Content)
  local rows=M.List(right);rows.UIListLayout.Padding=UDim.new(0,2);rows.ScrollBarThickness=2
  local categoryButtons={}
- -- Only real, persisted game options. Keep the stacked headings and slender rows from the reference.
  local groups={
   {'VÍDEO',{{'Campo de visão','fov',60,90,5}}},
   {'CALIBRAÇÃO',{{'Brilho','brightness',0,1,.1}}},
@@ -96,22 +97,26 @@ function M.OpenSettings()
   {'JOGABILIDADE',{{'Objetivos','objectives'},{'Dicas no carregamento','loadingHints'}}},
   {'ÁUDIO',{{'Volume geral','volume',0,1,.1}}}
  }
+ local transition=TweenInfo.new(.38,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+ local chosen=nil
  local function category(group)
   if not panel.Gui.Parent then return end
+  chosen=group[1]
+  caption.Text='OPÇÕES / '..chosen
   for name,b in pairs(categoryButtons) do
-   local selected=name==group[1]
+   local selected=name==chosen
    b.TextColor3=selected and Color3.fromRGB(234,238,235) or Color3.fromRGB(100,128,132)
    b.BackgroundTransparency=selected and .89 or 1
   end
   for _,o in ipairs(rows:GetChildren()) do if o:IsA('GuiObject') then o:Destroy() end end
   for index,spec in ipairs(group[2]) do
-   local row=make('Frame',{Name=spec[2],LayoutOrder=index,Size=UDim2.new(1,-4,0,33),BackgroundColor3=Color3.fromRGB(95,122,129),BackgroundTransparency=index==1 and .61 or .92,BorderSizePixel=0},rows)
-   local label=M.Label(row,string.upper(spec[1]),33)
+   local item=make('TextButton',{Name=spec[2],LayoutOrder=index,Size=UDim2.new(1,-4,0,33),Text='',AutoButtonColor=false,BackgroundColor3=Color3.fromRGB(95,122,129),BackgroundTransparency=index==1 and .61 or .92,BorderSizePixel=0},rows)
+   local label=M.Label(item,string.upper(spec[1]),33)
    label.Position=UDim2.fromScale(.045,0);label.Size=UDim2.fromScale(.47,1)
    label.Font=Enum.Font.RobotoCondensed;label.TextScaled=true;label.TextWrapped=false
    label.TextColor3=Color3.fromRGB(188,211,219)
    make('UITextSizeConstraint',{MinTextSize=8,MaxTextSize=13},label)
-   local value=M.Label(row,'',33);value.Position=UDim2.fromScale(.64,0);value.Size=UDim2.fromScale(.23,1)
+   local value=M.Label(item,'',33);value.Position=UDim2.fromScale(.64,0);value.Size=UDim2.fromScale(.23,1)
    value.TextXAlignment=Enum.TextXAlignment.Center;value.TextScaled=true;value.Font=Enum.Font.RobotoCondensed
    value.TextColor3=Color3.fromRGB(222,234,239)
    make('UITextSizeConstraint',{MinTextSize=9,MaxTextSize=13},value)
@@ -126,14 +131,29 @@ function M.OpenSettings()
     else M.Settings[key]=math.clamp(math.round((v+direction*spec[5])*100)/100,spec[3],spec[4]) end
     M.Dirty=true;M.Apply();refresh()
    end
-   local previous=M.Button(row,'‹',function() adjust(-1) end)
+   local previous=M.Button(item,'‹',function() adjust(-1) end)
    previous.Position=UDim2.fromScale(.51,0);previous.Size=UDim2.fromScale(.12,1)
    previous.TextXAlignment=Enum.TextXAlignment.Center;previous.TextSize=20
-   local following=M.Button(row,'›',function() adjust(1) end)
+   local following=M.Button(item,'›',function() adjust(1) end)
    following.Position=UDim2.fromScale(.87,0);following.Size=UDim2.fromScale(.12,1)
    following.TextXAlignment=Enum.TextXAlignment.Center;following.TextSize=20
+   item.Activated:Connect(function() adjust(1) end)
+   item.MouseEnter:Connect(function()
+    item.BackgroundTransparency=.48
+    panel.Status.Text=spec[1]
+   end)
+   item.MouseLeave:Connect(function() item.BackgroundTransparency=index==1 and .61 or .92 end)
    refresh()
   end
+  Tween:Create(categories,transition,{Position=UDim2.fromScale(0,0)}):Play()
+  Tween:Create(right,transition,{Position=UDim2.fromScale(.43,0)}):Play()
+ end
+ local function closeCategory()
+  chosen=nil
+  caption.Text='OPÇÕES'
+  for _,b in pairs(categoryButtons) do b.TextColor3=Color3.fromRGB(100,128,132);b.BackgroundTransparency=1 end
+  Tween:Create(categories,transition,{Position=UDim2.fromScale(.27,0)}):Play()
+  Tween:Create(right,transition,{Position=UDim2.fromScale(1.08,0)}):Play()
  end
  for i,g in ipairs(groups) do
   local b=M.Button(tabs,g[1],function() category(g) end)
@@ -146,24 +166,37 @@ function M.OpenSettings()
  local saving=false
  local save=M.Button(panel.Footer,'APLICAR / VOLTAR',function()
   if saving then return end
+  if chosen then closeCategory();return end
   saving=true;panel.Status.Text='Salvando…';local ok,err=M.Save();saving=false
   if ok then panel.Close() else panel.Status.Text=err end
  end)
  save.Position=UDim2.fromScale(.61,0);save.Size=UDim2.fromScale(.39,1)
  save.Font=Enum.Font.RobotoCondensed;save.TextSize=15
- local cancel=M.Button(tabs,'VOLTAR SEM SALVAR',function()
+ local cancel=M.Button(tabs,'DESCARTAR ALTERAÇÕES',function()
   if original then M.Settings=original;M.Dirty=false;M.Apply() end
   panel.Close()
  end)
  cancel.LayoutOrder=99;cancel.TextSize=12;cancel.Font=Enum.Font.RobotoCondensed
  cancel.TextXAlignment=Enum.TextXAlignment.Right
- panel.Status.Text='Carregando…'
- category(groups[1])
+ local UIS=game:GetService('UserInputService')
+ local binding
+ binding=UIS.InputBegan:Connect(function(input,processed)
+  if not panel.Gui.Parent then binding:Disconnect();return end
+  if processed then return end
+  if input.KeyCode==Enum.KeyCode.Backspace or input.KeyCode==Enum.KeyCode.Escape then
+   if chosen then closeCategory()
+   else local ok,err=M.Save();if ok then panel.Close() else panel.Status.Text=err end end
+  end
+ end)
+ panel.Gui.Destroying:Connect(function() if binding then binding:Disconnect() end end)
+ panel.Status.Text='Selecione uma categoria.'
  task.spawn(function()
   local ok=M.Load();if not panel.Gui.Parent then return end
-  panel.Status.Text=ok and 'Use as setas para ajustar.' or 'Falha ao carregar. Volte e tente novamente.'
+  panel.Status.Text=ok and 'Selecione uma categoria.' or 'Falha ao carregar. Volte e tente novamente.'
   if ok then original=table.clone(M.Settings) end
-  category(groups[1])
+  if chosen then
+   for _,group in ipairs(groups) do if group[1]==chosen then category(group);break end end
+  end
  end)
 end
 
