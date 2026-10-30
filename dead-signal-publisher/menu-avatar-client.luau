@@ -46,7 +46,7 @@ local function installAvatar(model)
  if not humanoid or not root then model:Destroy();warn('[MenuCinematic] Avatar rig incomplete');return end
  model.Name='SwimmingPlayerAvatar'
  model.Parent=menuRoot
- model:PivotTo(CFrame.new(anchor)*CFrame.Angles(math.rad(-8),math.pi,0))
+ model:PivotTo(CFrame.new(anchor)*CFrame.Angles(math.rad(-54),math.pi,0))
  avatar=model
  local animator=humanoid:FindFirstChildOfClass('Animator') or Instance.new('Animator',humanoid)
  local swim=Instance.new('Animation')
@@ -72,11 +72,11 @@ end)
 -- OUTSIDE the avatar's personal space. The genuine asset debris field is also
 -- still rendered by SkyBlackHoleClient; these add close parallax for the camera.
 local stones={}
-local numStones=UIS.TouchEnabled and 8 or 13
+local numStones=UIS.TouchEnabled and 6 or 10
 local colors={Color3.fromRGB(46,51,55),Color3.fromRGB(64,66,69),Color3.fromRGB(38,48,53)}
 for i=1,numStones do
  local rock=Instance.new('Model');rock.Name='PassingStone'..i;rock.Parent=menuRoot
- local scale=.65+(i%5)*.21
+ local scale=.16+(i%5)*.035
  local function piece(kind,size,localCF,color)
   local p=Instance.new(kind)
   p.Name='RockFragment';p.Size=size;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false
@@ -87,9 +87,9 @@ for i=1,numStones do
  piece('WedgePart',Vector3.new(.9,.7,1.1)*scale,CFrame.new(.33,.3,-.24)*CFrame.Angles(0,math.rad(155),math.rad(32)),colors[(i+1)%3+1])
  piece('Part',Vector3.new(.55,.35,.88)*scale,CFrame.new(-.3,-.24,.22)*CFrame.Angles(math.rad(15),0,math.rad(-30)),colors[i%3+1])
  local phase=i*2.399963229728653
- local radius=3.9+(i%4)*.68
+ local radius=4.6+(i%4)*.65
  local inFront=i%2==0
- local z=inFront and 2.4+(i%3)*.48 or -3.4-(i%3)*1.1
+ local z=inFront and 1.1+(i%3)*.3 or -3.4-(i%3)*.8
  local center=anchor+Vector3.new(math.cos(phase)*radius,math.sin(phase)*radius*.78,z)
  rock:PivotTo(CFrame.new(center))
  table.insert(stones,{model=rock,phase=phase,radius=radius,depth=z,speed=(i%3+2)*.005,spin=i*.14})
@@ -109,7 +109,7 @@ connection=RunService.RenderStepped:Connect(function(dt)
  local bob=math.sin(elapsed*.8)*.17
  local headPosition=anchor+Vector3.new(0,1.65+bob,0)
  if avatar then
-  avatar:PivotTo(CFrame.new(anchor+Vector3.new(0,bob,0))*CFrame.Angles(math.rad(-8)+math.sin(elapsed*.42)*.025,math.pi+math.sin(elapsed*.31)*.08,math.rad(6)+math.sin(elapsed*.4)*.03))
+  avatar:PivotTo(CFrame.new(anchor+Vector3.new(0,bob,0))*CFrame.Angles(math.rad(-54)+math.sin(elapsed*.42)*.035,math.pi+math.sin(elapsed*.31)*.08,math.rad(6)+math.sin(elapsed*.4)*.03))
   local head=avatar:FindFirstChild('Head')
   if head and head:IsA('BasePart') then headPosition=head.Position end
  end
