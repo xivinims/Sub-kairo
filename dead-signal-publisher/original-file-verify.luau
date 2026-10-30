@@ -113,7 +113,7 @@ for id,root in pairs({['7902470429']=original,['15864801103']=fps}) do
  originals[id]={}
  for _,d in ipairs(root:GetDescendants()) do if d:IsA('LuaSourceContainer') then local path=d:GetFullName();originals[id][path]=originals[id][path] or {};table.insert(originals[id][path],d.Source) end end
 end
-local guard="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' then return end\n"
+local guard="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' or workspace:GetAttribute('SelectedChapter')==2 then return end\n"
 for _,d in ipairs(dm:GetDescendants()) do if d:IsA('LuaSourceContainer') and d:GetAttribute('OriginalAsset') then
  local candidates=assert(originals[d:GetAttribute('OriginalAsset')][d:GetAttribute('OriginalPath')],'Source path absent')
  if d:GetAttribute('CompatibilityChange') then patched+=1 else local matched=false;for _,source in ipairs(candidates) do if d.Source==source or d.Source==guard..source then matched=true;break end end;assert(matched,'Unmarked source modification '..d:GetFullName());exact+=1 end
