@@ -134,7 +134,7 @@ local function playRequestedEmote(model)
  local track=trackOrError
  track.Priority=Enum.AnimationPriority.Action4
  track.Looped=true
- local played,err=pcall(function() track:Play(.15,1,1) end)
+ local played,err=pcall(function() track:Play(.15,1,.74) end)
  if not played then
   status('procedural-unavailable')
   warn('[StillHereEmote] Low Gravity did not start: '..tostring(err))
@@ -231,7 +231,7 @@ RunService:BindToRenderStep(uniqueRender,Enum.RenderPriority.Camera.Value+1,func
   scene:Destroy()
   return
  end
- elapsed+=math.min(dt,.08)
+ elapsed+=math.min(dt,.08)*.72
  local headPosition=anchor+Vector3.new(0,1.55,0)
  if avatar then
   avatar:PivotTo(positionAvatar(elapsed))
