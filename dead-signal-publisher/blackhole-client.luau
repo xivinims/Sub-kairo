@@ -16,8 +16,13 @@ local distance=900
 model:ScaleTo(math.clamp(500/reference,.12,.7))
 model.Parent=W
 local touch=UIS.TouchEnabled
-local offset=(menu and Vector3.new(-.30,.05,-1) or Vector3.new(-.36,.49,-.79)).Unit*distance
+-- In menus, reserve the upper-left sky for the actual accretion disk.
+-- This is a real mesh from the original asset, not a painted halo or a UI picture.
+-- Right-side menus and the floating avatar are separate UI layers.
+local offset=Vector3.new(-.36,.49,-.79).Unit*distance
 local base=model:GetPivot()
+local halo=assert(model:FindFirstChild('Halo',true),'Original black-hole singularity halo missing')
+local haloToPivot=halo.CFrame:ToObjectSpace(base)
 local orbit={};local flares={}
 local function pivot(object,cf)
  if object:IsA('Model') then object:PivotTo(cf) else object.CFrame=cf end
@@ -56,9 +61,25 @@ end
 
 for _,d in ipairs(model:GetDescendants()) do
  if d:IsA('BasePart') then d.CanCollide=false;d.CanTouch=false;d.CanQuery=false;d.CastShadow=false end
- if d:IsA('ParticleEmitter') then d.Rate=math.min(d.Rate,touch and 24 or 60) end
- if d:IsA('Light') then d.Shadows=false;d.Range=math.min(d.Range,30) end
- if d:IsA('BillboardGui') then table.insert(flares,{gui=d,enabled=d.Enabled}) end
+ if d:IsA('ParticleEmitter') then
+  d.Rate=math.min(d.Rate,menu and 6 or (touch and 24 or 60))
+  if menu then d.LightEmission=math.min(d.LightEmission,.15) end
+ end
+ if d:IsA('Light') then
+  d.Shadows=false
+  d.Range=math.min(d.Range,menu and 12 or 30)
+  if menu then d.Brightness=math.min(d.Brightness,.3) end
+ end
+ if d:IsA('Beam') and menu then
+  -- Keep the original rays, but stop them washing out the dark center.
+  d.Brightness=math.min(d.Brightness,.35)
+  d.LightEmission=math.min(d.LightEmission,.14)
+ end
+ if d:IsA('BillboardGui') then
+  -- Original lens flares are much larger than the disk at menu camera distance.
+  table.insert(flares,{gui=d,enabled=not menu and d.Enabled})
+  if menu then d.Enabled=false end
+ end
 end
 local time,clock,occlusion=0,0,0
 Run.RenderStepped:Connect(function(dt)
@@ -66,8 +87,26 @@ Run.RenderStepped:Connect(function(dt)
  if clock<1/20 then return end
  local camera=W.CurrentCamera;if not camera then return end
  local step=math.min(clock,.2);clock=0;time+=step
- local center=camera.CFrame.Position+offset
- base=CFrame.lookAt(center,camera.CFrame.Position)
+ local center
+ if menu then
+  local aspect=math.max(camera.ViewportSize.X,1)/math.max(camera.ViewportSize.Y,1)
+  -- Target upper-left, above the player's torso, rather than directly behind it.
+  -- Use camera axes so this composition is independent of the source asset's world coordinates.
+  local fov=math.rad(camera.FieldOfView)
+  local y=math.tan(fov*.5)*distance
+  local x=y*aspect
+  center=camera.CFrame.Position
+   +camera.CFrame.LookVector*distance
+   -camera.CFrame.RightVector*(x*.38)
+   +camera.CFrame.UpVector*(y*.40)
+  -- Force the original Halo mesh to face the menu camera so its dark
+  -- singularity and accretion disc stay visible instead of edge-on glare.
+  local targetHalo=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
+  base=targetHalo*haloToPivot
+ else
+  center=camera.CFrame.Position+offset
+  base=CFrame.lookAt(center,camera.CFrame.Position)
+ end
  model:PivotTo(base)
  if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*.018,0) end
  for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*(.018+i%4*.003),time*.012,time*.009) end
@@ -79,7 +118,7 @@ Run.RenderStepped:Connect(function(dt)
   occlusion=0
   local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.IgnoreWater=true
   local exclude={model};if player.Character then table.insert(exclude,player.Character) end;params.FilterDescendantsInstances=exclude
-  local blocked=W:Raycast(camera.CFrame.Position,center-camera.CFrame.Position,params)~=nil
+  local blocked=not menu and W:Raycast(camera.CFrame.Position,center-camera.CFrame.Position,params)~=nil
   for _,f in ipairs(flares) do if f.gui.Parent then f.gui.Enabled=f.enabled and not blocked end end
  end
 end)
