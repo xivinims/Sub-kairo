@@ -108,9 +108,8 @@ install(RF,'SessionMenuClient','LocalScript','session-menu-client.luau')
 install(RF,'MenuAvatarClient','LocalScript','menu-avatar-client.luau')
 install(RF,'OriginalUIBootstrap','LocalScript','original-ui-bootstrap.luau')
 install(RF,'OriginalMissionHUD','LocalScript','original-mission-hud.luau')
-install(RF,'WeaponPickupClient','LocalScript','weapon-pickup-client.luau')
 install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
-for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'},{'PickupWeaponRequest','RemoteEvent'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
+for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
 W:SetAttribute('DeadSignalBuildId','still-here-blackhole-repair-v7');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
