@@ -2,7 +2,7 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@l
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'))
 local original=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'));local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
 local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-black-void-v9','Wrong live build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-rocks-v10','Wrong live build')
 assert(SS.OriginalWorld.Content.Interior and SS.Corrupt.Grandfather,'Source map hierarchy lost')
 assert(not W:FindFirstChild('Content'),'Public menu contains mansion')
 assert(dm:GetService('ReplicatedFirst').MenuAvatarClient.Source:find('CreateHumanoidModelFromUserIdAsync',1,true),'Actual player portrait missing')
@@ -11,7 +11,12 @@ assert(sceneSource:find("PlayerStandingInWater",1,true),'Stationary player avata
 assert(sceneSource:find('LocalDarkWaterSurface',1,true),'Dark menu water missing')
 assert(not sceneSource:find('507784897',1,true),'Old swimming animation still packaged')
 assert(sceneSource:find('CameraZoom',1,true),'Cinematic zoom not packaged')
-assert(sceneSource:find('PassingStone',1,true),'Cinematic foreground/background debris not packaged')
+assert(not sceneSource:find('PassingStone',1,true),'Synthetic menu rocks still packaged')
+local originalDebris=RS:FindFirstChild('SkyBlackHoleTemplate')
+assert(originalDebris,'Original black-hole template missing')
+assert(originalDebris:GetAttribute('OriginalDebrisAnimationId')=='7239753826','Authored rock animation missing')
+assert(originalDebris:GetAttribute('OriginalDebrisBoneCount')==162,'Original rock bone count changed')
+assert(originalDebris.DebrisField:FindFirstChildOfClass('AnimationController'),'Original DebrisField animation controller missing')
 local function resolve(root,path) for _,name in ipairs(path:split('.')) do root=assert(root:FindFirstChild(name),'Missing source path '..path) end;return root end
 local exact,patched=0,0
 local originals={}
