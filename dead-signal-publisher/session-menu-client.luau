@@ -102,7 +102,7 @@ heading.TextColor3=Color3.fromRGB(232,232,222)
 local newsIndex=1
 -- Three original cassette illustrations, packed into a single
 -- Roblox Image asset. 200×198 sprite, each frame exactly 200×66.
--- This artwork has no Playtime logo or third-party branding.
+-- These original menu designs contain no other game's logos.
 local cassetteImageId='rbxassetid://82560036333396'
 local bulletins={
  {name='STILL HERE',number='FITA 01',row=0},
