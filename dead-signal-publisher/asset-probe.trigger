@@ -1,1 +1,1 @@
-original-native-release-cassette-archive-v19
+cassette-image-upload-v2-corrected-jpeg
