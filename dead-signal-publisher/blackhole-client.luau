@@ -27,17 +27,22 @@ local voidBackdrop
 if menu then
  local previousBackdrop=W:FindFirstChild('LocalBlackVoidBackdrop')
  if previousBackdrop then previousBackdrop:Destroy() end
- voidBackdrop=Instance.new('Part')
+ voidBackdrop=Instance.new('Folder')
  voidBackdrop.Name='LocalBlackVoidBackdrop'
- voidBackdrop.Anchored=true
- voidBackdrop.CanCollide=false;voidBackdrop.CanTouch=false;voidBackdrop.CanQuery=false
- voidBackdrop.CastShadow=false
- voidBackdrop.Material=Enum.Material.Neon
- voidBackdrop.Color=Color3.fromRGB(0,0,2)
- voidBackdrop.Size=Vector3.new(16000,12000,5)
- -- Beyond the entire local singularity and close foreground, but before the skybox.
- voidBackdrop.CFrame=CFrame.new(0,5000,-3200)
  voidBackdrop.Parent=W
+ -- BasePart.Size is limited to 2048. Nine tiled void panels cover the
+ -- entire mobile screen behind the original hole, without giant invalid parts.
+ for x=-1,1 do for y=-1,1 do
+  local tile=Instance.new('Part')
+  tile.Name='VoidTile'
+  tile.Anchored=true;tile.CanCollide=false;tile.CanTouch=false;tile.CanQuery=false
+  tile.CastShadow=false
+  tile.Material=Enum.Material.Neon
+  tile.Color=Color3.fromRGB(0,0,2)
+  tile.Size=Vector3.new(1900,1900,4)
+  tile.CFrame=CFrame.new(x*1880,5000+y*1880,-1750)
+  tile.Parent=voidBackdrop
+ end end
 end
 -- View the original singularity from its AUTHORED observer direction (+X with
 -- a slight downward angle). The previous code aimed Halo.LookVector (-Z) at
