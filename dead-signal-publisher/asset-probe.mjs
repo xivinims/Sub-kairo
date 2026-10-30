@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('original-native-release')){
+if(trigger.trim().startsWith('blackhole-geometry-audit')){
+ await import('./blackhole-geometry-audit.mjs');
+}else if(trigger.trim().startsWith('original-native-release')){
  await import('./original-native-publish.mjs');
 }else if(trigger.trim().startsWith('mansion-native-release')){
  await import('./mansion-native-publish.mjs');
