@@ -47,12 +47,13 @@ const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['r
 
 execFileSync('/tmp/islands-lune/lune',['run','original-gameplay-test.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/islands-lune/lune',['run','settings-test.luau'],{cwd,stdio:'inherit'});
+execFileSync('/tmp/islands-lune/lune',['run','original-weapon-test.luau'],{cwd,stdio:'inherit'});
 await fs.copyFile('/tmp/still-here-original.rbxl','/tmp/still-here-verified.rbxl');
 execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
 const payload=await fs.readFile('/tmp/original-payload.rbxm');
 const input=await api('https://apis.roblox.com/cloud/v2/universes/9421311218/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:payload.length})});
 const upload=await fetch(input.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:payload});if(!upload.ok)throw Error('Binary upload '+upload.status);
-const init=await fs.readFile(new URL('./original-initialize.luau',import.meta.url),'utf8');const verify=await fs.readFile(new URL('./original-verify.luau',import.meta.url),'utf8');
+const init=await fs.readFile(new URL('./original-initialize.luau',import.meta.url),'utf8');const verify='do\n'+await fs.readFile(new URL('./original-weapon-pickups.luau',import.meta.url),'utf8')+'\nend\n'+await fs.readFile(new URL('./original-verify.luau',import.meta.url),'utf8');
 const preflight=`assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
 local b=game:GetService('SerializationService'):DeserializeInstancesAsync(({...})[1].BinaryInput)[1]
 for _,service in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService','Lighting'}) do

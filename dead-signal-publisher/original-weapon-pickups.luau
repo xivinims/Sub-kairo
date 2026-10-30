@@ -2,20 +2,34 @@ while not workspace:GetAttribute('GameMode') do task.wait(.1) end
 if workspace:GetAttribute('GameMode')~='Match' then return end
 local lib=require(game.ReplicatedStorage.Library)
 while not lib.Loaded do task.wait(.1) end
--- Original weapon factory, original tools, original pickup remote/controller.
+local physics=game:GetService('PhysicsService')
+for _,group in ipairs({'Player','NonPlayer'}) do pcall(function() physics:RegisterCollisionGroup(group) end) end
+physics:CollisionGroupSetCollidable('Player','NonPlayer',false)
+local folder=workspace.WeaponToolsRespawn
 local locations={{'M4A1',Vector3.new(-62,16,-127)},{'Deagle',Vector3.new(65,17,-100)}}
-for _,spec in ipairs(locations) do
- local tool=lib.WeaponsHandler.CreateWeapon(spec[1])
- local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Content};rp.RespectCanCollide=true
- local hit=workspace:Raycast(spec[2]+Vector3.new(0,8,0),Vector3.new(0,-30,0),rp)
- assert(hit,'Original weapon pickup has no surface: '..spec[1])
- tool.Weapon:PivotTo(CFrame.new(hit.Position+Vector3.new(0,1,0)));tool.Parent=workspace.WeaponToolsRespawn
- -- Touch uses the same original server pickup handler as the F key.
- local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Pegar';prompt.ObjectText=spec[1];prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=true;prompt.Parent=tool.Weapon.PrimaryPart
- prompt.Triggered:Connect(function(player)
-  local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart')
-  if root and tool.Parent==workspace.WeaponToolsRespawn and (root.Position-tool.Weapon.PrimaryPart.Position).Magnitude<=9 then
-   player.Character.Humanoid:UnequipTools();tool.Parent=player.Backpack;player.Character.Humanoid:EquipTool(tool)
-  end
- end)
+for index,spec in ipairs(locations) do
+ local function spawnPickup()
+  local marker='OriginalPickup'..index
+  for _,old in ipairs(folder:GetChildren()) do if old:GetAttribute('PickupSlot')==marker then return end end
+  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.Content};rp.RespectCanCollide=true
+  local hit=workspace:Raycast(spec[2]+Vector3.new(0,8,0),Vector3.new(0,-30,0),rp)
+  assert(hit,'Original weapon pickup has no surface: '..spec[1])
+  local tool=lib.WeaponsHandler.CreateWeapon(spec[1]);tool:SetAttribute('PickupSlot',marker)
+  tool.Weapon:PivotTo(CFrame.new(hit.Position+Vector3.new(0,.65,0)))
+  for _,part in ipairs(tool:GetDescendants()) do if part:IsA('BasePart') then part.Anchored=true end end
+  tool.Parent=folder
+  local prompt=Instance.new('ProximityPrompt');prompt.Name='OriginalWeaponPickup';prompt.ActionText='Pegar arma';prompt.ObjectText=spec[1];prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=true;prompt.Parent=tool.Weapon.PrimaryPart
+  local claimed=false
+  tool.AncestryChanged:Connect(function()
+   if tool.Parent~=folder and not claimed then claimed=true;prompt:Destroy();task.delay(30,spawnPickup) end
+  end)
+  prompt.Triggered:Connect(function(player)
+   local char=player.Character;local root=char and char:FindFirstChild('HumanoidRootPart');local hum=char and char:FindFirstChildOfClass('Humanoid')
+   if not claimed and root and hum and hum.Health>0 and tool.Parent==folder and (root.Position-tool.Weapon.PrimaryPart.Position).Magnitude<=9 then
+    hum:UnequipTools();tool.Parent=player.Backpack;hum:EquipTool(tool)
+   end
+  end)
+ end
+ spawnPickup()
 end
+workspace:SetAttribute('OriginalWeaponPickupCount',#locations)
