@@ -55,6 +55,18 @@ task.spawn(function()
  else warn('[MenuCinematic] Could not load real player avatar') end
 end)
 
+-- This is only visual menu water. The avatar stays fully upright and still.
+local water=Instance.new('Part')
+water.Name='LocalDarkWaterSurface'
+water.Anchored=true
+water.CanCollide=false;water.CanTouch=false;water.CanQuery=false
+water.CastShadow=false
+water.Size=Vector3.new(170,.16,130)
+water.CFrame=CFrame.new(anchor+Vector3.new(0,-1.1,-18))
+water.Color=Color3.fromRGB(3,12,19)
+water.Material=Enum.Material.SmoothPlastic
+water.Transparency=.16
+water.Parent=menuRoot
 -- Slow atmospheric stones, in distinct depth planes, deliberately orbiting
 -- OUTSIDE the avatar's personal space. The genuine asset debris field is also
 -- still rendered by SkyBlackHoleClient; these add close parallax for the camera.
