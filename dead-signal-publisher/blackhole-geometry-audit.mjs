@@ -17,4 +17,4 @@ if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37
 await fs.writeFile('/tmp/blackhole-lune.zip',zip);
 execFileSync('unzip',['-o','/tmp/blackhole-lune.zip','-d','/tmp/blackhole-lune']);
 await fs.chmod('/tmp/blackhole-lune/lune',0o755);
-execFileSync('/tmp/blackhole-lune/lune',['run','blackhole-audit.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
+execFileSync('/tmp/blackhole-lune/lune',['run','blackhole-debris-audit.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
