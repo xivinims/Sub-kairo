@@ -22,8 +22,17 @@ return function(dm)
  else
   print('SOURCE SKY: no authored Lighting.Sky; using mansion sky temporarily')
  end
+ -- Read the actual source-rock animation BEFORE sanitizing the imported asset.
+ local sourceDebris=assert(sky:FindFirstChild('DebrisField'),'Original DebrisField absent')
+ local sourceController=assert(sourceDebris:FindFirstChildOfClass('AnimationController'),'Original debris AnimationController missing')
+ local sourceAnimationScript=assert(sourceDebris:FindFirstChild('Script'),'Original debris animation script missing')
+ local sourceAnimationId=assert(sourceAnimationScript.Source:match('local animationId%s*=%s*"(%d+)"'),'Cannot read source debris animation ID')
+ assert(sourceAnimationId=='7239753826','Source rock animation changed unexpectedly')
+ local sourceBones=0
+ for _,d in ipairs(sourceDebris:GetDescendants()) do if d:IsA('Bone') then sourceBones+=1 end end
+ assert(sourceBones>=162,'Not all original skinned rocks were imported')
  for _,c in ipairs(sky:GetChildren()) do if c.Name~='BlackHole' and c.Name~='DebrisField' then c:Destroy() end end
- local allowed={Bone=true,Model=true,Folder=true,MeshPart=true,Part=true,WedgePart=true,UnionOperation=true,Attachment=true,Beam=true,Trail=true,ParticleEmitter=true,PointLight=true,SpotLight=true,SurfaceLight=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true,Texture=true,Decal=true,SurfaceGui=true,BillboardGui=true,ImageLabel=true,Frame=true,UIGradient=true,UICorner=true,UIStroke=true,UIPadding=true,UIScale=true,UIAspectRatioConstraint=true}
+ local allowed={Bone=true,AnimationController=true,Animator=true,Animation=true,Model=true,Folder=true,MeshPart=true,Part=true,WedgePart=true,UnionOperation=true,Attachment=true,Beam=true,Trail=true,ParticleEmitter=true,PointLight=true,SpotLight=true,SurfaceLight=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true,Texture=true,Decal=true,SurfaceGui=true,BillboardGui=true,ImageLabel=true,Frame=true,UIGradient=true,UICorner=true,UIStroke=true,UIPadding=true,UIScale=true,UIAspectRatioConstraint=true}
  local list=sky:GetDescendants()
  for i=#list,1,-1 do local d=list[i];if not allowed[d.ClassName] then d:Destroy() end end
  local template=R.Instance.new('Model');template.Name='SkyBlackHoleTemplate'
@@ -51,6 +60,13 @@ return function(dm)
  template:SetAttribute('SourceHaloDiameter',math.max(halo.Size.X,halo.Size.Y,halo.Size.Z))
  print('SOURCE VIEW DIRECTION '..tostring(direction)..' / original halo diameter '..tostring(math.max(halo.Size.X,halo.Size.Y,halo.Size.Z)))
  template:SetAttribute('GeometryOnly',true);template:SetAttribute('OriginalPartCount',n)
+ template:SetAttribute('OriginalDebrisAnimationId',sourceAnimationId)
+ template:SetAttribute('OriginalDebrisBoneCount',sourceBones)
+ assert(template.DebrisField:FindFirstChildOfClass('AnimationController'),'Debris animator stripped by extractor')
+ local extractedBones=0
+ for _,d in ipairs(template.DebrisField:GetDescendants()) do if d:IsA('Bone') then extractedBones+=1 end end
+ assert(extractedBones==sourceBones,'Original DebrisField bone count changed')
+ print('ORIGINAL DEBRIS RESTORED: animation='..sourceAnimationId..'; bones='..sourceBones..'; animationController=preserved')
  local RS=dm:GetService('ReplicatedStorage');local old=RS:FindFirstChild(template.Name);if old then old:Destroy() end
  template.Parent=RS
  local source=fs.readFile('blackhole-client.luau');luau.load(source,{debugName='blackhole-client'})
