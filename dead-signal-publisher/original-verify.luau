@@ -1,6 +1,6 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-black-void-v9','Wrong build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-original-rocks-v10','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
@@ -34,6 +34,12 @@ assert(RS.SkyBlackHoleTemplate:GetAttribute('SourceAsset')=='7208091524','Black 
 local originalView=RS.SkyBlackHoleTemplate:GetAttribute('SourceViewDirection')
 assert(typeof(originalView)=='Vector3' and originalView.X>.9,'Original black-hole viewing angle absent')
 assert(RS.SkyBlackHoleTemplate:GetAttribute('SourceHaloDiameter')>210,'Original halo diameter missing')
+assert(RS.SkyBlackHoleTemplate:GetAttribute('OriginalDebrisAnimationId')=='7239753826','Original rock animation absent')
+assert(RS.SkyBlackHoleTemplate:GetAttribute('OriginalDebrisBoneCount')==162,'Not all original 160 rocks were preserved')
+local originalField=RS.SkyBlackHoleTemplate:FindFirstChild('DebrisField')
+assert(originalField and originalField:FindFirstChildOfClass('AnimationController'),'Original DebrisField controller missing')
+local rockBones=0;for _,d in ipairs(originalField:GetDescendants()) do if d:IsA('Bone') then rockBones+=1 end end
+assert(rockBones==162,'The source DebrisField skeleton was reduced')
 assert(RS.SkyBlackHoleTemplate.BlackHole.Model.Singularity.Halo:IsA('BasePart'),'Original singularity not mounted')
 local beams=0;for _,v in ipairs(RS.SkyBlackHoleTemplate:GetDescendants()) do if v:IsA('Beam') then beams+=1 end end
 assert(beams>=20,'Original black-hole rays were dropped')
