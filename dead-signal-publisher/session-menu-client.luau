@@ -8,7 +8,8 @@ local bg=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB
 bg.BackgroundTransparency=1
 local camera=workspace.CurrentCamera
 camera.CameraType=Enum.CameraType.Scriptable
-camera.CFrame=CFrame.lookAt(Vector3.new(0,5000,0),Vector3.new(0,5000,-1))
+camera.CFrame=CFrame.lookAt(Vector3.new(0,5001.05,1.3),Vector3.new(-.65,5001.05,-12))
+p:SetAttribute('MenuCameraMode','wide')
 camera.FieldOfView=60
 local lighting=game:GetService('Lighting');lighting.FogEnd=100000
 -- Menu-only lighting: expose the singularity, not a screen-filling flare.
@@ -33,15 +34,62 @@ local list=UI.List(holder)
 local status=UI.Label(composition,'',32);status.Position=UDim2.fromScale(0,.92);status.Size=UDim2.fromScale(1,.08);status.TextSize=14
 local function layout() local size=bg.AbsoluteSize;composition.Size=UDim2.fromScale(size.X<size.Y and .86 or .42,.86) end
 layout();bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
-p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function() composition.Visible=not p:GetAttribute('InterfaceOpen') end)
+local startLabel=UI.Label(bg,'INICIANDO...',55)
+startLabel.Name='StartingMessage'
+startLabel.AnchorPoint=Vector2.new(.5,.5)
+startLabel.Position=UDim2.fromScale(.73,.54)
+startLabel.Size=UDim2.fromScale(.38,.12)
+startLabel.Font=Enum.Font.Oswald;startLabel.TextScaled=true
+startLabel.TextXAlignment=Enum.TextXAlignment.Center
+startLabel.Visible=false
+make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
+local starting=false
+local function startPresentation()
+ starting=true
+ p:SetAttribute('MenuCameraMode','starting')
+ composition.Visible=false
+ if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
+ startLabel.Visible=true
+end
+local function restorePresentation()
+ if not starting then return end
+ starting=false
+ p:SetAttribute('MenuCameraMode',panel and panel.Gui.Parent and 'close' or 'wide')
+ startLabel.Visible=false
+ if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
+ composition.Visible=not p:GetAttribute('InterfaceOpen')
+end
+p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
+ composition.Visible=not starting and not p:GetAttribute('InterfaceOpen')
+end)
 local busy=false;local current;local panel;local redraw
 local function request(action,value)
- if busy then return end;busy=true
- local target=panel and panel.Gui.Parent and panel.Status or status;target.Text='Aguarde…'
- if action=='solo' or action=='start' then local ok,err=UI.Save();if not ok then target.Text=err;busy=false;return end end
- local ok,result=pcall(function() return remote:InvokeServer(action,value) end);busy=false
- if not ok then target.Text='Falha de conexão. Tente novamente.';return end
- current=result.data or current;target.Text=result.message or ''
+ if busy then return end
+ busy=true
+ local launching=action=='solo' or action=='start'
+ local target=panel and panel.Gui.Parent and panel.Status or status
+ if launching then
+  local saved,err=UI.Save()
+  if not saved then target.Text=err;busy=false;return end
+  startPresentation()
+ else target.Text='Aguarde…' end
+ local ok,result=pcall(function() return remote:InvokeServer(action,value) end)
+ busy=false
+ if not ok or type(result)~='table' then
+  restorePresentation();target.Text='Falha de conexão. Tente novamente.';return
+ end
+ current=result.data or current
+ if not result.ok then restorePresentation() end
+ target.Text=result.message or ''
+ if result.ok and launching then
+  -- Teleport keeps the cinematic until a new place loads; recover if teleport never completes.
+  task.delay(24,function()
+   if starting and gui.Parent then
+    restorePresentation()
+    status.Text='A partida não iniciou. Tente novamente.'
+   end
+  end)
+ end
  if panel and panel.Gui.Parent and redraw then redraw() end
 end
 local function groups()
@@ -90,5 +138,10 @@ UI.Button(list,'Créditos',function()
 end)
 p:SetAttribute('MenuReady',true)
 task.spawn(function() UI.Load();request('state') end)
-RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message) busy=false;status.Text=message;if panel and panel.Gui.Parent then panel.Status.Text=message end end)
+RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message)
+ busy=false
+ restorePresentation()
+ status.Text=message
+ if panel and panel.Gui.Parent then panel.Status.Text=message end
+end)
 task.spawn(function() while gui.Parent do task.wait(5);if panel and panel.Gui.Parent and current and current.party and not busy then request('state') end end end)
