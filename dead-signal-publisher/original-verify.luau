@@ -1,6 +1,6 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v3','Wrong build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v4','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
@@ -19,6 +19,7 @@ assert(game:GetService('ReplicatedFirst').OriginalMissionHUD.Enabled,'Top missio
 assert(RS.PlayerSettings:IsA('RemoteFunction') and RS.SessionInterface and RS.SettingsSchema,'Preferences infrastructure missing')
 assert(require(RS.DemoGlobalSettings).skipStartingEvent,'Imported title sequence still enabled')
 assert(game:GetService('ReplicatedFirst').SessionLoadingClient.Enabled,'Unified loading missing')
+assert(game:GetService('ReplicatedFirst').MenuAvatarClient.Enabled,'Floating menu avatar missing')
 assert(W:GetAttribute('WeaponFixVersion')=='original-touch-v5','Weapon fixes missing')
 assert(W:GetAttribute('OriginalWeaponPickupCount')==2,'Pickup spawn failed')
 for _,name in ipairs({'M4A1','Deagle'}) do local tool=W.WeaponToolsRespawn:FindFirstChild(name);assert(tool and tool.Weapon.PrimaryPart:FindFirstChild('OriginalWeaponPickup'),'Missing world pickup '..name) end
