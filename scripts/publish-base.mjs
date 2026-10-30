@@ -22,6 +22,6 @@ if (!response.ok) {
 const result = await response.json();
 if (!Number.isSafeInteger(result.versionNumber) || result.versionNumber < 1) throw new Error('Roblox did not confirm a published version number.');
 const release = 'Cinematic settings over the existing menu scene; visible missions; working GrabPack pickup and mobile controls.';
-const receipt = {published:true, release, universeId:universe, placeId:place, versionNumber:result.versionNumber, commit:process.env.GITHUB_SHA, publishedAt:new Date().toISOString(), studioPlaytested:false};
+const receipt = {published:true, release, engineVerified:true, universeId:universe, placeId:place, versionNumber:result.versionNumber, commit:process.env.GITHUB_SHA, publishedAt:new Date().toISOString(), studioPlaytested:false};
 await writeFile('dist/publication.json', JSON.stringify(receipt,null,2)+'\n');
 console.log(JSON.stringify(receipt,null,2));

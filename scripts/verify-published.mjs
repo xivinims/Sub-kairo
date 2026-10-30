@@ -9,18 +9,21 @@ async function api(path,body) {
  return r.json();
 }
 const configSource=await readFile("src/shared/Config.luau","utf8");
+const campaignSource=await readFile("src/shared/Campaign.luau","utf8");
+const mazeSource=await readFile("src/shared/Maze.luau","utf8");
 const modelSource=await readFile("src/server/AssetModels.luau","utf8");
 const worldSource=await readFile("src/server/World.luau","utf8");
+const modelModule=modelSource.replace("local Config=require(RS.Shared.Config)","local Config=Config");
+const worldModule=worldSource.replace("local Config=require(RS.Shared.Config)","local Config=Config").replace("local Maze=require(RS.Shared.Maze)","local Maze=Maze");
 const script=`
 assert(game.GameId == 9421311218 and game.PlaceId == 118064584465155, "Wrong place")
 local RS=game:GetService("ReplicatedStorage")
-local Config=require(RS.Shared.Config)
-local desired=(function() ${configSource} end)()
-for key,value in pairs(desired) do Config[key]=value end
-local Campaign=require(RS.Shared.Campaign)
+local Config=(function() ${configSource} end)()
+local Campaign=(function() ${campaignSource} end)()
+local Maze=(function() ${mazeSource} end)()
 assert(Config.Chapter=="DEAD SIGNAL")
 assert(#Config.Sectors==7)
-local AssetModels=(function() ${modelSource} end)()
+local AssetModels=(function() ${modelModule} end)()
 local templates=AssetModels.load()
 local imports={}
 for name,id in pairs(Config.Models) do
@@ -33,7 +36,7 @@ for name,id in pairs(Config.Models) do
  assert(meshes>0,"No mesh geometry: "..name)
  local size=model:GetExtentsSize();imports[name]={id=id,meshes=meshes,size={size.X,size.Y,size.Z}}
 end
-local World=(function() ${worldSource} end)()
+local World=(function() ${worldModule} end)()
 World.build()
 AssetModels.decorate(World)
 World.build() -- Rehydration must preserve original targets, not their decorative MeshParts.
@@ -44,7 +47,7 @@ for id,part in pairs(World.Targets) do
  assert(part:FindFirstChildOfClass("ProximityPrompt"),id)
  targets+=1
 end
-assert(targets==76,"Wrong target count")
+assert(targets==77,"Wrong target count including the pickup")
 for sector=1,7 do
  assert(typeof(World.Spawns[sector])=="Vector3","Missing spawn")
  assert(typeof(World.EnemySpawns[sector])=="Vector3","Missing enemy spawn")
