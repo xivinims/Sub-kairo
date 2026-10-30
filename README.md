@@ -1,4 +1,4 @@
-# Bramble’s Sprout — Dead Signal · Roblox
+# Still Here — Dead Signal · Roblox
 
 Port nativo em **Luau** do capítulo 1, com projeto Rojo e um arquivo de experiência para abrir no Roblox Studio. Esta branch foi substituída por este projeto a pedido do proprietário. O commit anterior continua no histórico do Git.
 
@@ -17,7 +17,7 @@ O workflow `roblox-build.yml` valida e gera o arquivo atualizado de Studio. `rob
 ## O que está implementado
 
 - Abertura em preto → Aurivane Works → pausa de 2 segundos → branco/fade → Bramble’s Sprout → carregamento real → menu.
-- Menu com Continuar, Novo jogo com confirmação, Configurações, Créditos e Sair com confirmação. Tela de pausa, derrota, protocolos e final.
+- Menu no estilo da referência, com a logo Still Here, Story, Options, Extra, Visit Pros e Quit Game; Continue e New Game ficam dentro de Story. A faixa Message of the Day percorre três fitas e se reposiciona no topo direito em telas móveis. Tela de pausa, derrota, protocolos e final.
 - Interface dimensionada para celular; movimento, câmera e pulo nativos do Roblox; botões próprios para as mãos, corrida, agachar e lanterna.
 - Mãos azul e vermelha em primeira pessoa, lançamento/retração visual e cabos. A lógica de alcance, linha de visão, cor da mão, inventário e progressão é validada no servidor.
 - Sete setores com checkpoints individuais: conservatório; arquivo de botânica; máquinas; labirinto; ecos; raízes; estação de transmissão.

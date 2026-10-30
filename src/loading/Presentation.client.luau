@@ -30,7 +30,8 @@ local function fade(item,alpha,duration)
  local t=TweenService:Create(item,TweenInfo.new(duration),goal);t:Play();t.Completed:Wait()
 end
 local preloadDone=false
-local assets={};for _,key in ipairs({"StudioLogo","ChapterLogo","Ambient","Pursuit","Radio","Relay","OpeningVoice"}) do local id=Config.Assets[key];if id and id>0 then table.insert(assets,"rbxassetid://"..id) end end
+local assets={};for _,key in ipairs({"StudioLogo","ChapterLogo","MenuLogo","Ambient","Pursuit","Radio","Relay","OpeningVoice"}) do local id=Config.Assets[key];if id and id>0 then table.insert(assets,"rbxassetid://"..id) end end
+for _,id in pairs(Config.Assets.Cassettes or {}) do if type(id)=="number" and id>0 then table.insert(assets,"rbxassetid://"..id) end end
 for _,id in pairs(Config.Assets.Voices) do if id>0 then table.insert(assets,"rbxassetid://"..id) end end
 task.spawn(function()
  local n=0

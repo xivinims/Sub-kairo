@@ -4,6 +4,8 @@
 
 - `assets/branding/aurivane-works.png`: logo fornecida pelo usuário.
 - `assets/branding/dead-signal.png`: logo de capítulo fornecida pelo usuário.
+- `assets/branding/still-here.png`: logo do jogo enviada pelo usuário, com fundo transparente para a tela de menu.
+- `assets/cassettes/chapter-1.jpg`, `mission-found.jpg` e `you-are-my-tools.jpg`: fitas do carrossel Message of the Day.
 - `assets/audio/security-original.mp3`: gravação de 33 segundos fornecida pelo usuário; a versão `.ogg` é uma conversão.
 - `ambient.ogg`, `pursuit.ogg`, `radio.ogg`, `relay.ogg`: trilha/efeitos originais produzidos para este projeto.
 - `assets/world/BramblesWorld.rbxmx`: geometria procedural original do port.
@@ -14,6 +16,10 @@ Esses arquivos não ganham automaticamente um ID Roblox ao entrar no GitHub. Imp
 |---|---|
 | `StudioLogo` | `aurivane-works.png` |
 | `ChapterLogo` | `dead-signal.png` (reservado para apresentação de capítulo) |
+| `MenuLogo` | `still-here.png` |
+| `Cassettes.Chapter1` | `chapter-1.jpg` |
+| `Cassettes.MissionFound` | `mission-found.jpg` |
+| `Cassettes.YouAreMyTools` | `you-are-my-tools.jpg` |
 | `Ambient` | `ambient.ogg` |
 | `Pursuit` | `pursuit.ogg` |
 | `Radio` | `radio.ogg` |

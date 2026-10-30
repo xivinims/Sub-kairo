@@ -15,11 +15,35 @@ local camera=workspace.CurrentCamera
 local assets=RS:WaitForChild("BrambleAssets",30)
 if assets then local deadline=os.clock()+30;while not assets:GetAttribute("Ready") and os.clock()<deadline do task.wait(.1) end end
 local hands=Hands.new(camera)
-local gui=Instance.new("ScreenGui");gui.Name="BramblesSprout";gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.Enabled=false;gui.Parent=player:WaitForChild("PlayerGui")
-local root=Instance.new("Frame");root.Size=UDim2.fromOffset(1280,720);root.AnchorPoint=Vector2.new(.5,.5);root.Position=UDim2.fromScale(.5,.5);root.BackgroundTransparency=1;root.Parent=gui
+local gui=Instance.new("ScreenGui");gui.Name="BramblesSprout";gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;gui.Enabled=false;gui.Parent=player:WaitForChild("PlayerGui")
+local root=Instance.new("Frame");root.Size=UDim2.fromOffset(1280,720);root.AnchorPoint=Vector2.new(.5,.5);root.Position=UDim2.fromScale(.5,.5);root.BackgroundTransparency=1;root.ZIndex=2;root.Parent=gui
 local scale=Instance.new("UIScale");scale.Parent=root
-local function resize() local size=camera.ViewportSize;scale.Scale=math.min(size.X/1280,size.Y/720) end
+local phoneLayout=false
+local menuActive=true
+local subpageActive=false
+local logo,heading,chapter,description,rule,controls,desktopMOTD,mobileMOTD,footer
+local function resize()
+ local size=camera.ViewportSize
+ phoneLayout=UIS.TouchEnabled
+ if phoneLayout and size.Y>size.X then
+  scale.Scale=math.min(size.X/520,size.Y/720)
+  root.AnchorPoint=Vector2.new(0,.5);root.Position=UDim2.new(0,0,.5,0)
+ else
+  scale.Scale=math.min(size.X/1280,size.Y/720)
+  root.AnchorPoint=Vector2.new(.5,.5);root.Position=UDim2.fromScale(.5,.5)
+ end
+ if logo then logo.Position=UDim2.fromOffset(24,12);logo.Size=UDim2.fromOffset(220,150) end
+ if heading then heading.Position=UDim2.fromOffset(55,45);heading.Size=UDim2.fromOffset(680,75) end
+ if chapter then chapter.Position=UDim2.fromOffset(55,135);chapter.Size=UDim2.fromOffset(480,26) end
+ if description then description.Position=UDim2.fromOffset(55,195);description.Size=UDim2.fromOffset(480,205) end
+ if rule then rule.Position=UDim2.fromOffset(55,165);rule.Size=UDim2.fromOffset(460,1) end
+ if controls then controls.Position=UDim2.fromOffset(55,if subpageActive then 425 else 178) end
+ if desktopMOTD then desktopMOTD.Visible=menuActive and not subpageActive and not phoneLayout end
+ if mobileMOTD then mobileMOTD.Visible=menuActive and not subpageActive and phoneLayout end
+ if footer then footer.Position=UDim2.fromOffset(55,680) end
+end
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(resize);resize()
+
 local function frame(parent,name,pos,size,color,transparency)
  local f=Instance.new("Frame");f.Name=name;f.Position=UDim2.fromOffset(pos.X,pos.Y);f.Size=UDim2.fromOffset(size.X,size.Y);f.BorderSizePixel=0;f.BackgroundColor3=color or Color3.new(0,0,0);f.BackgroundTransparency=transparency or 0;f.Parent=parent;return f
 end
@@ -29,19 +53,59 @@ end
 local function button(parent,text,pos,size,fn)
  local b=Instance.new("TextButton");b.Position=UDim2.fromOffset(pos.X,pos.Y);b.Size=UDim2.fromOffset(size.X,size.Y);b.BackgroundColor3=Color3.fromRGB(9,12,11);b.BackgroundTransparency=.3;b.BorderSizePixel=1;b.BorderColor3=Color3.fromRGB(112,119,111);b.TextColor3=Color3.fromRGB(228,232,218);b.Font=Enum.Font.Code;b.TextSize=21;b.Text=text;b.Parent=parent;b.Activated:Connect(fn);return b
 end
-local menu=frame(root,"Menu",Vector2.zero,Vector2.new(1280,720),Color3.new(0,0,0),.5)
+local backdrop=Instance.new("Frame");backdrop.Name="MenuBackdrop";backdrop.Size=UDim2.fromScale(1,1);backdrop.BackgroundColor3=Color3.new(0,0,0);backdrop.BackgroundTransparency=.5;backdrop.BorderSizePixel=0;backdrop.ZIndex=1;backdrop.Visible=false;backdrop.Parent=gui
+local menu=frame(root,"Menu",Vector2.zero,Vector2.new(1280,720),Color3.new(0,0,0),1)
 local shade=frame(menu,"ReadingShade",Vector2.zero,Vector2.new(550,720),Color3.new(0,0,0),.12)
-local chapter=label(menu,"BRAMBLE’S SPROUT / CAPÍTULO 1",Vector2.new(55,45),Vector2.new(600,35),24)
-local heading=label(menu,"DEAD SIGNAL",Vector2.new(55,93),Vector2.new(680,70),45)
-frame(menu,"Rule",Vector2.new(55,165),Vector2.new(460,1),Color3.fromRGB(109,117,109))
-local description=label(menu,"Hora de podar.\nAs flores murcharam. O sinal continuou.",Vector2.new(55,195),Vector2.new(480,205),22)
-local controls=frame(menu,"Buttons",Vector2.new(55,425),Vector2.new(405,280),nil,1)
+logo=Instance.new("ImageLabel");logo.Name="StillHereLogo";logo.Position=UDim2.fromOffset(24,12);logo.Size=UDim2.fromOffset(220,150);logo.BackgroundTransparency=1;logo.Image=if Config.Assets.MenuLogo>0 then "rbxassetid://"..Config.Assets.MenuLogo else "";logo.ScaleType=Enum.ScaleType.Fit;logo.Visible=Config.Assets.MenuLogo>0;logo.Parent=menu
+heading=label(menu,"STILL HERE",Vector2.new(55,45),Vector2.new(680,75),58);heading.Font=Enum.Font.GothamBlack;heading.Visible=Config.Assets.MenuLogo<=0
+chapter=label(menu,"CHAPTER 1 / DEAD SIGNAL",Vector2.new(55,135),Vector2.new(480,26),18);chapter.Visible=false
+rule=frame(menu,"Rule",Vector2.new(55,165),Vector2.new(460,1),Color3.fromRGB(109,117,109));rule.Visible=false
+description=label(menu,"",Vector2.new(55,195),Vector2.new(480,205),22);description.Visible=false
+controls=frame(menu,"Buttons",Vector2.new(55,178),Vector2.new(405,280),nil,1)
+local footerLabel=label(menu,"PLAY THE STORY OF STILL HERE",Vector2.new(55,680),Vector2.new(520,24),16);footer=footerLabel
+footer.TextYAlignment=Enum.TextYAlignment.Center
+local status=label(menu,"Conectando ao servidor…",Vector2.new(720,680),Vector2.new(510,24),15);status.TextXAlignment=Enum.TextXAlignment.Right;status.TextYAlignment=Enum.TextYAlignment.Center
+local cassetteViews={}
+local cassetteIndex=1
+local cassetteAssets=Config.Assets.Cassettes or {}
+local cassetteEntries={
+ {title="CHAPTER 1",id=cassetteAssets.Chapter1 or 0},
+ {title="MISSION FOUND",id=cassetteAssets.MissionFound or 0},
+ {title="YOU ARE MY TOOLS",id=cassetteAssets.YouAreMyTools or 0},
+}
+local cycleCassette
+local function makeCassettePanel(parent,name,pos,size,isMobile)
+ local panel=frame(parent,name,pos,size,Color3.fromRGB(8,10,9),.2);panel.BorderSizePixel=1;panel.BorderColor3=Color3.fromRGB(98,103,97);panel.ZIndex=if parent==gui then 3 else 4;panel.ClipsDescendants=true
+ local title=label(panel,"MESSAGE OF THE DAY",Vector2.new(8,5),Vector2.new(if isMobile then size.X-56 else size.X-130,20),if isMobile then 12 else 16);title.Font=Enum.Font.Code;title.TextYAlignment=Enum.TextYAlignment.Center;title.ZIndex=panel.ZIndex+1
+ local counter=label(panel,"1 / 3",Vector2.new(size.X-(if isMobile then 48 else 112),5),Vector2.new(if isMobile then 40 else 104,20),if isMobile then 12 else 16);counter.TextXAlignment=Enum.TextXAlignment.Right;counter.TextYAlignment=Enum.TextYAlignment.Center;counter.ZIndex=panel.ZIndex+1
+ local image=Instance.new("ImageLabel");image.Name="CassetteImage";image.Position=UDim2.fromOffset(8,if isMobile then 29 else 32);image.Size=UDim2.fromOffset(size.X-16,if isMobile then size.Y-62 else size.Y-66);image.BackgroundColor3=Color3.fromRGB(18,20,18);image.BackgroundTransparency=.1;image.BorderSizePixel=1;image.BorderColor3=Color3.fromRGB(55,60,55);image.ScaleType=Enum.ScaleType.Crop;image.ZIndex=panel.ZIndex+1;image.Parent=panel
+ local fallback=label(image,"",Vector2.zero,Vector2.fromOffset(size.X-16,if isMobile then size.Y-62 else size.Y-66),if isMobile then 14 else 20);fallback.TextColor3=Color3.fromRGB(235,232,220);fallback.TextXAlignment=Enum.TextXAlignment.Center;fallback.TextYAlignment=Enum.TextYAlignment.Center;fallback.Font=Enum.Font.Code;fallback.ZIndex=image.ZIndex+1
+ local prev=button(panel,if isMobile then "‹" else "Q  ‹",Vector2.new(8,size.Y-28),Vector2.new(if isMobile then 36 else 64,22),function() if cycleCassette then cycleCassette(-1) end end);prev.TextSize=if isMobile then 14 else 13;prev.ZIndex=panel.ZIndex+1
+ local nextButton=button(panel,if isMobile then "›" else "›  E",Vector2.new(size.X-(if isMobile then 44 else 72),size.Y-28),Vector2.new(if isMobile then 36 else 64,22),function() if cycleCassette then cycleCassette(1) end end);nextButton.TextSize=if isMobile then 14 else 13;nextButton.ZIndex=panel.ZIndex+1
+ table.insert(cassetteViews,{image=image,fallback=fallback,counter=counter})
+ return panel
+end
+desktopMOTD=makeCassettePanel(menu,"MessageOfTheDayDesktop",Vector2.new(38,405),Vector2.new(360,225),false)
+mobileMOTD=makeCassettePanel(gui,"MessageOfTheDayMobile",Vector2.zero,Vector2.new(180,168),true);mobileMOTD.AnchorPoint=Vector2.new(1,0);mobileMOTD.Position=UDim2.new(1,-12,0,12);mobileMOTD.Visible=false
+local function updateCassetteViews()
+ local entry=cassetteEntries[cassetteIndex]
+ for _,view in ipairs(cassetteViews) do
+  view.image.Image=if entry.id>0 then "rbxassetid://"..entry.id else ""
+  view.fallback.Text=entry.title
+  view.fallback.Visible=entry.id<=0
+  view.counter.Text=tostring(cassetteIndex).." / "..tostring(#cassetteEntries)
+ end
+end
+cycleCassette=function(delta)
+ cassetteIndex=((cassetteIndex-1+delta)%#cassetteEntries)+1
+ updateCassetteViews()
+end
+updateCassetteViews()
 local hud=frame(root,"HUD",Vector2.zero,Vector2.new(1280,720),nil,1);hud.Visible=false
 local objective=label(hud,"",Vector2.new(24,25),Vector2.new(940,100),22)
 local stamina=label(hud,"",Vector2.new(24,135),Vector2.new(460,35),18)
 local prompt=label(hud,"",Vector2.new(220,470),Vector2.new(850,70),21);prompt.TextXAlignment=Enum.TextXAlignment.Center
 local crosshair=label(hud,"·",Vector2.new(627,332),Vector2.new(28,35),30)
-local status=label(menu,"Conectando ao servidor…",Vector2.new(55,685),Vector2.new(1050,30),16)
 local cinema=frame(root,"Cinema",Vector2.zero,Vector2.new(1280,720),nil,1);cinema.Visible=false
 frame(cinema,"TopBar",Vector2.zero,Vector2.new(1280,85));frame(cinema,"BottomBar",Vector2.new(0,610),Vector2.new(1280,110))
 local caption=label(cinema,"",Vector2.new(95,635),Vector2.new(1090,75),24);caption.TextXAlignment=Enum.TextXAlignment.Center
@@ -56,45 +120,109 @@ local ambience=sound(Config.Assets.Ambient,true,.25);local pursuit=sound(Config.
 if ambience then ambience:Play() end;if pursuit then pursuit:Play() end
 local function stopVoice() if voice then voice:Stop();voice:Destroy();voice=nil end end
 local function playVoice(id) stopVoice();voice=sound(id,false,.9*volume);if voice then voice:Play() end end
-local function clearButtons() for _,b in ipairs(controls:GetChildren()) do b:Destroy() end end
-local function add(text,index,fn) return button(controls,text,Vector2.new(0,(index-1)*46),Vector2.new(330,39),fn) end
+local menuOptionButtons={}
+local selectedMenuOption=1
+local function clearButtons()
+ for _,b in ipairs(controls:GetChildren()) do b:Destroy() end
+ table.clear(menuOptionButtons)
+end
+local function add(text,index,fn)
+ return button(controls,text,Vector2.new(0,(index-1)*46),Vector2.new(330,39),fn)
+end
+local function refreshMenuOptions()
+ for _,item in ipairs(menuOptionButtons) do
+  local prefix=if item.index==selectedMenuOption then "<font color='#d6403a'>▶</font>  " else "   "
+  item.button.Text=prefix..item.label
+  item.button.TextColor3=if item.index==selectedMenuOption then Color3.fromRGB(241,239,225) else Color3.fromRGB(199,200,190)
+ end
+end
+local function addMenuOption(text,index,fn)
+ local b=Instance.new("TextButton");b.Name="MenuOption_"..index;b.Position=UDim2.fromOffset(0,(index-1)*40);b.Size=UDim2.fromOffset(380,34);b.BackgroundTransparency=1;b.BorderSizePixel=0;b.TextColor3=Color3.fromRGB(199,200,190);b.Font=Enum.Font.Code;b.TextSize=22;b.TextXAlignment=Enum.TextXAlignment.Left;b.TextYAlignment=Enum.TextYAlignment.Center;b.RichText=true;b.AutoButtonColor=false;b.Parent=controls
+ local item={button=b,label=text,index=index};table.insert(menuOptionButtons,item)
+ b.MouseEnter:Connect(function() selectedMenuOption=index;refreshMenuOptions() end)
+ b.Activated:Connect(function() selectedMenuOption=index;refreshMenuOptions();fn() end)
+ refreshMenuOptions()
+ return b
+end
+
 local function mouse(free) UIS.MouseBehavior=if free then Enum.MouseBehavior.Default else Enum.MouseBehavior.LockCenter;UIS.MouseIconEnabled=free end
 local function gameplay()
- mode="playing";menu.Visible=false;hud.Visible=true;cinema.Visible=false;hands:setEnabled(true)
+ mode="playing";menuActive=false;subpageActive=false;menu.Visible=false;backdrop.Visible=false;if desktopMOTD then desktopMOTD.Visible=false end;if mobileMOTD then mobileMOTD.Visible=false end;hud.Visible=true;cinema.Visible=false;hands:setEnabled(true)
  camera.CameraType=Enum.CameraType.Custom;player.CameraMode=Enum.CameraMode.LockFirstPerson
  local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid");if h then camera.CameraSubject=h end;mouse(false)
 end
-local mainMenu
-local function askNew()
- heading.Text="NOVO JOGO";description.Text="Isso substitui seu checkpoint atual. Começar de novo?";clearButtons()
- add("COMEÇAR",1,function() if loaded then action:FireServer("Start",false) end end);add("VOLTAR",2,mainMenu)
+local mainMenu,storyMenu,askNew,settings,extraMenu,visitPros,quitConfirm
+local function showSubpage(title,body)
+ menuActive=true;subpageActive=true;mode="menu"
+ menu.Visible=true;backdrop.Visible=true
+ if logo then logo.Visible=false end
+ if chapter then chapter.Visible=true;chapter.Text="CHAPTER 1 / DEAD SIGNAL" end
+ if heading then heading.Visible=true;heading.Text=title end
+ if description then description.Visible=true;description.Text=body end
+ if rule then rule.Visible=true end
+ if desktopMOTD then desktopMOTD.Visible=false end
+ if mobileMOTD then mobileMOTD.Visible=false end
+ clearButtons();resize()
 end
-local function settings()
- heading.Text="CONFIGURAÇÕES";description.Text="Ajustes desta sessão. O progresso do capítulo é salvo pelo servidor.";clearButtons()
+askNew=function()
+ showSubpage("NEW GAME","Isso substitui seu checkpoint atual. Começar de novo?")
+ add("COMEÇAR",1,function() if loaded then action:FireServer("Start",false) end end)
+ add("VOLTAR",2,storyMenu)
+end
+storyMenu=function()
+ showSubpage("STORY","Escolha continuar do último checkpoint ou recomeçar o capítulo.")
+ local cont=add(if data.dead then "RETOMAR CHECKPOINT" else "CONTINUAR",1,function()
+  if not loaded or data.state.finished then return end
+  if data.active then action:FireServer("Resume") else action:FireServer("Start",true) end
+ end);cont.AutoButtonColor=loaded and not data.state.finished
+ add("NOVO JOGO",2,askNew);add("VOLTAR",3,mainMenu)
+end
+settings=function()
+ showSubpage("OPTIONS","Ajustes desta sessão. O progresso do capítulo é salvo pelo servidor.")
  add("VOLUME: "..math.floor(volume*100).."%",1,function() volume=(volume+.25)%1.25;if voice then voice.Volume=volume*.9 end;settings() end)
  add("SENSIBILIDADE: "..string.format("%.1f",sensitivity),2,function() sensitivity=if sensitivity>=1.5 then .5 else sensitivity+.25;UIS.MouseDeltaSensitivity=sensitivity;settings() end)
  add("GRÁFICOS: "..(if lowGraphics then "LEVE" else "NORMAL"),3,function() lowGraphics=not lowGraphics;Lighting.GlobalShadows=not lowGraphics;settings() end)
  add("VOLTAR",4,mainMenu)
 end
+extraMenu=function()
+ local selected=cassetteEntries[cassetteIndex].title
+ showSubpage("EXTRA","FITAS RECUPERADAS\nCHAPTER 1\nMISSION FOUND\nYOU ARE MY TOOLS\n\nSelecionada: "..selected)
+ add("FITA ANTERIOR",1,function() cycleCassette(-1);extraMenu() end)
+ add("PRÓXIMA FITA",2,function() cycleCassette(1);extraMenu() end)
+ add("VOLTAR",3,mainMenu)
+end
+visitPros=function()
+ showSubpage("VISIT PROS","AURIVANE WORKS\nStill Here — Chapter 1\nPort nativo em Luau, com cenário e sistemas próprios.\nVeja ASSETS.md para créditos e origens dos recursos.")
+ add("VOLTAR",1,mainMenu)
+end
+quitConfirm=function()
+ showSubpage("QUIT GAME","Seu último checkpoint continua salvo quando o armazenamento online está disponível.")
+ add("SAIR DA EXPERIÊNCIA",1,function() action:FireServer("Quit") end)
+ add("VOLTAR",2,mainMenu)
+end
 mainMenu=function()
- mode="menu";menu.Visible=true;hud.Visible=false;cinema.Visible=false;hands:setEnabled(false);mouse(true)
- chapter.Text="BRAMBLE’S SPROUT / CAPÍTULO 1";heading.Text="DEAD SIGNAL";description.Text="Hora de podar.\nAs flores murcharam. O sinal continuou.\n\nVolte ao conservatório e corte o que não deveria crescer.";clearButtons()
- local cont=add(if data.dead then "RETOMAR CHECKPOINT" else "CONTINUAR",1,function()
-  if not loaded or data.state.finished then return end
-  if data.active==false and not data.dead and mode=="paused" then action:FireServer("Resume") else action:FireServer("Start",true) end
- end);cont.AutoButtonColor=loaded and not data.state.finished
- add("NOVO JOGO",2,askNew);add("CONFIGURAÇÕES",3,settings)
- add("CRÉDITOS",4,function() heading.Text="CRÉDITOS";description.Text="Aurivane Works\nBramble’s Sprout — Dead Signal\nPort nativo em Luau. Cenários e criatura provisória procedurais.\nVeja ASSETS.md para importações e créditos.";clearButtons();add("VOLTAR",1,mainMenu) end)
- add("SAIR",5,function() heading.Text="ENCERRAR SESSÃO?";description.Text="Seu último checkpoint continua salvo quando o armazenamento online está disponível.";clearButtons();add("SAIR DA EXPERIÊNCIA",1,function() action:FireServer("Quit") end);add("VOLTAR",2,mainMenu) end)
+ mode="menu";menuActive=true;subpageActive=false;menu.Visible=true;backdrop.Visible=true;hud.Visible=false;cinema.Visible=false;hands:setEnabled(false);mouse(true)
+ if logo then logo.Visible=Config.Assets.MenuLogo>0 end
+ if heading then heading.Visible=Config.Assets.MenuLogo<=0;heading.Text="STILL HERE" end
+ if chapter then chapter.Visible=false end
+ if description then description.Visible=false end
+ if rule then rule.Visible=false end
+ resize();clearButtons();selectedMenuOption=1
+ addMenuOption("STORY",1,storyMenu)
+ addMenuOption("OPTIONS",2,settings)
+ addMenuOption("EXTRA",3,extraMenu)
+ addMenuOption("VISIT PROS",4,visitPros)
+ addMenuOption("QUIT GAME",5,quitConfirm)
  camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=CFrame.lookAt(Vector3.new(-8,7,92),Vector3.new(6,7,67))
 end
+
 local function sceneDone()
  sceneEpoch+=1;if shotTween then shotTween:Cancel() end;stopVoice();cinema.Visible=false;action:FireServer("SceneDone")
 end
 button(cinema,"PULAR CENA ›",Vector2.new(1040,25),Vector2.new(190,45),sceneDone)
 local function scene(payload,ending)
  sceneEpoch+=1;local token=sceneEpoch
- mode="cinema";menu.Visible=false;hud.Visible=false;cinema.Visible=true;hands:setEnabled(false);mouse(true);camera.CameraType=Enum.CameraType.Scriptable
+ mode="cinema";menuActive=false;subpageActive=false;menu.Visible=false;backdrop.Visible=false;if desktopMOTD then desktopMOTD.Visible=false end;if mobileMOTD then mobileMOTD.Visible=false end;hud.Visible=false;cinema.Visible=true;hands:setEnabled(false);mouse(true);camera.CameraType=Enum.CameraType.Scriptable
  local sector=payload.state.sector;local o=payload.origin or Vector3.zero
  local lines=if ending then {"O ELEVADOR / 00:03","VOCÊ: Acabou. A antena está muda.","RÁDIO: Você não desligou o sinal. Você me levou com você."} else Config.Sectors[sector].Lines
  local shots={o+Vector3.new(10,8,-15),o+Vector3.new(-20,8,-100),o+Vector3.new(10,9,-220)}
@@ -151,7 +279,9 @@ end
 player.CharacterAdded:Connect(character);if player.Character then task.spawn(character,player.Character) end
 UIS.InputBegan:Connect(function(input,processed)
  if processed then return end
- if input.KeyCode==Enum.KeyCode.E or input.UserInputType==Enum.UserInputType.MouseButton1 then use(false)
+ if mode=="menu" and not subpageActive and input.KeyCode==Enum.KeyCode.Q then cycleCassette(-1)
+ elseif mode=="menu" and not subpageActive and input.KeyCode==Enum.KeyCode.E then cycleCassette(1)
+ elseif input.KeyCode==Enum.KeyCode.E or input.UserInputType==Enum.UserInputType.MouseButton1 then use(false)
  elseif input.KeyCode==Enum.KeyCode.Q or input.UserInputType==Enum.UserInputType.MouseButton2 then use(true)
  elseif input.KeyCode==Enum.KeyCode.LeftShift then run=true;movement()
  elseif input.KeyCode==Enum.KeyCode.C then crouch=not crouch;movement()
@@ -193,11 +323,18 @@ update.OnClientEvent:Connect(function(kind,payload)
  if payload.message then message=payload.message;messageUntil=os.clock()+4 end
  if kind=="Ready" then loaded=true;if mode=="menu" then mainMenu() end
  elseif kind=="Scene" or kind=="Ending" then task.spawn(scene,payload,kind=="Ending")
- elseif kind=="Dead" then mainMenu();heading.Text="ELE ENCONTROU VOCÊ";description.Text=payload.message or "Retome o checkpoint para tentar outra vez."
- elseif kind=="Won" then mainMenu();heading.Text="O SINAL NÃO MORREU";description.Text="FIM DO CAPÍTULO 1 / DEAD SIGNAL\nVocê saiu. A transmissão foi junto."
- elseif kind=="Paused" then mainMenu();mode="paused";heading.Text="PAUSADO";clearButtons();add("CONTINUAR",1,function() action:FireServer("Resume") end);add("CONFIGURAÇÕES",2,settings);add("MENU PRINCIPAL",3,mainMenu)
+ elseif kind=="Dead" then
+  showSubpage("ELE ENCONTROU VOCÊ",payload.message or "Retome o checkpoint para tentar outra vez.")
+  add("RETOMAR CHECKPOINT",1,function() action:FireServer("Start",true) end);add("MENU PRINCIPAL",2,mainMenu)
+ elseif kind=="Won" then
+  showSubpage("O SINAL NÃO MORREU","FIM DO CAPÍTULO 1 / DEAD SIGNAL\nVocê saiu. A transmissão foi junto.")
+  add("VOLTAR AO MENU",1,mainMenu)
+ elseif kind=="Paused" then
+  showSubpage("PAUSADO","O capítulo está pausado.")
+  mode="paused";add("CONTINUAR",1,function() action:FireServer("Resume") end);add("CONFIGURAÇÕES",2,settings);add("MENU PRINCIPAL",3,mainMenu)
  elseif kind=="Document" then
-  mode="reading";menu.Visible=true;hud.Visible=false;hands:setEnabled(false);mouse(true);heading.Text="PROTOCOLO";description.Text=payload.message or "";clearButtons();add("FECHAR",1,gameplay)
+  showSubpage("PROTOCOLO",payload.message or "")
+  mode="reading";hud.Visible=false;hands:setEnabled(false);mouse(true);add("FECHAR",1,gameplay)
  elseif data.active and not data.scene and not data.dead and mode~="reading" and mode~="cinema" then gameplay()
  elseif data.active and not data.scene and mode=="cinema" then gameplay() end
 end)

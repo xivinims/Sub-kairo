@@ -1,5 +1,5 @@
 local Config = {}
-Config.Title = "Bramble’s Sprout"
+Config.Title = "Still Here"
 Config.Chapter = "DEAD SIGNAL"
 Config.Studio = "Aurivane Works"
 Config.SaveKey = "BrambleSproutChapter1_v1"
@@ -8,7 +8,8 @@ Config.InteractionCooldown = 0.4
 -- Upload the supplied files to the owning Roblox experience, then put the IDs here.
 -- 0 deliberately disables an unconfigured asset; GitHub URLs are not Roblox content IDs.
 Config.Assets = {
- StudioLogo = 119097868099668, ChapterLogo = 104036635112721,
+ StudioLogo = 119097868099668, ChapterLogo = 104036635112721, MenuLogo = 0,
+ Cassettes = {Chapter1=0, MissionFound=0, YouAreMyTools=0},
  BlueHandTexture = 91503834655118, RedHandTexture = 71928482940714,
  Ambient = 4745539237, Pursuit = 9039697342, Radio = 8028069841, Relay = 0, OpeningVoice = 0,
  Voices = {},
