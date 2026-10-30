@@ -1,6 +1,6 @@
 local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
-if W:GetAttribute('GameMode')~='Match' then return end
+if W:GetAttribute('GameMode')~='Match' or W:GetAttribute('SelectedChapter')==2 then return end
 local Players=game:GetService('Players');local Tween=game:GetService('TweenService')
 local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui')
 local gui=Instance.new('ScreenGui');gui.Name='MissionTop';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.DisplayOrder=40;gui.Parent=pg

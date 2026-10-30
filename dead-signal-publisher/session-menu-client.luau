@@ -97,108 +97,41 @@ status.TextColor3=Color3.fromRGB(208,179,163)
 
 local news=make('Frame',{
  Name='OperatorBriefing',Position=UDim2.fromScale(.047,.633),
- Size=UDim2.fromScale(.33,.317),BackgroundTransparency=1,BorderSizePixel=0
+ Size=UDim2.fromScale(.34,.317),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
 local heading=UI.Label(news,'MESSAGE OF THE DAY',20)
 heading.Name='BriefingHeading'
 heading.Position=UDim2.new(0,0,0,0)
-heading.Size=UDim2.new(.56,0,0,20)
+heading.Size=UDim2.new(1,0,0,20)
 heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
-local newsIndex=1
-local motdText=UI.Label(news,'CHAPTER 2 · COMING SOON (ENGLISH)',22)
+local motdText=UI.Label(news,'CHAPTER 2 · AQUELE QUE NÃO ENCONTRA',34)
 motdText.Name='Chapter2Announcement'
-motdText.Position=UDim2.new(0,0,0,21)
-motdText.Size=UDim2.new(1,0,0,21)
+motdText.Position=UDim2.new(0,0,0,22)
+motdText.Size=UDim2.new(1,0,0,30)
 motdText.Font=Enum.Font.RobotoCondensed;motdText.TextSize=12
 motdText.TextColor3=Color3.fromRGB(191,196,190)
 motdText.TextXAlignment=Enum.TextXAlignment.Left
--- Three original cassette illustrations, packed into one horizontal sprite.
--- Each frame is 320×180 and contains the requested hand-lettered label.
-local cassetteImageId='rbxassetid://132118511952340'
-local fallbackCassetteImageId='rbxassetid://82560036333396'
-local cassetteImageReady
-local bulletins={
- {name='CHAPTER 1',number='TAPE 01',row=0},
- {name='MISSION FOUND',number='TAPE 02',row=1},
- {name='YOU ARE MY TOOLS',number='TAPE 03',row=2}
-}
-local paging=UI.Label(news,'1 / 3',20)
-paging.Name='BriefingCounter'
-paging.Position=UDim2.new(1,-80,0,0)
-paging.Size=UDim2.new(0,39,0,20)
-paging.TextXAlignment=Enum.TextXAlignment.Center
-paging.Font=Enum.Font.RobotoCondensed;paging.TextSize=11
-local prior=make('TextButton',{
- Name='PreviousBriefing',Position=UDim2.new(1,-113,0,0),Size=UDim2.fromOffset(25,22),
- Text='‹',Font=Enum.Font.GothamBold,TextSize=20,BackgroundTransparency=1,
- TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
+motdText.TextWrapped=true
+local preview=make('ImageButton',{
+ Name='BriefingPreview',Position=UDim2.new(0,0,0,55),
+ Size=UDim2.new(1,0,1,-81),BackgroundColor3=Color3.fromRGB(9,13,13),
+ BorderSizePixel=0,Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',
+ ScaleType=Enum.ScaleType.Fit,AutoButtonColor=true
 },news)
-local nextButton=make('TextButton',{
- Name='NextBriefing',Position=UDim2.new(1,-37,0,0),Size=UDim2.fromOffset(25,22),
- Text='›',Font=Enum.Font.GothamBold,TextSize=20,BackgroundTransparency=1,
- TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
-},news)
-local preview=make('ImageLabel',{
- Name='BriefingPreview',Position=UDim2.new(0,0,0,44),
- Size=UDim2.new(1,0,1,-67),
- BackgroundTransparency=1,BorderSizePixel=0,
- Image=cassetteImageId,
- ImageRectOffset=Vector2.new(0,0),
- ImageRectSize=Vector2.new(320,180),
- ImageTransparency=0,
- ScaleType=Enum.ScaleType.Fit
-},news)
--- Show the cassette itself, not the previous generic text/thumbnail card.
-local footer=UI.Label(news,'CHAPTER 1',18)
-footer.Name='CassetteLabel'
-footer.Position=UDim2.new(0,0,1,-19)
+make('UIStroke',{Color=Color3.fromRGB(133,158,150),Thickness=1,Transparency=.35},preview)
+local footer=UI.Label(news,'TOQUE NA ARTE PARA ENTRAR',18)
+footer.Name='ChapterTwoCallToAction'
+footer.Position=UDim2.new(0,0,1,-20)
 footer.Size=UDim2.new(1,0,0,18)
 footer.TextXAlignment=Enum.TextXAlignment.Left
-footer.Font=Enum.Font.RobotoCondensed
-footer.TextSize=11
+footer.Font=Enum.Font.RobotoCondensed;footer.TextSize=11
 footer.TextColor3=Color3.fromRGB(177,186,187)
-local function stepTape(direction)
- newsIndex=(newsIndex-1+direction)%#bulletins+1
- local item=bulletins[newsIndex]
- if cassetteImageReady==false then
-  preview.Image=fallbackCassetteImageId
-  preview.ImageRectSize=Vector2.new(200,66)
-  preview.ImageRectOffset=Vector2.new(0,item.row*66)
- else
-  preview.Image=cassetteImageId
-  preview.ImageRectSize=Vector2.new(320,180)
-  preview.ImageRectOffset=Vector2.new(item.row*320,0)
- end
- paging.Text=tostring(newsIndex)..' / '..tostring(#bulletins)
- footer.Text=item.name
-end
--- Finger swipe works on iPhone without interfering with menu navigation.
-local touchStart
-preview.InputBegan:Connect(function(input)
- if input.UserInputType==Enum.UserInputType.Touch then
-  touchStart=input.Position
- end
-end)
-preview.InputEnded:Connect(function(input)
- if input.UserInputType==Enum.UserInputType.Touch and touchStart then
-  local delta=input.Position.X-touchStart.X
-  if math.abs(delta)>36 then
-   stepTape(delta<0 and 1 or -1)
-  end
-  touchStart=nil
- end
-end)
-
-local function updateBriefing()
- stepTape(0)
-end
-prior.Activated:Connect(function() stepTape(-1) end)
-nextButton.Activated:Connect(function() stepTape(1) end)
-updateBriefing()
-local selectedChapter=0
-p:SetAttribute('MenuChapter',0)
+local selectedChapter=1
+p:SetAttribute('MenuChapter',1)
+local chapterMap=require(RS:WaitForChild('ChapterTwoMap'))
+chapterMap.BuildMenuBackdrop()
 -- Chapter 2's menu can briefly flicker its local scene lighting; the avatar
 -- stays in the world and is never hidden or rebuilt during the effect.
 task.spawn(function()
@@ -215,13 +148,6 @@ task.spawn(function()
  end
  lighting.ExposureCompensation=-.32
 end)
-local chapterSelect=make('Frame',{Name='ChapterSelectScreen',Position=UDim2.fromScale(.047,.075),Size=UDim2.fromScale(.42,.58),BackgroundTransparency=1,BorderSizePixel=0},bg)
-local selectHeading=UI.Label(chapterSelect,'SELECT CHAPTER',38)
-selectHeading.Position=UDim2.new(0,0,0,0);selectHeading.Size=UDim2.new(1,0,0,44);selectHeading.Font=Enum.Font.RobotoCondensed;selectHeading.TextSize=24;selectHeading.TextXAlignment=Enum.TextXAlignment.Left;selectHeading.TextColor3=Color3.fromRGB(233,232,223)
-local function chapterButton(text,y,callback)
- local button=make('TextButton',{Name='ChapterChoice',Position=UDim2.new(0,0,0,y),Size=UDim2.new(1,0,0,48),BackgroundTransparency=1,BorderSizePixel=0,Text=text,TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.RobotoCondensed,TextSize=19,TextColor3=Color3.fromRGB(190,195,193),AutoButtonColor=true},chapterSelect)
- button.Activated:Connect(callback);return button
-end
 local chapterTwo=make('Frame',{
  Name='ChapterTwoMenu',AnchorPoint=Vector2.new(1,0),
  Position=UDim2.fromScale(.96,.18),Size=UDim2.fromScale(.34,.48),
@@ -233,12 +159,12 @@ chapterEyebrow.Font=Enum.Font.RobotoCondensed;chapterEyebrow.TextSize=13;chapter
 local chapterTitle=UI.Label(chapterTwo,'AQUELE QUE NÃO ENCONTRA',68)
 chapterTitle.Name='ChapterTwoTitle';chapterTitle.Position=UDim2.new(0,0,0,31);chapterTitle.Size=UDim2.new(1,0,0,68)
 chapterTitle.Font=Enum.Font.RobotoCondensed;chapterTitle.TextSize=31;chapterTitle.TextWrapped=true;chapterTitle.TextColor3=Color3.fromRGB(232,230,220)
-local chapterDetail=UI.Label(chapterTwo,'CHAPTER 2  ·  ENGLISH',30)
+local chapterDetail=UI.Label(chapterTwo,'A SINETA PAROU. A ESTUFA NÃO.',30)
 chapterDetail.Name='ChapterTwoLanguage';chapterDetail.Position=UDim2.new(0,0,0,106);chapterDetail.Size=UDim2.new(1,0,0,28)
 chapterDetail.Font=Enum.Font.RobotoCondensed;chapterDetail.TextSize=15;chapterDetail.TextColor3=Color3.fromRGB(184,188,183)
-local chapterUnavailable=UI.Label(chapterTwo,'MAP NOT INSTALLED  ·  MENU PREVIEW',46)
-chapterUnavailable.Name='ChapterTwoAvailability';chapterUnavailable.Position=UDim2.new(0,0,0,146);chapterUnavailable.Size=UDim2.new(1,0,0,42)
-chapterUnavailable.Font=Enum.Font.RobotoCondensed;chapterUnavailable.TextSize=12;chapterUnavailable.TextColor3=Color3.fromRGB(188,97,89)
+local chapterUnavailable=UI.Label(chapterTwo,'RECUPERE OS 3 FRAGMENTOS, REATIVE O GERADOR E ENCONTRE A SAÍDA.',56)
+chapterUnavailable.Name='ChapterTwoAvailability';chapterUnavailable.Position=UDim2.new(0,0,0,146);chapterUnavailable.Size=UDim2.new(1,0,0,56)
+chapterUnavailable.Font=Enum.Font.RobotoCondensed;chapterUnavailable.TextSize=12;chapterUnavailable.TextColor3=Color3.fromRGB(177,190,178)
 chapterUnavailable.TextWrapped=true
 local function layout()
  local size=bg.AbsoluteSize
@@ -269,19 +195,14 @@ local function layout()
  chapterTitle.TextSize=mobile and 23 or 31
  chapterDetail.TextSize=mobile and 12 or 15
  chapterUnavailable.TextSize=mobile and 10 or 12
- preview.Position=UDim2.new(0,0,0,44)
- preview.Size=UDim2.new(1,0,1,-67)
- footer.Position=UDim2.new(0,0,1,-18)
- chapterSelect.Position=UDim2.fromScale(mobile and .06 or .047,.075)
- chapterSelect.Size=UDim2.fromScale(mobile and .62 or .40,landscape and .42 or .32)
- selectHeading.TextSize=mobile and 18 or 24
- for _,choice in ipairs(chapterSelect:GetChildren()) do if choice:IsA('TextButton') then choice.TextSize=mobile and 15 or 19 end end
+ preview.Position=UDim2.new(0,0,0,55)
+ preview.Size=UDim2.new(1,0,1,-81)
+ footer.Position=UDim2.new(0,0,1,-20)
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
-composition.Visible=false
-chapterSelect.Visible=true
-news.Visible=false
+composition.Visible=true
+news.Visible=true
 chapterTwo.Visible=false
 local startLabel=UI.Label(bg,'INICIANDO...',55)
 startLabel.Name='StartingMessage'
@@ -295,6 +216,7 @@ make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
 local starting=false
 local navButtons={}
 local activeNav=1
+local backButton
 local infoButton
 local creditsGui
 local busy=false;local current;local panel;local redraw
@@ -304,7 +226,6 @@ local function startPresentation()
  if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
  if infoButton then infoButton.Visible=false end
  composition.Visible=false
- chapterSelect.Visible=false
  news.Visible=false
  chapterTwo.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
@@ -316,16 +237,14 @@ local function restorePresentation()
  p:SetAttribute('MenuCameraMode',panel and panel.Gui.Parent and 'close' or 'wide')
  startLabel.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
- chapterSelect.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==0
- composition.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter>0
+ composition.Visible=not p:GetAttribute('InterfaceOpen')
  news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
  chapterTwo.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==2
  if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
- chapterSelect.Visible=visible and selectedChapter==0
- composition.Visible=visible and selectedChapter>0
+ composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
  if infoButton then infoButton.Visible=visible end
@@ -404,6 +323,12 @@ end
 -- Reference-style text-only actions, red selection marker and subtle easing.
 -- Buttons retain generous transparent tap zones for iPhone touch.
 local function selectNavigation(index)
+ if #navButtons==0 then return end
+ index=(index-1)%#navButtons+1
+ for _=1,#navButtons do
+  if navButtons[index].button.Visible then break end
+  index=index%#navButtons+1
+ end
  activeNav=index
  for i,item in ipairs(navButtons) do
   local chosen=i==index
@@ -412,6 +337,21 @@ local function selectNavigation(index)
    TextTransparency=chosen and 0 or .12
   }):Play()
   Tween:Create(item.marker,TweenInfo.new(.16),{TextTransparency=chosen and 0 or 1}):Play()
+ end
+end
+local function layoutNavigation()
+ local row=0
+ for _,item in ipairs(navButtons) do
+  if item.button.Visible then
+   item.button.Position=UDim2.new(0,0,0,row*42)
+   row+=1
+  end
+ end
+end
+local function moveNavigation(direction)
+ for step=1,#navButtons do
+  local index=(activeNav-1+direction*step)%#navButtons+1
+  if navButtons[index].button.Visible then selectNavigation(index);return end
  end
 end
 local function addNavigation(text,action)
@@ -444,46 +384,33 @@ local function addNavigation(text,action)
  return btn
 end
 local function chooseChapter(index)
- selectedChapter=index
- p:SetAttribute('MenuChapter',index)
- chapterSelect.Visible=false
+ selectedChapter=index==2 and 2 or 1
+ p:SetAttribute('MenuChapter',selectedChapter)
  composition.Visible=true
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
- news.Visible=visible and index==1
- chapterTwo.Visible=visible and index==2
- if index==1 then
-  status.Text='Capítulo 1 selecionado.'
-  else
-  status.Text='Chapter 2 · menu preview. Map integration is pending.'
- end
+ news.Visible=visible and selectedChapter==1
+ chapterTwo.Visible=visible and selectedChapter==2
+ backButton.Visible=selectedChapter==2
+ layoutNavigation()
+ selectNavigation(selectedChapter==2 and 2 or 1)
+ status.Text=selectedChapter==2 and 'Capítulo 2 selecionado.' or 'Capítulo 1 selecionado.'
 end
-chapterButton('CHAPTER 1',58,function() chooseChapter(1) end)
-chapterButton('CHAPTER 2  ·  AQUELE QUE NÃO ENCONTRA',108,function() chooseChapter(2) end)
-chapterSelect.Visible=true
-composition.Visible=false
-addNavigation('VOLTAR AOS CAPÍTULOS',function() selectedChapter=0;p:SetAttribute('MenuChapter',0);chapterSelect.Visible=true;composition.Visible=false;news.Visible=false;chapterTwo.Visible=false end)
-addNavigation('JOGAR (SOLO)',function()
- if selectedChapter==2 then status.Text='Chapter 2: map integration is pending.';return end
- request('solo')
-end)
-addNavigation('MULTIPLAYER',function()
- if selectedChapter==2 then status.Text='Chapter 2: map integration is pending.';return end
- groups()
-end)
+preview.Activated:Connect(function() chooseChapter(2) end)
+backButton=addNavigation('VOLTAR AO ARQUIVO',function() chooseChapter(1) end)
+addNavigation('JOGAR (SOLO)',function() request('solo') end)
+addNavigation('MULTIPLAYER',groups)
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
+backButton.Visible=false
+layoutNavigation()
 selectNavigation(1)
 UIS.InputBegan:Connect(function(input,processed)
  if processed or starting or p:GetAttribute('InterfaceOpen') then return end
  if input.KeyCode==Enum.KeyCode.Up or input.KeyCode==Enum.KeyCode.DPadUp then
-  selectNavigation((activeNav-2)%#navButtons+1)
+  moveNavigation(-1)
  elseif input.KeyCode==Enum.KeyCode.Down or input.KeyCode==Enum.KeyCode.DPadDown then
-  selectNavigation(activeNav%#navButtons+1)
+  moveNavigation(1)
  elseif input.KeyCode==Enum.KeyCode.Return or input.KeyCode==Enum.KeyCode.ButtonA then
   navButtons[activeNav].action()
- elseif input.KeyCode==Enum.KeyCode.Q then
-  stepTape(-1)
- elseif input.KeyCode==Enum.KeyCode.E then
-  stepTape(1)
  end
 end)
 -- An unobtrusive information icon, anchored to the lower-left safe area.
@@ -577,7 +504,7 @@ task.spawn(function()
  local preloads={}
  local model=RS:WaitForChild('SkyBlackHoleTemplate',12)
  if model then table.insert(preloads,model) end
- -- Preload the new cassette image before revealing the slider.
+ -- Load the generated Chapter 2 artwork before revealing the menu.
  table.insert(preloads,preview)
  table.insert(preloads,title)
  local music=game:GetService('SoundService'):FindFirstChild('MassiveBlackHoleMenu')
@@ -596,8 +523,7 @@ task.spawn(function()
    assetsFailed+=1
   end
  end
- cassetteImageReady=preview.IsLoaded
- if not cassetteImageReady then stepTape(0) end
+ if not preview.IsLoaded then warn('[MenuLoad] Chapter 2 artwork did not load; the card remains available') end
  assetsDone=true
 end)
 task.spawn(function()
@@ -639,8 +565,7 @@ task.spawn(function()
  title.Visible=title.IsLoaded
  titleFallback.Visible=not title.IsLoaded
  local visible=not p:GetAttribute('InterfaceOpen')
- chapterSelect.Visible=visible and selectedChapter==0
- composition.Visible=visible and selectedChapter>0
+ composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
  infoButton.Visible=visible

@@ -2,8 +2,11 @@ local W=workspace;local P=game:GetService('Players');local RS=game:GetService('R
 local p=P.LocalPlayer;local pg=p:WaitForChild('PlayerGui')
 while not W:GetAttribute('GameMode') do task.wait(.1) end
 if W:GetAttribute('GameMode')~='Match' then return end
-for _,gui in ipairs(RS:WaitForChild('OriginalStarterGui'):GetChildren()) do gui:Clone().Parent=pg end
+if W:GetAttribute('SelectedChapter')~=2 then
+ for _,gui in ipairs(RS:WaitForChild('OriginalStarterGui'):GetChildren()) do gui:Clone().Parent=pg end
+end
 p.CameraMode=Enum.CameraMode.LockFirstPerson
+if W:GetAttribute('SelectedChapter')==2 then p:SetAttribute('ArrivalReady',true);return end
 local char=p.Character or p.CharacterAdded:Wait();local root=char:WaitForChild('HumanoidRootPart')
 pcall(function() p:RequestStreamAroundAsync(root.Position,15) end)
 local library=require(RS:WaitForChild('Library'));local untilTime=os.clock()+35

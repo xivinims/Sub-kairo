@@ -45,6 +45,14 @@ if menu then
   tile.Parent=voidBackdrop
  end end
 end
+local function syncMenuBackdrop()
+ if not menu then return end
+ local visible=player:GetAttribute('MenuChapter')~=2
+ model.Parent=visible and W or nil
+ if voidBackdrop then voidBackdrop.Parent=visible and W or nil end
+end
+syncMenuBackdrop()
+player:GetAttributeChangedSignal('MenuChapter'):Connect(syncMenuBackdrop)
 -- View the original singularity from its AUTHORED observer direction (+X with
 -- a slight downward angle). The previous code aimed Halo.LookVector (-Z) at
 -- the camera, which turned the accretion disc into a giant edge-on stripe.

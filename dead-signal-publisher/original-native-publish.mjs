@@ -43,6 +43,45 @@ for(const id of ['7902470429','7208091524','186677844','15864801103'])await exte
 const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
 const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
+const artBytes=await fs.readFile(new URL('./chapter-2-hero.jpg',import.meta.url));
+const artForm=new FormData();
+artForm.set('request',new Blob([JSON.stringify({
+ assetType:'Image',
+ displayName:'Still Here Chapter 2',
+ description:'Generated greenhouse key art for the Chapter 2 message of the day.',
+ creationContext:{creator:{userId:8344738123}}
+})],{type:'application/json'}));
+artForm.set('fileContent',new Blob([artBytes],{type:'image/jpeg'}),'still-here-chapter-2.jpg');
+const artResponse=await fetch('https://apis.roblox.com/assets/v1/assets',{
+ method:'POST',headers:{'x-api-key':key},body:artForm,signal:AbortSignal.timeout(45000)
+});
+const artRaw=await artResponse.text();
+if(!artResponse.ok)throw new Error('CHAPTER_TWO_ART_UPLOAD_FAILED '+artResponse.status+' '+artRaw.slice(0,1800));
+const artOperation=JSON.parse(artRaw);
+const artPath=artOperation.path||artOperation.operation?.path;
+if(!artPath)throw new Error('CHAPTER_TWO_ART_OPERATION_MISSING_PATH '+artRaw.slice(0,1200));
+let chapterTwoArtId;
+for(let retry=0;retry<30;retry++){
+ const poll=await fetch('https://apis.roblox.com/assets/v1/'+artPath,{
+  headers:{'x-api-key':key},signal:AbortSignal.timeout(15000)
+ });
+ const data=await poll.json();
+ if(!poll.ok)throw new Error('CHAPTER_TWO_ART_STATUS_FAILED '+poll.status+' '+JSON.stringify(data).slice(0,1000));
+ if(data.done){
+  if(data.error)throw new Error('CHAPTER_TWO_ART_MODERATION_ERROR '+JSON.stringify(data.error));
+  chapterTwoArtId=data.response?.assetId;
+  if(!chapterTwoArtId)throw new Error('CHAPTER_TWO_ART_ID_MISSING '+JSON.stringify(data).slice(0,1000));
+  break;
+ }
+ await pause(1500);
+}
+if(!chapterTwoArtId)throw new Error('CHAPTER_TWO_ART_MODERATION_PENDING '+artPath);
+const menuPath=new URL('./session-menu-client.luau',import.meta.url);
+const menuSource=await fs.readFile(menuPath,'utf8');
+const artMarker='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__';
+if(!menuSource.includes(artMarker))throw new Error('Chapter 2 artwork marker missing from menu source');
+await fs.writeFile(menuPath,menuSource.replace(artMarker,'rbxassetid://'+chapterTwoArtId));
+console.log(JSON.stringify({chapterTwoArtworkUploaded:true,assetId:chapterTwoArtId,moderationState:artOperation.moderationResult?.moderationState}));
 const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['run','original-assemble.luau'],{cwd,stdio:'inherit'});
 
 execFileSync('/tmp/islands-lune/lune',['run','original-gameplay-test.luau'],{cwd,stdio:'inherit'});

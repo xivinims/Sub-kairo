@@ -2,7 +2,7 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local luau=require(
 local dm=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'))
 local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
 local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService');local RF=dm:GetService('ReplicatedFirst');local SP=dm:GetService('StarterPlayer')
-local guard="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' then return end\n"
+local guard="while not workspace:GetAttribute('GameMode') do task.wait(.1) end\nif workspace:GetAttribute('GameMode')~='Match' or workspace:GetAttribute('SelectedChapter')==2 then return end\n"
 local records={};local function mark(root,id)
  for _,s in ipairs(root:GetDescendants()) do if s:IsA('LuaSourceContainer') then
   s:SetAttribute('OriginalAsset',id);s:SetAttribute('OriginalPath',s:GetFullName());s:SetAttribute('OriginalLength',#s.Source)
@@ -118,6 +118,7 @@ local function install(parent,name,class,file)
 end
 local runtime=R.Instance.new('Folder');runtime.Name='StillHereRuntime';runtime.Parent=SSS
 install(runtime,'SessionProfile','ModuleScript','session-profile.luau');install(runtime,'SessionRuntime','Script','session-server.luau')
+install(RS,'ChapterTwoMap','ModuleScript','chapter-two-map.luau')
 install(RS,'SettingsSchema','ModuleScript','settings-schema.luau')
 install(RS,'SessionInterface','ModuleScript','session-interface.luau')
 install(runtime,'PlayerSettings','Script','settings-server.luau')
@@ -128,10 +129,12 @@ install(RF,'MenuAvatarClient','LocalScript','menu-avatar-client.luau')
 install(RF,'CinematicEnvironmentClient','LocalScript','cinematic-environment-client.luau')
 install(RF,'OriginalUIBootstrap','LocalScript','original-ui-bootstrap.luau')
 install(RF,'OriginalMissionHUD','LocalScript','original-mission-hud.luau')
+install(RF,'ChapterTwoHUD','LocalScript','chapter-two-hud.luau')
 install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
+install(runtime,'ChapterTwoRuntime','Script','chapter-two-runtime.luau')
 for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
-W:SetAttribute('DeadSignalBuildId','still-here-cassette-archive-v20');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
+W:SetAttribute('DeadSignalBuildId','still-here-chapter-two-greenhouse-v1');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
 local manifest=R.Instance.new('StringValue');manifest.Name='OriginalScriptManifest';manifest.Value=J.encode('json',records);manifest.Parent=SS
 local region=R.Instance.new('TerrainRegion');region.Name='OriginalTerrain';region.SmoothGrid=W.Terrain.SmoothGrid;region.ExtentsMin=R.Vector3int16.new(-144,-64,-192);region.ExtentsMax=R.Vector3int16.new(144,100,144);region.Parent=SS
