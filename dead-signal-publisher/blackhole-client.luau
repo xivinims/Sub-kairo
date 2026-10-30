@@ -53,41 +53,44 @@ local halo=assert(model:FindFirstChild('Halo',true),'Original black-hole singula
 local sourceDirection=template:GetAttribute('SourceViewDirection') or Vector3.new(1,-.09,0)
 local sourceObservation=CFrame.lookAt(halo.CFrame.Position,halo.CFrame.Position+sourceDirection)
 local observationToPivot=sourceObservation:ToObjectSpace(base)
-local orbit={};local flares={}
-local function pivot(object,cf)
- if object:IsA('Model') then object:PivotTo(cf) else object.CFrame=cf end
-end
-local field=model:FindFirstChild('DebrisField')
-local spinner;local shardBones={}
-if field and field:FindFirstChildWhichIsA('Bone',true) then
- -- The original debris is one skinned mesh: retain its authored bones and shapes.
- local _,size=field:GetBoundingBox();local maximum=math.max(size.X,size.Y,size.Z)
- local maxDebris=menu and 85 or 420
- if maximum>maxDebris then field:ScaleTo(field:GetScale()*maxDebris/maximum) end
- local orientation=base:ToObjectSpace(field:GetPivot()).Rotation
- field:PivotTo(base*orientation)
- spinner=field:FindFirstChild('spinner',true)
- for _,d in ipairs(field:GetDescendants()) do
-  if d:IsA('Bone') and d.Name:match('^%d+$') and #shardBones<(touch and 12 or 32) then table.insert(shardBones,d) end
- end
-elseif field then
- local index=0
- for _,object in ipairs(field:GetChildren()) do
-  if object:IsA('Model') or object:IsA('BasePart') then
-   local part=object:IsA('BasePart') and object or object:FindFirstChildWhichIsA('BasePart',true)
-   if part then
-    index+=1
-    local original=object:IsA('Model') and object:GetPivot() or object.CFrame
-    local rotation=base:ToObjectSpace(original).Rotation
-    local angle=index*2.399963
-    local radius=(menu and 35 or 140)+(index*37)%(menu and 30 or 90)
-    local pos=Vector3.new(math.cos(angle)*radius,math.sin(index*1.7)*48,math.sin(angle)*radius)
-    local localCF=CFrame.new(pos)*rotation
-    pivot(object,base*localCF)
-    table.insert(orbit,{object=object,cf=localCF,speed=(menu and .009 or .012)+(index%7)*(menu and .002 or .003),phase=angle,animated=index<=(touch and 24 or 48)})
-   end
+-- Original source asset 7208091524:
+-- DebrisField.Pipe.001 has 160 original rock bones plus root+spinner.
+-- Its authored Script plays Roblox animation 7239753826 at speed 1.
+-- Restore THAT track instead of changing the individual bone transforms,
+-- shrinking the skinned field, or replacing its authored circular formation.
+local flares={}
+local field=assert(model:FindFirstChild('DebrisField'),'Original debris field missing')
+local controller=assert(field:FindFirstChildOfClass('AnimationController'),'Original debris animation controller missing')
+local sourceAnimationId=template:GetAttribute('OriginalDebrisAnimationId')
+assert(sourceAnimationId=='7239753826','Unexpected original debris animation')
+local boneCount=0
+for _,d in ipairs(field:GetDescendants()) do if d:IsA('Bone') then boneCount+=1 end end
+assert(boneCount==template:GetAttribute('OriginalDebrisBoneCount') and boneCount>=162,'Some original debris bones were removed')
+local animator=controller:FindFirstChildOfClass('Animator') or Instance.new('Animator')
+animator.Parent=controller
+local animation=Instance.new('Animation')
+animation.Name='SourceDebrisRotation'
+animation.AnimationId='rbxassetid://'..sourceAnimationId
+animation.Parent=controller
+local debrisTrack
+local fallbackSpin=false
+local originalSpinner=field:FindFirstChild('spinner',true)
+local ok,err=pcall(function()
+ debrisTrack=animator:LoadAnimation(animation)
+ debrisTrack.Looped=true
+ debrisTrack:Play(0,1,1)
+end)
+if not ok then
+ warn('[SkyBlackHole] Original DebrisField animation unavailable: '..tostring(err))
+ fallbackSpin=true
+else
+ task.delay(8,function()
+  if field.Parent and debrisTrack and debrisTrack.Length<=0 then
+   warn('[SkyBlackHole] Original debris animation did not load; spinning complete untouched original rig as fallback')
+   debrisTrack:Stop(0)
+   fallbackSpin=true
   end
- end
+ end)
 end
 
 for _,d in ipairs(model:GetDescendants()) do
@@ -103,7 +106,7 @@ for _,d in ipairs(model:GetDescendants()) do
  -- Disabling all world GUIs removed part of the authored accretion glow.
  if d:IsA('BillboardGui') then table.insert(flares,{gui=d,enabled=d.Enabled}) end
 end
-local time,clock,occlusion=0,0,0
+local time,occlusion=0,0
 local blastStarted
 local blastBall
 local blastRings={}
@@ -137,7 +140,7 @@ player:GetAttributeChangedSignal('MenuCameraMode'):Connect(function()
 end)
 if menu and player:GetAttribute('MenuCameraMode')=='starting' then localBurst() end
 Run.RenderStepped:Connect(function(dt)
- clock+=dt;occlusion+=dt;time+=math.min(dt,.12)
+ occlusion+=dt;time+=math.min(dt,.12)
  local camera=W.CurrentCamera;if not camera then return end
  local center
  if menu then
@@ -179,14 +182,12 @@ Run.RenderStepped:Connect(function(dt)
    table.clear(blastRings)
   end
  end
- if clock<1/24 then return end
- clock=0
- if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*(menu and .018 or .018),0) end
- for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*((menu and .015 or .018)+i%4*(menu and .003 or .003)),time*(menu and .010 or .012),time*(menu and .008 or .009)) end
- for _,state in ipairs(orbit) do if state.animated then
-  local spin=CFrame.Angles(0,time*state.speed,0)
-  pivot(state.object,base*spin*state.cf*CFrame.Angles(time*(menu and .006 or .018),0,time*(menu and .004 or .012)))
- end end
+ -- Keep the engine's original looping AnimationTrack driving EVERY rock bone.
+ -- If the platform denies access to the original asset animation, rotate only
+ -- the existing rig's spinner bone, retaining all 160 rock shapes and placement.
+ if fallbackSpin and originalSpinner and originalSpinner:IsA('Bone') then
+  originalSpinner.Transform=CFrame.Angles(0,time*.30,0)
+ end
  if occlusion>.25 then
   occlusion=0
   local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.IgnoreWater=true
