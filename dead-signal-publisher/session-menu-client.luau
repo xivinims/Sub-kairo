@@ -92,7 +92,7 @@ local news=make('Frame',{
  Name='OperatorBriefing',Position=UDim2.fromScale(.047,.633),
  Size=UDim2.fromScale(.33,.317),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local heading=UI.Label(news,'TRANSMISSÃO RECEBIDA',20)
+local heading=UI.Label(news,'ARQUIVO DE FITAS',20)
 heading.Name='BriefingHeading'
 heading.Position=UDim2.new(0,0,0,0)
 heading.Size=UDim2.new(.56,0,0,20)
@@ -100,10 +100,14 @@ heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
 local newsIndex=1
+-- Three original cassette illustrations, packed into a single
+-- Roblox Image asset. 200×198 sprite, each frame exactly 200×66.
+-- This artwork has no Playtime logo or third-party branding.
+local cassetteImageId='rbxassetid://82560036333396'
 local bulletins={
- {name='SINAL INTERROMPIDO',body='A última transmissão veio da mansão.',asset='7902470429'},
- {name='SEM CONTATO',body='A equipe ainda não retornou.',asset='7902470429'},
- {name='NÃO OLHE PARA TRÁS',body='Alguns sinais não deveriam ser recebidos.',asset='7208091524'}
+ {name='STILL HERE',number='FITA 01',row=0},
+ {name='TEST FOOTAGE',number='FITA 02',row=1},
+ {name='LOST RECORDING',number='FITA 03',row=2}
 }
 local paging=UI.Label(news,'1 / 3',20)
 paging.Name='BriefingCounter'
@@ -122,43 +126,55 @@ local nextButton=make('TextButton',{
  TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
 },news)
 local preview=make('ImageLabel',{
- Name='BriefingPreview',Position=UDim2.new(0,0,0,24),
- Size=UDim2.new(1,0,.48,0),BackgroundColor3=Color3.fromRGB(8,12,16),
- BackgroundTransparency=.12,BorderSizePixel=0,
- ScaleType=Enum.ScaleType.Crop,ImageTransparency=.28
+ Name='BriefingPreview',Position=UDim2.new(0,0,0,23),
+ Size=UDim2.new(1,0,1,-46),
+ BackgroundTransparency=1,BorderSizePixel=0,
+ Image=cassetteImageId,
+ ImageRectOffset=Vector2.new(0,0),
+ ImageRectSize=Vector2.new(200,66),
+ ImageTransparency=0,
+ ScaleType=Enum.ScaleType.Fit
 },news)
-make('UIStroke',{Color=Color3.fromRGB(94,100,104),Transparency=.56,Thickness=1},preview)
-local scan=make('UIGradient',{
- Rotation=90,Color=ColorSequence.new({
-  ColorSequenceKeypoint.new(0,Color3.fromRGB(165,176,183)),
-  ColorSequenceKeypoint.new(.55,Color3.fromRGB(115,123,132)),
-  ColorSequenceKeypoint.new(1,Color3.fromRGB(36,44,51))
- }),Transparency=NumberSequence.new(.28,.75)
-},preview)
-local newsName=UI.Label(news,'',20)
-newsName.Name='BriefingTitle';newsName.Position=UDim2.new(0,0,.51,21)
-newsName.Size=UDim2.new(1,0,0,20)
-newsName.Font=Enum.Font.RobotoCondensed;newsName.TextSize=12
-newsName.TextColor3=Color3.fromRGB(239,237,228)
-local newsBody=UI.Label(news,'',34)
-newsBody.Name='BriefingDescription'
-newsBody.Position=UDim2.new(0,0,.51,42)
-newsBody.Size=UDim2.new(1,0,0,34)
-newsBody.Font=Enum.Font.Gotham;newsBody.TextSize=11
-newsBody.TextColor3=Color3.fromRGB(172,176,180)
-newsBody.TextXAlignment=Enum.TextXAlignment.Left
-local function updateBriefing()
+-- Show the cassette itself, not the previous generic text/thumbnail card.
+local footer=UI.Label(news,'FITA 01  /  STILL HERE',18)
+footer.Name='CassetteLabel'
+footer.Position=UDim2.new(0,0,1,-19)
+footer.Size=UDim2.new(1,0,0,18)
+footer.TextXAlignment=Enum.TextXAlignment.Left
+footer.Font=Enum.Font.RobotoCondensed
+footer.TextSize=11
+footer.TextColor3=Color3.fromRGB(177,186,187)
+local function stepTape(direction)
+ newsIndex=(newsIndex-1+direction)%#bulletins+1
  local item=bulletins[newsIndex]
- newsName.Text=item.name;newsBody.Text=item.body
+ preview.Image=cassetteImageId
+ preview.ImageRectSize=Vector2.new(200,66)
+ preview.ImageRectOffset=Vector2.new(0,item.row*66)
  paging.Text=tostring(newsIndex)..' / '..tostring(#bulletins)
- preview.Image='rbxthumb://type=Asset&id='..item.asset..'&w=420&h=420'
+ footer.Text=item.number..'  /  '..item.name
 end
-prior.Activated:Connect(function()
- newsIndex=(newsIndex-2)%#bulletins+1;updateBriefing()
+-- Finger swipe works on iPhone without interfering with menu navigation.
+local touchStart
+preview.InputBegan:Connect(function(input)
+ if input.UserInputType==Enum.UserInputType.Touch then
+  touchStart=input.Position
+ end
 end)
-nextButton.Activated:Connect(function()
- newsIndex=newsIndex%#bulletins+1;updateBriefing()
+preview.InputEnded:Connect(function(input)
+ if input.UserInputType==Enum.UserInputType.Touch and touchStart then
+  local delta=input.Position.X-touchStart.X
+  if math.abs(delta)>36 then
+   stepTape(delta<0 and 1 or -1)
+  end
+  touchStart=nil
+ end
 end)
+
+local function updateBriefing()
+ stepTape(0)
+end
+prior.Activated:Connect(function() stepTape(-1) end)
+nextButton.Activated:Connect(function() stepTape(1) end)
 updateBriefing()
 local function layout()
  local size=bg.AbsoluteSize
@@ -171,9 +187,9 @@ local function layout()
  nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
  news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .633 or .59)
  news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .317 or .34)
- preview.Size=UDim2.new(1,0,compact and .39 or .48,0)
- newsName.Position=UDim2.new(0,0,.51,compact and 11 or 21)
- newsBody.Position=UDim2.new(0,0,.51,compact and 31 or 42)
+ preview.Position=UDim2.new(0,0,0,compact and 23 or 24)
+ preview.Size=UDim2.new(1,0,1,compact and -43 or -46)
+ footer.Position=UDim2.new(0,0,1,-18)
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
@@ -341,9 +357,9 @@ UIS.InputBegan:Connect(function(input,processed)
  elseif input.KeyCode==Enum.KeyCode.Return or input.KeyCode==Enum.KeyCode.ButtonA then
   navButtons[activeNav].action()
  elseif input.KeyCode==Enum.KeyCode.Q then
-  newsIndex=(newsIndex-2)%#bulletins+1;updateBriefing()
+  stepTape(-1)
  elseif input.KeyCode==Enum.KeyCode.E then
-  newsIndex=newsIndex%#bulletins+1;updateBriefing()
+  stepTape(1)
  end
 end)
 -- An unobtrusive information icon, anchored to the lower-left safe area.
@@ -437,6 +453,8 @@ task.spawn(function()
  local preloads={}
  local model=RS:WaitForChild('SkyBlackHoleTemplate',12)
  if model then table.insert(preloads,model) end
+ -- Preload the new cassette image before revealing the slider.
+ table.insert(preloads,preview)
  local music=game:GetService('SoundService'):FindFirstChild('MassiveBlackHoleMenu')
  if music then table.insert(preloads,music) end
  if #preloads>0 then
