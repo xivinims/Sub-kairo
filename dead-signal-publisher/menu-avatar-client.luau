@@ -67,35 +67,10 @@ water.Color=Color3.fromRGB(3,12,19)
 water.Material=Enum.Material.SmoothPlastic
 water.Transparency=.16
 water.Parent=menuRoot
--- Slow atmospheric stones, in distinct depth planes, deliberately orbiting
--- OUTSIDE the avatar's personal space. The genuine asset debris field is also
--- still rendered by SkyBlackHoleClient; these add close parallax for the camera.
-local stones={}
-local numStones=UIS.TouchEnabled and 4 or 6
-local colors={Color3.fromRGB(46,51,55),Color3.fromRGB(64,66,69),Color3.fromRGB(38,48,53)}
-for i=1,numStones do
- local rock=Instance.new('Model');rock.Name='PassingStone'..i;rock.Parent=menuRoot
- local scale=.11+(i%4)*.024
- local function piece(kind,size,localCF,color)
-  local p=Instance.new(kind)
-  p.Name='RockFragment';p.Size=size;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false
-  p.Material=Enum.Material.Slate;p.Color=color;p.CastShadow=false;p.CFrame=localCF
-  p.Parent=rock
- end
- piece('WedgePart',Vector3.new(1.4,1.0,1.8)*scale,CFrame.new(0,0,0),colors[i%3+1])
- piece('WedgePart',Vector3.new(.9,.7,1.1)*scale,CFrame.new(.33,.3,-.24)*CFrame.Angles(0,math.rad(155),math.rad(32)),colors[(i+1)%3+1])
- piece('Part',Vector3.new(.55,.35,.88)*scale,CFrame.new(-.3,-.24,.22)*CFrame.Angles(math.rad(15),0,math.rad(-30)),colors[i%3+1])
- local phase=i*2.399963229728653
- local radius=4.6+(i%4)*.65
- local inFront=i%3==0
- local z=inFront and 1.1+(i%3)*.3 or -3.4-(i%3)*.8
- local center=anchor+Vector3.new(math.cos(phase)*radius,math.sin(phase)*radius*.78,z)
- rock:PivotTo(CFrame.new(center))
- table.insert(stones,{model=rock,phase=phase,radius=radius,depth=z,speed=(i%3+2)*.005,spin=i*.14})
-end
+-- All debris now comes exclusively from the original 7208091524 DebrisField.
+-- No locally generated wedge/part rocks or individual fake stone orbits.
 
 local elapsed=0
-local stoneAccum=0
 local connection
 connection=RunService.RenderStepped:Connect(function(dt)
  if not menuRoot.Parent or W:GetAttribute('GameMode')~='Menu' then
@@ -120,16 +95,4 @@ connection=RunService.RenderStepped:Connect(function(dt)
  camera.CameraType=Enum.CameraType.Scriptable
  camera.FieldOfView=60-t*8
  camera.CFrame=CFrame.lookAt(wideEye:Lerp(closeEye,t),wideTarget:Lerp(closeTarget,t))
- stoneAccum+=dt
- if stoneAccum>1/24 then
-  stoneAccum=0
-  for _,stone in ipairs(stones) do
-   local theta=stone.phase+elapsed*stone.speed
-   local r=stone.radius
-   -- X/Y radial clearance is at least 3.9 studs, even when a stone is in front.
-   local center=anchor+Vector3.new(math.cos(theta)*r,math.sin(theta)*r*.78+math.sin(elapsed*.19+stone.spin)*.26,stone.depth)
-   local tilt=CFrame.Angles(elapsed*.033+stone.spin,theta*.44,elapsed*.018)
-   stone.model:PivotTo(CFrame.new(center)*tilt)
-  end
- end
 end)
