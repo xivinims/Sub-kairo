@@ -1,4 +1,4 @@
--- The actual player avatar swims in 3D before the original Beyond the Dark black hole.
+-- The actual player avatar stands still in dark water before the original Beyond the Dark black hole.
 -- The menu camera zooms toward the face for panels and game launch.
 -- Local-only objects never affect match maps, player physics, or server-owned gameplay.
 local W=workspace
@@ -29,7 +29,6 @@ modeChanged()
 
 -- Actual Roblox R15 swimming animation, not handmade limb motion.
 local avatar
-local swimTrack
 local function installAvatar(model)
  if not menuRoot.Parent then model:Destroy();return end
  for _,d in ipairs(model:GetDescendants()) do
@@ -44,22 +43,10 @@ local function installAvatar(model)
  local humanoid=model:FindFirstChildOfClass('Humanoid')
  local root=model:FindFirstChild('HumanoidRootPart')
  if not humanoid or not root then model:Destroy();warn('[MenuCinematic] Avatar rig incomplete');return end
- model.Name='SwimmingPlayerAvatar'
+ model.Name='PlayerStandingInWater'
  model.Parent=menuRoot
- model:PivotTo(CFrame.new(anchor)*CFrame.Angles(math.rad(-26),math.pi,0))
+ model:PivotTo(CFrame.lookAt(anchor,Vector3.new(0,5001.05,1.3)))
  avatar=model
- local animator=humanoid:FindFirstChildOfClass('Animator') or Instance.new('Animator',humanoid)
- local swim=Instance.new('Animation')
- swim.Name='RobloxDefaultR15Swim'
- swim.AnimationId='rbxassetid://507784897'
- swim.Parent=model
- local ok,track=pcall(function() return animator:LoadAnimation(swim) end)
- if ok and track then
-  swimTrack=track
-  swimTrack.Looped=true
-  swimTrack.Priority=Enum.AnimationPriority.Movement
-  swimTrack:Play(.25,1,.74)
- else warn('[MenuCinematic] Roblox default swim track unavailable') end
  player:SetAttribute('MenuAvatarReady',true)
 end
 task.spawn(function()
@@ -101,15 +88,14 @@ local connection
 connection=RunService.RenderStepped:Connect(function(dt)
  if not menuRoot.Parent or W:GetAttribute('GameMode')~='Menu' then
   if connection then connection:Disconnect() end
-  if swimTrack then swimTrack:Stop() end
   menuRoot:Destroy()
   return
  end
  elapsed+=math.min(dt,.08)
- local bob=math.sin(elapsed*.8)*.17
- local headPosition=anchor+Vector3.new(0,1.65+bob,0)
+ local headPosition=anchor+Vector3.new(0,1.65,0)
+ -- Avatar is motionless, fully upright at the waterline.
  if avatar then
-  avatar:PivotTo(CFrame.new(anchor+Vector3.new(0,bob,0))*CFrame.Angles(math.rad(-26)+math.sin(elapsed*.42)*.035,math.pi+math.sin(elapsed*.31)*.08,math.rad(6)+math.sin(elapsed*.4)*.03))
+  avatar:PivotTo(CFrame.lookAt(anchor,Vector3.new(0,5001.05,1.3)))
   local head=avatar:FindFirstChild('Head')
   if head and head:IsA('BasePart') then headPosition=head.Position end
  end
