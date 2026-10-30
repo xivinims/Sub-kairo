@@ -8,8 +8,8 @@ Config.InteractionCooldown = 0.4
 -- Upload the supplied files to the owning Roblox experience, then put the IDs here.
 -- 0 deliberately disables an unconfigured asset; GitHub URLs are not Roblox content IDs.
 Config.Assets = {
- StudioLogo = 119097868099668, ChapterLogo = 104036635112721, MenuLogo = 0,
- Cassettes = {Chapter1=0, MissionFound=0, YouAreMyTools=0},
+ StudioLogo = 119097868099668, ChapterLogo = 104036635112721, MenuLogo = 127763777191805,
+ Cassettes = {Chapter1=121673951150922, MissionFound=122762203607710, YouAreMyTools=120585401870108},
  BlueHandTexture = 91503834655118, RedHandTexture = 71928482940714,
  Ambient = 4745539237, Pursuit = 9039697342, Radio = 8028069841, Relay = 0, OpeningVoice = 0,
  Voices = {},
