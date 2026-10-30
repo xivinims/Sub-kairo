@@ -76,9 +76,25 @@ for _,o in ipairs(game:GetDescendants()) do audio(o) end
 game.DescendantAdded:Connect(audio)
 local correction=make('ColorCorrectionEffect',{Name='PlayerBrightness'},Lighting)
 local bloomOriginal=setmetatable({},{__mode='k'})
+-- When the menu has been removed for a match, re-apply the player's saved
+-- graphics preferences rather than allowing the cinematic overrides to leak.
+workspace:GetAttributeChangedSignal('GameMode'):Connect(function()
+ if M.Loaded then task.defer(function() if player.Parent then M.Apply() end end) end
+end)
 function M.Apply()
- local s=M.Settings;master.Volume=s.volume;for group,volume in pairs(groupVolumes) do if group.Parent then group.Volume=volume*s.volume end end;correction.Brightness=(s.brightness-.5)*.3;Lighting.GlobalShadows=s.shadows
- for _,e in ipairs(Lighting:GetChildren()) do if e:IsA('BloomEffect') then if bloomOriginal[e]==nil then bloomOriginal[e]=e.Enabled end;e.Enabled=s.bloom and bloomOriginal[e] end end
+ local s=M.Settings;master.Volume=s.volume;for group,volume in pairs(groupVolumes) do if group.Parent then group.Volume=volume*s.volume end end
+ -- MENU IS CINEMATIC: saved graphics options affect only the game match.
+ -- The local menu uses the creator's high-quality light/shadow/Bloom setup.
+ -- Roblox device-level graphics quality may still disable expensive effects.
+ local cinematicMenu=workspace:GetAttribute('GameMode')=='Menu'
+ correction.Brightness=cinematicMenu and 0 or (s.brightness-.5)*.3
+ Lighting.GlobalShadows=cinematicMenu or s.shadows
+ for _,e in ipairs(Lighting:GetChildren()) do
+  if e:IsA('BloomEffect') then
+   if bloomOriginal[e]==nil then bloomOriginal[e]=e.Enabled end
+   e.Enabled=cinematicMenu or (s.bloom and bloomOriginal[e])
+  end
+ end
  game:GetService('UserInputService').MouseDeltaSensitivity=s.sensitivity
  player:SetAttribute('ShowObjectives',s.objectives);player:SetAttribute('PreferredFOV',s.fov);player:SetAttribute('LoadingHints',s.loadingHints)
  if workspace.CurrentCamera and workspace.CurrentCamera.CameraType~=Enum.CameraType.Scriptable then workspace.CurrentCamera.FieldOfView=s.fov end
@@ -101,6 +117,34 @@ end
 function M.OpenSettings()
  local initial=M.Loaded and table.clone(M.Settings) or nil
  local panel=M.Panel('CONFIGURAÇÕES')
+ -- A proper editorial settings sheet, not giant floating text over the scene.
+ panel.Pane.BackgroundTransparency=.10
+ panel.Pane.BackgroundColor3=Color3.fromRGB(11,17,21)
+ make('UICorner',{CornerRadius=UDim.new(0,10)},panel.Pane)
+ make('UIStroke',{Color=Color3.fromRGB(99,113,122),Transparency=.47,Thickness=1},panel.Pane)
+ make('UIGradient',{
+  Rotation=90,
+  Color=ColorSequence.new(Color3.fromRGB(22,30,35),Color3.fromRGB(6,12,17)),
+  Transparency=NumberSequence.new(.04,.14)
+ },panel.Pane)
+ panel.Pane:FindFirstChildWhichIsA('UIStroke').Enabled=true
+ panel.Pane.ClipsDescendants=false
+ local titleText=panel.Pane:FindFirstChildWhichIsA('TextLabel')
+ if titleText then
+  titleText.Text='CONFIGURAÇÕES'
+  titleText.Font=Enum.Font.RobotoCondensed
+  titleText.TextSize=18;titleText.TextScaled=false
+  titleText.TextXAlignment=Enum.TextXAlignment.Left
+  titleText.Position=UDim2.new(0,20,0,8)
+  titleText.Size=UDim2.new(1,-40,0,29)
+  titleText.TextColor3=Color3.fromRGB(231,232,225)
+ end
+ local titleDivider=make('Frame',{
+  Name='SettingsHeaderDivider',Position=UDim2.new(0,20,0,52),
+  Size=UDim2.new(1,-40,0,1),BorderSizePixel=0,
+  BackgroundColor3=Color3.fromRGB(81,92,101),BackgroundTransparency=.46
+ },panel.Pane)
+
  local categoryStack=make('Frame',{
   Name='OptionCategoryStack',
   Position=UDim2.fromScale(0,0),
@@ -151,8 +195,8 @@ function M.OpenSettings()
  local groups={
   {'VÍDEO',{{'Campo de visão','fov',60,90,5,'Altera a visão durante a partida.'}}},
   {'CALIBRAÇÃO',{{'Brilho','brightness',0,1,.1,'Ajusta a luminosidade da imagem.'}}},
-  {'QUALIDADE',{{'Sombras','shadows',nil,nil,nil,'Sombras dinâmicas no cenário.'},
-                 {'Bloom','bloom',nil,nil,nil,'Brilho suave das fontes de luz.'}}},
+  {'QUALIDADE',{{'Sombras','shadows',nil,nil,nil,'Sombras dinâmicas durante a partida.'},
+                 {'Bloom','bloom',nil,nil,nil,'Pós-processamento durante a partida.'}}},
   {'CONTROLES',{{'Sensibilidade','sensitivity',.2,2,.2,'Velocidade do movimento da câmera.'}}},
   {'JOGABILIDADE',{{'Objetivos','objectives',nil,nil,nil,'Exibe os objetivos na interface.'},
                    {'Dicas no carregamento','loadingHints',nil,nil,nil,'Exibe dicas nas telas de carregamento.'}}},
@@ -191,6 +235,11 @@ function M.OpenSettings()
  local function drawSettings(group)
   if closed or not panel.Gui.Parent then return end
   selected=group[1]
+  if group[1]=='QUALIDADE' then
+   panel.Status.Text='A qualidade do menu permanece cinematográfica.'
+  else
+   panel.Status.Text='Alterações são aplicadas ao entrar na partida.'
+  end
   caption.Text='CONFIGURAÇÕES'
   sectionHeading.Text=group[1]
   for name,tab in pairs(tabsByName) do
