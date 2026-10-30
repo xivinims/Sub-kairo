@@ -13,13 +13,13 @@ p:SetAttribute('MenuCameraMode','wide')
 camera.FieldOfView=60
 local lighting=game:GetService('Lighting');lighting.FogEnd=100000
 -- Menu-only lighting: expose the singularity, not a screen-filling flare.
-lighting.ExposureCompensation=-.6
+lighting.ExposureCompensation=-.32
 for _,effect in ipairs(lighting:GetChildren()) do
  if effect:IsA('Atmosphere') then effect.Density=.025;effect.Haze=0;effect.Glare=0
  elseif effect:IsA('BloomEffect') then
-  effect.Intensity=math.min(effect.Intensity,.12)
-  effect.Threshold=math.max(effect.Threshold,1.8)
-  effect.Size=math.min(effect.Size,16)
+  effect.Intensity=math.min(effect.Intensity,.75)
+  effect.Threshold=math.max(effect.Threshold,1.15)
+  effect.Size=math.min(effect.Size,32)
  elseif effect:IsA('SunRaysEffect') then effect.Enabled=false end
 end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
@@ -44,6 +44,7 @@ startLabel.TextXAlignment=Enum.TextXAlignment.Center
 startLabel.Visible=false
 make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
 local starting=false
+local busy=false;local current;local panel;local redraw
 local function startPresentation()
  starting=true
  p:SetAttribute('MenuCameraMode','starting')
@@ -62,7 +63,6 @@ end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  composition.Visible=not starting and not p:GetAttribute('InterfaceOpen')
 end)
-local busy=false;local current;local panel;local redraw
 local function request(action,value)
  if busy then return end
  busy=true
@@ -72,6 +72,8 @@ local function request(action,value)
   local saved,err=UI.Save()
   if not saved then target.Text=err;busy=false;return end
   startPresentation()
+  -- Give only the initiating client time to see the singularity burst before teleport.
+  task.wait(1.35)
  else target.Text='Aguarde…' end
  local ok,result=pcall(function() return remote:InvokeServer(action,value) end)
  busy=false
