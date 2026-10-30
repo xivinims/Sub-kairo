@@ -59,7 +59,7 @@ assert(prefsSource:find("M.Panel('OPTIONS','left')",1,true),'Settings panel does
 assert(prefsSource:find('panel.Pane.BackgroundTransparency=.08',1,true),'Dark settings surface missing')
 assert(prefsSource:find("'LANGUAGE'",1,true) and prefsSource:find("'CREDITS'",1,true),'Language or credits option category missing')
 local pickupUi=dm:GetService('ReplicatedFirst'):FindFirstChild('OriginalWeaponHoldPrompt')
-assert(pickupUi and pickupUi.Enabled and pickupUi.Source:find("button.Text='👌'",1,true),'Touch hold-to-pickup button is not packaged')
+assert(pickupUi and pickupUi:IsA('LocalScript') and pickupUi.Source:find("button.Text='👌'",1,true),'Touch hold-to-pickup button is not packaged')
 for _,label in ipairs({'CHAPTER 1','MISSION FOUND','YOU ARE MY TOOLS'}) do assert(menuSource:find(label,1,true),'Cassette artwork label missing: '..label) end
 assert(dm:GetService('StarterPlayer').StarterPlayerScripts.SkyBlackHoleClient.Source:find("player:SetAttribute('MenuBlackHoleReady',true)",1,true),'No first-frame black-hole readiness')
 assert(dm:GetService('ReplicatedFirst').CinematicEnvironmentClient.Source:find("player:SetAttribute('MenuEffectsReady',true)",1,true),'No post-processing readiness')
