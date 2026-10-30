@@ -1,3 +1,13 @@
+## Original weapon recovery — verified version 220
+
+Build `still-here-weapons-v5`, workflow 40984680051. Published and verified through exact-version Roblox execution, exact downloaded source comparison and restartServers. 377 unchanged original bodies, 14 marked compatibility files.
+
+Original weapon equip no longer waits forever for animation lengths; after 3 seconds unavailable animations warn without blocking viewmodel/controls. Character-contained tools are registered and missed equip events reconciled. R15 torso/joint arrival is awaited. Original gun input uses a held trigger flag for touch auto/burst, fixes the sprint method call, cancels on focus/settings loss and blocks starting fire through settings. Original mobile button assets are placed in their own screen layer, away from JumpButton; Shoot, ADS, Reload, Sprint, equipped-only Crouch. Firemode remains on keyboard B.
+
+Original M4A1 and Deagle world pickups are anchored until collected; proximity pickup validates life and distance. World supply replenishes after 30 seconds. Native verification now actually runs pickup spawning and confirms both prompts and supporting surface rays. No replacement shooting implementation introduced.
+
+Executed regression: source gun callbacks with touch input and no pressed mouse; auto fire, semi-auto duplicate begin suppression, release/cancel, settings modal blocking, reload, aim toggle and unbind. Movement/settings tests passed again. Actual mobile rendering and full multiplayer combat remain untested; original animation asset availability depends on Roblox permissions and is not claimed resolved.
+
 ## Interface and stability — verified version 219
 
 Build `still-here-interface-v4`, workflow 40982385309. Published, executed exact live version, downloaded and compared original sources, restarted servers. All 7 source missions and original weapon factory still verify. Original bodies: 378 unchanged; 13 explicitly marked compatibility files.
