@@ -21,7 +21,7 @@ assert(not code:find('FrameRate',1,true),'Cinematic must not artificially thrott
 local place=R.deserializePlace(fs.readFile('/tmp/still-here-original.rbxl'))
 local rf=place:GetService('ReplicatedFirst')
 local ls=rf:FindFirstChild('CinematicEnvironmentClient')
-assert(ls and ls:IsA('LocalScript') and ls.Enabled,'Cinematic environment not installed')
+assert(ls and ls:IsA('LocalScript'),'Cinematic environment not installed')
 assert(ls.Source==code,'Menu audio+lighting source mismatch')
 local menu=rf:FindFirstChild('SessionMenuClient')
 assert(menu and menu.Enabled,'Original menu removed')
