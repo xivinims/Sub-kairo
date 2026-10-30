@@ -1,5 +1,5 @@
 while not workspace:GetAttribute('GameMode') do task.wait(.1) end
-if workspace:GetAttribute('GameMode')~='Match' then return end
+local menu=workspace:GetAttribute('GameMode')=='Menu'
 -- Original visual data from Roblox asset 7208091524; all runtime code here is ours.
 local W=workspace
 local Players=game:GetService('Players');local RS=game:GetService('ReplicatedStorage')
@@ -16,7 +16,7 @@ local distance=900
 model:ScaleTo(math.clamp(500/reference,.12,.7))
 model.Parent=W
 local touch=UIS.TouchEnabled
-local offset=Vector3.new(-.36,.49,-.79).Unit*distance
+local offset=(menu and Vector3.new(-.30,.05,-1) or Vector3.new(-.36,.49,-.79)).Unit*distance
 local base=model:GetPivot()
 local orbit={};local flares={}
 local function pivot(object,cf)

@@ -5,9 +5,12 @@ local p=game:GetService('Players').LocalPlayer;local RS=game:GetService('Replica
 local remote=RS:WaitForChild('SessionMenu')
 local gui=make('ScreenGui',{Name='StillHereMenu',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1000},p:WaitForChild('PlayerGui'))
 local bg=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(6,7,8),BorderSizePixel=0,ClipsDescendants=true},gui)
-local viewport=make('ViewportFrame',{Name='MansionBackdrop',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Ambient=Color3.fromRGB(85,88,85),LightColor=Color3.fromRGB(155,165,151),LightDirection=Vector3.new(-1,-.6,-.4),ImageColor3=Color3.fromRGB(144,155,151)},bg)
-local camera=make('Camera',{FieldOfView=64},viewport);viewport.CurrentCamera=camera
-local template=RS:WaitForChild('MenuBackdrop');template:Clone().Parent=viewport;camera.CFrame=template:GetAttribute('CameraCFrame')
+bg.BackgroundTransparency=1
+local camera=workspace.CurrentCamera
+camera.CameraType=Enum.CameraType.Scriptable
+camera.CFrame=CFrame.lookAt(Vector3.new(0,5000,0),Vector3.new(0,5000,-1))
+camera.FieldOfView=60
+-- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 local shade=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},bg)
 make('UIGradient',{Transparency=NumberSequence.new(.75,.08)},shade)
 local composition=make('Frame',{AnchorPoint=Vector2.new(1,0),Position=UDim2.fromScale(.95,.07),Size=UDim2.fromScale(.42,.86),BackgroundTransparency=1},bg)
@@ -30,8 +33,8 @@ local function request(action,value)
  if panel and panel.Gui.Parent and redraw then redraw() end
 end
 local function groups()
- panel=UI.Panel('MULTIPLAYER');local left=make('Frame',{Size=UDim2.fromScale(.29,1),BackgroundTransparency=1},panel.Content);local tabs=UI.List(left)
- local right=make('Frame',{Position=UDim2.fromScale(.32,0),Size=UDim2.fromScale(.68,1),BackgroundTransparency=1},panel.Content);local rows=UI.List(right)
+ panel=UI.Panel('MULTIPLAYER');local left=make('Frame',{Position=UDim2.fromScale(.15,0),Size=UDim2.fromScale(.32,1),BackgroundTransparency=1},panel.Content);local tabs=UI.List(left)
+ local right=make('Frame',{Position=UDim2.fromScale(.50,0),Size=UDim2.fromScale(.50,1),BackgroundColor3=Color3.fromRGB(8,20,24),BackgroundTransparency=.20,BorderSizePixel=0},panel.Content);local rows=UI.List(right)
  local view='list';local capacity=6;local friends=false
  redraw=function()
   if not panel or not panel.Gui.Parent then return end
@@ -61,6 +64,7 @@ local function groups()
  UI.Button(tabs,'GRUPOS',function() view='list';redraw();request('state') end)
  UI.Button(tabs,'CRIAR',function() view='create';redraw() end)
  UI.Button(tabs,'CÓDIGO',function() view='code';redraw() end)
+ for _,b in ipairs(tabs:GetChildren()) do if b:IsA('TextButton') then b.Font=Enum.Font.Oswald;b.TextSize=28;b.TextXAlignment=Enum.TextXAlignment.Right end end
  redraw();task.spawn(request,'state')
 end
 UI.Button(list,'Jogar (solo)',function() request('solo') end)

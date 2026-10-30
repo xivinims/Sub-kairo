@@ -20,10 +20,10 @@ local opened
 function M.Panel(title)
  if opened then opened.Close() end
  local gui=make('ScreenGui',{Name='SidePanel',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1500,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
- make('TextButton',{Size=UDim2.fromScale(1,1),Text='',Modal=true,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.35,AutoButtonColor=false,BorderSizePixel=0},gui)
- local pane=make('Frame',{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(1.5,.5),Size=UDim2.fromScale(.94,.9),BackgroundColor3=Color3.fromRGB(9,17,18),BackgroundTransparency=.12,BorderSizePixel=0,ClipsDescendants=true},gui)
- make('UIGradient',{Color=ColorSequence.new(Color3.fromRGB(31,45,43),Color3.fromRGB(6,11,14)),Rotation=15},pane)
- local heading=M.Label(pane,title,46);heading.Position=UDim2.new(.035,0,0,4);heading.Size=UDim2.new(.86,0,0,46);heading.TextSize=30
+ make('TextButton',{Size=UDim2.fromScale(1,1),Text='',Modal=true,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.80,AutoButtonColor=false,BorderSizePixel=0},gui)
+ local pane=make('Frame',{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(1.5,.5),Size=UDim2.fromScale(.94,.86),BackgroundColor3=Color3.fromRGB(9,17,18),BackgroundTransparency=1,BorderSizePixel=0,ClipsDescendants=true},gui)
+ -- Only the options column has a dark panel; the scenery remains visible.
+ local heading=M.Label(pane,title,46);heading.Position=UDim2.new(.15,0,0,4);heading.Size=UDim2.new(.33,0,0,50);heading.Font=Enum.Font.Oswald;heading.TextScaled=true;heading.TextXAlignment=Enum.TextXAlignment.Right;make('UITextSizeConstraint',{MinTextSize=14,MaxTextSize=42},heading)
  local content=make('Frame',{Position=UDim2.new(.025,0,0,56),Size=UDim2.new(.95,0,1,-118),BackgroundTransparency=1},pane)
  local footer=make('Frame',{Position=UDim2.new(.035,0,1,-53),Size=UDim2.new(.93,0,0,45),BackgroundTransparency=1},pane)
  local status=M.Label(footer,'',44);status.Size=UDim2.fromScale(.64,1);status.TextSize=15
@@ -36,7 +36,7 @@ function M.Panel(title)
   gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false);if opened==obj then opened=nil end
  end
  local close=M.Button(footer,'VOLTAR',obj.Close);close.Position=UDim2.fromScale(.68,0);close.Size=UDim2.fromScale(.32,1)
- obj.Back=close;opened=obj;Tween:Create(pane,TweenInfo.new(.25,Enum.EasingStyle.Quad),{Position=UDim2.fromScale(.5,.5)}):Play();return obj
+ obj.Back=close;obj.Pane=pane;opened=obj;Tween:Create(pane,TweenInfo.new(.25,Enum.EasingStyle.Quad),{Position=UDim2.fromScale(.5,.5)}):Play();return obj
 end
 local master=make('SoundGroup',{Name='StillHereMaster',Volume=.8},Sound)
 local groupVolumes=setmetatable({},{__mode='k'})
@@ -72,15 +72,18 @@ function M.Save()
 end
 function M.OpenSettings()
  local original=M.Loaded and table.clone(M.Settings) or nil
- local panel=M.Panel('CONFIGURAÇÕES');local categories=make('Frame',{Size=UDim2.fromScale(.29,1),BackgroundTransparency=1},panel.Content)
- local tabs=M.List(categories);local right=make('Frame',{Position=UDim2.fromScale(.32,0),Size=UDim2.fromScale(.68,1),BackgroundTransparency=1},panel.Content);local rows=M.List(right)
+ local panel=M.Panel('OPÇÕES');local categories=make('Frame',{Position=UDim2.fromScale(.15,0),Size=UDim2.fromScale(.32,1),BackgroundTransparency=1},panel.Content)
+ local tabs=M.List(categories);local caption=M.Label(tabs,'CATEGORIAS',22);caption.Font=Enum.Font.RobotoCondensed;caption.TextSize=12;caption.TextXAlignment=Enum.TextXAlignment.Right
+ local right=make('Frame',{Name='OptionsHalf',Position=UDim2.fromScale(.50,0),Size=UDim2.fromScale(.50,1),BackgroundColor3=Color3.fromRGB(8,20,24),BackgroundTransparency=.20,BorderSizePixel=0},panel.Content);local rows=M.List(right);rows.UIListLayout.Padding=UDim.new(0,2)
+ local categoryButtons={}
  local groups={{'VÍDEO',{{'Brilho','brightness',0,1,.1},{'Campo de visão','fov',60,90,5},{'Sombras','shadows'},{'Bloom','bloom'}}},{'ÁUDIO',{{'Volume geral','volume',0,1,.1}}},{'CONTROLES',{{'Sensibilidade do mouse','sensitivity',.2,2,.2}}},{'JOGO',{{'Missão no topo','objectives'},{'Frases no carregamento','loadingHints'}}}}
  local function category(group)
+  for name,b in pairs(categoryButtons) do b.TextColor3=name==group[1] and Color3.fromRGB(230,237,218) or Color3.fromRGB(102,122,124) end
   for _,c in ipairs(rows:GetChildren()) do if c:IsA('GuiObject') then c:Destroy() end end
   for _,spec in ipairs(group[2]) do
-   local row=make('Frame',{Size=UDim2.new(1,0,0,64),BackgroundColor3=Color3.fromRGB(60,76,73),BackgroundTransparency=.85,BorderSizePixel=0},rows)
-   local label=M.Label(row,spec[1],64);label.Size=UDim2.fromScale(.48,1);label.TextSize=16
-   local value=M.Label(row,'',64);value.Position=UDim2.fromScale(.60,0);value.Size=UDim2.fromScale(.25,1);value.TextXAlignment=Enum.TextXAlignment.Center;value.TextSize=15
+   local row=make('Frame',{Size=UDim2.new(1,0,0,30),BackgroundColor3=Color3.fromRGB(60,76,73),BackgroundTransparency=.85,BorderSizePixel=0},rows)
+   local label=M.Label(row,string.upper(spec[1]),30);label.Size=UDim2.fromScale(.48,1);label.Font=Enum.Font.RobotoCondensed;label.TextScaled=true;make('UITextSizeConstraint',{MinTextSize=9,MaxTextSize=14},label)
+   local value=M.Label(row,'',30);value.Position=UDim2.fromScale(.60,0);value.Size=UDim2.fromScale(.25,1);value.TextXAlignment=Enum.TextXAlignment.Center;value.TextSize=13;value.Font=Enum.Font.RobotoCondensed
    local function refresh() local v=M.Settings[spec[2]];value.Text=typeof(v)=='boolean' and (v and 'SIM' or 'NÃO') or (spec[2]=='volume' or spec[2]=='brightness') and math.floor(v*100+.5)..'%' or string.format('%.1f',v) end
    local function adjust(direction)
     if not M.Loaded then panel.Status.Text='Aguarde carregar as configurações.';return end
@@ -91,7 +94,7 @@ function M.OpenSettings()
    refresh()
   end
  end
- for _,g in ipairs(groups) do local b=M.Button(tabs,g[1],function() category(g) end);b.TextSize=18 end
+ for _,g in ipairs(groups) do local b=M.Button(tabs,g[1],function() category(g) end);b.Size=UDim2.new(1,0,0,40);b.Font=Enum.Font.Oswald;b.TextScaled=true;b.TextXAlignment=Enum.TextXAlignment.Right;make('UITextSizeConstraint',{MinTextSize=14,MaxTextSize=32},b);categoryButtons[g[1]]=b end
  panel.Back:Destroy();local saving=false
  local save=M.Button(panel.Footer,'SALVAR E VOLTAR',function()
   if saving then return end;saving=true;panel.Status.Text='Salvando…';local ok,err=M.Save();saving=false
@@ -99,7 +102,7 @@ function M.OpenSettings()
  end);save.Position=UDim2.fromScale(.60,0);save.Size=UDim2.fromScale(.40,1);save.TextSize=17
  panel.Status.Text='Carregando…';task.spawn(function() local ok=M.Load();if not panel.Gui.Parent then return end;panel.Status.Text=ok and 'Vale no menu e na partida.' or 'Falha ao carregar. Feche e tente novamente.';if ok then original=table.clone(M.Settings) end;category(groups[1]) end)
  -- Escape from a network error without pretending preferences were saved.
- local cancel=M.Button(tabs,'CANCELAR',function() if original then M.Settings=original;M.Dirty=false;M.Apply() end;panel.Close() end);cancel.LayoutOrder=10;cancel.TextSize=16
+ local cancel=M.Button(tabs,'CANCELAR',function() if original then M.Settings=original;M.Dirty=false;M.Apply() end;panel.Close() end);cancel.LayoutOrder=10;cancel.TextSize=14;cancel.TextXAlignment=Enum.TextXAlignment.Right
  category(groups[1])
 end
 return M
