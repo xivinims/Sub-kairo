@@ -12,11 +12,11 @@ local model=template:Clone();model.Name='LocalSkyBlackHole'
 local origin=template:GetAttribute('SourceOrigin')
 local reference=template:GetAttribute('ReferenceDistance') or 1028
 model.WorldPivot=CFrame.lookAt(origin,origin+Vector3.new(1,0,0))
-local distance=menu and 600 or 900
+local distance=menu and 565 or 900
 -- Source halo diameter is 220 studs and the beam lattice extends much farther.
 -- Scale according to the actual halo, NOT the spawn distance or the full sky.
 local haloDiameter=template:GetAttribute('SourceHaloDiameter') or 220
-local scale=menu and math.clamp(145/haloDiameter,.60,.70) or math.clamp(500/reference,.12,.7)
+local scale=menu and math.clamp(190/haloDiameter,.78,.90) or math.clamp(500/reference,.12,.7)
 model:ScaleTo(scale)
 model.Parent=W
 local touch=UIS.TouchEnabled
@@ -152,7 +152,7 @@ Run.RenderStepped:Connect(function(dt)
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   -camera.CFrame.RightVector*(x*.20)
+   -camera.CFrame.RightVector*(x*.24)
    +camera.CFrame.UpVector*(y*.10)
   local targetObservation=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
   base=targetObservation*observationToPivot
