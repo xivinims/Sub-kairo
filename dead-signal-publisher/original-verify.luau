@@ -37,7 +37,7 @@ local lockDoors,lockSounds=0,0
 assert(Enum.Font.Oswald and Enum.Font.RobotoCondensed)
 for _,door in ipairs(game:GetService('CollectionService'):GetTagged('Door')) do
  if door:IsDescendantOf(W) then
-  lockDoors+=1;assert(door:FindFirstChild('DoubleClickLock'),'Door click missing')
+  lockDoors+=1;assert(door.TargetR_Closed:FindFirstChild('DoubleClickLock'),'Door click missing')
   local prompt=door.TargetR_Closed:FindFirstChild('PlayerDoorLock');assert(prompt,'Door prompt missing')
   if door.TargetR_Closed:FindFirstChild('PlayerLockSound') then lockSounds+=1 end
   assert(doors.SetPlayerLocked(door,true) and door:GetAttribute('PlayerLocked'),'Lock failed')
