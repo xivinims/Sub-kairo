@@ -1,3 +1,15 @@
+## Interface and stability — verified version 219
+
+Build `still-here-interface-v4`, workflow 40982385309. Published, executed exact live version, downloaded and compared original sources, restarted servers. All 7 source missions and original weapon factory still verify. Original bodies: 378 unchanged; 13 explicitly marked compatibility files.
+
+- R15 crouch restores standing height; unarmed crouch hidden/blocked; duplicate movement, forced-body visibility and R6 mouse tilt disabled. Camera effects ordered after Roblox camera; locomotion bob/FOV jump impulses removed. Jump height 7.2 and climbing enabled. Only audited SUV_Damaged wreck and its random rattles removed.
+- Scrollable responsive main menu; Credits replaces Shop. Multiplayer side panel: local-lobby groups, private code entry, capacity 2–6 and optional friends-only admission.
+- Shared side-panel preferences in menu and match: volume, brightness, FOV, mouse sensitivity, shadows, bloom, mission HUD and loading phrases. Save & Back writes validated settings to StillHerePreferences_v1. Cancel reverts the open panel's changes. Mouse sensitivity setting affects mouse, not native touch look.
+- Immediate black loading cover in both modes; only corner Carregando… label. Match phrases appear rarely after 12 seconds, with no artificial loading extension. Source Starting Sequence disabled; source title/quote/credits visuals hidden. Original story transitions still exist.
+- Mission text at top driven by replicated source state, including late join snapshots.
+
+Tests executed: actual shipped movement methods in deterministic harness (20 crouch cycles, unarmed gate, 2–240 FPS interpolation, cinematic camera); settings malformed input, clamps, false booleans, write throttling, fresh-session read and simulated failed write. Native server validation passed on version 219. No rendered Roblox client is available here: mobile visual fit, touch interactions, multiplayer teleports and full campaign are not end-to-end playtested. Group list is for the current public lobby, not a cross-server directory.
+
 ## Menu reference update — version 217
 
 Build `still-here-original-menu-v2`: title and borderless navigation on the right, muted serif typography, script-free original foyer in a ViewportFrame, dark edge gradients. Solo/group/shop remote actions remain unchanged. Decorative tags are removed before campaign initialization. Native verification and exact original-source comparison passed; servers restarted. Client-rendered appearance and touch interaction have not been visually tested; pixel-identical reproduction is not claimed.
