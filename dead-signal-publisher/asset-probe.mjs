@@ -44,6 +44,9 @@ if(trigger.trim().startsWith('cassette-status-audit')){
  console.log('CASSETTE_ASSET_STATUS '+JSON.stringify({http:response.status,body:body.slice(0,3500)}));
 }else if(trigger.trim().startsWith('cassette-image-upload')){
  await import('./cassette-image-upload.mjs');
+}else if(trigger.trim().startsWith('menu-images-upload')){
+ await import('./cassette-image-upload.mjs');
+ await import('./logo-image-upload.mjs');
 }else if(trigger.trim().startsWith('chapter2-map-audit')){
  const fs=await import('node:fs/promises');
  const {execFileSync}=await import('node:child_process');
