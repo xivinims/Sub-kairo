@@ -23,7 +23,7 @@ for _,effect in ipairs(lighting:GetChildren()) do
 end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 local shade=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},bg)
-make('UIGradient',{Transparency=NumberSequence.new(.75,.08)},shade)
+make('UIGradient',{Transparency=NumberSequence.new(.94,.68)},shade)
 local composition=make('Frame',{AnchorPoint=Vector2.new(1,0),Position=UDim2.fromScale(.95,.07),Size=UDim2.fromScale(.42,.86),BackgroundTransparency=1},bg)
 local by=UI.Label(composition,'BY CH_CKZ2N',25);by.Size=UDim2.fromScale(1,.07);by.TextXAlignment=Enum.TextXAlignment.Center;by.TextSize=14
 local title=UI.Label(composition,'STILL HERE',90);title.Position=UDim2.fromScale(0,.07);title.Size=UDim2.fromScale(1,.23);title.Font=Enum.Font.Antique;title.TextScaled=true;title.TextXAlignment=Enum.TextXAlignment.Center
