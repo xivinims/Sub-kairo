@@ -45,6 +45,9 @@ if(trigger.trim().startsWith('cassette-status-audit')){
 }else if(trigger.trim().startsWith('cassette-image-upload')){
  await import('./cassette-image-upload.mjs');
 }else if(trigger.trim().startsWith('chapter2-map-audit')){
+ const fs=await import('node:fs/promises');
+ const {execFileSync}=await import('node:child_process');
+ const {createHash}=await import('node:crypto');
  const key=process.env.ROBLOX_API_KEY;
  const [metaResponse,deliveryResponse]=await Promise.all([
   fetch('https://economy.roblox.com/v2/assets/3251795155/details'),
@@ -58,6 +61,16 @@ if(trigger.trim().startsWith('cassette-status-audit')){
   const downloaded=await fetch(location);
   const bytes=Buffer.from(await downloaded.arrayBuffer());
   file={http:downloaded.status,contentType:downloaded.headers.get('content-type'),bytes:bytes.length,magic:bytes.subarray(0,24).toString('hex')};
+  if(downloaded.ok&&bytes.length>100000){
+   await fs.writeFile('/tmp/chapter2-map.rbxl',bytes);
+   const archive=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
+   const zip=Buffer.from(await archive.arrayBuffer());
+   if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
+   await fs.writeFile('/tmp/chapter2-lune.zip',zip);
+   execFileSync('unzip',['-q','-o','/tmp/chapter2-lune.zip','-d','/tmp/chapter2-lune']);
+   await fs.chmod('/tmp/chapter2-lune/lune',0o755);
+   execFileSync('/tmp/chapter2-lune/lune',['run','chapter2-map-inspect.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
+  }
  }
  const summary={assetId:3251795155,metadataHttp:metaResponse.status,metadata:{name:metadata.Name,description:metadata.Description,assetTypeId:metadata.AssetTypeId,creator:metadata.Creator},deliveryHttp:deliveryResponse.status,delivery:{assetType:delivery.assetType,assetId:delivery.assetId,versionNumber:delivery.versionNumber,error:delivery.errors?.[0]?.message},file};
  console.log('CHAPTER2_MAP_AUDIT '+JSON.stringify(summary));
