@@ -48,6 +48,7 @@ const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['r
 execFileSync('/tmp/islands-lune/lune',['run','original-gameplay-test.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/islands-lune/lune',['run','settings-test.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/islands-lune/lune',['run','door-lock-test.luau'],{cwd,stdio:'inherit'});
+execFileSync('/tmp/islands-lune/lune',['run','menu-layout-test.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/islands-lune/lune',['run','original-weapon-test.luau'],{cwd,stdio:'inherit'});
 await fs.copyFile('/tmp/still-here-original.rbxl','/tmp/still-here-verified.rbxl');
 execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
