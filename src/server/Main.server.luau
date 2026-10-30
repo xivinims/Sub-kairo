@@ -41,6 +41,7 @@ local function save(p,s)
 end
 local function beginScene(p,s,ending)
  s.scene=true;s.sceneToken+=1;freeze(p,true)
+ if s.held then for side in pairs(s.held) do releaseHeld(s,side) end end
  snapshot(p,s,if ending then "Ending" else "Scene")
 end
 local function teleport(p,s)
@@ -53,7 +54,7 @@ local function characterReady(p,c)
  task.wait(.2)
  if s.active then teleport(p,s) else c:PivotTo(CFrame.new(0,4,100)) end
  freeze(p,not s.active or s.scene or s.dead)
- h.Died:Connect(function() if sessions[p]~=s then return end;s.dead=true;s.active=false;removeEnemy(s);snapshot(p,s,"Dead","A raiz encontrou você.") end)
+ h.Died:Connect(function() if sessions[p]~=s then return end;s.dead=true;s.active=false;removeEnemy(s);if s.held then for side in pairs(s.held) do releaseHeld(s,side) end end;snapshot(p,s,"Dead","A raiz encontrou você.") end)
  snapshot(p,s)
 end
 local function join(p)
