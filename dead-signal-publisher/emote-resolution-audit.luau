@@ -20,4 +20,37 @@ if ok and model then
  end
  model:Destroy()
 else result.insertError=tostring(model) end
+-- Also check playback of the RESOLVED animation on a temporary R15 humanoid.
+-- This is a read-only, ephemeral test session, never altering the published game.
+if #result.animations>0 then
+ local animId=result.animations[1].animationId
+ local Players=game:GetService('Players')
+ local description=Instance.new('HumanoidDescription')
+ local rigOk,rig=pcall(function()
+  return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
+ end)
+ result.rigOk=rigOk
+ if rigOk and rig then
+  rig.Name='TemporaryEmotePlaybackAudit'
+  rig.Parent=workspace
+  rig:PivotTo(CFrame.new(0,100000,0))
+  local hum=rig:FindFirstChildOfClass('Humanoid')
+  local animator=hum and (hum:FindFirstChildOfClass('Animator') or Instance.new('Animator',hum))
+  local anim=Instance.new('Animation')
+  anim.AnimationId=animId
+  if animator then
+   local loadOk,track=pcall(function() return animator:LoadAnimation(anim) end)
+   result.loadOk=loadOk
+   if loadOk and track then
+    result.playOk=pcall(function() track:Play(0,1,1) end)
+    task.wait(5)
+    result.trackLength=track.Length
+    result.trackPlaying=track.IsPlaying
+    result.timePosition=track.TimePosition
+    pcall(function() track:Stop(0) end)
+   else result.loadError=tostring(track) end
+  else result.loadError='Animator unavailable' end
+  rig:Destroy()
+ else result.rigError=tostring(rig) end
+end
 return HttpService:JSONEncode(result)
