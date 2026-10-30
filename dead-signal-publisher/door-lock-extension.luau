@@ -9,7 +9,11 @@ function DoorManager.SetPlayerLocked(door, locked)
   task.spawn(StartClosing,info,info.frontSideInfo)
  else
   -- Re-evaluate proximity only if the original mission permits entry.
-  if info.enabled then DoorManager.EnableDoor(door,true) end
+  if info.enabled then
+   DoorManager.EnableDoor(door,true)
+   if next(info.frontSideInfo.playersNear or {}) then task.spawn(StartOpening,info,info.frontSideInfo)
+   elseif next(info.backSideInfo.playersNear or {}) then task.spawn(StartOpening,info,info.backSideInfo) end
+  end
  end
  if info.lockSound then info.lockSound:Stop();info.lockSound:Play() end
  if info.lockPrompt then info.lockPrompt.ActionText=locked and 'Destrancar · 2 toques' or 'Trancar · 2 toques' end
@@ -20,9 +24,9 @@ local function InstallPlayerLock(door,info)
  local prompt=Instance.new('ProximityPrompt');prompt.Name='PlayerDoorLock';prompt.ActionText='Trancar · 2 toques';prompt.ObjectText='Fechadura';prompt.HoldDuration=0;prompt.MaxActivationDistance=7;prompt.RequiresLineOfSight=true;prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.Parent=target
  info.lockPrompt=prompt
  -- Reuse the door's authored mechanical close sound, quietly and briefly.
- local authored=door:FindFirstChild('DoorLock',true) or info.soundClose
+ local authored=door:FindFirstChild('DoorLock',true) or info.soundClose or workspace:FindFirstChild('DoorClose',true) or workspace:FindFirstChild('DoorOpen',true)
  if authored and authored:IsA('Sound') then
-  local sound=authored:Clone();sound.Name='PlayerLockSound';sound.Looped=false;sound.Volume=math.min(authored.Volume,.4);sound.PlaybackSpeed=1.3;sound.RollOffMaxDistance=24;sound.Parent=target;info.lockSound=sound
+  local sound=authored:Clone();sound.Name='PlayerLockSound';sound.Looped=false;sound.Volume=math.clamp(authored.Volume,.15,.4);sound.PlaybackSpeed=1.3;sound.RollOffMaxDistance=24;sound.Parent=target;info.lockSound=sound
  end
  local clicks=setmetatable({},{__mode='k'});local lastChange=0
  local function activate(player)
