@@ -107,7 +107,7 @@ heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
 local newsIndex=1
-local motdText=UI.Label(news,'CHAPTER 2 — IN DEVELOPMENT',22)
+local motdText=UI.Label(news,'CHAPTER 2 · COMING SOON (ENGLISH)',22)
 motdText.Name='Chapter2Announcement'
 motdText.Position=UDim2.new(0,0,0,21)
 motdText.Size=UDim2.new(1,0,0,21)
@@ -197,7 +197,31 @@ end
 prior.Activated:Connect(function() stepTape(-1) end)
 nextButton.Activated:Connect(function() stepTape(1) end)
 updateBriefing()
-local selectedChapter=1
+local selectedChapter=0
+p:SetAttribute('MenuChapter',0)
+-- Chapter 2's menu can briefly flicker its local scene lighting; the avatar
+-- stays in the world and is never hidden or rebuilt during the effect.
+task.spawn(function()
+ while gui.Parent do
+  if selectedChapter==2 and not p:GetAttribute('InterfaceOpen') then
+   task.wait(math.random(10,18))
+   if gui.Parent and selectedChapter==2 and not p:GetAttribute('InterfaceOpen') then
+    lighting.ExposureCompensation=-2.2;task.wait(.075)
+    lighting.ExposureCompensation=-.32;task.wait(.04)
+    lighting.ExposureCompensation=-1.35;task.wait(.06)
+    lighting.ExposureCompensation=-.32
+   end
+  else task.wait(.8) end
+ end
+ lighting.ExposureCompensation=-.32
+end)
+local chapterSelect=make('Frame',{Name='ChapterSelectScreen',Position=UDim2.fromScale(.047,.075),Size=UDim2.fromScale(.42,.58),BackgroundTransparency=1,BorderSizePixel=0},bg)
+local selectHeading=UI.Label(chapterSelect,'SELECT CHAPTER',38)
+selectHeading.Position=UDim2.new(0,0,0,0);selectHeading.Size=UDim2.new(1,0,0,44);selectHeading.Font=Enum.Font.RobotoCondensed;selectHeading.TextSize=24;selectHeading.TextXAlignment=Enum.TextXAlignment.Left;selectHeading.TextColor3=Color3.fromRGB(233,232,223)
+local function chapterButton(text,y,callback)
+ local button=make('TextButton',{Name='ChapterChoice',Position=UDim2.new(0,0,0,y),Size=UDim2.new(1,0,0,48),BackgroundTransparency=1,BorderSizePixel=0,Text=text,TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.RobotoCondensed,TextSize=19,TextColor3=Color3.fromRGB(190,195,193),AutoButtonColor=true},chapterSelect)
+ button.Activated:Connect(callback);return button
+end
 local chapterTwo=make('Frame',{
  Name='ChapterTwoMenu',AnchorPoint=Vector2.new(1,0),
  Position=UDim2.fromScale(.96,.18),Size=UDim2.fromScale(.34,.48),
@@ -212,7 +236,7 @@ chapterTitle.Font=Enum.Font.RobotoCondensed;chapterTitle.TextSize=31;chapterTitl
 local chapterDetail=UI.Label(chapterTwo,'CHAPTER 2  ·  ENGLISH',30)
 chapterDetail.Name='ChapterTwoLanguage';chapterDetail.Position=UDim2.new(0,0,0,106);chapterDetail.Size=UDim2.new(1,0,0,28)
 chapterDetail.Font=Enum.Font.RobotoCondensed;chapterDetail.TextSize=15;chapterDetail.TextColor3=Color3.fromRGB(184,188,183)
-local chapterUnavailable=UI.Label(chapterTwo,'NOT YET CONNECTED TO THIS EXPERIENCE',46)
+local chapterUnavailable=UI.Label(chapterTwo,'MAP NOT INSTALLED  ·  MENU PREVIEW',46)
 chapterUnavailable.Name='ChapterTwoAvailability';chapterUnavailable.Position=UDim2.new(0,0,0,146);chapterUnavailable.Size=UDim2.new(1,0,0,42)
 chapterUnavailable.Font=Enum.Font.RobotoCondensed;chapterUnavailable.TextSize=12;chapterUnavailable.TextColor3=Color3.fromRGB(188,97,89)
 chapterUnavailable.TextWrapped=true
@@ -248,10 +272,15 @@ local function layout()
  preview.Position=UDim2.new(0,0,0,44)
  preview.Size=UDim2.new(1,0,1,-67)
  footer.Position=UDim2.new(0,0,1,-18)
+ chapterSelect.Position=UDim2.fromScale(mobile and .06 or .047,.075)
+ chapterSelect.Size=UDim2.fromScale(mobile and .62 or .40,landscape and .42 or .32)
+ selectHeading.TextSize=mobile and 18 or 24
+ for _,choice in ipairs(chapterSelect:GetChildren()) do if choice:IsA('TextButton') then choice.TextSize=mobile and 15 or 19 end end
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
 composition.Visible=false
+chapterSelect.Visible=true
 news.Visible=false
 chapterTwo.Visible=false
 local startLabel=UI.Label(bg,'INICIANDO...',55)
@@ -275,6 +304,7 @@ local function startPresentation()
  if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
  if infoButton then infoButton.Visible=false end
  composition.Visible=false
+ chapterSelect.Visible=false
  news.Visible=false
  chapterTwo.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
@@ -286,24 +316,26 @@ local function restorePresentation()
  p:SetAttribute('MenuCameraMode',panel and panel.Gui.Parent and 'close' or 'wide')
  startLabel.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
- composition.Visible=not p:GetAttribute('InterfaceOpen')
+ chapterSelect.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==0
+ composition.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter>0
  news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
  chapterTwo.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==2
  if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
- composition.Visible=visible
+ chapterSelect.Visible=visible and selectedChapter==0
+ composition.Visible=visible and selectedChapter>0
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
  if infoButton then infoButton.Visible=visible end
 end)
 local function request(action,value)
  if busy then return end
- if (action=='solo' or action=='start') and selectedChapter==2 then
-  status.Text='Chapter 2 is not connected to this experience yet.'
-  return
- end
+ if action=='solo' then value={chapter=selectedChapter}
+ elseif action=='create' and type(value)=='table' then value.chapter=selectedChapter
+ elseif action=='state' then value={chapter=selectedChapter}
+ elseif action=='join' and type(value)=='string' then value={code=value,chapter=selectedChapter} end
  busy=true
  local launching=action=='solo' or action=='start'
  local target=panel and panel.Gui.Parent and panel.Status or status
@@ -358,8 +390,9 @@ local function groups()
   else
    UI.Label(rows,'GRUPOS DESTE LOBBY',44)
    local available=current and current.groups or {}
-   if #available==0 then UI.Label(rows,'Nenhum grupo esperando. Crie um para chamar outras pessoas.',90) end
-   for _,g in ipairs(available) do UI.Button(rows,g.name..' · '..g.count..'/'..g.capacity..(g.friendsOnly and ' · amigos' or ''),function() request('join',g.code) end) end
+   local matching={};for _,g in ipairs(available) do if g.chapter==selectedChapter then table.insert(matching,g) end end
+   if #matching==0 then UI.Label(rows,'Nenhum grupo deste capítulo esperando. Crie um para chamar outras pessoas.',90) end
+   for _,g in ipairs(matching) do UI.Button(rows,g.name..' · '..g.count..'/'..g.capacity..(g.friendsOnly and ' · amigos' or ''),function() request('join',g.code) end) end
   end
  end
  UI.Button(tabs,'GRUPOS',function() view='list';redraw();request('state') end)
@@ -412,19 +445,31 @@ local function addNavigation(text,action)
 end
 local function chooseChapter(index)
  selectedChapter=index
+ p:SetAttribute('MenuChapter',index)
+ chapterSelect.Visible=false
+ composition.Visible=true
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
  news.Visible=visible and index==1
  chapterTwo.Visible=visible and index==2
  if index==1 then
   status.Text='Capítulo 1 selecionado.'
- else
-  status.Text='Aquele que não encontra · Chapter 2 in English.'
+  else
+  status.Text='Chapter 2 · menu preview. Map integration is pending.'
  end
 end
-addNavigation('CHAPTER 1',function() chooseChapter(1) end)
-addNavigation('CHAPTER 2',function() chooseChapter(2) end)
-addNavigation('JOGAR (SOLO)',function() request('solo') end)
-addNavigation('MULTIPLAYER',groups)
+chapterButton('CHAPTER 1',58,function() chooseChapter(1) end)
+chapterButton('CHAPTER 2  ·  AQUELE QUE NÃO ENCONTRA',108,function() chooseChapter(2) end)
+chapterSelect.Visible=true
+composition.Visible=false
+addNavigation('VOLTAR AOS CAPÍTULOS',function() selectedChapter=0;p:SetAttribute('MenuChapter',0);chapterSelect.Visible=true;composition.Visible=false;news.Visible=false;chapterTwo.Visible=false end)
+addNavigation('JOGAR (SOLO)',function()
+ if selectedChapter==2 then status.Text='Chapter 2: map integration is pending.';return end
+ request('solo')
+end)
+addNavigation('MULTIPLAYER',function()
+ if selectedChapter==2 then status.Text='Chapter 2: map integration is pending.';return end
+ groups()
+end)
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
 selectNavigation(1)
 UIS.InputBegan:Connect(function(input,processed)
@@ -594,7 +639,8 @@ task.spawn(function()
  title.Visible=title.IsLoaded
  titleFallback.Visible=not title.IsLoaded
  local visible=not p:GetAttribute('InterfaceOpen')
- composition.Visible=visible
+ chapterSelect.Visible=visible and selectedChapter==0
+ composition.Visible=visible and selectedChapter>0
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
  infoButton.Visible=visible

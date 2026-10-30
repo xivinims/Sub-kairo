@@ -10,8 +10,8 @@ local gui=Instance.new('ScreenGui')
 gui.Name='OriginalWeaponHoldPrompt';gui.ResetOnSpawn=false
 gui.IgnoreGuiInset=false;gui.DisplayOrder=90;gui.Parent=player:WaitForChild('PlayerGui')
 local button=Instance.new('TextButton')
-button.Name='HoldToPickUp';button.AnchorPoint=Vector2.new(.5,.5)
-button.Position=UDim2.new(.5,0,1,-132);button.Size=UDim2.fromOffset(82,82)
+button.Name='HoldToInteract';button.AnchorPoint=Vector2.new(1,.5)
+button.Position=UDim2.new(1,-26,1,-178);button.Size=UDim2.fromOffset(76,76)
 button.BackgroundColor3=Color3.fromRGB(18,22,22);button.BackgroundTransparency=.12
 button.BorderSizePixel=0;button.AutoButtonColor=false;button.Text='👌'
 button.TextColor3=Color3.fromRGB(235,232,218);button.TextSize=39
@@ -22,7 +22,7 @@ stroke.Transparency=.25;stroke.Thickness=1.5;stroke.Parent=button
 local caption=Instance.new('TextLabel')
 caption.Name='HoldCaption';caption.AnchorPoint=Vector2.new(.5,0)
 caption.Position=UDim2.new(.5,0,1,5);caption.Size=UDim2.new(0,180,0,24)
-caption.BackgroundTransparency=1;caption.Text='SEGURE PARA PEGAR'
+caption.BackgroundTransparency=1;caption.Text='SEGURE PARA INTERAGIR'
 caption.TextColor3=Color3.fromRGB(223,221,212);caption.TextSize=12
 caption.Font=Enum.Font.RobotoCondensed;caption.Parent=button
 local track=Instance.new('Frame')
@@ -64,19 +64,20 @@ local function hidePrompt()
  if inputConnection then inputConnection:Disconnect();inputConnection=nil end
 end
 ProximityPromptService.PromptShown:Connect(function(prompt,inputType)
- if prompt.Name~='OriginalWeaponPickup' then return end
  hidePrompt()
  activePrompt=prompt
+ pcall(function() prompt.Style=Enum.ProximityPromptStyle.Custom end)
  holdDuration=math.max(prompt.HoldDuration,.45)
+ caption.Text=string.upper(prompt.ActionText~='' and prompt.ActionText or 'SEGURE PARA INTERAGIR')
  if inputType==Enum.ProximityPromptInputType.Touch then
   button.Visible=true
-  caption.Text='SEGURE PARA PEGAR'
+  button.Text='👌'
  elseif inputType==Enum.ProximityPromptInputType.Gamepad then
   button.Visible=true
-  button.Text='X';caption.Text='SEGURE PARA PEGAR'
+  button.Text='X'
  elseif inputType==Enum.ProximityPromptInputType.Keyboard then
   button.Visible=true
-  button.Text='E';caption.Text='SEGURE PARA PEGAR'
+  button.Text='E'
  end
  inputConnection=UIS.InputBegan:Connect(function(input,_processed)
   if not activePrompt then return end

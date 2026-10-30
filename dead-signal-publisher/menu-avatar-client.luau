@@ -105,10 +105,23 @@ local function proceduralLevitation(t)
  pose('Left Hip',CFrame.Angles(math.rad(12)-a*.1,0,0))
 end
 
+local function chapterTwoCameraPart()
+ local cameras=W:FindFirstChild('Cameras')
+ return cameras and cameras:FindFirstChild('MenuCamPart')
+end
+
 local function positionAvatar(t)
+ if player:GetAttribute('MenuChapter')==2 then
+  local marker=chapterTwoCameraPart()
+  if marker and marker:IsA('BasePart') then
+   return marker.CFrame*CFrame.new(0,-1.9,-5.6)*CFrame.Angles(0,math.pi,0)
+  end
+  -- Keep the player avatar still and facing the viewer until the Chapter 2
+  -- map's camera marker is installed in this experience.
+  return CFrame.new(anchor)*CFrame.Angles(0,math.pi,0)
+ end
  local rise=.46*math.sin(t*.78)
  local drift=.15*math.sin(t*.37)
- -- Face the viewer while genuinely floating, not leaning sideways.
  return CFrame.new(anchor+Vector3.new(drift,rise,0))
   * CFrame.Angles(math.rad(-7)+math.sin(t*.43)*math.rad(3),math.pi,math.sin(t*.32)*math.rad(2))
 end
@@ -199,7 +212,7 @@ local function installAvatar(model)
  -- Start with a REAL visible pose even before Roblox downloads the emote.
  proceduralLevitation(0)
  player:SetAttribute('MenuAvatarReady',true)
- if humanoid.RigType==Enum.HumanoidRigType.R15 then task.spawn(playRequestedEmote,model) end
+ if humanoid.RigType==Enum.HumanoidRigType.R15 and player:GetAttribute('MenuChapter')~=2 then task.spawn(playRequestedEmote,model) end
 end
 
 task.spawn(function()
@@ -235,7 +248,11 @@ RunService:BindToRenderStep(uniqueRender,Enum.RenderPriority.Camera.Value+1,func
  local headPosition=anchor+Vector3.new(0,1.55,0)
  if avatar then
   avatar:PivotTo(positionAvatar(elapsed))
-  if mode~='asset' or not emoteTrack or not emoteTrack.IsPlaying then
+  if player:GetAttribute('MenuChapter')==2 then
+   if emoteTrack then pcall(function() emoteTrack:Stop(.08) end);emoteTrack=nil end
+   resetPose()
+   if mode~='chapter2-still' then status('chapter2-still') end
+  elseif mode~='asset' or not emoteTrack or not emoteTrack.IsPlaying then
    if mode=='asset' then status('procedural-stopped') end
    proceduralLevitation(elapsed)
   end
@@ -248,6 +265,13 @@ RunService:BindToRenderStep(uniqueRender,Enum.RenderPriority.Camera.Value+1,func
  local closeTarget=headPosition+Vector3.new(1.05,-.03,-.2)
  local t=math.clamp(zoom.Value,0,1)
  camera.CameraType=Enum.CameraType.Scriptable
- camera.FieldOfView=60-t*8
- camera.CFrame=CFrame.lookAt(wideEye:Lerp(closeEye,t),wideTarget:Lerp(closeTarget,t))
+ if player:GetAttribute('MenuChapter')==2 then
+  local marker=chapterTwoCameraPart()
+  camera.FieldOfView=60
+  if marker and marker:IsA('BasePart') then camera.CFrame=marker.CFrame
+  else camera.CFrame=CFrame.lookAt(wideEye,wideTarget) end
+ else
+  camera.FieldOfView=60-t*8
+  camera.CFrame=CFrame.lookAt(wideEye:Lerp(closeEye,t),wideTarget:Lerp(closeTarget,t))
+ end
 end)

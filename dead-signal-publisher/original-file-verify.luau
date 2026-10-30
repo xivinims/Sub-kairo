@@ -35,7 +35,7 @@ assert(menuSource:find("stillHereLogoId='rbxassetid://82992691266920'",1,true),'
 assert(menuSource:find("ImageRectSize=Vector2.new(320,180)",1,true),'Cassette sprite sizing missing')
 assert(menuSource:find("ImageRectOffset=Vector2.new(item.row*320,0)",1,true),'Carousel cannot switch cassette frames')
 assert(menuSource:find("Name='ChapterTwoMenu'",1,true),'Chapter 2 side menu missing')
-assert(menuSource:find("addNavigation('CHAPTER 1'",1,true) and menuSource:find("addNavigation('CHAPTER 2'",1,true),'Chapter selector missing')
+assert(menuSource:find("Name='ChapterSelectScreen'",1,true) and menuSource:find("chapterButton('CHAPTER 1'",1,true) and menuSource:find("chapterButton('CHAPTER 2",1,true),'Separate chapter selector missing')
 assert(menuSource:find("Text='EXPERIÊNCIA DE TERROR INDEPENDENTE'",1,true),'Creator names still appear on initial loading screen')
 assert(menuSource:find("preview.InputEnded:Connect(function(input)",1,true),'Mobile cassette swipe disabled')
 assert(menuSource:find("table.insert(preloads,preview)",1,true),'Cassette artwork is not preloaded')
@@ -59,7 +59,7 @@ assert(prefsSource:find("M.Panel('OPTIONS','left')",1,true),'Settings panel does
 assert(prefsSource:find('panel.Pane.BackgroundTransparency=.08',1,true),'Dark settings surface missing')
 assert(prefsSource:find("'LANGUAGE'",1,true) and prefsSource:find("'CREDITS'",1,true),'Language or credits option category missing')
 local pickupUi=dm:GetService('ReplicatedFirst'):FindFirstChild('OriginalWeaponHoldPrompt')
-assert(pickupUi and pickupUi:IsA('LocalScript') and pickupUi.Source:find("button.Text='👌'",1,true),'Touch hold-to-pickup button is not packaged')
+assert(pickupUi and pickupUi:IsA('LocalScript') and pickupUi.Source:find("button.Text='👌'",1,true) and pickupUi.Source:find('ProximityPromptService.PromptShown',1,true),'Touch hold-to-interact button is not packaged')
 for _,label in ipairs({'CHAPTER 1','MISSION FOUND','YOU ARE MY TOOLS'}) do assert(menuSource:find(label,1,true),'Cassette artwork label missing: '..label) end
 assert(dm:GetService('StarterPlayer').StarterPlayerScripts.SkyBlackHoleClient.Source:find("player:SetAttribute('MenuBlackHoleReady',true)",1,true),'No first-frame black-hole readiness')
 assert(dm:GetService('ReplicatedFirst').CinematicEnvironmentClient.Source:find("player:SetAttribute('MenuEffectsReady',true)",1,true),'No post-processing readiness')
