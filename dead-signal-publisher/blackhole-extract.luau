@@ -32,7 +32,7 @@ return function(dm)
  for _,d in ipairs(sourceDebris:GetDescendants()) do if d:IsA('Bone') then sourceBones+=1 end end
  assert(sourceBones>=162,'Not all original skinned rocks were imported')
  for _,c in ipairs(sky:GetChildren()) do if c.Name~='BlackHole' and c.Name~='DebrisField' then c:Destroy() end end
- local allowed={Bone=true,AnimationController=true,Animator=true,Animation=true,Model=true,Folder=true,MeshPart=true,Part=true,WedgePart=true,UnionOperation=true,Attachment=true,Beam=true,Trail=true,ParticleEmitter=true,PointLight=true,SpotLight=true,SurfaceLight=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true,Texture=true,Decal=true,SurfaceGui=true,BillboardGui=true,ImageLabel=true,Frame=true,UIGradient=true,UICorner=true,UIStroke=true,UIPadding=true,UIScale=true,UIAspectRatioConstraint=true}
+ local allowed={Bone=true,CFrameValue=true,AnimationController=true,Animator=true,Animation=true,Model=true,Folder=true,MeshPart=true,Part=true,WedgePart=true,UnionOperation=true,Attachment=true,Beam=true,Trail=true,ParticleEmitter=true,PointLight=true,SpotLight=true,SurfaceLight=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true,Texture=true,Decal=true,SurfaceGui=true,BillboardGui=true,ImageLabel=true,Frame=true,UIGradient=true,UICorner=true,UIStroke=true,UIPadding=true,UIScale=true,UIAspectRatioConstraint=true}
  local list=sky:GetDescendants()
  for i=#list,1,-1 do local d=list[i];if not allowed[d.ClassName] then d:Destroy() end end
  local template=R.Instance.new('Model');template.Name='SkyBlackHoleTemplate'
