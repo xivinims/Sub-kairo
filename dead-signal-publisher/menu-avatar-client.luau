@@ -1,5 +1,8 @@
 -- STILL HERE / menu avatar cinematic.
--- Preferred: real Roblox Low Gravity emote 103686359406944.
+-- Preferred: catalog item 103686359406944 ("Low Gravity").
+-- Its real internal Roblox AnimationId is 91933762333526, independently
+-- verified by InsertService:LoadAsset() and a 10-second R15 playback probe.
+-- The catalog item ID is a Model wrapper and must NOT be passed to Animator.
 -- Safe independent fallback: original procedural low-gravity pose animated by
 -- Motor6D.C0 (never Motor6D.Transform, which the Animator can overwrite).
 -- All changes are local to the menu, never applied to the actual player's character.
@@ -14,6 +17,7 @@ local ContentProvider=game:GetService('ContentProvider')
 local player=Players.LocalPlayer
 local camera=W.CurrentCamera
 local anchor=Vector3.new(-1.3,5000,-7.2)
+local LOW_GRAVITY_ANIMATION_ID='rbxassetid://91933762333526'
 
 local previous=W:FindFirstChild('LocalMenuCinematic')
 if previous then previous:Destroy() end
@@ -114,7 +118,7 @@ local function playRequestedEmote(model)
  animator.Parent=humanoid
  local animation=Instance.new('Animation')
  animation.Name='RobloxLowGravityEmote'
- animation.AnimationId='rbxassetid://103686359406944'
+ animation.AnimationId=LOW_GRAVITY_ANIMATION_ID
  animation.Parent=model
 
  -- Request the asset, but do not block the procedural motion or the menu.
@@ -183,6 +187,10 @@ local function installAvatar(model)
  end
  humanoid.AutoRotate=false
  humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+ if humanoid.RigType~=Enum.HumanoidRigType.R15 then
+  warn('[StillHereEmote] User avatar is not R15: only procedural fallback can animate this rig')
+  status('procedural-r6')
+ end
  model.Name='LowGravityAvatar'
  model.Parent=scene
  model:PivotTo(positionAvatar(0))
@@ -191,13 +199,23 @@ local function installAvatar(model)
  -- Start with a REAL visible pose even before Roblox downloads the emote.
  proceduralLevitation(0)
  player:SetAttribute('MenuAvatarReady',true)
- task.spawn(playRequestedEmote,model)
+ if humanoid.RigType==Enum.HumanoidRigType.R15 then task.spawn(playRequestedEmote,model) end
 end
 
 task.spawn(function()
+ -- All Marketplace emotes require a standard R15 rig.
+ -- CreateHumanoidModelFromUserIdAsync can inherit the user's R6 avatar type,
+ -- so always build R15 while preserving their appearance from the description.
  local ok,model=pcall(function()
-  return Players:CreateHumanoidModelFromUserIdAsync(player.UserId)
+  local description=Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
+  return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R15)
  end)
+ if not ok or not model or not model:IsA('Model') then
+  warn('[StillHereEmote] R15 appearance build failed; trying avatar fallback: '..tostring(model))
+  ok,model=pcall(function()
+   return Players:CreateHumanoidModelFromUserIdAsync(player.UserId)
+  end)
+ end
  if ok and model and model:IsA('Model') then installAvatar(model)
  else warn('[StillHereEmote] Failed to load user avatar') end
 end)
