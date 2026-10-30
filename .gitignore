@@ -1,10 +1,5 @@
-*.iml
-.gradle
-/local.properties
-/.idea
+.tools/
+__pycache__/
+*.rbxl.lock
+*.rbxlx.lock
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-app/build

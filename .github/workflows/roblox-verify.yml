@@ -1,0 +1,24 @@
+name: Verify published Dead Signal in Roblox engine
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ['scripts/verify-published.mjs', '.github/workflows/roblox-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Inspect published data model and construct world in Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node scripts/verify-published.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dead-Signal-engine-verification
+          path: dist/engine-verification.json

@@ -1,0 +1,28 @@
+name: Build Brambles Sprout for Roblox Studio
+on:
+  push:
+    branches: [roblox-publisher]
+  pull_request:
+    branches: [roblox-publisher]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned official tools
+        run: python3 scripts/install-tools.py
+      - name: Compile, test and build Studio place
+        run: python3 scripts/check.py --luau .tools/luau/luau --compiler .tools/luau/luau-compile --rojo .tools/rojo/rojo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Brambles-Sprout-Roblox-Studio
+          path: dist/
+          if-no-files-found: error
+# This workflow does not publish or replace any live Roblox experience.
+# No Roblox credentials or repository secrets are requested.

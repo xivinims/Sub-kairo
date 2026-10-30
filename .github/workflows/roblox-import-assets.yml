@@ -1,0 +1,30 @@
+name: Import supplied logos and starter kit meshes
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ['scripts/import-assets.mjs', '.github/workflows/roblox-import-assets.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dead-signal-asset-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Embed original starter kit textures
+        run: python3 scripts/texture-source-models.py
+      - name: Import exact supplied logos and source meshes
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node scripts/import-assets.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Dead-Signal-imported-assets
+          path: dist/imported-assets.json
