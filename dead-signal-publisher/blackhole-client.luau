@@ -152,8 +152,8 @@ Run.RenderStepped:Connect(function(dt)
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   -camera.CFrame.RightVector*(x*.24)
-   +camera.CFrame.UpVector*(y*.10)
+   +camera.CFrame.RightVector*(x*.37)
+   +camera.CFrame.UpVector*(y*.07)
   local targetObservation=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
   base=targetObservation*observationToPivot
  else
