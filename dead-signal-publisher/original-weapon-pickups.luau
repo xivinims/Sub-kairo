@@ -18,7 +18,7 @@ for index,spec in ipairs(locations) do
   tool.Weapon:PivotTo(CFrame.new(hit.Position+Vector3.new(0,.65,0)))
   for _,part in ipairs(tool:GetDescendants()) do if part:IsA('BasePart') then part.Anchored=true end end
   tool.Parent=folder
-  local prompt=Instance.new('ProximityPrompt');prompt.Name='OriginalWeaponPickup';prompt.ActionText='Pegar arma';prompt.ObjectText=spec[1];prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=true;prompt.Parent=tool.Weapon.PrimaryPart
+  local prompt=Instance.new('ProximityPrompt');prompt.Name='OriginalWeaponPickup';prompt.ActionText='Segure para pegar';prompt.ObjectText=spec[1];prompt.MaxActivationDistance=8;prompt.RequiresLineOfSight=true;prompt.HoldDuration=.45;prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.GamepadKeyCode=Enum.KeyCode.ButtonX;prompt.Style=Enum.ProximityPromptStyle.Custom;prompt.Parent=tool.Weapon.PrimaryPart
   local claimed=false
   tool.AncestryChanged:Connect(function()
    if tool.Parent~=folder and not claimed then claimed=true;prompt:Destroy();task.delay(30,spawnPickup) end

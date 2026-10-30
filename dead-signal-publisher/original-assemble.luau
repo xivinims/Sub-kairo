@@ -123,6 +123,7 @@ install(RS,'SessionInterface','ModuleScript','session-interface.luau')
 install(runtime,'PlayerSettings','Script','settings-server.luau')
 install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'SessionMenuClient','LocalScript','session-menu-client.luau')
+install(RF,'OriginalWeaponHoldPrompt','LocalScript','original-touch-prompt.luau')
 install(RF,'MenuAvatarClient','LocalScript','menu-avatar-client.luau')
 install(RF,'CinematicEnvironmentClient','LocalScript','cinematic-environment-client.luau')
 install(RF,'OriginalUIBootstrap','LocalScript','original-ui-bootstrap.luau')
@@ -130,7 +131,7 @@ install(RF,'OriginalMissionHUD','LocalScript','original-mission-hud.luau')
 install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
 for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
-W:SetAttribute('DeadSignalBuildId','still-here-cassette-archive-v19');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
+W:SetAttribute('DeadSignalBuildId','still-here-cassette-archive-v20');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
 local manifest=R.Instance.new('StringValue');manifest.Name='OriginalScriptManifest';manifest.Value=J.encode('json',records);manifest.Parent=SS
 local region=R.Instance.new('TerrainRegion');region.Name='OriginalTerrain';region.SmoothGrid=W.Terrain.SmoothGrid;region.ExtentsMin=R.Vector3int16.new(-144,-64,-192);region.ExtentsMax=R.Vector3int16.new(144,100,144);region.Parent=SS

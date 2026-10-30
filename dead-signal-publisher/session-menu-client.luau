@@ -27,7 +27,7 @@ local loadingCopy=make('TextLabel',{
 local loadingSub=make('TextLabel',{
  Name='LoadingSubtext',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-12),Size=UDim2.new(1,-56,0,18),
- BackgroundTransparency=1,Text='STILL HERE / CONEXÃO COM O DESCONHECIDO',
+ BackgroundTransparency=1,Text='EXPERIÊNCIA DE TERROR INDEPENDENTE',
  TextColor3=Color3.fromRGB(102,118,126),
  Font=Enum.Font.RobotoCondensed,TextSize=10,
  TextXAlignment=Enum.TextXAlignment.Left
@@ -65,18 +65,25 @@ local composition=make('Frame',{
  Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
  Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local by=UI.Label(composition,'STILL HERE  /  CH_CKZ2N',18)
+local by=UI.Label(composition,'ARQUIVO 01  /  CAPÍTULOS',18)
 by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
 by.Font=Enum.Font.GothamMedium;by.TextSize=10
 by.TextColor3=Color3.fromRGB(140,144,148)
-local title=UI.Label(composition,'STILL HERE',55)
-title.Name='StillHereTitle'
-title.Position=UDim2.new(0,0,0,18)
-title.Size=UDim2.new(1,0,0,53)
-title.Font=Enum.Font.Antique;title.TextSize=37
-title.TextScaled=false;title.TextXAlignment=Enum.TextXAlignment.Left
-title.TextColor3=Color3.fromRGB(234,230,218)
-local titleConstraint=make('UITextSizeConstraint',{MinTextSize=25,MaxTextSize=40},title)
+local stillHereLogoId='rbxassetid://82992691266920'
+local title=make('ImageLabel',{
+ Name='StillHereTitle',Position=UDim2.new(0,0,0,18),
+ Size=UDim2.new(0,0,0,0),BackgroundTransparency=1,
+ Image=stillHereLogoId,ScaleType=Enum.ScaleType.Fit
+},composition)
+local titleFallback=UI.Label(composition,'STILL HERE',55)
+titleFallback.Name='StillHereTitleFallback'
+titleFallback.Position=UDim2.new(0,0,0,18)
+titleFallback.Size=UDim2.new(1,0,0,53)
+titleFallback.Font=Enum.Font.Antique;titleFallback.TextSize=37
+titleFallback.TextScaled=false;titleFallback.TextXAlignment=Enum.TextXAlignment.Left
+titleFallback.TextColor3=Color3.fromRGB(234,230,218)
+titleFallback.Visible=false
+make('UITextSizeConstraint',{MinTextSize=25,MaxTextSize=40},titleFallback)
 local nav=make('Frame',{
  Name='StoryStyleNavigation',Position=UDim2.new(0,0,0,82),
  Size=UDim2.new(1,0,1,-82),BackgroundTransparency=1,BorderSizePixel=0
@@ -92,7 +99,7 @@ local news=make('Frame',{
  Name='OperatorBriefing',Position=UDim2.fromScale(.047,.633),
  Size=UDim2.fromScale(.33,.317),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local heading=UI.Label(news,'ARQUIVO DE FITAS',20)
+local heading=UI.Label(news,'MESSAGE OF THE DAY',20)
 heading.Name='BriefingHeading'
 heading.Position=UDim2.new(0,0,0,0)
 heading.Size=UDim2.new(.56,0,0,20)
@@ -100,14 +107,22 @@ heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
 local newsIndex=1
--- Three original cassette illustrations, packed into a single
--- Roblox Image asset. 200×198 sprite, each frame exactly 200×66.
--- These original menu designs contain no other game's logos.
-local cassetteImageId='rbxassetid://82560036333396'
+local motdText=UI.Label(news,'CHAPTER 2 — IN DEVELOPMENT',22)
+motdText.Name='Chapter2Announcement'
+motdText.Position=UDim2.new(0,0,0,21)
+motdText.Size=UDim2.new(1,0,0,21)
+motdText.Font=Enum.Font.RobotoCondensed;motdText.TextSize=12
+motdText.TextColor3=Color3.fromRGB(191,196,190)
+motdText.TextXAlignment=Enum.TextXAlignment.Left
+-- Three original cassette illustrations, packed into one horizontal sprite.
+-- Each frame is 320×180 and contains the requested hand-lettered label.
+local cassetteImageId='rbxassetid://132118511952340'
+local fallbackCassetteImageId='rbxassetid://82560036333396'
+local cassetteImageReady
 local bulletins={
- {name='STILL HERE',number='FITA 01',row=0},
- {name='TEST FOOTAGE',number='FITA 02',row=1},
- {name='LOST RECORDING',number='FITA 03',row=2}
+ {name='CHAPTER 1',number='TAPE 01',row=0},
+ {name='MISSION FOUND',number='TAPE 02',row=1},
+ {name='YOU ARE MY TOOLS',number='TAPE 03',row=2}
 }
 local paging=UI.Label(news,'1 / 3',20)
 paging.Name='BriefingCounter'
@@ -126,17 +141,17 @@ local nextButton=make('TextButton',{
  TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
 },news)
 local preview=make('ImageLabel',{
- Name='BriefingPreview',Position=UDim2.new(0,0,0,23),
- Size=UDim2.new(1,0,1,-46),
+ Name='BriefingPreview',Position=UDim2.new(0,0,0,44),
+ Size=UDim2.new(1,0,1,-67),
  BackgroundTransparency=1,BorderSizePixel=0,
  Image=cassetteImageId,
  ImageRectOffset=Vector2.new(0,0),
- ImageRectSize=Vector2.new(200,66),
+ ImageRectSize=Vector2.new(320,180),
  ImageTransparency=0,
  ScaleType=Enum.ScaleType.Fit
 },news)
 -- Show the cassette itself, not the previous generic text/thumbnail card.
-local footer=UI.Label(news,'FITA 01  /  STILL HERE',18)
+local footer=UI.Label(news,'CHAPTER 1',18)
 footer.Name='CassetteLabel'
 footer.Position=UDim2.new(0,0,1,-19)
 footer.Size=UDim2.new(1,0,0,18)
@@ -147,11 +162,17 @@ footer.TextColor3=Color3.fromRGB(177,186,187)
 local function stepTape(direction)
  newsIndex=(newsIndex-1+direction)%#bulletins+1
  local item=bulletins[newsIndex]
- preview.Image=cassetteImageId
- preview.ImageRectSize=Vector2.new(200,66)
- preview.ImageRectOffset=Vector2.new(0,item.row*66)
+ if cassetteImageReady==false then
+  preview.Image=fallbackCassetteImageId
+  preview.ImageRectSize=Vector2.new(200,66)
+  preview.ImageRectOffset=Vector2.new(0,item.row*66)
+ else
+  preview.Image=cassetteImageId
+  preview.ImageRectSize=Vector2.new(320,180)
+  preview.ImageRectOffset=Vector2.new(item.row*320,0)
+ end
  paging.Text=tostring(newsIndex)..' / '..tostring(#bulletins)
- footer.Text=item.number..'  /  '..item.name
+ footer.Text=item.name
 end
 -- Finger swipe works on iPhone without interfering with menu navigation.
 local touchStart
@@ -176,25 +197,60 @@ end
 prior.Activated:Connect(function() stepTape(-1) end)
 nextButton.Activated:Connect(function() stepTape(1) end)
 updateBriefing()
+local selectedChapter=1
+local chapterTwo=make('Frame',{
+ Name='ChapterTwoMenu',AnchorPoint=Vector2.new(1,0),
+ Position=UDim2.fromScale(.96,.18),Size=UDim2.fromScale(.34,.48),
+ BackgroundTransparency=1,BorderSizePixel=0,Visible=false
+},bg)
+local chapterEyebrow=UI.Label(chapterTwo,'CHAPTER 02  /  STILL HERE',24)
+chapterEyebrow.Name='ChapterTwoEyebrow';chapterEyebrow.Position=UDim2.new(0,0,0,0);chapterEyebrow.Size=UDim2.new(1,0,0,24)
+chapterEyebrow.Font=Enum.Font.RobotoCondensed;chapterEyebrow.TextSize=13;chapterEyebrow.TextColor3=Color3.fromRGB(175,181,180)
+local chapterTitle=UI.Label(chapterTwo,'AQUELE QUE NÃO ENCONTRA',68)
+chapterTitle.Name='ChapterTwoTitle';chapterTitle.Position=UDim2.new(0,0,0,31);chapterTitle.Size=UDim2.new(1,0,0,68)
+chapterTitle.Font=Enum.Font.RobotoCondensed;chapterTitle.TextSize=31;chapterTitle.TextWrapped=true;chapterTitle.TextColor3=Color3.fromRGB(232,230,220)
+local chapterDetail=UI.Label(chapterTwo,'CHAPTER 2  ·  ENGLISH',30)
+chapterDetail.Name='ChapterTwoLanguage';chapterDetail.Position=UDim2.new(0,0,0,106);chapterDetail.Size=UDim2.new(1,0,0,28)
+chapterDetail.Font=Enum.Font.RobotoCondensed;chapterDetail.TextSize=15;chapterDetail.TextColor3=Color3.fromRGB(184,188,183)
+local chapterUnavailable=UI.Label(chapterTwo,'NOT YET CONNECTED TO THIS EXPERIENCE',46)
+chapterUnavailable.Name='ChapterTwoAvailability';chapterUnavailable.Position=UDim2.new(0,0,0,146);chapterUnavailable.Size=UDim2.new(1,0,0,42)
+chapterUnavailable.Font=Enum.Font.RobotoCondensed;chapterUnavailable.TextSize=12;chapterUnavailable.TextColor3=Color3.fromRGB(188,97,89)
+chapterUnavailable.TextWrapped=true
 local function layout()
  local size=bg.AbsoluteSize
  local landscape=size.X>=size.Y
  local compact=size.X<900
+ local mobile=UIS.TouchEnabled
  composition.Position=UDim2.fromScale(landscape and .047 or .065,.075)
- composition.Size=UDim2.fromScale(landscape and (compact and .43 or .32) or .86,landscape and .58 or .45)
- title.TextSize=compact and 30 or 38
+ composition.Size=UDim2.fromScale(mobile and (landscape and .40 or .39) or (landscape and (compact and .43 or .32) or .86),landscape and .58 or .45)
+ title.Size=UDim2.fromOffset(mobile and 52 or 60,mobile and 52 or 60)
+ titleFallback.Size=UDim2.new(1,0,0,53)
  nav.Position=UDim2.new(0,0,0,compact and 65 or 88)
  nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
- news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .633 or .59)
- news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .317 or .34)
- preview.Position=UDim2.new(0,0,0,compact and 23 or 24)
- preview.Size=UDim2.new(1,0,1,compact and -43 or -46)
+ if mobile then
+  news.AnchorPoint=Vector2.new(1,0)
+  news.Position=UDim2.fromScale(.97,.055)
+  news.Size=UDim2.fromScale(landscape and .38 or .54,landscape and .55 or .30)
+  chapterTwo.Position=UDim2.fromScale(.97,landscape and .14 or .31)
+  chapterTwo.Size=UDim2.fromScale(landscape and .46 or .54,landscape and .57 or .34)
+ else
+  news.AnchorPoint=Vector2.new(0,0)
+  news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .633 or .59)
+  news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .317 or .34)
+  chapterTwo.Position=UDim2.fromScale(.96,.18)
+  chapterTwo.Size=UDim2.fromScale(.34,.48)
+ end
+ heading.TextSize=mobile and 10 or 12
+ motdText.TextSize=mobile and 10 or 12
+ preview.Position=UDim2.new(0,0,0,44)
+ preview.Size=UDim2.new(1,0,1,-67)
  footer.Position=UDim2.new(0,0,1,-18)
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
 composition.Visible=false
 news.Visible=false
+chapterTwo.Visible=false
 local startLabel=UI.Label(bg,'INICIANDO...',55)
 startLabel.Name='StartingMessage'
 startLabel.AnchorPoint=Vector2.new(.5,.5)
@@ -217,6 +273,7 @@ local function startPresentation()
  if infoButton then infoButton.Visible=false end
  composition.Visible=false
  news.Visible=false
+ chapterTwo.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
  startLabel.Visible=true
 end
@@ -227,17 +284,23 @@ local function restorePresentation()
  startLabel.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
  composition.Visible=not p:GetAttribute('InterfaceOpen')
- news.Visible=not p:GetAttribute('InterfaceOpen')
+ news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
+ chapterTwo.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==2
  if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
  composition.Visible=visible
- news.Visible=visible
+ news.Visible=visible and selectedChapter==1
+ chapterTwo.Visible=visible and selectedChapter==2
  if infoButton then infoButton.Visible=visible end
 end)
 local function request(action,value)
  if busy then return end
+ if (action=='solo' or action=='start') and selectedChapter==2 then
+  status.Text='Chapter 2 is not connected to this experience yet.'
+  return
+ end
  busy=true
  local launching=action=='solo' or action=='start'
  local target=panel and panel.Gui.Parent and panel.Status or status
@@ -344,6 +407,19 @@ local function addNavigation(text,action)
  end)
  return btn
 end
+local function chooseChapter(index)
+ selectedChapter=index
+ local visible=not starting and not p:GetAttribute('InterfaceOpen')
+ news.Visible=visible and index==1
+ chapterTwo.Visible=visible and index==2
+ if index==1 then
+  status.Text='Capítulo 1 selecionado.'
+ else
+  status.Text='Aquele que não encontra · Chapter 2 in English.'
+ end
+end
+addNavigation('CHAPTER 1',function() chooseChapter(1) end)
+addNavigation('CHAPTER 2',function() chooseChapter(2) end)
 addNavigation('JOGAR (SOLO)',function() request('solo') end)
 addNavigation('MULTIPLAYER',groups)
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
@@ -392,7 +468,7 @@ local function openModelCredits()
  make('UIStroke',{Color=Color3.fromRGB(100,137,150),Thickness=1,Transparency=.4},card)
  make('TextLabel',{Name='CreditsTitle',BackgroundTransparency=1,
   Position=UDim2.new(0,18,0,16),Size=UDim2.new(1,-80,0,39),
-  Text='MODEL CREDITS',TextXAlignment=Enum.TextXAlignment.Left,
+  Text='CREDITS',TextXAlignment=Enum.TextXAlignment.Left,
   Font=Enum.Font.Oswald,TextSize=30,TextColor3=Color3.fromRGB(231,233,233)},card)
  local close=make('TextButton',{Name='CloseCredits',AnchorPoint=Vector2.new(1,0),
   Position=UDim2.new(1,-14,0,15),Size=UDim2.fromOffset(37,37),
@@ -455,6 +531,7 @@ task.spawn(function()
  if model then table.insert(preloads,model) end
  -- Preload the new cassette image before revealing the slider.
  table.insert(preloads,preview)
+ table.insert(preloads,title)
  local music=game:GetService('SoundService'):FindFirstChild('MassiveBlackHoleMenu')
  if music then table.insert(preloads,music) end
  if #preloads>0 then
@@ -471,6 +548,8 @@ task.spawn(function()
    assetsFailed+=1
   end
  end
+ cassetteImageReady=preview.IsLoaded
+ if not cassetteImageReady then stepTape(0) end
  assetsDone=true
 end)
 task.spawn(function()
@@ -509,9 +588,12 @@ task.spawn(function()
   overlay:Destroy()
  end
  if starting then return end
+ title.Visible=title.IsLoaded
+ titleFallback.Visible=not title.IsLoaded
  local visible=not p:GetAttribute('InterfaceOpen')
  composition.Visible=visible
- news.Visible=visible
+ news.Visible=visible and selectedChapter==1
+ chapterTwo.Visible=visible and selectedChapter==2
  infoButton.Visible=visible
  p:SetAttribute('MenuReady',true)
  task.spawn(function() request('state') end)

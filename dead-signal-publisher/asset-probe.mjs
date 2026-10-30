@@ -37,7 +37,16 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('cassette-status-audit')){
+if(trigger.trim().startsWith('menu-art-status')){
+ const key=process.env.ROBLOX_API_KEY;
+ const assets=[['cassette',132118511952340],['logo',82992691266920]];
+ const results=await Promise.all(assets.map(async([name,id])=>{
+  const response=await fetch('https://apis.roblox.com/assets/v1/assets/'+id,{headers:{'x-api-key':key}});
+  const raw=await response.text();let body;try{body=JSON.parse(raw)}catch{body={raw:raw.slice(0,1800)}}
+  return {name,id,http:response.status,assetType:body.assetType,moderationState:body.moderationResult?.moderationState,error:body.error};
+ }));
+ console.log('MENU_ART_STATUS '+JSON.stringify(results));
+}else if(trigger.trim().startsWith('cassette-status-audit')){
  const key=process.env.ROBLOX_API_KEY;
  const response=await fetch('https://apis.roblox.com/assets/v1/assets/82560036333396',{headers:{'x-api-key':key}});
  const body=await response.text();
