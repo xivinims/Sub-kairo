@@ -25,15 +25,127 @@ end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 -- Leave the entire 3D background uncovered, especially the black-hole disk.
 -- The old full-screen semi-transparent shade made a huge rectangular overlay.
-local composition=make('Frame',{AnchorPoint=Vector2.new(1,0),Position=UDim2.fromScale(.95,.07),Size=UDim2.fromScale(.42,.86),BackgroundTransparency=1},bg)
-local by=UI.Label(composition,'BY CH_CKZ2N',25);by.Size=UDim2.fromScale(1,.07);by.TextXAlignment=Enum.TextXAlignment.Center;by.TextSize=14
-local title=UI.Label(composition,'STILL HERE',90);title.Position=UDim2.fromScale(0,.07);title.Size=UDim2.fromScale(1,.23);title.Font=Enum.Font.Antique;title.TextScaled=true;title.TextXAlignment=Enum.TextXAlignment.Center
-make('UITextSizeConstraint',{MinTextSize=20,MaxTextSize=76},title)
-local holder=make('Frame',{Position=UDim2.fromScale(.10,.36),Size=UDim2.fromScale(.90,.55),BackgroundTransparency=1},composition)
-local list=UI.List(holder)
-local status=UI.Label(composition,'',32);status.Position=UDim2.fromScale(0,.92);status.Size=UDim2.fromScale(1,.08);status.TextSize=14
-local function layout() local size=bg.AbsoluteSize;composition.Size=UDim2.fromScale(size.X<size.Y and .86 or .42,.86) end
-layout();bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
+-- Photo-inspired cinematic layout: small typography in the upper-left,
+-- a short operator briefing beneath it, and FULLY UNOBSTRUCTED world 3D.
+-- No oversized semi-opaque menu rectangles or right-side button container.
+local Tween=game:GetService('TweenService')
+local UIS=game:GetService('UserInputService')
+local composition=make('Frame',{
+ Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
+ Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
+},bg)
+local by=UI.Label(composition,'STILL HERE  /  CH_CKZ2N',18)
+by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
+by.Font=Enum.Font.GothamMedium;by.TextSize=10
+by.TextColor3=Color3.fromRGB(140,144,148)
+local title=UI.Label(composition,'STILL HERE',55)
+title.Name='StillHereTitle'
+title.Position=UDim2.new(0,0,0,18)
+title.Size=UDim2.new(1,0,0,53)
+title.Font=Enum.Font.Antique;title.TextSize=37
+title.TextScaled=false;title.TextXAlignment=Enum.TextXAlignment.Left
+title.TextColor3=Color3.fromRGB(234,230,218)
+local titleConstraint=make('UITextSizeConstraint',{MinTextSize=25,MaxTextSize=40},title)
+local nav=make('Frame',{
+ Name='StoryStyleNavigation',Position=UDim2.new(0,0,0,82),
+ Size=UDim2.new(1,0,1,-82),BackgroundTransparency=1,BorderSizePixel=0
+},composition)
+local status=UI.Label(composition,'',28)
+status.Name='MenuStatus'
+status.Position=UDim2.new(0,0,1,-25)
+status.Size=UDim2.new(1,0,0,25)
+status.TextSize=12
+status.TextColor3=Color3.fromRGB(208,179,163)
+
+local news=make('Frame',{
+ Name='OperatorBriefing',Position=UDim2.fromScale(.047,.666),
+ Size=UDim2.fromScale(.33,.285),BackgroundTransparency=1,BorderSizePixel=0
+},bg)
+local heading=UI.Label(news,'TRANSMISSÃO RECEBIDA',20)
+heading.Name='BriefingHeading'
+heading.Position=UDim2.new(0,0,0,0)
+heading.Size=UDim2.new(.56,0,0,20)
+heading.TextXAlignment=Enum.TextXAlignment.Left
+heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
+heading.TextColor3=Color3.fromRGB(232,232,222)
+local newsIndex=1
+local bulletins={
+ {name='SINAL INTERROMPIDO',body='A última transmissão veio da mansão.',asset='7902470429'},
+ {name='SEM CONTATO',body='A equipe ainda não retornou.',asset='7902470429'},
+ {name='NÃO OLHE PARA TRÁS',body='Alguns sinais não deveriam ser recebidos.',asset='7208091524'}
+}
+local paging=UI.Label(news,'1 / 3',20)
+paging.Name='BriefingCounter'
+paging.Position=UDim2.new(1,-80,0,0)
+paging.Size=UDim2.new(0,39,0,20)
+paging.TextXAlignment=Enum.TextXAlignment.Center
+paging.Font=Enum.Font.RobotoCondensed;paging.TextSize=11
+local prior=make('TextButton',{
+ Name='PreviousBriefing',Position=UDim2.new(1,-113,0,0),Size=UDim2.fromOffset(25,22),
+ Text='‹',Font=Enum.Font.GothamBold,TextSize=20,BackgroundTransparency=1,
+ TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
+},news)
+local nextButton=make('TextButton',{
+ Name='NextBriefing',Position=UDim2.new(1,-37,0,0),Size=UDim2.fromOffset(25,22),
+ Text='›',Font=Enum.Font.GothamBold,TextSize=20,BackgroundTransparency=1,
+ TextColor3=Color3.fromRGB(212,214,213),BorderSizePixel=0
+},news)
+local preview=make('ImageLabel',{
+ Name='BriefingPreview',Position=UDim2.new(0,0,0,24),
+ Size=UDim2.new(1,0,.48,0),BackgroundColor3=Color3.fromRGB(8,12,16),
+ BackgroundTransparency=.12,BorderSizePixel=0,
+ ScaleType=Enum.ScaleType.Crop,ImageTransparency=.28
+},news)
+make('UIStroke',{Color=Color3.fromRGB(94,100,104),Transparency=.56,Thickness=1},preview)
+local scan=make('UIGradient',{
+ Rotation=90,Color=ColorSequence.new({
+  ColorSequenceKeypoint.new(0,Color3.fromRGB(165,176,183)),
+  ColorSequenceKeypoint.new(.55,Color3.fromRGB(115,123,132)),
+  ColorSequenceKeypoint.new(1,Color3.fromRGB(36,44,51))
+ }),Transparency=NumberSequence.new(.28,.75)
+},preview)
+local newsName=UI.Label(news,'',20)
+newsName.Name='BriefingTitle';newsName.Position=UDim2.new(0,0,.51,21)
+newsName.Size=UDim2.new(1,0,0,20)
+newsName.Font=Enum.Font.RobotoCondensed;newsName.TextSize=12
+newsName.TextColor3=Color3.fromRGB(239,237,228)
+local newsBody=UI.Label(news,'',34)
+newsBody.Name='BriefingDescription'
+newsBody.Position=UDim2.new(0,0,.51,42)
+newsBody.Size=UDim2.new(1,0,0,34)
+newsBody.Font=Enum.Font.Gotham;newsBody.TextSize=11
+newsBody.TextColor3=Color3.fromRGB(172,176,180)
+newsBody.TextXAlignment=Enum.TextXAlignment.Left
+local function updateBriefing()
+ local item=bulletins[newsIndex]
+ newsName.Text=item.name;newsBody.Text=item.body
+ paging.Text=tostring(newsIndex)..' / '..tostring(#bulletins)
+ preview.Image='rbxthumb://type=Asset&id='..item.asset..'&w=420&h=420'
+end
+prior.Activated:Connect(function()
+ newsIndex=(newsIndex-2)%#bulletins+1;updateBriefing()
+end)
+nextButton.Activated:Connect(function()
+ newsIndex=newsIndex%#bulletins+1;updateBriefing()
+end)
+updateBriefing()
+local function layout()
+ local size=bg.AbsoluteSize
+ local landscape=size.X>=size.Y
+ local compact=size.X<900
+ composition.Position=UDim2.fromScale(landscape and .047 or .065,.075)
+ composition.Size=UDim2.fromScale(landscape and (compact and .43 or .32) or .86,landscape and .58 or .45)
+ title.TextSize=compact and 30 or 38
+ nav.Position=UDim2.new(0,0,0,compact and 65 or 88)
+ nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
+ news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .666 or .59)
+ news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .285 or .34)
+ preview.Size=UDim2.new(1,0,.48,0)
+ newsName.Position=UDim2.new(0,0,.51,compact and 16 or 21)
+ newsBody.Position=UDim2.new(0,0,.51,compact and 34 or 42)
+end
+layout()
+bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
 local startLabel=UI.Label(bg,'INICIANDO...',55)
 startLabel.Name='StartingMessage'
 startLabel.AnchorPoint=Vector2.new(.5,.5)
@@ -44,6 +156,8 @@ startLabel.TextXAlignment=Enum.TextXAlignment.Center
 startLabel.Visible=false
 make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
 local starting=false
+local navButtons={}
+local activeNav=1
 local infoButton
 local creditsGui
 local busy=false;local current;local panel;local redraw
@@ -53,6 +167,7 @@ local function startPresentation()
  if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
  if infoButton then infoButton.Visible=false end
  composition.Visible=false
+ news.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
  startLabel.Visible=true
 end
@@ -63,11 +178,13 @@ local function restorePresentation()
  startLabel.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
  composition.Visible=not p:GetAttribute('InterfaceOpen')
+ news.Visible=not p:GetAttribute('InterfaceOpen')
  if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
  composition.Visible=visible
+ news.Visible=visible
  if infoButton then infoButton.Visible=visible end
 end)
 local function request(action,value)
@@ -136,14 +253,71 @@ local function groups()
  for _,b in ipairs(tabs:GetChildren()) do if b:IsA('TextButton') then b.Font=Enum.Font.Oswald;b.TextSize=28;b.TextXAlignment=Enum.TextXAlignment.Right end end
  redraw();task.spawn(request,'state')
 end
-UI.Button(list,'Jogar (solo)',function() request('solo') end)
-UI.Button(list,'Multiplayer',groups)
-UI.Button(list,'Configurações',UI.OpenSettings)
+-- Reference-style text-only actions, red selection marker and subtle easing.
+-- Buttons retain generous transparent tap zones for iPhone touch.
+local function selectNavigation(index)
+ activeNav=index
+ for i,item in ipairs(navButtons) do
+  local chosen=i==index
+  Tween:Create(item.label,TweenInfo.new(.16),{
+   TextColor3=chosen and Color3.fromRGB(247,246,237) or Color3.fromRGB(162,169,174),
+   TextTransparency=chosen and 0 or .12
+  }):Play()
+  Tween:Create(item.marker,TweenInfo.new(.16),{TextTransparency=chosen and 0 or 1}):Play()
+ end
+end
+local function addNavigation(text,action)
+ local index=#navButtons+1
+ local btn=make('TextButton',{
+  Name='MenuAction'..index,Position=UDim2.new(0,0,0,(index-1)*42),
+  Size=UDim2.new(1,0,0,42),BackgroundTransparency=1,BorderSizePixel=0,
+  Text='',AutoButtonColor=false
+ },nav)
+ local marker=make('TextLabel',{
+  Name='RedSelectionMarker',Position=UDim2.new(0,0,0,0),
+  Size=UDim2.fromOffset(21,42),BackgroundTransparency=1,
+  Text='▶',Font=Enum.Font.GothamBold,TextSize=11,
+  TextColor3=Color3.fromRGB(211,47,59),TextTransparency=1
+ },btn)
+ local label=make('TextLabel',{
+  Name='ActionText',Position=UDim2.new(0,23,0,0),
+  Size=UDim2.new(1,-23,1,0),BackgroundTransparency=1,
+  Text=text,Font=Enum.Font.RobotoCondensed,
+  TextSize=UIS.TouchEnabled and 16 or 18,TextXAlignment=Enum.TextXAlignment.Left,
+  TextColor3=Color3.fromRGB(162,169,174)
+ },btn)
+ table.insert(navButtons,{button=btn,marker=marker,label=label,action=action})
+ btn.MouseEnter:Connect(function() selectNavigation(index) end)
+ btn.SelectionGained:Connect(function() selectNavigation(index) end)
+ btn.Activated:Connect(function()
+  selectNavigation(index)
+  if not starting then action() end
+ end)
+ return btn
+end
+addNavigation('JOGAR (SOLO)',function() request('solo') end)
+addNavigation('MULTIPLAYER',groups)
+addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
+selectNavigation(1)
+UIS.InputBegan:Connect(function(input,processed)
+ if processed or starting or p:GetAttribute('InterfaceOpen') then return end
+ if input.KeyCode==Enum.KeyCode.Up or input.KeyCode==Enum.KeyCode.DPadUp then
+  selectNavigation((activeNav-2)%#navButtons+1)
+ elseif input.KeyCode==Enum.KeyCode.Down or input.KeyCode==Enum.KeyCode.DPadDown then
+  selectNavigation(activeNav%#navButtons+1)
+ elseif input.KeyCode==Enum.KeyCode.Return or input.KeyCode==Enum.KeyCode.ButtonA then
+  navButtons[activeNav].action()
+ elseif input.KeyCode==Enum.KeyCode.Q then
+  newsIndex=(newsIndex-2)%#bulletins+1;updateBriefing()
+ elseif input.KeyCode==Enum.KeyCode.E then
+  newsIndex=newsIndex%#bulletins+1;updateBriefing()
+ end
+end)
 -- An unobtrusive information icon, anchored to the lower-left safe area.
 -- It replaces the old full-size 'Créditos' entry in the main menu.
 infoButton=make('TextButton',{
  Name='CreditsInfoButton',AnchorPoint=Vector2.new(0,1),
- Position=UDim2.new(0,18,1,-22),Size=UDim2.fromOffset(40,40),
+ Position=UDim2.new(1,-57,1,-23),Size=UDim2.fromOffset(38,38),
  BackgroundColor3=Color3.fromRGB(7,17,22),BackgroundTransparency=.28,
  BorderSizePixel=0,Text='i',Font=Enum.Font.GothamBold,TextSize=22,
  TextColor3=Color3.fromRGB(225,231,232),AutoButtonColor=true,ZIndex=5
