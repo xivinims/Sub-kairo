@@ -40,13 +40,30 @@ function M.Panel(title)
  end
  local close=M.Button(footer,'VOLTAR',obj.Close);close.Position=UDim2.fromScale(.68,0);close.Size=UDim2.fromScale(.32,1)
  obj.Back=close;obj.Pane=pane;opened=obj
- -- Keep the cinematic sky/figure exposed on the left instead of covering the screen.
- local viewport=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280,720)
- local compact=viewport.X<800
- local width=compact and .76 or .55
- local destination=compact and .61 or .72
- pane.Size=UDim2.fromScale(width,.86)
- Tween:Create(pane,TweenInfo.new(.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.fromScale(destination,.5)}):Play()
+ -- Screen-aware side sheet: never spills beyond a portrait or landscape viewport.
+ -- Leave the 3D cinematic visible to the left on wide landscape devices.
+ local viewportConnection
+ local function fitPanel(animate)
+  if not gui.Parent then return end
+  local camera=workspace.CurrentCamera
+  local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
+  local portrait=viewport.Y>viewport.X
+  local compact=viewport.X<1000
+  local width=portrait and .94 or compact and .79 or .57
+  local center=portrait and .50 or (1-width/2-.025)
+  local height=portrait and .87 or .86
+  pane.Size=UDim2.fromScale(width,height)
+  local destination=UDim2.fromScale(center,.50)
+  if animate then
+   Tween:Create(pane,TweenInfo.new(.31,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=destination}):Play()
+  else pane.Position=destination end
+ end
+ fitPanel(true)
+ local camera=workspace.CurrentCamera
+ if camera then
+  viewportConnection=camera:GetPropertyChangedSignal('ViewportSize'):Connect(function() fitPanel(false) end)
+ end
+ gui.Destroying:Connect(function() if viewportConnection then viewportConnection:Disconnect() end end)
  return obj
 end
 local master=make('SoundGroup',{Name='StillHereMaster',Volume=.8},Sound)
