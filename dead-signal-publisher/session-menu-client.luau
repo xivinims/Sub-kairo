@@ -4,6 +4,37 @@ if W:GetAttribute('GameMode')~='Menu' then return end
 local p=game:GetService('Players').LocalPlayer;local RS=game:GetService('ReplicatedStorage');local UI=require(RS:WaitForChild('SessionInterface'));local make=UI.Make
 local remote=RS:WaitForChild('SessionMenu')
 local gui=make('ScreenGui',{Name='StillHereMenu',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1000},p:WaitForChild('PlayerGui'))
+-- Hold the menu until the actual scene has rendered and important local
+-- assets have finished their first preload attempt. No imaginary 100% bar.
+local ContentProvider=game:GetService('ContentProvider')
+local rf=game:GetService('ReplicatedFirst')
+local overlay=make('ScreenGui',{
+ Name='MenuCinematicLoading',ResetOnSpawn=false,IgnoreGuiInset=true,
+ DisplayOrder=1900,ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+},p:WaitForChild('PlayerGui'))
+local loadingShade=make('Frame',{
+ Name='LoadingShade',Size=UDim2.fromScale(1,1),
+ BackgroundColor3=Color3.fromRGB(2,3,6),BorderSizePixel=0
+},overlay)
+local loadingCopy=make('TextLabel',{
+ Name='LoadingMessage',AnchorPoint=Vector2.new(0,1),
+ Position=UDim2.new(0,28,1,-34),Size=UDim2.new(1,-56,0,28),
+ BackgroundTransparency=1,Text='PREPARANDO O CENÁRIO...',
+ TextColor3=Color3.fromRGB(213,220,221),
+ Font=Enum.Font.RobotoCondensed,TextSize=17,
+ TextXAlignment=Enum.TextXAlignment.Left
+},loadingShade)
+local loadingSub=make('TextLabel',{
+ Name='LoadingSubtext',AnchorPoint=Vector2.new(0,1),
+ Position=UDim2.new(0,28,1,-12),Size=UDim2.new(1,-56,0,18),
+ BackgroundTransparency=1,Text='STILL HERE / CONEXÃO COM O DESCONHECIDO',
+ TextColor3=Color3.fromRGB(102,118,126),
+ Font=Enum.Font.RobotoCondensed,TextSize=10,
+ TextXAlignment=Enum.TextXAlignment.Left
+},loadingShade)
+p:SetAttribute('MenuReady',false)
+p:SetAttribute('MenuAssetPreloadStatus','loading')
+
 local bg=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(6,7,8),BorderSizePixel=0,ClipsDescendants=true},gui)
 bg.BackgroundTransparency=1
 local camera=workspace.CurrentCamera
@@ -146,6 +177,8 @@ local function layout()
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
+composition.Visible=false
+news.Visible=false
 local startLabel=UI.Label(bg,'INICIANDO...',55)
 startLabel.Name='StartingMessage'
 startLabel.AnchorPoint=Vector2.new(.5,.5)
@@ -395,8 +428,77 @@ local function openModelCredits()
  close.Activated:Connect(dismiss)
 end
 infoButton.Activated:Connect(openModelCredits)
-p:SetAttribute('MenuReady',true)
-task.spawn(function() UI.Load();request('state') end)
+infoButton.Visible=false
+-- Do not preload the entire world or rely on RequestQueueSize. Preload the
+-- source black-hole meshes/textures and the existing menu audio only.
+local assetsDone=false
+local assetsFailed=0
+task.spawn(function()
+ local preloads={}
+ local model=RS:WaitForChild('SkyBlackHoleTemplate',12)
+ if model then table.insert(preloads,model) end
+ local music=game:GetService('SoundService'):FindFirstChild('MassiveBlackHoleMenu')
+ if music then table.insert(preloads,music) end
+ if #preloads>0 then
+  local ok,err=pcall(function()
+   ContentProvider:PreloadAsync(preloads,function(assetId,status)
+    if status~=Enum.AssetFetchStatus.Success then
+     assetsFailed+=1
+     warn('[MenuLoad] Asset unavailable: '..tostring(assetId)..' ('..tostring(status)..')')
+    end
+   end)
+  end)
+  if not ok then
+   warn('[MenuLoad] Preload failure (fallback allowed): '..tostring(err))
+   assetsFailed+=1
+  end
+ end
+ assetsDone=true
+end)
+task.spawn(function()
+ -- Wait for the real first-frame black-hole and effects, and for essential
+ -- resource fetches. Never wait forever for a blocked third-party sound.
+ local started=os.clock()
+ local complete=false
+ while gui.Parent and os.clock()-started<22 do
+  local sceneReady=p:GetAttribute('MenuBlackHoleReady')==true
+  local effectsReady=p:GetAttribute('MenuEffectsReady')==true
+  local avatarReady=p:GetAttribute('MenuAvatarReady')==true
+  if not sceneReady then loadingCopy.Text='PREPARANDO BURACO NEGRO...'
+  elseif not avatarReady then loadingCopy.Text='PREPARANDO O AVATAR...'
+  elseif not effectsReady then loadingCopy.Text='AJUSTANDO ILUMINAÇÃO...'
+  elseif not assetsDone then loadingCopy.Text='CARREGANDO TEXTURAS E ÁUDIO...'
+  else complete=true;break end
+  task.wait(.15)
+ end
+ if not gui.Parent then if overlay.Parent then overlay:Destroy() end;return end
+ if not complete then
+  warn('[MenuLoad] Timeout: open with best available assets rather than hang')
+  p:SetAttribute('MenuAssetPreloadStatus','partial')
+ else
+  p:SetAttribute('MenuAssetPreloadStatus',assetsFailed==0 and 'ready' or 'partial')
+ end
+ -- A few rendered frames after readiness let Beams/particles and the local
+ -- camera catch up before revealing the real 3D scene.
+ for _=1,3 do game:GetService('RunService').RenderStepped:Wait() end
+ if overlay.Parent then
+  local Tween=game:GetService('TweenService')
+  local fade=Tween:Create(loadingShade,TweenInfo.new(.65,Enum.EasingStyle.Quad),{BackgroundTransparency=1})
+  Tween:Create(loadingCopy,TweenInfo.new(.5),{TextTransparency=1}):Play()
+  Tween:Create(loadingSub,TweenInfo.new(.5),{TextTransparency=1}):Play()
+  fade:Play()
+  fade.Completed:Wait()
+  overlay:Destroy()
+ end
+ if starting then return end
+ local visible=not p:GetAttribute('InterfaceOpen')
+ composition.Visible=visible
+ news.Visible=visible
+ infoButton.Visible=visible
+ p:SetAttribute('MenuReady',true)
+ task.spawn(function() request('state') end)
+end)
+task.spawn(function() UI.Load() end)
 RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message)
  busy=false
  restorePresentation()
