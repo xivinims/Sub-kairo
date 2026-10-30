@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('cassette-creator-audit')){
+if(trigger.trim().startsWith('cassette-image-upload')){
+ await import('./cassette-image-upload.mjs');
+}else if(trigger.trim().startsWith('cassette-creator-audit')){
  const luau="local HttpService=game:GetService('HttpService')\nreturn HttpService:JSONEncode({creatorId=game.CreatorId,creatorType=tostring(game.CreatorType),universe=game.GameId})";
  console.log('CASSETTE_CREATOR_RESULT '+JSON.stringify(await execute(luau)));
 }else if(trigger.trim().startsWith('credits-author-audit')){
