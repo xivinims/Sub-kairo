@@ -71,9 +71,9 @@ if menu then
  menuLights.Name='LocalCinematicLights'
  menuLights.Parent=W
  local lights={
-  {'ColdKey',Vector3.new(-4,5005,-3.7),Color3.fromRGB(95,157,230),3.3,25},
-  {'WarmRim',Vector3.new(2.2,5004,-11),Color3.fromRGB(223,152,110),2.5,22},
-  {'DeepFill',Vector3.new(-2.1,4998.8,-5),Color3.fromRGB(52,98,154),1.6,13},
+  {'ColdKey',Vector3.new(-4,5005,-3.7),Color3.fromRGB(95,157,230),.95,22},
+  {'WarmRim',Vector3.new(2.2,5004,-11),Color3.fromRGB(223,152,110),.80,20},
+  {'DeepFill',Vector3.new(-2.1,4998.8,-5),Color3.fromRGB(52,98,154),.17,11},
  }
  for _,spec in ipairs(lights) do
   local anchor=Instance.new('Part')
