@@ -139,7 +139,7 @@ assert(menu:find("value={chapter=selectedChapter}",1,true),'Solo launch does not
 assert(menu:find("Name='BriefingPreview'",1,true),'Operator message image preview missing')
 assert(menu:find("Name='ChapterTwoCallToAction'",1,true),'MOTD art has no interaction hint')
 local chapterTwoImage=menu:match("Name='BriefingPreview'.-Image='rbxassetid://([^']+)'")
-assert(chapterTwoImage=='__CHAPTER_TWO_ART_ASSET_ID__' or (chapterTwoImage and chapterTwoImage:match('^%d+
+assert(chapterTwoImage=='__CHAPTER_TWO_ART_ASSET_ID__' or tonumber(chapterTwoImage)~=nil,'Generated Chapter 2 artwork is not wired into the MOTD')
 assert(menu:find("ScaleType=Enum.ScaleType.Fit",1,true),'MOTD artwork is cropped')
 assert(not menu:find("Name='NextBriefing'",1,true),'Old MOTD carousel next button remains')
 assert(not menu:find("Name='PreviousBriefing'",1,true),'Old MOTD carousel previous button remains')
