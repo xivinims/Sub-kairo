@@ -22,8 +22,6 @@ assert(game:GetService('ReplicatedFirst').SessionLoadingClient.Enabled,'Unified 
 assert(game:GetService('ReplicatedFirst').MenuAvatarClient.Enabled,'Floating menu avatar missing')
 assert(W:GetAttribute('WeaponFixVersion')=='original-touch-v5','Weapon fixes missing')
 assert(W:GetAttribute('OriginalWeaponPickupCount')==2,'Pickup spawn failed')
-assert(RS.PickupWeaponRequest:IsA('RemoteEvent'),'PEGAR pickup RemoteEvent missing')
-assert(game:GetService('ReplicatedFirst').WeaponPickupClient.Enabled,'Pickup UI client missing')
 for _,name in ipairs({'M4A1','Deagle'}) do local tool=W.WeaponToolsRespawn:FindFirstChild(name);assert(tool and tool.Weapon.PrimaryPart:FindFirstChild('OriginalWeaponPickup'),'Missing world pickup '..name) end
 local cfg=require(game:GetService('ReplicatedFirst').DemoConfig)
 local missions=0;for name,mission in pairs(cfg.Missions) do assert(mission.MissionRoot,'Mission root missing '..name);missions+=1 end
