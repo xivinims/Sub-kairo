@@ -58,8 +58,8 @@ status.TextSize=12
 status.TextColor3=Color3.fromRGB(208,179,163)
 
 local news=make('Frame',{
- Name='OperatorBriefing',Position=UDim2.fromScale(.047,.666),
- Size=UDim2.fromScale(.33,.285),BackgroundTransparency=1,BorderSizePixel=0
+ Name='OperatorBriefing',Position=UDim2.fromScale(.047,.633),
+ Size=UDim2.fromScale(.33,.317),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
 local heading=UI.Label(news,'TRANSMISSÃO RECEBIDA',20)
 heading.Name='BriefingHeading'
@@ -138,11 +138,11 @@ local function layout()
  title.TextSize=compact and 30 or 38
  nav.Position=UDim2.new(0,0,0,compact and 65 or 88)
  nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
- news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .666 or .59)
- news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .285 or .34)
- preview.Size=UDim2.new(1,0,.48,0)
- newsName.Position=UDim2.new(0,0,.51,compact and 16 or 21)
- newsBody.Position=UDim2.new(0,0,.51,compact and 34 or 42)
+ news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .633 or .59)
+ news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .317 or .34)
+ preview.Size=UDim2.new(1,0,compact and .39 or .48,0)
+ newsName.Position=UDim2.new(0,0,.51,compact and 11 or 21)
+ newsBody.Position=UDim2.new(0,0,.51,compact and 31 or 42)
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
