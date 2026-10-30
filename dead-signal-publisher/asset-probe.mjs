@@ -37,7 +37,12 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('cassette-image-upload')){
+if(trigger.trim().startsWith('cassette-status-audit')){
+ const key=process.env.ROBLOX_API_KEY;
+ const response=await fetch('https://apis.roblox.com/assets/v1/assets/82560036333396',{headers:{'x-api-key':key}});
+ const body=await response.text();
+ console.log('CASSETTE_ASSET_STATUS '+JSON.stringify({http:response.status,body:body.slice(0,3500)}));
+}else if(trigger.trim().startsWith('cassette-image-upload')){
  await import('./cassette-image-upload.mjs');
 }else if(trigger.trim().startsWith('cassette-creator-audit')){
  const luau="local HttpService=game:GetService('HttpService')\nreturn HttpService:JSONEncode({creatorId=game.CreatorId,creatorType=tostring(game.CreatorType),universe=game.GameId})";
