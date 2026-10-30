@@ -12,10 +12,18 @@ local model=template:Clone();model.Name='LocalSkyBlackHole'
 local origin=template:GetAttribute('SourceOrigin')
 local reference=template:GetAttribute('ReferenceDistance') or 1028
 model.WorldPivot=CFrame.lookAt(origin,origin+Vector3.new(1,0,0))
-local distance=900
-model:ScaleTo(math.clamp(500/reference,.12,.7))
+local distance=menu and 460 or 900
+-- Source's disc was nearly invisible because the extracted scene was shrunken
+-- and moved too far from the menu camera. Keep its authored geometry.
+model:ScaleTo(math.clamp((menu and 900 or 500)/reference,menu and .5 or .12,menu and 1.0 or .7))
 model.Parent=W
 local touch=UIS.TouchEnabled
+local sourceSky=RS:FindFirstChild('OriginalBlackHoleSky')
+if menu and sourceSky then
+ local lighting=game:GetService('Lighting')
+ for _,s in ipairs(lighting:GetChildren()) do if s:IsA('Sky') then s:Destroy() end end
+ sourceSky:Clone().Parent=lighting
+end
 -- In menus, reserve the visible center-right sky for the actual accretion disk.
 -- This is a real mesh from the original asset, not a painted halo or a UI picture.
 -- Right-side menus and the floating avatar are separate UI layers.
@@ -32,7 +40,8 @@ local spinner;local shardBones={}
 if field and field:FindFirstChildWhichIsA('Bone',true) then
  -- The original debris is one skinned mesh: retain its authored bones and shapes.
  local _,size=field:GetBoundingBox();local maximum=math.max(size.X,size.Y,size.Z)
- if maximum>420 then field:ScaleTo(field:GetScale()*420/maximum) end
+ local maxDebris=menu and 140 or 420
+ if maximum>maxDebris then field:ScaleTo(field:GetScale()*maxDebris/maximum) end
  local orientation=base:ToObjectSpace(field:GetPivot()).Rotation
  field:PivotTo(base*orientation)
  spinner=field:FindFirstChild('spinner',true)
@@ -49,11 +58,11 @@ elseif field then
     local original=object:IsA('Model') and object:GetPivot() or object.CFrame
     local rotation=base:ToObjectSpace(original).Rotation
     local angle=index*2.399963
-    local radius=140+(index*37)%90
+    local radius=(menu and 55 or 140)+(index*37)%(menu and 45 or 90)
     local pos=Vector3.new(math.cos(angle)*radius,math.sin(index*1.7)*48,math.sin(angle)*radius)
     local localCF=CFrame.new(pos)*rotation
     pivot(object,base*localCF)
-    table.insert(orbit,{object=object,cf=localCF,speed=(menu and .004 or .012)+(index%7)*(menu and .001 or .003),phase=angle,animated=index<=(touch and 24 or 48)})
+    table.insert(orbit,{object=object,cf=localCF,speed=(menu and .009 or .012)+(index%7)*(menu and .002 or .003),phase=angle,animated=index<=(touch and 24 or 48)})
    end
   end
  end
@@ -62,43 +71,63 @@ end
 for _,d in ipairs(model:GetDescendants()) do
  if d:IsA('BasePart') then d.CanCollide=false;d.CanTouch=false;d.CanQuery=false;d.CastShadow=false end
  if d:IsA('ParticleEmitter') then
-  d.Rate=math.min(d.Rate,menu and 6 or (touch and 24 or 60))
-  if menu then d.LightEmission=math.min(d.LightEmission,.15) end
+  d.Rate=math.min(d.Rate,menu and 26 or (touch and 24 or 60))
  end
  if d:IsA('Light') then
   d.Shadows=false
-  d.Range=math.min(d.Range,menu and 12 or 30)
-  if menu then d.Brightness=math.min(d.Brightness,.3) end
+  d.Range=math.min(d.Range,menu and 100 or 30)
  end
- if d:IsA('Beam') and menu then
-  -- Keep the original rays, but stop them washing out the dark center.
-  d.Brightness=math.min(d.Brightness,.35)
-  d.LightEmission=math.min(d.LightEmission,.14)
- end
- if d:IsA('BillboardGui') then
-  -- Original lens flares are much larger than the disk at menu camera distance.
-  table.insert(flares,{gui=d,enabled=not menu and d.Enabled})
-  if menu then d.Enabled=false end
- end
+ -- Preserve the original Beams and BillboardGui elements of the singularity.
+ -- Disabling all world GUIs removed part of the authored accretion glow.
+ if d:IsA('BillboardGui') then table.insert(flares,{gui=d,enabled=d.Enabled}) end
 end
 local time,clock,occlusion=0,0,0
+local blastStarted
+local blastBall
+local blastRings={}
+local function localBurst()
+ if blastStarted then return end
+ blastStarted=os.clock()
+ blastBall=Instance.new('Part')
+ blastBall.Name='LocalSingularityBurst'
+ blastBall.Shape=Enum.PartType.Ball
+ blastBall.Material=Enum.Material.Neon
+ blastBall.Color=Color3.fromRGB(187,213,244)
+ blastBall.Transparency=.42
+ blastBall.Anchored=true
+ blastBall.CanCollide=false;blastBall.CanQuery=false;blastBall.CanTouch=false
+ blastBall.Size=Vector3.new(2,2,2)
+ blastBall.Parent=W
+ for i=1,2 do
+  local ring=Instance.new('Part')
+  ring.Name='LocalBlackHoleShockwave'
+  ring.Shape=Enum.PartType.Cylinder
+  ring.Material=Enum.Material.Neon
+  ring.Color=i==1 and Color3.fromRGB(157,189,233) or Color3.fromRGB(247,217,160)
+  ring.Transparency=.25
+  ring.Anchored=true;ring.CanCollide=false;ring.CanQuery=false;ring.CanTouch=false
+  ring.Parent=W
+  table.insert(blastRings,ring)
+ end
+end
+player:GetAttributeChangedSignal('MenuCameraMode'):Connect(function()
+ if menu and player:GetAttribute('MenuCameraMode')=='starting' then localBurst() end
+end)
+if menu and player:GetAttribute('MenuCameraMode')=='starting' then localBurst() end
 Run.RenderStepped:Connect(function(dt)
- clock+=dt;occlusion+=dt
- if clock<1/20 then return end
+ clock+=dt;occlusion+=dt;time+=math.min(dt,.12)
  local camera=W.CurrentCamera;if not camera then return end
- local step=math.min(clock,.2);clock=0;time+=step
  local center
  if menu then
   local aspect=math.max(camera.ViewportSize.X,1)/math.max(camera.ViewportSize.Y,1)
-  -- Target upper-left, above the player's torso, rather than directly behind it.
-  -- Use camera axes so this composition is independent of the source asset's world coordinates.
+  -- Keep the authored disc visually behind the avatar and away from the right panel.
   local fov=math.rad(camera.FieldOfView)
   local y=math.tan(fov*.5)*distance
   local x=y*aspect
   center=camera.CFrame.Position
    +camera.CFrame.LookVector*distance
-   -camera.CFrame.RightVector*(x*.14)
-   +camera.CFrame.UpVector*(y*.12)
+   -camera.CFrame.RightVector*(x*.17)
+   +camera.CFrame.UpVector*(y*.10)
   -- Force the original Halo mesh to face the menu camera so its dark
   -- singularity and accretion disc stay visible instead of edge-on glare.
   local targetHalo=CFrame.lookAt(center,camera.CFrame.Position,camera.CFrame.UpVector)
@@ -108,8 +137,31 @@ Run.RenderStepped:Connect(function(dt)
   base=CFrame.lookAt(center,camera.CFrame.Position)
  end
  model:PivotTo(base)
- if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*(menu and .005 or .018),0) end
- for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*((menu and .004 or .018)+i%4*(menu and .001 or .003)),time*(menu and .004 or .012),time*(menu and .003 or .009)) end
+ if menu and blastStarted then
+  local progress=math.clamp((os.clock()-blastStarted)/1.25,0,1)
+  if blastBall then
+   blastBall.CFrame=CFrame.new(center)
+   local size=5+progress*220
+   blastBall.Size=Vector3.new(size,size,size)
+   blastBall.Transparency=math.clamp(.52+progress*.48,0,1)
+  end
+  for i,ring in ipairs(blastRings) do
+   local t=math.clamp((progress-(i-1)*.18)/.82,0,1)
+   local width=10+t*250
+   ring.Size=Vector3.new(1.2,width,width)
+   ring.CFrame=CFrame.lookAt(center,camera.CFrame.Position)*CFrame.Angles(0,0,t*1.5)
+   ring.Transparency=.28+t*.72
+  end
+  if progress>=1 then
+   if blastBall then blastBall:Destroy();blastBall=nil end
+   for _,ring in ipairs(blastRings) do ring:Destroy() end
+   table.clear(blastRings)
+  end
+ end
+ if clock<1/24 then return end
+ clock=0
+ if spinner and spinner:IsA('Bone') then spinner.Transform=CFrame.Angles(0,time*(menu and .018 or .018),0) end
+ for i,bone in ipairs(shardBones) do bone.Transform=CFrame.Angles(time*((menu and .015 or .018)+i%4*(menu and .003 or .003)),time*(menu and .010 or .012),time*(menu and .008 or .009)) end
  for _,state in ipairs(orbit) do if state.animated then
   local spin=CFrame.Angles(0,time*state.speed,0)
   pivot(state.object,base*spin*state.cf*CFrame.Angles(time*(menu and .006 or .018),0,time*(menu and .004 or .012)))
