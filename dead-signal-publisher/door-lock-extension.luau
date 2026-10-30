@@ -21,7 +21,7 @@ function DoorManager.SetPlayerLocked(door, locked)
 end
 local function InstallPlayerLock(door,info)
  local target=door.TargetR_Closed
- local prompt=Instance.new('ProximityPrompt');prompt.Name='PlayerDoorLock';prompt.ActionText='Trancar · 2 toques';prompt.ObjectText='Fechadura';prompt.HoldDuration=0;prompt.MaxActivationDistance=7;prompt.RequiresLineOfSight=true;prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.Parent=target
+ local prompt=Instance.new('ProximityPrompt');prompt.Name='PlayerDoorLock';prompt.ActionText='Trancar · 2 toques';prompt.ObjectText='Fechadura';prompt.HoldDuration=0;prompt.MaxActivationDistance=7;prompt.RequiresLineOfSight=true;prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.ClickablePrompt=true;prompt.Parent=target
  info.lockPrompt=prompt
  -- Reuse the door's authored mechanical close sound, quietly and briefly.
  local authored=door:FindFirstChild('DoorLock',true) or info.soundClose or workspace:FindFirstChild('DoorClose',true) or workspace:FindFirstChild('DoorOpen',true)
@@ -41,7 +41,7 @@ local function InstallPlayerLock(door,info)
   DoorManager.SetPlayerLocked(door,not info.playerLocked)
  end
  prompt.Triggered:Connect(activate)
- local detector=Instance.new('ClickDetector');detector.Name='DoubleClickLock';detector.MaxActivationDistance=7;detector.Parent=door;detector.MouseClick:Connect(activate)
+ local detector=Instance.new('ClickDetector');detector.Name='DoubleClickLock';detector.MaxActivationDistance=7;detector.Parent=target;detector.MouseClick:Connect(activate)
  local function refresh() prompt.Enabled=info.enabled;detector.MaxActivationDistance=info.enabled and 7 or 0 end
  door:GetAttributeChangedSignal('DoorEnabled'):Connect(refresh);refresh()
  door:SetAttribute('PlayerLocked',false)
