@@ -52,7 +52,8 @@ local function characterReady(p,c)
  local h=c:WaitForChild("Humanoid",10);local root=c:WaitForChild("HumanoidRootPart",10);if not h or not root then return end
  task.wait(.2)
  if s.active then teleport(p,s) else c:PivotTo(CFrame.new(0,4,100)) end
- freeze(p,not s.active or s.scene or s.dead)
+ if s.state.hasGrabPack then AssetModels.equipGrabPack(c) end
+  freeze(p,not s.active or s.scene or s.dead)
  h.Died:Connect(function() if sessions[p]~=s then return end;s.dead=true;s.active=false;removeEnemy(s);snapshot(p,s,"Dead","A raiz encontrou você.") end)
  snapshot(p,s)
 end
@@ -66,6 +67,7 @@ local function join(p)
   if sessions[p]~=s then return end
   if ok and type(record)=="table" then s.state=Campaign.restore(record.state);s.elapsed=math.clamp(tonumber(record.elapsed) or 0,0,60*60*100) end
   s.loaded=true;s.saveStatus=if ok then "Progresso carregado" else "Salvamento online indisponível; progresso nesta sessão"
+  if s.state.hasGrabPack and p.Character then AssetModels.equipGrabPack(p.Character) end
   if p.Parent then snapshot(p,s,"Ready") end
  end)
 end
@@ -76,7 +78,9 @@ local function interact(p,s,id,right,handAlreadyLaunched)
  if not s.active or s.scene or s.dead or os.clock()-s.lastAction<Config.InteractionCooldown then return end
  local target=World.Targets[id];local root=p.Character and p.Character:FindFirstChild("HumanoidRootPart")
  if not target or not root or target:GetAttribute("Sector")~=s.state.sector then return end
- local head=p.Character:FindFirstChild("Head") or root
+ local command=target:GetAttribute("Action")
+  if not s.state.hasGrabPack and command~="pack" then snapshot(p,s,"State","Pegue o GrabPack para iniciar as missões.");return end
+  local head=p.Character:FindFirstChild("Head") or root
  local distance=(head.Position-target.Position).Magnitude
  if distance>Config.MaxReach then return end
  local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={p.Character,s.enemy}
@@ -91,7 +95,7 @@ local function interact(p,s,id,right,handAlreadyLaunched)
   if command=="protocol" then snapshot(p,s,"Document",Config.Sectors[sector].Protocol);return end
   local nextState,message,changed=Campaign.act(s.state,command,right)
   if changed then
-   local oldSector=s.state.sector;s.state=nextState;save(p,s)
+   local oldSector=s.state.sector;s.state=nextState;if s.state.hasGrabPack then AssetModels.equipGrabPack(p.Character) end;save(p,s)
    if s.state.finished then removeEnemy(s);beginScene(p,s,true)
    elseif oldSector~=s.state.sector then removeEnemy(s);teleport(p,s);beginScene(p,s,false)
    else snapshot(p,s,"State",message) end
@@ -110,7 +114,8 @@ releaseHeld=function(s,side)
 end
 local function fireHand(p,s,direction,right)
  if not s.active or s.scene or s.dead or type(right)~="boolean" or typeof(direction)~="Vector3" then return end
- if direction.X~=direction.X or direction.Y~=direction.Y or direction.Z~=direction.Z or direction.Magnitude<.5 or direction.Magnitude>2 then return end
+ if not s.state.hasGrabPack then snapshot(p,s,"State","Pegue o GrabPack para usar as mãos.");return end
+  if direction.X~=direction.X or direction.Y~=direction.Y or direction.Z~=direction.Z or direction.Magnitude<.5 or direction.Magnitude>2 then return end
  local side=if right then 2 else 1
  s.handClocks=s.handClocks or {0,0};s.held=s.held or {}
  if os.clock()-s.handClocks[side]<.4 then return end
@@ -164,7 +169,7 @@ action.OnServerEvent:Connect(function(p,verb,arg,extra)
  if verb~="Start" or not s.loaded or os.clock()-s.lastAction<.5 then return end
  s.lastAction=os.clock();removeEnemy(s)
  if arg~=false and s.state.finished then snapshot(p,s,"Won");return end
- if arg==false then s.state=Campaign.new();s.elapsed=0 end
+ if arg==false then s.state=Campaign.new();s.elapsed=0;AssetModels.unequipGrabPack(p.Character) end
  s.dead=false;s.active=true;s.stamina=100;s.run=false;s.crouch=false
  local h=p.Character and p.Character:FindFirstChildOfClass("Humanoid")
  if not h or h.Health<=0 then p:LoadCharacterAsync();task.wait(.3) end

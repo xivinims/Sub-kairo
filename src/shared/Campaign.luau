@@ -9,7 +9,7 @@ local function toggle(matrix, index)
  for i=1,9 do if math.abs((i-1)%3-(index-1)%3)+math.abs(math.floor((i-1)/3)-math.floor((index-1)/3))<=1 then matrix[i]=not matrix[i] end end
 end
 function Campaign.new(sector)
- local s={sector=sector or 1,flags={},digits={0,0,0,0},valves={false,false,false,false},pressure=0,tones=0,matrix={},angles={0,0,0},finished=false}
+ local s={sector=sector or 1,flags={},digits={0,0,0,0},valves={false,false,false,false},pressure=0,tones=0,matrix={},angles={0,0,0},finished=false,hasGrabPack=false}
  for i=1,9 do s.matrix[i]=false end
  for _,i in ipairs({1,3,5,8}) do toggle(s.matrix,i) end
  return s
@@ -27,6 +27,10 @@ function Campaign.restore(raw)
  s.pressure=math.clamp(math.floor(tonumber(raw.pressure) or 0),0,9)
  s.tones=math.clamp(math.floor(tonumber(raw.tones) or 0),0,6)
  s.finished=raw.finished==true and sector==7
+  s.hasGrabPack=raw.hasGrabPack==true or s.flags.pack==true or sector>1
+  if not s.hasGrabPack and type(raw.flags)=="table" then
+   for _,key in ipairs({"card","fuse","power","socket1","socket2","bloom1","bloom2","bloom3","socket3","release"}) do if raw.flags[key]==true then s.hasGrabPack=true;break end end
+  end
  return s
 end
 function Campaign.count(s,prefix)
@@ -54,9 +58,13 @@ function Campaign.act(original,id,right)
  if id=="exit" then
   if not Campaign.complete(s) then return s,"Conclua os objetivos deste setor.",false end
   if s.sector==7 then s.finished=true; return s,"O sinal foi interrompido.",true end
-  return Campaign.new(s.sector+1),"Passagem liberada.",true
+  local nextState=Campaign.new(s.sector+1);nextState.hasGrabPack=s.hasGrabPack;return nextState,"Passagem liberada.",true
  end
- local function reject(text) return original,text,false end
+ if s.sector==1 and id=="pack" then
+   if s.hasGrabPack then return original,"O GrabPack já está equipado.",false end
+   s.hasGrabPack=true;f.pack=true;return s,"GrabPack recolhido. Mãos azul e vermelha liberadas.",true
+  end
+  local function reject(text) return original,text,false end
  local function take(key) if f[key] then return false end; f[key]=true; return true end
  if s.sector==1 then
   if id=="card" or id=="fuse" then if not take(id) then return reject("Você já recolheu este item.") end

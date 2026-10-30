@@ -34,7 +34,7 @@
     "Workspace": {
       "$properties": {
         "Gravity": 130,
-        "StreamingEnabled": false
+        "StreamingEnabled": true
       },
       "BrambleWorld": {
         "$path": "assets/world/BramblesWorld.rbxmx"

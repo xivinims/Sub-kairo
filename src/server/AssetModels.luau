@@ -50,6 +50,39 @@ function AssetModels.place(template,parent,cf,height,name)
  m:ScaleTo(m:GetScale()*height/math.max(size.Y,.01));m.WorldPivot=m:GetBoundingBox();m:PivotTo(cf);m.Parent=parent
  return m
 end
+function AssetModels.equipGrabPack(character)
+ if not character then return nil end
+ local existing=character:FindFirstChild("GrabPackEquipped")
+ if existing then return existing end
+ local torso=character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart")
+ if not torso or not torso:IsA("BasePart") then return nil end
+ local templates=RS:FindFirstChild("BrambleAssets")
+ local template=templates and templates:FindFirstChild("GrabPack")
+ local model
+ if template and template:IsA("Model") then
+  model=AssetModels.place(template,character,torso.CFrame*CFrame.new(0,0,.58),1.55,"GrabPackEquipped")
+ else
+  model=Instance.new("Model");model.Name="GrabPackEquipped";model.Parent=character
+  local function piece(name,size,offset,color,material)
+   local part=Instance.new("Part");part.Name=name;part.Size=size;part.CFrame=torso.CFrame*CFrame.new(offset);part.Color=color;part.Material=material;part.Parent=model;return part
+  end
+  piece("PackShell",Vector3.new(1.3,1.2,.45),Vector3.new(0,0,.58),Color3.fromRGB(42,62,49),Enum.Material.Metal)
+  piece("BlueCanister",Vector3.new(.35,.9,.35),Vector3.new(-.62,0,.58),Color3.fromRGB(37,105,211),Enum.Material.Metal)
+  piece("RedCanister",Vector3.new(.35,.9,.35),Vector3.new(.62,0,.58),Color3.fromRGB(197,58,41),Enum.Material.Metal)
+ end
+ for _,part in ipairs(model:GetDescendants()) do
+  if part:IsA("BasePart") then
+   part.Anchored=false;part.CanCollide=false;part.CanTouch=false;part.CanQuery=false;part.Massless=true
+   local weld=Instance.new("WeldConstraint");weld.Part0=torso;weld.Part1=part;weld.Parent=part
+  end
+ end
+ model:SetAttribute("Equipped",true)
+ return model
+end
+function AssetModels.unequipGrabPack(character)
+ local existing=character and character:FindFirstChild("GrabPackEquipped")
+ if existing then existing:Destroy() end
+end
 function AssetModels.decorate(world)
  local templates=RS:FindFirstChild("BrambleAssets");if not templates then return end
  local built=workspace:FindFirstChild("BrambleWorld")
@@ -61,15 +94,15 @@ function AssetModels.decorate(world)
  end
  for _,target in pairs(world.Targets) do
   local id=target:GetAttribute("Action")
-  local name=if string.match(id,"^fuse") or string.match(id,"^cell") then "Battery" else if string.match(id,"^socket") then "Scanner" else if id=="exit" then "Doors" else if id=="power" or id=="master" or id=="start" then "BatteryHolder" else nil
+  local name=if id=="pack" then "GrabPack" else if string.match(id,"^fuse") or string.match(id,"^cell") then "Battery" else if string.match(id,"^socket") then "Scanner" else if id=="exit" then "Doors" else if id=="power" or id=="master" or id=="start" then "BatteryHolder" else nil
   local template=name and templates:FindFirstChild(name)
   if template and not target:FindFirstChild("ImportedVisual") then
-   local m=AssetModels.place(template,target,target.CFrame*CFrame.new(0,0,.7),if name=="Battery" then 1.5 else if name=="Doors" then 9 else 2.5,"ImportedVisual")
+   local m=AssetModels.place(template,target,target.CFrame*CFrame.new(0,0,.7),if name=="Battery" then 1.5 else if name=="Doors" then 9 else if name=="GrabPack" then 1.55 else 2.5,"ImportedVisual")
    target.Transparency=1
    local indicator=target:FindFirstChild("Indicator");if indicator then indicator.Transparency=1 end
-   for _,p in ipairs(m:GetDescendants()) do if p:IsA("BasePart") then p:SetAttribute("TargetId",target:GetAttribute("TargetId"));p:SetAttribute("Sector",target:GetAttribute("Sector")) end end
+   for _,p in ipairs(m:GetDescendants()) do if p:IsA("BasePart") then p:SetAttribute("TargetId",target:GetAttribute("TargetId"));p:SetAttribute("Sector",target:GetAttribute("Sector"));p:SetAttribute("Action",target:GetAttribute("Action"));p:SetAttribute("Title",target:GetAttribute("Title")) end end
   end
-  local prompt=target:FindFirstChildOfClass("ProximityPrompt");if prompt then prompt.Enabled=false end
+  local prompt=target:FindFirstChildOfClass("ProximityPrompt");if prompt then prompt.Enabled=id=="pack" end
  end
  local root=workspace:FindFirstChild("BrambleWorld");if not root or root:FindFirstChild("ImportedKitScenery") then return end
  local scenery=Instance.new("Folder");scenery.Name="ImportedKitScenery";scenery.Parent=root
@@ -89,7 +122,6 @@ function AssetModels.decorate(world)
    for _,part in ipairs(prop:GetDescendants()) do if part:IsA("BasePart") then part.Anchored=false;part.CanCollide=true;part.CanQuery=true;part:SetAttribute("GrabMovable",true);if part~=rootPart then local weld=Instance.new("WeldConstraint");weld.Part0=rootPart;weld.Part1=part;weld.Parent=rootPart end end end
   end
  end
- local pack=templates:FindFirstChild("GrabPack")
- if pack then AssetModels.place(pack,scenery,CFrame.new(world.Origins[1]+Vector3.new(-20,4,-12)),3,"GrabPack_Equipment") end
+ 
 end
 return AssetModels

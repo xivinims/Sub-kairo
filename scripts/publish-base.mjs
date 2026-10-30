@@ -1,4 +1,4 @@
-// Asset correction release: exact supplied logos, imported starter kit meshes and free GrabPack firing.
+// Release: original-scene menu settings, mission markers, GrabPack pickup and touch controls.
 import {readFile, writeFile} from 'node:fs/promises';
 
 // Verified from the owner's Dead Signal share link. Never fall back to another place.
@@ -21,6 +21,7 @@ if (!response.ok) {
 }
 const result = await response.json();
 if (!Number.isSafeInteger(result.versionNumber) || result.versionNumber < 1) throw new Error('Roblox did not confirm a published version number.');
-const receipt = {published:true, universeId:universe, placeId:place, versionNumber:result.versionNumber, commit:process.env.GITHUB_SHA, publishedAt:new Date().toISOString(), studioPlaytested:false};
+const release = 'Cinematic settings over the existing menu scene; visible missions; working GrabPack pickup and mobile controls.';
+const receipt = {published:true, release, universeId:universe, placeId:place, versionNumber:result.versionNumber, commit:process.env.GITHUB_SHA, publishedAt:new Date().toISOString(), studioPlaytested:false};
 await writeFile('dist/publication.json', JSON.stringify(receipt,null,2)+'\n');
 console.log(JSON.stringify(receipt,null,2));

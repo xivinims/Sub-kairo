@@ -12,6 +12,17 @@ function World.label(p,text,size)
  local limit=Instance.new("UITextSizeConstraint");limit.MaxTextSize=size or 48;limit.Parent=t
  return t
 end
+function World.missionMarker(target,title)
+ local marker=target:FindFirstChild("MissionMarker")
+ if not marker then
+  marker=Instance.new("BillboardGui");marker.Name="MissionMarker";marker.Adornee=target;marker.Size=UDim2.fromOffset(192,34);marker.StudsOffset=Vector3.new(0,2.55,0);marker.MaxDistance=58;marker.AlwaysOnTop=false;marker.LightInfluence=0;marker.Parent=target
+  local plate=Instance.new("Frame");plate.Name="Plate";plate.Size=UDim2.fromScale(1,1);plate.BackgroundColor3=Color3.fromRGB(8,11,10);plate.BackgroundTransparency=.12;plate.BorderSizePixel=1;plate.BorderColor3=Color3.fromRGB(102,116,105);plate.Parent=marker
+  local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(.08,0);corner.Parent=plate
+  local text=Instance.new("TextLabel");text.Name="Label";text.Position=UDim2.fromOffset(7,0);text.Size=UDim2.new(1,-14,1,0);text.BackgroundTransparency=1;text.TextColor3=Color3.fromRGB(239,238,220);text.TextStrokeTransparency=.65;text.Font=Enum.Font.GothamBold;text.TextSize=14;text.TextWrapped=true;text.Parent=plate
+ end
+ local text=marker:FindFirstChild("Label",true);if text then text.Text=string.upper(title or target.Name) end
+ return marker
+end
 local function block(parent,name,pos,size,color,material,collide) return World.part(parent,name,size,CFrame.new(pos),color,material,collide) end
 function World.target(folder,sector,id,pos,title,color)
  local old=World.Targets[sector..":"..id];if old then old:Destroy();if World.Index and World.Index:FindFirstChild(sector..":"..id) then World.Index[sector..":"..id]:Destroy() end end
@@ -20,7 +31,8 @@ function World.target(folder,sector,id,pos,title,color)
  local lamp=block(p,"Indicator",pos+Vector3.new(0,-0.6,0.5),Vector3.new(1,0.45,0.12),color or Color3.fromRGB(63,174,189),Enum.Material.Neon,false)
  lamp.CastShadow=false
  local display=World.label(p,title,28);display.Name="Readout"
- local prompt=Instance.new("ProximityPrompt");prompt.Enabled=false;prompt.ActionText="Mão azul / E";prompt.ObjectText=title;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=true;prompt.HoldDuration=0.3;prompt.Parent=p
+ World.missionMarker(p,title)
+ local prompt=Instance.new("ProximityPrompt");prompt.Enabled=id=="pack";prompt.ActionText=if id=="pack" then "PEGAR" else "Mão azul / E";prompt.ObjectText=title;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=id~="pack";prompt.HoldDuration=0.3;prompt.Parent=p
  World.Targets[sector..":"..id]=p
  if World.Index then local ref=Instance.new("ObjectValue");ref.Name=sector..":"..id;ref.Value=p;ref.Parent=World.Index end
  return p
@@ -60,7 +72,18 @@ function World.build()
   for sector=1,7 do local o=Vector3.new((sector-1)*650,0,-100);World.Origins[sector]=o;World.Spawns[sector]=o+Vector3.new(0,4,0);World.EnemySpawns[sector]=o+Vector3.new(0,5,-210) end
   World.Spawns[4]=World.Origins[4]+Vector3.new(-63,4,-15);World.EnemySpawns[4]=World.Origins[4]+Vector3.new(-63,5,-15)
   World.Index=previous:FindFirstChild("TargetIndex")
-  for _,item in ipairs(previous:GetDescendants()) do local id=item:GetAttribute("TargetId");if id and item:FindFirstChildOfClass("ProximityPrompt") then World.Targets[id]=item end end
+  if not World.Index then World.Index=Instance.new("Folder");World.Index.Name="TargetIndex";World.Index.Parent=previous end
+  for _,item in ipairs(previous:GetDescendants()) do
+   local id=item:GetAttribute("TargetId")
+   if id and item:FindFirstChildOfClass("ProximityPrompt") then
+    World.Targets[id]=item;World.missionMarker(item,item:GetAttribute("Title") or item.Name)
+    local ref=World.Index:FindFirstChild(id)
+    if not ref then ref=Instance.new("ObjectValue");ref.Name=id;ref.Parent=World.Index end
+    ref.Value=item
+   end
+  end
+  if not World.Targets["1:pack"] then World.target(previous,1,"pack",World.Origins[1]+Vector3.new(-4,4,-6),"PEGAR GRABPACK",Color3.fromRGB(48,126,214)) end
+  for _,target in pairs(World.Targets) do local prompt=target:FindFirstChildOfClass("ProximityPrompt");if prompt then prompt.Enabled=target:GetAttribute("Action")=="pack" end end
   workspace:SetAttribute("BrambleWorldReady",true);return World
  end
  if previous then previous:Destroy() end
@@ -103,7 +126,7 @@ function World.build()
    target("card",-55,-30,"CRACHÁ");target("fuse",48,-38,"FUSÍVEL");target("power",40,-70,"QUADRO PRINCIPAL")
    target("socket1",-44,-105,"TERMINAL 1 / AZUL",Color3.fromRGB(35,100,230));target("socket2",45,-135,"TERMINAL 2 / VERMELHA",Color3.fromRGB(220,40,25))
    for i=1,3 do target("bloom"..i,-50+(i-1)*50,-175,"PODAR FLOR "..i,Color3.fromRGB(143,91,47)) end
-   target("socket3",40,-207,"TERMINAL 3 / AZUL");target("release",-30,-225,"LIBERAÇÃO / VERMELHA")
+   target("socket3",40,-207,"TERMINAL 3 / AZUL");target("release",-30,-225,"LIBERAÇÃO / VERMELHA");target("pack",-4,-6,"PEGAR GRABPACK",Color3.fromRGB(48,126,214))
   elseif sector==2 then
    for _,x in ipairs({-65,-40,40,65}) do for z=55,210,25 do block(f,"Bookcase",o+Vector3.new(x,5,-z),Vector3.new(9,10,3),Color3.fromRGB(52,36,23),Enum.Material.Wood)
     for shelf=1,3 do for book=1,5 do block(f,"Book",o+Vector3.new(x-3+book, shelf*2.5,-z-2),Vector3.new(.6,2,1),Color3.fromHSV((book+shelf)*.04,.4,.35),Enum.Material.Fabric,false) end end
