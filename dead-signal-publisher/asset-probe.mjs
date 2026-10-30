@@ -45,30 +45,22 @@ if(trigger.trim().startsWith('cassette-status-audit')){
 }else if(trigger.trim().startsWith('cassette-image-upload')){
  await import('./cassette-image-upload.mjs');
 }else if(trigger.trim().startsWith('chapter2-map-audit')){
- const script=`local H=game:GetService('HttpService')
-local ok,root=pcall(function() return game:GetService('InsertService'):LoadAsset(3251795155) end)
-if not ok then return H:JSONEncode({ok=false,error=tostring(root)}) end
-local counts={parts=0,models=0,folders=0,scripts=0,localscripts=0,modules=0,prompts=0,lights=0,decals=0,meshes=0}
-local names={}
-for _,item in ipairs(root:GetDescendants()) do
- if item:IsA('BasePart') then counts.parts+=1 end
- if item:IsA('Model') then counts.models+=1 end
- if item:IsA('Folder') then counts.folders+=1 end
- if item:IsA('Script') then counts.scripts+=1 end
- if item:IsA('LocalScript') then counts.localscripts+=1 end
- if item:IsA('ModuleScript') then counts.modules+=1 end
- if item:IsA('ProximityPrompt') then counts.prompts+=1 end
- if item:IsA('Light') then counts.lights+=1 end
- if item:IsA('Decal') or item:IsA('Texture') or item:IsA('SurfaceAppearance') then counts.decals+=1 end
- if item:IsA('MeshPart') or item:IsA('SpecialMesh') then counts.meshes+=1 end
-end
-for _,item in ipairs(root:GetChildren()) do table.insert(names,item.Name..' ['..item.ClassName..']') end
-local bounds
-if root:IsA('Model') then local okBox,cf,size=pcall(function() return root:GetBoundingBox() end);if okBox then bounds={x=size.X,y=size.Y,z=size.Z} end end
-root:Destroy()
-return H:JSONEncode({ok=true,name='Light Bulb Reillumination map',asset=3251795155,rootClass=root.ClassName,children=names,counts=counts,bounds=bounds})`;
- const result=await execute(script);
- console.log('CHAPTER2_MAP_AUDIT '+JSON.stringify(result));
+ const key=process.env.ROBLOX_API_KEY;
+ const [metaResponse,deliveryResponse]=await Promise.all([
+  fetch('https://economy.roblox.com/v2/assets/3251795155/details'),
+  fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/3251795155',{headers:{'x-api-key':key}}),
+ ]);
+ const metadata=await metaResponse.json().catch(()=>({}));
+ const delivery=await deliveryResponse.json().catch(()=>({}));
+ let file=null;
+ const location=delivery.location||delivery.locations?.[0]?.location;
+ if(location){
+  const downloaded=await fetch(location);
+  const bytes=Buffer.from(await downloaded.arrayBuffer());
+  file={http:downloaded.status,contentType:downloaded.headers.get('content-type'),bytes:bytes.length,magic:bytes.subarray(0,24).toString('hex')};
+ }
+ const summary={assetId:3251795155,metadataHttp:metaResponse.status,metadata:{name:metadata.Name,description:metadata.Description,assetTypeId:metadata.AssetTypeId,creator:metadata.Creator},deliveryHttp:deliveryResponse.status,delivery:{assetType:delivery.assetType,assetId:delivery.assetId,versionNumber:delivery.versionNumber,error:delivery.errors?.[0]?.message},file};
+ console.log('CHAPTER2_MAP_AUDIT '+JSON.stringify(summary));
 }else if(trigger.trim().startsWith('cassette-creator-audit')){
  const luau="local HttpService=game:GetService('HttpService')\nreturn HttpService:JSONEncode({creatorId=game.CreatorId,creatorType=tostring(game.CreatorType),universe=game.GameId})";
  console.log('CASSETTE_CREATOR_RESULT '+JSON.stringify(await execute(luau)));
