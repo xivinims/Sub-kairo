@@ -37,7 +37,11 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('emote-id-audit')){
+if(trigger.trim().startsWith('credits-author-audit')){
+ const fs=await import('node:fs/promises');
+ const script=await fs.readFile(new URL('./credits-author-audit.luau',import.meta.url),'utf8');
+ console.log('CREDITS_AUTHOR_RESULT '+JSON.stringify(await execute(script)));
+}else if(trigger.trim().startsWith('emote-id-audit')){
  const fs=await import('node:fs/promises');
  const script=await fs.readFile(new URL('./emote-resolution-audit.luau',import.meta.url),'utf8');
  console.log('EMOTE_RESOLVE_RESULT '+JSON.stringify(await execute(script)));
