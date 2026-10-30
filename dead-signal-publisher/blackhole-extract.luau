@@ -3,6 +3,25 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local luau=require(
 return function(dm)
  local original=R.deserializePlace(fs.readFile('/tmp/asset-7208091524.rbxl'))
  local W=original:GetService('Workspace');local sky=assert(W:FindFirstChild('Skybox'),'Skybox missing'):Clone()
+ local other={}
+ for _,c in ipairs(sky:GetChildren()) do
+  table.insert(other,c.Name..'/'..c.ClassName..'/'..#c:GetDescendants())
+ end
+ print('SOURCE SKYBOX CONTENTS: '..table.concat(other,', '))
+ -- Preserve the original source skybox textures if they exist. Without this,
+ -- the menu inherits the unrelated mansion's cloudy horizon.
+ local originalSky=original:GetService('Lighting'):FindFirstChildWhichIsA('Sky')
+ if originalSky then
+  local skyCopy=originalSky:Clone()
+  skyCopy.Name='OriginalBlackHoleSky'
+  local rs=dm:GetService('ReplicatedStorage')
+  local oldSky=rs:FindFirstChild(skyCopy.Name)
+  if oldSky then oldSky:Destroy() end
+  skyCopy.Parent=rs
+  print('ORIGINAL SOURCE SPACE SKY COPIED: '..skyCopy.Name)
+ else
+  print('SOURCE SKY: no authored Lighting.Sky; using mansion sky temporarily')
+ end
  for _,c in ipairs(sky:GetChildren()) do if c.Name~='BlackHole' and c.Name~='DebrisField' then c:Destroy() end end
  local allowed={Bone=true,Model=true,Folder=true,MeshPart=true,Part=true,WedgePart=true,UnionOperation=true,Attachment=true,Beam=true,Trail=true,ParticleEmitter=true,PointLight=true,SpotLight=true,SurfaceLight=true,SurfaceAppearance=true,SpecialMesh=true,BlockMesh=true,CylinderMesh=true,Texture=true,Decal=true,SurfaceGui=true,BillboardGui=true,ImageLabel=true,Frame=true,UIGradient=true,UICorner=true,UIStroke=true,UIPadding=true,UIScale=true,UIAspectRatioConstraint=true}
  local list=sky:GetDescendants()
