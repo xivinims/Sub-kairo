@@ -2,10 +2,14 @@ local fs=require('@lune/fs');local R=require('@lune/roblox');local J=require('@l
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-verified.rbxl'))
 local original=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'));local fps=R.deserializePlace(fs.readFile('/tmp/asset-15864801103.rbxl'))
 local W=dm:GetService('Workspace');local SS=dm:GetService('ServerStorage');local RS=dm:GetService('ReplicatedStorage');local SSS=dm:GetService('ServerScriptService')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-blackhole-menu-v5','Wrong live build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-swim-v6','Wrong live build')
 assert(SS.OriginalWorld.Content.Interior and SS.Corrupt.Grandfather,'Source map hierarchy lost')
 assert(not W:FindFirstChild('Content'),'Public menu contains mansion')
 assert(dm:GetService('ReplicatedFirst').MenuAvatarClient.Source:find('CreateHumanoidModelFromUserIdAsync',1,true),'Actual player portrait missing')
+local sceneSource=dm:GetService('ReplicatedFirst').MenuAvatarClient.Source
+assert(sceneSource:find('507784897',1,true),'Roblox swimming animation missing from packaged script')
+assert(sceneSource:find('CameraZoom',1,true),'Cinematic zoom not packaged')
+assert(sceneSource:find('PassingStone',1,true),'Cinematic foreground/background debris not packaged')
 local function resolve(root,path) for _,name in ipairs(path:split('.')) do root=assert(root:FindFirstChild(name),'Missing source path '..path) end;return root end
 local exact,patched=0,0
 local originals={}
