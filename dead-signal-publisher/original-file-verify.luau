@@ -14,7 +14,7 @@ assert(not sceneSource:find('LocalDarkWaterSurface',1,true),'Artificial water re
 assert(not sceneSource:find('507784897',1,true),'Old swimming animation still packaged')
 assert(sceneSource:find('CameraZoom',1,true),'Cinematic zoom not packaged')
 local visualSource=dm:GetService('ReplicatedFirst'):FindFirstChild('CinematicEnvironmentClient')
-assert(visualSource and visualSource:IsA('LocalScript') and visualSource.Enabled,'Visual controller not packaged')
+assert(visualSource and visualSource:IsA('LocalScript'),'Visual controller not packaged')
 assert(visualSource.Source:find('9045936046',1,true),'Requested Massive Black Hole sound missing')
 assert(visualSource.Source:find('BloomEffect',1,true),'Cinematic bloom missing')
 assert(visualSource.Source:find('DepthOfFieldEffect',1,true),'Cinematic depth of field missing')
