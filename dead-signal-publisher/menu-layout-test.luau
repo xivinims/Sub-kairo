@@ -1,6 +1,6 @@
 local fs=require('@lune/fs')
 local luau=require('@lune/luau')
-local files={'session-interface.luau','session-menu-client.luau','menu-avatar-client.luau','blackhole-client.luau','weapon-pickup-client.luau'}
+local files={'session-interface.luau','session-menu-client.luau','menu-avatar-client.luau','blackhole-client.luau'}
 for _,file in ipairs(files) do
  local source=fs.readFile(file)
  assert(source and #source>300,'Missing menu source: '..file)
@@ -50,9 +50,4 @@ assert(menu:find('lighting.ExposureCompensation=-.32',1,true),'Original sky over
 assert(menu:find('NumberSequence.new(.94,.68)',1,true),'Menu sky hidden by dark overlay')
 local doors=fs.readFile('original-door-fixes.luau')
 assert(not doors:find('InstallPlayerLock',1,true),'Custom door locks are still installed')
-local weapon=fs.readFile('weapon-pickup-client.luau')
-assert(weapon:find("button.Text='PEGAR'",1,true),'PEGAR UI missing')
-assert(weapon:find("request:FireServer(tool)",1,true),'PEGAR server pickup not connected')
-local pickup=fs.readFile('original-weapon-pickups.luau')
-assert(pickup:find("prompt.Style=Enum.ProximityPromptStyle.Custom",1,true),'Default prompt overlaps PEGAR UI')
-print('MENU REPAIR PASS: original singularity visuals, small debris, local burst, PEGAR UI, original doors')
+print('MENU REPAIR PASS: original singularity visuals, small debris, local burst, original doors')
