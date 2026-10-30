@@ -1,1 +1,1 @@
-cassette-creator-audit-v1
+cassette-image-upload-v1
