@@ -13,6 +13,7 @@ local TweenService=game:GetService('TweenService')
 local RunService=game:GetService('RunService')
 local ContentProvider=game:GetService('ContentProvider')
 local player=Players.LocalPlayer
+if menu then player:SetAttribute('MenuEffectsReady',false) end
 
 local POSTFIX='StillHereCinema'
 local function addEffect(class,name,props)
@@ -106,6 +107,7 @@ else
 end
 
 if not menu then return end
+player:SetAttribute('MenuEffectsReady',true)
 
 local previous=SoundService:FindFirstChild('MassiveBlackHoleMenu')
 if previous then previous:Destroy() end
