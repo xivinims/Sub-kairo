@@ -10,6 +10,8 @@ local camera=workspace.CurrentCamera
 camera.CameraType=Enum.CameraType.Scriptable
 camera.CFrame=CFrame.lookAt(Vector3.new(0,5000,0),Vector3.new(0,5000,-1))
 camera.FieldOfView=60
+local lighting=game:GetService('Lighting');lighting.FogEnd=100000
+for _,effect in ipairs(lighting:GetChildren()) do if effect:IsA('Atmosphere') then effect.Density=.05;effect.Haze=0 end end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 local shade=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},bg)
 make('UIGradient',{Transparency=NumberSequence.new(.75,.08)},shade)
@@ -22,6 +24,7 @@ local list=UI.List(holder)
 local status=UI.Label(composition,'',32);status.Position=UDim2.fromScale(0,.92);status.Size=UDim2.fromScale(1,.08);status.TextSize=14
 local function layout() local size=bg.AbsoluteSize;composition.Size=UDim2.fromScale(size.X<size.Y and .86 or .42,.86) end
 layout();bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
+p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function() composition.Visible=not p:GetAttribute('InterfaceOpen') end)
 local busy=false;local current;local panel;local redraw
 local function request(action,value)
  if busy then return end;busy=true

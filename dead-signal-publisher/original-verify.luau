@@ -1,6 +1,6 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v1','Wrong build')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-menu-lock-v2','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
@@ -32,11 +32,13 @@ assert(RS.Library.Shared.WeaponsHandler.BaseWeapon.Gun.Hitscan and SS.Library.We
 assert(RS.SkyBlackHoleTemplate:GetAttribute('SourceAsset')=='7208091524','Black hole missing')
 -- Run the original config/door setup, not an imitation of the source controller.
 local doors=require(SSS.DoorManager);doors.Init()
-local lockDoors=0
+local lockDoors,lockSounds=0,0
+assert(Enum.Font.Oswald and Enum.Font.RobotoCondensed)
 for _,door in ipairs(game:GetService('CollectionService'):GetTagged('Door')) do
  if door:IsDescendantOf(W) then
   lockDoors+=1;assert(door:FindFirstChild('DoubleClickLock'),'Door click missing')
   local prompt=door.TargetR_Closed:FindFirstChild('PlayerDoorLock');assert(prompt,'Door prompt missing')
+  if door.TargetR_Closed:FindFirstChild('PlayerLockSound') then lockSounds+=1 end
   assert(doors.SetPlayerLocked(door,true) and door:GetAttribute('PlayerLocked'),'Lock failed')
   doors.EnableDoor(door,false)
   assert(doors.SetPlayerLocked(door,false) and not doors.IsEnabled(door),'Player lock bypassed campaign lock')
@@ -45,6 +47,7 @@ for _,door in ipairs(game:GetService('CollectionService'):GetTagged('Door')) do
  end
 end
 assert(lockDoors>0,'No lockable original doors')
+assert(lockSounds==lockDoors,'Some doors have no lock sound')
 local fpsLoaded=false
 if game:GetService('RunService'):IsServer() then
  local lib=require(RS.Library);local deadline=os.clock()+40
@@ -55,4 +58,4 @@ if game:GetService('RunService'):IsServer() then
  for _,name in ipairs({'M4A1','Deagle'}) do local tool=lib.WeaponsHandler.CreateWeapon(name);assert(tool and tool.Weapon.PrimaryPart,'Original weapon factory failed '..name);tool:Destroy() end
  fpsLoaded=true
 end
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,gameplayFixes=W:GetAttribute('GameplayFixVersion'),wreckRemoved=true,preferences=true,lockableDoors=lockDoors,weaponFixes=W:GetAttribute('WeaponFixVersion'),pickups=W:GetAttribute('OriginalWeaponPickupCount'),importedIntroDisabled=true,menuDesign=RS.MenuBackdrop:GetAttribute('DesignVersion'),originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=W:GetAttribute('DeadSignalBuildId'),originalScripts=sources,missions=missions,parts=parts,tagged=tagged,gameplayFixes=W:GetAttribute('GameplayFixVersion'),wreckRemoved=true,preferences=true,lockableDoors=lockDoors,lockSounds=lockSounds,weaponFixes=W:GetAttribute('WeaponFixVersion'),pickups=W:GetAttribute('OriginalWeaponPickupCount'),importedIntroDisabled=true,menuDesign=RS.MenuBackdrop:GetAttribute('DesignVersion'),originalHUD=true,originalFPS=true,fpsServerLoaded=fpsLoaded})
