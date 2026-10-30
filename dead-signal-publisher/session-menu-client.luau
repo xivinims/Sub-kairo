@@ -11,7 +11,16 @@ camera.CameraType=Enum.CameraType.Scriptable
 camera.CFrame=CFrame.lookAt(Vector3.new(0,5000,0),Vector3.new(0,5000,-1))
 camera.FieldOfView=60
 local lighting=game:GetService('Lighting');lighting.FogEnd=100000
-for _,effect in ipairs(lighting:GetChildren()) do if effect:IsA('Atmosphere') then effect.Density=.05;effect.Haze=0 end end
+-- Menu-only lighting: expose the singularity, not a screen-filling flare.
+lighting.ExposureCompensation=-.6
+for _,effect in ipairs(lighting:GetChildren()) do
+ if effect:IsA('Atmosphere') then effect.Density=.025;effect.Haze=0;effect.Glare=0
+ elseif effect:IsA('BloomEffect') then
+  effect.Intensity=math.min(effect.Intensity,.12)
+  effect.Threshold=math.max(effect.Threshold,1.8)
+  effect.Size=math.min(effect.Size,16)
+ elseif effect:IsA('SunRaysEffect') then effect.Enabled=false end
+end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 local shade=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0},bg)
 make('UIGradient',{Transparency=NumberSequence.new(.75,.08)},shade)
