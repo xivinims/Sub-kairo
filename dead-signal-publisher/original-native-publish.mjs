@@ -90,6 +90,7 @@ for _,name in ipairs({'StarterPlayerScripts','StarterCharacterScripts'}) do loca
 for _,c in ipairs(workspace:GetChildren()) do if not c:IsA('Terrain') and not c:IsA('Camera') then c:Destroy() end end
 for key in pairs(workspace:GetAttributes()) do workspace:SetAttribute(key,nil) end;for key,value in pairs(b:GetAttributes()) do workspace:SetAttribute(key,value) end
 workspace:SetAttribute('ExperienceChapter',${experienceChapter})
+if ${experienceChapter}==2 then workspace:SetAttribute('DisplayEpisodeLabel',nil);workspace:SetAttribute('DisplayEpisodeNumber',1) end
 workspace:SetAttribute('OriginalPreflight',true)
 ${init}
 ${verify}`
