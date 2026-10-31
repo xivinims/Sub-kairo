@@ -107,20 +107,20 @@ function Map.Build(world)
  local map=Instance.new('Model');map.Name='ChapterTwoWorld';map.Parent=world
  local lights=buildFrame(map)
  local lighting=game:GetService('Lighting')
- lighting.ClockTime=.35;lighting.Brightness=1.1
- lighting.Ambient=Color3.fromRGB(30,42,38)
- lighting.OutdoorAmbient=Color3.fromRGB(17,28,25)
- lighting.FogColor=Color3.fromRGB(25,39,34)
- lighting.FogStart=10;lighting.FogEnd=125
- lighting.EnvironmentDiffuseScale=.2;lighting.EnvironmentSpecularScale=.25
+ lighting.ClockTime=16.4;lighting.Brightness=1.65
+ lighting.Ambient=Color3.fromRGB(56,69,57)
+ lighting.OutdoorAmbient=Color3.fromRGB(42,55,43)
+ lighting.FogColor=Color3.fromRGB(73,88,67)
+ lighting.FogStart=22;lighting.FogEnd=185
+ lighting.EnvironmentDiffuseScale=.34;lighting.EnvironmentSpecularScale=.31
  local atmosphere=lighting:FindFirstChildOfClass('Atmosphere') or Instance.new('Atmosphere')
- atmosphere.Name='ChapterTwoAtmosphere';atmosphere.Density=.28
- atmosphere.Offset=.12;atmosphere.Haze=2.1;atmosphere.Glare=0
- atmosphere.Color=Color3.fromRGB(137,162,144)
- atmosphere.Decay=Color3.fromRGB(30,43,38);atmosphere.Parent=lighting
+ atmosphere.Name='ChapterTwoAtmosphere';atmosphere.Density=.17
+ atmosphere.Offset=.12;atmosphere.Haze=1.35;atmosphere.Glare=.04
+ atmosphere.Color=Color3.fromRGB(174,190,160)
+ atmosphere.Decay=Color3.fromRGB(77,96,68);atmosphere.Parent=lighting
  local grade=lighting:FindFirstChild('ChapterTwoColorGrade') or Instance.new('ColorCorrectionEffect')
- grade.Name='ChapterTwoColorGrade';grade.Saturation=-.25;grade.Contrast=.12
- grade.TintColor=Color3.fromRGB(193,213,192);grade.Brightness=-.04;grade.Parent=lighting
+ grade.Name='ChapterTwoColorGrade';grade.Saturation=-.12;grade.Contrast=.06
+ grade.TintColor=Color3.fromRGB(220,226,197);grade.Brightness=.02;grade.Parent=lighting
  local spawn=Instance.new('SpawnLocation')
  spawn.Name='SpawnLocation';spawn.Size=Vector3.new(12,1,12)
  spawn.CFrame=CFrame.new(0,.6,34);spawn.Anchored=true

@@ -1,6 +1,7 @@
 local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
 if W:GetAttribute('GameMode')~='Menu' then return end
+local experienceChapter=W:GetAttribute('ExperienceChapter')==2 and 2 or 1
 local p=game:GetService('Players').LocalPlayer;local RS=game:GetService('ReplicatedStorage');local UI=require(RS:WaitForChild('SessionInterface'));local make=UI.Make
 local remote=RS:WaitForChild('SessionMenu')
 local gui=make('ScreenGui',{Name='StillHereMenu',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1000},p:WaitForChild('PlayerGui'))
@@ -16,6 +17,25 @@ local loadingShade=make('Frame',{
  Name='LoadingShade',Size=UDim2.fromScale(1,1),
  BackgroundColor3=Color3.fromRGB(2,3,6),BorderSizePixel=0
 },overlay)
+local loadingHero=make('ImageLabel',{
+ Name='ChapterTwoLoadingArtwork',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
+ Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',ScaleType=Enum.ScaleType.Crop,
+ Visible=experienceChapter==2,ZIndex=1
+},loadingShade)
+local loadingVignette=make('Frame',{
+ Name='ChapterTwoLoadingShade',Size=UDim2.fromScale(1,1),BorderSizePixel=0,
+ BackgroundColor3=Color3.fromRGB(5,10,8),BackgroundTransparency=.76,
+ Visible=experienceChapter==2,ZIndex=2
+},loadingShade)
+local loadingTitle=make('TextLabel',{
+ Name='ChapterTwoLoadingTitle',AnchorPoint=Vector2.new(0,1),
+ Position=UDim2.new(0,28,1,-112),Size=UDim2.new(.78,0,0,48),
+ BackgroundTransparency=1,Text='CHAPTER 2  ·  AQUELE QUE NÃO ENCONTRA',
+ TextColor3=Color3.fromRGB(246,239,213),Font=Enum.Font.Oswald,
+ TextSize=30,TextXAlignment=Enum.TextXAlignment.Left,
+ Visible=experienceChapter==2,ZIndex=3
+},loadingShade)
+make('UITextSizeConstraint',{MinTextSize=17,MaxTextSize=32},loadingTitle)
 local loadingCopy=make('TextLabel',{
  Name='LoadingMessage',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-34),Size=UDim2.new(1,-56,0,28),
@@ -27,7 +47,7 @@ local loadingCopy=make('TextLabel',{
 local loadingSub=make('TextLabel',{
  Name='LoadingSubtext',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-12),Size=UDim2.new(1,-56,0,18),
- BackgroundTransparency=1,Text='EXPERIÊNCIA DE TERROR INDEPENDENTE',
+ BackgroundTransparency=1,Text=experienceChapter==2 and 'STILL HERE · CHAPTER 2' or 'STILL HERE · CHAPTER 1',
  TextColor3=Color3.fromRGB(102,118,126),
  Font=Enum.Font.RobotoCondensed,TextSize=10,
  TextXAlignment=Enum.TextXAlignment.Left
@@ -37,14 +57,15 @@ p:SetAttribute('MenuAssetPreloadStatus','loading')
 
 local bg=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(6,7,8),BorderSizePixel=0,ClipsDescendants=true},gui)
 bg.BackgroundTransparency=1
+local hero=make('ImageLabel',{Name='ChapterTwoHero',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',ImageColor3=Color3.fromRGB(255,255,249),ScaleType=Enum.ScaleType.Crop,Visible=experienceChapter==2,ZIndex=1},bg)
 local camera=workspace.CurrentCamera
 camera.CameraType=Enum.CameraType.Scriptable
 camera.CFrame=CFrame.lookAt(Vector3.new(0,5001.05,1.3),Vector3.new(-.65,5001.05,-12))
 p:SetAttribute('MenuCameraMode','wide')
 camera.FieldOfView=60
 local lighting=game:GetService('Lighting');lighting.FogEnd=100000
--- Menu-only lighting: expose the singularity, not a screen-filling flare.
-lighting.ExposureCompensation=-.32
+-- Menu-only lighting keeps the Chapter 1 scene readable and Chapter 2 warm.
+lighting.ExposureCompensation=experienceChapter==2 and .05 or -.12
 for _,effect in ipairs(lighting:GetChildren()) do
  if effect:IsA('Atmosphere') then effect.Density=.025;effect.Haze=0;effect.Glare=0
  elseif effect:IsA('BloomEffect') then
@@ -56,16 +77,15 @@ end
 -- The original sky effect renders in Workspace: ViewportFrames omit its beams.
 -- Leave the entire 3D background uncovered, especially the black-hole disk.
 -- The old full-screen semi-transparent shade made a huge rectangular overlay.
--- Photo-inspired cinematic layout: small typography in the upper-left,
--- a short operator briefing beneath it, and FULLY UNOBSTRUCTED world 3D.
--- No oversized semi-opaque menu rectangles or right-side button container.
+-- Keep the controls in the upper-left and give Chapter 2's generated art
+-- a full-height poster on the right. Chapter 2 uses the same image as its backdrop.
 local Tween=game:GetService('TweenService')
 local UIS=game:GetService('UserInputService')
 local composition=make('Frame',{
  Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
  Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local by=UI.Label(composition,'ARQUIVO 01  /  CAPÍTULOS',18)
+local by=UI.Label(composition,experienceChapter==2 and 'ARQUIVO 02  /  ESTUFA' or 'ARQUIVO 01  /  STILL HERE',18)
 by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
 by.Font=Enum.Font.GothamMedium;by.TextSize=10
 by.TextColor3=Color3.fromRGB(140,144,148)
@@ -106,7 +126,7 @@ heading.Size=UDim2.new(1,0,0,20)
 heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
-local motdText=UI.Label(news,'CHAPTER 2 · AQUELE QUE NÃO ENCONTRA',34)
+local motdText=UI.Label(news,'CHAPTER 2 · A SINETA PAROU. A ESTUFA NÃO.',34)
 motdText.Name='Chapter2Announcement'
 motdText.Position=UDim2.new(0,0,0,22)
 motdText.Size=UDim2.new(1,0,0,30)
@@ -118,41 +138,28 @@ local preview=make('ImageButton',{
  Name='BriefingPreview',Position=UDim2.new(0,0,0,55),
  Size=UDim2.new(1,0,1,-81),BackgroundColor3=Color3.fromRGB(9,13,13),
  BorderSizePixel=0,Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',
- ScaleType=Enum.ScaleType.Fit,AutoButtonColor=true
+ ScaleType=Enum.ScaleType.Crop,AutoButtonColor=true
 },news)
 make('UIStroke',{Color=Color3.fromRGB(133,158,150),Thickness=1,Transparency=.35},preview)
-local footer=UI.Label(news,'TOQUE NA ARTE PARA ENTRAR',18)
+local footer=UI.Label(news,'ABRIR CHAPTER 2  →',18)
 footer.Name='ChapterTwoCallToAction'
 footer.Position=UDim2.new(0,0,1,-20)
 footer.Size=UDim2.new(1,0,0,18)
 footer.TextXAlignment=Enum.TextXAlignment.Left
 footer.Font=Enum.Font.RobotoCondensed;footer.TextSize=11
 footer.TextColor3=Color3.fromRGB(177,186,187)
-local selectedChapter=1
-p:SetAttribute('MenuChapter',1)
+local selectedChapter=experienceChapter
+p:SetAttribute('MenuChapter',selectedChapter)
 local chapterMap=require(RS:WaitForChild('ChapterTwoMap'))
-chapterMap.BuildMenuBackdrop()
--- Chapter 2's menu can briefly flicker its local scene lighting; the avatar
--- stays in the world and is never hidden or rebuilt during the effect.
-task.spawn(function()
- while gui.Parent do
-  if selectedChapter==2 and not p:GetAttribute('InterfaceOpen') then
-   task.wait(math.random(10,18))
-   if gui.Parent and selectedChapter==2 and not p:GetAttribute('InterfaceOpen') then
-    lighting.ExposureCompensation=-2.2;task.wait(.075)
-    lighting.ExposureCompensation=-.32;task.wait(.04)
-    lighting.ExposureCompensation=-1.35;task.wait(.06)
-    lighting.ExposureCompensation=-.32
-   end
-  else task.wait(.8) end
- end
- lighting.ExposureCompensation=-.32
-end)
+if experienceChapter==2 then chapterMap.BuildMenuBackdrop() end
+-- Chapter 2 keeps a steady, warm exposure while its artwork is visible.
 local chapterTwo=make('Frame',{
  Name='ChapterTwoMenu',AnchorPoint=Vector2.new(1,0),
  Position=UDim2.fromScale(.96,.18),Size=UDim2.fromScale(.34,.48),
- BackgroundTransparency=1,BorderSizePixel=0,Visible=false
+ BackgroundColor3=Color3.fromRGB(7,15,12),BackgroundTransparency=.38,BorderSizePixel=0,Visible=false
 },bg)
+make('UICorner',{CornerRadius=UDim.new(0,8)},chapterTwo)
+make('UIStroke',{Color=Color3.fromRGB(202,190,143),Thickness=1,Transparency=.35},chapterTwo)
 local chapterEyebrow=UI.Label(chapterTwo,'CHAPTER 02  /  STILL HERE',24)
 chapterEyebrow.Name='ChapterTwoEyebrow';chapterEyebrow.Position=UDim2.new(0,0,0,0);chapterEyebrow.Size=UDim2.new(1,0,0,24)
 chapterEyebrow.Font=Enum.Font.RobotoCondensed;chapterEyebrow.TextSize=13;chapterEyebrow.TextColor3=Color3.fromRGB(175,181,180)
@@ -179,16 +186,16 @@ local function layout()
  nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
  if mobile then
   news.AnchorPoint=Vector2.new(1,0)
-  news.Position=UDim2.fromScale(.97,.055)
-  news.Size=UDim2.fromScale(landscape and .38 or .54,landscape and .55 or .30)
-  chapterTwo.Position=UDim2.fromScale(.97,landscape and .14 or .31)
-  chapterTwo.Size=UDim2.fromScale(landscape and .46 or .54,landscape and .57 or .34)
+  news.Position=UDim2.fromScale(.97,landscape and .06 or .52)
+  news.Size=UDim2.fromScale(landscape and .43 or .52,landscape and .86 or .40)
+  chapterTwo.Position=UDim2.fromScale(.97,landscape and .12 or .51)
+  chapterTwo.Size=UDim2.fromScale(landscape and .45 or .52,landscape and .73 or .41)
  else
-  news.AnchorPoint=Vector2.new(0,0)
-  news.Position=UDim2.fromScale(landscape and .047 or .065,landscape and .633 or .59)
-  news.Size=UDim2.fromScale(landscape and (compact and .32 or .29) or .83,landscape and .317 or .34)
-  chapterTwo.Position=UDim2.fromScale(.96,.18)
-  chapterTwo.Size=UDim2.fromScale(.34,.48)
+  news.AnchorPoint=landscape and Vector2.new(1,0) or Vector2.new(0,0)
+  news.Position=landscape and UDim2.fromScale(.96,.15) or UDim2.fromScale(.065,.52)
+  news.Size=landscape and UDim2.fromScale(compact and .42 or .40,.63) or UDim2.fromScale(.83,.45)
+  chapterTwo.Position=landscape and UDim2.fromScale(.96,.16) or UDim2.fromScale(.065,.55)
+  chapterTwo.Size=landscape and UDim2.fromScale(compact and .43 or .39,.62) or UDim2.fromScale(.83,.38)
  end
  heading.TextSize=mobile and 10 or 12
  motdText.TextSize=mobile and 10 or 12
@@ -196,14 +203,15 @@ local function layout()
  chapterDetail.TextSize=mobile and 12 or 15
  chapterUnavailable.TextSize=mobile and 10 or 12
  preview.Position=UDim2.new(0,0,0,55)
- preview.Size=UDim2.new(1,0,1,-81)
+ local artHeight=math.min(news.AbsoluteSize.X*9/16,math.max(94,news.AbsoluteSize.Y-88))
+ preview.Size=UDim2.new(1,0,0,artHeight)
  footer.Position=UDim2.new(0,0,1,-20)
 end
 layout()
 bg:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
 composition.Visible=true
-news.Visible=true
-chapterTwo.Visible=false
+news.Visible=experienceChapter==1
+chapterTwo.Visible=experienceChapter==2
 local startLabel=UI.Label(bg,'INICIANDO...',55)
 startLabel.Name='StartingMessage'
 startLabel.AnchorPoint=Vector2.new(.5,.5)
@@ -213,6 +221,41 @@ startLabel.Font=Enum.Font.Oswald;startLabel.TextScaled=true
 startLabel.TextXAlignment=Enum.TextXAlignment.Center
 startLabel.Visible=false
 make('UITextSizeConstraint',{MinTextSize=16,MaxTextSize=38},startLabel)
+startLabel.ZIndex=22
+local transitionArt=make('ImageLabel',{
+ Name='ChapterTwoTransition',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
+ Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',ScaleType=Enum.ScaleType.Crop,
+ Visible=false,ZIndex=20
+},bg)
+local transitionShade=make('Frame',{
+ Name='ChapterTwoTransitionShade',Size=UDim2.fromScale(1,1),
+ BackgroundColor3=Color3.fromRGB(3,8,7),BackgroundTransparency=.40,
+ BorderSizePixel=0,Visible=false,ZIndex=21
+},bg)
+local transitionHeadline=make('TextLabel',{
+ Name='TransitionHeadline',Position=UDim2.new(.065,0,1,-129),
+ Size=UDim2.new(.82,0,0,47),BackgroundTransparency=1,
+ Text='ENTRANDO NO CAPÍTULO 2',Font=Enum.Font.Oswald,TextSize=32,
+ TextColor3=Color3.fromRGB(246,239,213),TextXAlignment=Enum.TextXAlignment.Left,
+ Visible=false,ZIndex=23
+},bg)
+local transitionDetail=make('TextLabel',{
+ Name='TransitionDetail',Position=UDim2.new(.065,0,1,-80),
+ Size=UDim2.new(.78,0,0,25),BackgroundTransparency=1,
+ Text='A ESTUFA AINDA ESTÁ VIVA.',Font=Enum.Font.RobotoCondensed,TextSize=16,
+ TextColor3=Color3.fromRGB(213,222,210),TextXAlignment=Enum.TextXAlignment.Left,
+ Visible=false,ZIndex=23
+},bg)
+local transitionTrack=make('Frame',{
+ Name='TransitionProgressTrack',Position=UDim2.new(.065,0,1,-38),
+ Size=UDim2.new(.70,0,0,3),BackgroundColor3=Color3.fromRGB(183,194,173),
+ BackgroundTransparency=.55,BorderSizePixel=0,Visible=false,ZIndex=23
+},bg)
+local transitionProgress=make('Frame',{
+ Name='TransitionProgress',Size=UDim2.new(.26,0,1,0),
+ BackgroundColor3=Color3.fromRGB(241,223,165),BorderSizePixel=0,ZIndex=24
+},transitionTrack)
+local transitionTween
 local starting=false
 local navButtons={}
 local activeNav=1
@@ -220,7 +263,7 @@ local backButton
 local infoButton
 local creditsGui
 local busy=false;local current;local panel;local redraw
-local function startPresentation()
+local function startPresentation(action)
  starting=true
  p:SetAttribute('MenuCameraMode','starting')
  if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
@@ -229,13 +272,37 @@ local function startPresentation()
  news.Visible=false
  chapterTwo.Visible=false
  if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
- startLabel.Visible=true
+ local isChapterHop=action=='chapterOne' or action=='chapterTwo'
+ local showArtwork=experienceChapter==2 or action=='chapterTwo'
+ transitionArt.Visible=showArtwork
+ transitionArt.ImageTransparency=showArtwork and 1 or 0
+ transitionShade.Visible=showArtwork
+ transitionHeadline.Visible=showArtwork
+ transitionDetail.Visible=showArtwork
+ transitionTrack.Visible=showArtwork
+ if showArtwork then
+  transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO AO ARQUIVO' or (isChapterHop and 'ENTRANDO NO CHAPTER 2' or 'AQUELE QUE NÃO ENCONTRA')
+  transitionDetail.Text=action=='chapterOne' and 'RETORNANDO AO PRIMEIRO CAPÍTULO…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
+  if transitionTween then transitionTween:Cancel() end
+  transitionProgress.Position=UDim2.new(0,0,0,0)
+  transitionTween=Tween:Create(transitionProgress,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.74,0,0,0)})
+  transitionTween:Play()
+  Tween:Create(transitionArt,TweenInfo.new(.45,Enum.EasingStyle.Quad),{ImageTransparency=0}):Play()
+  startLabel.Visible=false
+ else
+  transitionArt.Visible=false;transitionShade.Visible=false
+  transitionHeadline.Visible=false;transitionDetail.Visible=false;transitionTrack.Visible=false
+  startLabel.Text='INICIANDO...';startLabel.Visible=true
+ end
 end
 local function restorePresentation()
  if not starting then return end
  starting=false
  p:SetAttribute('MenuCameraMode',panel and panel.Gui.Parent and 'close' or 'wide')
  startLabel.Visible=false
+ transitionArt.Visible=false;transitionShade.Visible=false
+ transitionHeadline.Visible=false;transitionDetail.Visible=false;transitionTrack.Visible=false
+ if transitionTween then transitionTween:Cancel();transitionTween=nil end
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
  composition.Visible=not p:GetAttribute('InterfaceOpen')
  news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
@@ -256,12 +323,12 @@ local function request(action,value)
  elseif action=='state' then value={chapter=selectedChapter}
  elseif action=='join' and type(value)=='string' then value={code=value,chapter=selectedChapter} end
  busy=true
- local launching=action=='solo' or action=='start'
+ local launching=action=='solo' or action=='start' or action=='chapterTwo' or action=='chapterOne'
  local target=panel and panel.Gui.Parent and panel.Status or status
  if launching then
   local saved,err=UI.Save()
   if not saved then target.Text=err;busy=false;return end
-  startPresentation()
+  startPresentation(action)
   -- Give only the initiating client time to see the singularity burst before teleport.
   task.wait(1.35)
  else target.Text='Aguarde…' end
@@ -383,26 +450,14 @@ local function addNavigation(text,action)
  end)
  return btn
 end
-local function chooseChapter(index)
- selectedChapter=index==2 and 2 or 1
- p:SetAttribute('MenuChapter',selectedChapter)
- composition.Visible=true
- local visible=not starting and not p:GetAttribute('InterfaceOpen')
- news.Visible=visible and selectedChapter==1
- chapterTwo.Visible=visible and selectedChapter==2
- backButton.Visible=selectedChapter==2
- layoutNavigation()
- selectNavigation(selectedChapter==2 and 2 or 1)
- status.Text=selectedChapter==2 and 'Capítulo 2 selecionado.' or 'Capítulo 1 selecionado.'
-end
-preview.Activated:Connect(function() chooseChapter(2) end)
-backButton=addNavigation('VOLTAR AO ARQUIVO',function() chooseChapter(1) end)
+preview.Activated:Connect(function() request('chapterTwo') end)
+backButton=addNavigation('VOLTAR AO CHAPTER 1',function() request('chapterOne') end)
 addNavigation('JOGAR (SOLO)',function() request('solo') end)
 addNavigation('MULTIPLAYER',groups)
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
-backButton.Visible=false
+backButton.Visible=experienceChapter==2
 layoutNavigation()
-selectNavigation(1)
+selectNavigation(experienceChapter==2 and 2 or 1)
 UIS.InputBegan:Connect(function(input,processed)
  if processed or starting or p:GetAttribute('InterfaceOpen') then return end
  if input.KeyCode==Enum.KeyCode.Up or input.KeyCode==Enum.KeyCode.DPadUp then
@@ -502,10 +557,11 @@ local assetsDone=false
 local assetsFailed=0
 task.spawn(function()
  local preloads={}
- local model=RS:WaitForChild('SkyBlackHoleTemplate',12)
+ local model=experienceChapter==1 and RS:WaitForChild('SkyBlackHoleTemplate',12) or nil
  if model then table.insert(preloads,model) end
  -- Load the generated Chapter 2 artwork before revealing the menu.
  table.insert(preloads,preview)
+ table.insert(preloads,hero)
  table.insert(preloads,title)
  local music=game:GetService('SoundService'):FindFirstChild('MassiveBlackHoleMenu')
  if music then table.insert(preloads,music) end
@@ -532,9 +588,9 @@ task.spawn(function()
  local started=os.clock()
  local complete=false
  while gui.Parent and os.clock()-started<22 do
-  local sceneReady=p:GetAttribute('MenuBlackHoleReady')==true
-  local effectsReady=p:GetAttribute('MenuEffectsReady')==true
-  local avatarReady=p:GetAttribute('MenuAvatarReady')==true
+  local sceneReady=experienceChapter==2 and hero.IsLoaded or p:GetAttribute('MenuBlackHoleReady')==true
+  local effectsReady=experienceChapter==2 or p:GetAttribute('MenuEffectsReady')==true
+  local avatarReady=experienceChapter==2 or p:GetAttribute('MenuAvatarReady')==true
   if not sceneReady then loadingCopy.Text='PREPARANDO BURACO NEGRO...'
   elseif not avatarReady then loadingCopy.Text='PREPARANDO O AVATAR...'
   elseif not effectsReady then loadingCopy.Text='AJUSTANDO ILUMINAÇÃO...'
@@ -557,6 +613,9 @@ task.spawn(function()
   local fade=Tween:Create(loadingShade,TweenInfo.new(.65,Enum.EasingStyle.Quad),{BackgroundTransparency=1})
   Tween:Create(loadingCopy,TweenInfo.new(.5),{TextTransparency=1}):Play()
   Tween:Create(loadingSub,TweenInfo.new(.5),{TextTransparency=1}):Play()
+  Tween:Create(loadingTitle,TweenInfo.new(.5),{TextTransparency=1}):Play()
+  Tween:Create(loadingHero,TweenInfo.new(.5),{ImageTransparency=1}):Play()
+  Tween:Create(loadingVignette,TweenInfo.new(.5),{BackgroundTransparency=1}):Play()
   fade:Play()
   fade.Completed:Wait()
   overlay:Destroy()

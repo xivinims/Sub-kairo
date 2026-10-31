@@ -5,7 +5,8 @@ if backdrop then
  for _,d in ipairs(backdrop:GetDescendants()) do for _,tag in ipairs(tags:GetTags(d)) do tags:RemoveTag(d,tag) end end
 end
 local W=workspace;local SS=game:GetService('ServerStorage');local P=game:GetService('Players')
-local selectedChapter=1
+local experienceChapter=W:GetAttribute('ExperienceChapter')==2 and 2 or 1
+local selectedChapter=experienceChapter
 if game.PrivateServerId~='' then
  local serviceOk,Memory=pcall(function()
   return game:GetService('MemoryStoreService'):GetHashMap('StillHereSessions_v1')
@@ -18,7 +19,7 @@ if game.PrivateServerId~='' then
    task.wait(.5)
   end
  end
- if session then selectedChapter=tonumber(session.chapter)==2 and 2 or 1 end
+ if session and tonumber(session.chapter)==experienceChapter then selectedChapter=experienceChapter end
 end
 W:SetAttribute('SelectedChapter',selectedChapter)
 local mode=W:GetAttribute('OriginalPreflight') and 'Match' or (game.PrivateServerId=='' and 'Menu' or 'Match')

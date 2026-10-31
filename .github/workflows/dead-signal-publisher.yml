@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dead-signal-publisher-9421311218-118064584465155
+  group: dead-signal-publisher-9421311218-9421505041
   cancel-in-progress: false
 
 jobs:

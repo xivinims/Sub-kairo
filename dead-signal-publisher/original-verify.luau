@@ -1,6 +1,7 @@
 local W=workspace;local RS=game:GetService('ReplicatedStorage');local SS=game:GetService('ServerStorage');local SSS=game:GetService('ServerScriptService');local SP=game:GetService('StarterPlayer')
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong target')
-assert(W:GetAttribute('DeadSignalBuildId')=='still-here-chapter-two-greenhouse-v1','Wrong build')
+assert(W:GetAttribute('ExperienceChapter')==1,'Chapter 1 experience marker missing')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-chapter-two-greenhouse-v2','Wrong build')
 assert(W.Content.Interior.Foyer and W.Content.Interior.Kitchen and SS.Corrupt.Grandfather,'Original mansion dependencies missing')
 assert(SSS.GameStateManager.Enabled and SSS.MissionsLogic.Enabled and SSS.EventManager.Enabled,'Original campaign scripts disabled')
 assert(SSS.Weapons.WeaponsServer.Enabled,'Original weapon server disabled')
