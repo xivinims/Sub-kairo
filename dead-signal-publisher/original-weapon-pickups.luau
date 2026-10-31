@@ -6,7 +6,58 @@ local physics=game:GetService('PhysicsService')
 for _,group in ipairs({'Player','NonPlayer'}) do pcall(function() physics:RegisterCollisionGroup(group) end) end
 physics:CollisionGroupSetCollidable('Player','NonPlayer',false)
 local folder=workspace.WeaponToolsRespawn
+local Players=game:GetService('Players')
+local experienceChapter=workspace:GetAttribute('ExperienceChapter') or 1
+local selectedChapter=workspace:GetAttribute('SelectedChapter') or experienceChapter
+local chapterOne=experienceChapter==1 and selectedChapter==1
+local STARTING_WEAPON='M4A1'
+
+local function prepareStartingWeapon(player)
+ local starterGear=player:WaitForChild('StarterGear',10)
+ if not starterGear then return nil end
+ local tool=starterGear:FindFirstChild(STARTING_WEAPON)
+ if not tool then
+  tool=lib.WeaponsHandler.CreateWeapon(STARTING_WEAPON)
+  tool.Name=STARTING_WEAPON
+  tool:SetAttribute('StartingLoadoutWeapon',true)
+  tool.Parent=starterGear
+ end
+ return tool
+end
+
+local function equipStartingWeapon(player,character)
+ local humanoid=character:WaitForChild('Humanoid',10)
+ local backpack=player:WaitForChild('Backpack',10)
+ if not humanoid or not backpack or humanoid.Health<=0 then return end
+ local tool=backpack:FindFirstChild(STARTING_WEAPON) or character:FindFirstChild(STARTING_WEAPON)
+ if not tool then
+  local template=prepareStartingWeapon(player)
+  if not template then return end
+  tool=template:Clone()
+  tool.Name=STARTING_WEAPON
+  tool:SetAttribute('StartingLoadoutWeapon',true)
+  tool.Parent=backpack
+ end
+ if tool.Parent==backpack then
+  task.wait(.15)
+  if character.Parent and humanoid.Health>0 and tool.Parent==backpack then humanoid:EquipTool(tool) end
+ end
+end
+
+local function setupStartingWeapon(player)
+ prepareStartingWeapon(player)
+ player.CharacterAdded:Connect(function(character)
+  task.spawn(equipStartingWeapon,player,character)
+ end)
+ if player.Character then task.spawn(equipStartingWeapon,player,player.Character) end
+end
+if chapterOne then
+ Players.PlayerAdded:Connect(setupStartingWeapon)
+ for _,player in ipairs(Players:GetPlayers()) do task.spawn(setupStartingWeapon,player) end
+end
+
 local locations={{'M4A1',Vector3.new(-62,16,-127)},{'Deagle',Vector3.new(65,17,-100)}}
+if chapterOne then locations={{'Deagle',Vector3.new(65,17,-100)}} end
 for index,spec in ipairs(locations) do
  local function spawnPickup()
   local marker='OriginalPickup'..index
