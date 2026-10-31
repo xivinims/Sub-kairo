@@ -15,6 +15,7 @@ local function prompt(host,name,action,object,enabled)
  local p=Instance.new('ProximityPrompt')
  p.Name=name;p.ActionText=action;p.ObjectText=object
  p.KeyboardKeyCode=Enum.KeyCode.E;p.GamepadKeyCode=Enum.KeyCode.ButtonX
+ p.Style=Enum.ProximityPromptStyle.Custom
  p.HoldDuration=.75;p.MaxActivationDistance=10
  p.RequiresLineOfSight=false;p.Exclusivity=Enum.ProximityPromptExclusivity.OneGlobally
  p.Enabled=enabled~=false;p.Parent=host
