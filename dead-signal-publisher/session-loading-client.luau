@@ -37,7 +37,7 @@ title.AnchorPoint=Vector2.new(0,1)
 title.Position=UDim2.new(0,28,1,-100)
 title.Size=UDim2.new(.82,0,0,44)
 title.BackgroundTransparency=1
-title.Text='MISTÉRIO'
+title.Text=workspace:GetAttribute('SceneDisplayName') or 'STILL HERE'
 title.TextXAlignment=Enum.TextXAlignment.Left
 title.Font=Enum.Font.RobotoCondensed
 title.TextSize=30
@@ -49,7 +49,7 @@ caption.AnchorPoint=Vector2.new(1,1)
 caption.Position=UDim2.new(1,-28,1,-30)
 caption.Size=UDim2.new(.65,0,0,28)
 caption.BackgroundTransparency=1
-caption.Text='Carregando o casarão…'
+caption.Text='Carregando o ambiente…'
 caption.TextXAlignment=Enum.TextXAlignment.Right
 caption.Font=Enum.Font.Garamond
 caption.TextSize=17
@@ -84,7 +84,7 @@ task.spawn(function()
  if not ui.Load() then warn('[Configurações] As preferências não carregaram; usando os padrões.') end
 end)
 local active=true
-local hints={'Use E para interagir.','Explore os cômodos.','Aproxime-se das cadeiras para sentar.'}
+local hints={'Use os botões da interface para interagir.','Aproxime-se de uma porta para abrir.','Use a lanterna quando precisar.'}
 task.spawn(function()
  while active do
   task.wait(10)
@@ -128,3 +128,4 @@ button.Position=UDim2.new(1,-10,0,6)
 button.Size=UDim2.fromOffset(44,44)
 button.TextSize=27
 button.TextXAlignment=Enum.TextXAlignment.Center
+

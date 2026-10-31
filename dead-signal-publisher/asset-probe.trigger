@@ -1,1 +1,1 @@
-hotel-ui-inspect-v1
+hotel-preview-v1

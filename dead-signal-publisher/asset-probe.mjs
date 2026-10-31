@@ -37,7 +37,10 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('hotel-ui-inspect')){
+if(trigger.trim().startsWith('hotel-preview')){
+ const {runHotelRelease}=await import('./hotel-native-publish.mjs');
+ await runHotelRelease({publish:false});
+}else if(trigger.trim().startsWith('hotel-ui-inspect')){
  const {prepareHotel,run}=await import('./hotel-build.mjs');
  await prepareHotel();run('hotel-ui-inspect.luau');
 }else if(trigger.trim().startsWith('menu-art-status')){
