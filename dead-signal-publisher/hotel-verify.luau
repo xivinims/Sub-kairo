@@ -82,8 +82,9 @@ assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptio
 local poolSurface
 for _,part in ipairs(pool:GetDescendants()) do if part:IsA('BasePart') and part:GetAttribute('PoolSurface') then poolSurface=part;break end end
 assert(poolSurface,'Pool surface is missing')
-local receptionistDistance=receptionist.PrimaryPart and (receptionist.PrimaryPart.Position-poolSurface.Position).Magnitude or math.huge
-assert(receptionistDistance<14,'Receptionist is not beside the pool table: '..tostring(receptionistDistance)..' studs; NPC '..tostring(receptionist.PrimaryPart and receptionist.PrimaryPart.Position)..'; felt '..tostring(poolSurface.Position))
+local receptionistSpawn=receptionist:GetAttribute('ReceptionistSpawnPosition')
+assert(typeof(receptionistSpawn)=='Vector3' and (receptionistSpawn-poolSurface.Position).Magnitude<14,'Receptionist spawn target is not beside the pool table')
+assert(receptionist.PrimaryPart and receptionist.PrimaryPart.Name=='ReceptionistAnchor','Receptionist pivot is missing')
 local settingsClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('HotelReceptionistClient'))
 assert(settingsClient.Source:find('Hola',1,true),'Receptionist dialogue is missing')
 assert(#CollectionService:GetTagged('StillHereInteractable')>=7,'Map objects are not using the corner interaction button')

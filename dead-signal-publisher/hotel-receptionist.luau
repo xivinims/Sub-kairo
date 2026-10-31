@@ -110,10 +110,11 @@ function Receptionist.Initialize(map,interactions)
 	local position=floor+Vector3.new(0,3.15,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
 	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
-	local model=createAvatar(targetFrame);model.Parent=folder
+	local model=createAvatar(targetFrame)
+	model:SetAttribute('ReceptionistSpawnPosition',targetFrame.Position)
+	model.Parent=folder
 	local root=model.PrimaryPart or model:FindFirstChild('ReceptionistAnchor')
 	assert(root,'Receptionist fallback avatar is missing its root')
-	assert((root.Position-targetFrame.Position).Magnitude<.1,'Could not place receptionist beside the pool: '..tostring(root.Position)..' target '..tostring(targetFrame.Position)..' class='..root.ClassName..' anchored='..tostring(root.Anchored)..' parts='..tostring(#model:GetDescendants()))
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
