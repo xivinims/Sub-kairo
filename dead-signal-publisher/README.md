@@ -1,6 +1,6 @@
 # Still Here — Hotel Mistério
 
-Última versão verificada: **PlaceVersion 249**, workflow **41228313035**. Os servidores foram reiniciados. A correção dos instrumentos e do recepcionista está em prévia antes da publicação.
+Versão publicada e verificada: **PlaceVersion 250**, workflow **41231051029** (tentativa 2). Os servidores foram reiniciados. A prévia correspondente passou no workflow **41230977157**.
 
 O ramo `dead-signal-publisher` monta o mapa de hotel e a interface original do Mistério como pacotes independentes. O mapa vem de `assets/hotel/1940sHotelLobby.rbxm`; a GUI reutilizada está em `assets/ui/mystery-interface.rbxm`.
 
@@ -24,10 +24,9 @@ O cenário conserva 8.688 peças, iluminação e dez pontos de nascimento. As es
 ## Conferência e publicação
 
 - Universo `9421311218`; Place `118064584465155`; branch `dead-signal-publisher`.
-- Último build publicado: `still-here-hotel-interactions-v3` (PlaceVersion 249).
-- Correção em prévia: `still-here-hotel-instruments-v4`.
+- Build publicado: `still-here-hotel-instruments-v4` (PlaceVersion 250).
 - `preview.trigger` roda montagem, comparação de fontes, conferência geométrica e preflight isolado no Roblox sem publicar.
 - `release.trigger` roda o mesmo preflight e publica só após ele passar. A rotina baixa e guarda a versão anterior, confere a versão publicada e reinicia os servidores; em falha, executa a recuperação.
-- O preflight verifica script, mapa, portas, spawns, bolsos, teclado físico, songbook e registro do recepcionista. Não renderiza a tela em um cliente real nem simula uma sessão de tacadas para avaliar sensação/latência visual.
+- O preflight verifica scripts, mapa, portas, spawns, bolsos, teclas, songbook, diálogo e o ponto de spawn do recepcionista perto da mesa. Ele não renderiza um cliente real nem toca o áudio; no ambiente de preflight, peças recém-criadas do NPC são estacionadas em `Y = -1.000.000`, então a aparência e a posição final precisam ser confirmadas dentro do Roblox.
 
 Os dois verificadores comparam o mapa com o arquivo recebido, verificam a separação entre GUI e mapa e conferem que o Chapter 2 não foi incluído.
