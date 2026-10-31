@@ -71,7 +71,7 @@ assert(next(originalParts)==nil,'Missing geometry from supplied map')
 assert(parts==map:GetAttribute('SourcePartCount'),'Map part count mismatch')
 for _,d in ipairs(ui:GetDescendants()) do assert(not d:IsA('BasePart') and not d:IsA('LuaSourceContainer'),'UI package depends on map/code') end
 local scripts=0
-local shipped={MapInteractions='mystery-map-interactions.luau',PoolGame='pool-game.luau',PianoGame='piano-game.luau',HotelReceptionist='hotel-receptionist.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',PoolGameClient='pool-game-client.luau',PianoGameClient='piano-game-client.luau',HotelReceptionistClient='hotel-receptionist-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
+local shipped={MapInteractions='mystery-map-interactions.luau',PoolGame='pool-game.luau',PianoGame='piano-game.luau',HotelReceptionist='hotel-receptionist.luau',HotelBlenderDecor='hotel-blender-decor.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',PoolGameClient='pool-game-client.luau',PianoGameClient='piano-game-client.luau',HotelReceptionistClient='hotel-receptionist-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
 for _,d in ipairs(dm:GetDescendants()) do
  assert(not d:IsA('Tool'),'Weapon tool in release')
  if d:IsA('LuaSourceContainer') then
