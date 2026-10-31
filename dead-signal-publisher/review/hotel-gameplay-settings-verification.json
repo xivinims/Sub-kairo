@@ -1,0 +1,43 @@
+{
+  "placeId": 118064584465155,
+  "universeId": 9421311218,
+  "placeVersion": 248,
+  "buildId": "still-here-hotel-gameplay-settings-v2",
+  "branch": "dead-signal-publisher",
+  "previewWorkflow": {
+    "id": 41225757700,
+    "status": "success",
+    "published": false
+  },
+  "publishWorkflow": {
+    "id": 41225810899,
+    "status": "success",
+    "downloadedPublishedPlaceVerified": true,
+    "serversRestarted": true
+  },
+  "checks": {
+    "separateMapAndGui": true,
+    "mapParts": 8688,
+    "doorCount": 4,
+    "spawnCount": 10,
+    "orphanedRainModelsRemoved": 14,
+    "cornerButtonInteractables": 15,
+    "poolBalls": 16,
+    "poolSupportAndPocketParts": 19,
+    "poolShotLogicPresent": true,
+    "fullViewportSettings": true,
+    "settingsPages": ["JOGO", "CONTROLES", "TELA", "ÁUDIO", "IDIOMA"],
+    "walkSpeed": 16,
+    "chapter2Modified": false
+  },
+  "notCompleted": {
+    "chapter1LabyrinthWallCards": "The labyrinth map is not present in this branch or active hotel place.",
+    "liveClientVisualCapture": "No rendered Roblox client or mobile capture was available."
+  },
+  "unresolvedMapMaterials": [
+    "Bricks 02",
+    "Marble Speckled",
+    "Metal",
+    "Wood Floor Rough MV"
+  ]
+}
