@@ -18,7 +18,8 @@ map.Parent=W
 local runtime=game:GetService('ServerScriptService').StillHereRuntime
 local interactions=require(runtime.MapInteractions)
 interactions.Initialize(map)
-require(runtime.HotelReceptionist).Initialize(map,interactions)
+local receptionist=require(runtime.HotelReceptionist).Initialize(map,interactions)
+require(runtime.HotelBlenderDecor).Initialize(receptionist)
 W:SetAttribute('WorldReady',true)
 W:SetAttribute('GameMode','Match')
 if Run:IsRunning() then
