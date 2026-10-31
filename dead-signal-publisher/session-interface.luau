@@ -254,13 +254,13 @@ local function openMysterySettings()
  end)
  footerButton('BackSettings','VOLTAR',.69,function() closeSettings(true) end)
  panel.Gui.Destroying:Connect(function() closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect() end)
- panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO MISTÉRIO' or 'CARREGANDO CONFIGURAÇÕES…'
+ panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO JOGO' or 'CARREGANDO CONFIGURAÇÕES…'
  if not M.Loaded then
   task.spawn(function()
    local ok=M.Load()
    if closed or not panel.Gui.Parent then return end
    if ok then
-    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO MISTÉRIO'
+    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO JOGO'
     for _,refresh in ipairs(refreshers) do refresh() end
    else panel.Status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
   end)
@@ -271,3 +271,4 @@ function M.OpenSettings()
  return openMysterySettings()
 end
 return M
+

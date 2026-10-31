@@ -32,7 +32,7 @@ install(RF,'PortugueseText','LocalScript','original-portuguese-text.luau')
 local settings=R.Instance.new('RemoteFunction');settings.Name='PlayerSettings';settings.Parent=RS
 local actions=R.Instance.new('RemoteEvent');actions.Name='MysteryUIAction';actions.Parent=RS
 W:SetAttribute('DeadSignalBuildId','still-here-hotel-mystery-ui-v1')
-W:SetAttribute('SceneDisplayName','STILL HERE')
+W:SetAttribute('SceneDisplayName','HOTEL')
 W:SetAttribute('ActiveMap','1940sHotelLobby')
 W:SetAttribute('InterfaceSource','7902470429')
 W:SetAttribute('WorldReady',false)

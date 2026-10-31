@@ -15,6 +15,13 @@ end
 local byPath={}
 for _,d in ipairs(ui:GetDescendants()) do byPath[relativePath(d,ui)]=d end
 local guiObjects=0
+local function sameProperty(actual,expected,property,path)
+ local aok,a=pcall(function() return actual[property] end)
+ local eok,e=pcall(function() return expected[property] end)
+ assert(aok==eok,'UI property availability changed '..path..'.'..property)
+ -- The reflection database omits defaults for some deprecated Content properties.
+ if aok then assert(a==e,'Original UI design changed '..path..'.'..property) end
+end
 for _,expected in ipairs(expectedUI:GetDescendants()) do
  local path=relativePath(expected,expectedUI)
  local actual=assert(byPath[path],'Missing original UI object '..path)
@@ -22,14 +29,14 @@ for _,expected in ipairs(expectedUI:GetDescendants()) do
  if expected:IsA('GuiObject') then
   guiObjects+=1
   for _,property in ipairs({'Size','Position','AnchorPoint','Rotation','ZIndex','Visible','BackgroundColor3','BackgroundTransparency'}) do
-   assert(actual[property]==expected[property],'Original UI design changed '..path..'.'..property)
+   sameProperty(actual,expected,property,path)
   end
  end
  if expected:IsA('ImageLabel') or expected:IsA('ImageButton') then
-  assert(actual.Image==expected.Image and actual.ImageColor3==expected.ImageColor3,'Original UI image changed '..path)
+  for _,property in ipairs({'Image','ImageContent','ImageColor3','ImageTransparency','ScaleType','SliceCenter'}) do sameProperty(actual,expected,property,path) end
  end
  if expected:IsA('TextLabel') or expected:IsA('TextButton') then
-  for _,property in ipairs({'Text','TextSize','Font','TextColor3','TextScaled','TextWrapped'}) do assert(actual[property]==expected[property],'Original UI text style changed '..path) end
+  for _,property in ipairs({'Text','TextSize','FontFace','TextColor3','TextScaled','TextWrapped'}) do sameProperty(actual,expected,property,path) end
  end
 end
 assert(#expectedUI:GetDescendants()==#ui:GetDescendants(),'UI has extra map/controller objects')
@@ -49,7 +56,9 @@ for _,d in ipairs(map:GetDescendants()) do
   for _,property in ipairs({'CFrame','Size','Color','Material','MaterialVariant','Transparency','CanCollide'}) do
    assert(d[property]==expected[property],'Map source changed '..d:GetFullName()..'.'..property)
   end
-  if d:IsA('MeshPart') then assert(d.MeshId==expected.MeshId and d.TextureID==expected.TextureID,'Map mesh changed') end
+  if d:IsA('MeshPart') then
+   for _,property in ipairs({'MeshId','MeshContent','TextureID','TextureContent'}) do sameProperty(d,expected,property,d:GetFullName()) end
+  end
   originalParts[d:GetAttribute('HotelSourceId')]=nil
  end
 end
@@ -57,10 +66,17 @@ assert(next(originalParts)==nil,'Missing geometry from supplied map')
 assert(parts==map:GetAttribute('SourcePartCount'),'Map part count mismatch')
 for _,d in ipairs(ui:GetDescendants()) do assert(not d:IsA('BasePart') and not d:IsA('LuaSourceContainer'),'UI package depends on map/code') end
 local scripts=0
+local shipped={MapInteractions='mystery-map-interactions.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
 for _,d in ipairs(dm:GetDescendants()) do
  assert(not d:IsA('Tool'),'Weapon tool in release')
- if d:IsA('LuaSourceContainer') then scripts+=1;luau.load(d.Source,{debugName=d:GetFullName()}) end
+ if d:IsA('LuaSourceContainer') then
+  scripts+=1;luau.load(d.Source,{debugName=d:GetFullName()})
+  local file=assert(shipped[d.Name],'Unexpected controller '..d:GetFullName())
+  assert(d.Source==fs.readFile(file),'Shipped controller source mismatch '..d.Name)
+  shipped[d.Name]=nil
+ end
 end
+assert(next(shipped)==nil,'Missing controller')
 assert(not dm:GetService('ServerStorage'):FindFirstChild('OriginalWorld'),'Old mansion bundled into new map')
 assert(dm:GetService('StarterPlayer').CameraMode==R.Enum.CameraMode.Classic,'Wrong camera mode')
 assert(dm:GetService('StarterPlayer').CameraMinZoomDistance>=8,'First person enabled')
