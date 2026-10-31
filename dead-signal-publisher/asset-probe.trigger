@@ -1,1 +1,1 @@
-menu-art-status
+mystery-map-inspect-v1

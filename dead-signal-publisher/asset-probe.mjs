@@ -96,6 +96,10 @@ end)
 return game:GetService('HttpService'):JSONEncode({ok=ok,placeId=ok and placeId or nil,error=not ok and tostring(placeId) or nil})`;
  const result=await execute(script);
  console.log('CHAPTER2_PLACE_CREATE '+JSON.stringify(result));
+}else if(trigger.trim().startsWith('mystery-map-inspect')){
+ const fs=await import('node:fs/promises');
+ const script=await fs.readFile(new URL('./mystery-map-inspect.luau',import.meta.url),'utf8');
+ console.log('MYSTERY_MAP_INSPECT '+JSON.stringify(await execute(script)));
 }else if(trigger.trim().startsWith('cassette-creator-audit')){
  const luau="local HttpService=game:GetService('HttpService')\nreturn HttpService:JSONEncode({creatorId=game.CreatorId,creatorType=tostring(game.CreatorType),universe=game.GameId})";
  console.log('CASSETTE_CREATOR_RESULT '+JSON.stringify(await execute(luau)));
