@@ -134,7 +134,7 @@ install(runtime,'OriginalWeaponPickups','Script','original-weapon-pickups.luau')
 install(runtime,'ChapterTwoRuntime','Script','chapter-two-runtime.luau')
 for _,item in ipairs({{'SessionMenu','RemoteFunction'},{'SessionNotice','RemoteEvent'},{'PlayerSettings','RemoteFunction'}}) do local o=R.Instance.new(item[2]);o.Name=item[1];o.Parent=RS end
 require('./blackhole-extract')(dm)
-W:SetAttribute('ExperienceChapter',1);W:SetAttribute('DeadSignalBuildId','still-here-chapter-two-greenhouse-v2');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
+W:SetAttribute('ExperienceChapter',1);W:SetAttribute('DisplayEpisodeLabel','VERSÃO ORIGINAL');W:SetAttribute('DeadSignalBuildId','still-here-chapter-two-greenhouse-v2');W:SetAttribute('OriginalMansionAsset','7902470429');W:SetAttribute('OriginalFPSAsset','15864801103');W:SetAttribute('OriginalScriptCount',#records)
 W:SetAttribute('IslandWorldReady',false)
 local manifest=R.Instance.new('StringValue');manifest.Name='OriginalScriptManifest';manifest.Value=J.encode('json',records);manifest.Parent=SS
 local region=R.Instance.new('TerrainRegion');region.Name='OriginalTerrain';region.SmoothGrid=W.Terrain.SmoothGrid;region.ExtentsMin=R.Vector3int16.new(-144,-64,-192);region.ExtentsMax=R.Vector3int16.new(144,100,144);region.Parent=SS

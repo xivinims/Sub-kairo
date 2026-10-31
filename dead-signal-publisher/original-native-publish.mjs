@@ -51,8 +51,8 @@ const artBytes=await fs.readFile(new URL('./chapter-2-hero.jpg',import.meta.url)
 const artForm=new FormData();
 artForm.set('request',JSON.stringify({
  assetType:'Image',
- displayName:'Still Here Episode 2',
- description:'Generated greenhouse key art for Episode 2.',
+ displayName:'Still Here Episode 1',
+ description:'Generated greenhouse key art for Episode 1.',
  creationContext:{creator:{userId:8344738123}}
 }));
 artForm.set('fileContent',new Blob([artBytes],{type:'image/jpeg'}),'still-here-chapter-2.jpg');

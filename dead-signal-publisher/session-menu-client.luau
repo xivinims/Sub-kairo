@@ -2,6 +2,8 @@ local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
 if W:GetAttribute('GameMode')~='Menu' then return end
 local experienceChapter=W:GetAttribute('ExperienceChapter')==2 and 2 or 1
+local displayEpisodeNumber=math.max(1,math.floor(tonumber(W:GetAttribute('DisplayEpisodeNumber')) or experienceChapter))
+local displayEpisodeLabel=typeof(W:GetAttribute('DisplayEpisodeLabel'))=='string' and W:GetAttribute('DisplayEpisodeLabel') or ('EPISÓDIO '..tostring(displayEpisodeNumber))
 local p=game:GetService('Players').LocalPlayer;local RS=game:GetService('ReplicatedStorage');local UI=require(RS:WaitForChild('SessionInterface'));local make=UI.Make
 local remote=RS:WaitForChild('SessionMenu')
 local gui=make('ScreenGui',{Name='StillHereMenu',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1000},p:WaitForChild('PlayerGui'))
@@ -30,7 +32,7 @@ local loadingVignette=make('Frame',{
 local loadingTitle=make('TextLabel',{
  Name='ChapterTwoLoadingTitle',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-112),Size=UDim2.new(.78,0,0,48),
- BackgroundTransparency=1,Text='EPISÓDIO 2  ·  AQUELE QUE NÃO ENCONTRA',
+ BackgroundTransparency=1,Text='EPISÓDIO '..string.format('%02d',displayEpisodeNumber)..'  ·  AQUELE QUE NÃO ENCONTRA',
  TextColor3=Color3.fromRGB(246,239,213),Font=Enum.Font.Oswald,
  TextSize=30,TextXAlignment=Enum.TextXAlignment.Left,
  Visible=experienceChapter==2,ZIndex=3
@@ -47,7 +49,7 @@ local loadingCopy=make('TextLabel',{
 local loadingSub=make('TextLabel',{
  Name='LoadingSubtext',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-12),Size=UDim2.new(1,-56,0,18),
- BackgroundTransparency=1,Text=experienceChapter==2 and 'STILL HERE · EPISÓDIO 2' or 'STILL HERE · EPISÓDIO 1',
+ BackgroundTransparency=1,Text='STILL HERE · '..displayEpisodeLabel,
  TextColor3=Color3.fromRGB(102,118,126),
  Font=Enum.Font.RobotoCondensed,TextSize=10,
  TextXAlignment=Enum.TextXAlignment.Left
@@ -101,7 +103,7 @@ local composition=make('Frame',{
  Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
  Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local by=UI.Label(composition,experienceChapter==2 and 'EPISÓDIO 2  /  ESTUFA' or 'EPISÓDIO 1',18)
+local by=UI.Label(composition,experienceChapter==2 and (displayEpisodeLabel..'  /  ESTUFA') or displayEpisodeLabel,18)
 by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
 by.Font=Enum.Font.GothamMedium;by.TextSize=10
 by.TextColor3=Color3.fromRGB(140,144,148)
@@ -144,7 +146,7 @@ heading.Size=UDim2.new(1,0,0,20)
 heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
-local motdText=UI.Label(news,'EPISÓDIO 2 · A SINETA PAROU. A ESTUFA NÃO.',34)
+local motdText=UI.Label(news,'EPISÓDIO 1 · A SINETA PAROU. A ESTUFA NÃO.',34)
 motdText.Name='Chapter2Announcement'
 motdText.Position=UDim2.new(0,0,0,22)
 motdText.Size=UDim2.new(1,0,0,30)
@@ -159,7 +161,7 @@ local preview=make('ImageButton',{
  ScaleType=Enum.ScaleType.Crop,AutoButtonColor=true
 },news)
 make('UIStroke',{Color=Color3.fromRGB(133,158,150),Thickness=1,Transparency=.35},preview)
-local footer=UI.Label(news,'ABRIR EPISÓDIO 2  →',18)
+local footer=UI.Label(news,'ABRIR EPISÓDIO 1  →',18)
 footer.Name='ChapterTwoCallToAction'
 footer.Position=UDim2.new(0,0,1,-20)
 footer.Size=UDim2.new(1,0,0,18)
@@ -178,7 +180,7 @@ local chapterTwo=make('Frame',{
 },bg)
 make('UICorner',{CornerRadius=UDim.new(0,8)},chapterTwo)
 make('UIStroke',{Color=Color3.fromRGB(202,190,143),Thickness=1,Transparency=.35},chapterTwo)
-local chapterEyebrow=UI.Label(chapterTwo,'EPISÓDIO 02  /  STILL HERE',24)
+local chapterEyebrow=UI.Label(chapterTwo,string.format('EPISÓDIO %02d  /  STILL HERE',displayEpisodeNumber),24)
 chapterEyebrow.Name='ChapterTwoEyebrow';chapterEyebrow.Position=UDim2.new(0,0,0,0);chapterEyebrow.Size=UDim2.new(1,0,0,24)
 chapterEyebrow.Font=Enum.Font.RobotoCondensed;chapterEyebrow.TextSize=13;chapterEyebrow.TextColor3=Color3.fromRGB(175,181,180)
 local chapterTitle=UI.Label(chapterTwo,'AQUELE QUE NÃO ENCONTRA',68)
@@ -261,7 +263,7 @@ local transitionShade=make('Frame',{
 local transitionHeadline=make('TextLabel',{
  Name='TransitionHeadline',Position=UDim2.new(.065,0,1,-129),
  Size=UDim2.new(.82,0,0,47),BackgroundTransparency=1,
- Text='ENTRANDO NO EPISÓDIO 2',Font=Enum.Font.Oswald,TextSize=32,
+ Text='ENTRANDO NO EPISÓDIO '..tostring(displayEpisodeNumber),Font=Enum.Font.Oswald,TextSize=32,
  TextColor3=Color3.fromRGB(246,239,213),TextXAlignment=Enum.TextXAlignment.Left,
  Visible=false,ZIndex=23
 },bg)
@@ -304,8 +306,8 @@ local function startPresentation(action)
  transitionTrack.Visible=showArtwork
  if showArtwork then
   transitionProgress.BackgroundColor3=Color3.fromRGB(241,223,165);transitionShade.BackgroundColor3=Color3.fromRGB(3,8,7)
-  transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO AO ARQUIVO' or (isChapterHop and 'ENTRANDO NO EPISÓDIO 2' or 'AQUELE QUE NÃO ENCONTRA')
-  transitionDetail.Text=action=='chapterOne' and 'RETORNANDO AO EPISÓDIO 1…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
+  transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO À VERSÃO ORIGINAL' or (isChapterHop and 'ENTRANDO NO EPISÓDIO 1' or 'AQUELE QUE NÃO ENCONTRA')
+  transitionDetail.Text=action=='chapterOne' and 'RETORNANDO À EXPERIÊNCIA ORIGINAL…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
   if transitionTween then transitionTween:Cancel() end
   transitionProgress.Position=UDim2.new(0,0,0,0)
   transitionTween=Tween:Create(transitionProgress,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.74,0,0,0)})
@@ -466,10 +468,10 @@ local function addNavigation(text,action)
  return btn
 end
 preview.Activated:Connect(function() request('chapterTwo') end)
-backButton=addNavigation('VOLTAR AO EPISÓDIO 1',function() request('chapterOne') end)
+backButton=addNavigation('VOLTAR À VERSÃO ORIGINAL',function() request('chapterOne') end)
 addNavigation('JOGAR (SOLO)',function() request('solo') end)
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
-backButton.Visible=experienceChapter==2
+backButton.Visible=experienceChapter==2 and displayEpisodeNumber~=1
 layoutNavigation()
 selectNavigation(experienceChapter==2 and 2 or 1)
 UIS.InputBegan:Connect(function(input,processed)

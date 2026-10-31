@@ -23,7 +23,8 @@ local accent=Instance.new('Frame');accent.Name='EpisodeAccent';accent.Position=U
 local eyebrow=Instance.new('TextLabel')
 eyebrow.Name='ChapterLabel';eyebrow.BackgroundTransparency=1
 eyebrow.Position=UDim2.new(0,15,0,9);eyebrow.Size=UDim2.new(1,-30,0,20)
-eyebrow.Text='STILL HERE  /  EPISÓDIO 02'
+local displayEpisodeNumber=math.max(1,math.floor(tonumber(W:GetAttribute('DisplayEpisodeNumber')) or 2))
+eyebrow.Text=string.format('STILL HERE  /  EPISÓDIO %02d',displayEpisodeNumber)
 eyebrow.TextXAlignment=Enum.TextXAlignment.Left
 eyebrow.Font=Enum.Font.RobotoCondensed;eyebrow.TextSize=12
 eyebrow.TextColor3=Color3.fromRGB(155,181,157);eyebrow.TextTransparency=1;eyebrow.Parent=card

@@ -140,7 +140,7 @@ remote.OnServerInvoke=function(p,action,value)
    launching[p]=true
    local teleported,err=pcall(function() TS:TeleportAsync(destinationPlace,{p}) end)
    if not teleported then launching[p]=nil;ok=false;message='Não foi possível abrir o outro episódio. Tente novamente.';warn('[ChapterTeleport] '..tostring(err))
-   else message=destinationChapter==2 and 'Entrando no Episódio 2…' or 'Voltando ao Episódio 1…' end
+   else message=destinationChapter==2 and 'Entrando no Episódio 1…' or 'Voltando à versão original…' end
   end
  elseif action=='buy' then ok,message=Profile.Buy(p,value);if typeof(message)=='table' then message=ok and 'Compra salva. Será aplicada na partida.' or 'Créditos insuficientes.' end
  else ok=false;message='Pedido inválido.' end
