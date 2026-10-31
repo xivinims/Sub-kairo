@@ -1,5 +1,5 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong experience')
-assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-instruments-v5','Wrong release')
+assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-instruments-v6','Wrong release')
 local ReplicatedStorage=game:GetService('ReplicatedStorage')
 local CollectionService=game:GetService('CollectionService')
 local map=assert(workspace:FindFirstChild('HotelMap'))
@@ -87,7 +87,17 @@ local receptionist=assert(workspace:FindFirstChild('HotelActors') and workspace.
 assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChild('Head') and receptionist:FindFirstChildWhichIsA('Shirt') and receptionist:FindFirstChildWhichIsA('Pants'),'Reference receptionist model is incomplete')
 local receptionistHumanoid=assert(receptionist:FindFirstChildOfClass('Humanoid'),'Receptionist rig is not animatable')
 assert(receptionistHumanoid:FindFirstChildOfClass('Animator'),'Receptionist Animator is missing')
+assert(receptionistHumanoid.RigType==Enum.HumanoidRigType.R6 and receptionist:FindFirstChild('Torso') and receptionist:FindFirstChild('HumanoidRootPart'),'Receptionist must use a visible R6 rig')
+local receptionistAppearance=receptionistHumanoid:GetAppliedDescription()
+assert(receptionistAppearance.Head==134082579 and receptionistAppearance.RightLeg==139607718,'Headless/Korblox appearance did not apply to the R6 body')
 assert(receptionist:GetAttribute('AnimationPackAssetId')==86582491164528,'Requested NPC animation pack is not attached')
+assert(receptionist:GetAttribute('AppearanceHeadAssetId')==134082579 and receptionist:GetAttribute('AppearanceKorbloxRightLegAssetId')==139607718,'Headless/Korblox R6 appearance is missing')
+assert(receptionist:GetAttribute('ReceptionistReady') and workspace:GetAttribute('ReceptionistReady'),'Receptionist was not fully initialized')
+assert(receptionist.ModelStreamingMode==Enum.ModelStreamingMode.Persistent,'Receptionist can stream out while players approach the pool')
+assert(receptionist:GetAttribute('ReceptionistSpawnVerified')==true,'Receptionist did not reach its visible spawn beside the pool')
+assert(not receptionist:FindFirstChild('ReceptionistNameplate',true),'Receptionist still has a text nameplate')
+assert(receptionist:FindFirstChild('ReceptionistBowTie1') and receptionist:FindFirstChild('ReceptionistHeartPin'),'Cute receptionist details are missing')
+assert(receptionist:FindFirstChild('ReceptionistDoodleReactions',true),'Surprise/spiral doodle reactions are missing')
 local animationFolder=assert(game:GetService('ServerStorage'):FindFirstChild('ReceptionistAnimations'),'Receptionist animation pack is missing')
 assert(animationFolder:FindFirstChild('Idle'),'Receptionist idle animation is missing')
 for _,object in ipairs(receptionist:GetDescendants()) do assert(not object:IsA('BaseScript'),'Unreviewed code was copied with the NPC animation pack') end
@@ -97,6 +107,12 @@ assert(poolSurface,'Pool surface is missing')
 local receptionistSpawn=receptionist:GetAttribute('ReceptionistSpawnPosition')
 assert(typeof(receptionistSpawn)=='Vector3' and (receptionistSpawn-poolSurface.Position).Magnitude<14,'Receptionist spawn target is not beside the pool table')
 assert(receptionist.PrimaryPart and receptionist.PrimaryPart.Name=='HumanoidRootPart','Receptionist pivot is missing')
+assert((receptionist.PrimaryPart.Position-receptionistSpawn).Magnitude<.25,'Receptionist is not standing at its saved spawn target')
+local partsNearSpawn=0
+for _,object in ipairs(receptionist:GetDescendants()) do
+	if object:IsA('BasePart') and object.Name~='HumanoidRootPart' and object.Transparency<1 then partsNearSpawn+=1 end
+end
+assert(partsNearSpawn>=5,'R6 receptionist body is invisible')
 local settingsClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('HotelReceptionistClient'))
 assert(settingsClient.Source:find('Hola',1,true),'Receptionist dialogue is missing')
 assert(settingsClient.Source:find('PromptGameInvite',1,true) and settingsClient.Source:find('JOGAR COMIGO',1,true),'Native friend invite/NPC dialogue options are missing')
@@ -107,4 +123,4 @@ end
 assert(interfaceSource:find('Position=UDim2.fromScale(0,0)',1,true) and interfaceSource:find('scheduleSave',1,true),'Settings are not left-anchored with autosave')
 assert(not interfaceSource:find('APLICAR',1,true),'Manual apply button remains')
 for _,object in ipairs(ui:GetDescendants()) do assert(not object:IsA('BasePart') and not object:IsA('LuaSourceContainer'),'UI package depends on map') end
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),parts=parts,screens=#ui:GetChildren(),doors=doors,spawns=spawns,removedRainModels=map:GetAttribute('RemovedOrphanedRainModels'),poolBalls=#poolWorld.Balls:GetChildren(),poolPocketObjects=#poolWorld.InvisiblePlayfield:GetChildren(),poolShotLogic=true,interactables=#CollectionService:GetTagged('StillHereInteractable'),separateMapAndUI=true})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),parts=parts,screens=#ui:GetChildren(),doors=doors,spawns=spawns,removedRainModels=map:GetAttribute('RemovedOrphanedRainModels'),poolBalls=#poolWorld.Balls:GetChildren(),poolPocketObjects=#poolWorld.InvisiblePlayfield:GetChildren(),poolShotLogic=true,interactables=#CollectionService:GetTagged('StillHereInteractable'),receptionistRig=receptionistHumanoid.RigType.Name,receptionistAnimationMode=receptionist:GetAttribute('ReceptionistAnimationMode'),receptionistAnimationSourceRig=receptionist:GetAttribute('ReceptionistAnimationRigType'),receptionistSpawnVerified=receptionist:GetAttribute('ReceptionistSpawnVerified'),receptionistPosition=receptionist.PrimaryPart.Position,separateMapAndUI=true})

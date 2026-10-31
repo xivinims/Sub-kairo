@@ -42,12 +42,15 @@ if not rigSource then
   if object:IsA('Model') and object:FindFirstChildOfClass('Humanoid') then rigSource=object;break end
  end
 end
-assert(rigSource,'Dynamic NPC animation pack has no sample Humanoid rig')
-local rigTemplate=rigSource:Clone();rigTemplate.Name='ReceptionistRigTemplate'
-for _,object in ipairs(rigTemplate:GetDescendants()) do
+local sourceHumanoid=rigSource and rigSource:FindFirstChildOfClass('Humanoid')
+W:SetAttribute('NPCAnimationRigType',sourceHumanoid and sourceHumanoid.RigType.Name or 'Unknown')
+if rigSource and sourceHumanoid then
+ local rigTemplate=rigSource:Clone();rigTemplate.Name='ReceptionistRigTemplate'
+ for _,object in ipairs(rigTemplate:GetDescendants()) do
 	if object:IsA('BaseScript') or object:IsA('ProximityPrompt') or object:IsA('ClickDetector') or object:IsA('Tool') then object:Destroy() end
+ end
+ rigTemplate.Parent=SS
 end
-rigTemplate.Parent=SS
 W:SetAttribute('NPCAnimationPackAssetId',86582491164528)
 local function install(parent,name,class,file)
  local source=fs.readFile(file);luau.load(source,{debugName=file})
@@ -70,7 +73,7 @@ install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'PortugueseText','LocalScript','original-portuguese-text.luau')
 local settings=R.Instance.new('RemoteFunction');settings.Name='PlayerSettings';settings.Parent=RS
 local actions=R.Instance.new('RemoteEvent');actions.Name='MysteryUIAction';actions.Parent=RS
-W:SetAttribute('DeadSignalBuildId','still-here-hotel-instruments-v5')
+W:SetAttribute('DeadSignalBuildId','still-here-hotel-instruments-v6')
 W:SetAttribute('SceneDisplayName','HOTEL')
 W:SetAttribute('ActiveMap','1940sHotelLobby')
 W:SetAttribute('InterfaceSource','7902470429')

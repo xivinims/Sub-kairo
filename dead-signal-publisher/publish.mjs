@@ -10,7 +10,7 @@ try{
    ['assets/hotel/1940sHotelLobby.rbxm','03520ce828d3a652b58133424577df2fd1125497dc2a40d2b9fdc45b786b3700'],
    ['assets/ui/mystery-interface.rbxm','6e4b2f1e7454cc4b69148ef99c0e55497779e0d2944178c568ff02fc9641dd8f']
   ])if(createHash('sha256').update(await fs.readFile(new URL('./'+file,import.meta.url))).digest('hex')!==sha)throw Error('Asset checksum mismatch: '+file);
-  console.log(JSON.stringify({dryRun:true,build:'still-here-hotel-instruments-v5',sourceFiles:files.length,separateMapAndUI:true}));
+  console.log(JSON.stringify({dryRun:true,build:'still-here-hotel-instruments-v6',sourceFiles:files.length,separateMapAndUI:true}));
  }else{
   const {runHotelRelease}=await import('./hotel-native-publish.mjs');
   await runHotelRelease({publish:!preview});

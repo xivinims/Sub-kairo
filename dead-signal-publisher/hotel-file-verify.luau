@@ -3,6 +3,7 @@ local R=require('@lune/roblox')
 local luau=require('@lune/luau')
 local serde=require('@lune/serde')
 local dm=R.deserializePlace(fs.readFile('/tmp/still-here-hotel-verified.rbxl'))
+assert(dm:GetService('Workspace'):GetAttribute('DeadSignalBuildId')=='still-here-hotel-instruments-v6','Hotel build id is not v6')
 local source=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'))
 local expectedUI=require('./mystery-ui-extract')(source)
 local ui=assert(dm:GetService('ReplicatedStorage'):FindFirstChild('MysteryInterface'))
@@ -82,9 +83,13 @@ for _,d in ipairs(dm:GetDescendants()) do
 end
 assert(next(shipped)==nil,'Missing controller')
 assert(not dm:GetService('ServerStorage'):FindFirstChild('OriginalWorld'),'Old mansion bundled into new map')
-local receptionistRig=assert(dm:GetService('ServerStorage'):FindFirstChild('ReceptionistRigTemplate'),'Receptionist rig was not assembled')
-assert(receptionistRig:FindFirstChildOfClass('Humanoid') and receptionistRig:FindFirstChild('HumanoidRootPart',true),'Receptionist rig cannot play the supplied animations')
-for _,object in ipairs(receptionistRig:GetDescendants()) do assert(not object:IsA('BaseScript'),'Unreviewed NPC-pack script was copied') end
+local receptionistRig=dm:GetService('ServerStorage'):FindFirstChild('ReceptionistRigTemplate')
+if receptionistRig then
+ assert(receptionistRig:FindFirstChildOfClass('Humanoid') and receptionistRig:FindFirstChild('HumanoidRootPart',true),'Optional animation sample rig is invalid')
+ for _,object in ipairs(receptionistRig:GetDescendants()) do assert(not object:IsA('BaseScript'),'Unreviewed NPC-pack script was copied') end
+end
+local animationRigType=dm:GetService('Workspace'):GetAttribute('NPCAnimationRigType')
+assert(animationRigType=='R6' or animationRigType=='R15' or animationRigType=='Unknown','NPC animation source rig type was not recorded')
 local receptionistAnimations=assert(dm:GetService('ServerStorage'):FindFirstChild('ReceptionistAnimations'),'NPC animation pack was not assembled')
 assert(receptionistAnimations:FindFirstChild('Idle'),'NPC animation pack has no idle')
 for _,name in ipairs({'IdleToActive','ActiveIdle','ActiveToIdle'}) do

@@ -60,6 +60,11 @@ local function toggleLight(target)
  for _,light in ipairs(lights) do light.Enabled=on end
  target:SetAttribute('IsLightOn',on);return true
 end
+local function reactReceptionist(reaction)
+ local actorsFolder=workspace:FindFirstChild('HotelActors')
+ local receptionist=actorsFolder and actorsFolder:FindFirstChild('HotelReceptionist')
+ if receptionist then receptionist:SetAttribute('CuteReaction',reaction);receptionist:SetAttribute('CuteReactionAt',os.clock()) end
+end
 function Interactions.Interact(player,target)
  if typeof(target)~='Instance' or not isAllowed(target) then return false end
  local kind=target:GetAttribute('InteractionKind')
@@ -69,11 +74,13 @@ function Interactions.Interact(player,target)
  cooldown[player]=os.clock()
  if kind=='Door' then local state=doors[target];return state and Interactions.SetDoorOpen(target,not state.flag.Value) or false
  elseif kind=='PoolTable' then
+  reactReceptionist('Burst')
   RS.MysteryUIAction:FireClient(player,'receptionist_dialogue',{text='Hola. Quer jogar sinuca? Você pode convidar um amigo pelo Roblox ou jogar comigo.',speaker='RECEPCIONISTA'})
   return true
  elseif kind=='Piano' then return PianoGame.Join(player)
  elseif kind=='Light' then return toggleLight(target)
  elseif kind=='Receptionist' then
+  reactReceptionist('Burst')
   RS.MysteryUIAction:FireClient(player,'receptionist_dialogue',{text='Hola. Quer jogar sinuca? Você pode convidar um amigo pelo Roblox ou jogar comigo.',speaker='RECEPCIONISTA'})
   return true
  end

@@ -462,6 +462,9 @@ end
 function PoolGame.StartNPC(player)
 	if not state.initialized or not validStart(player) then return false end
 	if state.session then state.remote:FireClient(player,'pool_busy');return false end
+	local actorsFolder=workspace:FindFirstChild('HotelActors')
+	local receptionist=actorsFolder and actorsFolder:FindFirstChild('HotelReceptionist')
+	if receptionist then receptionist:SetAttribute('CuteReaction','Spiral');receptionist:SetAttribute('CuteReactionAt',os.clock()) end
 	startGame()
 	local session={host=player,mode='npc',turn=player,waiting=false,token={},unselectedFriends={}}
 	state.session=session
