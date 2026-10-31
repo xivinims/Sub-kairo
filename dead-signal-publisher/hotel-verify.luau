@@ -48,13 +48,14 @@ local poolWorld=assert(workspace:FindFirstChild('StillHerePoolGame'),'Pool physi
 assert(#poolWorld.InvisiblePlayfield:GetChildren()>=13,'Pool pockets/playfield are missing')
 assert(#poolWorld.Balls:GetChildren()==16,'Pool rack is missing its cue ball and 15 object balls')
 local cueBall=assert(poolWorld.Balls:FindFirstChild('CueBall'))
-cueBall:ApplyImpulse(pool.PrimaryPart.CFrame.RightVector*cueBall.AssemblyMass*16)
-local shotSpeed=cueBall.AssemblyLinearVelocity.Magnitude
-cueBall.AssemblyLinearVelocity=Vector3.zero
-assert(shotSpeed>.5,'Pool cue impulse did not move the cue ball')
+assert(not cueBall.Anchored and cueBall.CanCollide,'Pool cue ball is not a physical ball')
+local poolScript=assert(game:GetService('ServerScriptService').StillHereRuntime:FindFirstChild('PoolGame'))
+local poolClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('PoolGameClient'))
+assert(poolScript.Source:find('function PoolGame.Shoot',1,true) and poolScript.Source:find(':ApplyImpulse(',1,true),'Pool shot logic is missing')
+assert(poolClient.Source:find('pool_shoot',1,true) and poolClient.Source:find('pool_restart',1,true),'Pool controls are missing')
 assert(#CollectionService:GetTagged('StillHereInteractable')>=7,'Map objects are not using the corner interaction button')
 for _,object in ipairs(CollectionService:GetTagged('StillHereInteractable')) do
 	assert(object:GetAttribute('InteractionKind')=='Door' or object:GetAttribute('InteractionKind')=='PoolTable' or object:GetAttribute('InteractionKind')=='Light','Unexpected interaction type')
 end
 for _,object in ipairs(ui:GetDescendants()) do assert(not object:IsA('BasePart') and not object:IsA('LuaSourceContainer'),'UI package depends on map') end
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),parts=parts,screens=#ui:GetChildren(),doors=doors,spawns=spawns,removedRainModels=map:GetAttribute('RemovedOrphanedRainModels'),poolBalls=#poolWorld.Balls:GetChildren(),poolPocketObjects=#poolWorld.InvisiblePlayfield:GetChildren(),poolShotSpeed=shotSpeed,interactables=#CollectionService:GetTagged('StillHereInteractable'),separateMapAndUI=true})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),parts=parts,screens=#ui:GetChildren(),doors=doors,spawns=spawns,removedRainModels=map:GetAttribute('RemovedOrphanedRainModels'),poolBalls=#poolWorld.Balls:GetChildren(),poolPocketObjects=#poolWorld.InvisiblePlayfield:GetChildren(),poolShotLogic=true,interactables=#CollectionService:GetTagged('StillHereInteractable'),separateMapAndUI=true})
