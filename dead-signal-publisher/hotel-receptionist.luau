@@ -178,12 +178,15 @@ function Receptionist.Initialize(map,interactions)
 	assert(surface,'Pool felt surface missing')
 	local folder=oldFolder or Instance.new('Folder');folder.Name='HotelActors';folder.Parent=workspace
 	local model=createAvatar();model.Parent=folder
+	task.wait(.25)
 	local floor=findFloor(tableModel,surface,folder)
 	local position=floor+Vector3.new(0,2.85,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
 	local root=model.PrimaryPart or model:FindFirstChild('HumanoidRootPart')
 	assert(root,'Receptionist fallback avatar is missing its root')
-	placeAt(model,root,CFrame.lookAt(position,target,Vector3.yAxis))
+	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
+	placeAt(model,root,targetFrame)
+	root.CFrame=targetFrame
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
