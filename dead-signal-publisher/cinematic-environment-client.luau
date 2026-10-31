@@ -67,6 +67,7 @@ local rays=addEffect('SunRaysEffect','Rays',{
 Lighting:SetAttribute('StillHereCinematicPreset',menu and 'VoidMenuHQ' or 'MansionHQ')
 
 local menuLights
+local lightTweens={}
 if menu then
  menuLights=Instance.new('Folder')
  menuLights.Name='LocalCinematicLights'
@@ -75,6 +76,7 @@ if menu then
   {'ColdKey',Vector3.new(-4,5005,-3.7),Color3.fromRGB(95,157,230),.95,22},
   {'WarmRim',Vector3.new(2.2,5004,-11),Color3.fromRGB(223,152,110),.80,20},
   {'DeepFill',Vector3.new(-2.1,4998.8,-5),Color3.fromRGB(52,98,154),.17,11},
+  {'PortraitFill',Vector3.new(-1.3,5001.2,-4.1),Color3.fromRGB(182,207,229),.46,14,false},
  }
  for _,spec in ipairs(lights) do
   local anchor=Instance.new('Part')
@@ -88,8 +90,12 @@ if menu then
   local lamp=Instance.new('PointLight')
   lamp.Name='CastShadowLight'
   lamp.Color=spec[3];lamp.Brightness=spec[4];lamp.Range=spec[5]
-  lamp.Shadows=true
+  lamp.Shadows=spec[6]~=false
   lamp.Parent=anchor
+  if spec[1]=='WarmRim' then
+   local pulse=TweenService:Create(lamp,TweenInfo.new(3.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Brightness=spec[4]*1.08})
+   pulse:Play();table.insert(lightTweens,pulse)
+  end
  end
 else
  -- Preserve all original mansion fixtures. Give the local player rich shadows
@@ -152,6 +158,7 @@ worldSignal=W:GetAttributeChangedSignal('GameMode'):Connect(function()
   cameraSignal:Disconnect();worldSignal:Disconnect()
   if fading then fading:Cancel() end
   music:Stop();music:Destroy()
+  for _,tween in ipairs(lightTweens) do tween:Cancel() end
   if menuLights then menuLights:Destroy() end
  end
 end)

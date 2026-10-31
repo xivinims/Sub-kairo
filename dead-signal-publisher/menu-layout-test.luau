@@ -125,6 +125,7 @@ assert(menu:find('lighting.ExposureCompensation=experienceChapter==2 and .05 or 
 assert(menu:find("Name='ChapterOneTitle'",1,true) and menu:find("Text='DEAD SIGNAL'",1,true),'Chapter 1 title treatment is missing')
 assert(not menu:find("local shade=make('Frame'",1,true),'Menu contains old dark rectangle')
 assert(menu:find("Name='CinematicLeftMenu'",1,true),'Photo-style left menu not installed')
+assert(menu:find("Name='CinematicLeftFalloff'",1,true) and menu:find("Name='SelectionLight'",1,true),'Menu readability lighting and active navigation state are missing')
 assert(menu:find("Name='StoryStyleNavigation'",1,true),'Compact reference-style navigation missing')
 assert(menu:find("Name='StillHereTitle'",1,true),'Creator logo image missing')
 assert(menu:find("stillHereLogoId='rbxassetid://82992691266920'",1,true),'Provided STILL HERE logo asset missing')

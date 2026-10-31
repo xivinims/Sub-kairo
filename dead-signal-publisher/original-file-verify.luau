@@ -22,6 +22,7 @@ assert(not sceneSource:find('LocalDarkWaterSurface',1,true),'Artificial water re
 assert(not sceneSource:find('507784897',1,true),'Old swimming animation still packaged')
 assert(sceneSource:find('CameraZoom',1,true),'Cinematic zoom not packaged')
 local menuSource=dm:GetService('ReplicatedFirst').SessionMenuClient.Source
+assert(menuSource:find("Name='CinematicLeftFalloff'",1,true) and menuSource:find("Name='SelectionLight'",1,true),'Polished menu lighting and active option state are missing')
 local runtimeSource=SSS.StillHereRuntime.SessionRuntime.Source
 assert(runtimeSource:find('ReferredByPlayerId',1,true) and runtimeSource:find('IsFriendsWith',1,true) and runtimeSource:find('invitedHostByPlayer',1,true),'Default friend invite join routing is missing')
 assert(runtimeSource:find('CFrame.new(3.5,0,0)',1,true),'Invited friend is not placed beside the inviter')

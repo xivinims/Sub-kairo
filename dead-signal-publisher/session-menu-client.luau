@@ -58,6 +58,17 @@ p:SetAttribute('MenuAssetPreloadStatus','loading')
 local bg=make('Frame',{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(6,7,8),BorderSizePixel=0,ClipsDescendants=true},gui)
 bg.BackgroundTransparency=1
 local hero=make('ImageLabel',{Name='ChapterTwoHero',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__',ImageColor3=Color3.fromRGB(255,255,249),ScaleType=Enum.ScaleType.Crop,Visible=experienceChapter==2,ZIndex=1},bg)
+local falloff=make('Frame',{
+ Name='CinematicLeftFalloff',Position=UDim2.fromScale(0,0),Size=UDim2.fromScale(.68,1),
+ BackgroundColor3=Color3.fromRGB(3,7,12),BackgroundTransparency=0,BorderSizePixel=0,ZIndex=1
+},bg)
+make('UIGradient',{
+ Rotation=0,
+ Color=ColorSequence.new(Color3.fromRGB(3,7,12),Color3.fromRGB(6,9,12)),
+ Transparency=NumberSequence.new({
+  NumberSequenceKeypoint.new(0,.22),NumberSequenceKeypoint.new(.53,.50),NumberSequenceKeypoint.new(1,1)
+ })
+},falloff)
 local camera=workspace.CurrentCamera
 camera.CameraType=Enum.CameraType.Scriptable
 camera.CFrame=CFrame.lookAt(Vector3.new(0,5001.05,1.3),Vector3.new(-.65,5001.05,-12))
@@ -389,6 +400,12 @@ local function selectNavigation(index)
  activeNav=index
  for i,item in ipairs(navButtons) do
   local chosen=i==index
+  Tween:Create(item.backplate,TweenInfo.new(.20,Enum.EasingStyle.Quad),{
+   BackgroundTransparency=chosen and .56 or 1
+  }):Play()
+  Tween:Create(item.stroke,TweenInfo.new(.20,Enum.EasingStyle.Quad),{
+   Transparency=chosen and .72 or 1
+  }):Play()
   Tween:Create(item.label,TweenInfo.new(.16),{
    TextColor3=chosen and Color3.fromRGB(247,246,237) or Color3.fromRGB(162,169,174),
    TextTransparency=chosen and 0 or .12
@@ -418,6 +435,14 @@ local function addNavigation(text,action)
   Size=UDim2.new(1,0,0,42),BackgroundTransparency=1,BorderSizePixel=0,
   Text='',AutoButtonColor=false
  },nav)
+ local backplate=make('Frame',{
+  Name='SelectionLight',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(20,32,37),
+  BackgroundTransparency=1,BorderSizePixel=0,ZIndex=btn.ZIndex
+ },btn)
+ make('UICorner',{CornerRadius=UDim.new(0,4)},backplate)
+ local stroke=make('UIStroke',{
+  Color=Color3.fromRGB(126,192,201),Thickness=1,Transparency=1
+ },backplate)
  local marker=make('TextLabel',{
   Name='RedSelectionMarker',Position=UDim2.new(0,0,0,0),
   Size=UDim2.fromOffset(21,42),BackgroundTransparency=1,
@@ -431,7 +456,7 @@ local function addNavigation(text,action)
   TextSize=UIS.TouchEnabled and 16 or 18,TextXAlignment=Enum.TextXAlignment.Left,
   TextColor3=Color3.fromRGB(162,169,174)
  },btn)
- table.insert(navButtons,{button=btn,marker=marker,label=label,action=action})
+ table.insert(navButtons,{button=btn,marker=marker,label=label,backplate=backplate,stroke=stroke,action=action})
  btn.MouseEnter:Connect(function() selectNavigation(index) end)
  btn.SelectionGained:Connect(function() selectNavigation(index) end)
  btn.Activated:Connect(function()
