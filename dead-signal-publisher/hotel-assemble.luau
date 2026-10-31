@@ -21,10 +21,15 @@ local npcAnimationWorkspace=npcAnimationPlace:GetService('Workspace')
 local npcAnimationRoot=assert(npcAnimationWorkspace:FindFirstChild('NPC_ANIMATIONS',true),'Dynamic NPC animation pack is missing NPC_ANIMATIONS')
 local npcAnimationTemplate=assert(npcAnimationRoot:FindFirstChild('NPC_TEMPLATE',true),'Dynamic NPC animation pack is missing NPC_TEMPLATE')
 local receptionistAnimations=R.Instance.new('Folder');receptionistAnimations.Name='ReceptionistAnimations';receptionistAnimations.Parent=SS
+local function usableAnimation(object)
+ if not object:IsA('Animation') then return false end
+ local ok,animationId=pcall(function() return object.AnimationId end)
+ return not ok or (type(animationId)=='string' and animationId~='')
+end
 for _,animationName in ipairs({'Idle','IdleToActive','ActiveIdle','ActiveToIdle'}) do
  local source
  for _,object in ipairs(npcAnimationTemplate:GetDescendants()) do
-  if object:IsA('Animation') and object.Name==animationName and object.AnimationId~='' then source=object;break end
+  if object.Name==animationName and usableAnimation(object) then source=object;break end
  end
  if not source and animationName=='Idle' then error('Dynamic NPC animation pack has no usable Idle animation') end
  if source then source:Clone().Parent=receptionistAnimations end

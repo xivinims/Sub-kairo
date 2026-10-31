@@ -89,7 +89,11 @@ local receptionistAnimations=assert(dm:GetService('ServerStorage'):FindFirstChil
 assert(receptionistAnimations:FindFirstChild('Idle'),'NPC animation pack has no idle')
 for _,name in ipairs({'IdleToActive','ActiveIdle','ActiveToIdle'}) do
  local animation=receptionistAnimations:FindFirstChild(name)
- if animation then assert(animation:IsA('Animation') and animation.AnimationId~='','NPC animation track is invalid '..name) end
+ if animation then
+  assert(animation:IsA('Animation'),'NPC animation track has the wrong type '..name)
+  local idOK,animationId=pcall(function() return animation.AnimationId end)
+  if idOK then assert(animationId~='','NPC animation track is empty '..name) end
+ end
 end
 assert(dm:GetService('StarterPlayer').CameraMode==R.Enum.CameraMode.Classic,'Wrong camera mode')
 assert(dm:GetService('StarterPlayer').CameraMinZoomDistance>=8,'First person enabled')
