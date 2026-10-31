@@ -1,1 +1,1 @@
-mystery-map-inspect-v1
+mystery-map-inspect-v2
