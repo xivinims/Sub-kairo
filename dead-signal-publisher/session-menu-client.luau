@@ -489,7 +489,7 @@ end
 preview.Activated:Connect(function() request('chapterTwo') end)
 backButton=addNavigation('VOLTAR AO CHAPTER 1',function() request('chapterOne') end)
 addNavigation('JOGAR (SOLO)',function() request('solo') end)
-addNavigation('MULTIPLAYER',groups)
+if experienceChapter==2 then addNavigation('MULTIPLAYER',groups) end
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
 backButton.Visible=experienceChapter==2
 layoutNavigation()

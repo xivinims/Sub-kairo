@@ -2,7 +2,7 @@ local Players=game:GetService('Players');local RS=game:GetService('ReplicatedSto
 local Memory=game:GetService('MemoryStoreService'):GetHashMap('StillHereSessions_v1');local H=game:GetService('HttpService')
 local Profile=require(script.Parent.SessionProfile)
 while not workspace:GetAttribute('GameMode') do task.wait(.1) end
-local mode=workspace:GetAttribute('GameMode');local experienceChapter=workspace:GetAttribute('ExperienceChapter')==2 and 2 or 1;local parties={};local membership={};local last={};local launching={}
+local mode=workspace:GetAttribute('GameMode');local experienceChapter=workspace:GetAttribute('ExperienceChapter')==2 and 2 or 1;local parties={};local membership={};local last={};local launching={};local invitedHostByPlayer={};local placedBesideHost={}
 local remote=RS:WaitForChild('SessionMenu');local notice=RS:WaitForChild('SessionNotice')
 local function leave(p)
  local code=membership[p];local party=code and parties[code];membership[p]=nil
@@ -20,6 +20,43 @@ local function snapshot(p)
  end
  table.sort(groups,function(a,b) return a.code<b.code end)
  return {profile=Profile.Cache[p],groups=groups,party=party and {code=code,members=members,leader=party.leader.UserId,capacity=party.capacity or 6,friendsOnly=party.friendsOnly==true,chapter=party.chapter or 1} or nil}
+end
+
+local function getInviterUserId(p,joinData)
+ local teleportData=type(joinData)=='table' and joinData.TeleportData or nil
+ local inviterId=type(teleportData)=='table' and tonumber(teleportData.inviteHostUserId or teleportData.inviterUserId) or nil
+ inviterId=inviterId or (type(joinData)=='table' and tonumber(joinData.ReferredByPlayerId) or nil)
+ if not inviterId and type(joinData)=='table' and type(joinData.LaunchData)=='string' then
+  local ok,data=pcall(function() return H:JSONDecode(joinData.LaunchData) end)
+  if ok and type(data)=='table' then inviterId=tonumber(data.inviterUserId) end
+ end
+ if inviterId==p.UserId then return nil end
+ return inviterId
+end
+local function getInviteRecord(inviterId)
+ local ok,record=pcall(function() return Memory:GetAsync('invite:'..tostring(inviterId)) end)
+ if ok and type(record)=='table' and type(record.serverId)=='string' and record.expires and record.expires>=os.time() then return record end
+ return nil
+end
+local function routeInvitedPlayer(p,inviterId)
+ if experienceChapter~=1 or not inviterId then return false,nil end
+ local record=getInviteRecord(inviterId)
+ if not record or record.chapter~=1 then return false,nil end
+ if mode=='Match' and game.PrivateServerId==record.serverId then return false,record end
+ if mode~='Menu' and mode~='Match' then return false,record end
+ local options=Instance.new('TeleportOptions')
+ options.ReservedServerId=record.serverId
+ options:SetTeleportData({session=record.serverId,chapter=1,inviteHostUserId=inviterId})
+ local ok,err=pcall(function()
+  launching[p]=true;TS:TeleportAsync(game.PlaceId,{p},options)
+ end)
+ if not ok then
+  launching[p]=nil
+  notice:FireClient(p,'Não foi possível abrir a sessão do seu amigo.')
+  warn('[InviteTeleport] '..tostring(err))
+  return false,record
+ end
+ return true,record
 end
 local function launch(members,chapter)
  chapter=experienceChapter
@@ -39,6 +76,17 @@ local function launch(members,chapter)
 end
 remote.OnServerInvoke=function(p,action,value)
  if mode~='Menu' then
+  if action=='invite' then
+   if experienceChapter~=1 or mode~='Match' then return {ok=false,message='Convites disponíveis durante o Chapter 1.'} end
+   if os.clock()-(last[p] or 0)<1 then return {ok=false,message='Aguarde um instante.'} end;last[p]=os.clock()
+   local sessionOk,sessionData=pcall(function() return Memory:GetAsync(game.PrivateServerId) end)
+   if not sessionOk or type(sessionData)~='table' or type(sessionData.users)~='table' or not sessionData.users[tostring(p.UserId)] then return {ok=false,message='Entre em uma partida antes de convidar.'} end
+   if #Players:GetPlayers()>=math.clamp(math.floor(tonumber(sessionData.capacity) or 6),1,6) then return {ok=false,message='Esta partida está cheia.'} end
+   local record={serverId=game.PrivateServerId,chapter=1,expires=os.time()+600}
+   local saved,err=pcall(function() Memory:SetAsync('invite:'..tostring(p.UserId),record,600) end)
+   if not saved then warn('[InvitePrepare] '..tostring(err));return {ok=false,message='Não foi possível preparar o convite.'} end
+   return {ok=true,message='Convite pronto.'}
+  end
   if action~='return' then return {ok=false,message='Disponível no menu.'} end
   if workspace:GetAttribute('DisasterPhase')=='Active' then return {ok=false,message='Espere o desastre acabar para voltar ao menu.'} end
   if os.clock()-(last[p] or 0)<2 then return {ok=false,message='Aguarde.'} end;last[p]=os.clock()
@@ -50,6 +98,7 @@ remote.OnServerInvoke=function(p,action,value)
  if typeof(action)~='string' or (typeof(value)=='table' and action~='create' and action~='solo' and action~='join' and action~='state') then return {ok=false,message='Pedido inválido.'} end
  if os.clock()-(last[p] or 0)<.35 then return {ok=false,message='Aguarde um instante.'} end;last[p]=os.clock()
  if action=='state' then if not Profile.Cache[p] then Profile.Load(p) end;return {ok=true,data=snapshot(p)} end
+ if experienceChapter==1 and (action=='create' or action=='join' or action=='leave' or action=='start') then return {ok=false,message='Use o convite dentro da partida.'} end
  if launching[p] then return {ok=false,message='A partida já está iniciando.'} end
  local ok,message=true,nil
  if action=='solo' then ok,message=launch({p},experienceChapter)
@@ -88,20 +137,86 @@ remote.OnServerInvoke=function(p,action,value)
 end
 TS.TeleportInitFailed:Connect(function(p,result,message) launching[p]=nil;notice:FireClient(p,'Não foi possível entrar na partida. Tenta novamente.');warn('[TeleportInitFailed] '..tostring(result)..': '..message) end)
 local function added(p)
+ local joinData={}
+ local inviterId
+ if experienceChapter==1 then
+  local ok,data=pcall(function() return p:GetJoinData() end)
+  if ok and type(data)=='table' then joinData=data;inviterId=getInviterUserId(p,data) end
+ end
+ local inviteRecord
+ if inviterId then
+  local routed,record=routeInvitedPlayer(p,inviterId)
+  inviteRecord=record
+  if routed then return end
+ end
  if mode=='Match' then
   local ok,data=pcall(function() return Memory:GetAsync(game.PrivateServerId) end)
-  if not ok or not data or not data.users[tostring(p.UserId)] or #Players:GetPlayers()>6 then p:Kick('Esta sessão é restrita ao grupo que a criou.');return end
-  local join=p:GetJoinData();local teleportData=join and join.TeleportData or {};local chapter=tonumber(teleportData.chapter) or 1
+  local userKey=tostring(p.UserId)
+  if not ok or type(data)~='table' or type(data.users)~='table' then p:Kick('Esta sessão é restrita ao grupo que a criou.');return end
+  local capacity=math.clamp(math.floor(tonumber(data.capacity) or 6),1,6)
+  local listed=data.users[userKey]==true
+  local invited=false
+  if experienceChapter==1 and inviterId and inviteRecord and inviteRecord.serverId==game.PrivateServerId and inviteRecord.chapter==1 and data.users[tostring(inviterId)] then
+   local host=Players:GetPlayerByUserId(inviterId)
+   local checked,isFriend=pcall(function() return p:IsFriendsWith(inviterId) end)
+   invited=host~=nil and checked and isFriend==true and #Players:GetPlayers()<=capacity
+   if invited and not listed then
+    local stored,updated=pcall(function()
+     return Memory:UpdateAsync(game.PrivateServerId,function(current)
+      if type(current)~='table' or type(current.users)~='table' or not current.users[tostring(inviterId)] then return nil end
+      local currentCapacity=math.clamp(math.floor(tonumber(current.capacity) or 6),1,6)
+      if #Players:GetPlayers()>currentCapacity then return nil end
+      current.users[userKey]=true
+      return current
+     end,3600)
+    end)
+    invited=stored and type(updated)=='table' and type(updated.users)=='table' and updated.users[userKey]==true
+   end
+   if invited then
+    invitedHostByPlayer[p]=inviterId
+    if host then
+     notice:FireClient(host,p.DisplayName..' entrou pelo seu convite.')
+     notice:FireClient(p,'Você entrou na partida de '..host.DisplayName..'.')
+    end
+   end
+  end
+  if (not listed and not invited) or #Players:GetPlayers()>capacity then p:Kick('Esta sessão é restrita ao grupo que a criou.');return end
+  local teleportData=joinData.TeleportData or {}
+  local chapter=tonumber(teleportData.chapter) or 1
   if chapter~=experienceChapter or chapter~=(data.chapter or 1) then p:Kick('O código desta sala pertence a outro capítulo.');return end
   if not workspace:GetAttribute('SelectedChapter') then workspace:SetAttribute('SelectedChapter',chapter) elseif workspace:GetAttribute('SelectedChapter')~=chapter then p:Kick('Esta sala está restrita a outro capítulo.');return end
  end
  Profile.Load(p)
  if mode=='Match' then
-  local function character(c) Profile.Apply(p,c) end;p.CharacterAdded:Connect(character);if p.Character then task.spawn(character,p.Character) end
+  local function spawnBesideHost(character)
+   local hostId=invitedHostByPlayer[p]
+   if not hostId or placedBesideHost[p] then return end
+   task.spawn(function()
+    local guestRoot=character:WaitForChild('HumanoidRootPart',10)
+    local deadline=os.clock()+20
+    while guestRoot and p.Parent==Players and os.clock()<deadline do
+     local host=Players:GetPlayerByUserId(hostId)
+     local hostCharacter=host and host.Character
+     local hostRoot=hostCharacter and hostCharacter:FindFirstChild('HumanoidRootPart')
+     if hostRoot and hostRoot:IsA('BasePart') then
+      task.wait(.35)
+      if character.Parent and guestRoot.Parent and hostRoot.Parent then
+       character:PivotTo(hostRoot.CFrame*CFrame.new(3.5,0,0))
+       placedBesideHost[p]=true
+       notice:FireClient(p,'Você nasceu ao lado de '..host.DisplayName..'.')
+       return
+      end
+     end
+     task.wait(.2)
+    end
+   end)
+  end
+  local function character(c) Profile.Apply(p,c);spawnBesideHost(c) end
+  p.CharacterAdded:Connect(character);if p.Character then task.spawn(character,p.Character) end
  end
 end
 Players.PlayerAdded:Connect(added);for _,p in ipairs(Players:GetPlayers()) do task.spawn(added,p) end
-Players.PlayerRemoving:Connect(function(p) leave(p);if mode=='Match' then Profile.Reward(p,p:GetAttribute('NPCRescues') or 0) end;Profile.Cache[p]=nil;last[p]=nil;launching[p]=nil end)
+Players.PlayerRemoving:Connect(function(p) leave(p);if mode=='Match' then Profile.Reward(p,p:GetAttribute('NPCRescues') or 0) end;invitedHostByPlayer[p]=nil;placedBesideHost[p]=nil;Profile.Cache[p]=nil;last[p]=nil;launching[p]=nil;if experienceChapter==1 then pcall(function() Memory:RemoveAsync('invite:'..tostring(p.UserId)) end) end end)
 
 game:BindToClose(function()
  if mode=='Match' then for _,p in ipairs(Players:GetPlayers()) do Profile.Reward(p,p:GetAttribute('NPCRescues') or 0) end end

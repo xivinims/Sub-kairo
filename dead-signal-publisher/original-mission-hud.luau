@@ -2,10 +2,56 @@ local W=workspace
 while not W:GetAttribute('GameMode') do task.wait(.1) end
 if W:GetAttribute('GameMode')~='Match' or W:GetAttribute('SelectedChapter')==2 then return end
 local Players=game:GetService('Players');local Tween=game:GetService('TweenService')
-local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui')
+local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui');local RS=game:GetService('ReplicatedStorage')
 local gui=Instance.new('ScreenGui');gui.Name='MissionTop';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.DisplayOrder=40;gui.Parent=pg
 local panel=Instance.new('Frame');panel.Name='MissionObjectivePanel';panel.Position=UDim2.new(0,18,0,14);panel.Size=UDim2.new(.48,0,0,72);panel.BackgroundColor3=Color3.fromRGB(18,18,18);panel.BackgroundTransparency=.18;panel.BorderSizePixel=0;panel.Parent=gui
 Instance.new('UICorner',panel).CornerRadius=UDim.new(0,4)
+local inviteButton=Instance.new('TextButton');inviteButton.Name='InviteFriendButton';inviteButton.AnchorPoint=Vector2.new(1,0);inviteButton.Size=UDim2.fromOffset(164,42);inviteButton.BackgroundColor3=Color3.fromRGB(18,18,18);inviteButton.BackgroundTransparency=.12;inviteButton.BorderSizePixel=0;inviteButton.Text='CONVIDAR AMIGO';inviteButton.TextColor3=Color3.fromRGB(235,232,220);inviteButton.Font=Enum.Font.RobotoCondensed;inviteButton.TextSize=14;inviteButton.AutoButtonColor=false;inviteButton.ZIndex=5;inviteButton.Parent=gui
+Instance.new('UICorner',inviteButton).CornerRadius=UDim.new(0,4)
+local inviteEdge=Instance.new('UIStroke');inviteEdge.Color=Color3.fromRGB(137,132,125);inviteEdge.Transparency=.55;inviteEdge.Thickness=1;inviteEdge.Parent=inviteButton
+local inviteStatus=Instance.new('TextLabel');inviteStatus.Name='InviteStatus';inviteStatus.AnchorPoint=Vector2.new(1,0);inviteStatus.Size=UDim2.fromOffset(228,28);inviteStatus.BackgroundTransparency=1;inviteStatus.Text='';inviteStatus.TextColor3=Color3.fromRGB(207,199,188);inviteStatus.Font=Enum.Font.RobotoCondensed;inviteStatus.TextSize=11;inviteStatus.TextXAlignment=Enum.TextXAlignment.Right;inviteStatus.TextWrapped=true;inviteStatus.Visible=false;inviteStatus.ZIndex=5;inviteStatus.Parent=gui
+local function fitInvite()
+ local camera=workspace.CurrentCamera;local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
+ local compact=viewport.X<520
+ inviteButton.Position=UDim2.new(1,compact and -12 or -18,0,compact and 94 or 14)
+ inviteStatus.Position=UDim2.new(1,compact and -12 or -18,0,compact and 138 or 58)
+end
+fitInvite()
+if workspace.CurrentCamera then workspace.CurrentCamera:GetPropertyChangedSignal('ViewportSize'):Connect(fitInvite) end
+local inviteBusy=false
+local function showInviteStatus(message)
+ inviteStatus.Text=message or '';inviteStatus.Visible=message~=nil and message~=''
+end
+inviteButton.MouseEnter:Connect(function() inviteButton.TextColor3=Color3.fromRGB(255,248,236);inviteEdge.Transparency=.18 end)
+inviteButton.MouseLeave:Connect(function() inviteButton.TextColor3=Color3.fromRGB(235,232,220);inviteEdge.Transparency=.55 end)
+inviteButton.Activated:Connect(function()
+ if inviteBusy then return end
+ inviteBusy=true;inviteButton.Text='VERIFICANDO…';showInviteStatus('VERIFICANDO CONVITES DISPONÍVEIS')
+ local social=game:GetService('SocialService')
+ local allowedOk,allowed=pcall(function() return social:CanSendGameInviteAsync(player) end)
+ if not allowedOk or not allowed then
+  showInviteStatus('CONVITE INDISPONÍVEL NESTA PLATAFORMA')
+  inviteButton.Text='CONVIDAR AMIGO';inviteBusy=false;return
+ end
+ local remote=RS:WaitForChild('SessionMenu')
+ local preparedOk,prepared=pcall(function() return remote:InvokeServer('invite') end)
+ if not preparedOk or type(prepared)~='table' or not prepared.ok then
+  showInviteStatus(preparedOk and (prepared and prepared.message or 'NÃO FOI POSSÍVEL PREPARAR O CONVITE') or 'FALHA DE CONEXÃO')
+  inviteButton.Text='CONVIDAR AMIGO';inviteBusy=false;return
+ end
+ local options=Instance.new('ExperienceInviteOptions')
+ options.PromptMessage='Convide um amigo para jogar ao seu lado.'
+ options.LaunchData=game:GetService('HttpService'):JSONEncode({inviterUserId=player.UserId})
+ local prompted,err=pcall(function() social:PromptGameInvite(player,options) end)
+ if prompted then showInviteStatus('ESCOLHA UM AMIGO NO CONVITE DO ROBLOX')
+ else showInviteStatus('NÃO FOI POSSÍVEL ABRIR O CONVITE') end
+ inviteButton.Text=prompted and 'CONVITE ABERTO' or 'CONVIDAR AMIGO'
+ task.delay(5,function() inviteBusy=false;if gui.Parent then inviteButton.Text='CONVIDAR AMIGO';if prompted then showInviteStatus('') end end end)
+end)
+RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message)
+ showInviteStatus(tostring(message))
+ task.delay(8,function() if gui.Parent and inviteStatus.Text==tostring(message) then showInviteStatus('') end end)
+end)
 local limit=Instance.new('UISizeConstraint');limit.MinSize=Vector2.new(230,72);limit.MaxSize=Vector2.new(470,72);limit.Parent=panel
 local edge=Instance.new('UIStroke');edge.Color=Color3.fromRGB(137,132,125);edge.Thickness=1;edge.Transparency=.78;edge.Parent=panel
 local accent=Instance.new('Frame');accent.Name='ObjectiveAccent';accent.Position=UDim2.new(0,0,0,8);accent.Size=UDim2.new(0,2,1,-16);accent.BackgroundColor3=Color3.fromRGB(177,54,57);accent.BorderSizePixel=0;accent.Parent=panel

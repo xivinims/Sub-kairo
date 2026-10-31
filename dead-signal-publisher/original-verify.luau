@@ -17,6 +17,8 @@ assert(not W.Content.Exterior.Props.Vechicles:FindFirstChild('SUV_Damaged'),'Wre
 assert(not SP.StarterCharacterScripts.Movement.Enabled and not SP.StarterCharacterScripts.BodyVisible.Enabled,'Competing locomotion/body scripts enabled')
 assert(not RS.OriginalStarterGui.Scripts.Game.MouseTilt.Enabled,'R6 joint writer active')
 assert(game:GetService('ReplicatedFirst').OriginalMissionHUD.Enabled,'Top mission HUD missing')
+local missionHudSource=game:GetService('ReplicatedFirst').OriginalMissionHUD.Source
+assert(missionHudSource:find("Name='InviteFriendButton'",1,true) and missionHudSource:find('CanSendGameInviteAsync',1,true),'Chapter 1 in-game friend invite button missing')
 assert(RS.ChapterTwoMap:IsA('ModuleScript'),'Chapter 2 map module missing')
 assert(SSS.StillHereRuntime:FindFirstChild('ChapterTwoRuntime'),'Chapter 2 gameplay runtime missing')
 assert(game:GetService('ReplicatedFirst').ChapterTwoHUD.Enabled,'Chapter 2 objective HUD missing')
