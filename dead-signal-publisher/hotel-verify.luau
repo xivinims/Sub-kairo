@@ -78,7 +78,7 @@ for _,object in ipairs(pianoRuntime:GetDescendants()) do
 end
 assert(pianoNotes>=13 and pianoCards==6,'The in-world piano keyboard or songbook is incomplete')
 local receptionist=assert(workspace:FindFirstChild('HotelActors') and workspace.HotelActors:FindFirstChild('HotelReceptionist'),'Receptionist is missing')
-assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChildOfClass('Humanoid'),'Receptionist is not interactable')
+assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChild('Head') and receptionist:FindFirstChildWhichIsA('Shirt') and receptionist:FindFirstChildWhichIsA('Pants'),'Reference receptionist model is incomplete')
 local poolSurface
 for _,part in ipairs(pool:GetDescendants()) do if part:IsA('BasePart') and part:GetAttribute('PoolSurface') then poolSurface=part;break end end
 assert(poolSurface,'Pool surface is missing')

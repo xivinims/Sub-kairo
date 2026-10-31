@@ -24,7 +24,6 @@ end
 
 local function fallbackAvatar()
 	local model=Instance.new('Model');model.Name='HotelReceptionist'
-	local humanoid=Instance.new('Humanoid');humanoid.Name='Humanoid';humanoid.DisplayName='Recepcionista';humanoid.NameDisplayDistance=30;humanoid.HealthDisplayDistance=0;humanoid.AutoRotate=false;humanoid.BreakJointsOnDeath=false;humanoid.RequiresNeck=false;humanoid.Parent=model
 	local root=setPart(Instance.new('Part'),Color3.fromRGB(35,35,35));root.Name='HumanoidRootPart';root.Size=Vector3.new(2,2,1);root.Transparency=1;root.CFrame=CFrame.new();root.Anchored=true;root.Parent=model;model.PrimaryPart=root
 	local shirtColor=Color3.fromRGB(214,225,221);local pantsColor=Color3.fromRGB(229,226,214);local skin=Color3.fromRGB(222,207,184)
 	local torso=setPart(Instance.new('Part'),shirtColor);torso.Name='Torso';torso.Size=Vector3.new(2,2,1);torso.CFrame=CFrame.new();torso.Parent=model
@@ -60,19 +59,12 @@ local function fallbackAvatar()
 		local strip=setPart(Instance.new('Part'),Color3.fromRGB(212,208,196));strip.Name='FaceBandage'..index;strip.Size=Vector3.new(.9,.13,.045);strip.Parent=model
 		weldTo(head,strip,CFrame.new(offset)*CFrame.Angles(0,0,math.rad(index==1 and 5 or -8)))
 	end
-	local animator=Instance.new('Animator');animator.Parent=humanoid
 	return model
 end
 
 local function createAvatar()
-	-- Creator-avatar models can be returned at Roblox's hidden preview origin.
-	-- The authored R6 model uses the exact clothing/accessory reference and has a stable pivot.
-	local model=fallbackAvatar()
-	model.Name='HotelReceptionist'
-	local humanoid=model:FindFirstChildOfClass('Humanoid')
-	humanoid.DisplayName='Recepcionista';humanoid.NameDisplayDistance=30;humanoid.HealthDisplayDistance=0;humanoid.AutoRotate=false;humanoid.BreakJointsOnDeath=false;humanoid.RequiresNeck=false
-	model.PrimaryPart=model:FindFirstChild('HumanoidRootPart')
-	return model
+	-- A static authored rig avoids Roblox placing non-player Humanoids at its hidden preview origin.
+	return fallbackAvatar()
 end
 
 local function findFloor(tableModel,surface,folder)
@@ -124,8 +116,7 @@ local function placeAt(model,root,target)
 	end
 	local transform=target*root.CFrame:Inverse()
 	for _,part in ipairs(parts) do part.CFrame=transform*part.CFrame end
-	root.Anchored=true
-	for _,part in ipairs(parts) do if part~=root then part.Anchored=false end end
+	for _,part in ipairs(parts) do part.Anchored=true end
 end
 
 function Receptionist.Initialize(map,interactions)
@@ -139,15 +130,14 @@ function Receptionist.Initialize(map,interactions)
 	assert(surface,'Pool felt surface missing')
 	local folder=oldFolder or Instance.new('Folder');folder.Name='HotelActors';folder.Parent=workspace
 	local model=createAvatar();model.Parent=folder
-	task.wait(.25)
 	local floor=findFloor(tableModel,surface,folder)
-	local position=floor+Vector3.new(0,2.85,0)
+	local position=floor+Vector3.new(0,3.15,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
 	local root=model.PrimaryPart or model:FindFirstChild('HumanoidRootPart')
 	assert(root,'Receptionist fallback avatar is missing its root')
 	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
 	placeAt(model,root,targetFrame)
-	root.CFrame=targetFrame
+	assert((root.Position-targetFrame.Position).Magnitude<.1,'Could not place receptionist beside the pool')
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
