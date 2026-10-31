@@ -18,12 +18,16 @@ assert(not SP.StarterCharacterScripts.Movement.Enabled and not SP.StarterCharact
 assert(not RS.OriginalStarterGui.Scripts.Game.MouseTilt.Enabled,'R6 joint writer active')
 assert(game:GetService('ReplicatedFirst').OriginalMissionHUD.Enabled,'Top mission HUD missing')
 local missionHudSource=game:GetService('ReplicatedFirst').OriginalMissionHUD.Source
-assert(missionHudSource:find("Name='InviteFriendButton'",1,true) and missionHudSource:find('CanSendGameInviteAsync',1,true),'Chapter 1 in-game friend invite button missing')
+assert(not missionHudSource:find("Name='InviteFriendButton'",1,true) and not missionHudSource:find('PromptGameInvite',1,true),'Custom friend invite button remains')
+assert(missionHudSource:find("Name='MissionObjectivePanel'",1,true) and missionHudSource:find('EPISÓDIO 1   /   OBJETIVO',1,true),'Episode 1 mission HUD is missing')
 assert(RS.ChapterTwoMap:IsA('ModuleScript'),'Chapter 2 map module missing')
 assert(SSS.StillHereRuntime:FindFirstChild('ChapterTwoRuntime'),'Chapter 2 gameplay runtime missing')
-assert(game:GetService('ReplicatedFirst').ChapterTwoHUD.Enabled,'Chapter 2 objective HUD missing')
+assert(game:GetService('ReplicatedFirst').ChapterTwoHUD.Enabled,'Episode 2 objective HUD missing')
+local episodeTwoHudSource=game:GetService('ReplicatedFirst').ChapterTwoHUD.Source
+assert(episodeTwoHudSource:find('EPISÓDIO 02',1,true) and episodeTwoHudSource:find('Tween:Create(card',1,true),'Episode 2 HUD treatment missing')
 assert(game:GetService('ReplicatedFirst').OriginalWeaponHoldPrompt.Enabled,'Touch weapon hold button missing')
 assert(RS.PlayerSettings:IsA('RemoteFunction') and RS.SessionInterface and RS.SettingsSchema,'Preferences infrastructure missing')
+assert(not RS.SessionInterface.Source:find("'CREDITS'",1,true),'Credits remain in settings')
 assert(require(RS.DemoGlobalSettings).skipStartingEvent,'Imported title sequence still enabled')
 assert(game:GetService('ReplicatedFirst').SessionLoadingClient.Enabled,'Unified loading missing')
 assert(game:GetService('ReplicatedFirst').MenuAvatarClient.Enabled,'Floating menu avatar missing')

@@ -30,7 +30,7 @@ local loadingVignette=make('Frame',{
 local loadingTitle=make('TextLabel',{
  Name='ChapterTwoLoadingTitle',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-112),Size=UDim2.new(.78,0,0,48),
- BackgroundTransparency=1,Text='CHAPTER 2  ·  AQUELE QUE NÃO ENCONTRA',
+ BackgroundTransparency=1,Text='EPISÓDIO 2  ·  AQUELE QUE NÃO ENCONTRA',
  TextColor3=Color3.fromRGB(246,239,213),Font=Enum.Font.Oswald,
  TextSize=30,TextXAlignment=Enum.TextXAlignment.Left,
  Visible=experienceChapter==2,ZIndex=3
@@ -47,7 +47,7 @@ local loadingCopy=make('TextLabel',{
 local loadingSub=make('TextLabel',{
  Name='LoadingSubtext',AnchorPoint=Vector2.new(0,1),
  Position=UDim2.new(0,28,1,-12),Size=UDim2.new(1,-56,0,18),
- BackgroundTransparency=1,Text=experienceChapter==2 and 'STILL HERE · CHAPTER 2' or 'STILL HERE · CHAPTER 1',
+ BackgroundTransparency=1,Text=experienceChapter==2 and 'STILL HERE · EPISÓDIO 2' or 'STILL HERE · EPISÓDIO 1',
  TextColor3=Color3.fromRGB(102,118,126),
  Font=Enum.Font.RobotoCondensed,TextSize=10,
  TextXAlignment=Enum.TextXAlignment.Left
@@ -90,7 +90,7 @@ local composition=make('Frame',{
  Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
  Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local by=UI.Label(composition,experienceChapter==2 and 'ARQUIVO 02  /  ESTUFA' or 'CHAPTER 1',18)
+local by=UI.Label(composition,experienceChapter==2 and 'EPISÓDIO 2  /  ESTUFA' or 'EPISÓDIO 1',18)
 by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
 by.Font=Enum.Font.GothamMedium;by.TextSize=10
 by.TextColor3=Color3.fromRGB(140,144,148)
@@ -133,7 +133,7 @@ heading.Size=UDim2.new(1,0,0,20)
 heading.TextXAlignment=Enum.TextXAlignment.Left
 heading.Font=Enum.Font.RobotoCondensed;heading.TextSize=12
 heading.TextColor3=Color3.fromRGB(232,232,222)
-local motdText=UI.Label(news,'CHAPTER 2 · A SINETA PAROU. A ESTUFA NÃO.',34)
+local motdText=UI.Label(news,'EPISÓDIO 2 · A SINETA PAROU. A ESTUFA NÃO.',34)
 motdText.Name='Chapter2Announcement'
 motdText.Position=UDim2.new(0,0,0,22)
 motdText.Size=UDim2.new(1,0,0,30)
@@ -148,7 +148,7 @@ local preview=make('ImageButton',{
  ScaleType=Enum.ScaleType.Crop,AutoButtonColor=true
 },news)
 make('UIStroke',{Color=Color3.fromRGB(133,158,150),Thickness=1,Transparency=.35},preview)
-local footer=UI.Label(news,'ABRIR CHAPTER 2  →',18)
+local footer=UI.Label(news,'ABRIR EPISÓDIO 2  →',18)
 footer.Name='ChapterTwoCallToAction'
 footer.Position=UDim2.new(0,0,1,-20)
 footer.Size=UDim2.new(1,0,0,18)
@@ -167,7 +167,7 @@ local chapterTwo=make('Frame',{
 },bg)
 make('UICorner',{CornerRadius=UDim.new(0,8)},chapterTwo)
 make('UIStroke',{Color=Color3.fromRGB(202,190,143),Thickness=1,Transparency=.35},chapterTwo)
-local chapterEyebrow=UI.Label(chapterTwo,'CHAPTER 02  /  STILL HERE',24)
+local chapterEyebrow=UI.Label(chapterTwo,'EPISÓDIO 02  /  STILL HERE',24)
 chapterEyebrow.Name='ChapterTwoEyebrow';chapterEyebrow.Position=UDim2.new(0,0,0,0);chapterEyebrow.Size=UDim2.new(1,0,0,24)
 chapterEyebrow.Font=Enum.Font.RobotoCondensed;chapterEyebrow.TextSize=13;chapterEyebrow.TextColor3=Color3.fromRGB(175,181,180)
 local chapterTitle=UI.Label(chapterTwo,'AQUELE QUE NÃO ENCONTRA',68)
@@ -250,7 +250,7 @@ local transitionShade=make('Frame',{
 local transitionHeadline=make('TextLabel',{
  Name='TransitionHeadline',Position=UDim2.new(.065,0,1,-129),
  Size=UDim2.new(.82,0,0,47),BackgroundTransparency=1,
- Text='ENTRANDO NO CAPÍTULO 2',Font=Enum.Font.Oswald,TextSize=32,
+ Text='ENTRANDO NO EPISÓDIO 2',Font=Enum.Font.Oswald,TextSize=32,
  TextColor3=Color3.fromRGB(246,239,213),TextXAlignment=Enum.TextXAlignment.Left,
  Visible=false,ZIndex=23
 },bg)
@@ -275,18 +275,14 @@ local starting=false
 local navButtons={}
 local activeNav=1
 local backButton
-local infoButton
-local creditsGui
-local busy=false;local current;local panel;local redraw
+local busy=false
 local function startPresentation(action)
  starting=true
  p:SetAttribute('MenuCameraMode','starting')
- if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil end
- if infoButton then infoButton.Visible=false end
  composition.Visible=false
  news.Visible=false
  chapterTwo.Visible=false
- if panel and panel.Gui.Parent then panel.Gui.Enabled=false end
+
  local isChapterHop=action=='chapterOne' or action=='chapterTwo'
  local showArtwork=experienceChapter==2 or action=='chapterTwo'
  transitionArt.Visible=showArtwork
@@ -297,8 +293,8 @@ local function startPresentation(action)
  transitionTrack.Visible=showArtwork
  if showArtwork then
   transitionProgress.BackgroundColor3=Color3.fromRGB(241,223,165);transitionShade.BackgroundColor3=Color3.fromRGB(3,8,7)
-  transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO AO ARQUIVO' or (isChapterHop and 'ENTRANDO NO CHAPTER 2' or 'AQUELE QUE NÃO ENCONTRA')
-  transitionDetail.Text=action=='chapterOne' and 'RETORNANDO AO PRIMEIRO CAPÍTULO…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
+  transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO AO ARQUIVO' or (isChapterHop and 'ENTRANDO NO EPISÓDIO 2' or 'AQUELE QUE NÃO ENCONTRA')
+  transitionDetail.Text=action=='chapterOne' and 'RETORNANDO AO EPISÓDIO 1…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
   if transitionTween then transitionTween:Cancel() end
   transitionProgress.Position=UDim2.new(0,0,0,0)
   transitionTween=Tween:Create(transitionProgress,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.74,0,0,0)})
@@ -308,7 +304,7 @@ local function startPresentation(action)
  elseif experienceChapter==1 then
   transitionArt.Visible=false;transitionShade.BackgroundColor3=Color3.fromRGB(7,5,6)
   transitionShade.BackgroundTransparency=1;transitionShade.Visible=true
-  transitionHeadline.Text='CHAPTER 1 · DEAD SIGNAL';transitionDetail.Text='SINTONIZANDO O SINAL…'
+  transitionHeadline.Text='EPISÓDIO 1 · DEAD SIGNAL';transitionDetail.Text='SINTONIZANDO O SINAL…'
   transitionHeadline.TextTransparency=1;transitionDetail.TextTransparency=1
   transitionHeadline.Visible=true;transitionDetail.Visible=true
   transitionTrack.BackgroundTransparency=1;transitionTrack.Visible=true
@@ -331,7 +327,7 @@ end
 local function restorePresentation()
  if not starting then return end
  starting=false
- p:SetAttribute('MenuCameraMode',panel and panel.Gui.Parent and 'close' or 'wide')
+ p:SetAttribute('MenuCameraMode','wide')
  startLabel.Visible=false
  transitionArt.Visible=false;transitionShade.Visible=false
  transitionHeadline.Visible=false;transitionDetail.Visible=false;transitionTrack.Visible=false
@@ -339,28 +335,24 @@ local function restorePresentation()
  transitionShade.BackgroundColor3=Color3.fromRGB(3,8,7);transitionShade.BackgroundTransparency=.40
  transitionHeadline.TextTransparency=0;transitionDetail.TextTransparency=0
  transitionTrack.BackgroundTransparency=.55;transitionProgress.BackgroundColor3=Color3.fromRGB(241,223,165)
- if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
+
  composition.Visible=not p:GetAttribute('InterfaceOpen')
  news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
  chapterTwo.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==2
- if infoButton then infoButton.Visible=experienceChapter==2 and not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
  composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
- if infoButton then infoButton.Visible=experienceChapter==2 and visible end
 end)
 local function request(action,value)
  if busy then return end
  if action=='solo' then value={chapter=selectedChapter}
- elseif action=='create' and type(value)=='table' then value.chapter=selectedChapter
- elseif action=='state' then value={chapter=selectedChapter}
- elseif action=='join' and type(value)=='string' then value={code=value,chapter=selectedChapter} end
+ elseif action=='state' then value={chapter=selectedChapter} end
  busy=true
  local launching=action=='solo' or action=='start' or action=='chapterTwo' or action=='chapterOne'
- local target=panel and panel.Gui.Parent and panel.Status or status
+ local target=status
  if launching then
   local saved,err=UI.Save()
   if not saved then target.Text=err;busy=false;return end
@@ -373,7 +365,6 @@ local function request(action,value)
  if not ok or type(result)~='table' then
   restorePresentation();target.Text='Falha de conexão. Tente novamente.';return
  end
- current=result.data or current
  if not result.ok then restorePresentation() end
  target.Text=result.message or ''
  if result.ok and launching then
@@ -385,43 +376,6 @@ local function request(action,value)
    end
   end)
  end
- if panel and panel.Gui.Parent and redraw then redraw() end
-end
-local function groups()
- panel=UI.Panel('MULTIPLAYER');local left=make('Frame',{Position=UDim2.fromScale(.15,0),Size=UDim2.fromScale(.32,1),BackgroundTransparency=1},panel.Content);local tabs=UI.List(left)
- local right=make('Frame',{Position=UDim2.fromScale(.50,0),Size=UDim2.fromScale(.50,1),BackgroundColor3=Color3.fromRGB(8,20,24),BackgroundTransparency=.20,BorderSizePixel=0},panel.Content);local rows=UI.List(right)
- local view='list';local capacity=6;local friends=false
- redraw=function()
-  if not panel or not panel.Gui.Parent then return end
-  for _,c in ipairs(rows:GetChildren()) do if c:IsA('GuiObject') then c:Destroy() end end
-  local party=current and current.party
-  if party then
-   UI.Label(rows,'GRUPO '..party.code..' · '..#party.members..'/'..(party.capacity or 6),44)
-   for _,member in ipairs(party.members) do UI.Label(rows,member.name..(member.id==party.leader and ' · líder' or ''),44) end
-   if party.leader==p.UserId then UI.Button(rows,'INICIAR PARTIDA',function() request('start') end) end
-   UI.Button(rows,'SAIR DO GRUPO',function() request('leave') end)
-  elseif view=='create' then
-   UI.Label(rows,'CRIAR GRUPO',44)
-   UI.Button(rows,'Limite: '..capacity..' jogadores',function() capacity=capacity==6 and 2 or capacity+1;redraw() end)
-   UI.Button(rows,friends and 'Acesso: somente amigos' or 'Acesso: todos',function() friends=not friends;redraw() end)
-   UI.Button(rows,'CRIAR',function() request('create',{capacity=capacity,friendsOnly=friends}) end)
-  elseif view=='code' then
-   UI.Label(rows,'ENTRAR COM CÓDIGO',44)
-   local code=make('TextBox',{Size=UDim2.new(1,0,0,48),Text='',PlaceholderText='CÓDIGO DO GRUPO',ClearTextOnFocus=false,Font=Enum.Font.Garamond,TextSize=20,TextColor3=Color3.new(1,1,1),BackgroundColor3=Color3.fromRGB(25,36,35),BorderSizePixel=0},rows)
-   UI.Button(rows,'ENTRAR',function() request('join',code.Text) end)
-  else
-   UI.Label(rows,'GRUPOS DESTE LOBBY',44)
-   local available=current and current.groups or {}
-   local matching={};for _,g in ipairs(available) do if g.chapter==selectedChapter then table.insert(matching,g) end end
-   if #matching==0 then UI.Label(rows,'Nenhum grupo deste capítulo esperando. Crie um para chamar outras pessoas.',90) end
-   for _,g in ipairs(matching) do UI.Button(rows,g.name..' · '..g.count..'/'..g.capacity..(g.friendsOnly and ' · amigos' or ''),function() request('join',g.code) end) end
-  end
- end
- UI.Button(tabs,'GRUPOS',function() view='list';redraw();request('state') end)
- UI.Button(tabs,'CRIAR',function() view='create';redraw() end)
- UI.Button(tabs,'CÓDIGO',function() view='code';redraw() end)
- for _,b in ipairs(tabs:GetChildren()) do if b:IsA('TextButton') then b.Font=Enum.Font.Oswald;b.TextSize=28;b.TextXAlignment=Enum.TextXAlignment.Right end end
- redraw();task.spawn(request,'state')
 end
 -- Reference-style text-only actions, red selection marker and subtle easing.
 -- Buttons retain generous transparent tap zones for iPhone touch.
@@ -487,9 +441,8 @@ local function addNavigation(text,action)
  return btn
 end
 preview.Activated:Connect(function() request('chapterTwo') end)
-backButton=addNavigation('VOLTAR AO CHAPTER 1',function() request('chapterOne') end)
+backButton=addNavigation('VOLTAR AO EPISÓDIO 1',function() request('chapterOne') end)
 addNavigation('JOGAR (SOLO)',function() request('solo') end)
-if experienceChapter==2 then addNavigation('MULTIPLAYER',groups) end
 addNavigation('CONFIGURAÇÕES',UI.OpenSettings)
 backButton.Visible=experienceChapter==2
 layoutNavigation()
@@ -504,89 +457,6 @@ UIS.InputBegan:Connect(function(input,processed)
   navButtons[activeNav].action()
  end
 end)
--- An unobtrusive information icon, anchored to the lower-left safe area.
--- It replaces the old full-size 'Créditos' entry in the main menu.
-infoButton=make('TextButton',{
- Name='CreditsInfoButton',AnchorPoint=Vector2.new(0,1),
- Position=UDim2.new(1,-57,1,-23),Size=UDim2.fromOffset(38,38),
- BackgroundColor3=Color3.fromRGB(7,17,22),BackgroundTransparency=.28,
- BorderSizePixel=0,Text='i',Font=Enum.Font.GothamBold,TextSize=22,
- TextColor3=Color3.fromRGB(225,231,232),AutoButtonColor=true,ZIndex=5
-},bg)
-make('UICorner',{CornerRadius=UDim.new(1,0)},infoButton)
-make('UIStroke',{Color=Color3.fromRGB(123,151,166),Thickness=1,Transparency=.33},infoButton)
-
-local function openModelCredits()
- if starting then return end
- if creditsGui and creditsGui.Parent then creditsGui:Destroy();creditsGui=nil;return end
- local overlay=make('ScreenGui',{Name='ModelCreditsOverlay',ResetOnSpawn=false,
-  IgnoreGuiInset=false,DisplayOrder=1600,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},p:WaitForChild('PlayerGui'))
- creditsGui=overlay
- local dim=make('TextButton',{Name='CloseOutside',Size=UDim2.fromScale(1,1),
-  Text='',AutoButtonColor=false,BorderSizePixel=0,
-  BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.48},overlay)
- local card=make('Frame',{Name='ModelCreditsCard',AnchorPoint=Vector2.new(.5,.5),
-  Position=UDim2.fromScale(.5,.5),Size=UDim2.fromScale(.88,.77),
-  BackgroundColor3=Color3.fromRGB(8,15,20),BackgroundTransparency=.05,
-  BorderSizePixel=0,ClipsDescendants=true},overlay)
- make('UISizeConstraint',{MaxSize=Vector2.new(520,640),MinSize=Vector2.new(255,300)},card)
- make('UICorner',{CornerRadius=UDim.new(0,12)},card)
- make('UIStroke',{Color=Color3.fromRGB(100,137,150),Thickness=1,Transparency=.4},card)
- make('TextLabel',{Name='CreditsTitle',BackgroundTransparency=1,
-  Position=UDim2.new(0,18,0,16),Size=UDim2.new(1,-80,0,39),
-  Text='CREDITS',TextXAlignment=Enum.TextXAlignment.Left,
-  Font=Enum.Font.Oswald,TextSize=30,TextColor3=Color3.fromRGB(231,233,233)},card)
- local close=make('TextButton',{Name='CloseCredits',AnchorPoint=Vector2.new(1,0),
-  Position=UDim2.new(1,-14,0,15),Size=UDim2.fromOffset(37,37),
-  Text='×',Font=Enum.Font.GothamBold,TextSize=26,
-  TextColor3=Color3.fromRGB(233,240,239),
-  BackgroundColor3=Color3.fromRGB(27,43,51),BackgroundTransparency=.3,
-  BorderSizePixel=0},card)
- make('UICorner',{CornerRadius=UDim.new(0,8)},close)
- local scroll=UI.List(card)
- scroll.Name='ModelCreditsScroll'
- scroll.Position=UDim2.new(0,15,0,71)
- scroll.Size=UDim2.new(1,-30,1,-85)
- scroll.ScrollBarThickness=2
- local function addSource(section,project,author,extra)
-  local block=make('Frame',{Name='CreditEntry',Size=UDim2.new(1,-8,0,extra and 96 or 75),
-   BackgroundColor3=Color3.fromRGB(20,33,41),BackgroundTransparency=.37,BorderSizePixel=0},scroll)
-  make('UICorner',{CornerRadius=UDim.new(0,7)},block)
-  local category=UI.Label(block,string.upper(section),18)
-  category.Position=UDim2.new(0,12,0,5);category.Size=UDim2.new(1,-24,0,18)
-  category.Font=Enum.Font.GothamBold;category.TextSize=10;category.TextColor3=Color3.fromRGB(132,168,185)
-  local name=UI.Label(block,project,22)
-  name.Position=UDim2.new(0,12,0,23);name.Size=UDim2.new(1,-24,0,23)
-  name.TextSize=19;name.TextColor3=Color3.fromRGB(235,239,240)
-  local creator=UI.Label(block,'Criador: '..author,19)
-  creator.Position=UDim2.new(0,12,0,49);creator.Size=UDim2.new(1,-24,0,18)
-  creator.Font=Enum.Font.Gotham;creator.TextSize=12;creator.TextColor3=Color3.fromRGB(179,201,208)
-  if extra then
-   local detail=UI.Label(block,extra,18)
-   detail.Position=UDim2.new(0,12,0,71);detail.Size=UDim2.new(1,-24,0,18)
-   detail.TextSize=11;detail.Font=Enum.Font.Gotham
-   detail.TextColor3=Color3.fromRGB(149,170,177)
-  end
- end
- -- Creator names confirmed via Roblox MarketplaceService on 2026-10-30.
- addSource('Mansão','The Mystery of Duvall Drive','Alpha Strike Group')
- addSource('Buraco negro','Beyond the Dark','Alpha Strike Group','Efeitos do buraco negro: Chad Foxglove')
- addSource('Sistemas','FPS System Demo','Bobbity Games')
- addSource('Áudio ambiente','Massive Black Hole','APMOfficial')
- addSource('Emote','Low Gravity','Matching Anime Outfits')
- local note=UI.Label(scroll,'Interface e adaptação: CH_CKZ2N.\\nContextActionUtility: PseudoPerson (CC BY).\\nProjeto independente, sem afiliação oficial com os criadores citados.',98)
- note.Name='CreditsDisclaimer';note.Font=Enum.Font.Gotham;note.TextSize=11
- note.TextColor3=Color3.fromRGB(150,170,178)
- note.TextXAlignment=Enum.TextXAlignment.Center
- local function dismiss()
-  if creditsGui==overlay then creditsGui=nil end
-  if overlay.Parent then overlay:Destroy() end
- end
- dim.Activated:Connect(dismiss)
- close.Activated:Connect(dismiss)
-end
-infoButton.Activated:Connect(openModelCredits)
-infoButton.Visible=false
 -- Do not preload the entire world or rely on RequestQueueSize. Preload the
 -- source black-hole meshes/textures and the existing menu audio only.
 local assetsDone=false
@@ -663,7 +533,6 @@ task.spawn(function()
  composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
- infoButton.Visible=visible and experienceChapter==2
  p:SetAttribute('MenuReady',true)
  task.spawn(function() request('state') end)
 end)
@@ -672,6 +541,5 @@ RS:WaitForChild('SessionNotice').OnClientEvent:Connect(function(message)
  busy=false
  restorePresentation()
  status.Text=message
- if panel and panel.Gui.Parent then panel.Status.Text=message end
+
 end)
-task.spawn(function() while gui.Parent do task.wait(5);if panel and panel.Gui.Parent and current and current.party and not busy then request('state') end end end)

@@ -15,7 +15,7 @@ W:SetAttribute('ChapterTwoFragments',0)
 W:SetAttribute('ChapterTwoGeneratorActive',false)
 W:SetAttribute('ChapterTwoComplete',false)
 local function objective()
- if complete then return 'SINAL RESTABELECIDO · CAPÍTULO CONCLUÍDO' end
+ if complete then return 'SINAL RESTABELECIDO · EPISÓDIO CONCLUÍDO' end
  if not powered then
   if count<3 then return 'RECUPERE OS FRAGMENTOS DE MEMÓRIA · '..count..'/3' end
   return 'LEVE OS FRAGMENTOS AO GERADOR DA ESTUFA'

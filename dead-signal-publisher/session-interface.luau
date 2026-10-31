@@ -259,13 +259,13 @@ local function openChapterOneSettings()
  end)
  footerButton('BackSettings','VOLTAR',.69,function() closeSettings(true) end)
  panel.Gui.Destroying:Connect(function() closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect() end)
- panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO CHAPTER 1' or 'CARREGANDO CONFIGURAÇÕES…'
+ panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO EPISÓDIO 1' or 'CARREGANDO CONFIGURAÇÕES…'
  if not M.Loaded then
   task.spawn(function()
    local ok=M.Load()
    if closed or not panel.Gui.Parent then return end
    if ok then
-    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO CHAPTER 1'
+    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO EPISÓDIO 1'
     for _,refresh in ipairs(refreshers) do refresh() end
    else panel.Status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
   end)
@@ -353,8 +353,7 @@ function M.OpenSettings()
               {'Shadows','shadows',nil,nil,nil,'Dynamic shadows during a mission.'},
               {'Bloom','bloom',nil,nil,nil,'Cinematic glow during a mission.'}}},
   {'AUDIO',{{'Master volume','volume',0,1,.1,'Menu, environment and effects volume.'}}},
-  {'LANGUAGE',{}},
-  {'CREDITS',{}}
+  {'LANGUAGE',{}}
  }
  local tabsByName={}
  local selected
@@ -391,7 +390,7 @@ function M.OpenSettings()
  local function drawSettings(group)
   if closed or not panel.Gui.Parent then return end
   selected=group[1]
-  if group[1]=='LANGUAGE' or group[1]=='CREDITS' then
+  if group[1]=='LANGUAGE' then
    panel.Status.Text='Back to return to the menu.'
   else
    panel.Status.Text='Changes apply when the mission starts.'
@@ -418,15 +417,11 @@ function M.OpenSettings()
    infoRow(10,'KEYBOARD / CONTROLLER','WASD or stick — move   ·   E / X — interact   ·   ESC / Start — menu')
    infoRow(11,'TOUCH','Use the on-screen hand button to hold and pick up weapons.')
   elseif group[1]=='LANGUAGE' then
-   infoRow(1,'TEXT','Português · Chapter 1')
-   infoRow(2,'SUBTITLES','Português · Chapter 1')
+   infoRow(1,'TEXT','Português · Episódio 1')
+   infoRow(2,'SUBTITLES','Português · Episódio 1')
    infoRow(3,'DIALOGUE','Original voice track')
-   infoRow(4,'CHAPTER 2','English language package is planned for “Aquele que não encontra”.')
-  elseif group[1]=='CREDITS' then
-   infoRow(1,'STILL HERE','Independent horror experience')
-   infoRow(2,'INTERFACE','CH_CKZ2N')
-   infoRow(3,'ASSET CREDITS','Original source creators are listed in the menu info panel.')
-  end
+   infoRow(4,'EPISÓDIO 2','Pacote de idioma em inglês planejado para “Aquele que não encontra”.')
+    end
   for i,spec in ipairs(group[2]) do
    local boolean=typeof(M.Settings[spec[2]])=='boolean'
    local height=boolean and 73 or 99
