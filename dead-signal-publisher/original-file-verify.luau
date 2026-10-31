@@ -28,7 +28,7 @@ assert(menuSource:find("Name='StoryStyleNavigation'",1,true),'Reference-style st
 assert(menuSource:find("Name='RedSelectionMarker'",1,true),'Photo-style highlighted selection missing')
 assert(menuSource:find("Name='OperatorBriefing'",1,true),'Bottom-left message of the day panel missing')
 assert(menuSource:find("UI.Label(news,'MESSAGE OF THE DAY',20)",1,true),'Message of the day title missing')
-assert(menuSource:find("news.Position=UDim2.fromScale(.97,landscape and .055 or .52)",1,true),'Mobile MOTD is not top-right')
+assert(menuSource:find("news.Position=UDim2.fromScale(.97,landscape and .06 or .52)",1,true),'Mobile MOTD is not top-right')
 assert(menuSource:find("news.Visible=visible and selectedChapter==1",1,true),'MOTD is shown on Chapter 2')
 assert(menuSource:find("Name='BriefingPreview'",1,true),'Chapter 2 art card missing')
 assert(menuSource:find("Image='rbxassetid://",1,true),'Uploaded Chapter 2 artwork ID missing')
