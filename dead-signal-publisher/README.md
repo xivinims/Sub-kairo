@@ -1,18 +1,27 @@
-# Still Here — Mistério
+# Still Here — mapa do hotel e GUI do Mistério
 
-Esta branch prepara uma experiência única de exploração no casarão original.
+O mapa enviado e a interface da antiga mansão Mistério são pacotes independentes.
 
-- Universo Roblox principal: `9421311218`
-- Place: `118064584465155`
-- Branch: `dead-signal-publisher`
-- Build: `still-here-mystery-only-v1`
+| Pacote | Arquivo | Destino no jogo |
+| --- | --- | --- |
+| GUI original da mansão | `assets/ui/mystery-interface.rbxm` | `ReplicatedStorage.MysteryInterface`, copiada para `PlayerGui` |
+| Mapa enviado | `assets/hotel/1940sHotelLobby.rbxm` | `ServerStorage.HotelMap`, carregado em `Workspace.HotelMap` |
 
-A pessoa entra no casarão após uma tela de carregamento em português. A versão não tem menu principal personalizado, créditos na tela, fluxo de grupo, armas ou câmera em primeira pessoa. Os gatilhos de história, o ritual, a nuvem sobre a casa e o carro batido são removidos. A porta principal abre sem a chave, e as cadeiras existentes recebem a opção `Sentar`.
+Os sete templates originais conservam imagens, posições e tipografia. A interface ativa usa HUD, vinheta e indicador de interação. Os botões originais de lanterna e interação funcionam sobre o mapa novo, com rótulos em português. As configurações usam as preferências já existentes. A câmera é em terceira pessoa, com tela de carregamento na entrada. Não há menu personalizado, botão de multiplayer, créditos visíveis ou armas. Os convites padrão do Roblox continuam disponíveis.
 
-O botão de pausa e os convites padrão do Roblox continuam disponíveis. As configurações do jogo ficam no botão de engrenagem.
+O cenário conserva 8.714 peças, os materiais incluídos, efeitos de iluminação, sons e dez pontos de nascimento. Os quatro conjuntos de porta que já traziam dobradiças recebem interação por botão, clique ou prompt. A arma e seu gerador são removidos do cenário montado. Scripts embutidos são substituídos pelo controlador revisado. Peças decorativas soltas ficam ancoradas; posições, dimensões, malhas e cores são preservadas.
 
-## Build e publicação
+O arquivo recebido contém quatro nomes de materiais sem definição: `Bricks 02`, `Marble Speckled`, `Metal` e `Wood Floor Rough MV`. As referências são mantidas e o Roblox usa o material nativo correspondente quando a definição falta.
 
-`publish.mjs --dry-run` confere se os arquivos da versão de um único mapa estão presentes. O publicador monta, verifica e publica somente o Place do Mistério. Se o Universe separado da estufa ainda estiver ativo, ele o desativa depois da verificação; se uma etapa posterior falhar, a recuperação tenta reativá-lo junto com o rollback do Place principal.
+## Montagem e conferência
 
-A publicação não roda quando apenas os arquivos-fonte mudam. Ela é iniciada pela atualização de `release.trigger` após a revisão.
+- Universo `9421311218`; Place `118064584465155`; branch `dead-signal-publisher`.
+- Build `still-here-hotel-mystery-ui-v1`.
+- `node dead-signal-publisher/publish.mjs --dry-run` verifica fontes e hashes dos dois pacotes.
+- `hotel-assemble.luau` monta o Place sem a geometria ou os controladores de história da antiga mansão. A GUI está salva no repositório e pode ser reutilizada em outro cenário.
+- `hotel-file-verify.luau` compara o desenho da GUI com o original do Mistério, a geometria com o arquivo recebido e os controladores com as fontes da branch. Transformações admitem somente a precisão de serialização de 0,0001 stud/componente.
+- `hotel-verify.luau` confere os pacotes, nascimentos e abertura/fechamento das portas em uma sessão isolada do motor Roblox.
+- `asset-probe.trigger` com `hotel-preview` executa a conferência sem publicar.
+- `release.trigger` inicia a publicação depois da revisão. O publicador guarda o Place anterior, verifica e baixa a versão publicada, confere seus arquivos e reinicia os servidores. Uma falha durante a publicação aciona recuperação.
+
+A conferência no motor e nos arquivos não substitui uma avaliação visual em cliente Roblox ou celular.

@@ -66,7 +66,6 @@ ${verify}`;
 }
 export async function runHotelRelease({publish:shouldPublish=false}={}){
  await prepareHotel();run('hotel-assemble.luau');
- if(!shouldPublish)console.log('MYSTERY_UI_EXPORT '+(await fs.readFile('/tmp/still-here-mystery-ui.rbxm')).toString('base64'));
  await fs.copyFile('/tmp/still-here-hotel.rbxl','/tmp/still-here-hotel-verified.rbxl');
  run('hotel-file-verify.luau');
  const verify=await read('hotel-verify.luau');
@@ -77,8 +76,9 @@ export async function runHotelRelease({publish:shouldPublish=false}={}){
  console.log('HOTEL_PREFLIGHT '+JSON.stringify(checked));
  if(!shouldPublish){console.log('HOTEL_PREVIEW_COMPLETE '+JSON.stringify({published:false,verified:true}));return;}
  await download('/tmp/still-here-hotel-rollback.rbxl');
- let candidate;
+ let candidate;let publicationAttempted=false;
  try{
+  publicationAttempted=true;
   candidate=await publish(await fs.readFile('/tmp/still-here-hotel.rbxl'));
   if(!candidate.versionNumber)throw Error('Published version missing');
   console.log('HOTEL_PUBLISHED '+JSON.stringify(candidate));
@@ -88,7 +88,7 @@ export async function runHotelRelease({publish:shouldPublish=false}={}){
   await restart();
   console.log('HOTEL_RELEASE_COMPLETE '+JSON.stringify({...result,restarted:true}));
  }catch(error){
-  if(candidate){
+  if(publicationAttempted){
    const recovery=await publish(await fs.readFile('/tmp/still-here-hotel-rollback.rbxl'));
    await restart();console.error('HOTEL_ROLLBACK '+JSON.stringify(recovery));
   }

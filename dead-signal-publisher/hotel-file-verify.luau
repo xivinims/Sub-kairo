@@ -53,7 +53,9 @@ for _,d in ipairs(map:GetDescendants()) do
  if d:IsA('BasePart') then
   parts+=1
   local expected=assert(originalParts[d:GetAttribute('HotelSourceId')],'Unexpected map geometry')
-  for _,property in ipairs({'CFrame','Size','Color','Material','MaterialVariant','Transparency','CanCollide'}) do
+  local actualCF={d.CFrame:GetComponents()};local expectedCF={expected.CFrame:GetComponents()}
+  for i,value in ipairs(actualCF) do assert(math.abs(value-expectedCF[i])<.0001,'Map transform changed '..d:GetFullName()) end
+  for _,property in ipairs({'Size','Color','Material','MaterialVariant','Transparency','CanCollide'}) do
    assert(d[property]==expected[property],'Map source changed '..d:GetFullName()..'.'..property)
   end
   if d:IsA('MeshPart') then

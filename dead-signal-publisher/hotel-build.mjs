@@ -7,6 +7,8 @@ export const lune='/tmp/still-here-hotel-lune/lune';
 export async function prepareHotel(){
  const map=await fs.readFile(new URL('./assets/hotel/1940sHotelLobby.rbxm',import.meta.url));
  if(createHash('sha256').update(map).digest('hex')!=='03520ce828d3a652b58133424577df2fd1125497dc2a40d2b9fdc45b786b3700')throw Error('Supplied hotel model checksum mismatch');
+ const ui=await fs.readFile(new URL('./assets/ui/mystery-interface.rbxm',import.meta.url));
+ if(createHash('sha256').update(ui).digest('hex')!=='6e4b2f1e7454cc4b69148ef99c0e55497779e0d2944178c568ff02fc9641dd8f')throw Error('Original Mystery UI package checksum mismatch');
  const key=process.env.ROBLOX_API_KEY;
  if(!key)throw Error('Missing ROBLOX_API_KEY');
  const delivery=await fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/7902470429',{headers:{'x-api-key':key},signal:AbortSignal.timeout(60000)});

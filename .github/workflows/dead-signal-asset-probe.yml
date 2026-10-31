@@ -16,9 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: dead-signal-publisher
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Run authorized asset inspection or place maintenance
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/asset-probe.mjs
+

@@ -2,14 +2,14 @@ local fs=require('@lune/fs')
 local R=require('@lune/roblox')
 local luau=require('@lune/luau')
 local serde=require('@lune/serde')
-local mansion=R.deserializePlace(fs.readFile('/tmp/asset-7902470429.rbxl'))
 local dm=R.Instance.new('DataModel')
 local W=dm:GetService('Workspace')
 local RS=dm:GetService('ReplicatedStorage')
 local SS=dm:GetService('ServerStorage')
 local RF=dm:GetService('ReplicatedFirst')
 local SP=dm:GetService('StarterPlayer')
-local interface=require('./mystery-ui-extract')(mansion)
+local interface=R.deserializeModel(fs.readFile('assets/ui/mystery-interface.rbxm'))[1]
+assert(interface and interface.Name=='MysteryInterface','Separated Mystery UI package missing')
 -- Export the interface before attaching a map or any runtime controller.
 fs.writeFile('/tmp/still-here-mystery-ui.rbxm',R.serializeModel({interface}))
 interface.Parent=RS

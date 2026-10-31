@@ -23,15 +23,18 @@ jobs:
       - name: Checkout dead signal publisher branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: dead-signal-publisher
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Validate publisher syntax
         run: |
           node --check dead-signal-publisher/publish.mjs
-          node --check dead-signal-publisher/original-native-publish.mjs
+          node --check dead-signal-publisher/hotel-native-publish.mjs
+          node --check dead-signal-publisher/hotel-build.mjs
+          node dead-signal-publisher/publish.mjs --dry-run
 
-      - name: Publish and verify the mystery mansion
+      - name: Publish the supplied hotel with the separated Mystery interface
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/publish.mjs
+
