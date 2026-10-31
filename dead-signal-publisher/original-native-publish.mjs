@@ -48,6 +48,12 @@ const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.
 const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
 await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
 const chapterTwoArtId=process.env.CHAPTER_TWO_ART_ASSET_ID||'88050012978358';
+const artMarker='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__';
+for(const file of ['session-menu-client.luau','session-loading-client.luau']){
+ const path=new URL('./'+file,import.meta.url);const source=await fs.readFile(path,'utf8');
+ if(!source.includes(artMarker))throw new Error('Episode 1 artwork marker missing from '+file);
+ await fs.writeFile(path,source.replaceAll(artMarker,'rbxassetid://'+chapterTwoArtId));
+}
 console.log(JSON.stringify({chapterTwoArtworkReused:true,assetId:chapterTwoArtId}));
 const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['run','original-assemble.luau'],{cwd,stdio:'inherit'});
 execFileSync('/tmp/islands-lune/lune',['run','chapter-two-place.luau'],{cwd,stdio:'inherit'});
