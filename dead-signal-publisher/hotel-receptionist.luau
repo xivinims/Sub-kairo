@@ -74,6 +74,11 @@ local function createR6Rig()
 		end
 	end
 	description:Destroy()
+	for _,object in ipairs(model:GetDescendants()) do
+		if object:IsA('BaseScript') or object:IsA('Tool') or object:IsA('ProximityPrompt') or object:IsA('ClickDetector') then
+			object:Destroy()
+		end
+	end
 	local humanoid=assert(model:FindFirstChildOfClass('Humanoid'),'Created receptionist has no Humanoid')
 	assert(humanoid.RigType==Enum.HumanoidRigType.R6,'Created receptionist is not R6')
 	return model,humanoid
