@@ -4,7 +4,7 @@ local PANTS=6296971062
 
 local function setPart(part,color,material)
 	part.Color=color;part.Material=material or Enum.Material.SmoothPlastic
-	part.Anchored=false;part.CanCollide=false;part.CanTouch=false;part.CanQuery=true
+	part.Anchored=true;part.CanCollide=false;part.CanTouch=false;part.CanQuery=true
 	part.TopSurface=Enum.SurfaceType.Smooth;part.BottomSurface=Enum.SurfaceType.Smooth
 	return part
 end
@@ -14,16 +14,17 @@ local function positionAt(base,part,offset)
 	return part
 end
 
-local function fallbackAvatar()
+local function fallbackAvatar(origin)
+	origin=origin or CFrame.new()
 	local model=Instance.new('Model');model.Name='HotelReceptionist'
-	local root=setPart(Instance.new('Part'),Color3.fromRGB(35,35,35));root.Name='ReceptionistAnchor';root.Size=Vector3.new(2,2,1);root.Transparency=1;root.CFrame=CFrame.new();root.Anchored=true;root.Parent=model;model.PrimaryPart=root
+	local root=setPart(Instance.new('Part'),Color3.fromRGB(35,35,35));root.Name='ReceptionistAnchor';root.Size=Vector3.new(2,2,1);root.Transparency=1;root.CFrame=origin;root.Parent=model;model.PrimaryPart=root
 	local shirtColor=Color3.fromRGB(214,225,221);local pantsColor=Color3.fromRGB(229,226,214);local skin=Color3.fromRGB(222,207,184)
-	local torso=setPart(Instance.new('Part'),shirtColor);torso.Name='Torso';torso.Size=Vector3.new(2,2,1);torso.CFrame=CFrame.new();torso.Parent=model
-	local head=setPart(Instance.new('Part'),Color3.fromRGB(20,20,21));head.Name='Head';head.Size=Vector3.new(2,1,1);head.CFrame=CFrame.new(0,1.5,0);head.Parent=model
-	local rightArm=setPart(Instance.new('Part'),shirtColor);rightArm.Name='Right Arm';rightArm.Size=Vector3.new(1,2,1);rightArm.CFrame=CFrame.new(1.5,0,0);rightArm.Parent=model
-	local leftArm=setPart(Instance.new('Part'),shirtColor);leftArm.Name='Left Arm';leftArm.Size=Vector3.new(1,2,1);leftArm.CFrame=CFrame.new(-1.5,0,0);leftArm.Parent=model
-	local rightLeg=setPart(Instance.new('Part'),pantsColor);rightLeg.Name='Right Leg';rightLeg.Size=Vector3.new(1,2,1);rightLeg.CFrame=CFrame.new(.5,-2,0);rightLeg.Parent=model
-	local leftLeg=setPart(Instance.new('Part'),pantsColor);leftLeg.Name='Left Leg';leftLeg.Size=Vector3.new(1,2,1);leftLeg.CFrame=CFrame.new(-.5,-2,0);leftLeg.Parent=model
+	local torso=setPart(Instance.new('Part'),shirtColor);torso.Name='Torso';torso.Size=Vector3.new(2,2,1);torso.CFrame=origin;torso.Parent=model
+	local head=setPart(Instance.new('Part'),Color3.fromRGB(20,20,21));head.Name='Head';head.Size=Vector3.new(2,1,1);head.CFrame=origin*CFrame.new(0,1.5,0);head.Parent=model
+	local rightArm=setPart(Instance.new('Part'),shirtColor);rightArm.Name='Right Arm';rightArm.Size=Vector3.new(1,2,1);rightArm.CFrame=origin*CFrame.new(1.5,0,0);rightArm.Parent=model
+	local leftArm=setPart(Instance.new('Part'),shirtColor);leftArm.Name='Left Arm';leftArm.Size=Vector3.new(1,2,1);leftArm.CFrame=origin*CFrame.new(-1.5,0,0);leftArm.Parent=model
+	local rightLeg=setPart(Instance.new('Part'),pantsColor);rightLeg.Name='Right Leg';rightLeg.Size=Vector3.new(1,2,1);rightLeg.CFrame=origin*CFrame.new(.5,-2,0);rightLeg.Parent=model
+	local leftLeg=setPart(Instance.new('Part'),pantsColor);leftLeg.Name='Left Leg';leftLeg.Size=Vector3.new(1,2,1);leftLeg.CFrame=origin*CFrame.new(-.5,-2,0);leftLeg.Parent=model
 	local shirt=Instance.new('Shirt');shirt.ShirtTemplate='rbxassetid://'..SHIRT;shirt.Parent=model
 	local pants=Instance.new('Pants');pants.PantsTemplate='rbxassetid://'..PANTS;pants.Parent=model
 	local colors=Instance.new('BodyColors');colors.HeadColor3=skin;colors.LeftArmColor3=shirtColor;colors.RightArmColor3=shirtColor;colors.TorsoColor3=shirtColor;colors.LeftLegColor3=pantsColor;colors.RightLegColor3=pantsColor;colors.Parent=model
@@ -48,9 +49,9 @@ local function fallbackAvatar()
 	return model
 end
 
-local function createAvatar()
+local function createAvatar(origin)
 	-- A static authored rig avoids Roblox placing non-player Humanoids at its hidden preview origin.
-	return fallbackAvatar()
+	return fallbackAvatar(origin)
 end
 
 local function findFloor(tableModel,surface,folder)
@@ -95,20 +96,6 @@ local function addNameplate(model,root)
 	local lamp=Instance.new('PointLight');lamp.Name='ReceptionistWarmLight';lamp.Color=Color3.fromRGB(255,218,164);lamp.Brightness=.28;lamp.Range=8;lamp.Shadows=false;lamp.Parent=root
 end
 
-local function placeAt(model,root,target)
-	local parts={}
-	for _,object in ipairs(model:GetDescendants()) do
-		if object:IsA('BasePart') then object.Anchored=true;table.insert(parts,object) end
-	end
-	local origin=root.CFrame
-	local relative={}
-	for _,part in ipairs(parts) do relative[part]=origin:ToObjectSpace(part.CFrame) end
-	for _,part in ipairs(parts) do part.CFrame=target*relative[part] end
-	model:PivotTo(target)
-	root.Position=target.Position
-	root.CFrame=target
-end
-
 function Receptionist.Initialize(map,interactions)
 	local oldFolder=workspace:FindFirstChild('HotelActors')
 	if oldFolder and oldFolder:FindFirstChild('HotelReceptionist') then return oldFolder.HotelReceptionist end
@@ -119,14 +106,13 @@ function Receptionist.Initialize(map,interactions)
 	end
 	assert(surface,'Pool felt surface missing')
 	local folder=oldFolder or Instance.new('Folder');folder.Name='HotelActors';folder.Parent=workspace
-	local model=createAvatar();model.Parent=folder
 	local floor=findFloor(tableModel,surface,folder)
 	local position=floor+Vector3.new(0,3.15,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
+	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
+	local model=createAvatar(targetFrame);model.Parent=folder
 	local root=model.PrimaryPart or model:FindFirstChild('ReceptionistAnchor')
 	assert(root,'Receptionist fallback avatar is missing its root')
-	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
-	placeAt(model,root,targetFrame)
 	assert((root.Position-targetFrame.Position).Magnitude<.1,'Could not place receptionist beside the pool: '..tostring(root.Position)..' target '..tostring(targetFrame.Position)..' class='..root.ClassName..' anchored='..tostring(root.Anchored)..' parts='..tostring(#model:GetDescendants()))
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
