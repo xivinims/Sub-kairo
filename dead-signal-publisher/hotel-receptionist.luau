@@ -115,8 +115,8 @@ local function createAvatar()
 end
 
 local function findFloor(tableModel,surface,folder)
-	local radiusX=surface.Size.X/2+2.4
-	local radiusZ=surface.Size.Z/2+2.4
+	local radiusX=math.min(surface.Size.X/2+1.4,6.4)
+	local radiusZ=math.min(surface.Size.Z/2+1.4,4.6)
 	local offsets={
 		surface.CFrame.LookVector*radiusZ,
 		-surface.CFrame.LookVector*radiusZ,

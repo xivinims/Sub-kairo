@@ -79,7 +79,10 @@ end
 assert(pianoNotes>=13 and pianoCards==6,'The in-world piano keyboard or songbook is incomplete')
 local receptionist=assert(workspace:FindFirstChild('HotelActors') and workspace.HotelActors:FindFirstChild('HotelReceptionist'),'Receptionist is missing')
 assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChildOfClass('Humanoid'),'Receptionist is not interactable')
-assert(receptionist.PrimaryPart and (receptionist.PrimaryPart.Position-pool.PrimaryPart.Position).Magnitude<14,'Receptionist is not beside the pool table')
+local poolSurface
+for _,part in ipairs(pool:GetDescendants()) do if part:IsA('BasePart') and part:GetAttribute('PoolSurface') then poolSurface=part;break end end
+assert(poolSurface,'Pool surface is missing')
+assert(receptionist.PrimaryPart and (receptionist.PrimaryPart.Position-poolSurface.Position).Magnitude<14,'Receptionist is not beside the pool table')
 local settingsClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('HotelReceptionistClient'))
 assert(settingsClient.Source:find('Hola',1,true),'Receptionist dialogue is missing')
 assert(#CollectionService:GetTagged('StillHereInteractable')>=7,'Map objects are not using the corner interaction button')
