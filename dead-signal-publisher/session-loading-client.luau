@@ -1,44 +1,130 @@
-local Players=game:GetService('Players');local RF=game:GetService('ReplicatedFirst');local RS=game:GetService('ReplicatedStorage');local Tween=game:GetService('TweenService')
-local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui')
-local experienceChapter=workspace:GetAttribute('ExperienceChapter')==2 and 2 or 1
-local displayEpisodeNumber=math.max(1,math.floor(tonumber(workspace:GetAttribute('DisplayEpisodeNumber')) or experienceChapter))
-local gui=Instance.new('ScreenGui');gui.Name='StillHereLoading';gui.IgnoreGuiInset=true;gui.ResetOnSpawn=false;gui.DisplayOrder=10000;gui.Parent=pg
-local background=Instance.new('Frame');background.Size=UDim2.fromScale(1,1);background.BackgroundColor3=experienceChapter==2 and Color3.fromRGB(7,11,8) or Color3.fromRGB(4,5,6);background.BorderSizePixel=0;background.Parent=gui
-local chapterArt=Instance.new('ImageLabel');chapterArt.Name='ChapterTwoLoadingArtwork';chapterArt.Size=UDim2.fromScale(1,1);chapterArt.BackgroundTransparency=1;chapterArt.Image='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__';chapterArt.ScaleType=Enum.ScaleType.Crop;chapterArt.ImageTransparency=experienceChapter==2 and 0 or 1;chapterArt.ZIndex=1;chapterArt.Parent=background
-local artShade=Instance.new('Frame');artShade.Name='ChapterTwoLoadingShade';artShade.Size=UDim2.fromScale(1,1);artShade.BackgroundColor3=experienceChapter==2 and Color3.fromRGB(8,16,11) or Color3.fromRGB(5,7,9);artShade.BackgroundTransparency=experienceChapter==2 and .70 or 0;artShade.BorderSizePixel=0;artShade.ZIndex=2;artShade.Parent=background
-local chapterTitle=Instance.new('TextLabel');chapterTitle.Name='ChapterTwoLoadingTitle';chapterTitle.AnchorPoint=Vector2.new(0,1);chapterTitle.Position=UDim2.new(0,28,1,-104);chapterTitle.Size=UDim2.new(.82,0,0,50);chapterTitle.BackgroundTransparency=1;chapterTitle.Text='EPISÓDIO '..string.format('%02d',displayEpisodeNumber)..'  ·  AQUELE QUE NÃO ENCONTRA';chapterTitle.TextXAlignment=Enum.TextXAlignment.Left;chapterTitle.Font=Enum.Font.Oswald;chapterTitle.TextSize=29;chapterTitle.TextColor3=Color3.fromRGB(246,239,213);chapterTitle.Visible=experienceChapter==2;chapterTitle.ZIndex=4;chapterTitle.Parent=background
-local titleLimit=Instance.new('UITextSizeConstraint');titleLimit.MinTextSize=17;titleLimit.MaxTextSize=30;titleLimit.Parent=chapterTitle
-local caption=Instance.new('TextLabel');caption.AnchorPoint=Vector2.new(1,1);caption.Position=UDim2.new(1,-28,1,-24);caption.Size=UDim2.new(.65,0,0,36);caption.BackgroundTransparency=1;caption.Text=experienceChapter==2 and ('Abrindo Episódio '..tostring(displayEpisodeNumber)..'…') or 'Carregando…';caption.ZIndex=4;caption.TextXAlignment=Enum.TextXAlignment.Right;caption.Font=Enum.Font.Garamond;caption.TextSize=20;caption.TextColor3=Color3.fromRGB(239,236,220);caption.ZIndex=4;caption.Parent=background
-local hint=caption:Clone();hint.AnchorPoint=Vector2.new(0,1);hint.Position=UDim2.new(0,28,1,-74);hint.TextXAlignment=Enum.TextXAlignment.Left;hint.TextTransparency=1;hint.Text='';hint.ZIndex=4;hint.Parent=background
-local track=Instance.new('Frame');track.Name='LoadingProgressTrack';track.Position=UDim2.new(.04,0,1,-14);track.Size=UDim2.new(.92,0,0,2);track.BackgroundColor3=experienceChapter==2 and Color3.fromRGB(153,175,145) or Color3.fromRGB(199,203,184);track.BackgroundTransparency=.62;track.BorderSizePixel=0;track.ZIndex=4;track.Parent=background
-local fill=Instance.new('Frame');fill.Name='LoadingProgress';fill.Size=UDim2.fromScale(.28,1);fill.BackgroundColor3=experienceChapter==2 and Color3.fromRGB(163,190,143) or Color3.fromRGB(230,205,136);fill.BorderSizePixel=0;fill.ZIndex=5;fill.Parent=track
-local progressTween=Tween:Create(fill,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.72,0,0,0)});progressTween:Play()
+local Players=game:GetService('Players')
+local RF=game:GetService('ReplicatedFirst')
+local RS=game:GetService('ReplicatedStorage')
+local Tween=game:GetService('TweenService')
+local player=Players.LocalPlayer
+local pg=player:WaitForChild('PlayerGui')
+local gui=Instance.new('ScreenGui')
+gui.Name='StillHereLoading'
+gui.IgnoreGuiInset=true
+gui.ResetOnSpawn=false
+gui.DisplayOrder=10000
+gui.Parent=pg
+local background=Instance.new('Frame')
+background.Name='LoadingBackground'
+background.Size=UDim2.fromScale(1,1)
+background.BackgroundColor3=Color3.fromRGB(5,6,8)
+background.BorderSizePixel=0
+background.Parent=gui
+local gradient=Instance.new('UIGradient')
+gradient.Rotation=90
+gradient.Color=ColorSequence.new(Color3.fromRGB(18,19,22),Color3.fromRGB(3,4,6))
+gradient.Parent=background
+local eyebrow=Instance.new('TextLabel')
+eyebrow.Name='LoadingBrand'
+eyebrow.Position=UDim2.new(0,28,0,28)
+eyebrow.Size=UDim2.new(.8,0,0,22)
+eyebrow.BackgroundTransparency=1
+eyebrow.Text='STILL HERE'
+eyebrow.TextXAlignment=Enum.TextXAlignment.Left
+eyebrow.Font=Enum.Font.RobotoCondensed
+eyebrow.TextSize=14
+eyebrow.TextColor3=Color3.fromRGB(178,177,169)
+eyebrow.Parent=background
+local title=Instance.new('TextLabel')
+title.Name='LoadingTitle'
+title.AnchorPoint=Vector2.new(0,1)
+title.Position=UDim2.new(0,28,1,-100)
+title.Size=UDim2.new(.82,0,0,44)
+title.BackgroundTransparency=1
+title.Text='MISTÉRIO'
+title.TextXAlignment=Enum.TextXAlignment.Left
+title.Font=Enum.Font.RobotoCondensed
+title.TextSize=30
+title.TextColor3=Color3.fromRGB(237,231,219)
+title.Parent=background
+local caption=Instance.new('TextLabel')
+caption.Name='LoadingCaption'
+caption.AnchorPoint=Vector2.new(1,1)
+caption.Position=UDim2.new(1,-28,1,-30)
+caption.Size=UDim2.new(.65,0,0,28)
+caption.BackgroundTransparency=1
+caption.Text='Carregando o casarão…'
+caption.TextXAlignment=Enum.TextXAlignment.Right
+caption.Font=Enum.Font.Garamond
+caption.TextSize=17
+caption.TextColor3=Color3.fromRGB(204,202,193)
+caption.Parent=background
+local hint=caption:Clone()
+hint.Name='LoadingHint'
+hint.AnchorPoint=Vector2.new(0,1)
+hint.Position=UDim2.new(0,28,1,-62)
+hint.TextXAlignment=Enum.TextXAlignment.Left
+hint.TextTransparency=1
+hint.Text=''
+hint.Parent=background
+local track=Instance.new('Frame')
+track.Name='LoadingProgressTrack'
+track.Position=UDim2.new(.04,0,1,-10)
+track.Size=UDim2.new(.92,0,0,2)
+track.BackgroundColor3=Color3.fromRGB(112,109,102)
+track.BackgroundTransparency=.52
+track.BorderSizePixel=0
+track.Parent=background
+local fill=Instance.new('Frame')
+fill.Name='LoadingProgress'
+fill.Size=UDim2.fromScale(.28,1)
+fill.BackgroundColor3=Color3.fromRGB(219,207,181)
+fill.BorderSizePixel=0
+fill.Parent=track
 RF:RemoveDefaultLoadingScreen()
-local ui=require(RS:WaitForChild('SessionInterface'))
-task.spawn(function() if not ui.Load() then warn('[Settings] Could not load preferences; defaults in use, retry in settings.') end end)
+local settings=RS:WaitForChild('SessionInterface')
+local ui=require(settings)
+task.spawn(function()
+ if not ui.Load() then warn('[Configurações] As preferências não carregaram; usando os padrões.') end
+end)
 local active=true
-local phrases={'Cuidado.','Não abra a porta.','Ele está te vendo.','Eu vejo você.'}
+local hints={'Use E para interagir.','Explore os cômodos.','Aproxime-se das cadeiras para sentar.'}
 task.spawn(function()
  while active do
-  task.wait(12)
+  task.wait(10)
   if not active then return end
-  if workspace:GetAttribute('GameMode')=='Match' and player:GetAttribute('LoadingHints')~=false and math.random()<.35 then
-   hint.Text=phrases[math.random(#phrases)];Tween:Create(hint,TweenInfo.new(2),{TextTransparency=.35}):Play();task.wait(4)
-   if active then Tween:Create(hint,TweenInfo.new(2),{TextTransparency=1}):Play() end
+  if player:GetAttribute('LoadingHints')~=false then
+   hint.Text=hints[math.random(1,#hints)]
+   Tween:Create(hint,TweenInfo.new(1.2),{TextTransparency=.24}):Play()
+   task.wait(4)
+   if active then Tween:Create(hint,TweenInfo.new(1.2),{TextTransparency=1}):Play() end
   end
  end
 end)
+local progress=Tween:Create(fill,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.72,0,0,0)})
+progress:Play()
 local started=os.clock()
 while true do
- local mode=workspace:GetAttribute('GameMode')
- if mode=='Menu' and player:GetAttribute('MenuReady') or mode=='Match' and player:GetAttribute('ArrivalReady') then break end
+ if workspace:GetAttribute('GameMode')=='Match' and player:GetAttribute('ArrivalReady') then break end
  if os.clock()-started>45 then caption.Text='Carregando… conexão lenta.' end
  task.wait(.1)
 end
 active=false
--- No white flash or title animation. Reveal the already prepared scene from black.
-progressTween:Cancel();Tween:Create(background,TweenInfo.new(.25),{BackgroundTransparency=1}):Play();Tween:Create(chapterArt,TweenInfo.new(.25),{ImageTransparency=1}):Play();Tween:Create(artShade,TweenInfo.new(.25),{BackgroundTransparency=1}):Play();Tween:Create(chapterTitle,TweenInfo.new(.2),{TextTransparency=1}):Play();Tween:Create(caption,TweenInfo.new(.2),{TextTransparency=1}):Play();Tween:Create(hint,TweenInfo.new(.2),{TextTransparency=1}):Play();Tween:Create(fill,TweenInfo.new(.2),{BackgroundTransparency=1}):Play();task.wait(.3);gui:Destroy()
-if workspace:GetAttribute('GameMode')=='Match' then
- local controls=Instance.new('ScreenGui');controls.Name='InGameSettings';controls.ResetOnSpawn=false;controls.IgnoreGuiInset=false;controls.DisplayOrder=100;controls.Parent=pg
- local button=ui.Button(controls,'⚙',ui.OpenSettings);button.AnchorPoint=Vector2.new(1,0);button.Position=UDim2.new(1,-10,0,6);button.Size=UDim2.fromOffset(44,44);button.TextSize=27;button.TextXAlignment=Enum.TextXAlignment.Center
-end
+progress:Cancel()
+Tween:Create(background,TweenInfo.new(.3),{BackgroundTransparency=1}):Play()
+Tween:Create(eyebrow,TweenInfo.new(.2),{TextTransparency=1}):Play()
+Tween:Create(title,TweenInfo.new(.2),{TextTransparency=1}):Play()
+Tween:Create(caption,TweenInfo.new(.2),{TextTransparency=1}):Play()
+Tween:Create(hint,TweenInfo.new(.2),{TextTransparency=1}):Play()
+Tween:Create(fill,TweenInfo.new(.2),{BackgroundTransparency=1}):Play()
+task.wait(.35)
+gui:Destroy()
+local controls=Instance.new('ScreenGui')
+controls.Name='InGameSettings'
+controls.ResetOnSpawn=false
+controls.IgnoreGuiInset=false
+controls.DisplayOrder=100
+controls.Parent=pg
+local button=ui.Button(controls,'⚙',ui.OpenSettings)
+button.Name='SettingsButton'
+button.AnchorPoint=Vector2.new(1,0)
+button.Position=UDim2.new(1,-10,0,6)
+button.Size=UDim2.fromOffset(44,44)
+button.TextSize=27
+button.TextXAlignment=Enum.TextXAlignment.Center

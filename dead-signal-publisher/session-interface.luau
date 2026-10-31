@@ -19,7 +19,7 @@ end
 local opened
 function M.Panel(title,dock)
  if opened then opened.Close() end
- if workspace:GetAttribute('GameMode')=='Menu' and player:GetAttribute('MenuCameraMode')~='starting' then player:SetAttribute('MenuCameraMode','close') end
+ 
  local gui=make('ScreenGui',{Name='SidePanel',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1500,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
  make('TextButton',{Size=UDim2.fromScale(1,1),Text='',Modal=true,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.80,AutoButtonColor=false,BorderSizePixel=0},gui)
  local startX=dock=='left' and -.5 or 1.5
@@ -36,7 +36,7 @@ function M.Panel(title,dock)
  function obj.Close()
   if not gui.Parent then return end
   gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false)
-  if workspace:GetAttribute('GameMode')=='Menu' and player:GetAttribute('MenuCameraMode')~='starting' then player:SetAttribute('MenuCameraMode','wide') end
+  
   if opened==obj then opened=nil end
  end
  local close=M.Button(footer,'VOLTAR',obj.Close);close.Position=UDim2.fromScale(.68,0);close.Size=UDim2.fromScale(.32,1)
@@ -87,27 +87,23 @@ for _,o in ipairs(game:GetDescendants()) do audio(o) end
 game.DescendantAdded:Connect(audio)
 local correction=make('ColorCorrectionEffect',{Name='PlayerBrightness'},Lighting)
 local bloomOriginal=setmetatable({},{__mode='k'})
--- When the menu has been removed for a match, re-apply the player's saved
--- graphics preferences rather than allowing the cinematic overrides to leak.
+-- Re-apply saved graphics preferences to the active mystery session.
 workspace:GetAttributeChangedSignal('GameMode'):Connect(function()
  if M.Loaded then task.defer(function() if player.Parent then M.Apply() end end) end
 end)
 function M.Apply()
  local s=M.Settings;master.Volume=s.volume;for group,volume in pairs(groupVolumes) do if group.Parent then group.Volume=volume*s.volume end end
- -- MENU IS CINEMATIC: saved graphics options affect only the game match.
- -- The local menu uses the creator's high-quality light/shadow/Bloom setup.
- -- Roblox device-level graphics quality may still disable expensive effects.
- local cinematicMenu=workspace:GetAttribute('GameMode')=='Menu'
- correction.Brightness=cinematicMenu and 0 or (s.brightness-.5)*.3
- Lighting.GlobalShadows=cinematicMenu or s.shadows
+ -- Device-level graphics quality may still disable expensive effects.
+ correction.Brightness=(s.brightness-.5)*.3
+ Lighting.GlobalShadows=s.shadows
  for _,e in ipairs(Lighting:GetChildren()) do
   if e:IsA('BloomEffect') then
    if bloomOriginal[e]==nil then bloomOriginal[e]=e.Enabled end
-   e.Enabled=cinematicMenu or (s.bloom and bloomOriginal[e])
+   e.Enabled=s.bloom and bloomOriginal[e]
   end
  end
  game:GetService('UserInputService').MouseDeltaSensitivity=s.sensitivity
- player:SetAttribute('ShowObjectives',s.objectives);player:SetAttribute('PreferredFOV',s.fov);player:SetAttribute('LoadingHints',s.loadingHints)
+ player:SetAttribute('PreferredFOV',s.fov);player:SetAttribute('LoadingHints',s.loadingHints)
  if workspace.CurrentCamera and workspace.CurrentCamera.CameraType~=Enum.CameraType.Scriptable then workspace.CurrentCamera.FieldOfView=s.fov end
 end
 local loading=false
@@ -125,7 +121,7 @@ function M.Save()
  if ok and r.ok then M.Dirty=false;return true end
  return false,ok and r.message or 'Falha ao salvar. Tente novamente.'
 end
-local function openChapterOneSettings()
+local function openMysterySettings()
  local UIS=game:GetService('UserInputService')
  local initial=M.Loaded and table.clone(M.Settings) or nil
  local panel=M.Panel('CONFIGURAÇÕES','center')
@@ -135,18 +131,18 @@ local function openChapterOneSettings()
  make('UIGradient',{Rotation=90,Color=ColorSequence.new(Color3.fromRGB(37,31,28),Color3.fromRGB(20,18,17)),Transparency=NumberSequence.new(.02,.06)},pane)
  local title=pane:FindFirstChildWhichIsA('TextLabel')
  if title then
-  title.Name='ChapterOneSettingsTitle';title.Text='CONFIGURAÇÕES';title.Font=Enum.Font.RobotoCondensed
+  title.Name='MysterySettingsTitle';title.Text='CONFIGURAÇÕES';title.Font=Enum.Font.RobotoCondensed
   title.TextSize=24;title.TextScaled=false;title.TextXAlignment=Enum.TextXAlignment.Left
   title.Position=UDim2.new(0,22,0,13);title.Size=UDim2.new(1,-44,0,30)
   title.TextColor3=Color3.fromRGB(222,218,212)
  end
- make('Frame',{Name='ChapterOneSettingsDivider',Position=UDim2.new(0,22,0,53),Size=UDim2.new(1,-44,0,1),BackgroundColor3=Color3.fromRGB(154,145,138),BackgroundTransparency=.62,BorderSizePixel=0},pane)
+ make('Frame',{Name='MysterySettingsDivider',Position=UDim2.new(0,22,0,53),Size=UDim2.new(1,-44,0,1),BackgroundColor3=Color3.fromRGB(154,145,138),BackgroundTransparency=.62,BorderSizePixel=0},pane)
  panel.Content.Position=UDim2.new(0,18,0,61);panel.Content.Size=UDim2.new(1,-36,1,-136)
  panel.Footer.Position=UDim2.new(0,22,1,-61);panel.Footer.Size=UDim2.new(1,-44,0,48)
  panel.Status.Position=UDim2.new(0,0,0,-14);panel.Status.Size=UDim2.new(1,0,0,13)
  panel.Status.TextXAlignment=Enum.TextXAlignment.Center;panel.Status.TextSize=10
  panel.Status.TextColor3=Color3.fromRGB(167,158,151);panel.Back:Destroy()
- local rows=M.List(panel.Content);rows.Name='ChapterOneSettingsRows'
+ local rows=M.List(panel.Content);rows.Name='MysterySettingsRows'
  rows.ScrollBarThickness=2;rows.ScrollBarImageColor3=Color3.fromRGB(173,163,156)
  rows.UIListLayout.Padding=UDim.new(0,2)
  local options={
@@ -156,7 +152,6 @@ local function openChapterOneSettings()
   {label='SENSIBILIDADE DO MOUSE',key='sensitivity',min=.2,max=2,step=.2},
   {label='SOMBRAS',key='shadows'},
   {label='BLOOM',key='bloom'},
-  {label='OBJETIVOS DA MISSÃO',key='objectives'},
   {label='DICAS DE CARREGAMENTO',key='loadingHints'}
  }
  local refreshers={};local drag;local closed=false;local busy=false
@@ -259,13 +254,13 @@ local function openChapterOneSettings()
  end)
  footerButton('BackSettings','VOLTAR',.69,function() closeSettings(true) end)
  panel.Gui.Destroying:Connect(function() closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect() end)
- panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO EPISÓDIO 1' or 'CARREGANDO CONFIGURAÇÕES…'
+ panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO MISTÉRIO' or 'CARREGANDO CONFIGURAÇÕES…'
  if not M.Loaded then
   task.spawn(function()
    local ok=M.Load()
    if closed or not panel.Gui.Parent then return end
    if ok then
-    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO EPISÓDIO 1'
+    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO MISTÉRIO'
     for _,refresh in ipairs(refreshers) do refresh() end
    else panel.Status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
   end)
@@ -273,368 +268,6 @@ local function openChapterOneSettings()
 end
 
 function M.OpenSettings()
- if workspace:GetAttribute('ExperienceChapter')~=2 then return openChapterOneSettings() end
- local initial=M.Loaded and table.clone(M.Settings) or nil
- local panel=M.Panel('OPTIONS','left')
- -- The current live 3D menu remains visible on the right; no replacement
- -- background artwork is added behind this reference-style settings column.
- panel.Pane.BackgroundTransparency=.08
- panel.Pane.BackgroundColor3=Color3.fromRGB(4,6,7)
- make('UIStroke',{Color=Color3.fromRGB(64,71,75),Transparency=.72,Thickness=1},panel.Pane)
- make('UIGradient',{
-  Rotation=90,
-  Color=ColorSequence.new(Color3.fromRGB(14,17,17),Color3.fromRGB(3,4,5)),
-  Transparency=NumberSequence.new(.02,.05)
- },panel.Pane)
- panel.Pane:FindFirstChildWhichIsA('UIStroke').Enabled=true
- panel.Pane.ClipsDescendants=true
- local titleText=panel.Pane:FindFirstChildWhichIsA('TextLabel')
- if titleText then
-  titleText.Text='OPTIONS'
-  titleText.Font=Enum.Font.RobotoCondensed
-  titleText.TextSize=24;titleText.TextScaled=false
-  titleText.TextXAlignment=Enum.TextXAlignment.Left
-  titleText.Position=UDim2.new(0,22,0,14)
-  titleText.Size=UDim2.new(1,-40,0,29)
-  titleText.TextColor3=Color3.fromRGB(205,207,204)
- end
- local titleDivider=make('Frame',{
-  Name='SettingsHeaderDivider',Position=UDim2.new(0,22,0,54),
-  Size=UDim2.new(1,-44,0,1),BorderSizePixel=0,
-  BackgroundColor3=Color3.fromRGB(105,109,108),BackgroundTransparency=.70
- },panel.Pane)
-
- local categoryStack=make('Frame',{
-  Name='OptionCategoryStack',
-  Position=UDim2.fromScale(0,0),
-  Size=UDim2.fromScale(.28,1),
-  BackgroundTransparency=1
- },panel.Content)
- local tabs=M.List(categoryStack)
- tabs.Name='SettingsCategoryScroll'
- tabs.ScrollBarThickness=2
- tabs.UIListLayout.Padding=UDim.new(0,7)
- local right=make('Frame',{
-  Name='OptionsHalf',
-  Position=UDim2.fromScale(.30,0),
-  Size=UDim2.fromScale(.68,1),
-  BackgroundColor3=Color3.fromRGB(10,17,23),
-  BackgroundTransparency=1,
-  BorderSizePixel=0,
-  ClipsDescendants=true
- },panel.Content)
- make('UIStroke',{Color=Color3.fromRGB(77,95,105),Transparency=.60,Thickness=1},right)
- local sectionHeading=M.Label(right,'GAME',33)
- sectionHeading.Name='ActiveSettingsCategory'
- sectionHeading.Position=UDim2.new(0,12,0,10)
- sectionHeading.Size=UDim2.new(1,-24,0,31)
- sectionHeading.Font=Enum.Font.RobotoCondensed
- sectionHeading.TextXAlignment=Enum.TextXAlignment.Left
- sectionHeading.TextSize=22
- sectionHeading.TextColor3=Color3.fromRGB(192,195,193)
- local accent=make('Frame',{
-  Name='SettingsRedAccent',Position=UDim2.new(0,12,0,47),
-  Size=UDim2.new(0,25,0,1),
-  BackgroundColor3=Color3.fromRGB(153,55,58),BorderSizePixel=0
- },right)
- local rows=M.List(right)
- rows.Name='SettingsValuesScroll'
- rows.Position=UDim2.new(0,9,0,60)
- rows.Size=UDim2.new(1,-18,1,-71)
- rows.ScrollBarThickness=3
- rows.UIListLayout.Padding=UDim.new(0,2)
-
- local groups={
-  {'GAME',{{'Mission objectives','objectives',nil,nil,nil,'Show current story objectives.'},
-           {'Loading hints','loadingHints',nil,nil,nil,'Show short hints during loading.'}}},
-  {'CONTROLS',{{'Mouse sensitivity','sensitivity',.2,2,.2,'Camera sensitivity for mouse and aim.'}}},
-  {'DISPLAY',{{'Brightness','brightness',0,1,.1,'Adjust the game image brightness.'},
-              {'Field of view','fov',60,90,5,'Camera field of view during a mission.'},
-              {'Shadows','shadows',nil,nil,nil,'Dynamic shadows during a mission.'},
-              {'Bloom','bloom',nil,nil,nil,'Cinematic glow during a mission.'}}},
-  {'AUDIO',{{'Master volume','volume',0,1,.1,'Menu, environment and effects volume.'}}},
-  {'LANGUAGE',{}}
- }
- local tabsByName={}
- local selected
- local busy=false
- local closed=false
- local portraitLayout=false
- local fitSettingsLayout
- local function valueText(key)
-  local v=M.Settings[key]
-  if typeof(v)=='boolean' then return v and 'ON' or 'OFF' end
-  if key=='volume' or key=='brightness' then return tostring(math.floor(v*100+.5))..'%' end
-  if key=='fov' then return tostring(math.floor(v+.5))..'°' end
-  return string.format('%.1f',v)
- end
- local function canAdjust()
-  if M.Loaded then return true end
-  panel.Status.Text='Settings are still loading.'
-  return false
- end
- local function changeValue(spec,direction)
-  if not canAdjust() then return end
-  local key=spec[2]
-  local old=M.Settings[key]
-  if typeof(old)=='boolean' then M.Settings[key]=not old
-  else
-   local min,max,step=spec[3],spec[4],spec[5]
-   local rounded=math.round(((old+direction*step)-min)/step)*step+min
-   M.Settings[key]=math.clamp(math.floor(rounded*100+.5)/100,min,max)
-  end
-  M.Dirty=true
-  M.Apply()
-  panel.Status.Text='Unsaved changes.'
- end
- local function drawSettings(group)
-  if closed or not panel.Gui.Parent then return end
-  selected=group[1]
-  if group[1]=='LANGUAGE' then
-   panel.Status.Text='Back to return to the menu.'
-  else
-   panel.Status.Text='Changes apply when the mission starts.'
-  end
-  sectionHeading.Text=group[1]
-  for name,tab in pairs(tabsByName) do
-   local active=name==selected
-   Tween:Create(tab.button,TweenInfo.new(.16),{
-    TextColor3=active and Color3.fromRGB(244,242,235) or Color3.fromRGB(159,166,172)
-   }):Play()
-   Tween:Create(tab.mark,TweenInfo.new(.16),{
-    BackgroundTransparency=active and 0 or 1
-   }):Play()
-  end
-  for _,o in ipairs(rows:GetChildren()) do
-   if o:IsA('GuiObject') then o:Destroy() end
-  end
-  local function infoRow(order,title,detail)
-   local row=make('Frame',{Name='SettingsInfo'..order,LayoutOrder=order,Size=UDim2.new(1,-5,0,58),BackgroundTransparency=1,BorderSizePixel=0},rows)
-   local name=M.Label(row,title,22);name.Position=UDim2.new(0,5,0,4);name.Size=UDim2.new(1,-10,0,21);name.Font=Enum.Font.RobotoCondensed;name.TextSize=13;name.TextColor3=Color3.fromRGB(174,178,176)
-   local hint=M.Label(row,detail,26);hint.Position=UDim2.new(0,5,0,26);hint.Size=UDim2.new(1,-10,0,25);hint.Font=Enum.Font.Gotham;hint.TextSize=10;hint.TextColor3=Color3.fromRGB(126,131,130)
-  end
-  if group[1]=='CONTROLS' then
-   infoRow(10,'KEYBOARD / CONTROLLER','WASD or stick — move   ·   E / X — interact   ·   ESC / Start — menu')
-   infoRow(11,'TOUCH','Use the on-screen hand button to hold and pick up weapons.')
-  elseif group[1]=='LANGUAGE' then
-   infoRow(1,'TEXT','Português · Episódio 1')
-   infoRow(2,'SUBTITLES','Português · Episódio 1')
-   infoRow(3,'DIALOGUE','Original voice track')
-   infoRow(4,'EPISÓDIO 2','Pacote de idioma em inglês planejado para “Aquele que não encontra”.')
-    end
-  for i,spec in ipairs(group[2]) do
-   local boolean=typeof(M.Settings[spec[2]])=='boolean'
-   local height=boolean and 73 or 99
-   local row=make('Frame',{
-    Name='Setting_'..spec[2],LayoutOrder=i,
-    Size=UDim2.new(1,-5,0,height),
-    BackgroundColor3=Color3.fromRGB(22,30,36),
-    BackgroundTransparency=1,BorderSizePixel=0
-   },rows)
-   local name=M.Label(row,string.upper(spec[1]),24)
-   name.Name='SettingName'
-   name.Position=UDim2.new(0,11,0,8)
-   name.Size=UDim2.new(.73,-11,0,24)
-   name.Font=Enum.Font.RobotoCondensed
-   name.TextSize=15
-   name.TextXAlignment=Enum.TextXAlignment.Left
-   name.TextColor3=Color3.fromRGB(220,229,228)
-   local hint=M.Label(row,spec[6] or '',33)
-   hint.Name='SettingDescription'
-   hint.Position=UDim2.new(0,11,0,33)
-   hint.Size=UDim2.new(boolean and .68 or .80,-11,0,32)
-   hint.Font=Enum.Font.Gotham
-   hint.TextSize=10
-   hint.TextColor3=Color3.fromRGB(126,131,130)
-   hint.TextXAlignment=Enum.TextXAlignment.Left
-   if boolean then
-    local toggle=make('TextButton',{
-     Name='Toggle_'..spec[2],AnchorPoint=Vector2.new(1,.5),
-     Position=UDim2.new(1,-10,.5,0),
-     Size=UDim2.fromOffset(61,37),
-     BackgroundColor3=Color3.fromRGB(35,45,52),
-     BackgroundTransparency=.07,
-     BorderSizePixel=0,Text='',AutoButtonColor=true
-    },row)
-    make('UICorner',{CornerRadius=UDim.new(1,0)},toggle)
-    local knob=make('Frame',{
-     Name='SwitchKnob',AnchorPoint=Vector2.new(0,.5),
-     Position=UDim2.new(0,5,.5,0),Size=UDim2.fromOffset(25,25),
-     BackgroundColor3=Color3.fromRGB(217,220,214),BorderSizePixel=0
-    },toggle)
-    make('UICorner',{CornerRadius=UDim.new(1,0)},knob)
-    local function refresh()
-     local on=M.Settings[spec[2]]
-     Tween:Create(toggle,TweenInfo.new(.15),{BackgroundColor3=on and Color3.fromRGB(105,43,48) or Color3.fromRGB(48,51,50)}):Play()
-     Tween:Create(knob,TweenInfo.new(.15),{Position=UDim2.new(on and 1 or 0,on and -30 or 5,.5,0)}):Play()
-    end
-    toggle.Activated:Connect(function()
-     changeValue(spec,1)
-     refresh()
-    end)
-    refresh()
-   else
-    local value=M.Label(row,'',23)
-    value.Name='SettingValue'
-    value.Position=UDim2.new(.69,0,0,8)
-    value.Size=UDim2.new(.28,-12,0,23)
-    value.TextXAlignment=Enum.TextXAlignment.Right
-    value.Font=Enum.Font.RobotoCondensed;value.TextSize=14
-    value.TextColor3=Color3.fromRGB(235,236,229)
-    local bar=make('Frame',{
-     Name='ValueTrack',Position=UDim2.new(0,11,1,-17),
-     Size=UDim2.new(1,-22,0,2),BackgroundColor3=Color3.fromRGB(58,68,74),
-     BorderSizePixel=0
-    },row)
-    local progress=make('Frame',{
-     Name='ValueProgress',Size=UDim2.fromScale(0,1),
-     BackgroundColor3=Color3.fromRGB(153,55,58),BorderSizePixel=0
-    },bar)
-    local function refresh()
-     value.Text=valueText(spec[2])
-     progress.Size=UDim2.fromScale(math.clamp((M.Settings[spec[2]]-spec[3])/(spec[4]-spec[3]),0,1),1)
-    end
-    local function arrow(text,offset,direction)
-     local button=make('TextButton',{
-      Name=(direction<0 and 'Decrease_' or 'Increase_')..spec[2],
-      Position=UDim2.new(1,offset,0,37),Size=UDim2.fromOffset(43,43),
-      BackgroundColor3=Color3.fromRGB(41,51,58),
-      BackgroundTransparency=.28,BorderSizePixel=0,
-      Text=text,Font=Enum.Font.GothamBold,TextSize=20,
-      TextColor3=Color3.fromRGB(233,238,237),AutoButtonColor=true
-     },row)
-     make('UICorner',{CornerRadius=UDim.new(0,5)},button)
-     button.Activated:Connect(function() changeValue(spec,direction);refresh() end)
-    end
-    arrow('−',-102,-1)
-    arrow('+',-52,1)
-    refresh()
-   end
-  end
-  rows.CanvasPosition=Vector2.zero
-  if fitSettingsLayout then fitSettingsLayout() end
- end
-
- for i,g in ipairs(groups) do
-  local button=make('TextButton',{
-   Name='Category_'..g[1],LayoutOrder=i,Size=UDim2.new(1,-3,0,42),
-   BackgroundTransparency=1,BorderSizePixel=0,
-   Text=g[1],Font=Enum.Font.RobotoCondensed,TextSize=15,
-   TextColor3=Color3.fromRGB(159,166,172),
-   TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=false,
-   AutoButtonColor=false
-  },tabs)
-  local marker=make('Frame',{
-   Name='CategoryActiveMarker',Size=UDim2.fromOffset(3,20),
-   Position=UDim2.new(0,0,.5,-10),
-   BackgroundColor3=Color3.fromRGB(189,48,59),
-   BackgroundTransparency=1,BorderSizePixel=0
-  },button)
-  tabsByName[g[1]]={button=button,mark=marker}
-  button.Activated:Connect(function() drawSettings(g) end)
- end
-
- fitSettingsLayout=function()
-  if not panel.Gui.Parent then return end
-  local camera=workspace.CurrentCamera
-  local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
-  portraitLayout=viewport.Y>viewport.X
-  local categoryLayout=tabs:FindFirstChildOfClass('UIListLayout')
-  if portraitLayout then
-   categoryStack.Position=UDim2.new(0,0,0,0)
-   categoryStack.Size=UDim2.new(1,0,0,38)
-   tabs.AutomaticCanvasSize=Enum.AutomaticSize.X
-   tabs.ScrollingDirection=Enum.ScrollingDirection.X
-   if categoryLayout then categoryLayout.FillDirection=Enum.FillDirection.Horizontal end
-   for _,tab in pairs(tabsByName) do
-    tab.button.Size=UDim2.fromOffset(105,34)
-    tab.button.TextSize=13
-    tab.mark.Size=UDim2.new(1,-18,0,2)
-    tab.mark.Position=UDim2.new(0,8,1,-2)
-   end
-   right.Position=UDim2.fromScale(.02,.12)
-   right.Size=UDim2.new(.96,0,1,-.12)
-  else
-   categoryStack.Position=UDim2.fromScale(0,0)
-   categoryStack.Size=UDim2.fromScale(.28,1)
-   tabs.AutomaticCanvasSize=Enum.AutomaticSize.Y
-   tabs.ScrollingDirection=Enum.ScrollingDirection.Y
-   if categoryLayout then categoryLayout.FillDirection=Enum.FillDirection.Vertical end
-   for _,tab in pairs(tabsByName) do
-    tab.button.Size=UDim2.new(1,-3,0,42)
-    tab.button.TextSize=15
-    tab.mark.Size=UDim2.new(0,2,0,20)
-    tab.mark.Position=UDim2.new(0,0,.5,-10)
-   end
-   right.Position=UDim2.fromScale(.30,0)
-   right.Size=UDim2.fromScale(.68,1)
-  end
- end
- fitSettingsLayout()
- local settingsCamera=workspace.CurrentCamera
- local settingsViewportConnection=settingsCamera and settingsCamera:GetPropertyChangedSignal('ViewportSize'):Connect(fitSettingsLayout)
- panel.Gui.Destroying:Connect(function()
-  if settingsViewportConnection then settingsViewportConnection:Disconnect() end
- end)
-
- panel.Back:Destroy()
- panel.Status.Size=UDim2.fromScale(.37,1)
- panel.Status.TextSize=11
- local function leave(saveChanges)
-  if busy or closed then return end
-  busy=true
-  if saveChanges then
-   panel.Status.Text='Salvando…'
-   local ok,err=M.Save()
-   if not ok then
-    panel.Status.Text=err or 'Falha ao salvar as configurações.'
-    busy=false
-    return
-   end
-  else
-   if initial then M.Settings=table.clone(initial);M.Dirty=false;M.Apply() end
-  end
-  closed=true
-  panel.Close()
- end
- local cancel=M.Button(panel.Footer,'DESCARTAR',function() leave(false) end)
- cancel.Name='DiscardSettings'
- cancel.Position=UDim2.fromScale(.40,0)
- cancel.Size=UDim2.fromScale(.25,1)
- cancel.TextSize=12
- cancel.Font=Enum.Font.RobotoCondensed
- cancel.TextXAlignment=Enum.TextXAlignment.Center
- local save=M.Button(panel.Footer,'SALVAR / VOLTAR',function() leave(true) end)
- save.Name='SaveSettings'
- save.Position=UDim2.fromScale(.66,0)
- save.Size=UDim2.fromScale(.34,1)
- save.TextSize=12
- save.Font=Enum.Font.RobotoCondensed
- save.TextXAlignment=Enum.TextXAlignment.Center
- local UIS=game:GetService('UserInputService')
- local binding=UIS.InputBegan:Connect(function(input,processed)
-  if processed or closed or not panel.Gui.Parent then return end
-  if input.KeyCode==Enum.KeyCode.Escape or input.KeyCode==Enum.KeyCode.Backspace then leave(true) end
- end)
- panel.Gui.Destroying:Connect(function()
-  closed=true
-  binding:Disconnect()
- end)
- drawSettings(groups[1])
-   panel.Status.Text='Loading settings…'
- task.spawn(function()
-  local ok=M.Load()
-  if closed or not panel.Gui.Parent then return end
-  if ok then
-   initial=table.clone(M.Settings)
-   panel.Status.Text='Ready.'
-  else
-   panel.Status.Text='Could not load settings. Try again.'
-  end
-  for _,group in ipairs(groups) do
-   if group[1]==selected then drawSettings(group);break end
-  end
- end)
+ return openMysterySettings()
 end
-
 return M

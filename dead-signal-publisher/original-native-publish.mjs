@@ -1,139 +1,191 @@
 import fs from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+
 const key=process.env.ROBLOX_API_KEY;
 if(!key)throw new Error('Missing ROBLOX_API_KEY');
 const target='universes/9421311218/places/118064584465155/';
-const chapterTwoTarget='universes/9421505041/places/87600271104551/';
-const chapterOneUniverseId=9421311218;const chapterOnePlaceId=118064584465155;
-const chapterTwoUniverseId=9421505041;const chapterTwoPlaceId=87600271104551;
-const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const universeId=9421311218;
+const placeId=118064584465155;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
 async function api(url,{method='GET',body,type='application/json'}={}){
- const r=await fetch(url,{method,headers:{'x-api-key':key,'content-type':type},body,signal:AbortSignal.timeout(240000)});
- const raw=await r.text();let j;try{j=JSON.parse(raw)}catch{j={raw}};
- if(!r.ok)throw new Error('HTTP '+r.status+': '+JSON.stringify(j).slice(0,900));return j;
+ const response=await fetch(url,{
+  method,headers:{'x-api-key':key,'content-type':type},body,
+  signal:AbortSignal.timeout(240000)
+ });
+ const raw=await response.text();
+ let data;try{data=JSON.parse(raw)}catch{data={raw}};
+ if(!response.ok)throw new Error('HTTP '+response.status+': '+JSON.stringify(data).slice(0,900));
+ return data;
 }
-async function download(file,version,placeId=chapterOnePlaceId){
+async function download(file,version){
  const suffix=version?'/version/'+version:'';
- const j=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+placeId+suffix);
- const location=j.location||j.locations?.[0]?.location;
+ const metadata=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+placeId+suffix);
+ const location=metadata.location||metadata.locations?.[0]?.location;
  if(!location)throw new Error('Asset download location missing');
- const r=await fetch(location);if(!r.ok)throw new Error('File download HTTP '+r.status);
- const data=Buffer.from(await r.arrayBuffer());if(data.length<10000)throw new Error('Unexpected empty place');
- await fs.writeFile(file,data);console.log(JSON.stringify({downloaded:true,version,bytes:data.length}));
+ const response=await fetch(location);
+ if(!response.ok)throw new Error('Place download HTTP '+response.status);
+ const bytes=Buffer.from(await response.arrayBuffer());
+ if(bytes.length<10000)throw new Error('Unexpected empty place');
+ await fs.writeFile(file,bytes);
+ console.log(JSON.stringify({downloaded:true,version,bytes:bytes.length}));
 }
-async function execute(script,version,binaryInput,executionTarget=target){
+async function external(assetId){
+ const metadata=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+assetId);
+ const location=metadata.location||metadata.locations?.[0]?.location;
+ if(!location)throw new Error('Missing source asset '+assetId);
+ const response=await fetch(location);
+ if(!response.ok)throw new Error('Source asset download HTTP '+response.status);
+ await fs.writeFile('/tmp/asset-'+assetId+'.rbxl',Buffer.from(await response.arrayBuffer()));
+}
+async function execute(script,version,binaryInput){
  const base='https://apis.roblox.com/cloud/v2/';
- let t=await api(base+executionTarget+(version?'versions/'+version+'/':'')+'luau-execution-session-tasks',{method:'POST',body:JSON.stringify({timeout:'300s',script,binaryInput})});
- for(let i=0;['QUEUED','PENDING','PROCESSING'].includes(t.state);i++){
-  if(i>240){let logs;try{logs=await api(base+t.path+'/logs?view=FLAT')}catch(e){logs=String(e)}throw new Error('Execution timeout '+JSON.stringify({state:t.state,path:t.path,logs}));}await pause(1500);t=await api(base+t.path);
+ let task=await api(base+target+(version?'versions/'+version+'/':'')+'luau-execution-session-tasks',{
+  method:'POST',body:JSON.stringify({timeout:'300s',script,binaryInput})
+ });
+ for(let i=0;['QUEUED','PENDING','PROCESSING'].includes(task.state);i++){
+  if(i>240){
+   let logs;try{logs=await api(base+task.path+'/logs?view=FLAT')}catch(error){logs=String(error)}
+   throw new Error('Execution timeout '+JSON.stringify({state:task.state,path:task.path,logs}));
+  }
+  await pause(1500);
+  task=await api(base+task.path);
  }
- if(t.state!=='COMPLETE'||t.error)throw new Error(JSON.stringify(t.error||t));
- const v=t.output?.results?.[0];return typeof v==='string'?JSON.parse(v):v;
+ if(task.state!=='COMPLETE'||task.error)throw new Error(JSON.stringify(task.error||task));
+ const result=task.output?.results?.[0];
+ return typeof result==='string'?JSON.parse(result):result;
 }
-
-async function external(id){
- const j=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+id);
- const url=j.location||j.locations?.[0]?.location;if(!url)throw Error('Missing source '+id);
- const r=await fetch(url);if(!r.ok)throw Error('Source download '+r.status);
- await fs.writeFile('/tmp/asset-'+id+'.rbxl',Buffer.from(await r.arrayBuffer()));
+async function binaryInput(bytes){
+ const upload=await api('https://apis.roblox.com/cloud/v2/universes/'+universeId+'/luau-execution-session-task-binary-inputs',{
+  method:'POST',body:JSON.stringify({size:bytes.length})
+ });
+ const response=await fetch(upload.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:bytes});
+ if(!response.ok)throw new Error('Binary upload HTTP '+response.status);
+ return upload.path;
 }
-
-const releaseState=JSON.parse(await fs.readFile(new URL('./release-state.json',import.meta.url),'utf8'));
-
-await download('/tmp/still-here-rollback.rbxl',undefined,chapterOnePlaceId);
-await download('/tmp/still-here-chapter-two-rollback.rbxl',undefined,chapterTwoPlaceId);
-for(const id of ['7902470429','7208091524','186677844','15864801103'])await external(id);
-const binary=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
-const zip=Buffer.from(await binary.arrayBuffer());if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum');
-await fs.writeFile('/tmp/islands-lune.zip',zip);execFileSync('unzip',['-o','/tmp/islands-lune.zip','-d','/tmp/islands-lune']);await fs.chmod('/tmp/islands-lune/lune',0o755);
-const chapterTwoArtId=process.env.CHAPTER_TWO_ART_ASSET_ID||'88050012978358';
-const artMarker='rbxassetid://__CHAPTER_TWO_ART_ASSET_ID__';
-for(const file of ['session-menu-client.luau','session-loading-client.luau']){
- const path=new URL('./'+file,import.meta.url);const source=await fs.readFile(path,'utf8');
- if(!source.includes(artMarker))throw new Error('Episode 1 artwork marker missing from '+file);
- await fs.writeFile(path,source.replaceAll(artMarker,'rbxassetid://'+chapterTwoArtId));
-}
-console.log(JSON.stringify({chapterTwoArtworkReused:true,assetId:chapterTwoArtId}));
-const cwd=new URL('.',import.meta.url);execFileSync('/tmp/islands-lune/lune',['run','original-assemble.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','chapter-two-place.luau'],{cwd,stdio:'inherit'});
-
-execFileSync('/tmp/islands-lune/lune',['run','original-gameplay-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','settings-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','door-lock-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','menu-layout-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','cinematic-audio-lighting-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','blackhole-layout-test.luau'],{cwd,stdio:'inherit'});
-execFileSync('/tmp/islands-lune/lune',['run','original-weapon-test.luau'],{cwd,stdio:'inherit'});
-await fs.copyFile('/tmp/still-here-original.rbxl','/tmp/still-here-verified.rbxl');
-execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
-const payload=await fs.readFile('/tmp/original-payload.rbxm');
-async function binaryInput(universeId,bytes){
- const input=await api('https://apis.roblox.com/cloud/v2/universes/'+universeId+'/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:bytes.length})});
- const upload=await fetch(input.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:bytes});
- if(!upload.ok)throw Error('Binary upload '+upload.status);
- return input.path;
-}
-const mainBinaryInput=await binaryInput(chapterOneUniverseId,payload);
-const chapterTwoBinaryInput=await binaryInput(chapterTwoUniverseId,payload);
-const init=await fs.readFile(new URL('./original-initialize.luau',import.meta.url),'utf8');
-const weaponPick=await fs.readFile(new URL('./original-weapon-pickups.luau',import.meta.url),'utf8');
-const mainVerify=await fs.readFile(new URL('./original-verify.luau',import.meta.url),'utf8');
-const chapterTwoVerify=await fs.readFile(new URL('./chapter-two-verify.luau',import.meta.url),'utf8');
-function preflight(gameId,placeId,experienceChapter,verify){
- return `assert(game.GameId==${gameId} and game.PlaceId==${placeId},'Wrong target')
-local b=game:GetService('SerializationService'):DeserializeInstancesAsync(({...})[1].BinaryInput)[1]
-for _,service in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService','Lighting'}) do
- local target=game:GetService(service);for _,c in ipairs(target:GetChildren()) do c:Destroy() end;for _,c in ipairs(b[service]:GetChildren()) do c.Parent=target end
-end
-for _,name in ipairs({'StarterPlayerScripts','StarterCharacterScripts'}) do local target=game:GetService('StarterPlayer')[name];for _,c in ipairs(target:GetChildren()) do c:Destroy() end;for _,c in ipairs(b[name]:GetChildren()) do c.Parent=target end end
-for _,c in ipairs(workspace:GetChildren()) do if not c:IsA('Terrain') and not c:IsA('Camera') then c:Destroy() end end
-for key in pairs(workspace:GetAttributes()) do workspace:SetAttribute(key,nil) end;for key,value in pairs(b:GetAttributes()) do workspace:SetAttribute(key,value) end
-workspace:SetAttribute('ExperienceChapter',${experienceChapter})
-if ${experienceChapter}==2 then workspace:SetAttribute('DisplayEpisodeLabel',nil);workspace:SetAttribute('DisplayEpisodeNumber',1) end
-workspace:SetAttribute('OriginalPreflight',true)
-${init}
-${verify}`
-}
-console.log(JSON.stringify({originalPreflight:await execute(preflight(chapterOneUniverseId,chapterOnePlaceId,1,'do\n'+weaponPick+'\nend\n'+mainVerify),releaseState.preflightVersion,mainBinaryInput)}));
-console.log(JSON.stringify({chapterTwoPreflight:await execute(preflight(chapterTwoUniverseId,chapterTwoPlaceId,2,chapterTwoVerify),undefined,chapterTwoBinaryInput,chapterTwoTarget)}));
-const chapterOneCandidate=await fs.readFile('/tmp/still-here-original.rbxl');
-const chapterTwoCandidate=await fs.readFile('/tmp/still-here-chapter-two.rbxl');
-let chapterOnePublished,chapterTwoPublished;
-async function publish(universeId,placeId,bytes){
- return await api('https://apis.roblox.com/universes/v1/'+universeId+'/places/'+placeId+'/versions?versionType=Published',{
+async function publish(bytes){
+ return api('https://apis.roblox.com/universes/v1/'+universeId+'/places/'+placeId+'/versions?versionType=Published',{
   method:'POST',type:'application/octet-stream',body:bytes
  });
 }
-async function restore(universeId,placeId,bytes){
- return await publish(universeId,placeId,bytes);
-}
-async function restart(universeId){
+async function restart(){
  await api('https://apis.roblox.com/cloud/v2/universes/'+universeId+':restartServers',{method:'POST',body:'{}'});
 }
+async function secondaryUniverseActive(){
+ const response=await fetch('https://develop.roblox.com/v1/universes/9421505041',{signal:AbortSignal.timeout(30000)});
+ const raw=await response.text();
+ if(!response.ok)throw new Error('Secondary universe status HTTP '+response.status+': '+raw.slice(0,500));
+ let data;try{data=JSON.parse(raw)}catch{throw new Error('Secondary universe status was not JSON')}
+ if(typeof data.isActive==='boolean')return data.isActive;
+ const privacy=typeof data.privacyType==='string'?data.privacyType.toLowerCase():'';
+ if(privacy==='public')return true;
+ if(privacy==='private')return false;
+ throw new Error('Secondary universe status did not include a recognized active or privacy state');
+}
+async function deactivateSecondaryIfActive(){
+ if(!await secondaryUniverseActive()){
+  console.log(JSON.stringify({secondaryUniverse:{universeId:9421505041,active:false,changed:false}}));
+  return false;
+ }
+ try{
+  await api('https://apis.roblox.com/legacy-develop/v1/universes/9421505041/deactivate',{method:'POST',body:'{}'});
+ }catch(error){
+  let active;try{active=await secondaryUniverseActive()}catch{throw error}
+  if(active)throw error;
+ }
+ let active;
+ try{active=await secondaryUniverseActive()}catch(error){
+  try{await api('https://apis.roblox.com/legacy-develop/v1/universes/9421505041/activate',{method:'POST',body:'{}'})}catch{}
+  throw new Error('Could not verify secondary universe deactivation; attempted to restore its prior active state: '+String(error));
+ }
+ if(active)throw new Error('Secondary universe remained active after deactivation request');
+ console.log(JSON.stringify({secondaryUniverse:{universeId:9421505041,active:false,changed:true}}));
+ return true;
+}
+async function reactivateSecondary(){
+ try{
+  await api('https://apis.roblox.com/legacy-develop/v1/universes/9421505041/activate',{method:'POST',body:'{}'});
+ }catch(error){
+  let active;try{active=await secondaryUniverseActive()}catch{throw error}
+  if(!active)throw error;
+ }
+ if(!await secondaryUniverseActive())throw new Error('Secondary universe reactivation could not be verified');
+}
+async function preflight(verify){
+ return `assert(game.GameId==${universeId} and game.PlaceId==${placeId},'Wrong target')
+local b=game:GetService('SerializationService'):DeserializeInstancesAsync(({...})[1].BinaryInput)[1]
+for _,service in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService','Lighting'}) do
+ local target=game:GetService(service)
+ for _,child in ipairs(target:GetChildren()) do child:Destroy() end
+ for _,child in ipairs(b[service]:GetChildren()) do child.Parent=target end
+end
+for _,name in ipairs({'StarterPlayerScripts','StarterCharacterScripts'}) do
+ local target=game:GetService('StarterPlayer')[name]
+ for _,child in ipairs(target:GetChildren()) do child:Destroy() end
+ for _,child in ipairs(b[name]:GetChildren()) do child.Parent=target end
+end
+for _,child in ipairs(workspace:GetChildren()) do if not child:IsA('Terrain') and not child:IsA('Camera') then child:Destroy() end end
+for key in pairs(workspace:GetAttributes()) do workspace:SetAttribute(key,nil) end
+for key,value in pairs(b:GetAttributes()) do workspace:SetAttribute(key,value) end
+workspace:SetAttribute('ExperienceChapter',1)
+workspace:SetAttribute('OriginalPreflight',true)
+${await fs.readFile(new URL('./original-initialize.luau',import.meta.url),'utf8')}
+${verify}`;
+}
 
+const releaseState=JSON.parse(await fs.readFile(new URL('./release-state.json',import.meta.url),'utf8'));
+await download('/tmp/still-here-rollback.rbxl',undefined);
+for(const assetId of ['7902470429','7208091524','186677844','15864801103'])await external(assetId);
+const luneArchive=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');
+const luneZip=Buffer.from(await luneArchive.arrayBuffer());
+if(createHash('sha256').update(luneZip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw new Error('Lune checksum mismatch');
+await fs.writeFile('/tmp/still-here-lune.zip',luneZip);
+execFileSync('unzip',['-o','/tmp/still-here-lune.zip','-d','/tmp/still-here-lune']);
+await fs.chmod('/tmp/still-here-lune/lune',0o755);
+const cwd=new URL('.',import.meta.url);
+const lune='/tmp/still-here-lune/lune';
+
+execFileSync(lune,['run','original-assemble.luau'],{cwd,stdio:'inherit'});
+for(const test of [
+ 'original-gameplay-test.luau',
+ 'settings-test.luau',
+ 'door-lock-test.luau',
+ 'cinematic-audio-lighting-test.luau',
+ 'blackhole-layout-test.luau'
+]){
+ execFileSync(lune,['run',test],{cwd,stdio:'inherit'});
+}
+await fs.copyFile('/tmp/still-here-original.rbxl','/tmp/still-here-verified.rbxl');
+execFileSync(lune,['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
+const verify=await fs.readFile(new URL('./original-verify.luau',import.meta.url),'utf8');
+const payload=await fs.readFile('/tmp/original-payload.rbxm');
+const input=await binaryInput(payload);
+console.log(JSON.stringify({mysteryPreflight:await execute(await preflight(verify),releaseState.preflightVersion,input)}));
+const candidate=await fs.readFile('/tmp/still-here-original.rbxl');
+let published;
+let secondaryDeactivated=false;
 try{
- chapterTwoPublished=await publish(chapterTwoUniverseId,chapterTwoPlaceId,chapterTwoCandidate);
- console.log(JSON.stringify({chapterTwoPublishedCandidate:chapterTwoPublished}));
- const chapterTwoLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\n"+init+'\n'+chapterTwoVerify,chapterTwoPublished.versionNumber,chapterTwoBinaryInput,chapterTwoTarget);
- console.log(JSON.stringify({chapterTwoLiveVerified:chapterTwoLive}));
- await download('/tmp/still-here-chapter-two-verified.rbxl',chapterTwoLive.version,chapterTwoPlaceId);
- execFileSync('/tmp/islands-lune/lune',['run','chapter-two-file-verify.luau'],{cwd,stdio:'inherit'});
- chapterOnePublished=await publish(chapterOneUniverseId,chapterOnePlaceId,chapterOneCandidate);
- console.log(JSON.stringify({chapterOnePublishedCandidate:chapterOnePublished}));
- const mainLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\n"+init+'\ndo\n'+weaponPick+'\nend\n'+mainVerify,chapterOnePublished.versionNumber,mainBinaryInput);
- console.log(JSON.stringify({chapterOneLiveVerified:mainLive}));
- await download('/tmp/still-here-verified.rbxl',mainLive.version,chapterOnePlaceId);
- execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
- await restart(chapterTwoUniverseId);await restart(chapterOneUniverseId);
- console.log(JSON.stringify({published:true,chapterOne:mainLive,chapterTwo:chapterTwoLive,restarted:true}));
+ published=await publish(candidate);
+ console.log(JSON.stringify({mysteryPublishedCandidate:published}));
+ const live=await execute("workspace:SetAttribute('OriginalPreflight',true)\n"+await fs.readFile(new URL('./original-initialize.luau',import.meta.url),'utf8')+'\n'+verify,published.versionNumber,input);
+ console.log(JSON.stringify({mysteryLiveVerified:live}));
+ await download('/tmp/still-here-verified.rbxl',live.version);
+ execFileSync(lune,['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
+ secondaryDeactivated=await deactivateSecondaryIfActive();
+ await restart();
+ console.log(JSON.stringify({published:true,mystery:live,restarted:true}));
 }catch(error){
  const recovery=[];
- if(chapterOnePublished)try{recovery.push({chapterOneRestored:await restore(chapterOneUniverseId,chapterOnePlaceId,await fs.readFile('/tmp/still-here-rollback.rbxl'))})}catch(restoreError){recovery.push({chapterOneRestoreError:String(restoreError)})}
- if(chapterTwoPublished)try{recovery.push({chapterTwoRestored:await restore(chapterTwoUniverseId,chapterTwoPlaceId,await fs.readFile('/tmp/still-here-chapter-two-rollback.rbxl'))})}catch(restoreError){recovery.push({chapterTwoRestoreError:String(restoreError)})}
- if(chapterOnePublished||chapterTwoPublished){
-  for(const universeId of [chapterTwoUniverseId,chapterOneUniverseId])try{await restart(universeId)}catch(restartError){recovery.push({restartError:String(restartError),universeId})}
+ if(secondaryDeactivated){
+  try{await reactivateSecondary();recovery.push({secondaryUniverseReactivated:true})}
+  catch(restoreSecondaryError){recovery.push({secondaryUniverseRestoreError:String(restoreSecondaryError)})}
  }
- if(recovery.length)console.error(JSON.stringify({recovery}));
+ if(published){
+  try{recovery.push({restored:await publish(await fs.readFile('/tmp/still-here-rollback.rbxl'))})}
+  catch(restoreError){recovery.push({restoreError:String(restoreError)})}
+  try{await restart()}catch(restartError){recovery.push({restartError:String(restartError)})}
+  if(recovery.length)console.error(JSON.stringify({recovery}));
+ }
  throw error;
 }

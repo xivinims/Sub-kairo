@@ -1,4 +1,4 @@
-local M={Defaults={volume=.8,brightness=.5,fov=70,sensitivity=1,shadows=true,bloom=true,objectives=true,loadingHints=true}}
+local M={Defaults={volume=.8,brightness=.5,fov=70,sensitivity=1,shadows=true,bloom=true,loadingHints=true}}
 function M.Clean(data)
  if typeof(data)~='table' then return nil end
  local out={}

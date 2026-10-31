@@ -27,9 +27,11 @@ jobs:
           persist-credentials: false
 
       - name: Validate publisher syntax
-        run: node --check dead-signal-publisher/publish.mjs
+        run: |
+          node --check dead-signal-publisher/publish.mjs
+          node --check dead-signal-publisher/original-native-publish.mjs
 
-      - name: Publish and verify Dead Signal social lobby
+      - name: Publish and verify the mystery mansion
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/publish.mjs

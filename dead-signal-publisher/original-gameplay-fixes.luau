@@ -1,7 +1,7 @@
--- Auditable compatibility fixes; weapon logic and mansion progression remain source-owned.
+-- Compatibility fixes for third-person, weapon-free exploration of the original mansion.
 local R=require('@lune/roblox')
 return function(dm)
- local RS=dm:GetService('ReplicatedStorage');local SP=dm:GetService('StarterPlayer');local SSS=dm:GetService('ServerScriptService');local W=dm:GetService('Workspace')
+ local RS=dm:GetService('ReplicatedStorage');local SP=dm:GetService('StarterPlayer');local W=dm:GetService('Workspace')
  local function replace(s,old,new)
   local a,b=s.Source:find(old,1,true);assert(a,'Source contract changed: '..s:GetFullName()..' / '..old)
   s.Source=s.Source:sub(1,a-1)..new..s.Source:sub(b+1)
@@ -14,6 +14,7 @@ return function(dm)
  local characterInit=SP.StarterCharacterScripts.CharacterInit
  replace(characterInit,'Enum.HumanoidStateType.Climbing, false','Enum.HumanoidStateType.Climbing, true')
  SP.CharacterUseJumpPower=false;SP.CharacterJumpHeight=7.2;SP.CharacterJumpPower=50
+ SP.CameraMode=R.Enum.CameraMode.Classic;SP.CameraMinZoomDistance=8;SP.CameraMaxZoomDistance=18
  local movement=RS.Library.Client.MovementHandler
  replace(movement,'function movementHandler:CanCrouch()\n\t\n\treturn true','function movementHandler:CanCrouch()\n return library.WeaponsHandler.GetEquippedWeapon() ~= nil')
  replace(movement,'function movementHandler:CanSlide()\n\t\n\treturn true','function movementHandler:CanSlide()\n return self.humanoid.RigType == Enum.HumanoidRigType.R6 and self:CanCrouch()')
@@ -49,11 +50,10 @@ return function(dm)
  local recoil=RS.Library.Client.RecoilHandler
  replace(recoil,'function handler:Update(dt)','function handler:Update(dt)\n if workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable then self.PreviousValue=self.RecoilValue.Value;return end')
  replace(recoil,'"RecoilUpdate",Enum.RenderPriority.First.Value','"RecoilUpdate",Enum.RenderPriority.Camera.Value+2')
- local manager=SSS.GameStateManager
- replace(manager,'return {demoConfig.GameEvents.GameState, currentState, stateInfo}','workspace:SetAttribute("OriginalMissionName",currentMission and currentMission.Name or "")\n workspace:SetAttribute("OriginalMissionState",currentState)\n return {demoConfig.GameEvents.GameState, currentState, stateInfo}')
+
  -- Delete only the audited wreck, not other vehicles or unrelated "car" names.
  local wreck=W.Content.Exterior.Props.Vechicles:FindFirstChild('SUV_Damaged')
  assert(wreck,'Audited SUV wreck missing');wreck:Destroy()
  local rattle=W.RandomAudioPlayback:FindFirstChild('CarRattle');if rattle then rattle:Destroy() end
- W:SetAttribute('GameplayFixVersion','r15-stability-v3');W:SetAttribute('WreckRemoved',true)
+ W:SetAttribute('GameplayFixVersion','third-person-exploration-v1');W:SetAttribute('ThirdPersonOnly',true);W:SetAttribute('WreckRemoved',true);W:SetAttribute('WeaponsRemoved',true)
 end

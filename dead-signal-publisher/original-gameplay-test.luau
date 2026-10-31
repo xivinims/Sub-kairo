@@ -34,6 +34,8 @@ for _,dt in ipairs({1/240,1/60,1/30,.1,.5}) do
 end
 local previous=applications;world.CurrentCamera.CameraType=R.Enum.CameraType.Scriptable;m:OnRenderStepped(.1);assert(applications==previous,'Movement modified cinematic camera')
 assert(SP.StarterCharacterScripts.Movement.Disabled and SP.StarterCharacterScripts.BodyVisible.Disabled)
+assert(SP.CameraMode==R.Enum.CameraMode.Classic and SP.CameraMinZoomDistance>=8 and SP.CameraMaxZoomDistance>SP.CameraMinZoomDistance,'First person camera still enabled')
 assert(RS.OriginalStarterGui.Scripts.Game.MouseTilt.Disabled)
+assert(RS.OriginalStarterGui.Scripts.Game.ClientHandler.Disabled,'Shooter first-person camera script still enabled')
 assert(not dm:GetService('ServerStorage').OriginalWorld.Content.Exterior.Props.Vechicles:FindFirstChild('SUV_Damaged'))
-print('GAMEPLAY REGRESSION PASS: R15 crouch/stand x20; unarmed gating; 2-240 FPS speed bounds; cinematic camera ownership; wreck removed')
+print('GAMEPLAY REGRESSION PASS: R15 crouch/stand x20; unarmed gating; third-person camera; 2-240 FPS speed bounds; cinematic camera ownership; wreck removed')
