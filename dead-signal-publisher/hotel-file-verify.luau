@@ -82,6 +82,15 @@ for _,d in ipairs(dm:GetDescendants()) do
 end
 assert(next(shipped)==nil,'Missing controller')
 assert(not dm:GetService('ServerStorage'):FindFirstChild('OriginalWorld'),'Old mansion bundled into new map')
+local receptionistRig=assert(dm:GetService('ServerStorage'):FindFirstChild('ReceptionistRigTemplate'),'Receptionist rig was not assembled')
+assert(receptionistRig:FindFirstChildOfClass('Humanoid') and receptionistRig:FindFirstChild('HumanoidRootPart',true),'Receptionist rig cannot play the supplied animations')
+for _,object in ipairs(receptionistRig:GetDescendants()) do assert(not object:IsA('BaseScript'),'Unreviewed NPC-pack script was copied') end
+local receptionistAnimations=assert(dm:GetService('ServerStorage'):FindFirstChild('ReceptionistAnimations'),'NPC animation pack was not assembled')
+assert(receptionistAnimations:FindFirstChild('Idle'),'NPC animation pack has no idle')
+for _,name in ipairs({'IdleToActive','ActiveIdle','ActiveToIdle'}) do
+ local animation=receptionistAnimations:FindFirstChild(name)
+ if animation then assert(animation:IsA('Animation') and animation.AnimationId~='','NPC animation track is invalid '..name) end
+end
 assert(dm:GetService('StarterPlayer').CameraMode==R.Enum.CameraMode.Classic,'Wrong camera mode')
 assert(dm:GetService('StarterPlayer').CameraMinZoomDistance>=8,'First person enabled')
 assert(dm:GetService('StarterPlayer').CharacterWalkSpeed==16,'Player walk speed was not normalized')

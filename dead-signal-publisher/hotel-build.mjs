@@ -19,6 +19,16 @@ export async function prepareHotel(){
  const source=await fetch(location,{signal:AbortSignal.timeout(180000)});
  if(!source.ok)throw Error('Mansion UI source HTTP '+source.status);
  await fs.writeFile('/tmp/asset-7902470429.rbxl',Buffer.from(await source.arrayBuffer()));
+ const animationDelivery=await fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/86582491164528',{headers:{'x-api-key':key},signal:AbortSignal.timeout(60000)});
+ if(!animationDelivery.ok)throw Error('Dynamic NPC animation pack metadata HTTP '+animationDelivery.status);
+ const animationMetadata=await animationDelivery.json();
+ const animationLocation=animationMetadata.location||animationMetadata.locations?.[0]?.location;
+ if(!animationLocation)throw Error('Dynamic NPC animation pack source unavailable');
+ const animationSource=await fetch(animationLocation,{signal:AbortSignal.timeout(180000)});
+ if(!animationSource.ok)throw Error('Dynamic NPC animation pack HTTP '+animationSource.status);
+ const animationBytes=Buffer.from(await animationSource.arrayBuffer());
+ if(animationBytes.length<10000)throw Error('Dynamic NPC animation pack was unexpectedly empty');
+ await fs.writeFile('/tmp/still-here-dynamic-npc-animations-v2.rbxl',animationBytes);
  const response=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip',{signal:AbortSignal.timeout(120000)});
  if(!response.ok)throw Error('Lune download HTTP '+response.status);
  const zip=Buffer.from(await response.arrayBuffer());

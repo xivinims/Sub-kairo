@@ -37,7 +37,7 @@ local function interact()
  if not available() then return end
  local currentMode=mode()
  if currentMode=='Piano' then remote:FireServer('piano_exit');return end
- if currentMode=='Pool' then remote:FireServer('pool_exit');return end
+ if currentMode=='Pool' then return end
  if target then remote:FireServer('interact',target) end
 end
 lamp.Activated:Connect(useLamp)
@@ -53,10 +53,16 @@ Run.Heartbeat:Connect(function(dt)
  target=nil
  local currentMode=mode()
  if currentMode=='Piano' or currentMode=='Pool' then
-  action.Active=true;action.AutoButtonColor=true;action.ImageTransparency=0;indicator.Enabled=false
-  setLabel(action,currentMode=='Piano' and 'Sair do piano' or 'Sair da sinuca')
+  indicator.Enabled=false
+  if currentMode=='Pool' then
+   action.Visible=false;action.Active=false;action.AutoButtonColor=false
+  else
+   action.Visible=true;action.Active=true;action.AutoButtonColor=true;action.ImageTransparency=0
+   setLabel(action,'Sair do piano')
+  end
   return
  end
+ action.Visible=true
  local character=player.Character
  local root=character and character:FindFirstChild('HumanoidRootPart')
  local camera=workspace.CurrentCamera

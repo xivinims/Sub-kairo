@@ -16,6 +16,34 @@ interface.Parent=RS
 local map=require('./hotel-map-extract')(dm)
 fs.writeFile('/tmp/still-here-hotel-map.rbxm',R.serializeModel({map}))
 map.Parent=SS
+local npcAnimationPlace=R.deserializePlace(fs.readFile('/tmp/still-here-dynamic-npc-animations-v2.rbxl'))
+local npcAnimationWorkspace=npcAnimationPlace:GetService('Workspace')
+local npcAnimationRoot=assert(npcAnimationWorkspace:FindFirstChild('NPC_ANIMATIONS',true),'Dynamic NPC animation pack is missing NPC_ANIMATIONS')
+local npcAnimationTemplate=assert(npcAnimationRoot:FindFirstChild('NPC_TEMPLATE',true),'Dynamic NPC animation pack is missing NPC_TEMPLATE')
+local receptionistAnimations=R.Instance.new('Folder');receptionistAnimations.Name='ReceptionistAnimations';receptionistAnimations.Parent=SS
+for _,animationName in ipairs({'Idle','IdleToActive','ActiveIdle','ActiveToIdle'}) do
+ local source
+ for _,object in ipairs(npcAnimationTemplate:GetDescendants()) do
+  if object:IsA('Animation') and object.Name==animationName and object.AnimationId~='' then source=object;break end
+ end
+ if not source and animationName=='Idle' then error('Dynamic NPC animation pack has no usable Idle animation') end
+ if source then source:Clone().Parent=receptionistAnimations end
+end
+local rigSource
+local npcReference=npcAnimationTemplate:FindFirstChild('NPC',true)
+if npcReference and npcReference:IsA('ObjectValue') and npcReference.Value and npcReference.Value:IsA('Model') then rigSource=npcReference.Value end
+if not rigSource then
+ for _,object in ipairs(npcAnimationWorkspace:GetDescendants()) do
+  if object:IsA('Model') and object:FindFirstChildOfClass('Humanoid') then rigSource=object;break end
+ end
+end
+assert(rigSource,'Dynamic NPC animation pack has no sample Humanoid rig')
+local rigTemplate=rigSource:Clone();rigTemplate.Name='ReceptionistRigTemplate'
+for _,object in ipairs(rigTemplate:GetDescendants()) do
+	if object:IsA('BaseScript') or object:IsA('ProximityPrompt') or object:IsA('ClickDetector') or object:IsA('Tool') then object:Destroy() end
+end
+rigTemplate.Parent=SS
+W:SetAttribute('NPCAnimationPackAssetId',86582491164528)
 local function install(parent,name,class,file)
  local source=fs.readFile(file);luau.load(source,{debugName=file})
  local script=R.Instance.new(class);script.Name=name;script.Source=source;script.Parent=parent
@@ -37,7 +65,7 @@ install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'PortugueseText','LocalScript','original-portuguese-text.luau')
 local settings=R.Instance.new('RemoteFunction');settings.Name='PlayerSettings';settings.Parent=RS
 local actions=R.Instance.new('RemoteEvent');actions.Name='MysteryUIAction';actions.Parent=RS
-W:SetAttribute('DeadSignalBuildId','still-here-hotel-instruments-v4')
+W:SetAttribute('DeadSignalBuildId','still-here-hotel-instruments-v5')
 W:SetAttribute('SceneDisplayName','HOTEL')
 W:SetAttribute('ActiveMap','1940sHotelLobby')
 W:SetAttribute('InterfaceSource','7902470429')

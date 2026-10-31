@@ -68,11 +68,13 @@ function Interactions.Interact(player,target)
  if not root or os.clock()-(cooldown[player] or -1)<.25 then return false end
  cooldown[player]=os.clock()
  if kind=='Door' then local state=doors[target];return state and Interactions.SetDoorOpen(target,not state.flag.Value) or false
- elseif kind=='PoolTable' then return PoolGame.Join(player)
+ elseif kind=='PoolTable' then
+  RS.MysteryUIAction:FireClient(player,'receptionist_dialogue',{text='Hola. Quer jogar sinuca? Você pode convidar um amigo pelo Roblox ou jogar comigo.',speaker='RECEPCIONISTA'})
+  return true
  elseif kind=='Piano' then return PianoGame.Join(player)
  elseif kind=='Light' then return toggleLight(target)
  elseif kind=='Receptionist' then
-  RS.MysteryUIAction:FireClient(player,'receptionist_dialogue',{text='Hola. Seja bem-vindo ao hotel. A mesa de sinuca está logo ali.'})
+  RS.MysteryUIAction:FireClient(player,'receptionist_dialogue',{text='Hola. Quer jogar sinuca? Você pode convidar um amigo pelo Roblox ou jogar comigo.',speaker='RECEPCIONISTA'})
   return true
  end
  return false
@@ -108,6 +110,10 @@ function Interactions.Initialize(map)
   elseif action=='pool_shoot' then PoolGame.Shoot(player,value)
   elseif action=='pool_restart' then PoolGame.Restart(player)
   elseif action=='pool_exit' then PoolGame.Exit(player)
+  elseif action=='pool_start_npc' then PoolGame.StartNPC(player)
+  elseif action=='pool_start_friend' then PoolGame.StartFriend(player)
+  elseif action=='pool_friend_recipients' then PoolGame.SetInviteRecipients(player,value)
+  elseif action=='pool_cancel_friend' then PoolGame.CancelFriend(player)
   elseif action=='piano_note' then PianoGame.Note(player,value)
   elseif action=='piano_song' then PianoGame.Song(player,value)
   elseif action=='piano_exit' then PianoGame.Exit(player)
