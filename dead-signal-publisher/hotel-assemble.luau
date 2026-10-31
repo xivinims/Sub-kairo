@@ -61,6 +61,7 @@ install(runtime,'MapInteractions','ModuleScript','mystery-map-interactions.luau'
 install(runtime,'PoolGame','ModuleScript','pool-game.luau')
 install(runtime,'PianoGame','ModuleScript','piano-game.luau')
 install(runtime,'HotelReceptionist','ModuleScript','hotel-receptionist.luau')
+install(runtime,'HotelBlenderDecor','ModuleScript','hotel-blender-decor.luau')
 install(runtime,'WorldInitializer','Script','hotel-initialize.luau')
 install(runtime,'PlayerSettings','Script','settings-server.luau')
 install(RS,'SettingsSchema','ModuleScript','settings-schema.luau')
