@@ -156,6 +156,17 @@ local function addNameplate(model,root)
 	local lamp=Instance.new('PointLight');lamp.Name='ReceptionistWarmLight';lamp.Color=Color3.fromRGB(255,218,164);lamp.Brightness=.28;lamp.Range=8;lamp.Shadows=false;lamp.Parent=root
 end
 
+local function placeAt(model,root,target)
+	local parts={}
+	for _,object in ipairs(model:GetDescendants()) do
+		if object:IsA('BasePart') then object.Anchored=true;table.insert(parts,object) end
+	end
+	local transform=target*root.CFrame:Inverse()
+	for _,part in ipairs(parts) do part.CFrame=transform*part.CFrame end
+	root.Anchored=true
+	for _,part in ipairs(parts) do if part~=root then part.Anchored=false end end
+end
+
 function Receptionist.Initialize(map,interactions)
 	local oldFolder=workspace:FindFirstChild('HotelActors')
 	if oldFolder and oldFolder:FindFirstChild('HotelReceptionist') then return oldFolder.HotelReceptionist end
@@ -170,9 +181,9 @@ function Receptionist.Initialize(map,interactions)
 	local floor=findFloor(tableModel,surface,folder)
 	local position=floor+Vector3.new(0,2.85,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
-	model:PivotTo(CFrame.lookAt(position,target,Vector3.yAxis))
 	local root=model.PrimaryPart or model:FindFirstChild('HumanoidRootPart')
 	assert(root,'Receptionist fallback avatar is missing its root')
+	placeAt(model,root,CFrame.lookAt(position,target,Vector3.yAxis))
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
