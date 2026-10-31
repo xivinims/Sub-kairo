@@ -4,8 +4,14 @@ if W:GetAttribute('GameMode')~='Match' or W:GetAttribute('SelectedChapter')==2 t
 local Players=game:GetService('Players');local Tween=game:GetService('TweenService')
 local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui')
 local gui=Instance.new('ScreenGui');gui.Name='MissionTop';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.DisplayOrder=40;gui.Parent=pg
-local text=Instance.new('TextLabel');text.Name='Objective';text.AnchorPoint=Vector2.new(.5,0);text.Position=UDim2.new(.5,0,0,12);text.Size=UDim2.new(.76,0,0,46);text.BackgroundTransparency=1;text.TextColor3=Color3.fromRGB(235,232,220);text.TextStrokeColor3=Color3.new(0,0,0);text.TextStrokeTransparency=.35;text.Font=Enum.Font.Garamond;text.TextSize=20;text.TextWrapped=true;text.Parent=gui
-local limit=Instance.new('UISizeConstraint');limit.MaxSize=Vector2.new(720,70);limit.Parent=text
+local panel=Instance.new('Frame');panel.Name='MissionObjectivePanel';panel.Position=UDim2.new(0,18,0,14);panel.Size=UDim2.new(.48,0,0,72);panel.BackgroundColor3=Color3.fromRGB(18,18,18);panel.BackgroundTransparency=.18;panel.BorderSizePixel=0;panel.Parent=gui
+Instance.new('UICorner',panel).CornerRadius=UDim.new(0,4)
+local limit=Instance.new('UISizeConstraint');limit.MinSize=Vector2.new(230,72);limit.MaxSize=Vector2.new(470,72);limit.Parent=panel
+local edge=Instance.new('UIStroke');edge.Color=Color3.fromRGB(137,132,125);edge.Thickness=1;edge.Transparency=.78;edge.Parent=panel
+local accent=Instance.new('Frame');accent.Name='ObjectiveAccent';accent.Position=UDim2.new(0,0,0,8);accent.Size=UDim2.new(0,2,1,-16);accent.BackgroundColor3=Color3.fromRGB(177,54,57);accent.BorderSizePixel=0;accent.Parent=panel
+local eyebrow=Instance.new('TextLabel');eyebrow.Name='ChapterLabel';eyebrow.Position=UDim2.new(0,15,0,7);eyebrow.Size=UDim2.new(1,-24,0,16);eyebrow.BackgroundTransparency=1;eyebrow.Text='CHAPTER 1   /   OBJETIVO';eyebrow.TextColor3=Color3.fromRGB(171,166,158);eyebrow.Font=Enum.Font.RobotoCondensed;eyebrow.TextSize=10;eyebrow.TextXAlignment=Enum.TextXAlignment.Left;eyebrow.Parent=panel
+local text=Instance.new('TextLabel');text.Name='Objective';text.Position=UDim2.new(0,15,0,25);text.Size=UDim2.new(1,-24,0,40);text.BackgroundTransparency=1;text.TextColor3=Color3.fromRGB(235,232,220);text.Font=Enum.Font.RobotoCondensed;text.TextSize=16;text.TextXAlignment=Enum.TextXAlignment.Left;text.TextYAlignment=Enum.TextYAlignment.Center;text.TextWrapped=true;text.Parent=panel
+local textLimit=Instance.new('UITextSizeConstraint');textLimit.MinTextSize=12;textLimit.MaxTextSize=17;textLimit.Parent=text
 local missions={OpenHouseDoor='Encontre a chave e abra a porta da mansão.',Son='Investigue o escritório e recupere a fotografia.',Mother='Encontre as peças e complete o manequim.',Father='Encontre os ingredientes e complete a receita.',Daughter='Encontre as peças e restaure a escultura.',Grandmother='Encontre as peças da estátua no solário.',Grandfather='Encontre as velas e complete o ritual.'}
 local current;local generation=0;local fade
 local function objective()
@@ -26,6 +32,7 @@ local function refresh()
  if fade then fade:Cancel() end
  text.Text=(first and 'Missão: ' or 'Nova missão: ')..nextText;text.TextTransparency=1
  fade=Tween:Create(text,TweenInfo.new(.45),{TextTransparency=0});fade:Play()
+ Tween:Create(accent,TweenInfo.new(.24,Enum.EasingStyle.Quad),{BackgroundTransparency=.08}):Play()
  if not first then task.delay(5,function() if token==generation and gui.Parent then text.Text='Missão: '..nextText end end) end
 end
 W:GetAttributeChangedSignal('OriginalMissionState'):Connect(refresh)
