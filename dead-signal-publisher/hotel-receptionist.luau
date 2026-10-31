@@ -118,6 +118,8 @@ local function placeAt(model,root,target)
 	local relative={}
 	for _,part in ipairs(parts) do relative[part]=origin:ToObjectSpace(part.CFrame) end
 	for _,part in ipairs(parts) do part.CFrame=target*relative[part] end
+	model:PivotTo(target)
+	root.Position=target.Position
 	root.CFrame=target
 end
 
@@ -139,7 +141,7 @@ function Receptionist.Initialize(map,interactions)
 	assert(root,'Receptionist fallback avatar is missing its root')
 	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
 	placeAt(model,root,targetFrame)
-	assert((root.Position-targetFrame.Position).Magnitude<.1,'Could not place receptionist beside the pool: '..tostring(root.Position)..' target '..tostring(targetFrame.Position))
+	assert((root.Position-targetFrame.Position).Magnitude<.1,'Could not place receptionist beside the pool: '..tostring(root.Position)..' target '..tostring(targetFrame.Position)..' class='..root.ClassName..' anchored='..tostring(root.Anchored)..' parts='..tostring(#model:GetDescendants()))
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
