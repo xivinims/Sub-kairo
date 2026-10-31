@@ -37,7 +37,7 @@ install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'PortugueseText','LocalScript','original-portuguese-text.luau')
 local settings=R.Instance.new('RemoteFunction');settings.Name='PlayerSettings';settings.Parent=RS
 local actions=R.Instance.new('RemoteEvent');actions.Name='MysteryUIAction';actions.Parent=RS
-W:SetAttribute('DeadSignalBuildId','still-here-hotel-interactions-v3')
+W:SetAttribute('DeadSignalBuildId','still-here-hotel-instruments-v4')
 W:SetAttribute('SceneDisplayName','HOTEL')
 W:SetAttribute('ActiveMap','1940sHotelLobby')
 W:SetAttribute('InterfaceSource','7902470429')

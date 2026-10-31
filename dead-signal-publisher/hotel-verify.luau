@@ -1,5 +1,5 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong experience')
-assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-interactions-v3','Wrong release')
+assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-instruments-v4','Wrong release')
 local ReplicatedStorage=game:GetService('ReplicatedStorage')
 local CollectionService=game:GetService('CollectionService')
 local map=assert(workspace:FindFirstChild('HotelMap'))
@@ -55,16 +55,31 @@ local runtime=game:GetService('ServerScriptService').StillHereRuntime
 local poolScript=assert(runtime:FindFirstChild('PoolGame'))
 local poolClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('PoolGameClient'))
 assert(poolScript.Source:find('function PoolGame.Shoot',1,true) and poolScript.Source:find(':ApplyImpulse(',1,true),'Pool shot logic is missing')
-assert(poolClient.Source:find('pool_shoot',1,true) and poolClient.Source:find('pool_restart',1,true),'Pool controls are missing')
-assert(poolClient.Source:find('CameraType.Scriptable',1,true) and poolClient.Source:find('AimBeam',1,true) and poolClient.Source:find('CueVisual',1,true),'Pool camera, aiming guide, or cue presentation missing')
+assert(poolClient.Source:find('pool_shoot',1,true) and poolClient.Source:find('InputEnded',1,true),'Direct pool controls are missing')
+assert(poolClient.Source:find('CameraType.Scriptable',1,true) and poolClient.Source:find('HotelPoolAimBeam',1,true) and poolClient.Source:find('HotelPoolCue_',1,true),'Pool camera, world aim, or cue presentation missing')
+assert(not poolClient.Source:find('ScreenGui',1,true) and not poolClient.Source:find('PoolGameControls',1,true),'Pool still uses a fake on-screen table')
 local piano=assert(map:FindFirstChild('Piano',true),'Hotel piano missing')
-assert(piano:GetAttribute('InteractionKind')=='Piano','Piano interaction is missing')
+assert(piano:GetAttribute('InteractionKind')=='Piano' and piano:GetAttribute('PlayableKeysReady') and piano:GetAttribute('PhysicalSongCards')==6,'Physical piano interaction is missing')
 local pianoGame=assert(runtime:FindFirstChild('PianoGame'))
 local pianoClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('PianoGameClient'))
 assert(pianoGame.Source:find('HotelPianoNote',1,true) and pianoGame.Source:find('122098201042601',1,true),'Piano notes are missing')
-assert(pianoClient.Source:find('MISTERIO',1,true) and pianoClient.Source:find('CameraType.Scriptable',1,true),'Piano controls, songs, or camera are missing')
+assert(pianoGame.Source:find('HEAVEN_SAYS_AUDIO',1,true) and pianoGame.Source:find('72980269840928',1,true),'Requested Heaven Says song is missing')
+assert(pianoClient.Source:find('ViewportPointToRay',1,true) and pianoClient.Source:find('PianoNoteIndex',1,true) and pianoClient.Source:find('CameraType.Scriptable',1,true),'Direct piano keys or camera are missing')
+assert(not pianoClient.Source:find('ScreenGui',1,true) and not pianoClient.Source:find('HotelPianoControls',1,true),'Piano still uses a fake on-screen keyboard')
+local pianoRuntime=assert(workspace:FindFirstChild('HotelPianoRuntime'),'Physical piano keys/cards are missing')
+local heavenSound=assert(pianoRuntime:FindFirstChild('HeavenSaysAtHotelPiano',true),'Heaven Says audio is not attached to the piano')
+assert(heavenSound.Looped and heavenSound.SoundId=='rbxassetid://72980269840928','Heaven Says does not loop from the requested audio asset')
+assert(pianoGame.Source:find('playStep',1,true),'Original piano melodies are missing')
+local pianoNotes,pianoCards=0,0
+for _,object in ipairs(piano:GetDescendants()) do if object:IsA('BasePart') and object:GetAttribute('PianoNoteIndex')~=nil then pianoNotes+=1 end end
+for _,object in ipairs(pianoRuntime:GetDescendants()) do
+	if object:IsA('BasePart') and object:GetAttribute('PianoNoteIndex')~=nil then pianoNotes+=1 end
+	if object:IsA('BasePart') and object:GetAttribute('PianoSongId')~=nil then pianoCards+=1 end
+end
+assert(pianoNotes>=13 and pianoCards==6,'The in-world piano keyboard or songbook is incomplete')
 local receptionist=assert(workspace:FindFirstChild('HotelActors') and workspace.HotelActors:FindFirstChild('HotelReceptionist'),'Receptionist is missing')
 assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChildOfClass('Humanoid'),'Receptionist is not interactable')
+assert(receptionist.PrimaryPart and (receptionist.PrimaryPart.Position-pool.PrimaryPart.Position).Magnitude<14,'Receptionist is not beside the pool table')
 local settingsClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('HotelReceptionistClient'))
 assert(settingsClient.Source:find('Hola',1,true),'Receptionist dialogue is missing')
 assert(#CollectionService:GetTagged('StillHereInteractable')>=7,'Map objects are not using the corner interaction button')

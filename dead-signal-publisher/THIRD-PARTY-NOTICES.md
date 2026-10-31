@@ -7,6 +7,7 @@ Player-facing credits screens were removed. These attributions are retained here
 - **FPS System Demo** — Bobbity Games.
 - **Massive Black Hole** — APMOfficial.
 - **Low Gravity** — Matching Anime Outfits.
+- **HEAVEN SAYS (MANDELA MIX)** — xxusrnm / Z Sharp Studios, Roblox audio asset 72980269840928. The creator's asset description permits gameplay use with credit; the track is played from the piano's in-world songbook and is not redistributed as a project file. Original **HEAVEN SAYS** credit: Chartcarr; cover credit: GamePlayah.
 - **ContextActionUtility** — PseudoPerson. The source identifies this module as CC BY 4.0 and asks that credit remain in the code.  
   License: https://creativecommons.org/licenses/by/4.0/  
   Source post: https://devforum.roblox.com/t/source-code-contextactionutility/804187  

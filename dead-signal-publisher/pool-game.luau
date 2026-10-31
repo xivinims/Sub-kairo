@@ -284,6 +284,7 @@ function PoolGame.Join(player)
 	if not root or (root.Position-state.surface.Position).Magnitude>11 then return false end
 	if state.owner and state.owner~=player then state.remote:FireClient(player,'pool_busy');return false end
 	state.owner=player
+	player:SetAttribute('HotelInteractionMode','Pool')
 	startGame()
 	state.remote:FireClient(player,'pool_open',{
 		remaining=state.remaining,
@@ -330,6 +331,7 @@ end
 function PoolGame.Exit(player)
 	if state.owner~=player then return false end
 	state.owner=nil
+	player:SetAttribute('HotelInteractionMode',nil)
 	state.remote:FireClient(player,'pool_close')
 	return true
 end

@@ -30,9 +30,16 @@ local function setLabel(button,text)
 end
 setLabel(lamp,Input.TouchEnabled and 'Lanterna' or 'Lanterna (U)')
 local target
+local function mode() return player:GetAttribute('HotelInteractionMode') end
 local function available() return player:GetAttribute('InterfaceOpen')~=true and workspace:GetAttribute('WorldReady')==true end
 local function useLamp() if available() then remote:FireServer('lamp') end end
-local function interact() if available() and target then remote:FireServer('interact',target) end end
+local function interact()
+ if not available() then return end
+ local currentMode=mode()
+ if currentMode=='Piano' then remote:FireServer('piano_exit');return end
+ if currentMode=='Pool' then remote:FireServer('pool_exit');return end
+ if target then remote:FireServer('interact',target) end
+end
 lamp.Activated:Connect(useLamp)
 action.Activated:Connect(interact)
 Input.InputBegan:Connect(function(input,processed)
@@ -44,6 +51,12 @@ local elapsed=0
 Run.Heartbeat:Connect(function(dt)
  elapsed+=dt;if elapsed<.12 then return end;elapsed=0
  target=nil
+ local currentMode=mode()
+ if currentMode=='Piano' or currentMode=='Pool' then
+  action.Active=true;action.AutoButtonColor=true;action.ImageTransparency=0;indicator.Enabled=false
+  setLabel(action,currentMode=='Piano' and 'Sair do piano' or 'Sair da sinuca')
+  return
+ end
  local character=player.Character
  local root=character and character:FindFirstChild('HumanoidRootPart')
  local camera=workspace.CurrentCamera
