@@ -1,1 +1,1 @@
-mystery-map-inspect-v2
+hotel-ui-inspect-v1
