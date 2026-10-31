@@ -15,7 +15,10 @@ for _,player in ipairs(Players:GetPlayers()) do preparePlayer(player) end
 local map=W:FindFirstChild('HotelMap') or SS:FindFirstChild('HotelMap')
 assert(map,'Hotel map package missing')
 map.Parent=W
-require(game:GetService('ServerScriptService').StillHereRuntime.MapInteractions).Initialize(map)
+local runtime=game:GetService('ServerScriptService').StillHereRuntime
+local interactions=require(runtime.MapInteractions)
+interactions.Initialize(map)
+require(runtime.HotelReceptionist).Initialize(map,interactions)
 W:SetAttribute('WorldReady',true)
 W:SetAttribute('GameMode','Match')
 if Run:IsRunning() then

@@ -1,5 +1,5 @@
 assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong experience')
-assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-gameplay-settings-v2','Wrong release')
+assert(workspace:GetAttribute('DeadSignalBuildId')=='still-here-hotel-interactions-v3','Wrong release')
 local ReplicatedStorage=game:GetService('ReplicatedStorage')
 local CollectionService=game:GetService('CollectionService')
 local map=assert(workspace:FindFirstChild('HotelMap'))
@@ -10,7 +10,9 @@ assert(ui.HUD.Frame.HeadlampButton:IsA('ImageButton') and ui.HUD.Frame.GrabRelea
 assert(game:GetService('StarterPlayer').CharacterWalkSpeed==16,'Default walking speed mismatch')
 local interfaceSource=assert(ReplicatedStorage:FindFirstChild('SessionInterface')).Source
 assert(interfaceSource:find('IgnoreGuiInset=true',1,true),'Settings are not full-screen')
-for _,label in ipairs({'JOGO','CONTROLES','TELA','ÁUDIO','IDIOMA','RESTAURAR','APLICAR'}) do
+assert(interfaceSource:find('Position=UDim2.fromScale(0,0)',1,true) and interfaceSource:find('scheduleSave',1,true),'Settings are not anchored left with autosave')
+assert(not interfaceSource:find('APLICAR',1,true),'Manual apply button remains')
+for _,label in ipairs({'JOGO','CONTROLES','TELA','ÁUDIO','IDIOMA','RESTAURAR PADRÕES','SALVANDO AUTOMATICAMENTE'}) do
 	assert(interfaceSource:find(label,1,true),'Settings section missing '..label)
 end
 
@@ -49,13 +51,27 @@ assert(#poolWorld.InvisiblePlayfield:GetChildren()>=13,'Pool pockets/playfield a
 assert(#poolWorld.Balls:GetChildren()==16,'Pool rack is missing its cue ball and 15 object balls')
 local cueBall=assert(poolWorld.Balls:FindFirstChild('CueBall'))
 assert(not cueBall.Anchored and cueBall.CanCollide,'Pool cue ball is not a physical ball')
-local poolScript=assert(game:GetService('ServerScriptService').StillHereRuntime:FindFirstChild('PoolGame'))
+local runtime=game:GetService('ServerScriptService').StillHereRuntime
+local poolScript=assert(runtime:FindFirstChild('PoolGame'))
 local poolClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('PoolGameClient'))
 assert(poolScript.Source:find('function PoolGame.Shoot',1,true) and poolScript.Source:find(':ApplyImpulse(',1,true),'Pool shot logic is missing')
 assert(poolClient.Source:find('pool_shoot',1,true) and poolClient.Source:find('pool_restart',1,true),'Pool controls are missing')
+assert(poolClient.Source:find('CameraType.Scriptable',1,true) and poolClient.Source:find('AimBeam',1,true) and poolClient.Source:find('CueVisual',1,true),'Pool camera, aiming guide, or cue presentation missing')
+local piano=assert(map:FindFirstChild('Piano',true),'Hotel piano missing')
+assert(piano:GetAttribute('InteractionKind')=='Piano','Piano interaction is missing')
+local pianoGame=assert(runtime:FindFirstChild('PianoGame'))
+local pianoClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('PianoGameClient'))
+assert(pianoGame.Source:find('HotelPianoNote',1,true) and pianoGame.Source:find('122098201042601',1,true),'Piano notes are missing')
+assert(pianoClient.Source:find('MISTERIO',1,true) and pianoClient.Source:find('CameraType.Scriptable',1,true),'Piano controls, songs, or camera are missing')
+local receptionist=assert(workspace:FindFirstChild('HotelActors') and workspace.HotelActors:FindFirstChild('HotelReceptionist'),'Receptionist is missing')
+assert(receptionist:GetAttribute('InteractionKind')=='Receptionist' and receptionist:FindFirstChildOfClass('Humanoid'),'Receptionist is not interactable')
+local settingsClient=assert(game:GetService('ReplicatedFirst'):FindFirstChild('HotelReceptionistClient'))
+assert(settingsClient.Source:find('Hola',1,true),'Receptionist dialogue is missing')
 assert(#CollectionService:GetTagged('StillHereInteractable')>=7,'Map objects are not using the corner interaction button')
 for _,object in ipairs(CollectionService:GetTagged('StillHereInteractable')) do
-	assert(object:GetAttribute('InteractionKind')=='Door' or object:GetAttribute('InteractionKind')=='PoolTable' or object:GetAttribute('InteractionKind')=='Light','Unexpected interaction type')
+	assert(object:GetAttribute('InteractionKind')=='Door' or object:GetAttribute('InteractionKind')=='PoolTable' or object:GetAttribute('InteractionKind')=='Piano' or object:GetAttribute('InteractionKind')=='Receptionist' or object:GetAttribute('InteractionKind')=='Light','Unexpected interaction type')
 end
+assert(interfaceSource:find('Position=UDim2.fromScale(0,0)',1,true) and interfaceSource:find('scheduleSave',1,true),'Settings are not left-anchored with autosave')
+assert(not interfaceSource:find('APLICAR',1,true),'Manual apply button remains')
 for _,object in ipairs(ui:GetDescendants()) do assert(not object:IsA('BasePart') and not object:IsA('LuaSourceContainer'),'UI package depends on map') end
 return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),parts=parts,screens=#ui:GetChildren(),doors=doors,spawns=spawns,removedRainModels=map:GetAttribute('RemovedOrphanedRainModels'),poolBalls=#poolWorld.Balls:GetChildren(),poolPocketObjects=#poolWorld.InvisiblePlayfield:GetChildren(),poolShotLogic=true,interactables=#CollectionService:GetTagged('StillHereInteractable'),separateMapAndUI=true})

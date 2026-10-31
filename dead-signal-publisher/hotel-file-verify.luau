@@ -70,7 +70,7 @@ assert(next(originalParts)==nil,'Missing geometry from supplied map')
 assert(parts==map:GetAttribute('SourcePartCount'),'Map part count mismatch')
 for _,d in ipairs(ui:GetDescendants()) do assert(not d:IsA('BasePart') and not d:IsA('LuaSourceContainer'),'UI package depends on map/code') end
 local scripts=0
-local shipped={MapInteractions='mystery-map-interactions.luau',PoolGame='pool-game.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',PoolGameClient='pool-game-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
+local shipped={MapInteractions='mystery-map-interactions.luau',PoolGame='pool-game.luau',PianoGame='piano-game.luau',HotelReceptionist='hotel-receptionist.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',PoolGameClient='pool-game-client.luau',PianoGameClient='piano-game-client.luau',HotelReceptionistClient='hotel-receptionist-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
 for _,d in ipairs(dm:GetDescendants()) do
  assert(not d:IsA('Tool'),'Weapon tool in release')
  if d:IsA('LuaSourceContainer') then
@@ -86,6 +86,9 @@ assert(dm:GetService('StarterPlayer').CameraMode==R.Enum.CameraMode.Classic,'Wro
 assert(dm:GetService('StarterPlayer').CameraMinZoomDistance>=8,'First person enabled')
 assert(dm:GetService('StarterPlayer').CharacterWalkSpeed==16,'Player walk speed was not normalized')
 assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find('IgnoreGuiInset=true',1,true),'Settings do not fill the screen')
-for _,label in ipairs({'JOGO','CONTROLES','TELA','ÁUDIO','IDIOMA','RESTAURAR','APLICAR'}) do assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find(label,1,true),'Settings section missing '..label) end
+assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find('Position=UDim2.fromScale(0,0)',1,true),'Settings do not anchor to the left edge')
+assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find('function M.Save()',1,true),'Settings do not autosave')
+assert(not dm:GetService('ReplicatedStorage').SessionInterface.Source:find('APLICAR',1,true),'Manual apply button remains in settings')
+for _,label in ipairs({'JOGO','CONTROLES','TELA','ÁUDIO','IDIOMA','RESTAURAR PADRÕES','SALVANDO AUTOMATICAMENTE'}) do assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find(label,1,true),'Settings section missing '..label) end
 print('HOTEL_FILE_VERIFIED '..serde.encode('json',{parts=parts,originalGuiObjects=guiObjects,screens=#ui:GetChildren(),scripts=scripts,separateMapAndUI=true}))
 

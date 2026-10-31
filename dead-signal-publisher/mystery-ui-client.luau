@@ -73,6 +73,8 @@ Run.Heartbeat:Connect(function(dt)
   local kind=target:GetAttribute('InteractionKind')
   if kind=='Door' then label=target:GetAttribute('IsOpen') and 'Fechar' or 'Abrir'
   elseif kind=='PoolTable' then label='Jogar sinuca'
+  elseif kind=='Piano' then label='Tocar piano'
+  elseif kind=='Receptionist' then label='Falar com recepcionista'
   elseif kind=='Light' then label=target:GetAttribute('IsLightOn') and 'Apagar luz' or 'Acender luz' end
  end
  setLabel(action,label)

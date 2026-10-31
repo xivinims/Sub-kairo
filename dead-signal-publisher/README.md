@@ -1,33 +1,30 @@
-# Still Here — mapa do hotel e GUI do Mistério
+# Still Here — Hotel Mistério
 
-Publicado e verificado: **PlaceVersion 248**, workflow **41225810899**. Os servidores anteriores foram reiniciados. Evidências em `review/hotel-gameplay-settings-verification.json`.
-
-O mapa enviado e a interface da antiga mansão Mistério são pacotes independentes.
+O ramo `dead-signal-publisher` monta o mapa de hotel e a interface original do Mistério como pacotes independentes. O mapa vem de `assets/hotel/1940sHotelLobby.rbxm`; a GUI reutilizada está em `assets/ui/mystery-interface.rbxm`.
 
 | Pacote | Arquivo | Destino no jogo |
 | --- | --- | --- |
-| GUI original da mansão | `assets/ui/mystery-interface.rbxm` | `ReplicatedStorage.MysteryInterface`, copiada para `PlayerGui` |
-| Mapa enviado | `assets/hotel/1940sHotelLobby.rbxm` | `ServerStorage.HotelMap`, carregado em `Workspace.HotelMap` |
+| GUI do Mistério | `assets/ui/mystery-interface.rbxm` | `ReplicatedStorage.MysteryInterface`, clonada para `PlayerGui` |
+| Mapa do hotel | `assets/hotel/1940sHotelLobby.rbxm` | `ServerStorage.HotelMap`, carregado em `Workspace.HotelMap` |
 
-Os sete templates originais conservam imagens, posições e tipografia. A interface ativa usa HUD, vinheta e indicador de interação. O botão de interação no canto abre e fecha as portas, inicia a sinuca e alterna luzes próximas. Portas não têm mais clique do mouse, tecla E ou prompt. A sinuca monta 16 bolas e usa uma interface de ângulo, força, tacada, reinício e saída. A velocidade do personagem é 16.
+O Chapter 2 continua pausado e fora desta alteração. A geometria original do hotel permanece intacta. O botão de interação no canto ativa portas, luzes, sinuca, piano e recepcionista.
 
-As configurações agora ocupam a altura inteira da tela, alinhadas à esquerda, com páginas em português para Jogo, Controles, Tela, Áudio e Idioma. Há controles de brilho, campo de visão, sensibilidade, sombras, efeitos, volume e dicas. A tela ignora a margem superior do Roblox e se ajusta a retrato e paisagem.
+## Interações e interface
 
-O cenário conserva **8.688 peças**, materiais incluídos, efeitos de iluminação, sons e dez pontos de nascimento. As 14 estruturas repetidas de chuva que dependiam de scripts ausentes foram removidas; os efeitos das janelas e da lareira continuam. A arma e seu gerador são removidos do cenário montado. Scripts embutidos são substituídos pelo controlador revisado. Peças decorativas soltas ficam ancoradas; posições, dimensões, malhas e cores das peças mantidas são preservadas.
+- A sinuca abre uma câmera dedicada sobre a mesa, mostra mira e taco animado, permite ajustar direção e força com toque, teclado ou mouse, e mantém as tacadas no servidor.
+- O piano abre uma câmera dedicada, mostra um teclado responsivo e toca notas espaciais com reverberação. Há quatro melodias curtas originais.
+- O recepcionista aparece ao lado da sinuca com avatar baseado no criador do jogo e as peças identificáveis nas imagens de referência. Ele responde: “Hola. Seja bem-vindo ao hotel.”
+- Configurações ficam em um painel de altura total encostado à esquerda, sem a tela central. Categorias abrem páginas individuais; controles visuais e de áudio aplicam na hora e salvam automaticamente.
+- O menu removeu a página de créditos e não adiciona um botão próprio de convite multiplayer.
 
-O arquivo recebido contém quatro nomes de materiais sem definição: `Bricks 02`, `Marble Speckled`, `Metal` e `Wood Floor Rough MV`. As referências são mantidas e o Roblox usa o material nativo correspondente quando a definição falta.
+O cenário conserva 8.688 peças, iluminação e dez pontos de nascimento. As estruturas órfãs de chuva foram retiradas e a arma foi removida do mapa montado. O controlador mantém velocidade 16 e não habilita primeira pessoa.
 
-## Montagem e conferência
+## Conferência e publicação
 
 - Universo `9421311218`; Place `118064584465155`; branch `dead-signal-publisher`.
-- Build `still-here-hotel-gameplay-settings-v2`.
-- O Chapter 2 permaneceu inalterado. A branch não contém o mapa do labirinto do Chapter 1; por isso, as cartas dessa parede não entraram nesta versão.
-- `node dead-signal-publisher/publish.mjs --dry-run` verifica fontes e hashes dos dois pacotes.
-- `hotel-assemble.luau` monta o Place sem a geometria ou os controladores de história da antiga mansão. A GUI está salva no repositório e pode ser reutilizada em outro cenário.
-- `hotel-file-verify.luau` compara o desenho da GUI com o original do Mistério, a geometria mantida com o arquivo recebido e os controladores com as fontes da branch. Transformações admitem somente a precisão de serialização de 0,0001 stud/componente.
-- `hotel-verify.luau` confere os pacotes, nascimentos, portas, botões, bolas, caçapas e a presença da lógica de tacada em uma sessão isolada do motor Roblox.
-- `asset-probe.trigger` com `hotel-preview` executa a conferência sem publicar.
-- `release.trigger` inicia a publicação depois da revisão. O publicador guarda o Place anterior, verifica e baixa a versão publicada, confere seus arquivos e reinicia os servidores. Uma falha durante a publicação aciona recuperação.
+- Build candidato: `still-here-hotel-interactions-v3`.
+- `preview.trigger` roda montagem, comparação de fontes, conferência geométrica e preflight isolado no Roblox sem publicar.
+- `release.trigger` roda o mesmo preflight e publica só após ele passar. A rotina baixa e guarda a versão anterior, confere a versão publicada e reinicia os servidores; em falha, executa a recuperação.
+- O preflight verifica script, mapa, portas, spawns, bolsos e registros das novas interações. Não renderiza a tela em um cliente real nem simula uma sessão de tacadas para avaliar sensação/latência visual.
 
-A prévia isolada valida a montagem e os controladores, mas não renderiza a tela de configurações nem simula a física da tacada como um cliente Roblox ao vivo. Uma captura visual em cliente/celular não foi feita nesta publicação.
-
+Os dois verificadores comparam o mapa com o arquivo recebido, verificam a separação entre GUI e mapa e conferem que o Chapter 2 não foi incluído.

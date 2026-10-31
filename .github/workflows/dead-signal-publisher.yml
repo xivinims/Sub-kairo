@@ -6,6 +6,7 @@ on:
     branches:
       - dead-signal-publisher
     paths:
+      - "dead-signal-publisher/preview.trigger"
       - "dead-signal-publisher/release.trigger"
 
 permissions:
@@ -18,7 +19,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout dead signal publisher branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -26,15 +27,20 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Validate publisher syntax
+      - name: Validate publisher and source syntax
         run: |
           node --check dead-signal-publisher/publish.mjs
           node --check dead-signal-publisher/hotel-native-publish.mjs
           node --check dead-signal-publisher/hotel-build.mjs
           node dead-signal-publisher/publish.mjs --dry-run
 
-      - name: Publish the supplied hotel with the separated Mystery interface
+      - name: Run Roblox preview preflight without publishing
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/publish.mjs --preview
+
+      - name: Publish the verified hotel build
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.modified, 'dead-signal-publisher/release.trigger') || contains(github.event.head_commit.added, 'dead-signal-publisher/release.trigger')
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/publish.mjs
-

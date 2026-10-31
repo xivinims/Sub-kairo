@@ -1,17 +1,28 @@
-local RS=game:GetService('ReplicatedStorage');local Players=game:GetService('Players');local Tween=game:GetService('TweenService');local Lighting=game:GetService('Lighting');local Sound=game:GetService('SoundService')
-local player=Players.LocalPlayer;local pg=player:WaitForChild('PlayerGui');local M={};local schema=require(RS.SettingsSchema)
-M.Settings=table.clone(schema.Defaults);M.Loaded=false;M.Dirty=false
-function M.Make(class,props,parent) local o=Instance.new(class);for k,v in pairs(props) do o[k]=v end;o.Parent=parent;return o end
+local RS=game:GetService('ReplicatedStorage')
+local Players=game:GetService('Players')
+local Tween=game:GetService('TweenService')
+local Lighting=game:GetService('Lighting')
+local Sound=game:GetService('SoundService')
+local Input=game:GetService('UserInputService')
+local player=Players.LocalPlayer
+local pg=player:WaitForChild('PlayerGui')
+local schema=require(RS.SettingsSchema)
+local M={Settings=table.clone(schema.Defaults),Loaded=false,Dirty=false,Revision=0}
+function M.Make(class,second,third)
+ local parent,props
+ if typeof(second)=='Instance' then parent=second;props=third else props=second;parent=third end
+ local object=Instance.new(class);for key,value in pairs(props) do object[key]=value end;object.Parent=parent;return object
+end
 local make=M.Make
 function M.List(parent)
- local sc=make('ScrollingFrame',{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Color3.fromRGB(150,160,156),AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},parent)
- make('UIPadding',{PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,12),PaddingTop=UDim.new(0,4),PaddingBottom=UDim.new(0,10)},sc)
- make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},sc);return sc
+ local list=make('ScrollingFrame',{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true},parent)
+ make('UIPadding',{PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,12),PaddingTop=UDim.new(0,4),PaddingBottom=UDim.new(0,10)},list)
+ make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},list);return list
 end
-function M.Button(parent,text,fn)
+function M.Button(parent,text,callback)
  local b=make('TextButton',{Size=UDim2.new(1,0,0,44),Text=text,TextWrapped=true,Font=Enum.Font.Garamond,TextSize=21,TextColor3=Color3.fromRGB(178,185,178),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,AutoButtonColor=false,BorderSizePixel=0},parent)
  local function select(on) b.TextColor3=on and Color3.fromRGB(247,244,223) or Color3.fromRGB(178,185,178);b.BackgroundTransparency=on and .88 or 1 end
- b.MouseEnter:Connect(function() select(true) end);b.MouseLeave:Connect(function() select(false) end);b.SelectionGained:Connect(function() select(true) end);b.SelectionLost:Connect(function() select(false) end);b.Activated:Connect(fn);return b
+ b.MouseEnter:Connect(function() select(true) end);b.MouseLeave:Connect(function() select(false) end);b.SelectionGained:Connect(function() select(true) end);b.SelectionLost:Connect(function() select(false) end);b.Activated:Connect(callback);return b
 end
 function M.Label(parent,text,height)
  return make('TextLabel',{Size=UDim2.new(1,0,0,height or 52),Text=text,TextWrapped=true,Font=Enum.Font.Garamond,TextSize=18,TextColor3=Color3.fromRGB(188,195,187),TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1},parent)
@@ -19,347 +30,242 @@ end
 local opened
 function M.Panel(title,dock)
  if opened then opened.Close() end
- 
- local gui=make('ScreenGui',{Name='SidePanel',ResetOnSpawn=false,IgnoreGuiInset=false,DisplayOrder=1500,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
- make('TextButton',{Size=UDim2.fromScale(1,1),Text='',Modal=true,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.80,AutoButtonColor=false,BorderSizePixel=0},gui)
- local startX=dock=='left' and -.5 or 1.5
- local pane=make('Frame',{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(startX,.5),Size=UDim2.fromScale(.55,.86),BackgroundColor3=Color3.fromRGB(9,17,18),BackgroundTransparency=1,BorderSizePixel=0,ClipsDescendants=true},gui)
- -- Only the options column has a dark panel; the scenery remains visible.
- local heading=M.Label(pane,title,46);heading.Position=UDim2.new(.02,0,0,4);heading.Size=UDim2.new(.40,0,0,50);heading.Font=Enum.Font.Oswald;heading.TextScaled=true;heading.TextXAlignment=Enum.TextXAlignment.Right;make('UITextSizeConstraint',{MinTextSize=14,MaxTextSize=42},heading)
- local content=make('Frame',{Position=UDim2.new(.025,0,0,56),Size=UDim2.new(.95,0,1,-118),BackgroundTransparency=1},pane)
- local footer=make('Frame',{Position=UDim2.new(.035,0,1,-53),Size=UDim2.new(.93,0,0,45),BackgroundTransparency=1},pane)
- local status=M.Label(footer,'',44);status.Size=UDim2.fromScale(.64,1);status.TextSize=15
+ local gui=make('ScreenGui',{Name='SidePanel',ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=1500,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
+ local shade=make('TextButton',{Name='WorldInputBlocker',Size=UDim2.fromScale(1,1),Text='',Modal=true,BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.78,AutoButtonColor=false,BorderSizePixel=0},gui)
+ local pane=make('Frame',{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(dock=='left' and -.5 or 1.5,.5),Size=UDim2.fromScale(.55,.86),BackgroundColor3=Color3.fromRGB(9,17,18),BackgroundTransparency=.04,BorderSizePixel=0,ClipsDescendants=true},gui)
+ local heading=M.Label(pane,title,46);heading.Position=UDim2.new(.04,0,0,4);heading.Size=UDim2.new(.92,0,0,50);heading.Font=Enum.Font.Oswald;heading.TextScaled=true;make('UITextSizeConstraint',heading,{MinTextSize=14,MaxTextSize=36})
+ local content=make('Frame',pane,{Position=UDim2.new(.04,0,0,56),Size=UDim2.new(.92,0,1,-118),BackgroundTransparency=1})
+ local footer=make('Frame',pane,{Position=UDim2.new(.04,0,1,-53),Size=UDim2.new(.92,0,0,45),BackgroundTransparency=1})
  local controls
  if workspace:GetAttribute('GameMode')=='Match' then pcall(function() controls=require(player.PlayerScripts:WaitForChild('PlayerModule')):GetControls();controls:Disable() end) end
  player:SetAttribute('InterfaceOpen',true)
- local obj={Gui=gui,Content=content,Footer=footer,Status=status}
- function obj.Close()
-  if not gui.Parent then return end
-  gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false)
-  
-  if opened==obj then opened=nil end
+ local obj={Gui=gui,Content=content,Footer=footer}
+ function obj.Close() if not gui.Parent then return end;gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false);if opened==obj then opened=nil end end
+ local back=M.Button(footer,'VOLTAR',obj.Close);back.Size=UDim2.fromScale(.32,1);back.Position=UDim2.fromScale(.68,0);obj.Back=back;opened=obj
+ local function fit(animate)
+  local camera=workspace.CurrentCamera;local v=camera and camera.ViewportSize or Vector2.new(1280,720);local width=v.Y>v.X and .96 or v.X<1000 and .82 or .54
+  pane.Size=UDim2.fromScale(width,v.Y>v.X and .9 or .86);local goal=UDim2.fromScale(dock=='left' and width/2+.01 or 1-width/2-.02,.5)
+  if animate then Tween:Create(pane,TweenInfo.new(.3,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=goal}):Play() else pane.Position=goal end
  end
- local close=M.Button(footer,'VOLTAR',obj.Close);close.Position=UDim2.fromScale(.68,0);close.Size=UDim2.fromScale(.32,1)
- obj.Back=close;obj.Pane=pane;opened=obj
- -- Screen-aware side sheet: never spills beyond a portrait or landscape viewport.
- -- Leave the 3D cinematic visible to the left on wide landscape devices.
- local viewportConnection
- local function fitPanel(animate)
-  if not gui.Parent then return end
-  local camera=workspace.CurrentCamera
-  local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
-  local portrait=viewport.Y>viewport.X
-  local compact=viewport.X<1000
-  local width
-  local center
-  if dock=='center' then
-   width=portrait and .96 or compact and .92 or .72
-   center=.5
-  elseif dock=='left' then
-   width=portrait and .94 or compact and .82 or .54
-   center=portrait and .50 or (width/2+.012)
-  else
-   width=portrait and .94 or compact and .79 or .57
-   center=portrait and .50 or (1-width/2-.025)
-  end
-  local height=dock=='center' and (portrait and .91 or .88) or (portrait and .87 or .86)
-  pane.Size=UDim2.fromScale(width,height)
-  local destination=UDim2.fromScale(center,.50)
-  if animate then
-   Tween:Create(pane,TweenInfo.new(.31,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=destination}):Play()
-  else pane.Position=destination end
- end
- fitPanel(true)
- local camera=workspace.CurrentCamera
- if camera then
-  viewportConnection=camera:GetPropertyChangedSignal('ViewportSize'):Connect(function() fitPanel(false) end)
- end
- gui.Destroying:Connect(function() if viewportConnection then viewportConnection:Disconnect() end end)
+ fit(true);local camera=workspace.CurrentCamera;local connection=camera and camera:GetPropertyChangedSignal('ViewportSize'):Connect(function() fit(false) end);gui.Destroying:Connect(function() if connection then connection:Disconnect() end end)
  return obj
 end
-local master=make('SoundGroup',{Name='StillHereMaster',Volume=.8},Sound)
-local groupVolumes=setmetatable({},{__mode='k'})
-local function audio(o)
- if o:IsA('SoundGroup') and o~=master and o.Parent==Sound then groupVolumes[o]=groupVolumes[o] or o.Volume;o.Volume=groupVolumes[o]*M.Settings.volume
- elseif o:IsA('Sound') and not o.SoundGroup then o.SoundGroup=master end
+local master=make('SoundGroup',{Name='StillHereMaster',Volume=1},Sound)
+local groupNames={'Music','Ambience','Effects','Dialogue','Movies','Chat'}
+local audioGroups={};for _,name in ipairs(groupNames) do audioGroups[name]=make('SoundGroup',{Name='StillHere'..name,Volume=1},master) end
+local originalGroups=setmetatable({},{__mode='k'})
+local function categoryFor(object)
+ local category=object:GetAttribute('SoundCategory')
+ if category and audioGroups[category] then return category end
+ local text=string.lower(object.Name..' '..(object.Parent and object.Parent.Name or ''))
+ if string.find(text,'dialog',1,true) or string.find(text,'speech',1,true) then return 'Dialogue' end
+ if string.find(text,'movie',1,true) or string.find(text,'cinema',1,true) then return 'Movies' end
+ if string.find(text,'chat',1,true) then return 'Chat' end
+ if string.find(text,'ambien',1,true) or string.find(text,'rain',1,true) then return 'Ambience' end
+ if string.find(text,'music',1,true) or string.find(text,'piano',1,true) then return 'Music' end
+ return 'Effects'
 end
-for _,o in ipairs(game:GetDescendants()) do audio(o) end
-game.DescendantAdded:Connect(audio)
+local function registerAudio(object)
+ if object:IsA('Sound') then
+  if not object.SoundGroup or object.SoundGroup==master then object.SoundGroup=audioGroups[categoryFor(object)] end
+ elseif object:IsA('SoundGroup') and object~=master and not object:IsDescendantOf(master) then
+  originalGroups[object]=originalGroups[object] or object.Volume
+ end
+end
+for _,object in ipairs(game:GetDescendants()) do registerAudio(object) end
+game.DescendantAdded:Connect(registerAudio)
 local correction=make('ColorCorrectionEffect',{Name='PlayerBrightness'},Lighting)
 local bloomOriginal=setmetatable({},{__mode='k'})
--- Re-apply saved graphics preferences to the active mystery session.
-workspace:GetAttributeChangedSignal('GameMode'):Connect(function()
- if M.Loaded then task.defer(function() if player.Parent then M.Apply() end end) end
-end)
 function M.Apply()
- local s=M.Settings;master.Volume=s.volume;for group,volume in pairs(groupVolumes) do if group.Parent then group.Volume=volume*s.volume end end
- -- Device-level graphics quality may still disable expensive effects.
- correction.Brightness=(s.brightness-.5)*.3
- Lighting.GlobalShadows=s.shadows
- for _,e in ipairs(Lighting:GetChildren()) do
-  if e:IsA('BloomEffect') then
-   if bloomOriginal[e]==nil then bloomOriginal[e]=e.Enabled end
-   e.Enabled=s.bloom and bloomOriginal[e]
-  end
- end
- game:GetService('UserInputService').MouseDeltaSensitivity=s.sensitivity
- player:SetAttribute('PreferredFOV',s.fov);player:SetAttribute('LoadingHints',s.loadingHints)
- if workspace.CurrentCamera and workspace.CurrentCamera.CameraType~=Enum.CameraType.Scriptable then workspace.CurrentCamera.FieldOfView=s.fov end
+ local s=M.Settings
+ master.Volume=s.volume
+ audioGroups.Music.Volume=s.musicVolume;audioGroups.Ambience.Volume=s.ambienceVolume;audioGroups.Effects.Volume=s.effectsVolume;audioGroups.Dialogue.Volume=s.dialogueVolume;audioGroups.Movies.Volume=s.moviesVolume;audioGroups.Chat.Volume=s.chatVolume
+ for group,base in pairs(originalGroups) do if group.Parent then group.Volume=base*s.volume end end
+ correction.Brightness=(s.brightness-.5)*.3;Lighting.GlobalShadows=s.shadows
+ for _,effect in ipairs(Lighting:GetChildren()) do if effect:IsA('BloomEffect') then if bloomOriginal[effect]==nil then bloomOriginal[effect]=effect.Enabled end;effect.Enabled=s.bloom and bloomOriginal[effect] end end
+ Input.MouseDeltaSensitivity=s.sensitivity;player:SetAttribute('PreferredFOV',s.fov);player:SetAttribute('LoadingHints',s.loadingHints)
+ local camera=workspace.CurrentCamera;if camera and camera.CameraType~=Enum.CameraType.Scriptable then camera.FieldOfView=s.fov end
 end
-local loading=false
+workspace:GetAttributeChangedSignal('GameMode'):Connect(function() if M.Loaded then task.defer(M.Apply) end end)
+local loading=false;local saving=false;local autoToken=0;local statusLabel
+local function cloneSettings() return table.clone(M.Settings) end
 function M.Load()
  while loading do task.wait(.1) end
  if M.Loaded then return true end;loading=true
  local ok,result=pcall(function() return RS:WaitForChild('PlayerSettings'):InvokeServer('get') end);loading=false
- if ok and result.ok then M.Settings=schema.Clean(result.settings);M.Loaded=true;M.Apply();return true end
+ if ok and result and result.ok then M.Settings=schema.Clean(result.settings);M.Loaded=true;M.Dirty=false;M.Apply();return true end
  return false
 end
+local scheduleSave
 function M.Save()
  if not M.Dirty then return true end
- if not M.Loaded then return false,'Não foi possível carregar as configurações.' end
- local ok,r=pcall(function() return RS.PlayerSettings:InvokeServer('save',M.Settings) end)
- if ok and r.ok then M.Dirty=false;return true end
- return false,ok and r.message or 'Falha ao salvar. Tente novamente.'
+ if not M.Loaded then return false,'As configurações ainda estão carregando.' end
+ if saving then return false,'Aguarde o salvamento automático.' end
+ saving=true;local revision=M.Revision;local snapshot=cloneSettings()
+ local ok,response=pcall(function() return RS:WaitForChild('PlayerSettings'):InvokeServer('save',snapshot) end);saving=false
+ if ok and response and response.ok then
+  if revision==M.Revision then M.Dirty=false else M.Dirty=true;if scheduleSave then scheduleSave() end end
+  return true
+ end
+ if scheduleSave then scheduleSave() end
+ return false,ok and response and response.message or 'Não foi possível salvar. Tentando novamente.'
 end
-local function openMysterySettings()
- local UIS=game:GetService('UserInputService')
- local initial=M.Loaded and table.clone(M.Settings) or nil
+scheduleSave=function()
+ autoToken+=1;local token=autoToken
+ task.delay(.85,function()
+  if token~=autoToken or not M.Dirty then return end
+  task.spawn(function()
+   local ok,message=M.Save()
+   if statusLabel and statusLabel.Parent then statusLabel.Text=ok and 'CONFIGURAÇÕES SALVAS AUTOMATICAMENTE' or (message or 'TENTANDO SALVAR…') end
+   if not ok and M.Dirty then task.delay(.8,function() if M.Dirty then scheduleSave() end end) end
+  end)
+ end)
+end
+local function changeValue(key,value)
+ if typeof(M.Settings[key])=='boolean' then M.Settings[key]=not M.Settings[key] else M.Settings[key]=value end
+ M.Revision+=1;M.Dirty=true;M.Apply();scheduleSave()
+ if statusLabel then statusLabel.Text='SALVANDO AUTOMATICAMENTE…' end
+end
+local pages={
+ {id='GAME',label='JOGO',description='PREFERÊNCIAS DA PARTIDA'},
+ {id='CONTROLS',label='CONTROLES',description='AJUSTE A RESPOSTA DOS CONTROLES'},
+ {id='DISPLAY',label='TELA',description='BRILHO E EFEITOS VISUAIS'},
+ {id='AUDIO',label='ÁUDIO',description='VOLUMES E SAÍDA DE ÁUDIO'},
+ {id='LANGUAGE',label='IDIOMA',description='IDIOMA DOS TEXTOS DO JOGO'},
+}
+local options={
+ GAME={{label='DICAS DE CARREGAMENTO',key='loadingHints',kind='toggle'}},
+ CONTROLS={{label='SENSIBILIDADE',key='sensitivity',kind='slider',min=.2,max=2,step=.1,format='decimal'}},
+ DISPLAY={{label='BRILHO',key='brightness',kind='slider',min=0,max=1,step=.05,format='percent'},{label='CAMPO DE VISÃO',key='fov',kind='slider',min=60,max=90,step=1,format='degrees'},{label='SOMBRAS',key='shadows',kind='toggle'},{label='BRILHO AMBIENTE',key='bloom',kind='toggle'}},
+ AUDIO_VOLUMES={{label='EFEITOS',key='effectsVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='MÚSICA',key='musicVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='AMBIÊNCIA',key='ambienceVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='DIÁLOGO',key='dialogueVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='FILMES',key='moviesVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='CHAT',key='chatVolume',kind='slider',min=0,max=1,step=.05,format='percent'},{label='VOLUME GERAL',key='volume',kind='slider',min=0,max=1,step=.05,format='percent'}},
+ AUDIO_OUTPUT={{label='DISPOSITIVO',value='AUTOMÁTICO (ROBLOX)'},{label='CANAIS',value='AUTOMÁTICO'},{label='ALCANCE DINÂMICO',value='AUTOMÁTICO'},{label='CONTROLADOR',value='DETECTADO PELO ROBLOX'}},
+ LANGUAGE={{label='TEXTOS',value='PORTUGUÊS (BRASIL)'},{label='LEGENDAS',value='PORTUGUÊS (BRASIL)'},{label='DIÁLOGO',value='PORTUGUÊS (BRASIL)'}},
+}
+local function openSettings()
  if opened then opened.Close() end
  local gui=make('ScreenGui',{Name='MysterySettingsFullscreen',ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=2200,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
- local blocker=make('TextButton',{Name='WorldInputBlocker',Size=UDim2.fromScale(1,1),Position=UDim2.fromScale(0,0),Text='',Modal=true,Active=true,BackgroundTransparency=1,AutoButtonColor=false,BorderSizePixel=0,ZIndex=1},gui)
- local pane=make('Frame',{Name='OptionsPanel',Position=UDim2.new(-.035,0,0,0),Size=UDim2.new(.58,0,1,0),BackgroundColor3=Color3.fromRGB(12,13,13),BackgroundTransparency=.04,BorderSizePixel=0,ClipsDescendants=true,ZIndex=2},gui)
- make('UIGradient',{Rotation=0,Color=ColorSequence.new(Color3.fromRGB(14,14,14),Color3.fromRGB(10,11,11)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.02),NumberSequenceKeypoint.new(.76,.08),NumberSequenceKeypoint.new(1,1)})},pane)
- make('Frame',{Name='EdgeLine',Position=UDim2.new(1,-1,0,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=Color3.fromRGB(191,184,172),BackgroundTransparency=.72,BorderSizePixel=0,ZIndex=3},pane)
- local title=make('TextLabel',{Name='MysterySettingsTitle',Position=UDim2.fromOffset(26,20),Size=UDim2.new(1,-52,0,38),BackgroundTransparency=1,Text='OPÇÕES',Font=Enum.Font.RobotoCondensed,TextSize=26,TextColor3=Color3.fromRGB(222,218,212),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4},pane)
- make('Frame',{Name='MysterySettingsDivider',Position=UDim2.new(0,26,0,65),Size=UDim2.new(1,-52,0,1),BackgroundColor3=Color3.fromRGB(154,145,138),BackgroundTransparency=.65,BorderSizePixel=0,ZIndex=4},pane)
- local nav=make('Frame',{Name='SettingsCategories',Position=UDim2.fromOffset(26,91),Size=UDim2.new(0,142,1,-178),BackgroundTransparency=1,ZIndex=4},pane)
- make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},nav)
- local page=make('Frame',{Name='SettingsPage',Position=UDim2.fromOffset(190,91),Size=UDim2.new(1,-218,1,-178),BackgroundTransparency=1,ZIndex=4},pane)
- local pageTitle=make('TextLabel',{Name='SettingsPageTitle',Position=UDim2.new(0,0,0,0),Size=UDim2.new(1,0,0,31),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=19,TextColor3=Color3.fromRGB(222,218,212),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},page)
- local description=make('TextLabel',{Name='SettingsDescription',Position=UDim2.new(0,0,0,32),Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,Text='',TextWrapped=true,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(157,154,149),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=5},page)
- local rows=make('ScrollingFrame',{Name='MysterySettingsRows',Position=UDim2.new(0,0,0,73),Size=UDim2.new(1,0,1,-74),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=Color3.fromRGB(160,155,149),AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true,ZIndex=5},page)
- make('UIPadding',{PaddingRight=UDim.new(0,9),PaddingBottom=UDim.new(0,8)},rows)
- local rowLayout=make('UIListLayout',{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder},rows)
- local status=make('TextLabel',{Name='SettingsStatus',Position=UDim2.new(0,26,1,-76),Size=UDim2.new(1,-52,0,18),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(166,159,151),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},pane)
- local footer=make('Frame',{Name='SettingsFooter',Position=UDim2.new(0,26,1,-48),Size=UDim2.new(1,-52,0,36),BackgroundTransparency=1,ZIndex=5},pane)
+ make('TextButton',gui,{Name='WorldInputBlocker',Size=UDim2.fromScale(1,1),Text='',Modal=true,Active=true,BackgroundTransparency=1,AutoButtonColor=false,BorderSizePixel=0,ZIndex=1})
+ local pane=make('Frame',gui,{Name='OptionsPanel',Position=UDim2.new(-.04,0,0,0),Size=UDim2.new(.42,0,1,0),BackgroundColor3=Color3.fromRGB(13,14,14),BackgroundTransparency=.04,BorderSizePixel=0,ClipsDescendants=true,ZIndex=2})
+ make('UIGradient',pane,{Rotation=0,Color=ColorSequence.new(Color3.fromRGB(16,16,16),Color3.fromRGB(9,10,10)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.02),NumberSequenceKeypoint.new(.82,.05),NumberSequenceKeypoint.new(1,.22)})})
+ make('Frame',pane,{Name='PanelEdge',Position=UDim2.new(1,-1,0,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=Color3.fromRGB(188,180,166),BackgroundTransparency=.78,BorderSizePixel=0,ZIndex=3})
+ local title=make('TextLabel',pane,{Name='OptionsTitle',Position=UDim2.new(0,42,0,27),Size=UDim2.new(1,-76,0,38),BackgroundTransparency=1,Text='OPÇÕES',Font=Enum.Font.RobotoCondensed,TextSize=26,TextColor3=Color3.fromRGB(220,216,209),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4})
+ make('Frame',pane,{Position=UDim2.new(0,42,0,70),Size=UDim2.new(1,-78,0,1),BackgroundColor3=Color3.fromRGB(150,143,134),BackgroundTransparency=.72,BorderSizePixel=0,ZIndex=4})
+ local body=make('ScrollingFrame',pane,{Name='SettingsContent',Position=UDim2.new(0,42,0,88),Size=UDim2.new(1,-80,1,-179),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=Color3.fromRGB(153,148,141),AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true,ZIndex=4})
+ make('UIPadding',body,{PaddingRight=UDim.new(0,8),PaddingBottom=UDim.new(0,10)});local bodyLayout=make('UIListLayout',body,{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder})
+ statusLabel=make('TextLabel',pane,{Name='SettingsStatus',Position=UDim2.new(0,42,1,-75),Size=UDim2.new(1,-82,0,18),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(164,159,151),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4})
+ local footer=make('Frame',pane,{Name='SettingsFooter',Position=UDim2.new(0,42,1,-49),Size=UDim2.new(1,-82,0,34),BackgroundTransparency=1,ZIndex=4})
+ local back=make('TextButton',footer,{Name='Back',Size=UDim2.new(.52,0,1,0),BackgroundTransparency=1,Text='◯  VOLTAR',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(191,185,176),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=5})
+ local reset=make('TextButton',footer,{Name='ResetDefaults',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,0,0,0),Size=UDim2.new(.48,0,1,0),BackgroundTransparency=1,Text='RESTAURAR PADRÕES',Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(163,157,148),TextXAlignment=Enum.TextXAlignment.Right,AutoButtonColor=false,ZIndex=5})
  local controls
  if workspace:GetAttribute('GameMode')=='Match' then pcall(function() controls=require(player.PlayerScripts:WaitForChild('PlayerModule')):GetControls();controls:Disable() end) end
  player:SetAttribute('InterfaceOpen',true)
- local obj={Gui=gui,Pane=pane,Status=status}
+ local closed=false;local drag=nil;local current='HOME';local refreshers={};local connections={};local render
+ local obj={Gui=gui,Pane=pane,Status=statusLabel}
  function obj.Close()
-  if not gui.Parent then return end
-  gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false)
+  if closed then return end;closed=true
+  if M.Dirty then task.spawn(M.Save) end
+  gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false);statusLabel=nil
   if opened==obj then opened=nil end
  end
  opened=obj
- local pages={
-  {id='GAME',label='JOGO',description='DICAS E PREFERÊNCIAS DA PARTIDA'},
-  {id='CONTROLS',label='CONTROLES',description='AJUSTE A RESPOSTA DOS CONTROLES'},
-  {id='DISPLAY',label='TELA',description='BRILHO E EFEITOS VISUAIS'},
-  {id='AUDIO',label='ÁUDIO',description='VOLUME DE SOM'},
-  {id='LANGUAGE',label='IDIOMA',description='IDIOMA DOS TEXTOS DO JOGO'}
- }
- local pageOptions={
-  GAME={{label='DICAS DE CARREGAMENTO',key='loadingHints',kind='toggle'}},
-  CONTROLS={{label='SENSIBILIDADE DO MOUSE',key='sensitivity',kind='slider',min=.2,max=2,step=.2,format='decimal'}},
-  DISPLAY={
-   {label='BRILHO',key='brightness',kind='slider',min=0,max=1,step=.1,format='percent'},
-   {label='CAMPO DE VISÃO',key='fov',kind='slider',min=60,max=90,step=5,format='degrees'},
-   {label='SOMBRAS',key='shadows',kind='toggle'},
-   {label='BRILHO AMBIENTE',key='bloom',kind='toggle'}
-  },
-  AUDIO={{label='VOLUME GERAL',key='volume',kind='slider',min=0,max=1,step=.1,format='percent'}},
-  LANGUAGE={{label='TEXTOS',value='PORTUGUÊS (BRASIL)'},{label='LEGENDAS E INTERAÇÕES',value='PORTUGUÊS (BRASIL)'}}
- }
- local refreshers={};local drag;local closed=false;local busy=false;local compact=false;local currentPage='GAME'
- local function formatValue(spec)
+ local function clearBody()
+  for _,child in ipairs(body:GetChildren()) do if not child:IsA('UIListLayout') and not child:IsA('UIPadding') then child:Destroy() end end
+  table.clear(refreshers)
+ end
+ local function format(spec)
   local value=M.Settings[spec.key]
-  if typeof(value)=='boolean' then return value and 'SIM' or 'NÃO' end
+  if typeof(value)=='boolean' then return value and 'On' or 'Off' end
   if spec.format=='percent' then return tostring(math.floor(value*100+.5))..'%' end
   if spec.format=='degrees' then return tostring(math.floor(value+.5))..'°' end
   return string.format('%.1f',value)
  end
- local function canChange()
-  if M.Loaded then return true end
-  status.Text='CARREGANDO CONFIGURAÇÕES…';return false
+ local function addButton(index,label,description,destination)
+  local button=make('TextButton',body,{Name='Page_'..index,LayoutOrder=index,Size=UDim2.new(1,-4,0,48),BackgroundColor3=Color3.fromRGB(74,69,63),BackgroundTransparency=1,BorderSizePixel=0,Text='',AutoButtonColor=false,ZIndex=5})
+  make('TextLabel',button,{Position=UDim2.new(0,10,0,1),Size=UDim2.new(1,-20,0,25),BackgroundTransparency=1,Text=label,Font=Enum.Font.RobotoCondensed,TextSize=14,TextColor3=Color3.fromRGB(196,192,185),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6})
+  if description then make('TextLabel',button,{Position=UDim2.new(0,10,0,24),Size=UDim2.new(1,-20,0,19),BackgroundTransparency=1,Text=description,Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(136,135,130),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6}) end
+  make('Frame',button,{Position=UDim2.new(0,10,1,-1),Size=UDim2.new(1,-20,0,1),BackgroundColor3=Color3.fromRGB(157,150,140),BackgroundTransparency=.87,BorderSizePixel=0,ZIndex=6})
+  button.MouseEnter:Connect(function() button.BackgroundTransparency=.83 end);button.MouseLeave:Connect(function() button.BackgroundTransparency=1 end);button.Activated:Connect(function() current=destination;render() end)
  end
- local function setValue(spec,value)
-  if not canChange() then return end
-  if typeof(M.Settings[spec.key])=='boolean' then M.Settings[spec.key]=not M.Settings[spec.key]
-  else
-   local steps=math.round((value-spec.min)/spec.step);local rounded=spec.min+steps*spec.step
-   M.Settings[spec.key]=math.clamp(math.floor(rounded*100+.5)/100,spec.min,spec.max)
-  end
-  M.Dirty=true;M.Apply();status.Text='ALTERAÇÕES NÃO APLICADAS'
-  for _,refresh in ipairs(refreshers) do refresh() end
+ local function addInfo(index,label,value)
+  local row=make('Frame',body,{Name='Info_'..index,LayoutOrder=index,Size=UDim2.new(1,-4,0,42),BackgroundTransparency=1,ZIndex=5})
+  make('TextLabel',row,{Position=UDim2.new(0,9,0,0),Size=UDim2.new(.58,-9,1,0),BackgroundTransparency=1,Text=label,Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(155,153,148),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6})
+  make('TextLabel',row,{Position=UDim2.new(.58,0,0,.0),Size=UDim2.new(.42,-8,1,0),BackgroundTransparency=1,Text=value,Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(203,199,191),TextXAlignment=Enum.TextXAlignment.Right,TextWrapped=true,ZIndex=6})
+  make('Frame',row,{Position=UDim2.new(0,9,1,-1),Size=UDim2.new(1,-18,0,1),BackgroundColor3=Color3.fromRGB(157,150,140),BackgroundTransparency=.89,BorderSizePixel=0,ZIndex=6})
  end
- local function setFromPointer(spec,track,x)
-  if track.AbsoluteSize.X<=0 then return end
-  local alpha=math.clamp((x-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
-  setValue(spec,spec.min+alpha*(spec.max-spec.min))
- end
- local function clearRows()
-  for _,child in ipairs(rows:GetChildren()) do if not child:IsA('UIListLayout') and not child:IsA('UIPadding') then child:Destroy() end end
-  table.clear(refreshers)
- end
- local function addInfoRow(index,label,value)
-  local row=make('Frame',{Name='SettingInfo_'..index,LayoutOrder=index,Size=UDim2.new(1,-5,0,51),BackgroundColor3=Color3.fromRGB(61,59,56),BackgroundTransparency=.91,BorderSizePixel=0,ZIndex=5},rows)
-  make('TextLabel',{Position=UDim2.new(0,8,0,0),Size=UDim2.new(.53,-8,1,0),BackgroundTransparency=1,Text=label,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(172,170,164),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6},row)
-  make('TextLabel',{Position=UDim2.new(.53,0,0,0),Size=UDim2.new(.47,-6,1,0),BackgroundTransparency=1,Text=value,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(220,216,209),TextXAlignment=Enum.TextXAlignment.Right,TextWrapped=true,ZIndex=6},row)
- end
- local function addSettingRow(index,spec)
-  local row=make('Frame',{Name='Setting_'..spec.key,LayoutOrder=index,Size=UDim2.new(1,-5,0,54),BackgroundColor3=Color3.fromRGB(61,59,56),BackgroundTransparency=.92,BorderSizePixel=0,ZIndex=5},rows)
-  make('TextLabel',{Name='SettingName',Position=UDim2.new(0,8,0,0),Size=UDim2.new(.50,-8,1,0),BackgroundTransparency=1,Text=spec.label,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(202,199,192),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6},row)
+ local function addSetting(index,spec)
+  local row=make('Frame',body,{Name='Setting_'..spec.key,LayoutOrder=index,Size=UDim2.new(1,-4,0,48),BackgroundTransparency=1,ZIndex=5})
+  make('TextLabel',row,{Position=UDim2.new(0,9,0,0),Size=UDim2.new(.48,-9,1,0),BackgroundTransparency=1,Text=spec.label,Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(182,179,172),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6})
   if spec.kind=='toggle' then
-   local button=make('TextButton',{Name='SettingValue',Position=UDim2.new(.62,0,.5,-17),Size=UDim2.new(.36,-4,0,34),BackgroundColor3=Color3.fromRGB(30,31,30),BackgroundTransparency=.25,BorderSizePixel=0,Text='',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(228,224,217),AutoButtonColor=false,ZIndex=7},row)
-   make('UIStroke',{Color=Color3.fromRGB(126,120,112),Transparency=.55,Thickness=1},button)
-   local function refresh() button.Text=formatValue(spec) end
-   button.Activated:Connect(function() setValue(spec) end)
-   refreshers[#refreshers+1]=refresh;refresh()
+   local value=make('TextButton',row,{Position=UDim2.new(.68,0,.5,-14),Size=UDim2.new(.29,0,0,28),BackgroundColor3=Color3.fromRGB(39,40,38),BorderSizePixel=0,Text='',Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(214,210,201),AutoButtonColor=false,ZIndex=7});make('UIStroke',value,{Color=Color3.fromRGB(135,129,119),Transparency=.64})
+   local function refresh() value.Text=format(spec) end
+   value.Activated:Connect(function() if M.Loaded then changeValue(spec.key) end end);refreshers[#refreshers+1]=refresh;refresh()
   else
-   local track=make('Frame',{Name='SliderTrack',Position=UDim2.new(.57,0,.5,-1),Size=UDim2.new(.34,0,0,2),BackgroundColor3=Color3.fromRGB(101,98,93),BorderSizePixel=0,ZIndex=6},row)
-   local fill=make('Frame',{Name='SliderFill',Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(223,218,211),BorderSizePixel=0,ZIndex=7},track)
-   local knob=make('Frame',{Name='SliderKnob',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(0,.5),Size=UDim2.fromOffset(14,14),BackgroundColor3=Color3.fromRGB(242,238,231),BorderSizePixel=0,ZIndex=8},track)
-   make('UICorner',{CornerRadius=UDim.new(1,0)},knob)
-   local value=make('TextLabel',{Name='SettingValue',Position=UDim2.new(.91,0,0,0),Size=UDim2.new(.09,0,1,0),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(224,220,214),TextXAlignment=Enum.TextXAlignment.Right,ZIndex=7},row)
-   local hit=make('TextButton',{Name='SliderInput_'..spec.key,Position=UDim2.new(.55,0,0,0),Size=UDim2.new(.39,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='',AutoButtonColor=false,ZIndex=8},row)
-   local function refresh()
-    local alpha=math.clamp((M.Settings[spec.key]-spec.min)/(spec.max-spec.min),0,1)
-    value.Text=formatValue(spec);fill.Size=UDim2.fromScale(alpha,1);knob.Position=UDim2.fromScale(alpha,.5)
-   end
-   hit.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then drag={spec=spec,track=track};setFromPointer(spec,track,input.Position.X) end
-   end)
+   local track=make('Frame',row,{Position=UDim2.new(.52,0,.5,-1),Size=UDim2.new(.36,0,0,2),BackgroundColor3=Color3.fromRGB(76,74,69),BorderSizePixel=0,ZIndex=6})
+   local fill=make('Frame',track,{Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(224,216,202),BorderSizePixel=0,ZIndex=7})
+   local knob=make('Frame',track,{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(0,.5),Size=UDim2.fromOffset(13,13),BackgroundColor3=Color3.fromRGB(239,233,221),BorderSizePixel=0,ZIndex=8});make('UICorner',knob,{CornerRadius=UDim.new(1,0)})
+   local text=make('TextLabel',row,{Position=UDim2.new(.89,0,0,0),Size=UDim2.new(.1,0,1,0),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(212,208,199),TextXAlignment=Enum.TextXAlignment.Right,ZIndex=7})
+   local hit=make('TextButton',row,{Position=UDim2.new(.49,0,0,0),Size=UDim2.new(.51,0,1,0),BackgroundTransparency=1,Text='',AutoButtonColor=false,ZIndex=8})
+   local function refresh() local alpha=math.clamp((M.Settings[spec.key]-spec.min)/(spec.max-spec.min),0,1);text.Text=format(spec);fill.Size=UDim2.fromScale(alpha,1);knob.Position=UDim2.fromScale(alpha,.5) end
+   local function update(x) if not M.Loaded or track.AbsoluteSize.X<=0 then return end;local alpha=math.clamp((x-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1);local steps=math.round((spec.min+alpha*(spec.max-spec.min)-spec.min)/spec.step);changeValue(spec.key,math.clamp(spec.min+steps*spec.step,spec.min,spec.max));refresh() end
+   hit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag={spec=spec,track=track,refresh=refresh};update(i.Position.X) end end)
    refreshers[#refreshers+1]=refresh;refresh()
   end
-  make('Frame',{Name='SettingDivider',Position=UDim2.new(0,8,1,-1),Size=UDim2.new(1,-16,0,1),BackgroundColor3=Color3.fromRGB(164,157,148),BackgroundTransparency=.85,BorderSizePixel=0,ZIndex=6},row)
  end
- local function renderPage(id)
-  currentPage=id;clearRows()
+ render=function()
+  if closed then return end;clearBody()
   local selected
-  for _,data in ipairs(pages) do if data.id==id then selected=data;break end end
-  pageTitle.Text=selected and selected.label or 'JOGO'
-  description.Text=selected and selected.description or ''
-  local options=pageOptions[id] or {}
-  if #options==0 then addInfoRow(1,'IDIOMA DO JOGO','PORTUGUÊS (BRASIL)')
+  if current=='HOME' then title.Text='OPÇÕES';back.Visible=false
   else
-   for index,spec in ipairs(options) do
-    if spec.key then addSettingRow(index,spec) else addInfoRow(index,spec.label,spec.value) end
-   end
+   back.Visible=true
+   for _,page in ipairs(pages) do if page.id==current then selected=page;break end end
+   title.Text=selected and selected.label or (current=='AUDIO_VOLUMES' and 'VOLUMES' or current=='AUDIO_OUTPUT' and 'SAÍDA DE ÁUDIO' or current=='LANGUAGE' and 'IDIOMA' or 'JOGO')
   end
-  for _,child in ipairs(nav:GetChildren()) do
-   if child:IsA('TextButton') then
-    local active=child.Name=='Category_'..id
-    child.TextColor3=active and Color3.fromRGB(245,241,233) or Color3.fromRGB(162,159,153)
-    child.BackgroundTransparency=active and .84 or 1
-   end
+  if current=='HOME' then
+   for index,page in ipairs(pages) do addButton(index,page.label,page.description,page.id) end
+  elseif current=='AUDIO' then
+   addButton(1,'VOLUMES','EFEITOS, MÚSICA, DIÁLOGO E AMBIÊNCIA','AUDIO_VOLUMES')
+   addButton(2,'SAÍDA','PREFERÊNCIAS DE ÁUDIO DO DISPOSITIVO','AUDIO_OUTPUT')
+  elseif current=='AUDIO_OUTPUT' then
+   for index,item in ipairs(options.AUDIO_OUTPUT) do addInfo(index,item.label,item.value) end
+   addInfo(5,'ÁUDIO ESPACIAL','ATIVO QUANDO SUPORTADO')
+  elseif current=='LANGUAGE' then
+   for index,item in ipairs(options.LANGUAGE) do addInfo(index,item.label,item.value) end
+  else
+   local selectedOptions=options[current] or {}
+   for index,spec in ipairs(selectedOptions) do if spec.key then addSetting(index,spec) else addInfo(index,spec.label,spec.value) end end
   end
+  statusLabel.Text=M.Loaded and (M.Dirty and 'SALVANDO AUTOMATICAMENTE…' or 'ALTERAÇÕES SALVAS AUTOMATICAMENTE') or 'CARREGANDO CONFIGURAÇÕES…'
  end
- for order,data in ipairs(pages) do
-  local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=order,Size=UDim2.new(1,0,0,37),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(162,159,153),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=5},nav)
-  make('UIPadding',{PaddingLeft=UDim.new(0,8)},button)
-  button.Activated:Connect(function() renderPage(data.id) end)
-  button.MouseEnter:Connect(function() if currentPage~=data.id then button.TextColor3=Color3.fromRGB(221,217,209) end end)
-  button.MouseLeave:Connect(function() if currentPage~=data.id then button.TextColor3=Color3.fromRGB(162,159,153) end end)
- end
- local back=make('TextButton',{Name='BackSettings',Position=UDim2.new(0,0,0,0),Size=UDim2.new(.28,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='◯  VOLTAR',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(193,187,179),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=6},footer)
- local reset=make('TextButton',{Name='ResetDefaults',Position=UDim2.new(.40,0,0,0),Size=UDim2.new(.31,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='RESTAURAR',Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(171,164,156),TextXAlignment=Enum.TextXAlignment.Center,AutoButtonColor=false,ZIndex=6},footer)
- local apply=make('TextButton',{Name='ApplySettings',Position=UDim2.new(.73,0,0,0),Size=UDim2.new(.27,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='APLICAR',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(209,203,195),TextXAlignment=Enum.TextXAlignment.Right,AutoButtonColor=false,ZIndex=6},footer)
- local function hover(button,base)
-  button.MouseEnter:Connect(function() button.TextColor3=Color3.fromRGB(250,247,240) end)
-  button.MouseLeave:Connect(function() button.TextColor3=base end)
- end
- hover(back,Color3.fromRGB(193,187,179));hover(reset,Color3.fromRGB(171,164,156));hover(apply,Color3.fromRGB(209,203,195))
- local function closeSettings(discard)
-  if closed then return end
-  if discard and initial then M.Settings=table.clone(initial);M.Dirty=false;M.Apply() end
-  closed=true;obj.Close()
- end
- back.Activated:Connect(function() closeSettings(true) end)
+ back.Activated:Connect(function()
+  if current=='HOME' then return end
+  if current=='AUDIO_VOLUMES' or current=='AUDIO_OUTPUT' then current='AUDIO' else current='HOME' end
+  render()
+ end)
  reset.Activated:Connect(function()
-  if not canChange() then return end
-  M.Settings=table.clone(schema.Defaults);M.Dirty=true;M.Apply();status.Text='PADRÕES RESTAURADOS — APLIQUE PARA SALVAR'
-  for _,refresh in ipairs(refreshers) do refresh() end
+  if not M.Loaded then statusLabel.Text='AGUARDE O CARREGAMENTO';return end
+  M.Settings=table.clone(schema.Defaults);M.Revision+=1;M.Dirty=true;M.Apply();scheduleSave();render();statusLabel.Text='SALVANDO PADRÕES…'
  end)
- apply.Activated:Connect(function()
-  if busy or closed then return end
-  busy=true;status.Text='APLICANDO…';local ok,err=M.Save()
-  if ok then initial=table.clone(M.Settings);status.Text='CONFIGURAÇÕES APLICADAS' else status.Text=err or 'NÃO FOI POSSÍVEL SALVAR' end
-  busy=false
- end)
- local function fitPanel(animate)
-  if not gui.Parent then return end
-  local camera=workspace.CurrentCamera
-  local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
-  compact=viewport.X<760 or viewport.Y>viewport.X
-  local width=compact and 1 or (viewport.X<1100 and .72 or .58)
-  pane.Size=UDim2.new(width,0,1,0)
-  title.TextSize=viewport.X<500 and 22 or 26
-  if compact then
-   nav.Position=UDim2.fromOffset(16,73);nav.Size=UDim2.new(1,-32,0,38)
-   nav:ClearAllChildren()
-   make('UIListLayout',{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,2),SortOrder=Enum.SortOrder.LayoutOrder},nav)
-   local widths=math.max(61,math.floor((viewport.X-40)/#pages))
-   for index,data in ipairs(pages) do
-    local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=index,Size=UDim2.new(0,widths,1,0),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=viewport.X<500 and 9 or 11,TextColor3=Color3.fromRGB(162,159,153),TextWrapped=true,AutoButtonColor=false,ZIndex=5},nav)
-    button.Activated:Connect(function() renderPage(data.id) end)
-   end
-   page.Position=UDim2.fromOffset(16,122);page.Size=UDim2.new(1,-32,1,-214)
-   status.Position=UDim2.new(0,18,1,-78);status.Size=UDim2.new(1,-36,0,17)
-   footer.Position=UDim2.new(0,18,1,-49);footer.Size=UDim2.new(1,-36,0,35)
-  else
-   nav.Position=UDim2.fromOffset(26,91);nav.Size=UDim2.new(0,142,1,-178)
-   nav:ClearAllChildren()
-   make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},nav)
-   for index,data in ipairs(pages) do
-    local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=index,Size=UDim2.new(1,0,0,37),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(162,159,153),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=5},nav)
-    make('UIPadding',{PaddingLeft=UDim.new(0,8)},button)
-    button.Activated:Connect(function() renderPage(data.id) end)
-   end
-   page.Position=UDim2.fromOffset(190,91);page.Size=UDim2.new(1,-218,1,-178)
-   status.Position=UDim2.new(0,26,1,-76);status.Size=UDim2.new(1,-52,0,18)
-   footer.Position=UDim2.new(0,26,1,-48);footer.Size=UDim2.new(1,-52,0,36)
-  end
-  renderPage(currentPage)
-  if animate then Tween:Create(pane,TweenInfo.new(.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=UDim2.new(0,0,0,0)}):Play()
-  else pane.Position=UDim2.new(0,0,0,0) end
+ local viewportConnection;local function fit()
+  local camera=workspace.CurrentCamera;local v=camera and camera.ViewportSize or Vector2.new(1280,720)
+  pane.Size=UDim2.new(v.Y>v.X and 1 or v.X<1000 and .72 or .42,0,1,0)
+  title.TextSize=v.X<520 and 21 or 26
  end
- local changed=UIS.InputChanged:Connect(function(input)
-  if drag and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then setFromPointer(drag.spec,drag.track,input.Position.X) end
- end)
- local ended=UIS.InputEnded:Connect(function(input)
-  if drag and (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) then drag=nil end
- end)
- local inputConnection=UIS.InputBegan:Connect(function(input,processed)
-  if not processed and not closed and input.KeyCode==Enum.KeyCode.Escape then closeSettings(true) end
- end)
- local cameraConnection
  local function bindCamera()
-  if cameraConnection then cameraConnection:Disconnect() end
-  local camera=workspace.CurrentCamera
-  if camera then cameraConnection=camera:GetPropertyChangedSignal('ViewportSize'):Connect(function() fitPanel(false) end) end
+  if viewportConnection then viewportConnection:Disconnect() end
+  local camera=workspace.CurrentCamera;if camera then viewportConnection=camera:GetPropertyChangedSignal('ViewportSize'):Connect(fit) end
  end
- local cameraChanged=workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function() bindCamera();fitPanel(false) end)
- gui.Destroying:Connect(function()
-  closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect();cameraChanged:Disconnect()
-  if cameraConnection then cameraConnection:Disconnect() end
- end)
- renderPage(currentPage);fitPanel(true)
- status.Text=M.Loaded and 'CONFIGURAÇÕES DO JOGO' or 'CARREGANDO CONFIGURAÇÕES…'
+ bindCamera();fit();table.insert(connections,workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function() bindCamera();fit() end))
+ table.insert(connections,Input.InputChanged:Connect(function(i) if drag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+  local alpha=math.clamp((i.Position.X-drag.track.AbsolutePosition.X)/math.max(drag.track.AbsoluteSize.X,1),0,1);local spec=drag.spec;local steps=math.round((spec.min+alpha*(spec.max-spec.min)-spec.min)/spec.step);changeValue(spec.key,math.clamp(spec.min+steps*spec.step,spec.min,spec.max));drag.refresh()
+ end end))
+ table.insert(connections,Input.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag=nil end end))
+ table.insert(connections,Input.InputBegan:Connect(function(i,processed) if not processed and not closed and i.KeyCode==Enum.KeyCode.Escape then obj.Close() end end))
+ gui.Destroying:Connect(function() closed=true;for _,connection in ipairs(connections) do connection:Disconnect() end;if viewportConnection then viewportConnection:Disconnect() end end)
+ render();pane.Position=UDim2.new(-pane.Size.X.Scale,0,0,0);Tween:Create(pane,TweenInfo.new(.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=UDim2.fromScale(0,0)}):Play()
  if not M.Loaded then
-  task.spawn(function()
-   local ok=M.Load()
-   if closed or not gui.Parent then return end
-   if ok then initial=table.clone(M.Settings);status.Text='CONFIGURAÇÕES DO JOGO';for _,refresh in ipairs(refreshers) do refresh() end
-   else status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
-  end)
+  task.spawn(function() local ok=M.Load();if not gui.Parent then return end;if ok then render() else statusLabel.Text='NÃO FOI POSSÍVEL CARREGAR. TENTE NOVAMENTE.' end end)
  end
  return obj
 end
-
-function M.OpenSettings()
- return openMysterySettings()
-end
+function M.OpenSettings() return openSettings() end
 return M
-
-
