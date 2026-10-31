@@ -45,11 +45,13 @@ local world=raw:FindFirstChild('---- Ungroup In Workspace ----')
 local originalParts={};local id=0
 for _,d in ipairs(world:GetDescendants()) do
  id+=1
- if d:IsA('BasePart') and not d:GetFullName():find('AK-47 Spawner',1,true) then originalParts[id]=d end
+ local rain=d:FindFirstAncestor('Rain')~=nil
+ if d:IsA('BasePart') and not rain and not d:GetFullName():find('AK-47 Spawner',1,true) then originalParts[id]=d end
 end
 local parts=0
 for _,d in ipairs(map:GetDescendants()) do
- assert(not d:IsA('ScreenGui') and not d:IsA('LuaSourceContainer') and not d:IsA('Tool'),'Map contains UI/code/weapon '..d:GetFullName())
+ assert(not d:IsA('ScreenGui') and not d:IsA('LuaSourceContainer') and not d:IsA('Tool') and not d:IsA('ClickDetector') and not d:IsA('ProximityPrompt'),'Map contains UI/code/weapon/legacy interaction '..d:GetFullName())
+ assert(not (d:IsA('Model') and d.Name=='Rain'),'Orphaned rain model remains in map')
  if d:IsA('BasePart') then
   parts+=1
   local expected=assert(originalParts[d:GetAttribute('HotelSourceId')],'Unexpected map geometry')
@@ -68,7 +70,7 @@ assert(next(originalParts)==nil,'Missing geometry from supplied map')
 assert(parts==map:GetAttribute('SourcePartCount'),'Map part count mismatch')
 for _,d in ipairs(ui:GetDescendants()) do assert(not d:IsA('BasePart') and not d:IsA('LuaSourceContainer'),'UI package depends on map/code') end
 local scripts=0
-local shipped={MapInteractions='mystery-map-interactions.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
+local shipped={MapInteractions='mystery-map-interactions.luau',PoolGame='pool-game.luau',WorldInitializer='hotel-initialize.luau',PlayerSettings='settings-server.luau',SettingsSchema='settings-schema.luau',SessionInterface='session-interface.luau',MysteryUIClient='mystery-ui-client.luau',PoolGameClient='pool-game-client.luau',SessionLoadingClient='session-loading-client.luau',PortugueseText='original-portuguese-text.luau'}
 for _,d in ipairs(dm:GetDescendants()) do
  assert(not d:IsA('Tool'),'Weapon tool in release')
  if d:IsA('LuaSourceContainer') then
@@ -82,4 +84,8 @@ assert(next(shipped)==nil,'Missing controller')
 assert(not dm:GetService('ServerStorage'):FindFirstChild('OriginalWorld'),'Old mansion bundled into new map')
 assert(dm:GetService('StarterPlayer').CameraMode==R.Enum.CameraMode.Classic,'Wrong camera mode')
 assert(dm:GetService('StarterPlayer').CameraMinZoomDistance>=8,'First person enabled')
+assert(dm:GetService('StarterPlayer').CharacterWalkSpeed==16,'Player walk speed was not normalized')
+assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find('IgnoreGuiInset=true',1,true),'Settings do not fill the screen')
+for _,label in ipairs({'JOGO','CONTROLES','TELA','ÁUDIO','IDIOMA','RESTAURAR','APLICAR'}) do assert(dm:GetService('ReplicatedStorage').SessionInterface.Source:find(label,1,true),'Settings section missing '..label) end
 print('HOTEL_FILE_VERIFIED '..serde.encode('json',{parts=parts,originalGuiObjects=guiObjects,screens=#ui:GetChildren(),scripts=scripts,separateMapAndUI=true}))
+

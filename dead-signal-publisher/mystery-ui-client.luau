@@ -38,7 +38,7 @@ action.Activated:Connect(interact)
 Input.InputBegan:Connect(function(input,processed)
  if processed or Input:GetFocusedTextBox() then return end
  if input.KeyCode==Enum.KeyCode.U then useLamp()
- elseif input.KeyCode==Enum.KeyCode.P then interact() end
+ end
 end)
 local elapsed=0
 Run.Heartbeat:Connect(function(dt)
@@ -68,8 +68,14 @@ Run.Heartbeat:Connect(function(dt)
  action.Active=target~=nil;action.AutoButtonColor=target~=nil
  action.ImageTransparency=target and 0 or .55
  indicator.Enabled=target~=nil
- local label=target and (target:GetAttribute('IsOpen') and 'Fechar' or 'Abrir') or 'Interagir'
- setLabel(action,label..(Input.TouchEnabled and '' or ' (P)'))
+ local label='Interagir'
+ if target then
+  local kind=target:GetAttribute('InteractionKind')
+  if kind=='Door' then label=target:GetAttribute('IsOpen') and 'Fechar' or 'Abrir'
+  elseif kind=='PoolTable' then label='Jogar sinuca'
+  elseif kind=='Light' then label=target:GetAttribute('IsLightOn') and 'Apagar luz' or 'Acender luz' end
+ end
+ setLabel(action,label)
 end)
 player.CameraMode=Enum.CameraMode.Classic
 player.CameraMinZoomDistance=8
@@ -81,3 +87,4 @@ local root=character:WaitForChild('HumanoidRootPart')
 pcall(function() player:RequestStreamAroundAsync(root.Position,15) end)
 pcall(function() Content:PreloadAsync({hud,indicator}) end)
 player:SetAttribute('ArrivalReady',true)
+

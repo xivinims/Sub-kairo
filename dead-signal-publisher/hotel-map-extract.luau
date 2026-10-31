@@ -15,10 +15,18 @@ return function(dm)
   sourceId+=1
   if d:IsA('BasePart') then d:SetAttribute('HotelSourceId',sourceId) end
  end
+ -- The supplied file repeats LocalScript rain planes throughout the hotel and
+ -- the exterior. Those scripts are intentionally not shipped, so remove their
+ -- orphaned emitters instead of leaving rain fixed in arbitrary rooms.
+ local rainModels={}
+ for _,d in ipairs(world:GetDescendants()) do
+  if d:IsA('Model') and d.Name=='Rain' then table.insert(rainModels,d) end
+ end
+ for _,d in ipairs(rainModels) do if d.Parent then d:Destroy() end end
  local weapon=assert(world:FindFirstChild('AK-47 Spawner',true),'Audited weapon spawner changed')
  weapon:Destroy()
  for _,d in ipairs(world:GetDescendants()) do
-  if d:IsA('LuaSourceContainer') or d:IsA('Tool') or d:IsA('ScreenGui') or d:IsA('RemoteEvent') or d:IsA('RemoteFunction') then d:Destroy() end
+  if d:IsA('LuaSourceContainer') or d:IsA('Tool') or d:IsA('ScreenGui') or d:IsA('RemoteEvent') or d:IsA('RemoteFunction') or d:IsA('ClickDetector') or d:IsA('ProximityPrompt') then d:Destroy() end
  end
  for _,child in ipairs(world:GetChildren()) do child.Parent=map end
  local doors,parts,spawns=0,0,0
@@ -39,6 +47,8 @@ return function(dm)
   end
  end
  assert(doors==4 and spawns==10,'Hotel interactive door/spawn layout changed')
+ map:SetAttribute('RemovedOrphanedRainModels',#rainModels)
+ assert(#rainModels>0,'Expected orphaned rain emitters were not found')
  -- Import named materials into the service; folders are packaging instructions.
  local seen={};local used={}
  for _,d in ipairs(map:GetDescendants()) do if d:IsA('BasePart') and d.MaterialVariant~='' then used[d.MaterialVariant]=true end end
@@ -60,3 +70,4 @@ return function(dm)
  map:SetAttribute('SourceSpawnCount',spawns)
  return map
 end
+

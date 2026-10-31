@@ -124,47 +124,64 @@ end
 local function openMysterySettings()
  local UIS=game:GetService('UserInputService')
  local initial=M.Loaded and table.clone(M.Settings) or nil
- local panel=M.Panel('CONFIGURAÇÕES','center')
- local pane=panel.Pane
- pane.BackgroundColor3=Color3.fromRGB(31,27,25);pane.BackgroundTransparency=.05
- make('UIStroke',{Color=Color3.fromRGB(114,101,94),Thickness=1,Transparency=.55},pane)
- make('UIGradient',{Rotation=90,Color=ColorSequence.new(Color3.fromRGB(37,31,28),Color3.fromRGB(20,18,17)),Transparency=NumberSequence.new(.02,.06)},pane)
- local title=pane:FindFirstChildWhichIsA('TextLabel')
- if title then
-  title.Name='MysterySettingsTitle';title.Text='CONFIGURAÇÕES';title.Font=Enum.Font.RobotoCondensed
-  title.TextSize=24;title.TextScaled=false;title.TextXAlignment=Enum.TextXAlignment.Left
-  title.Position=UDim2.new(0,22,0,13);title.Size=UDim2.new(1,-44,0,30)
-  title.TextColor3=Color3.fromRGB(222,218,212)
+ if opened then opened.Close() end
+ local gui=make('ScreenGui',{Name='MysterySettingsFullscreen',ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=2200,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},pg)
+ local blocker=make('TextButton',{Name='WorldInputBlocker',Size=UDim2.fromScale(1,1),Position=UDim2.fromScale(0,0),Text='',Modal=true,Active=true,BackgroundTransparency=1,AutoButtonColor=false,BorderSizePixel=0,ZIndex=1},gui)
+ local pane=make('Frame',{Name='OptionsPanel',Position=UDim2.new(-.035,0,0,0),Size=UDim2.new(.58,0,1,0),BackgroundColor3=Color3.fromRGB(12,13,13),BackgroundTransparency=.04,BorderSizePixel=0,ClipsDescendants=true,ZIndex=2},gui)
+ make('UIGradient',{Rotation=0,Color=ColorSequence.new(Color3.fromRGB(14,14,14),Color3.fromRGB(10,11,11)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,.02),NumberSequenceKeypoint.new(.76,.08),NumberSequenceKeypoint.new(1,1)})},pane)
+ make('Frame',{Name='EdgeLine',Position=UDim2.new(1,-1,0,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=Color3.fromRGB(191,184,172),BackgroundTransparency=.72,BorderSizePixel=0,ZIndex=3},pane)
+ local title=make('TextLabel',{Name='MysterySettingsTitle',Position=UDim2.fromOffset(26,20),Size=UDim2.new(1,-52,0,38),BackgroundTransparency=1,Text='OPÇÕES',Font=Enum.Font.RobotoCondensed,TextSize=26,TextColor3=Color3.fromRGB(222,218,212),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4},pane)
+ make('Frame',{Name='MysterySettingsDivider',Position=UDim2.new(0,26,0,65),Size=UDim2.new(1,-52,0,1),BackgroundColor3=Color3.fromRGB(154,145,138),BackgroundTransparency=.65,BorderSizePixel=0,ZIndex=4},pane)
+ local nav=make('Frame',{Name='SettingsCategories',Position=UDim2.fromOffset(26,91),Size=UDim2.new(0,142,1,-178),BackgroundTransparency=1,ZIndex=4},pane)
+ make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},nav)
+ local page=make('Frame',{Name='SettingsPage',Position=UDim2.fromOffset(190,91),Size=UDim2.new(1,-218,1,-178),BackgroundTransparency=1,ZIndex=4},pane)
+ local pageTitle=make('TextLabel',{Name='SettingsPageTitle',Position=UDim2.new(0,0,0,0),Size=UDim2.new(1,0,0,31),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=19,TextColor3=Color3.fromRGB(222,218,212),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},page)
+ local description=make('TextLabel',{Name='SettingsDescription',Position=UDim2.new(0,0,0,32),Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,Text='',TextWrapped=true,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(157,154,149),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=5},page)
+ local rows=make('ScrollingFrame',{Name='MysterySettingsRows',Position=UDim2.new(0,0,0,73),Size=UDim2.new(1,0,1,-74),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=Color3.fromRGB(160,155,149),AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new(),ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true,ZIndex=5},page)
+ make('UIPadding',{PaddingRight=UDim.new(0,9),PaddingBottom=UDim.new(0,8)},rows)
+ local rowLayout=make('UIListLayout',{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder},rows)
+ local status=make('TextLabel',{Name='SettingsStatus',Position=UDim2.new(0,26,1,-76),Size=UDim2.new(1,-52,0,18),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(166,159,151),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},pane)
+ local footer=make('Frame',{Name='SettingsFooter',Position=UDim2.new(0,26,1,-48),Size=UDim2.new(1,-52,0,36),BackgroundTransparency=1,ZIndex=5},pane)
+ local controls
+ if workspace:GetAttribute('GameMode')=='Match' then pcall(function() controls=require(player.PlayerScripts:WaitForChild('PlayerModule')):GetControls();controls:Disable() end) end
+ player:SetAttribute('InterfaceOpen',true)
+ local obj={Gui=gui,Pane=pane,Status=status}
+ function obj.Close()
+  if not gui.Parent then return end
+  gui:Destroy();if controls then controls:Enable() end;player:SetAttribute('InterfaceOpen',false)
+  if opened==obj then opened=nil end
  end
- make('Frame',{Name='MysterySettingsDivider',Position=UDim2.new(0,22,0,53),Size=UDim2.new(1,-44,0,1),BackgroundColor3=Color3.fromRGB(154,145,138),BackgroundTransparency=.62,BorderSizePixel=0},pane)
- panel.Content.Position=UDim2.new(0,18,0,61);panel.Content.Size=UDim2.new(1,-36,1,-136)
- panel.Footer.Position=UDim2.new(0,22,1,-61);panel.Footer.Size=UDim2.new(1,-44,0,48)
- panel.Status.Position=UDim2.new(0,0,0,-14);panel.Status.Size=UDim2.new(1,0,0,13)
- panel.Status.TextXAlignment=Enum.TextXAlignment.Center;panel.Status.TextSize=10
- panel.Status.TextColor3=Color3.fromRGB(167,158,151);panel.Back:Destroy()
- local rows=M.List(panel.Content);rows.Name='MysterySettingsRows'
- rows.ScrollBarThickness=2;rows.ScrollBarImageColor3=Color3.fromRGB(173,163,156)
- rows.UIListLayout.Padding=UDim.new(0,2)
- local options={
-  {label='VOLUME',key='volume',min=0,max=1,step=.1},
-  {label='BRILHO',key='brightness',min=0,max=1,step=.1},
-  {label='CAMPO DE VISÃO',key='fov',min=60,max=90,step=5},
-  {label='SENSIBILIDADE DO MOUSE',key='sensitivity',min=.2,max=2,step=.2},
-  {label='SOMBRAS',key='shadows'},
-  {label='BLOOM',key='bloom'},
-  {label='DICAS DE CARREGAMENTO',key='loadingHints'}
+ opened=obj
+ local pages={
+  {id='GAME',label='JOGO',description='DICAS E PREFERÊNCIAS DA PARTIDA'},
+  {id='CONTROLS',label='CONTROLES',description='AJUSTE A RESPOSTA DOS CONTROLES'},
+  {id='DISPLAY',label='TELA',description='BRILHO E EFEITOS VISUAIS'},
+  {id='AUDIO',label='ÁUDIO',description='VOLUME DE SOM'},
+  {id='LANGUAGE',label='IDIOMA',description='IDIOMA DOS TEXTOS DO JOGO'}
  }
- local refreshers={};local drag;local closed=false;local busy=false
+ local pageOptions={
+  GAME={{label='DICAS DE CARREGAMENTO',key='loadingHints',kind='toggle'}},
+  CONTROLS={{label='SENSIBILIDADE DO MOUSE',key='sensitivity',kind='slider',min=.2,max=2,step=.2,format='decimal'}},
+  DISPLAY={
+   {label='BRILHO',key='brightness',kind='slider',min=0,max=1,step=.1,format='percent'},
+   {label='CAMPO DE VISÃO',key='fov',kind='slider',min=60,max=90,step=5,format='degrees'},
+   {label='SOMBRAS',key='shadows',kind='toggle'},
+   {label='BRILHO AMBIENTE',key='bloom',kind='toggle'}
+  },
+  AUDIO={{label='VOLUME GERAL',key='volume',kind='slider',min=0,max=1,step=.1,format='percent'}},
+  LANGUAGE={{label='TEXTOS',value='PORTUGUÊS (BRASIL)'},{label='LEGENDAS E INTERAÇÕES',value='PORTUGUÊS (BRASIL)'}}
+ }
+ local refreshers={};local drag;local closed=false;local busy=false;local compact=false;local currentPage='GAME'
  local function formatValue(spec)
   local value=M.Settings[spec.key]
   if typeof(value)=='boolean' then return value and 'SIM' or 'NÃO' end
-  if spec.key=='volume' or spec.key=='brightness' then return tostring(math.floor(value*100+.5))..'%' end
-  if spec.key=='fov' then return tostring(math.floor(value+.5))..'°' end
+  if spec.format=='percent' then return tostring(math.floor(value*100+.5))..'%' end
+  if spec.format=='degrees' then return tostring(math.floor(value+.5))..'°' end
   return string.format('%.1f',value)
  end
  local function canChange()
   if M.Loaded then return true end
-  panel.Status.Text='CARREGANDO CONFIGURAÇÕES…';return false
+  status.Text='CARREGANDO CONFIGURAÇÕES…';return false
  end
  local function setValue(spec,value)
   if not canChange() then return end
@@ -173,7 +190,7 @@ local function openMysterySettings()
    local steps=math.round((value-spec.min)/spec.step);local rounded=spec.min+steps*spec.step
    M.Settings[spec.key]=math.clamp(math.floor(rounded*100+.5)/100,spec.min,spec.max)
   end
-  M.Dirty=true;M.Apply();panel.Status.Text='ALTERAÇÕES NÃO APLICADAS'
+  M.Dirty=true;M.Apply();status.Text='ALTERAÇÕES NÃO APLICADAS'
   for _,refresh in ipairs(refreshers) do refresh() end
  end
  local function setFromPointer(spec,track,x)
@@ -181,94 +198,168 @@ local function openMysterySettings()
   local alpha=math.clamp((x-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
   setValue(spec,spec.min+alpha*(spec.max-spec.min))
  end
- for index,spec in ipairs(options) do
-  local boolean=typeof(M.Settings[spec.key])=='boolean'
-  local row=make('Frame',{Name='Setting_'..spec.key,LayoutOrder=index,Size=UDim2.new(1,-5,0,52),BackgroundColor3=Color3.fromRGB(75,63,57),BackgroundTransparency=.94,BorderSizePixel=0},rows)
-  make('UICorner',{CornerRadius=UDim.new(0,4)},row)
-  make('TextLabel',{Name='SettingName',Position=UDim2.new(0,11,0,0),Size=UDim2.new(.54,-11,1,0),BackgroundTransparency=1,Text=spec.label,Font=Enum.Font.RobotoCondensed,TextSize=14,TextColor3=Color3.fromRGB(221,217,211),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,TextWrapped=false,ZIndex=7},row)
-  if boolean then
-   local value=make('TextLabel',{Name='SettingValue',Position=UDim2.new(.68,0,0,0),Size=UDim2.new(.16,0,1,0),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(224,220,214),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=7},row)
-   local function arrow(text,position,direction)
-    local button=make('TextButton',{Name=direction<0 and 'Decrease_'..spec.key or 'Increase_'..spec.key,Position=position,Size=UDim2.fromOffset(28,40),BackgroundTransparency=1,BorderSizePixel=0,Text=text,Font=Enum.Font.GothamMedium,TextSize=20,TextColor3=Color3.fromRGB(181,174,168),AutoButtonColor=false,ZIndex=8},row)
-    button.Activated:Connect(function() setValue(spec) end)
-    button.MouseEnter:Connect(function() button.TextColor3=Color3.fromRGB(250,247,240) end)
-    button.MouseLeave:Connect(function() button.TextColor3=Color3.fromRGB(181,174,168) end)
-   end
-   arrow('◂',UDim2.new(.58,0,.5,-20),-1);arrow('▸',UDim2.new(.95,-28,.5,-20),1)
-   refreshers[#refreshers+1]=function() value.Text=formatValue(spec) end;refreshers[#refreshers]()
+ local function clearRows()
+  for _,child in ipairs(rows:GetChildren()) do if not child:IsA('UIListLayout') and not child:IsA('UIPadding') then child:Destroy() end end
+  table.clear(refreshers)
+ end
+ local function addInfoRow(index,label,value)
+  local row=make('Frame',{Name='SettingInfo_'..index,LayoutOrder=index,Size=UDim2.new(1,-5,0,51),BackgroundColor3=Color3.fromRGB(61,59,56),BackgroundTransparency=.91,BorderSizePixel=0,ZIndex=5},rows)
+  make('TextLabel',{Position=UDim2.new(0,8,0,0),Size=UDim2.new(.53,-8,1,0),BackgroundTransparency=1,Text=label,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(172,170,164),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6},row)
+  make('TextLabel',{Position=UDim2.new(.53,0,0,0),Size=UDim2.new(.47,-6,1,0),BackgroundTransparency=1,Text=value,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(220,216,209),TextXAlignment=Enum.TextXAlignment.Right,TextWrapped=true,ZIndex=6},row)
+ end
+ local function addSettingRow(index,spec)
+  local row=make('Frame',{Name='Setting_'..spec.key,LayoutOrder=index,Size=UDim2.new(1,-5,0,54),BackgroundColor3=Color3.fromRGB(61,59,56),BackgroundTransparency=.92,BorderSizePixel=0,ZIndex=5},rows)
+  make('TextLabel',{Name='SettingName',Position=UDim2.new(0,8,0,0),Size=UDim2.new(.50,-8,1,0),BackgroundTransparency=1,Text=spec.label,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(202,199,192),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true,ZIndex=6},row)
+  if spec.kind=='toggle' then
+   local button=make('TextButton',{Name='SettingValue',Position=UDim2.new(.62,0,.5,-17),Size=UDim2.new(.36,-4,0,34),BackgroundColor3=Color3.fromRGB(30,31,30),BackgroundTransparency=.25,BorderSizePixel=0,Text='',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(228,224,217),AutoButtonColor=false,ZIndex=7},row)
+   make('UIStroke',{Color=Color3.fromRGB(126,120,112),Transparency=.55,Thickness=1},button)
+   local function refresh() button.Text=formatValue(spec) end
+   button.Activated:Connect(function() setValue(spec) end)
+   refreshers[#refreshers+1]=refresh;refresh()
   else
-   local value=make('TextLabel',{Name='SettingValue',Position=UDim2.new(.89,0,0,0),Size=UDim2.new(.09,-5,1,0),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(224,220,214),TextXAlignment=Enum.TextXAlignment.Right,ZIndex=7},row)
-   local track=make('Frame',{Name='SliderTrack',Position=UDim2.new(.57,0,.5,-1),Size=UDim2.new(.29,0,0,2),BackgroundColor3=Color3.fromRGB(104,96,91),BorderSizePixel=0,ZIndex=4},row)
-   local fill=make('Frame',{Name='SliderFill',Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(229,224,218),BorderSizePixel=0,ZIndex=5},track)
-   local knob=make('Frame',{Name='SliderKnob',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(0,.5),Size=UDim2.fromOffset(14,14),BackgroundColor3=Color3.fromRGB(244,239,232),BorderSizePixel=0,ZIndex=6},track)
+   local track=make('Frame',{Name='SliderTrack',Position=UDim2.new(.57,0,.5,-1),Size=UDim2.new(.34,0,0,2),BackgroundColor3=Color3.fromRGB(101,98,93),BorderSizePixel=0,ZIndex=6},row)
+   local fill=make('Frame',{Name='SliderFill',Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(223,218,211),BorderSizePixel=0,ZIndex=7},track)
+   local knob=make('Frame',{Name='SliderKnob',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(0,.5),Size=UDim2.fromOffset(14,14),BackgroundColor3=Color3.fromRGB(242,238,231),BorderSizePixel=0,ZIndex=8},track)
    make('UICorner',{CornerRadius=UDim.new(1,0)},knob)
-   local hit=make('TextButton',{Name='SliderInput_'..spec.key,Position=UDim2.new(.55,0,0,0),Size=UDim2.new(.34,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='',AutoButtonColor=false,ZIndex=6},row)
+   local value=make('TextLabel',{Name='SettingValue',Position=UDim2.new(.91,0,0,0),Size=UDim2.new(.09,0,1,0),BackgroundTransparency=1,Text='',Font=Enum.Font.RobotoCondensed,TextSize=10,TextColor3=Color3.fromRGB(224,220,214),TextXAlignment=Enum.TextXAlignment.Right,ZIndex=7},row)
+   local hit=make('TextButton',{Name='SliderInput_'..spec.key,Position=UDim2.new(.55,0,0,0),Size=UDim2.new(.39,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='',AutoButtonColor=false,ZIndex=8},row)
    local function refresh()
-    local valueNow=M.Settings[spec.key];local alpha=math.clamp((valueNow-spec.min)/(spec.max-spec.min),0,1)
+    local alpha=math.clamp((M.Settings[spec.key]-spec.min)/(spec.max-spec.min),0,1)
     value.Text=formatValue(spec);fill.Size=UDim2.fromScale(alpha,1);knob.Position=UDim2.fromScale(alpha,.5)
    end
    hit.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-     drag={spec=spec,track=track};setFromPointer(spec,track,input.Position.X)
-    end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then drag={spec=spec,track=track};setFromPointer(spec,track,input.Position.X) end
    end)
    refreshers[#refreshers+1]=refresh;refresh()
   end
+  make('Frame',{Name='SettingDivider',Position=UDim2.new(0,8,1,-1),Size=UDim2.new(1,-16,0,1),BackgroundColor3=Color3.fromRGB(164,157,148),BackgroundTransparency=.85,BorderSizePixel=0,ZIndex=6},row)
  end
- local function updateDrag(input)
-  if drag and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then setFromPointer(drag.spec,drag.track,input.Position.X) end
- end
- local function endDrag(input)
-  if drag and (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) then drag=nil end
- end
- local changed=UIS.InputChanged:Connect(updateDrag);local ended=UIS.InputEnded:Connect(endDrag)
- local inputConnection=UIS.InputBegan:Connect(function(input,processed)
-  if not processed and not closed and input.KeyCode==Enum.KeyCode.Escape then
-   if initial then M.Settings=table.clone(initial);M.Dirty=false;M.Apply() end
-   closed=true;panel.Close()
+ local function renderPage(id)
+  currentPage=id;clearRows()
+  local selected
+  for _,data in ipairs(pages) do if data.id==id then selected=data;break end end
+  pageTitle.Text=selected and selected.label or 'JOGO'
+  description.Text=selected and selected.description or ''
+  local options=pageOptions[id] or {}
+  if #options==0 then addInfoRow(1,'IDIOMA DO JOGO','PORTUGUÊS (BRASIL)')
+  else
+   for index,spec in ipairs(options) do
+    if spec.key then addSettingRow(index,spec) else addInfoRow(index,spec.label,spec.value) end
+   end
   end
- end)
+  for _,child in ipairs(nav:GetChildren()) do
+   if child:IsA('TextButton') then
+    local active=child.Name=='Category_'..id
+    child.TextColor3=active and Color3.fromRGB(245,241,233) or Color3.fromRGB(162,159,153)
+    child.BackgroundTransparency=active and .84 or 1
+   end
+  end
+ end
+ for order,data in ipairs(pages) do
+  local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=order,Size=UDim2.new(1,0,0,37),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(162,159,153),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=5},nav)
+  make('UIPadding',{PaddingLeft=UDim.new(0,8)},button)
+  button.Activated:Connect(function() renderPage(data.id) end)
+  button.MouseEnter:Connect(function() if currentPage~=data.id then button.TextColor3=Color3.fromRGB(221,217,209) end end)
+  button.MouseLeave:Connect(function() if currentPage~=data.id then button.TextColor3=Color3.fromRGB(162,159,153) end end)
+ end
+ local back=make('TextButton',{Name='BackSettings',Position=UDim2.new(0,0,0,0),Size=UDim2.new(.28,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='◯  VOLTAR',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(193,187,179),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=6},footer)
+ local reset=make('TextButton',{Name='ResetDefaults',Position=UDim2.new(.40,0,0,0),Size=UDim2.new(.31,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='RESTAURAR',Font=Enum.Font.RobotoCondensed,TextSize=11,TextColor3=Color3.fromRGB(171,164,156),TextXAlignment=Enum.TextXAlignment.Center,AutoButtonColor=false,ZIndex=6},footer)
+ local apply=make('TextButton',{Name='ApplySettings',Position=UDim2.new(.73,0,0,0),Size=UDim2.new(.27,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,Text='APLICAR',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(209,203,195),TextXAlignment=Enum.TextXAlignment.Right,AutoButtonColor=false,ZIndex=6},footer)
+ local function hover(button,base)
+  button.MouseEnter:Connect(function() button.TextColor3=Color3.fromRGB(250,247,240) end)
+  button.MouseLeave:Connect(function() button.TextColor3=base end)
+ end
+ hover(back,Color3.fromRGB(193,187,179));hover(reset,Color3.fromRGB(171,164,156));hover(apply,Color3.fromRGB(209,203,195))
  local function closeSettings(discard)
   if closed then return end
   if discard and initial then M.Settings=table.clone(initial);M.Dirty=false;M.Apply() end
-  closed=true;panel.Close()
+  closed=true;obj.Close()
  end
- local function footerButton(name,text,x,fn)
-  local button=make('TextButton',{Name=name,Position=UDim2.new(x,0,0,7),Size=UDim2.new(.31,0,0,38),BackgroundTransparency=1,BorderSizePixel=0,Text=text,TextWrapped=true,Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(177,169,162),AutoButtonColor=false},panel.Footer)
-  button.MouseEnter:Connect(function() button.TextColor3=Color3.fromRGB(246,242,236) end)
-  button.MouseLeave:Connect(function() button.TextColor3=Color3.fromRGB(177,169,162) end)
-  button.Activated:Connect(fn)
- end
- footerButton('ResetDefaults','RESTAURAR PADRÃO',0,function()
+ back.Activated:Connect(function() closeSettings(true) end)
+ reset.Activated:Connect(function()
   if not canChange() then return end
-  M.Settings=table.clone(schema.Defaults);M.Dirty=true;M.Apply()
-  panel.Status.Text='PADRÕES RESTAURADOS — APLIQUE PARA SALVAR'
+  M.Settings=table.clone(schema.Defaults);M.Dirty=true;M.Apply();status.Text='PADRÕES RESTAURADOS — APLIQUE PARA SALVAR'
   for _,refresh in ipairs(refreshers) do refresh() end
  end)
- footerButton('ApplySettings','APLICAR',.345,function()
+ apply.Activated:Connect(function()
   if busy or closed then return end
-  busy=true;panel.Status.Text='APLICANDO…';local ok,err=M.Save()
-  if ok then initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES APLICADAS'
-  else panel.Status.Text=err or 'NÃO FOI POSSÍVEL SALVAR' end
+  busy=true;status.Text='APLICANDO…';local ok,err=M.Save()
+  if ok then initial=table.clone(M.Settings);status.Text='CONFIGURAÇÕES APLICADAS' else status.Text=err or 'NÃO FOI POSSÍVEL SALVAR' end
   busy=false
  end)
- footerButton('BackSettings','VOLTAR',.69,function() closeSettings(true) end)
- panel.Gui.Destroying:Connect(function() closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect() end)
- panel.Status.Text=M.Loaded and 'CONFIGURAÇÕES DO JOGO' or 'CARREGANDO CONFIGURAÇÕES…'
+ local function fitPanel(animate)
+  if not gui.Parent then return end
+  local camera=workspace.CurrentCamera
+  local viewport=camera and camera.ViewportSize or Vector2.new(1280,720)
+  compact=viewport.X<760 or viewport.Y>viewport.X
+  local width=compact and 1 or (viewport.X<1100 and .72 or .58)
+  pane.Size=UDim2.new(width,0,1,0)
+  title.TextSize=viewport.X<500 and 22 or 26
+  if compact then
+   nav.Position=UDim2.fromOffset(16,73);nav.Size=UDim2.new(1,-32,0,38)
+   nav:ClearAllChildren()
+   make('UIListLayout',{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,2),SortOrder=Enum.SortOrder.LayoutOrder},nav)
+   local widths=math.max(61,math.floor((viewport.X-40)/#pages))
+   for index,data in ipairs(pages) do
+    local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=index,Size=UDim2.new(0,widths,1,0),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=viewport.X<500 and 9 or 11,TextColor3=Color3.fromRGB(162,159,153),TextWrapped=true,AutoButtonColor=false,ZIndex=5},nav)
+    button.Activated:Connect(function() renderPage(data.id) end)
+   end
+   page.Position=UDim2.fromOffset(16,122);page.Size=UDim2.new(1,-32,1,-214)
+   status.Position=UDim2.new(0,18,1,-78);status.Size=UDim2.new(1,-36,0,17)
+   footer.Position=UDim2.new(0,18,1,-49);footer.Size=UDim2.new(1,-36,0,35)
+  else
+   nav.Position=UDim2.fromOffset(26,91);nav.Size=UDim2.new(0,142,1,-178)
+   nav:ClearAllChildren()
+   make('UIListLayout',{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},nav)
+   for index,data in ipairs(pages) do
+    local button=make('TextButton',{Name='Category_'..data.id,LayoutOrder=index,Size=UDim2.new(1,0,0,37),BackgroundColor3=Color3.fromRGB(100,94,86),BackgroundTransparency=1,BorderSizePixel=0,Text=data.label,Font=Enum.Font.RobotoCondensed,TextSize=13,TextColor3=Color3.fromRGB(162,159,153),TextXAlignment=Enum.TextXAlignment.Left,AutoButtonColor=false,ZIndex=5},nav)
+    make('UIPadding',{PaddingLeft=UDim.new(0,8)},button)
+    button.Activated:Connect(function() renderPage(data.id) end)
+   end
+   page.Position=UDim2.fromOffset(190,91);page.Size=UDim2.new(1,-218,1,-178)
+   status.Position=UDim2.new(0,26,1,-76);status.Size=UDim2.new(1,-52,0,18)
+   footer.Position=UDim2.new(0,26,1,-48);footer.Size=UDim2.new(1,-52,0,36)
+  end
+  renderPage(currentPage)
+  if animate then Tween:Create(pane,TweenInfo.new(.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=UDim2.new(0,0,0,0)}):Play()
+  else pane.Position=UDim2.new(0,0,0,0) end
+ end
+ local changed=UIS.InputChanged:Connect(function(input)
+  if drag and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then setFromPointer(drag.spec,drag.track,input.Position.X) end
+ end)
+ local ended=UIS.InputEnded:Connect(function(input)
+  if drag and (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) then drag=nil end
+ end)
+ local inputConnection=UIS.InputBegan:Connect(function(input,processed)
+  if not processed and not closed and input.KeyCode==Enum.KeyCode.Escape then closeSettings(true) end
+ end)
+ local cameraConnection
+ local function bindCamera()
+  if cameraConnection then cameraConnection:Disconnect() end
+  local camera=workspace.CurrentCamera
+  if camera then cameraConnection=camera:GetPropertyChangedSignal('ViewportSize'):Connect(function() fitPanel(false) end) end
+ end
+ local cameraChanged=workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function() bindCamera();fitPanel(false) end)
+ gui.Destroying:Connect(function()
+  closed=true;changed:Disconnect();ended:Disconnect();inputConnection:Disconnect();cameraChanged:Disconnect()
+  if cameraConnection then cameraConnection:Disconnect() end
+ end)
+ renderPage(currentPage);fitPanel(true)
+ status.Text=M.Loaded and 'CONFIGURAÇÕES DO JOGO' or 'CARREGANDO CONFIGURAÇÕES…'
  if not M.Loaded then
   task.spawn(function()
    local ok=M.Load()
-   if closed or not panel.Gui.Parent then return end
-   if ok then
-    initial=table.clone(M.Settings);panel.Status.Text='CONFIGURAÇÕES DO JOGO'
-    for _,refresh in ipairs(refreshers) do refresh() end
-   else panel.Status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
+   if closed or not gui.Parent then return end
+   if ok then initial=table.clone(M.Settings);status.Text='CONFIGURAÇÕES DO JOGO';for _,refresh in ipairs(refreshers) do refresh() end
+   else status.Text='NÃO FOI POSSÍVEL CARREGAR — TENTE NOVAMENTE' end
   end)
  end
+ return obj
 end
 
 function M.OpenSettings()
  return openMysterySettings()
 end
 return M
+
 

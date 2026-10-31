@@ -1,1 +1,1 @@
-hotel-preview-v4
+hotel-preview-gameplay-settings-v2

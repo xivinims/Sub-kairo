@@ -22,23 +22,25 @@ local function install(parent,name,class,file)
 end
 local runtime=R.Instance.new('Folder');runtime.Name='StillHereRuntime';runtime.Parent=dm:GetService('ServerScriptService')
 install(runtime,'MapInteractions','ModuleScript','mystery-map-interactions.luau')
+install(runtime,'PoolGame','ModuleScript','pool-game.luau')
 install(runtime,'WorldInitializer','Script','hotel-initialize.luau')
 install(runtime,'PlayerSettings','Script','settings-server.luau')
 install(RS,'SettingsSchema','ModuleScript','settings-schema.luau')
 install(RS,'SessionInterface','ModuleScript','session-interface.luau')
 install(RF,'MysteryUIClient','LocalScript','mystery-ui-client.luau')
+install(RF,'PoolGameClient','LocalScript','pool-game-client.luau')
 install(RF,'SessionLoadingClient','LocalScript','session-loading-client.luau')
 install(RF,'PortugueseText','LocalScript','original-portuguese-text.luau')
 local settings=R.Instance.new('RemoteFunction');settings.Name='PlayerSettings';settings.Parent=RS
 local actions=R.Instance.new('RemoteEvent');actions.Name='MysteryUIAction';actions.Parent=RS
-W:SetAttribute('DeadSignalBuildId','still-here-hotel-mystery-ui-v1')
+W:SetAttribute('DeadSignalBuildId','still-here-hotel-gameplay-settings-v2')
 W:SetAttribute('SceneDisplayName','HOTEL')
 W:SetAttribute('ActiveMap','1940sHotelLobby')
 W:SetAttribute('InterfaceSource','7902470429')
 W:SetAttribute('WorldReady',false)
 W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=192
 SP.CameraMode=R.Enum.CameraMode.Classic;SP.CameraMinZoomDistance=8;SP.CameraMaxZoomDistance=18
-SP.CharacterWalkSpeed=12
+SP.CharacterWalkSpeed=16
 dm:GetService('Players').CharacterAutoLoads=false
 local lighting=dm:GetService('Lighting')
 lighting.GlobalShadows=true
@@ -52,3 +54,4 @@ for _,service in ipairs({'ServerStorage','ServerScriptService','ReplicatedStorag
 end
 fs.writeFile('/tmp/hotel-payload.rbxm',R.serializeModel({bundle}))
 print('HOTEL_ASSEMBLED '..serde.encode('json',{parts=map:GetAttribute('SourcePartCount'),doors=map:GetAttribute('InteractiveDoorCount'),spawns=map:GetAttribute('SourceSpawnCount'),screens=#interface:GetChildren()}))
+
