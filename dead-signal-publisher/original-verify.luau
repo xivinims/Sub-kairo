@@ -22,9 +22,9 @@ assert(not missionHudSource:find("Name='InviteFriendButton'",1,true) and not mis
 assert(missionHudSource:find("Name='MissionObjectivePanel'",1,true) and missionHudSource:find('EPISÓDIO 1   /   OBJETIVO',1,true),'Episode 1 mission HUD is missing')
 assert(RS.ChapterTwoMap:IsA('ModuleScript'),'Chapter 2 map module missing')
 assert(SSS.StillHereRuntime:FindFirstChild('ChapterTwoRuntime'),'Chapter 2 gameplay runtime missing')
-assert(game:GetService('ReplicatedFirst').ChapterTwoHUD.Enabled,'Episode 2 objective HUD missing')
-local episodeTwoHudSource=game:GetService('ReplicatedFirst').ChapterTwoHUD.Source
-assert(episodeTwoHudSource:find('EPISÓDIO 02',1,true) and episodeTwoHudSource:find('Tween:Create(card',1,true),'Episode 2 HUD treatment missing')
+assert(game:GetService('ReplicatedFirst').ChapterTwoHUD.Enabled,'Promoted Episode 1 objective HUD missing')
+local episodeOneHudSource=game:GetService('ReplicatedFirst').ChapterTwoHUD.Source
+assert(episodeOneHudSource:find("string.format('STILL HERE  /  EPISÓDIO %02d',displayEpisodeNumber)",1,true) and episodeOneHudSource:find('Tween:Create(card',1,true),'Promoted Episode 1 HUD treatment missing')
 assert(game:GetService('ReplicatedFirst').OriginalWeaponHoldPrompt.Enabled,'Touch weapon hold button missing')
 assert(RS.PlayerSettings:IsA('RemoteFunction') and RS.SessionInterface and RS.SettingsSchema,'Preferences infrastructure missing')
 assert(not RS.SessionInterface.Source:find("'CREDITS'",1,true),'Credits remain in settings')
