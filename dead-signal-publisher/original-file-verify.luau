@@ -111,7 +111,7 @@ assert(visualSource and visualSource:IsA('LocalScript'),'Visual controller not p
 assert(visualSource.Source:find('9045936046',1,true),'Requested Massive Black Hole sound missing')
 assert(visualSource.Source:find('BloomEffect',1,true),'Cinematic bloom missing')
 assert(visualSource.Source:find('DepthOfFieldEffect',1,true),'Cinematic depth of field missing')
-assert(visualSource.Source:find('lamp.Shadows=true',1,true),'Menu shadow lights missing')
+assert(visualSource.Source:find('lamp.Shadows=spec[6]~=false',1,true) and visualSource.Source:find("'ColdKey'",1,true) and visualSource.Source:find("'WarmRim'",1,true),'Menu shadow lights missing')
 assert(visualSource.Source:find("music:Stop();music:Destroy()",1,true),'Sound cleanup missing')
 assert(not sceneSource:find('PassingStone',1,true),'Synthetic menu rocks still packaged')
 local originalDebris=RS:FindFirstChild('SkyBlackHoleTemplate')
