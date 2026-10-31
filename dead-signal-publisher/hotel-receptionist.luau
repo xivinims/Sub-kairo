@@ -9,16 +9,8 @@ local function setPart(part,color,material)
 	return part
 end
 
-local function motor(parent,name,part0,part1,c0,c1)
-	local joint=Instance.new('Motor6D')
-	joint.Name=name;joint.Part0=part0;joint.Part1=part1;joint.C0=c0;joint.C1=c1;joint.Parent=parent
-	return joint
-end
-
-local function weldTo(base,part,offset)
+local function positionAt(base,part,offset)
 	part.CFrame=base.CFrame*offset
-	local weld=Instance.new('WeldConstraint')
-	weld.Part0=base;weld.Part1=part;weld.Parent=part
 	return part
 end
 
@@ -32,32 +24,26 @@ local function fallbackAvatar()
 	local leftArm=setPart(Instance.new('Part'),shirtColor);leftArm.Name='Left Arm';leftArm.Size=Vector3.new(1,2,1);leftArm.CFrame=CFrame.new(-1.5,0,0);leftArm.Parent=model
 	local rightLeg=setPart(Instance.new('Part'),pantsColor);rightLeg.Name='Right Leg';rightLeg.Size=Vector3.new(1,2,1);rightLeg.CFrame=CFrame.new(.5,-2,0);rightLeg.Parent=model
 	local leftLeg=setPart(Instance.new('Part'),pantsColor);leftLeg.Name='Left Leg';leftLeg.Size=Vector3.new(1,2,1);leftLeg.CFrame=CFrame.new(-.5,-2,0);leftLeg.Parent=model
-	motor(root,'RootJoint',root,torso,CFrame.new(),CFrame.new())
-	motor(torso,'Neck',torso,head,CFrame.new(0,1,0),CFrame.new(0,-.5,0))
-	motor(torso,'Right Shoulder',torso,rightArm,CFrame.new(1.5,.5,0),CFrame.new(0,.5,0))
-	motor(torso,'Left Shoulder',torso,leftArm,CFrame.new(-1.5,.5,0),CFrame.new(0,.5,0))
-	motor(torso,'Right Hip',torso,rightLeg,CFrame.new(.5,-1,0),CFrame.new(0,1,0))
-	motor(torso,'Left Hip',torso,leftLeg,CFrame.new(-.5,-1,0),CFrame.new(0,1,0))
 	local shirt=Instance.new('Shirt');shirt.ShirtTemplate='rbxassetid://'..SHIRT;shirt.Parent=model
 	local pants=Instance.new('Pants');pants.PantsTemplate='rbxassetid://'..PANTS;pants.Parent=model
 	local colors=Instance.new('BodyColors');colors.HeadColor3=skin;colors.LeftArmColor3=shirtColor;colors.RightArmColor3=shirtColor;colors.TorsoColor3=shirtColor;colors.LeftLegColor3=pantsColor;colors.RightLegColor3=pantsColor;colors.Parent=model
 	local pipOffsets={{-.48,.24},{.48,.24},{0,0},{-.48,-.24},{.48,-.24}}
 	for index,offset in ipairs(pipOffsets) do
 		local pip=setPart(Instance.new('Part'),Color3.fromRGB(240,238,225));pip.Name='DicePipFront'..index;pip.Shape=Enum.PartType.Ball;pip.Size=Vector3.new(.19,.19,.08);pip.Parent=model
-		weldTo(head,pip,CFrame.new(offset[1],offset[2],-.54))
+		positionAt(head,pip,CFrame.new(offset[1],offset[2],-.54))
 	end
 	local sidePips={{0,.28},{.3,0},{0,-.28}}
 	for index,offset in ipairs(sidePips) do
 		local pip=setPart(Instance.new('Part'),Color3.fromRGB(240,238,225));pip.Name='DicePipSide'..index;pip.Shape=Enum.PartType.Ball;pip.Size=Vector3.new(.08,.19,.19);pip.Parent=model
-		weldTo(head,pip,CFrame.new(1.04,offset[2],offset[1]))
+		positionAt(head,pip,CFrame.new(1.04,offset[2],offset[1]))
 	end
 	for index,side in ipairs({-1,1}) do
 		local horn=setPart(Instance.new('WedgePart'),Color3.fromRGB(17,17,18));horn.Name='BlackHorn'..index;horn.Size=Vector3.new(.34,.95,.34);horn.Parent=model
-		weldTo(head,horn,CFrame.new(side*.58,.68,0)*CFrame.Angles(0,0,math.rad(side*-18)))
+		positionAt(head,horn,CFrame.new(side*.58,.68,0)*CFrame.Angles(0,0,math.rad(side*-18)))
 	end
 	for index,offset in ipairs({Vector3.new(0,-.05,-.56),Vector3.new(.06,-.25,-.56)}) do
 		local strip=setPart(Instance.new('Part'),Color3.fromRGB(212,208,196));strip.Name='FaceBandage'..index;strip.Size=Vector3.new(.9,.13,.045);strip.Parent=model
-		weldTo(head,strip,CFrame.new(offset)*CFrame.Angles(0,0,math.rad(index==1 and 5 or -8)))
+		positionAt(head,strip,CFrame.new(offset)*CFrame.Angles(0,0,math.rad(index==1 and 5 or -8)))
 	end
 	return model
 end
