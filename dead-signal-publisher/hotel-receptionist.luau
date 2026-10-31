@@ -16,7 +16,7 @@ end
 
 local function fallbackAvatar()
 	local model=Instance.new('Model');model.Name='HotelReceptionist'
-	local root=setPart(Instance.new('Part'),Color3.fromRGB(35,35,35));root.Name='HumanoidRootPart';root.Size=Vector3.new(2,2,1);root.Transparency=1;root.CFrame=CFrame.new();root.Anchored=true;root.Parent=model;model.PrimaryPart=root
+	local root=setPart(Instance.new('Part'),Color3.fromRGB(35,35,35));root.Name='ReceptionistAnchor';root.Size=Vector3.new(2,2,1);root.Transparency=1;root.CFrame=CFrame.new();root.Anchored=true;root.Parent=model;model.PrimaryPart=root
 	local shirtColor=Color3.fromRGB(214,225,221);local pantsColor=Color3.fromRGB(229,226,214);local skin=Color3.fromRGB(222,207,184)
 	local torso=setPart(Instance.new('Part'),shirtColor);torso.Name='Torso';torso.Size=Vector3.new(2,2,1);torso.CFrame=CFrame.new();torso.Parent=model
 	local head=setPart(Instance.new('Part'),Color3.fromRGB(20,20,21));head.Name='Head';head.Size=Vector3.new(2,1,1);head.CFrame=CFrame.new(0,1.5,0);head.Parent=model
@@ -123,7 +123,7 @@ function Receptionist.Initialize(map,interactions)
 	local floor=findFloor(tableModel,surface,folder)
 	local position=floor+Vector3.new(0,3.15,0)
 	local target=Vector3.new(surface.Position.X,position.Y,surface.Position.Z)
-	local root=model.PrimaryPart or model:FindFirstChild('HumanoidRootPart')
+	local root=model.PrimaryPart or model:FindFirstChild('ReceptionistAnchor')
 	assert(root,'Receptionist fallback avatar is missing its root')
 	local targetFrame=CFrame.lookAt(position,target,Vector3.yAxis)
 	placeAt(model,root,targetFrame)

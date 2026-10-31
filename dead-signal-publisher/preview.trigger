@@ -1,1 +1,1 @@
-hotel-instruments-preview-10
+hotel-instruments-preview-11
