@@ -1,5 +1,7 @@
 # Still Here — mapa do hotel e GUI do Mistério
 
+Publicado e verificado: **PlaceVersion 247**, workflow **41210827168**. Os servidores anteriores foram reiniciados. Evidências em `review/hotel-mystery-ui-verification.json`.
+
 O mapa enviado e a interface da antiga mansão Mistério são pacotes independentes.
 
 | Pacote | Arquivo | Destino no jogo |
