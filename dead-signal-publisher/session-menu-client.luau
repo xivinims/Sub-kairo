@@ -64,8 +64,13 @@ camera.CFrame=CFrame.lookAt(Vector3.new(0,5001.05,1.3),Vector3.new(-.65,5001.05,
 p:SetAttribute('MenuCameraMode','wide')
 camera.FieldOfView=60
 local lighting=game:GetService('Lighting');lighting.FogEnd=100000
--- Menu-only lighting keeps the Chapter 1 scene readable and Chapter 2 warm.
-lighting.ExposureCompensation=experienceChapter==2 and .05 or -.12
+-- Chapter 1 keeps its black-hole palette while lifting the subject and preserving clear shadows.
+lighting.ExposureCompensation=experienceChapter==2 and .05 or .12
+if experienceChapter==1 then
+ lighting.Brightness=math.max(lighting.Brightness,1.25)
+ lighting.GlobalShadows=true;lighting.ShadowSoftness=.34
+ lighting.EnvironmentDiffuseScale=math.max(lighting.EnvironmentDiffuseScale,.42)
+end
 for _,effect in ipairs(lighting:GetChildren()) do
  if effect:IsA('Atmosphere') then effect.Density=.025;effect.Haze=0;effect.Glare=0
  elseif effect:IsA('BloomEffect') then
@@ -85,7 +90,7 @@ local composition=make('Frame',{
  Name='CinematicLeftMenu',Position=UDim2.fromScale(.047,.075),
  Size=UDim2.fromScale(.35,.57),BackgroundTransparency=1,BorderSizePixel=0
 },bg)
-local by=UI.Label(composition,experienceChapter==2 and 'ARQUIVO 02  /  ESTUFA' or 'ARQUIVO 01  /  STILL HERE',18)
+local by=UI.Label(composition,experienceChapter==2 and 'ARQUIVO 02  /  ESTUFA' or 'CHAPTER 1',18)
 by.Position=UDim2.fromScale(0,0);by.Size=UDim2.new(1,0,0,18)
 by.Font=Enum.Font.GothamMedium;by.TextSize=10
 by.TextColor3=Color3.fromRGB(140,144,148)
@@ -104,6 +109,8 @@ titleFallback.TextScaled=false;titleFallback.TextXAlignment=Enum.TextXAlignment.
 titleFallback.TextColor3=Color3.fromRGB(234,230,218)
 titleFallback.Visible=false
 make('UITextSizeConstraint',{MinTextSize=25,MaxTextSize=40},titleFallback)
+local chapterOneTitle=make('TextLabel',{Name='ChapterOneTitle',Position=UDim2.new(0,0,0,68),Size=UDim2.new(1,0,0,27),BackgroundTransparency=1,Text='DEAD SIGNAL',Font=Enum.Font.RobotoCondensed,TextSize=23,TextColor3=Color3.fromRGB(228,224,216),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Visible=experienceChapter==1},composition)
+local chapterOneDetail=make('TextLabel',{Name='ChapterOneDescription',Position=UDim2.new(0,0,0,98),Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,Text='EXPLORE A FÁBRICA. ENCONTRE A SAÍDA.',Font=Enum.Font.RobotoCondensed,TextSize=12,TextColor3=Color3.fromRGB(184,183,178),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=true,Visible=experienceChapter==1},composition)
 local nav=make('Frame',{
  Name='StoryStyleNavigation',Position=UDim2.new(0,0,0,82),
  Size=UDim2.new(1,0,1,-82),BackgroundTransparency=1,BorderSizePixel=0
@@ -180,10 +187,18 @@ local function layout()
  local mobile=UIS.TouchEnabled and not UIS.MouseEnabled
  composition.Position=UDim2.fromScale(landscape and .047 or .065,.075)
  composition.Size=UDim2.fromScale(mobile and (landscape and .40 or .39) or (landscape and (compact and .43 or .32) or .86),landscape and .58 or .45)
- title.Size=UDim2.fromOffset(mobile and 52 or 60,mobile and 52 or 60)
- titleFallback.Size=UDim2.new(1,0,0,53)
- nav.Position=UDim2.new(0,0,0,compact and 65 or 88)
- nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
+ if experienceChapter==1 then
+  title.Position=UDim2.new(0,0,0,18);title.Size=UDim2.new(1,0,0,48)
+  titleFallback.Position=UDim2.new(0,0,0,18);titleFallback.Size=UDim2.new(1,0,0,48)
+  chapterOneTitle.Position=UDim2.new(0,0,0,68);chapterOneTitle.Size=UDim2.new(1,0,0,27);chapterOneTitle.TextSize=mobile and 18 or 23
+  chapterOneDetail.Position=UDim2.new(0,0,0,98);chapterOneDetail.Size=UDim2.new(1,0,0,34);chapterOneDetail.TextSize=mobile and 10 or 12
+  local menuTop=compact and 136 or 144
+  nav.Position=UDim2.new(0,0,0,menuTop);nav.Size=UDim2.new(1,0,1,-menuTop)
+ else
+  title.Size=UDim2.fromOffset(mobile and 52 or 60,mobile and 52 or 60)
+  titleFallback.Size=UDim2.new(1,0,0,53)
+  nav.Position=UDim2.new(0,0,0,compact and 65 or 88);nav.Size=UDim2.new(1,0,1,-(compact and 65 or 88))
+ end
  if mobile then
   news.AnchorPoint=Vector2.new(1,0)
   news.Position=UDim2.fromScale(.97,landscape and .06 or .52)
@@ -281,6 +296,7 @@ local function startPresentation(action)
  transitionDetail.Visible=showArtwork
  transitionTrack.Visible=showArtwork
  if showArtwork then
+  transitionProgress.BackgroundColor3=Color3.fromRGB(241,223,165);transitionShade.BackgroundColor3=Color3.fromRGB(3,8,7)
   transitionHeadline.Text=action=='chapterOne' and 'VOLTANDO AO ARQUIVO' or (isChapterHop and 'ENTRANDO NO CHAPTER 2' or 'AQUELE QUE NÃO ENCONTRA')
   transitionDetail.Text=action=='chapterOne' and 'RETORNANDO AO PRIMEIRO CAPÍTULO…' or (isChapterHop and 'A ESTUFA AINDA ESTÁ VIVA.' or 'RECUPERE AS MEMÓRIAS. ENCONTRE A SAÍDA.')
   if transitionTween then transitionTween:Cancel() end
@@ -288,6 +304,23 @@ local function startPresentation(action)
   transitionTween=Tween:Create(transitionProgress,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.74,0,0,0)})
   transitionTween:Play()
   Tween:Create(transitionArt,TweenInfo.new(.45,Enum.EasingStyle.Quad),{ImageTransparency=0}):Play()
+  startLabel.Visible=false
+ elseif experienceChapter==1 then
+  transitionArt.Visible=false;transitionShade.BackgroundColor3=Color3.fromRGB(7,5,6)
+  transitionShade.BackgroundTransparency=1;transitionShade.Visible=true
+  transitionHeadline.Text='CHAPTER 1 · DEAD SIGNAL';transitionDetail.Text='SINTONIZANDO O SINAL…'
+  transitionHeadline.TextTransparency=1;transitionDetail.TextTransparency=1
+  transitionHeadline.Visible=true;transitionDetail.Visible=true
+  transitionTrack.BackgroundTransparency=1;transitionTrack.Visible=true
+  transitionProgress.BackgroundColor3=Color3.fromRGB(190,54,57)
+  if transitionTween then transitionTween:Cancel() end
+  transitionProgress.Position=UDim2.new(0,0,0,0)
+  transitionTween=Tween:Create(transitionProgress,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.new(.74,0,0,0)})
+  transitionTween:Play()
+  Tween:Create(transitionShade,TweenInfo.new(.35,Enum.EasingStyle.Quad),{BackgroundTransparency=.14}):Play()
+  Tween:Create(transitionHeadline,TweenInfo.new(.32),{TextTransparency=0}):Play()
+  Tween:Create(transitionDetail,TweenInfo.new(.42),{TextTransparency=0}):Play()
+  Tween:Create(transitionTrack,TweenInfo.new(.35),{BackgroundTransparency=.55}):Play()
   startLabel.Visible=false
  else
   transitionArt.Visible=false;transitionShade.Visible=false
@@ -303,18 +336,21 @@ local function restorePresentation()
  transitionArt.Visible=false;transitionShade.Visible=false
  transitionHeadline.Visible=false;transitionDetail.Visible=false;transitionTrack.Visible=false
  if transitionTween then transitionTween:Cancel();transitionTween=nil end
+ transitionShade.BackgroundColor3=Color3.fromRGB(3,8,7);transitionShade.BackgroundTransparency=.40
+ transitionHeadline.TextTransparency=0;transitionDetail.TextTransparency=0
+ transitionTrack.BackgroundTransparency=.55;transitionProgress.BackgroundColor3=Color3.fromRGB(241,223,165)
  if panel and panel.Gui.Parent then panel.Gui.Enabled=true end
  composition.Visible=not p:GetAttribute('InterfaceOpen')
  news.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==1
  chapterTwo.Visible=not p:GetAttribute('InterfaceOpen') and selectedChapter==2
- if infoButton then infoButton.Visible=not p:GetAttribute('InterfaceOpen') end
+ if infoButton then infoButton.Visible=experienceChapter==2 and not p:GetAttribute('InterfaceOpen') end
 end
 p:GetAttributeChangedSignal('InterfaceOpen'):Connect(function()
  local visible=not starting and not p:GetAttribute('InterfaceOpen')
  composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
- if infoButton then infoButton.Visible=visible end
+ if infoButton then infoButton.Visible=experienceChapter==2 and visible end
 end)
 local function request(action,value)
  if busy then return end
@@ -627,7 +663,7 @@ task.spawn(function()
  composition.Visible=visible
  news.Visible=visible and selectedChapter==1
  chapterTwo.Visible=visible and selectedChapter==2
- infoButton.Visible=visible
+ infoButton.Visible=visible and experienceChapter==2
  p:SetAttribute('MenuReady',true)
  task.spawn(function() request('state') end)
 end)
