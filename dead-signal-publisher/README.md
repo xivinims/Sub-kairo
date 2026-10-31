@@ -1,5 +1,7 @@
 # Still Here — Hotel Mistério
 
+Publicado e verificado: **PlaceVersion 249**, workflow **41228313035**. Os servidores foram reiniciados. Evidências em `review/hotel-gameplay-settings-verification.json`.
+
 O ramo `dead-signal-publisher` monta o mapa de hotel e a interface original do Mistério como pacotes independentes. O mapa vem de `assets/hotel/1940sHotelLobby.rbxm`; a GUI reutilizada está em `assets/ui/mystery-interface.rbxm`.
 
 | Pacote | Arquivo | Destino no jogo |
@@ -22,7 +24,7 @@ O cenário conserva 8.688 peças, iluminação e dez pontos de nascimento. As es
 ## Conferência e publicação
 
 - Universo `9421311218`; Place `118064584465155`; branch `dead-signal-publisher`.
-- Build candidato: `still-here-hotel-interactions-v3`.
+- Build publicado: `still-here-hotel-interactions-v3` (PlaceVersion 249).
 - `preview.trigger` roda montagem, comparação de fontes, conferência geométrica e preflight isolado no Roblox sem publicar.
 - `release.trigger` roda o mesmo preflight e publica só após ele passar. A rotina baixa e guarda a versão anterior, confere a versão publicada e reinicia os servidores; em falha, executa a recuperação.
 - O preflight verifica script, mapa, portas, spawns, bolsos e registros das novas interações. Não renderiza a tela em um cliente real nem simula uma sessão de tacadas para avaliar sensação/latência visual.

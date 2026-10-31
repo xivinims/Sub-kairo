@@ -1,16 +1,16 @@
 {
   "placeId": 118064584465155,
   "universeId": 9421311218,
-  "placeVersion": 248,
-  "buildId": "still-here-hotel-gameplay-settings-v2",
+  "placeVersion": 249,
+  "buildId": "still-here-hotel-interactions-v3",
   "branch": "dead-signal-publisher",
   "previewWorkflow": {
-    "id": 41225757700,
+    "id": 41228186408,
     "status": "success",
     "published": false
   },
   "publishWorkflow": {
-    "id": 41225810899,
+    "id": 41228313035,
     "status": "success",
     "downloadedPublishedPlaceVerified": true,
     "serversRestarted": true
@@ -21,18 +21,27 @@
     "doorCount": 4,
     "spawnCount": 10,
     "orphanedRainModelsRemoved": 14,
-    "cornerButtonInteractables": 15,
+    "cornerButtonInteractables": 17,
     "poolBalls": 16,
-    "poolSupportAndPocketParts": 19,
+    "poolSupportAndPocketParts": 13,
     "poolShotLogicPresent": true,
-    "fullViewportSettings": true,
-    "settingsPages": ["JOGO", "CONTROLES", "TELA", "ÁUDIO", "IDIOMA"],
+    "poolCameraAndAimGuide": true,
+    "pianoInteractionAndNoteScript": true,
+    "receptionistInteraction": true,
+    "settingsFullHeightLeftPanel": true,
+    "settingsAutoSave": true,
+    "settingsPages": [
+      "JOGO",
+      "CONTROLES",
+      "TELA",
+      "ÁUDIO",
+      "IDIOMA"
+    ],
     "walkSpeed": 16,
     "chapter2Modified": false
   },
   "notCompleted": {
-    "chapter1LabyrinthWallCards": "The labyrinth map is not present in this branch or active hotel place.",
-    "liveClientVisualCapture": "No rendered Roblox client or mobile capture was available."
+    "liveClientVisualAndAudioCapture": "Roblox API preflight compiled and checked the shipped UI/controller sources but did not render the client, play piano audio in a real session, or measure the feel of billiards physics."
   },
   "unresolvedMapMaterials": [
     "Bricks 02",
