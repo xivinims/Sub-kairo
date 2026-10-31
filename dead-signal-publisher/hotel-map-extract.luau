@@ -47,7 +47,13 @@ return function(dm)
    seen[d.Name]=true;d:Clone().Parent=dm:GetService('MaterialService')
   end
  end
- for name in pairs(used) do assert(seen[name],'Missing hotel material '..name) end
+ local missing={}
+ for name in pairs(used) do if not seen[name] then table.insert(missing,name) end end
+ table.sort(missing)
+ -- Some references are already unresolved in the supplied file. Keep the authored
+ -- reference and its native BaseMaterial fallback instead of inventing textures.
+ map:SetAttribute('SourceUnresolvedMaterials',table.concat(missing,', '))
+ if #missing>0 then print('HOTEL_SOURCE_MISSING_MATERIALS '..table.concat(missing,', ')) end
  for _,d in ipairs(effects:GetChildren()) do d:Clone().Parent=dm:GetService('Lighting') end
  map:SetAttribute('SourcePartCount',parts)
  map:SetAttribute('InteractiveDoorCount',doors)

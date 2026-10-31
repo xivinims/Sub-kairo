@@ -1,1 +1,1 @@
-hotel-preview-v1
+hotel-preview-v2
