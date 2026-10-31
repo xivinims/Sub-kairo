@@ -126,7 +126,7 @@ workspace:SetAttribute('OriginalPreflight',true)
 ${init}
 ${verify}`
 }
-console.log(JSON.stringify({originalPreflight:await execute(preflight(chapterOneUniverseId,chapterOnePlaceId,1,'do\\n'+weaponPick+'\\nend\\n'+mainVerify),releaseState.preflightVersion,mainBinaryInput)}));
+console.log(JSON.stringify({originalPreflight:await execute(preflight(chapterOneUniverseId,chapterOnePlaceId,1,'do\n'+weaponPick+'\nend\n'+mainVerify),releaseState.preflightVersion,mainBinaryInput)}));
 console.log(JSON.stringify({chapterTwoPreflight:await execute(preflight(chapterTwoUniverseId,chapterTwoPlaceId,2,chapterTwoVerify),undefined,chapterTwoBinaryInput,chapterTwoTarget)}));
 const chapterOneCandidate=await fs.readFile('/tmp/still-here-original.rbxl');
 const chapterTwoCandidate=await fs.readFile('/tmp/still-here-chapter-two.rbxl');
@@ -146,13 +146,13 @@ async function restart(universeId){
 try{
  chapterTwoPublished=await publish(chapterTwoUniverseId,chapterTwoPlaceId,chapterTwoCandidate);
  console.log(JSON.stringify({chapterTwoPublishedCandidate:chapterTwoPublished}));
- const chapterTwoLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\\n"+init+'\\n'+chapterTwoVerify,chapterTwoPublished.versionNumber,chapterTwoBinaryInput,chapterTwoTarget);
+ const chapterTwoLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\n"+init+'\n'+chapterTwoVerify,chapterTwoPublished.versionNumber,chapterTwoBinaryInput,chapterTwoTarget);
  console.log(JSON.stringify({chapterTwoLiveVerified:chapterTwoLive}));
  await download('/tmp/still-here-chapter-two-verified.rbxl',chapterTwoLive.version,chapterTwoPlaceId);
  execFileSync('/tmp/islands-lune/lune',['run','chapter-two-file-verify.luau'],{cwd,stdio:'inherit'});
  chapterOnePublished=await publish(chapterOneUniverseId,chapterOnePlaceId,chapterOneCandidate);
  console.log(JSON.stringify({chapterOnePublishedCandidate:chapterOnePublished}));
- const mainLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\\n"+init+'\\ndo\\n'+weaponPick+'\\nend\\n'+mainVerify,chapterOnePublished.versionNumber,mainBinaryInput);
+ const mainLive=await execute("workspace:SetAttribute('OriginalPreflight',true)\n"+init+'\ndo\n'+weaponPick+'\nend\n'+mainVerify,chapterOnePublished.versionNumber,mainBinaryInput);
  console.log(JSON.stringify({chapterOneLiveVerified:mainLive}));
  await download('/tmp/still-here-verified.rbxl',mainLive.version,chapterOnePlaceId);
  execFileSync('/tmp/islands-lune/lune',['run','original-file-verify.luau'],{cwd,stdio:'inherit'});
