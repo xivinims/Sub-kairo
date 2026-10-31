@@ -1,32 +1,6 @@
-local Players=game:GetService('Players')
 local Receptionist={}
 local SHIRT=7978206628
 local PANTS=6296971062
-local HEAD=14802934596
-local HAT=8208242118
-local BANDAGE=14492889106
-
-local function appendAsset(value,id)
-	local items={}
-	for asset in string.gmatch(tostring(value or ''),'[^,]+') do table.insert(items,string.gsub(asset,'%s+','')) end
-	local wanted=tostring(id)
-	for _,asset in ipairs(items) do if asset==wanted then return table.concat(items,',') end end
-	table.insert(items,wanted)
-	return table.concat(items,',')
-end
-
-local function description()
-	local outfit
-	if game.CreatorType==Enum.CreatorType.User and game.CreatorId>0 then
-		local ok,value=pcall(function() return Players:GetHumanoidDescriptionFromUserIdAsync(game.CreatorId) end)
-		if ok then outfit=value end
-	end
-	if not outfit then outfit=Instance.new('HumanoidDescription') end
-	outfit.Shirt=SHIRT;outfit.Pants=PANTS;outfit.Head=HEAD
-	outfit.HatAccessory=appendAsset(outfit.HatAccessory,HAT)
-	outfit.FaceAccessory=appendAsset(outfit.FaceAccessory,BANDAGE)
-	return outfit
-end
 
 local function setPart(part,color,material)
 	part.Color=color;part.Material=material or Enum.Material.SmoothPlastic
@@ -91,26 +65,13 @@ local function fallbackAvatar()
 end
 
 local function createAvatar()
-	local ok,model=pcall(function()
-		return Players:CreateHumanoidModelFromDescriptionAsync(description(),Enum.HumanoidRigType.R15)
-	end)
-	if not ok or not model then
-		warn('[HotelReceptionist] Avatar service unavailable; using visible fallback model with the requested pajamas and dice head.')
-		return fallbackAvatar()
-	end
+	-- Creator-avatar models can be returned at Roblox's hidden preview origin.
+	-- The authored R6 model uses the exact clothing/accessory reference and has a stable pivot.
+	local model=fallbackAvatar()
 	model.Name='HotelReceptionist'
 	local humanoid=model:FindFirstChildOfClass('Humanoid')
-	local root=model:FindFirstChild('HumanoidRootPart')
-	if not humanoid or not root then model:Destroy();return fallbackAvatar() end
 	humanoid.DisplayName='Recepcionista';humanoid.NameDisplayDistance=30;humanoid.HealthDisplayDistance=0;humanoid.AutoRotate=false;humanoid.BreakJointsOnDeath=false;humanoid.RequiresNeck=false
-	for _,part in ipairs(model:GetDescendants()) do if part:IsA('BasePart') then part.CanCollide=false;part.CanTouch=false;part.CanQuery=true end end
-	root.Anchored=true;model.PrimaryPart=root
-	local idle=Instance.new('Animation');idle.AnimationId='rbxassetid://507766666';idle.Parent=model
-	task.spawn(function()
-		local animator=humanoid:FindFirstChildOfClass('Animator') or Instance.new('Animator',humanoid)
-		local loaded,track=pcall(function() return animator:LoadAnimation(idle) end)
-		if loaded and track then track.Looped=true;track.Priority=Enum.AnimationPriority.Idle;track:Play(.4) end
-	end)
+	model.PrimaryPart=model:FindFirstChild('HumanoidRootPart')
 	return model
 end
 
@@ -190,7 +151,7 @@ function Receptionist.Initialize(map,interactions)
 	addNameplate(model,root)
 	model:SetAttribute('InteractionKind','Receptionist')
 	model:SetAttribute('HotelActorKind','LobbyHost')
-	model:SetAttribute('CreatorAvatarSource',game.CreatorType==Enum.CreatorType.User and 'CreatorAvatar' or 'RequestedOutfitFallback')
+	model:SetAttribute('CreatorAvatarSource','RequestedOutfitReference')
 	interactions.RegisterActor(model,'Receptionist')
 	return model
 end
