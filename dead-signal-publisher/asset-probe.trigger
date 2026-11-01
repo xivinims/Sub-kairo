@@ -1,1 +1,1 @@
-nametag-audit-2026-11-01-v1
+nametag-publish-2026-11-01-v1
