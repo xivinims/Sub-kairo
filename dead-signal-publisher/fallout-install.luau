@@ -102,7 +102,8 @@ for _,item in ipairs(C.Catalog) do
 end
 SS.SourceWeaponMeshes:Destroy()
 require(game.ServerScriptService.FalloutRuntime.ShopkeeperLayout).refresh()
-visuals:SetAttribute('UseReliableIcons',true)
+visuals:SetAttribute('UseReliableIcons',nil)
+workspace:SetAttribute('FalloutViewportRevision','weapon-clones-v1')
 workspace:SetAttribute('FalloutHUDRevision','hud-shop-npc-v2')
 workspace:SetAttribute('LobbyGrassDarkened',darkened)
 workspace:SetAttribute('FalloutNametagBuild','nametags-v1')
