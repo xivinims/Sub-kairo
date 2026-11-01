@@ -15,5 +15,7 @@ for _,entry in ipairs({{name='FalloutUI',parent=game.ReplicatedStorage},{name='S
 end
 bundle:Destroy()
 require(runtime.ShopkeeperLayout).refresh()
+-- The pack's mesh and texture dependencies returned AssetDelivery 403 during audit.
+game.ReplicatedStorage.FalloutItemVisuals:SetAttribute('UseReliableIcons',true)
 workspace:SetAttribute('FalloutHUDRevision','hud-shop-npc-v2')
 assert(protectedSnapshot()==before,'Unrelated game content changed')
