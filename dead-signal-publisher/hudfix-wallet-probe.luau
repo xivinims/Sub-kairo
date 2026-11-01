@@ -1,7 +1,7 @@
 -- Uses a unique, non-user key and deletes it even if an assertion fails.
 local probeProfiles=require(game.ServerScriptService.FalloutRuntime.Profiles)
 local probeStore=game:GetService('DataStoreService'):GetDataStore('FalloutProfiles_v1')
-local probePlayer={UserId='__hudfix_probe_'..game:GetService('HttpService'):GenerateGUID(false),attributes={}}
+local probePlayer={UserId='__hud_'..game:GetService('HttpService'):GenerateGUID(false),attributes={}}
 function probePlayer:GetAttribute(name)return self.attributes[name]end
 function probePlayer:SetAttribute(name,value)self.attributes[name]=value end
 local probeOK,probeError=xpcall(function()
