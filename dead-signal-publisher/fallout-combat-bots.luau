@@ -177,12 +177,14 @@ function Bots:SetCount(value)
   if #Players:GetPlayers()==1 then value=math.max(1,value) end
   while #self.slots>value do
    local slot=table.remove(self.slots)
+   slot.cancelled=true
    self:_removeBot(slot)
   end
   while #self.slots<value do
    if not self:_addSlot() then break end
   end
   value=#self.slots
+  self.folder:SetAttribute('ActiveBotCount',value)
   self.config.onChanged()
  end
  self.desired=value
@@ -251,7 +253,7 @@ function Bots:_removeBot(slot)
  slot.bot=nil
 end
 function Bots:_spawn(slot,generation)
- if not self.active or generation~=self.generation then return end
+ if not self.active or generation~=self.generation or slot.cancelled then return end
  local spawn=chooseSpawn(slot.team,slot.id)
  if not spawn or self.config.getPhase()~='Match' then return end
  local description=botAppearance(slot.team)
@@ -263,7 +265,7 @@ function Bots:_spawn(slot,generation)
   warn('Combat bot R6 creation failed:',model)
   return
  end
- if generation~=self.generation or not self.active or self.config.getPhase()~='Match' then model:Destroy();return end
+ if generation~=self.generation or not self.active or slot.cancelled or self.config.getPhase()~='Match' then model:Destroy();return end
  model.Name='CombatBot_'..slot.id
  model:SetAttribute('FalloutBot',true)
  model:SetAttribute('FalloutTeam',slot.team)
