@@ -10,6 +10,7 @@ local OptionsStore=require(script.Parent.OptionsStore)
 local Net=RS.FalloutNet
 local Action,Fx,State=Net.Action,Net.Fx,Net.State
 local records,states,cooldowns={},{},{}
+local CombatBots
 local round=0
 local phase='Waiting'
 local deadline=0
@@ -30,6 +31,7 @@ local function teamIndex(p) return p.Team==teamObjects[1] and 1 or p.Team==teamO
 local function rows()
  local list={}
  for id,r in pairs(records) do table.insert(list,{userId=id,name=r.name,team=r.team,kills=r.kills,downs=r.downs,deaths=r.deaths,heals=r.heals,headshots=r.headshots}) end
+ if CombatBots then for _,bot in ipairs(CombatBots:Ranking()) do table.insert(list,bot) end end
  return Rules.rank(list)
 end
 local function snapshot()
@@ -38,8 +40,9 @@ local function snapshot()
   local char,hum=alive(p)
   table.insert(roster,{userId=p.UserId,name=p.DisplayName,team=teamIndex(p),alive=hum~=nil,downed=p:GetAttribute('Downed')==true})
  end
+ if CombatBots then for _,bot in ipairs(CombatBots:Roster()) do table.insert(roster,bot) end end
  table.sort(roster,function(a,b)return a.userId<b.userId end)
- return {phase=phase,deadline=deadline,round=round,scores=scores,roster=roster,results=lastResults}
+ return {phase=phase,deadline=deadline,round=round,scores=scores,roster=roster,results=lastResults,botCount=CombatBots and CombatBots:Count() or 0}
 end
 local function broadcast() State:FireAllClients(snapshot()) end
 local function notify(p,text) Fx:FireClient(p,{kind='Notice',text=text}) end
@@ -216,7 +219,14 @@ local function attack(p,origin,direction)
  local point=result and result.Position or origin+dir*def.range
  local muzzle=tool.Handle:FindFirstChild('Muzzle');local from=muzzle and muzzle.WorldPosition or tool.Handle.Position
  Fx:FireAllClients({kind='Shot',userId=p.UserId,from=from,to=point,weapon=id,melee=def.kind=='Melee'})
- if result then local victim=targetFromPart(result.Instance);if victim then damage(p,victim,def.damage*(result.Instance.Name=='Head' and def.head or 1),result.Instance.Name=='Head') end end
+ if result then
+  local victim=targetFromPart(result.Instance)
+  if victim then
+   damage(p,victim,def.damage*(result.Instance.Name=='Head' and def.head or 1),result.Instance.Name=='Head')
+  elseif CombatBots then
+   CombatBots:Hit(p,result.Instance,def.damage*(result.Instance.Name=='Head' and def.head or 1),result.Instance.Name=='Head')
+  end
+ end
 end
 local function reload(p)
  local s=states[p];local char=alive(p);if not s or not char or phase~='Match' or p:GetAttribute('Downed') then return end
@@ -230,6 +240,67 @@ local function reload(p)
   local count=math.min(def.mag-ammo.mag,ammo.reserve);ammo.mag+=count;ammo.reserve-=count;tool:SetAttribute('Ammo',ammo.mag);tool:SetAttribute('Reserve',ammo.reserve)
  end)
 end
+-- Training NPCs share this match's team, damage, credits and shot FX, with no
+-- new trusted client damage remote. Live players remain the authoritative targets.
+local function botEliminatePlayer(bot,victim)
+ local victimState=states[victim]
+ if not victimState or victimState.killed or phase~='Match' then return end
+ scores[bot.slot.team]+=1
+ bot.slot.kills+=1
+ Fx:FireAllClients({kind='Kill',killer='BOT '..string.format('%02d',bot.slot.id),victim=victim.DisplayName,headshot=false})
+ eliminate(victim,nil,false)
+ broadcast()
+end
+CombatBots=require(script.Parent.CombatBots).new({
+ teamSize=C.TeamSize,catalog=C.ById,teamIndex=teamIndex,
+ getPhase=function()return phase end,
+ onChanged=function()broadcast()end,
+ onPlayerHit=function(attacker,bot,amount,headshot)
+  Fx:FireClient(attacker,{kind='Hit',headshot=headshot,damage=amount})
+ end,
+ onBotEliminated=function(bot,killer,headshot)
+  if phase~='Match' or killer.Parent~=Players or teamIndex(killer)==bot.slot.team then return end
+  local row=records[killer.UserId]
+  if not row then return end
+  row.kills+=1
+  if headshot then row.headshots+=1 end
+  scores[teamIndex(killer)]+=1
+  reward(killer,C.KillXP+(headshot and C.HeadshotXP or 0),C.KillCoins,'Eliminação de NPC')
+  Fx:FireAllClients({kind='Kill',killer=killer.DisplayName,victim='BOT '..string.format('%02d',bot.slot.id),headshot=headshot})
+  broadcast()
+ end,
+ onBotShot=function(bot,from,to)
+  if phase~='Match' then return end
+  Fx:FireAllClients({kind='Shot',from=from,to=to,weapon=bot.def and bot.def.id or 'compact',bot=true})
+ end,
+ onBotDamage=function(bot,victim,amount)
+  if phase~='Match' or victim.Parent~=Players or teamIndex(victim)==bot.slot.team or victim:GetAttribute('Downed') then return end
+  local victimState=states[victim]
+  local char,hum,root=alive(victim)
+  if not victimState or victimState.killed or victimState.protectedUntil>now() or not char then return end
+  local decision=Rules.damage(hum.Health,amount,false,C.DownedHealth)
+  if decision=='eliminated' then
+   botEliminatePlayer(bot,victim)
+  else
+   hum:TakeDamage(amount)
+   if decision=='downed' then
+    victim:SetAttribute('Downed',true)
+    victim:SetAttribute('BleedEnds',now()+C.BleedSeconds)
+    if records[victim.UserId] then records[victim.UserId].downs+=1 end
+    hum.WalkSpeed=0;hum.AutoRotate=false;root.Anchored=true
+    victimState.upright=root.CFrame
+    root.CFrame=(root.CFrame+Vector3.new(0,-1.4,0))*CFrame.Angles(math.pi/2,0,0)
+    local life=victimState.life
+    task.delay(C.BleedSeconds,function()
+     if states[victim]==victimState and victimState.life==life and victim:GetAttribute('Downed') and phase=='Match' then
+      botEliminatePlayer(bot,victim)
+     end
+    end)
+    broadcast()
+   end
+  end
+ end,
+})
 local function shopNear(p)
  local _,_,root=alive(p);local npc=workspace:FindFirstChild('Shopkeeper')
  return phase~='Match' and root and npc and npc.PrimaryPart and (root.Position-npc.PrimaryPart.Position).Magnitude<24
@@ -237,6 +308,14 @@ end
 Net.Query.OnServerInvoke=function(p,command,id)
  if command=='SettingsGet' then return OptionsStore.Get(p) end
  if command=='SettingsSave' then return OptionsStore.Set(p,id) end
+ if command=='BotAdd' or command=='BotRemove' then
+  if p.UserId~=C.OwnerUserId then return {ok=false,message='Apenas o criador pode controlar bots.'} end
+  if phase=='Match' then return {ok=false,message='Altere os bots no lobby.'} end
+  local current=CombatBots:Count()
+  local ok,value=CombatBots:SetCount(current+(command=='BotAdd' and 1 or -1))
+  broadcast()
+  return {ok=ok,count=ok and value or current,message=ok and ('NPCs configurados: '..value) or tostring(value)}
+ end
  local profile=Profiles.cache[p]
  if command=='State' then return snapshot() end
  if not profile then return {ok=false,message='Seus dados ainda estão carregando.'} end
@@ -290,6 +369,7 @@ game:BindToClose(function()
  while (next(Profiles.cache) or next(OptionsStore.cache)) and os.clock()<limit do task.wait(.2) end
 end)
 local function setPhase(value,duration)
+ if value~='Match' then CombatBots:Stop() end
  phase=value;deadline=now()+duration;workspace:SetAttribute('FalloutPhase',value);workspace:SetAttribute('FalloutDeadline',deadline)
  broadcast()
 end
@@ -299,6 +379,7 @@ local function startRound()
  for _,p in ipairs(Players:GetPlayers()) do assign(p);records[p.UserId]={name=p.DisplayName,team=teamIndex(p),kills=0,downs=0,deaths=0,heals=0,headshots=0} end
  setPhase('Match',C.RoundSeconds)
  for _,p in ipairs(Players:GetPlayers()) do if alive(p) then movePlayer(p) else p:LoadCharacterAsync() end end
+ CombatBots:Start()
  broadcast()
 end
 workspace:SetAttribute('FalloutServerInitialized',true)
@@ -319,11 +400,14 @@ task.spawn(function()
     elseif phase=='Match' and r.Position.Y< -80 then h.Health=0 end
    end
   end
-  if phase=='Waiting' and #Players:GetPlayers()>=2 then setPhase('Intermission',C.IntermissionSeconds)
-  elseif phase=='Intermission' and #Players:GetPlayers()<2 then setPhase('Waiting',0)
+  if phase=='Waiting' and (#Players:GetPlayers()>=2 or (#Players:GetPlayers()>=1 and CombatBots:Count()>0)) then setPhase('Intermission',#Players:GetPlayers()==1 and 8 or C.IntermissionSeconds)
+  elseif phase=='Intermission' and #Players:GetPlayers()==0 then setPhase('Waiting',0)
+  elseif phase=='Intermission' and #Players:GetPlayers()==1 and CombatBots:Count()==0 then setPhase('Waiting',0)
   elseif phase=='Intermission' and now()>=deadline then startRound()
   elseif phase=='Match' then
    local counts={0,0};for _,p in ipairs(Players:GetPlayers()) do local t=teamIndex(p);if t>0 then counts[t]+=1 end end
+   local npcCounts=CombatBots:TeamCounts()
+   counts[1]+=npcCounts[1];counts[2]+=npcCounts[2]
    if now()>=deadline then finishRound()
    elseif counts[1]==0 or counts[2]==0 then
     lastResults=nil;setPhase('Waiting',0);for _,p in ipairs(Players:GetPlayers()) do movePlayer(p) end
