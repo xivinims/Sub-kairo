@@ -27,14 +27,36 @@ end
 local board=UI.scoreboard(player.PlayerGui,colors)
 local score,clock,slots=board.score,board.clock,board.slots
 local wallet=UI.wallet(gui)
+local matchHUD=UI.matchHUD(gui)
+-- 2014 health asset is installed as visual UI only. We control the original bar here.
+local classicSource=RS:WaitForChild('LobbyHealthTemplate',30)
+local classicHealth=classicSource and classicSource:Clone() or nil
+local classicBar
+if classicHealth then
+ classicHealth.Name='LobbyClassicHealth'
+ classicHealth.ResetOnSpawn=false
+ classicHealth.DisplayOrder=32
+ classicHealth.ScreenInsets=Enum.ScreenInsets.None
+ classicHealth.Enabled=false
+ classicHealth.Parent=player.PlayerGui
+ local layer=classicHealth:FindFirstChild('HealthGui')
+ local frame=layer and layer:FindFirstChild('HealthFrame')
+ classicBar=frame and frame:FindFirstChild('HealthBar')
+ if layer then
+  layer.Size=UDim2.fromScale(1,1)
+  layer.Position=UDim2.new()
+ end
+ if frame then frame.Position=UDim2.new(.5,-85,1,-52) end
+ pcall(function()game:GetService('StarterGui'):SetCoreGuiEnabled(Enum.CoreGuiType.Health,false)end)
+end
 local notice=label(gui,'',UDim2.new(.7,0,0,40),UDim2.new(.15,0,.19,0));notice.TextSize=16
 local noticeSerial=0
 local function showNotice(text)
  noticeSerial+=1;local n=noticeSerial;notice.Text=text;task.delay(3,function()if noticeSerial==n then notice.Text='' end end)
 end
-local ammo=label(gui,'',UDim2.fromOffset(260,46),UDim2.new(1,-280,1,-70),Enum.Font.GothamBold);ammo.TextXAlignment=Enum.TextXAlignment.Right;ammo.TextSize=19
-local health=label(gui,'100 PV',UDim2.fromOffset(180,28),UDim2.new(0,16,1,-66),Enum.Font.GothamBold);health.TextXAlignment=Enum.TextXAlignment.Left
-local cross=label(gui,'+',UDim2.fromOffset(32,32),UDim2.new(.5,-16,.5,-16));cross.TextSize=26
+local ammo=label(gui,'',UDim2.fromOffset(260,46),UDim2.new(1,-280,1,-70),Enum.Font.GothamBold);ammo.TextXAlignment=Enum.TextXAlignment.Right;ammo.TextSize=19;ammo.Visible=false
+local health=label(gui,'100 PV',UDim2.fromOffset(180,28),UDim2.new(0,16,1,-66),Enum.Font.GothamBold);health.TextXAlignment=Enum.TextXAlignment.Left;health.Visible=false
+local cross=label(gui,'+',UDim2.fromOffset(32,32),UDim2.new(.5,-16,.5,-16));cross.TextSize=26;cross.Visible=false
 local hitmark=label(gui,'',UDim2.fromOffset(34,34),UDim2.new(.5,-17,.5,-17));hitmark.TextSize=30
 local down=label(gui,'',UDim2.new(.7,0,0,60),UDim2.new(.15,0,.7,0),Enum.Font.GothamBold);down.TextColor3=Color3.fromRGB(255,145,120)
 local results=make('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(12,18,19),BackgroundTransparency=.06,BorderSizePixel=0,Visible=false})
@@ -76,6 +98,7 @@ local function updateWallet()
  local ready=player:GetAttribute('ProfileReady')==true
  local coins=ready and UI.money(player:GetAttribute('Coins')) or '…'
  wallet.balance.Text=coins
+ wallet.root.Size=UDim2.fromOffset(math.clamp(61+#coins*10,96,142),34)
  wallet.progress.Text=ready and ('NÍV. '..UI.integer(player:GetAttribute('Level'))..'  •  '..UI.money(player:GetAttribute('XP'))..' XP') or 'CARREGANDO'
  shopBalance.Text=ready and (coins..' moedas disponíveis') or 'Carregando saldo…'
 end
@@ -130,6 +153,8 @@ end
 local function applyState(new)
  if type(new)~='table' then return end
  local previous=state.phase;state=new
+ matchHUD.root.Visible=state.phase=='Match'
+ if classicHealth then classicHealth.Enabled=state.phase=='Waiting' or state.phase=='Intermission' end
  score.Text=string.format('%d  —  %d',state.scores[1],state.scores[2])
  for team=1,2 do for i=1,5 do slots[team][i].portrait.Image='';slots[team][i].status.Visible=false end end
  local counts={0,0}
@@ -198,7 +223,12 @@ net.Fx.OnClientEvent:Connect(function(info)
  if info.kind=='Notice' then showNotice(info.text)
  elseif info.kind=='Reward' then showNotice('+'..info.xp..' XP  •  +'..info.coins..' moedas  —  '..info.reason)
  elseif info.kind=='Hit' then hitmark.Text='×';hitmark.TextColor3=info.headshot and Color3.fromRGB(255,128,94) or Color3.new(1,1,1);task.delay(.13,function()hitmark.Text='' end)
- elseif info.kind=='Kill' then showNotice(info.killer..'  '..(info.headshot and '◎' or '→')..'  '..info.victim)
+ elseif info.kind=='Kill' then
+  showNotice(info.killer..'  '..(info.headshot and '◎' or '→')..'  '..info.victim)
+  matchHUD.feedLabel.Text=info.killer..'   ›   '..info.victim
+  matchHUD.feed.Visible=state.phase=='Match'
+  local stamp=os.clock();matchHUD.feed:SetAttribute('Stamp',stamp)
+  task.delay(4,function()if matchHUD.feed:GetAttribute('Stamp')==stamp then matchHUD.feed.Visible=false end end)
  elseif info.kind=='Shot' then
   if not info.melee then
    local length=(info.to-info.from).Magnitude
@@ -212,16 +242,44 @@ end)
 Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
  UI.fitScoreboard(board,camera.ViewportSize,GuiService.TopbarInset)
- wallet.root.Position=UDim2.new(1,-12,0,board.fallback and 52 or 6)
+ wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 96 or 6)
  local left=math.max(0,math.ceil((state.deadline or 0)-workspace:GetServerTimeNow()))
  clock.Text=state.phase=='Waiting' and 'AGUARDANDO 2 JOGADORES' or (state.phase=='Match' and '' or 'INTERVALO  ')..string.format('%02d:%02d',math.floor(left/60),left%60)
  local char=player.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
  health.Text=hum and (math.ceil(hum.Health)..' PV') or 'AGUARDANDO'
+ local fraction=hum and hum.MaxHealth>0 and math.clamp(hum.Health/hum.MaxHealth,0,1) or 0
+ matchHUD.hp.Text=tostring(hum and math.ceil(hum.Health) or 0)
+ matchHUD.healthFill.Size=UDim2.fromScale(fraction,1)
+ if classicBar then
+  classicBar.Size=UDim2.fromScale(fraction,1)
+  classicBar.Image=fraction>.25 and 'rbxassetid://35238053' or 'rbxassetid://35238036'
+ end
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
- mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping;cross.Visible=state.phase=='Match' and not isDown
+ mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping;cross.Visible=false;matchHUD.root.Visible=state.phase=='Match' and not shopping
  local tool,def=equipped()
  if firing and def and def.automatic then shoot() end
  ammo.Text=tool and def and (def.name..'\n'..(tool:GetAttribute('Reloading') and 'RECARREGANDO' or ((tool:GetAttribute('Ammo') or -1)>=0 and tostring(tool:GetAttribute('Ammo'))..' / '..tostring(tool:GetAttribute('Reserve') or 0) or 'CORPO A CORPO'))) or ''
+ matchHUD.weaponName.Text=def and def.name or ''
+ matchHUD.ammoBig.Text=tool and (tool:GetAttribute('Reloading') and '...' or tostring(math.max(0,tool:GetAttribute('Ammo') or 0))) or '--'
+ matchHUD.ammoReserve.Text=tool and ('/ '..tostring(math.max(0,tool:GetAttribute('Reserve') or 0))) or ''
+ -- Team-only radar does not expose enemy positions or modify match rules.
+ local rootPart=char and char:FindFirstChild('HumanoidRootPart')
+ local dotIndex=0
+ for _,teammate in ipairs(Players:GetPlayers()) do
+  if teammate~=player and teammate.Team==player.Team and rootPart and dotIndex<#matchHUD.dots then
+   local other=teammate.Character and teammate.Character:FindFirstChild('HumanoidRootPart')
+   if other then
+    local relative=other.Position-rootPart.Position
+    if relative.Magnitude<=170 then
+     dotIndex+=1
+     local dot=matchHUD.dots[dotIndex]
+     dot.Position=UDim2.new(.5+math.clamp(relative.X/340,-.46,.46),-2,.5+math.clamp(relative.Z/340,-.46,.46),-2)
+     dot.Visible=true
+    end
+   end
+  end
+ end
+ for i=dotIndex+1,#matchHUD.dots do matchHUD.dots[i].Visible=false end
  if state.phase=='Match' and tool and def and not isDown then
   if activeTool~=tool then
    cleanupView();activeTool=tool
