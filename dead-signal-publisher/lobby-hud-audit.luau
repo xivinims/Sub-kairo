@@ -7,7 +7,10 @@ local function describe(d)
  local result={properties={},colors={},accessories=d:GetAccessories(true)}
  for _,key in ipairs({'Shirt','Pants','GraphicTShirt','Face','Head','Torso','LeftArm','RightArm','LeftLeg','RightLeg','BodyTypeScale','DepthScale','HeadScale','HeightScale','ProportionScale','WidthScale','ClimbAnimation','FallAnimation','IdleAnimation','JumpAnimation','RunAnimation','SwimAnimation','WalkAnimation','MoodAnimation'}) do local ok,v=pcall(function()return d[key]end);if ok then result.properties[key]=v end end
  for _,key in ipairs({'HeadColor','TorsoColor','LeftArmColor','RightArmColor','LeftLegColor','RightLegColor'}) do local c=d[key];result.colors[key]={c.R,c.G,c.B} end
- for _,accessory in ipairs(result.accessories) do accessory.AccessoryType=accessory.AccessoryType.Name end
+ for _,accessory in ipairs(result.accessories) do
+  accessory.AccessoryType=accessory.AccessoryType.Name
+  for _,key in ipairs({'Position','Rotation','Scale'}) do local value=accessory[key];if typeof(value)=='Vector3' then accessory[key]={value.X,value.Y,value.Z} end end
+ end
  return result
 end
 local old=workspace.Shopkeeper.Humanoid:GetAppliedDescription()
