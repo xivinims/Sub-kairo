@@ -1,12 +1,12 @@
 {
-  "preflightVersion": 258,
-  "rollbackVersion": 258,
-  "lastVerifiedVersion": 259,
+  "preflightVersion": 259,
+  "rollbackVersion": 259,
+  "lastVerifiedVersion": 260,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41340629422,
+  "releaseRunId": 41341419606,
   "nametagBuild": "nametags-v1",
   "hudFix": "fps-left-options-v4",
   "viewportRevision": "weapon-clones-v1",
@@ -22,9 +22,13 @@
   "optionsPanelMaxWidth": 235,
   "optionsVisualTestedInGame": false,
   "optionsPreservedSnapshot": "6166:1445956290",
-  "botBuild": "training-bots-v1",
-  "practiceBotsDefault": 1,
+  "botBuild": "training-bots-match-only-v2",
+  "practiceBotsDefault": 2,
   "practiceBotsMax": 4,
   "botNPCsServerVerified": true,
-  "botHUDProtectedSnapshot": "6166:2648412241"
+  "botHUDProtectedSnapshot": "6166:2648412241",
+  "botsMatchOnly": true,
+  "botControlsMatchOnly": true,
+  "botsCombatMapVerified": true,
+  "botNpcBehavior": "scripted-ai-navigation-and-combat"
 }
