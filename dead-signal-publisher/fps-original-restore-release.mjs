@@ -20,7 +20,7 @@ async function api(url,{method='GET',body}={}){
 async function execute(script,input,version){
  const path=cloud+'universes/'+universe+'/places/'+place+'/'
  let task=await api(path+(version?'versions/'+version+'/':'')+'luau-execution-session-tasks',{method:'POST',body:JSON.stringify({timeout:'300s',script,binaryInput:input})});
- const expires=Date.now()+420000;
+ const expires=Date.now()+115000;
  while(['QUEUED','PENDING','PROCESSING'].includes(task.state)&&Date.now()<expires){
   await new Promise(resolve=>setTimeout(resolve,1400));
   task=await api(cloud+task.path);
@@ -55,11 +55,11 @@ const put=await fetch(upload.uploadUri,{method:'PUT',headers:{'content-type':'ap
 if(!put.ok)throw Error('Cannot upload original FPS restore bundle');
 const install=await read('fps-original-restore-install.luau');
 const verify=await read('fps-original-restore-verify.luau');
-const installScript=invariants+'\nlocal beforeSnapshot='+JSON.stringify(baseline.preserved)+'\n'+install;
-const candidate=await execute(installScript+'\n'+verify,upload.path,baseline.version);
+const installScript=invariants+'\nassert(game.PlaceVersion==' + baseline.version + ',"Live FPS changed during preflight")\nlocal beforeSnapshot='+JSON.stringify(baseline.preserved)+'\n'+install;
+const candidate=await execute(installScript+'\n'+verify,upload.path);
 if(!candidate?.ok||candidate.preserved!==baseline.preserved||
  candidate.originalGui!==true||candidate.gunCount!==8){
- throw Error('FPS match bot validation failed '+JSON.stringify(candidate));
+ throw Error('Original FPS restoration validation failed '+JSON.stringify(candidate));
 }
 console.log('FPS_ORIGINAL_RESTORE_PREFLIGHT '+JSON.stringify(candidate));
 if(mode.startsWith('fps-original-restore-preview-')){
@@ -70,13 +70,13 @@ if(mode.startsWith('fps-original-restore-preview-')){
  let saved=false;
  try{
   const script=installScript+'\nlocal checked=(function()\n'+verify+'\nend)()\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn checked';
-  const result=await execute(script,upload.path,baseline.version);
+  const result=await execute(script,upload.path);
   saved=true;
   console.log('FPS_ORIGINAL_RESTORE_NATIVE_SAVE '+JSON.stringify(result));
   const live=await execute(invariants+'\n'+verify);
   if(!live?.ok||live.version!==baseline.version+1||live.preserved!==baseline.preserved||
    live.originalGui!==true||live.gunCount!==8){
-   throw Error('Published bot test did not match verified release '+JSON.stringify(live));
+   throw Error('Published original FPS did not match verified restoration '+JSON.stringify(live));
   }
   const config=await api(cloud+'universes/'+universe+'/places/'+place);
   if(config.serverSize!==10)throw Error('Game server size changed unexpectedly');
