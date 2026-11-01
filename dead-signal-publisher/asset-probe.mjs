@@ -37,7 +37,9 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('fps-demo-validate')||trigger.trim().startsWith('fps-demo-publish')){
+if(trigger.trim().startsWith('fallout-audit')){
+ await import('./fallout-audit.mjs');
+}else if(trigger.trim().startsWith('fps-demo-validate')||trigger.trim().startsWith('fps-demo-publish')){
  const {runFpsDemo}=await import('./fps-demo-release.mjs');
  await runFpsDemo(trigger.trim());
 }else if(trigger.trim().startsWith('fps-demo-audit')){
