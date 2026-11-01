@@ -106,7 +106,7 @@ local function openShop(itemsOnly)
    local iconBox=make('Frame',row,{Name='Preview',Size=UDim2.fromOffset(iconWidth,iconHeight),Position=UDim2.fromOffset(5,(94-iconHeight)/2),BackgroundColor3=Color3.fromRGB(25,32,30),BorderSizePixel=0});corner(iconBox,6)
    local icon=UI.itemIcon(iconBox,item)
    local viewport=make('ViewportFrame',iconBox,{Name='ModelPreview',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
-   local visual=RS.FalloutItemVisuals:FindFirstChild(item.id)
+   local visual=not RS.FalloutItemVisuals:GetAttribute('UseReliableIcons') and RS.FalloutItemVisuals:FindFirstChild(item.id)
    if visual then
     local clone=UI.preview(viewport,visual,item)
     task.spawn(function()
