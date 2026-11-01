@@ -52,4 +52,4 @@ local function inspect(root)
 end
 inspect(place)
 local result={containerType=containerType,descendantCount=#place:GetDescendants(),classCounts=counts,topLevel=top,scripts=scripts,suspiciousPatterns=suspicious}
-return serde.encode('json',result)
+print(serde.encode('json',result))
