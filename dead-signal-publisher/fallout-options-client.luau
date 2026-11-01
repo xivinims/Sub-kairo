@@ -25,7 +25,7 @@ local dictionary={
   videoNote='Ajustes visuais aplicados somente à sua câmera.',controlNote='As ações básicas seguem os controles do Roblox.',
   languageNote='O idioma altera este menu. O jogo continua em português.',
   gameMode='MODO DE JOGO',gameValue='5 VS 5',saved='SALVO',saving='SALVANDO',offline='SEM SALVAR',
-  reset='RESTAURAR PADRÕES',resetCategory='RESTAURAR ESTA SEÇÃO',open='CONFIGURAÇÕES',
+  reset='RESTAURAR PADRÕES',resetCategory='RESTAURAR ESTA SEÇÃO',open='OPÇÕES',
  },
  en={
   options='OPTIONS',back='BACK',game='GAME',controls='CONTROLS',display='DISPLAY',audio='AUDIO',language='LANGUAGE',credits='CREDITS',
@@ -267,7 +267,7 @@ function Menu.new(args)
  local function addRange(key,min,max,step)
   local row=baseRow(key,49)
   local title=addText(row,t(key),UDim2.new(.74,0,0,17),UDim2.fromOffset(5,0),10,Color3.fromRGB(206,215,213))
-  local valueLabel=addText(row,tostring(values[key])..'%',UDim2.new(.24,-5,0,18),UDim2.new(.76,0,0,0),10,Color3.fromRGB(230,231,225))
+  local valueLabel=addText(row,tostring(values[key])..(key=='cameraFov' and '°' or '%'),UDim2.new(.24,-5,0,18),UDim2.new(.76,0,0,0),10,Color3.fromRGB(230,231,225))
   valueLabel.TextXAlignment=Enum.TextXAlignment.Right
   local track=make('Frame',row,{
    Name='SliderTrack',Position=UDim2.fromOffset(10,27),Size=UDim2.new(1,-22,0,3),
@@ -295,7 +295,7 @@ function Menu.new(args)
   local function liveAt(x)
    local nextValue=positionToValue(x)
    set(key,nextValue,true)
-   valueLabel.Text=tostring(values[key])..'%'
+   valueLabel.Text=tostring(values[key])..(key=='cameraFov' and '°' or '%')
    local percent=(values[key]-min)/(max-min)
    fill.Size=UDim2.fromScale(percent,1)
    knob.Position=UDim2.fromScale(percent,.5)
