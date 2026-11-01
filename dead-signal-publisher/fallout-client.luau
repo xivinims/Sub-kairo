@@ -146,9 +146,29 @@ local function applyState(new)
  score.Text=string.format('%d  —  %d',state.scores[1],state.scores[2])
  for team=1,2 do for i=1,5 do slots[team][i].portrait.Image='';slots[team][i].status.Visible=false end end
  local counts={0,0}
- for _,p in ipairs(state.roster) do if p.team==1 or p.team==2 then counts[p.team]+=1;local s=slots[p.team][counts[p.team]];if s then s.portrait.Image='rbxthumb://type=AvatarHeadShot&id='..p.userId..'&w=150&h=150';s.portrait.ImageTransparency=p.alive and 0 or .65;s.status.Visible=p.downed;s.status.BackgroundColor3=Color3.fromRGB(225,185,101) end end end
+ for _,p in ipairs(state.roster) do
+  if p.team==1 or p.team==2 then
+   counts[p.team]+=1
+   local slot=slots[p.team][counts[p.team]]
+   if slot then
+    slot.portrait.Image=p.bot and '' or ('rbxthumb://type=AvatarHeadShot&id='..p.userId..'&w=150&h=150')
+    slot.portrait.ImageTransparency=p.alive and 0 or .65
+    slot.status.Visible=p.downed
+    slot.status.BackgroundColor3=Color3.fromRGB(225,185,101)
+    local botLabel=slot.portrait.Parent:FindFirstChild('BotLabel')
+    if not botLabel then
+     botLabel=Instance.new('TextLabel');botLabel.Name='BotLabel'
+     botLabel.Size=UDim2.fromScale(1,1);botLabel.BackgroundTransparency=1;botLabel.Text='BOT'
+     botLabel.Font=Enum.Font.GothamBold;botLabel.TextSize=7
+     botLabel.TextColor3=Color3.fromRGB(238,239,233);botLabel.Parent=slot.portrait.Parent
+    end
+    botLabel.Visible=p.bot==true
+   end
+  end
+ end
  results.Visible=state.phase=='Results';if state.phase=='Results' then showResults(state.results) end
- board.root.BackgroundTransparency=state.phase=='Match' and .76 or .15
+ board.root.BackgroundTransparency=.15
+ board.screen.Enabled=state.phase~='Match'
  if previous~=state.phase then
   closeShop()
   if dialogueController then dialogueController:hideGui() end
@@ -158,6 +178,18 @@ local function applyState(new)
 end
 net.State.OnClientEvent:Connect(applyState)
 task.spawn(function()local initial=query('State');if initial then applyState(initial) end end)
+local botControls=make('Frame',gui,{Name='OwnerNPCControls',Size=UDim2.fromOffset(129,26),Position=UDim2.new(1,-139,0,55),BackgroundTransparency=1,Visible=false})
+local botMinus=button(botControls,'−',UDim2.fromOffset(30,26),UDim2.fromOffset(0,0),function()
+ local response=query('BotRemove')
+ if response and response.message then showNotice(response.message) end
+end)
+local botAmount=label(botControls,'NPC: 1',UDim2.fromOffset(67,26),UDim2.fromOffset(30,0),Enum.Font.GothamBold)
+botAmount.TextSize=10;botAmount.TextXAlignment=Enum.TextXAlignment.Center
+local botPlus=button(botControls,'+',UDim2.fromOffset(30,26),UDim2.fromOffset(98,0),function()
+ local response=query('BotAdd')
+ if response and response.message then showNotice(response.message) end
+end)
+botMinus.TextSize=18;botPlus.TextSize=18
 local firing=false
 local aiming=false
 local options=require(RS:WaitForChild('FalloutOptionsClient')).new({
@@ -258,6 +290,8 @@ Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
  UI.fitScoreboard(board,camera.ViewportSize,GuiService:GetInsetArea(Enum.ScreenInsets.TopbarSafeInsets),GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets))
  wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 34 or 6)
+ botControls.Visible=player.UserId==C.OwnerUserId and state.phase~='Match' and state.phase~='Results' and not options:isOpen()
+ botAmount.Text='NPC: '..tostring(state.botCount or 1)
  notice.Visible=options:get('notices') and not options:isOpen()
  for control,scale in pairs(mobileScale) do scale.Scale=options:get('buttonScale')/100;control.BackgroundTransparency=1-options:get('buttonOpacity')/100 end
  if touch then
@@ -275,7 +309,7 @@ Run.RenderStepped:Connect(function(dt)
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
  mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping and not options:isOpen()
  local tool,def=equipped()
- CombatHUD.update(combat,{phase=state.phase,humanoid=hum,character=char,backpack=player:FindFirstChildOfClass('Backpack'),player=player,catalog=C.ById,tool=tool,def=def,downed=isDown,touch=touch,aiming=aiming,recoil=recoil,menuOpen=options:isOpen(),reticleEnabled=options:get('reticle'),radarEnabled=options:get('radar'),killfeedEnabled=options:get('killfeed')})
+ CombatHUD.update(combat,{phase=state.phase,humanoid=hum,character=char,backpack=player:FindFirstChildOfClass('Backpack'),player=player,catalog=C.ById,tool=tool,def=def,downed=isDown,touch=touch,aiming=aiming,recoil=recoil,menuOpen=options:isOpen(),scores=state.scores,deadline=state.deadline,reticleEnabled=options:get('reticle'),radarEnabled=options:get('radar'),killfeedEnabled=options:get('killfeed')})
  if firing and def and def.automatic then shoot() end
  if state.phase=='Match' and tool and def and not isDown then
   if activeTool~=tool then
