@@ -54,9 +54,15 @@ local function scriptFile(parent,name,class,file)
 end
 local config=scriptFile(RS,'FalloutConfig','ModuleScript','fallout-config.luau')
 scriptFile(RS,'FalloutUI','ModuleScript','fallout-ui.luau')
+scriptFile(RS,'FalloutHealthUI','ModuleScript','fallout-health-ui.luau')
+scriptFile(RS,'FalloutCombatHUD','ModuleScript','fallout-combat-hud.luau')
+scriptFile(RS,'FalloutOptionsClient','ModuleScript','fallout-options-client.luau')
+local healthTemplate=require('./lobby-hud-template')();healthTemplate.Name='LobbyHealthTemplate';healthTemplate.Parent=RS
 local runtime=instance('Folder','FalloutRuntime',folders.ServerScriptService)
 scriptFile(runtime,'Rules','ModuleScript','fallout-rules.luau')
 scriptFile(runtime,'ShopkeeperLayout','ModuleScript','fallout-shopkeeper.luau')
+scriptFile(runtime,'FrozenAvatar','ModuleScript','fallout-frozen-avatar.luau')
+scriptFile(runtime,'OptionsStore','ModuleScript','fallout-options-store.luau')
 scriptFile(runtime,'Profiles','ModuleScript','fallout-profiles.luau')
 local nametagPatch=R.deserializeModel(fs.readFile('/tmp/nametag-bundle.rbxm'))[1]
 nametagPatch.FalloutNametagTemplate.Parent=SS
@@ -91,3 +97,4 @@ assert(not Rules.canDamage({id=1,team=1,active=true},{id=2,team=2,active=true,pr
 local p={coins=400,owned={}};assert(Rules.purchase(p,C.ById.service));assert(p.coins==0);assert(Rules.purchase(p,C.ById.service));assert(p.coins==0);assert(not Rules.purchase(p,C.ById.heavy))
 local ranked=Rules.rank({{userId=2,kills=3,downs=4},{userId=1,kills=5,downs=5},{userId=3,kills=3,downs=1}});assert(ranked[1].userId==1 and ranked[2].userId==3)
 print('FALLOUT_BUILD '..serde.encode('json',{scripts=scripts,instances=#bundle:GetDescendants(),rulesPassed=true,sourceClips=#clips:GetChildren(),shotSound=sound~=nil}))
+

@@ -32,6 +32,11 @@ if(!/^fallout-(preview|publish)-/.test(mode))throw Error('Unsupported Fallout op
 const baseline=await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId')})");
 console.log('FALLOUT_BASELINE '+JSON.stringify(baseline));
 for(const id of Object.keys(hashes))await download(id);
+const healthMeta=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/84860453909277');
+const healthResponse=await fetch(healthMeta.location||healthMeta.locations?.[0]?.location);if(!healthResponse.ok)throw Error('Health template download failed');
+const healthBytes=Buffer.from(await healthResponse.arrayBuffer());
+if(createHash('sha256').update(healthBytes).digest('hex')!=='35bbef11373c32284c354fc7102af891af85fd133c2ac4be5e3df2ec7ad2deca')throw Error('Health template changed after inspection');
+await fs.writeFile('/tmp/lobby-health-source.rbxm',healthBytes);
 const r=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');if(!r.ok)throw Error('Lune download failed');const zip=Buffer.from(await r.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum mismatch');
 await fs.writeFile('/tmp/fallout-lune.zip',zip);execFileSync('unzip',['-q','-o','/tmp/fallout-lune.zip','-d','/tmp/fallout-lune']);await fs.chmod('/tmp/fallout-lune/lune',0o755);
@@ -41,7 +46,7 @@ execFileSync('/tmp/fallout-lune/lune',['run','fallout-build.luau'],{cwd:new URL(
 const bundle=await fs.readFile('/tmp/fallout-bundle.rbxm');
 const upload=await api(cloud+'universes/'+universe+'/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:bundle.length})});
 const put=await fetch(upload.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:bundle});if(!put.ok)throw Error('Binary input upload failed');
-const install=await read('fallout-install.luau'),verify=await read('fallout-verify.luau');
+const install=(await read('fallout-install.luau'))+'\n'+(await read('lobby-hud-radar.luau')),verify=await read('fallout-verify.luau');
 const preview=await execute(install+'\n'+verify,upload.path,baseline.version);
 if(!preview?.ok)throw Error('Native verification failed');
 console.log('FALLOUT_PREFLIGHT '+JSON.stringify(preview));
@@ -65,3 +70,4 @@ else{
   throw error;
  }
 }
+

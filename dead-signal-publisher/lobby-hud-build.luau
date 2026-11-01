@@ -10,6 +10,7 @@ source('FalloutClient','LocalScript','fallout-client.luau')
 source('FalloutUI','ModuleScript','fallout-ui.luau')
 source('FalloutHealthUI','ModuleScript','fallout-health-ui.luau')
 source('FalloutCombatHUD','ModuleScript','fallout-combat-hud.luau')
-for _,file in ipairs({'lobby-hud-install.luau','lobby-hud-verify.luau','lobby-hud-invariants.luau','lobby-hud-radar.luau'}) do luau.load(fs.readFile(file),{debugName=file}) end
+for _,file in ipairs({'lobby-hud-install.luau','lobby-hud-verify.luau','lobby-hud-invariants.luau','lobby-hud-radar.luau','fallout-build.luau','fallout-install.luau'}) do luau.load(fs.readFile(file),{debugName=file}) end
+local futureTemplate=require('./lobby-hud-template')();futureTemplate:Destroy()
 fs.writeFile('/tmp/lobby-hud-bundle.rbxm',R.serializeModel({bundle}))
-print('LOBBY_HUD_BUILD compiled=8 existingHealthTemplate=preserved existingOutfit=preserved')
+print('LOBBY_HUD_BUILD compiled=10 futureBuildTemplate=verified existingHealthTemplate=preserved existingOutfit=preserved')
