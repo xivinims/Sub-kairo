@@ -37,7 +37,38 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('hotel-preview')){
+if(trigger.trim().startsWith('fps-demo-audit')){
+ const fs=await import('node:fs/promises');
+ const {execFileSync}=await import('node:child_process');
+ const {createHash}=await import('node:crypto');
+ const id=15864801103;
+ const key=process.env.ROBLOX_API_KEY;
+ const [economyResponse,deliveryResponse]=await Promise.all([
+  fetch('https://economy.roblox.com/v2/assets/'+id+'/details',{signal:AbortSignal.timeout(60000)}),
+  fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+id,{headers:{'x-api-key':key},signal:AbortSignal.timeout(60000)}),
+ ]);
+ const economy=await economyResponse.json().catch(()=>({}));
+ const delivery=await deliveryResponse.json().catch(()=>({}));
+ let file=null,inspection=null;
+ const location=delivery.location||delivery.locations?.[0]?.location;
+ if(location){
+  const downloaded=await fetch(location,{signal:AbortSignal.timeout(240000)});
+  const bytes=Buffer.from(await downloaded.arrayBuffer());
+  file={http:downloaded.status,contentType:downloaded.headers.get('content-type'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),magic:bytes.subarray(0,24).toString('hex')};
+  if(downloaded.ok&&bytes.length>100000){
+   await fs.writeFile('/tmp/fps-system-demo-source',bytes);
+   const archive=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip',{signal:AbortSignal.timeout(120000)});
+   const zip=Buffer.from(await archive.arrayBuffer());
+   if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum mismatch');
+   await fs.writeFile('/tmp/fps-demo-lune.zip',zip);
+   execFileSync('unzip',['-q','-o','/tmp/fps-demo-lune.zip','-d','/tmp/fps-demo-lune']);
+   await fs.chmod('/tmp/fps-demo-lune/lune',0o755);
+   const output=execFileSync('/tmp/fps-demo-lune/lune',['run','fps-demo-inspect.luau'],{cwd:new URL('.',import.meta.url),encoding:'utf8',stdio:['ignore','pipe','inherit']});
+   inspection=JSON.parse(output.trim().split('\n').at(-1));
+  }
+ }
+ console.log('FPS_DEMO_AUDIT '+JSON.stringify({assetId:id,economyHttp:economyResponse.status,metadata:{name:economy.Name,description:economy.Description,assetTypeId:economy.AssetTypeId,creator:economy.Creator},deliveryHttp:deliveryResponse.status,delivery:{assetType:delivery.assetType,assetId:delivery.assetId,versionNumber:delivery.versionNumber,error:delivery.errors?.[0]?.message},file,inspection}));
+}else if(trigger.trim().startsWith('hotel-preview')){
  const {runHotelRelease}=await import('./hotel-native-publish.mjs');
  await runHotelRelease({publish:false});
 }else if(trigger.trim().startsWith('hotel-ui-inspect')){
