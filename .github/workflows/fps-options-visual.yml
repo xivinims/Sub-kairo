@@ -1,0 +1,31 @@
+name: FPS Options Visual
+
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - "dead-signal-publisher/options-visual.trigger"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-fps-options-visual-9421311218
+  cancel-in-progress: false
+
+jobs:
+  options:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout requested branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check isolated publisher syntax
+        run: node --check dead-signal-publisher/options-visual-release.mjs
+      - name: Validate and optionally publish only the FPS settings GUI
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/options-visual-release.mjs
