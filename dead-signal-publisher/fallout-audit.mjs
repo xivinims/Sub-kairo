@@ -11,7 +11,7 @@ async function json(url,options={}) {
 }
 for(const [name,id] of [['current',118064584465155],['fallout',8438960542],['lobby',95512398319263],['animations',86582491164528],['fps',15864801103]]) {
  try {
- const metadata=await json('https://economy.roblox.com/v2/assets/'+id+'/details');
+ let metadata={};try{metadata=await json('https://economy.roblox.com/v2/assets/'+id+'/details')}catch(e){console.log('METADATA_WARNING '+name+' '+String(e))}
  const delivery=await json('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+id);
  const location=delivery.location||delivery.locations?.[0]?.location;
  if(!location)throw Error('Asset has no download location');
