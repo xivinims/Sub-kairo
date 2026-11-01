@@ -78,6 +78,7 @@ local shopTitle=label(shop,'ARMARIA',UDim2.new(.65,0,0,42),UDim2.fromOffset(18,6
 local shopList=make('ScrollingFrame',shop,{Position=UDim2.fromOffset(14,58),Size=UDim2.new(1,-28,1,-72),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new()})
 make('UIListLayout',shopList,{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder})
 local shopping=false
+local dialogueController
 local function closeShop()shop.Visible=false;shopping=false end
 button(shop,'FECHAR',UDim2.fromOffset(88,34),UDim2.new(1,-104,0,10),closeShop)
 local function query(command,id)
@@ -121,8 +122,9 @@ local function applyState(new)
  results.Visible=state.phase=='Results';if state.phase=='Results' then showResults(state.results) end
  if previous~=state.phase then
   closeShop()
+  if dialogueController then dialogueController:hideGui() end
   player.CameraMode=state.phase=='Match' and Enum.CameraMode.LockFirstPerson or Enum.CameraMode.Classic
-  player.CameraMinZoomDistance=state.phase=='Match' and .5 or 8;player.CameraMaxZoomDistance=state.phase=='Match' and .5 or 18
+  if state.phase=='Match' then player.CameraMinZoomDistance=.5;player.CameraMaxZoomDistance=.5 else player.CameraMaxZoomDistance=18;player.CameraMinZoomDistance=8 end
  end
 end
 net.State.OnClientEvent:Connect(applyState)
@@ -225,6 +227,7 @@ task.spawn(function()
  local npc=workspace:WaitForChild('Shopkeeper',60);if not npc then return end
  local prompt=npc:WaitForChild('ProximityPrompt');local Dialog=require(RS:WaitForChild('DialogModule'))
  local dialog=Dialog.new('ch_ckz2n',npc,prompt)
+ dialogueController=dialog
  dialog:addDialog('Oi! O que você quer saber?',{'Sobre o jogo','Loja','Itens'})
  prompt.Triggered:Connect(function()if state.phase~='Match' then dialog:triggerDialog(player,1) end end)
  dialog.responded:Connect(function(option)
