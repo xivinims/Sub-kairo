@@ -133,15 +133,58 @@ function Bots.new(config)
  if not folder then folder=Instance.new('Folder');folder.Name='FalloutCombatBots';folder.Parent=workspace end
  local self=setmetatable({
   config=config,folder=folder,active=false,generation=0,
-  desired=1,slots={},models={},nextId=1
+  desired=2,slots={},models={},nextId=1
  },Bots)
  folder:SetAttribute('BotCount',self.desired)
  return self
 end
 function Bots:Count() return self.desired end
+function Bots:_chooseTeam()
+ local counts={0,0}
+ local humans=Players:GetPlayers()
+ for _,p in ipairs(humans) do
+  local team=self.config.teamIndex(p)
+  if team==1 or team==2 then counts[team]+=1 end
+ end
+ for _,slot in ipairs(self.slots) do counts[slot.team]+=1 end
+ -- Solo testing: every practice NPC is on the enemy team, inside the match map.
+ if #humans==1 then
+  local own=self.config.teamIndex(humans[1])
+  local enemy=own==1 and 2 or own==2 and 1 or nil
+  if enemy and counts[enemy]<self.config.teamSize then return enemy end
+ end
+ if counts[1]>=self.config.teamSize and counts[2]>=self.config.teamSize then return nil end
+ if counts[1]>=self.config.teamSize then return 2 end
+ if counts[2]>=self.config.teamSize then return 1 end
+ return counts[1]<=counts[2] and 1 or 2
+end
+function Bots:_addSlot()
+ local team=self:_chooseTeam()
+ if not team then return false end
+ local id=self.nextId
+ self.nextId+=1
+ local slot={id=id,team=team,kills=0,deaths=0,bot=nil}
+ table.insert(self.slots,slot)
+ local generation=self.generation
+ task.spawn(function()self:_spawn(slot,generation)end)
+ return true
+end
 function Bots:SetCount(value)
  if type(value)~='number' or value~=value then return false,'Quantidade inválida' end
  value=math.clamp(math.floor(value),0,maximum)
+ if self.active then
+  if self.config.getPhase()~='Match' then return false,'NPCs disponíveis somente na partida.' end
+  if #Players:GetPlayers()==1 then value=math.max(1,value) end
+  while #self.slots>value do
+   local slot=table.remove(self.slots)
+   self:_removeBot(slot)
+  end
+  while #self.slots<value do
+   if not self:_addSlot() then break end
+  end
+  value=#self.slots
+  self.config.onChanged()
+ end
  self.desired=value
  self.folder:SetAttribute('BotCount',value)
  return true,value
@@ -210,7 +253,7 @@ end
 function Bots:_spawn(slot,generation)
  if not self.active or generation~=self.generation then return end
  local spawn=chooseSpawn(slot.team,slot.id)
- if not spawn then return end
+ if not spawn or self.config.getPhase()~='Match' then return end
  local description=botAppearance(slot.team)
  local ok,model=pcall(function()
   return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
@@ -220,7 +263,7 @@ function Bots:_spawn(slot,generation)
   warn('Combat bot R6 creation failed:',model)
   return
  end
- if generation~=self.generation or not self.active then model:Destroy();return end
+ if generation~=self.generation or not self.active or self.config.getPhase()~='Match' then model:Destroy();return end
  model.Name='CombatBot_'..slot.id
  model:SetAttribute('FalloutBot',true)
  model:SetAttribute('FalloutTeam',slot.team)
@@ -270,10 +313,11 @@ function Bots:_spawn(slot,generation)
   end)
  end)
  task.spawn(function()self:_loop(bot,generation)end)
+ self.folder:SetAttribute('ActiveBotCount',#self.slots)
  self.config.onChanged()
 end
 function Bots:_target(bot)
- local best,closest=nil,300
+ local best,closest=nil,math.huge
  for _,p in ipairs(Players:GetPlayers()) do
   if self.config.teamIndex(p)~=bot.slot.team and not p:GetAttribute('Downed') then
    local _,h,root=alive(p)
@@ -290,6 +334,7 @@ function Bots:_loop(bot,generation)
  rayParams.FilterType=Enum.RaycastFilterType.Exclude
  rayParams.FilterDescendantsInstances={bot.model,workspace:FindFirstChild('FalloutEffects')}
  while self.active and generation==self.generation and not bot.dead and bot.model.Parent do
+  if self.config.getPhase()~='Match' then break end
   local target,distance=self:_target(bot)
   if target then
    local char,hum,targetRoot=alive(target)
@@ -377,26 +422,17 @@ function Bots:Stop()
  for _,slot in ipairs(self.slots) do self:_removeBot(slot) end
  table.clear(self.slots)
  self.folder:SetAttribute('InMatch',false)
+ self.folder:SetAttribute('ActiveBotCount',0)
 end
 function Bots:Start()
  self:Stop()
- if self.desired<=0 then return end
+ -- Prevent NPC characters from ever being created in the lobby or intermission.
+ if self.config.getPhase()~='Match' or self.desired<=0 then return end
  self.active=true
  self.folder:SetAttribute('InMatch',true)
- local generation=self.generation
- local counts={0,0}
- for _,p in ipairs(Players:GetPlayers()) do
-  local team=self.config.teamIndex(p)
-  if team==1 or team==2 then counts[team]+=1 end
- end
- for n=1,self.desired do
-  local team=(counts[1]<=counts[2] and counts[1]<self.config.teamSize) and 1 or
-   (counts[2]<self.config.teamSize and 2 or nil)
-  if not team then break end
-  counts[team]+=1
-  local slot={id=n,team=team,kills=0,deaths=0,bot=nil}
-  table.insert(self.slots,slot)
-  task.spawn(function()self:_spawn(slot,generation)end)
+ self.nextId=1
+ for _=1,self.desired do
+  if not self:_addSlot() then break end
  end
  self.config.onChanged()
 end
