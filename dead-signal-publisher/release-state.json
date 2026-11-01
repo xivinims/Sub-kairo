@@ -1,13 +1,15 @@
 {
-  "preflightVersion": 254,
-  "rollbackVersion": 253,
-  "lastVerifiedVersion": 254,
+  "preflightVersion": 255,
+  "rollbackVersion": 254,
+  "lastVerifiedVersion": 255,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41315002137,
+  "releaseRunId": 41319366783,
   "nametagBuild": "nametags-v1",
-  "hudFix": "hud-shop-npc-v2",
-  "viewportRevision": "weapon-clones-v1"
+  "hudFix": "fps-hud-2014-lobby-v3",
+  "viewportRevision": "weapon-clones-v1",
+  "frozenOutfit": "2026-11-01-owner-avatar",
+  "classicLobbyHealthAssetId": 84860453909277
 }
