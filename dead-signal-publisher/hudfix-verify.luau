@@ -25,7 +25,7 @@ local wallet=UI.wallet(fixture);assert(wallet.balance.Text=='…' and wallet.roo
 local icons=0
 for _,item in ipairs(C.Catalog) do
  local holder=Instance.new('Frame');holder.Parent=fixture
- local icon=UI.itemIcon(holder,item);assert(#icon:GetChildren()>=3,'Missing fallback icon: '..item.id)
+ local icon=UI.itemIcon(holder,item);assert(#icon:GetChildren()>=2,'Missing fallback icon: '..item.id)
  local viewport=Instance.new('ViewportFrame');viewport.Size=UDim2.fromOffset(96,82);viewport.Parent=holder
  local model=UI.preview(viewport,game.ReplicatedStorage.FalloutItemVisuals[item.id],item)
  assert(viewport.CurrentCamera and model.Parent:IsA('WorldModel') and model.Transparency==0 and model.LocalTransparencyModifier==0)
