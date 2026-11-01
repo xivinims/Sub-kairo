@@ -24,6 +24,10 @@ console.log('HUDFIX_BASELINE '+JSON.stringify(baseline));
 try{
  const thumbnails=await api('https://thumbnails.roblox.com/v1/assets?assetIds=12987749061&size=420x420&format=Png&isCircular=false');
  console.log('HUDFIX_SHOP_THUMBNAIL '+JSON.stringify(thumbnails));
+ if(mode.startsWith('hudfix-preview-')&&thumbnails.data?.[0]?.imageUrl){
+  const image=await fetch(thumbnails.data[0].imageUrl,{signal:AbortSignal.timeout(30000)});
+  if(image.ok)console.log('HUDFIX_REFERENCE_PNG '+Buffer.from(await image.arrayBuffer()).toString('base64'));
+ }
  const statuses=[];
  for(const id of [83500345427472,101245974370250]){
   const response=await fetch('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+id,{headers:{'x-api-key':key},signal:AbortSignal.timeout(30000)});
