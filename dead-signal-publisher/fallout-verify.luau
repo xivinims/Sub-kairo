@@ -9,6 +9,11 @@ assert(workspace.Shopkeeper:GetAttribute('OwnerAvatarUserId')==8344738123)
 assert(workspace.Shopkeeper.Humanoid.RigType==Enum.HumanoidRigType.R6)
 assert(workspace.Shopkeeper.Head:FindFirstChild('gui') and game.ReplicatedStorage:FindFirstChild('DialogModule'))
 assert(#game.ReplicatedStorage.FalloutNpcClips:GetChildren()==4)
+local joints={};for _,joint in ipairs(workspace.Shopkeeper:GetDescendants()) do if joint:IsA('Motor6D') and joint.Part1 then joints[joint.Part1.Name]=true end end
+for _,clip in ipairs(game.ReplicatedStorage.FalloutNpcClips:GetChildren()) do
+ local mapped={};for _,pose in ipairs(clip:GetDescendants()) do if pose:IsA('Pose') and joints[pose.Name] then mapped[pose.Name]=true end end
+ local count=0;for _ in pairs(mapped) do count+=1 end;assert(count>=4,'Source clip does not match R6: '..clip.Name)
+end
 for _,name in ipairs({'Team1','Team2','Lobby'}) do
  local folder=workspace.FalloutSpawns[name];assert(#folder:GetChildren()==(name=='Lobby' and 10 or 5))
  for _,point in ipairs(folder:GetChildren()) do
