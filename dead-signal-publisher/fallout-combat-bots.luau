@@ -75,6 +75,12 @@ local function animate(bot)
    bot.poseTween:Play()
    task.delay(.12,function()if not bot.dead and right.Parent then bot.raise() end end)
   end
+  bot.reloadPose=function()
+   if bot.dead or not right.Parent then return end
+   if bot.poseTween then bot.poseTween:Cancel() end
+   bot.poseTween=TweenService:Create(right,TweenInfo.new(.18),{C0=base*CFrame.Angles(math.rad(8),0,0)})
+   bot.poseTween:Play()
+  end
   bot.raise()
  end
 end
@@ -215,7 +221,8 @@ function Bots:_spawn(slot,generation)
  model.PrimaryPart=root
  model:PivotTo(spawn.CFrame*CFrame.new(0,2,0))
  pcall(function()root:SetNetworkOwner(nil)end)
- local id=(slot.id%2==0) and 'service' or 'compact'
+ local gunIds={'compact','service','subcompact','longslide'}
+ local id=gunIds[(slot.id-1)%#gunIds+1]
  local weapon=ServerStorage:WaitForChild('FalloutWeaponTemplates'):FindFirstChild(id)
  local tool=weapon and weapon:Clone()
  if tool then
@@ -224,8 +231,12 @@ function Bots:_spawn(slot,generation)
   hum:EquipTool(tool)
  end
  local bot={model=model,hum=hum,root=root,slot=slot,tool=tool,def=self.config.catalog[id],
+  ammo=self.config.catalog[id] and self.config.catalog[id].mag or 12,
+  reserve=self.config.catalog[id] and self.config.catalog[id].reserve or 60,
+  reloadingUntil=0,
   dead=false,nextShot=0,nextThink=0,nextPath=0,moveIndex=1,lastAttacker=nil,lastHeadshot=false}
  slot.bot=bot;self.models[model]=bot
+ if tool then tool:SetAttribute('Ammo',bot.ammo);tool:SetAttribute('Reserve',bot.reserve) end
  makeNameplate(model,slot.team,slot.id)
  animate(bot)
  hum.Died:Connect(function()
@@ -246,7 +257,7 @@ function Bots:_spawn(slot,generation)
  self.config.onChanged()
 end
 function Bots:_target(bot)
- local best,closest=nil,120
+ local best,closest=nil,300
  for _,p in ipairs(Players:GetPlayers()) do
   if self.config.teamIndex(p)~=bot.slot.team and not p:GetAttribute('Downed') then
    local _,h,root=alive(p)
@@ -284,7 +295,7 @@ function Bots:_loop(bot,generation)
         local worked=pcall(function()path:ComputeAsync(bot.root.Position,destination)end)
         if worked and path.Status==Enum.PathStatus.Success then
          local waypoints=path:GetWaypoints()
-         destination=(waypoints[math.min(#waypoints,3)] or waypoints[#waypoints]).Position
+         if #waypoints>0 then destination=waypoints[math.min(#waypoints,3)].Position end
         end
        end
        bot.hum:MoveTo(destination)
@@ -297,6 +308,26 @@ function Bots:_loop(bot,generation)
      if visible and distance<110 and os.clock()>=bot.nextShot and
       self.config.getPhase()=='Match' and not target:GetAttribute('Downed') then
       local def=bot.def
+      if bot.ammo<=0 then
+       bot.reloadingUntil=os.clock()+(def and def.reload or 1.8)
+       bot.nextShot=bot.reloadingUntil
+       if bot.tool then bot.tool:SetAttribute('Reloading',true) end
+       if bot.reloadPose then bot.reloadPose() end
+       task.delay(def and def.reload or 1.8,function()
+        if bot.dead or generation~=self.generation then return end
+        local loading=math.min(def and def.mag or 12,bot.reserve)
+        bot.reserve-=loading;bot.ammo=loading
+        if bot.reserve<=0 then bot.reserve=def and def.reserve or 60 end
+        if bot.tool then
+         bot.tool:SetAttribute('Ammo',bot.ammo)
+         bot.tool:SetAttribute('Reserve',bot.reserve)
+         bot.tool:SetAttribute('Reloading',false)
+        end
+        if bot.raise then bot.raise() end
+       end)
+      else
+      bot.ammo-=1
+      if bot.tool then bot.tool:SetAttribute('Ammo',bot.ammo) end
       bot.nextShot=os.clock()+math.max(1.1,def and def.rate*3 or 1.25)+rng:NextNumber(0,.45)
       if bot.firePose then bot.firePose() end
       local muzzle=bot.tool and bot.tool:FindFirstChild('Handle')
@@ -311,6 +342,7 @@ function Bots:_loop(bot,generation)
        if not verify or verify.Instance:IsDescendantOf(char) then
         self.config.onBotDamage(bot,target,11)
        end
+      end
       end
      end
     end
