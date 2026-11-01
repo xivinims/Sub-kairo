@@ -1,10 +1,11 @@
 {
-  "preflightVersion": 251,
-  "rollbackVersion": 250,
-  "lastVerifiedVersion": 251,
+  "preflightVersion": 252,
+  "rollbackVersion": 251,
+  "lastVerifiedVersion": 252,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41282505420
+  "releaseRunId": 41299522661,
+  "nametagBuild": "nametags-v1"
 }
