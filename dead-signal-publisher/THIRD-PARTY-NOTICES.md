@@ -23,3 +23,16 @@ The project includes the ContextActionUtility module as an input helper. Keep th
 - `assets/ui/mystery-interface.rbxm` contains the seven original ScreenGui templates extracted from Roblox's *The Mystery of Duvall Drive* source asset `7902470429`. The package preserves the original HUD artwork, positions and typography. The credits label is excluded following the user's interface request. Attribution remains in this document.
 - The running place has separate map and UI packages. The imported rifle/spawner and bundled executable scripts are excluded. The authored door animations are supported by the reviewed interaction adapter; the original headlamp and interaction image buttons are reused, with Portuguese labels. No third-party numeric module loader runs.
 - The supplied file references four MaterialVariant names without corresponding definitions: `Bricks 02`, `Marble Speckled`, `Metal`, and `Wood Floor Rough MV`. Those references and their native material fallbacks are retained as supplied; no replacement textures are invented.
+
+
+## Fallout 5×5 (publicado na versão 251)
+
+- Fallout Map (FPS), xavier2007 — https://create.roblox.com/store/asset/8438960542
+- Floating Lobby, MISUKEMA_YT — https://create.roblox.com/store/asset/95512398319263
+- Abandoned Shop — https://create.roblox.com/store/asset/12987749061
+- 16 Free Low Poly FPS Weapons and Military Models — https://create.roblox.com/store/asset/110602808776017
+- Dynamic NPC Animations V2, Questionable Labs — https://create.roblox.com/store/asset/86582491164528 (clips R6 de NPC1)
+- NPC Dialogue System, supdoggyDev — https://create.roblox.com/store/asset/80608769509945 (módulo e interface, adaptados para português e limpeza de conexões)
+- FPS System Demo, Bobbity Games — https://create.roblox.com/store/asset/15864801103 (som de disparo; seus mapas e sistemas não compõem esta versão)
+
+Todos os assets foram solicitados pelo usuário nesta conversa. A aparência do NPC é obtida da conta criadora do jogo, ch_ckz2n (8344738123), pela API de avatar do Roblox.
