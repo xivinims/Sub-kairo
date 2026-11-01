@@ -1,8 +1,10 @@
 {
-  "templateVersion": 177,
-  "preflightVersion": 250,
+  "preflightVersion": 251,
   "rollbackVersion": 250,
-  "lastVerifiedVersion": 250,
-  "buildId": "still-here-hotel-instruments-v4",
-  "celestialBuildId": "beyond-dark-blackhole-v1"
+  "lastVerifiedVersion": 251,
+  "buildId": "fallout-5v5-v1",
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "serverSize": 10,
+  "releaseRunId": 41282505420
 }
