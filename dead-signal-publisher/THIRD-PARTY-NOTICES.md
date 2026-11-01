@@ -36,3 +36,7 @@ The project includes the ContextActionUtility module as an input helper. Keep th
 - FPS System Demo, Bobbity Games — https://create.roblox.com/store/asset/15864801103 (som de disparo; seus mapas e sistemas não compõem esta versão)
 
 Todos os assets foram solicitados pelo usuário nesta conversa. A aparência do NPC é obtida da conta criadora do jogo, ch_ckz2n (8344738123), pela API de avatar do Roblox.
+
+## Nametags (versão 252)
+
+- **Custom Nametags System** — Bconggs (Roblox user 1345004125), asset [72094860266497](https://create.roblox.com/store/asset/72094860266497/Custom-Nametags-System). BillboardGui, labels, Inconsolata fonts and strokes adapted to name, tenure title and XP level. Original device lookup, sample stats scripts, health and membership icons are not installed. Server persistence and lifecycle handling are project-specific. Audited SHA-256: `adf4de6a1dc99460d27c8362fea8e259f61bc5ce6bfa01662e07cd1e5a481a37`.
