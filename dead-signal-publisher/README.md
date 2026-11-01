@@ -1,33 +1,43 @@
-# Still Here — Hotel Mistério
+# Fallout 5×5 — versão publicada 251
 
-Última versão publicada: **PlaceVersion 250**, build `still-here-hotel-instruments-v4`. As mudanças v6 estão em preparação na branch e ainda não foram publicadas.
+Branch ativa: `dead-signal-publisher`  
+Experiência: `9421311218` · Place: `118064584465155`  
+Build: `fallout-5v5-v1`
 
-O ramo `dead-signal-publisher` monta o mapa de hotel e a interface original do Mistério como pacotes independentes. O mapa vem de `assets/hotel/1940sHotelLobby.rbxm`; a GUI reutilizada está em `assets/ui/mystery-interface.rbxm`.
+O hotel antigo foi substituído no place publicado. A versão 250 permanece no histórico do Roblox para recuperação.
 
-| Pacote | Arquivo | Destino no jogo |
-| --- | --- | --- |
-| GUI do Mistério | `assets/ui/mystery-interface.rbxm` | `ReplicatedStorage.MysteryInterface`, clonada para `PlayerGui` |
-| Mapa do hotel | `assets/hotel/1940sHotelLobby.rbxm` | `ServerStorage.HotelMap`, carregado em `Workspace.HotelMap` |
+## Conteúdo atual
 
-O Chapter 2 continua pausado e fora desta alteração. A geometria original do hotel permanece intacta. O botão de interação no canto ativa portas, luzes, sinuca, piano e recepcionista.
+- Fallout Map (FPS): 680 peças, usado no combate.
+- Floating Lobby: intervalo e área segura; 25 peças de grama escurecidas.
+- Abandoned Shop: substitui a loja original do lobby, com 31 peças.
+- Avatar atual de ch_ckz2n (8344738123) em R6 na loja.
+- Quatro animações R6 do Dynamic NPC Animations V2, reproduzidas a partir dos keyframes do pacote.
+- Interface e módulo do NPC Dialogue System com “Sobre o jogo”, “Loja” e “Itens”.
+- 14 produtos do pacote de armas: oito armas de fogo, faca, machado, granada, mina, kit médico e seringa. Barco e avião do pacote não são armas e não fazem parte do catálogo.
 
-## Interações e interface
+## Partidas
 
-- A sinuca leva a câmera para cima da mesa. Uma pequena roda circular de força fica no canto inferior esquerdo; segurar carrega e soltar executa a tacada física no servidor. Arrastar fora da roda mira; A/D ou as setas também ajustam a direção. O botão padrão de pulo do Roblox encerra a partida e continua habilitado.
-- Ao falar com o recepcionista, a pessoa escolhe jogar com ele ou convidar um amigo. A opção de amigo abre o convite nativo do Roblox; um amigo escolhido que entrar no mesmo servidor é validado no servidor e aparece ao lado de quem convidou. As tacadas alternam entre os dois jogadores. Contra o recepcionista, o NPC responde com a própria tacada.
-- O piano leva a câmera até as teclas físicas. Clique/toque nas teclas ou use A/W/S/E/D/F/T/G/Y/H/U/J/K para tocar notas; o songbook de madeira no piano inicia faixas em loop, e “PARAR” encerra a música. Há quatro melodias originais com acordes e uma faixa HEAVEN SAYS em loop.
-- O recepcionista fica ao lado da sinuca em um rig R6 com Headless/Korblox, gravata borboleta e broche de coração. Não exibe nome sobre a cabeça; as reações usam os desenhos pontilhados de surpresa e espiral das referências. O pacote Dynamic NPC Animations V2 é usado quando a animação do pacote é compatível com R6; a prévia registra o rig e confirma a posição real do NPC.
-- Configurações ficam em um painel de altura total encostado à esquerda, sem a tela central. Categorias abrem páginas individuais; controles visuais e de áudio aplicam na hora e salvam automaticamente.
-- O menu removeu a página de créditos e não adiciona um botão próprio de convite multiplayer.
+Servidores de até 10 jogadores; equipes Azul e Vermelho, com até cinco em cada. São necessários dois jogadores para começar. Partida de 600 segundos; intervalo total de 90 segundos, incluindo 12 segundos de resultado após cada partida.
 
-O cenário conserva 8.688 peças, iluminação e dez pontos de nascimento. As estruturas órfãs de chuva foram retiradas e a arma foi removida do mapa montado. O controlador mantém velocidade 16 e não habilita primeira pessoa.
+O placar superior mostra as fotos de até cinco jogadores de cada lado, pontuação, relógio e indicação de queda/morte. A tela de resultado mostra o time vencedor e seus jogadores, ordenados por abates, com quedas, mortes e cura.
 
-## Conferência e publicação
+Dano, munição, recarga, distância, linha de visão, fogo amigo, proteção ao nascer, compras e recompensas são validados pelo servidor. Chegar a 20 PV ou menos sem sofrer dano fatal causa queda. Companheiros têm 20 segundos para reanimar; dano fatal elimina diretamente.
 
-- Universo `9421311218`; Place `118064584465155`; branch `dead-signal-publisher`.
-- Último build publicado: `still-here-hotel-instruments-v4` (PlaceVersion 250). `still-here-hotel-instruments-v6` é a próxima versão preparada, ainda não publicada.
-- `preview.trigger` roda montagem, comparação de fontes, conferência geométrica e preflight isolado no Roblox sem publicar.
-- `release.trigger` roda o mesmo preflight e publica só após ele passar. A rotina baixa e guarda a versão anterior, confere a versão publicada e reinicia os servidores; em falha, executa a recuperação.
-- O preflight verifica scripts, mapa, portas, spawns, bolsos, teclas, songbook, diálogo, rig R6, aparência Headless/Korblox, ausência de nome flutuante e posição final do recepcionista perto da mesa. Ele não renderiza um cliente real nem toca o áudio.
+## Progressão e controles
 
-Os dois verificadores comparam o mapa com o arquivo recebido, verificam a separação entre GUI e mapa e conferem que o Chapter 2 não foi incluído.
+Eliminação: 100 XP e 30 moedas. Eliminação com tiro na cabeça: +50 XP. Reanimação: 60 XP e 20 moedas. Cura também recompensa a vida recuperada de dano inimigo. Vitória: 150 XP e 120 moedas; participação: 50 XP e 40 moedas.
+
+XP, moedas, compras e equipamento ficam no DataStore `FalloutProfiles_v1`, com trava por sessão, salvamento periódico e ao sair. Compras usam moedas ganhas no jogo; não usam Robux. Pistola compacta, faca e kit médico são gratuitos.
+
+PC: clique para atirar, botão direito para mirar, R para recarregar, G para curar um aliado próximo. No celular há botões de tiro, mira, recarga e cura, além dos controles padrão do Roblox.
+
+## Publicação e verificações
+
+O publicador atual está em `fallout-release.mjs`. Baixa versões de assets fixadas por SHA-256, monta a carga, compila Luau e verifica regras. Em seguida usa o motor nativo do Roblox para montar mapa/loja/avatar, confirmar chão nos 20 pontos de nascimento e iniciar o código do servidor em sessão isolada.
+
+Publicação pela API nativa `AssetService:SavePlaceAsync()`, preservando as unions da loja. Após publicar, confere o conteúdo da nova versão, define `serverSize=10` e reinicia os servidores.
+
+Execução confirmada: https://github.com/xivinims/Sub-kairo/actions/runs/41282505420
+
+Essas verificações não substituem uma partida real em cliente Roblox: controles de celular, enquadramento das armas, áudio e fluxo visual da loja ainda precisam dessa validação.
