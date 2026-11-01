@@ -69,6 +69,7 @@ local function refreshGear(p)
    end
   end
  end
+ local primary=p.Backpack:FindFirstChild(loadout.gun or 'compact');if primary then hum:EquipTool(primary) end
 end
 local function movePlayer(p)
  local char,hum,root=alive(p);local data=states[p]
@@ -268,7 +269,7 @@ local function add(p)
   local hum=char:WaitForChild('Humanoid',10);local root=char:WaitForChild('HumanoidRootPart',10);if not hum or not root then return end
   hum.Died:Connect(function()
    local s=states[p];if phase=='Match' and s and not s.killed then local last=s.lastHit;eliminate(p,last and now()-last.time<10 and last.player or nil,last and last.head) end
-   task.delay(C.RespawnSeconds,function()if p.Parent==Players then p:LoadCharacterAsync() end end)
+   task.delay(C.RespawnSeconds,function()if p.Parent==Players and p.Character==char and hum.Health<=0 then p:LoadCharacterAsync() end end)
   end)
   movePlayer(p);broadcast()
  end)
@@ -307,6 +308,13 @@ end
 task.spawn(function()
  while true do
   for _,s in pairs(states) do s.remoteCount=0 end
+  for _,p in ipairs(Players:GetPlayers()) do
+   local _,h,r=alive(p)
+   if r then
+    if phase~='Match' and r.Position.Y<400 then movePlayer(p)
+    elseif phase=='Match' and r.Position.Y< -80 then h.Health=0 end
+   end
+  end
   if phase=='Waiting' and #Players:GetPlayers()>=2 then setPhase('Intermission',C.IntermissionSeconds)
   elseif phase=='Intermission' and #Players:GetPlayers()<2 then setPhase('Waiting',0)
   elseif phase=='Intermission' and now()>=deadline then startRound()
