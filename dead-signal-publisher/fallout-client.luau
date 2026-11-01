@@ -325,7 +325,7 @@ Run.RenderStepped:Connect(function(dt)
    local reload=tool:GetAttribute('Reloading') and math.sin(os.clock()*6)*.3 or 0
    local x=aiming and 0 or .55;local y=aiming and -.34 or -.65
    viewModel.CFrame=camera.CFrame*CFrame.new(x,y+math.sin(os.clock()*2)*.012,-1.25+recoil)*CFrame.Angles(recoil+reload,0,reload)*RS.FalloutItemVisuals[def.id].CFrame.Rotation
-   camera.FieldOfView+=( (aiming and 58 or 78)-camera.FieldOfView)*math.min(1,dt*12)
+   camera.FieldOfView+=( (aiming and 58 or options:get('cameraFov'))-camera.FieldOfView)*math.min(1,dt*12)
   end
  else cleanupView() end
 end)
