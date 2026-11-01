@@ -36,9 +36,13 @@ local dialogue=R.deserializeModel(fs.readFile('/tmp/fallout-input-80608769509945
 local module=assert(dialogue:FindFirstChild('DialogModule',true)):Clone();module.Parent=RS
 -- The source owns response creation; keep its look and sounds, add bounded cleanup.
 module.Source=module.Source:gsub('self.connections = {heartbeatConnection}[^\n]*','self.connections = {heartbeatConnection, shownConnection, hiddenConnection}')
+module.Source=module.Source:gsub('self%.npcGui%.name','self.npcGui:WaitForChild("name")')
+module.Source=module.Source:gsub('function DialogModule:triggerDialog%(player, questionNumber%)','function DialogModule:triggerDialog(player, questionNumber)\n self.generation=(self.generation or 0)+1\n local generation=self.generation')
+module.Source=module.Source:gsub('function DialogModule:hideGui%(exitQuip, notActuallyAnExitQuip%)','function DialogModule:hideGui(exitQuip, notActuallyAnExitQuip)\n self.generation=(self.generation or 0)+1')
 module.Source=module.Source:gsub('while self.active do','while self.active and player.Character and player.Character.PrimaryPart and self.npc.Parent do')
-module.Source=module.Source:gsub('repeat task.wait%(%) until responseNum ~= nil','repeat task.wait() until responseNum ~= nil or not self.active')
-module.Source=module.Source:gsub('self.talking = true\n\t\tlocal dialogObject','self.active = true\n\t\tself.talking = true\n\t\tlocal dialogObject')
+module.Source=module.Source:gsub('repeat task.wait%(%) until responseNum ~= nil','repeat task.wait() until responseNum ~= nil or self.generation ~= generation or not self.npc.Parent')
+module.Source=module.Source:gsub('self.active = true','if self.generation ~= generation then return end\n self.active = true')
+module.Source=module.Source:gsub('for i, letter in string.split%(dialog.text,""%) do','for i, letter in string.split(dialog.text,"") do\n if self.generation ~= generation then return end')
 local screen=assert(dialogue:FindFirstChild('dialog',true)):Clone();screen.ResetOnSpawn=false;screen.Parent=folders.StarterGui
 local originalNpc=assert(dialogue:FindFirstChild('showcase npc',true))
 local headGui=assert(originalNpc.Head:FindFirstChild('gui')):Clone();headGui.Name='NpcDialogueGui';headGui.Parent=SS
@@ -63,6 +67,8 @@ local demo=R.deserializePlace(fs.readFile('/tmp/fallout-input-15864801103'))
 local glock=demo:GetService('ReplicatedStorage'):FindFirstChild('Glock 17',true)
 local sound
 if glock then for _,v in ipairs(glock:GetDescendants()) do if v:IsA('Sound') and (v.Name:lower():find('fire') or v.Name:lower():find('shoot')) then sound=v;break end end end
+if not sound then for _,v in ipairs(demo:GetService('ReplicatedStorage'):GetDescendants()) do if v:IsA('Sound') and (v.Name:lower():find('fire') or v.Name:lower():find('shoot') or v.Name:lower():find('shot')) then sound=v;break end end end
+if not sound then local paths={};for _,v in ipairs(demo:GetService('ReplicatedStorage'):GetDescendants()) do if v:IsA('Sound') and #paths<60 then table.insert(paths,v:GetFullName()) end end;print('SOUND_CANDIDATES '..serde.encode('json',paths)) end
 if sound then sound=sound:Clone();sound.Name='FalloutShotSound';sound.Parent=RS end
 local scripts=0
 for _,v in ipairs(bundle:GetDescendants()) do if v:IsA('LuaSourceContainer') then luau.load(v.Source,{debugName=v:GetFullName()});scripts+=1 end end
