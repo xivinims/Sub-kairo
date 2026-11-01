@@ -1,11 +1,12 @@
 {
-  "preflightVersion": 252,
-  "rollbackVersion": 251,
-  "lastVerifiedVersion": 252,
+  "preflightVersion": 253,
+  "rollbackVersion": 252,
+  "lastVerifiedVersion": 253,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41299522661,
-  "nametagBuild": "nametags-v1"
+  "releaseRunId": 41305265341,
+  "nametagBuild": "nametags-v1",
+  "hudFix": "hud-shop-npc-v2"
 }
