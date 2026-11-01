@@ -1,4 +1,4 @@
-local UI={ScoreWidth=286,ScoreHeight=28}
+local UI={ScoreWidth=430,ScoreHeight=42}
 local function make(class,parent,props)
  local o=Instance.new(class);for k,v in pairs(props) do o[k]=v end;o.Parent=parent;return o
 end
@@ -22,53 +22,42 @@ function UI.coin(parent,size,pos)
  return coin
 end
 function UI.scoreboard(parent,colors)
- local screen=make('ScreenGui',parent,{Name='FalloutScoreboard',ResetOnSpawn=false,DisplayOrder=31,ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None})
+ local screen=make('ScreenGui',parent,{Name='FalloutScoreboard',ResetOnSpawn=false,DisplayOrder=31,ScreenInsets=Enum.ScreenInsets.TopbarSafeInsets,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None})
  local safe=make('Frame',screen,{Name='SafeArea',Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
- local root=make('Frame',safe,{Name='CompactScoreboard',AnchorPoint=Vector2.new(.5,0),Position=UDim2.fromScale(.5,0),Size=UDim2.fromOffset(UI.ScoreWidth,UI.ScoreHeight),BackgroundColor3=Color3.fromRGB(17,23,26),BackgroundTransparency=.15,BorderSizePixel=0});round(root,6)
+ local root=make('Frame',safe,{Name='CompactScoreboard',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(UI.ScoreWidth,UI.ScoreHeight),BackgroundColor3=Color3.fromRGB(17,23,26),BackgroundTransparency=.15,BorderSizePixel=0});round(root,10)
  local scale=make('UIScale',root,{Scale=1})
- local score=text(root,'Score','0  —  0',UDim2.fromOffset(80,17),UDim2.fromOffset(103,0),15);score.Font=Enum.Font.GothamBold
- local clock=text(root,'Clock','AGUARDANDO',UDim2.fromOffset(80,10),UDim2.fromOffset(103,17),8);clock.TextTruncate=Enum.TextTruncate.AtEnd
+ local score=text(root,'Score','0  —  0',UDim2.fromOffset(118,24),UDim2.fromOffset(156,1),21);score.Font=Enum.Font.GothamBold
+ local clock=text(root,'Clock','AGUARDANDO',UDim2.fromOffset(136,14),UDim2.fromOffset(147,26),10)
  local slots={{},{}}
  for team=1,2 do for i=1,5 do
-  local x=team==1 and 5+(i-1)*20 or 183+(i-1)*20
-  local frame=make('Frame',root,{Name='Team'..team..'Slot'..i,Size=UDim2.fromOffset(18,18),Position=UDim2.fromOffset(x,5),BackgroundColor3=colors[team],BackgroundTransparency=.78,BorderSizePixel=0});round(frame,4)
+  local x=team==1 and 8+(i-1)*28 or 284+(i-1)*28
+  local frame=make('Frame',root,{Name='Team'..team..'Slot'..i,Size=UDim2.fromOffset(26,26),Position=UDim2.fromOffset(x,8),BackgroundColor3=colors[team],BackgroundTransparency=.78,BorderSizePixel=0});round(frame,6)
   local portrait=make('ImageLabel',frame,{Name='Avatar',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=''});round(portrait,6)
   local line=make('Frame',frame,{Name='Status',Size=UDim2.new(1,-8,0,2),Position=UDim2.new(0,4,1,-2),BackgroundColor3=colors[team],BorderSizePixel=0,Visible=false})
   slots[team][i]={portrait=portrait,status=line}
  end end
  return {screen=screen,safe=safe,root=root,scale=scale,score=score,clock=clock,slots=slots}
 end
-function UI.fitScoreboard(board,viewport,topbarRect,deviceRect)
- -- Both rectangles come from GetInsetArea, so their coordinate origins agree.
- deviceRect=deviceRect or Rect.new(0,0,viewport.X,viewport.Y)
- local safeWidth=math.max(1,deviceRect.Width)
- local scale=math.min(viewport.Y<500 and .92 or 1,math.max(.1,(safeWidth-16)/UI.ScoreWidth))
- local width=UI.ScoreWidth*scale
- local left=math.max(0,topbarRect.Min.X-deviceRect.Min.X)+4
- local right=math.min(safeWidth,topbarRect.Max.X-deviceRect.Min.X)-4
- local centered=safeWidth/2
- local top=0
- board.fallback=right-left<width or topbarRect.Height<UI.ScoreHeight*scale
- if board.fallback then
-  top=math.max(0,topbarRect.Max.Y-deviceRect.Min.Y)
+function UI.fitScoreboard(board,viewport,topbarRect)
+ local useTopbar=topbarRect.Width>=260 and topbarRect.Height>=20
+ if not useTopbar then
+  board.screen.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets
+  board.root.AnchorPoint=Vector2.new(.5,0);board.root.Position=UDim2.new(.5,0,0,58)
+  board.fallback=true
  else
-  -- Center on the screen; only move sideways when a Roblox control would overlap.
-  centered=math.clamp(centered,left+width/2,right-width/2)
+  board.screen.ScreenInsets=Enum.ScreenInsets.TopbarSafeInsets
+  board.root.AnchorPoint=Vector2.new(.5,.5);board.root.Position=UDim2.fromScale(.5,.5);board.fallback=false
  end
- board.root.Position=UDim2.fromOffset(centered,top)
- board.scale.Scale=scale
+ local width=math.max(80,(useTopbar and topbarRect.Width or (board.safe.AbsoluteSize.X>0 and board.safe.AbsoluteSize.X or viewport.X))-12)
+ local heightScale=useTopbar and math.max(.1,(topbarRect.Height-4)/UI.ScoreHeight) or 1
+ board.scale.Scale=math.min(1,width/UI.ScoreWidth,heightScale)
 end
 function UI.wallet(parent)
- local root=make('Frame',parent,{Name='Wallet',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-10,0,6),Size=UDim2.fromOffset(64,26),BackgroundColor3=Color3.fromRGB(18,24,26),BackgroundTransparency=.14,BorderSizePixel=0})
- make('UICorner',root,{CornerRadius=UDim.new(1,0)})
- UI.coin(root,18,UDim2.fromOffset(5,4))
- local balance=text(root,'Balance','…',UDim2.new(1,-36,1,0),UDim2.fromOffset(28,0),14);balance.TextXAlignment=Enum.TextXAlignment.Right;balance.Font=Enum.Font.GothamBold
- return {root=root,balance=balance}
-end
-function UI.setBalance(wallet,value)
- wallet.balance.Text=value
- local bounds=game:GetService('TextService'):GetTextSize(value,14,Enum.Font.GothamBold,Vector2.new(200,26))
- wallet.root.Size=UDim2.fromOffset(math.clamp(math.ceil(bounds.X)+38,64,168),26)
+ local root=make('Frame',parent,{Name='Wallet',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-12,0,6),Size=UDim2.fromOffset(158,42),BackgroundColor3=Color3.fromRGB(18,24,26),BackgroundTransparency=.14,BorderSizePixel=0});round(root,9)
+ UI.coin(root,26,UDim2.fromOffset(8,8))
+ local balance=text(root,'Balance','…',UDim2.fromOffset(112,22),UDim2.fromOffset(40,3),17);balance.TextXAlignment=Enum.TextXAlignment.Left;balance.Font=Enum.Font.GothamBold
+ local progress=text(root,'Progress','CARREGANDO',UDim2.fromOffset(112,14),UDim2.fromOffset(40,25),9);progress.TextXAlignment=Enum.TextXAlignment.Left;progress.TextColor3=Color3.fromRGB(174,188,189)
+ return {root=root,balance=balance,progress=progress}
 end
 -- Code-drawn silhouettes stay visible even if a model's external mesh is unavailable.
 function UI.itemIcon(parent,item)
@@ -137,4 +126,3 @@ function UI.catalogPreview(parent,visual,item)
  return viewport,clone
 end
 return UI
-
