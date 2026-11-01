@@ -9,7 +9,7 @@ async function json(url,options={}) {
  const text=await r.text();let data;try{data=JSON.parse(text)}catch{data={message:text.slice(0,1000)}}
  if(!r.ok)throw Error('HTTP '+r.status+' '+JSON.stringify(data));return data;
 }
-for(const [name,id] of [['current',118064584465155],['fallout',8438960542],['lobby',95512398319263],['animations',86582491164528],['fps',15864801103]]) {
+for(const [name,id] of [['fps',15864801103],['animations',86582491164528],['dialogue',80608769509945],['shop',12987749061],['weapons',110602808776017]]) {
  try {
  let metadata={};try{metadata=await json('https://economy.roblox.com/v2/assets/'+id+'/details')}catch(e){console.log('METADATA_WARNING '+name+' '+String(e))}
  const delivery=await json('https://apis.roblox.com/asset-delivery-api/v1/assetId/'+id);
