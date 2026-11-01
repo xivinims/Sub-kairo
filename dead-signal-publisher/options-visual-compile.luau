@@ -14,10 +14,10 @@ assert(has("UIS.InputChanged:Connect") and has("SliderTouchArea"),'Mobile slider
 assert(has("SettingsSave") and has("SettingsGet"),'Do not remove persistent settings')
 assert(has("ColorCalibration") and has("currentPage=='home'"),'Missing subpages')
 for _,viewport in ipairs({
- Vector2.new(390,844),
- Vector2.new(812,375),
- Vector2.new(896,414),
- Vector2.new(1024,768)
+ {X=390,Y=844},
+ {X=812,Y=375},
+ {X=896,Y=414},
+ {X=1024,Y=768}
 }) do
  local width=math.floor(math.clamp(viewport.X*.265,188,235))
  local top=viewport.Y<355 and 91 or 98
