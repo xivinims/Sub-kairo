@@ -49,8 +49,8 @@ export async function runFpsDemo(mode){
  const inspected=verifyFile();
  if(inspected.containerType!=='Place'||inspected.descendantCount!==198476||inspected.scriptCount!==236||inspected.suspiciousPatterns.length)throw Error('Exact source place did not pass preflight');
  console.log('FPS_SOURCE_VERIFIED '+JSON.stringify({...source.metadata,sha256:source.digest,bytes:source.bytes.length,instances:inspected.descendantCount,scripts:inspected.scriptCount,scriptBytes:inspected.scriptBytes,suspiciousPatterns:inspected.suspiciousPatterns,topLevel:inspected.topLevel}));
- if(mode==='fps-demo-validate'){console.log('FPS_SOURCE_PREFLIGHT_COMPLETE '+JSON.stringify({published:false,verified:true}));return}
- if(mode!=='fps-demo-publish')throw Error('Unknown FPS demo operation '+mode);
+ if(mode.startsWith('fps-demo-validate')){console.log('FPS_SOURCE_PREFLIGHT_COMPLETE '+JSON.stringify({published:false,verified:true}));return}
+ if(!mode.startsWith('fps-demo-publish'))throw Error('Unknown FPS demo operation '+mode);
  const rollbackBytes=await downloadPlace();
  const rollbackSha=createHash('sha256').update(rollbackBytes).digest('hex');
  if(rollbackSha===source.digest)throw Error('Target already has the requested source content');
