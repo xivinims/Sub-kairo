@@ -75,6 +75,8 @@ if(trigger.trim().startsWith('fallout-preview-')||trigger.trim().startsWith('fal
   }
  }
  console.log('FPS_DEMO_AUDIT '+JSON.stringify({assetId:id,economyHttp:economyResponse.status,metadata:{name:economy.Name,description:economy.Description,assetTypeId:economy.AssetTypeId,creator:economy.Creator},deliveryHttp:deliveryResponse.status,delivery:{assetType:delivery.assetType,assetId:delivery.assetId,versionNumber:delivery.versionNumber,error:delivery.errors?.[0]?.message},file,inspection}));
+}else if(trigger.trim().startsWith('lobby-hud-')){
+ await import('./lobby-hud-release.mjs');
 }else if(trigger.trim().startsWith('viewport-preview-')||trigger.trim().startsWith('viewport-publish-')){
  await import('./viewport-release.mjs');
 }else if(trigger.trim().startsWith('hudfix-thumbnail-audit-')){
@@ -204,4 +206,5 @@ const result=await execute(script);
 console.log(JSON.stringify({stage:'dead-signal-asset-probe',result},null,2));
 
 }
+
 

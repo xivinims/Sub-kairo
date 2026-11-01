@@ -1,1 +1,1 @@
-viewport-publish-2026-11-01-v2
+lobby-hud-audit-20261101-v1
