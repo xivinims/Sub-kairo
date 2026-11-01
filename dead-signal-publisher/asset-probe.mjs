@@ -37,7 +37,10 @@ async function execute(script){
 }
 
 const trigger=await (await import('node:fs/promises')).readFile(new URL('./asset-probe.trigger',import.meta.url),'utf8');
-if(trigger.trim().startsWith('fps-demo-audit')){
+if(trigger.trim().startsWith('fps-demo-validate')||trigger.trim().startsWith('fps-demo-publish')){
+ const {runFpsDemo}=await import('./fps-demo-release.mjs');
+ await runFpsDemo(trigger.trim());
+}else if(trigger.trim().startsWith('fps-demo-audit')){
  const fs=await import('node:fs/promises');
  const {execFileSync}=await import('node:child_process');
  const {createHash}=await import('node:crypto');
