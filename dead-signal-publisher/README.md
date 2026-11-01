@@ -1,4 +1,4 @@
-# Fallout 5×5 — versão publicada 253
+# Fallout 5×5 — versão publicada 254
 
 Branch ativa: `dead-signal-publisher`  
 Experiência: `9421311218` · Place: `118064584465155`  
@@ -66,3 +66,11 @@ O patch usa `nametag-release.mjs`; a reconstrução completa em `fallout-release
 - NPC R6 recriado com o avatar atual e colocado atrás do balcão, centralizado na janela e com os pés alinhados ao chão. Mantém o diálogo e as animações.
 - Compra/equipamento salva saldo e item juntos. Se a gravação falhar, nenhuma moeda é descontada. Recompensas recebidas durante a gravação são mantidas. Moedas e XP aparecem como inteiros.
 - [Execução e testes da versão 253](https://github.com/xivinims/Sub-kairo/actions/runs/41305265341): layout para paisagem e retrato, 10 retratos, 14 ícones, enquadramento de cada malha na câmera quando disponível, posição do NPC, recompensa e falha de gravação simulada, salvamento e leitura do saldo em uma chave temporária removida ao final. Assinatura do restante do lugar igual antes/depois (`6033:140825198`). Servidores reiniciados; limite 10 conferido. O fluxo visual ainda não foi testado com clientes em uma partida pública.
+
+## Prévias dos modelos na loja — versão 254
+
+- A loja agora cria uma cópia do modelo de cada arma/item em um `ViewportFrame`, com câmera e iluminação próprias. Os 14 produtos usam as malhas e texturas já presentes em `FalloutItemVisuals`.
+- Removido o bloqueio `UseReliableIcons` e a troca das prévias por silhuetas. A visibilidade do modelo não depende mais do resultado de `PreloadAsync` ou de downloads externos. Um erro de acesso no Asset Delivery, sozinho, não comprova falha de renderização no cliente Roblox.
+- [Publicação 254 e verificações](https://github.com/xivinims/Sub-kairo/actions/runs/41315002137): compilação Luau, criação dos 14 clones, preservação das malhas/texturas originais e enquadramento completo em prévias de 76 e 96 pixels de largura. Verificado novamente após salvar; servidores reiniciados e limite de 10 jogadores confirmado.
+- Assinatura do restante do lugar preservada (`6170:1847713054`), incluindo mapas, NPC, armas equipáveis e scripts de combate. Patch restrito a `FalloutClient`, `FalloutUI` e aos atributos da prévia, via `viewport-release.mjs`.
+- Não houve teste visual em cliente Roblox ou celular. Esses testes confirmam a estrutura e o enquadramento, não que cada dependência externa tenha sido renderizada no aparelho do jogador.
