@@ -103,7 +103,7 @@ function UI.matchHUD(parent)
  local feed=panel('Eliminations',UDim2.fromOffset(240,30),UDim2.new(1,-16,0,64),Vector2.new(1,0),3)
  local feedLabel=text(feed,'FeedText','',UDim2.new(1,-12,1,0),UDim2.fromOffset(6,0),12)
  feedLabel.TextXAlignment=Enum.TextXAlignment.Right;feed.Visible=false
- return {root=root,healthFill=healthFill,hp=hp,ammoBig=ammoBig,ammoReserve=ammoReserve,weaponName=weaponName,radar=radar,dots=dots,feed=feed,feedLabel=feedLabel}
+ return {root=root,healthFill=healthFill,hp=hp,ammoBig=ammoBig,ammoReserve=ammoReserve,weaponName=weaponName,radar=radar,dots=dots,feed=feed,feedLabel=feedLabel,reticle=reticle}
 end
 -- Code-drawn silhouettes stay visible even if a model's external mesh is unavailable.
 function UI.itemIcon(parent,item)
