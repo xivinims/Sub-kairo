@@ -44,8 +44,8 @@ local function broadcast() State:FireAllClients(snapshot()) end
 local function notify(p,text) Fx:FireClient(p,{kind='Notice',text=text}) end
 local function reward(p,xp,coins,reason)
  if not p or p.Parent~=Players then return end
- Profiles.Reward(p,xp,coins)
- Fx:FireClient(p,{kind='Reward',xp=xp,coins=coins,reason=reason})
+ local paidXP,paidCoins=Profiles.Reward(p,xp,coins)
+ if paidXP then Fx:FireClient(p,{kind='Reward',xp=paidXP,coins=paidCoins,reason=reason}) end
 end
 local function refreshGear(p)
  local char,hum=alive(p);if not char then return end
@@ -242,17 +242,9 @@ Net.Query.OnServerInvoke=function(p,command,id)
   local t=now();if (cooldowns[p] or 0)>t then return {ok=false,message='Aguarde um instante'} end;cooldowns[p]=t+.4
   if profile.transaction then return {ok=false,message='Salvando compra…'} end
   local def=type(id)=='string' and C.ById[id];if not def then return {ok=false,message='Item inválido'} end
-  if command=='Buy' then
-   local before={coins=profile.coins,owned=table.clone(profile.owned)}
-   local ok,message=Rules.purchase(profile,def);if not ok then return {ok=false,message=message} end
-   profile.transaction=true;local saved=Profiles.Save(p,false);profile.transaction=false
-   if not saved then profile.coins=before.coins;profile.owned=before.owned;return {ok=false,message='Não foi possível salvar. A compra foi cancelada.'} end
-   p:SetAttribute('Coins',profile.coins)
-  end
-  if not profile.owned[id] then return {ok=false,message='Compre o item primeiro'} end
   local slot=def.kind=='Gun' and 'gun' or def.kind=='Melee' and 'melee' or def.kind=='Heal' and 'heal' or 'utility'
-  profile.loadout[slot]=id
-  return {ok=true,message='Equipado para a próxima partida',coins=profile.coins,xp=profile.xp,owned=profile.owned,loadout=profile.loadout}
+  local ok,message=Profiles.SelectItem(p,def,slot,command=='Buy')
+  return {ok=ok,message=message,coins=profile.coins,xp=profile.xp,owned=profile.owned,loadout=profile.loadout}
  end
  return {ok=false,message='Visite a loja no intervalo'}
 end
