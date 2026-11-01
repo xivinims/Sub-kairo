@@ -22,6 +22,7 @@ const assetUrl=metadata.location||metadata.locations?.[0]?.location;if(!assetUrl
 const assetResponse=await fetch(assetUrl,{signal:AbortSignal.timeout(60000)});if(!assetResponse.ok)throw Error('Health asset download failed');
 const asset=Buffer.from(await assetResponse.arrayBuffer());
 console.log('LOBBY_HEALTH_SOURCE '+JSON.stringify({assetId:'84860453909277',sha256:createHash('sha256').update(asset).digest('hex'),bytes:asset.length}));
+if(createHash('sha256').update(asset).digest('hex')!=='35bbef11373c32284c354fc7102af891af85fd133c2ac4be5e3df2ec7ad2deca')throw Error('Health asset changed after inspection');
 await fs.writeFile('/tmp/lobby-health-source.rbxm',asset);
 const response=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip',{signal:AbortSignal.timeout(60000)});
 if(!response.ok)throw Error('Lune download failed');const zip=Buffer.from(await response.arrayBuffer());
@@ -30,4 +31,45 @@ await fs.writeFile('/tmp/lobby-hud-lune.zip',zip);execFileSync('unzip',['-q','-o
 if(mode.startsWith('lobby-hud-audit-')){
  execFileSync('/tmp/lobby-hud-lune/lune',['run','lobby-hud-inspect.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
  console.log('LOBBY_HUD_AVATAR_AUDIT '+JSON.stringify(await execute(await read('lobby-hud-audit.luau'))));
-}else throw Error('Publish path requires inspected health asset and frozen avatar');
+}else{
+ execFileSync('/tmp/lobby-hud-lune/lune',['run','lobby-hud-build.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
+ const invariants=await read('lobby-hud-invariants.luau'),verify=await read('lobby-hud-verify.luau');
+ const baseline=await execute(invariants+"\nreturn game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,build=workspace:GetAttribute('DeadSignalBuildId'),preserved=protectedSnapshot()})");
+ if(baseline.build!=='fallout-5v5-v1'||baseline.version!==256)throw Error('FPS version changed since inspection: '+JSON.stringify(baseline));
+ console.log('LOBBY_HUD_BASELINE '+JSON.stringify(baseline));
+ const bundle=await fs.readFile('/tmp/lobby-hud-bundle.rbxm');
+ const upload=await api(cloud+'universes/'+universe+'/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:bundle.length})});
+ const put=await fetch(upload.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:bundle,signal:AbortSignal.timeout(60000)});if(!put.ok)throw Error('Patch payload upload failed');
+ const guard="\nassert(protectedSnapshot()=="+JSON.stringify(baseline.preserved)+",'Unrelated FPS content changed')\n";
+ const patch=invariants+guard+(await read('lobby-hud-install.luau'))+'\n'+(await read('lobby-hud-radar.luau'))+guard;
+ const preflight=await execute(patch+verify,upload.path,baseline.version);
+ if(!preflight?.ok||preflight.preserved!==baseline.preserved)throw Error('Native preflight failed');
+ console.log('LOBBY_HUD_PREFLIGHT '+JSON.stringify(preflight));
+ if(mode.startsWith('lobby-hud-preview-'))console.log('LOBBY_HUD_PREVIEW_COMPLETE '+JSON.stringify({published:false,verified:true}));
+ else{
+  const current=await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion})");
+  if(current.version!==baseline.version)throw Error('Place changed during preparation');
+  let saved=false;
+  try{
+   const release=process.env.GITHUB_SHA||'manual-lobby-hud';
+   const save=patch+'local checked=(function()\n'+verify+'\nend)()\nworkspace:SetAttribute("FalloutLobbyHUDRelease",'+JSON.stringify(release)+')\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn checked';
+   console.log('LOBBY_HUD_NATIVE_SAVE '+JSON.stringify(await execute(save,upload.path,baseline.version)));saved=true;
+   const live=await execute(invariants+'\n'+verify);
+   if(!live?.ok||live.version!==baseline.version+1||live.preserved!==baseline.preserved)throw Error('Published version verification failed');
+   const config=await api(cloud+'universes/'+universe+'/places/'+place);if(config.serverSize!==10)throw Error('Unexpected server size');
+   await api(cloud+'universes/'+universe+':restartServers',{method:'POST',body:'{}'});
+   console.log('LOBBY_HUD_RELEASE_COMPLETE '+JSON.stringify({...live,serverSize:config.serverSize,rollbackVersion:baseline.version,restarted:true}));
+  }catch(error){
+   if(saved){
+    try{
+     const latest=await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion})");
+     if(latest.version===baseline.version+1){
+      console.error('LOBBY_HUD_ROLLBACK '+JSON.stringify(await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restoredFromVersion=game.PlaceVersion})',undefined,baseline.version)));
+      await api(cloud+'universes/'+universe+':restartServers',{method:'POST',body:'{}'});
+     }else console.error('LOBBY_HUD_ROLLBACK_SKIPPED later publication exists');
+    }catch(rollback){console.error('LOBBY_HUD_ROLLBACK_FAILED '+String(rollback))}
+   }
+   throw error;
+  }
+ }
+}

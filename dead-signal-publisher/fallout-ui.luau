@@ -1,4 +1,4 @@
-local UI={ScoreWidth=334,ScoreHeight=32}
+local UI={ScoreWidth=286,ScoreHeight=28}
 local function make(class,parent,props)
  local o=Instance.new(class);for k,v in pairs(props) do o[k]=v end;o.Parent=parent;return o
 end
@@ -22,88 +22,53 @@ function UI.coin(parent,size,pos)
  return coin
 end
 function UI.scoreboard(parent,colors)
- local screen=make('ScreenGui',parent,{Name='FalloutScoreboard',ResetOnSpawn=false,DisplayOrder=31,ScreenInsets=Enum.ScreenInsets.None,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None})
+ local screen=make('ScreenGui',parent,{Name='FalloutScoreboard',ResetOnSpawn=false,DisplayOrder=31,ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None})
  local safe=make('Frame',screen,{Name='SafeArea',Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
- local root=make('Frame',safe,{Name='CompactScoreboard',AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,2),Size=UDim2.fromOffset(UI.ScoreWidth,UI.ScoreHeight),BackgroundColor3=Color3.fromRGB(17,23,26),BackgroundTransparency=.15,BorderSizePixel=0});round(root,7)
+ local root=make('Frame',safe,{Name='CompactScoreboard',AnchorPoint=Vector2.new(.5,0),Position=UDim2.fromScale(.5,0),Size=UDim2.fromOffset(UI.ScoreWidth,UI.ScoreHeight),BackgroundColor3=Color3.fromRGB(17,23,26),BackgroundTransparency=.15,BorderSizePixel=0});round(root,6)
  local scale=make('UIScale',root,{Scale=1})
- local score=text(root,'Score','0  —  0',UDim2.fromOffset(98,18),UDim2.fromOffset(118,0),17);score.Font=Enum.Font.GothamBold
- local clock=text(root,'Clock','AGUARDANDO',UDim2.fromOffset(144,12),UDim2.fromOffset(95,20),9)
+ local score=text(root,'Score','0  —  0',UDim2.fromOffset(80,17),UDim2.fromOffset(103,0),15);score.Font=Enum.Font.GothamBold
+ local clock=text(root,'Clock','AGUARDANDO',UDim2.fromOffset(80,10),UDim2.fromOffset(103,17),8);clock.TextTruncate=Enum.TextTruncate.AtEnd
  local slots={{},{}}
  for team=1,2 do for i=1,5 do
-  local x=team==1 and 8+(i-1)*22 or 218+(i-1)*22
-  local frame=make('Frame',root,{Name='Team'..team..'Slot'..i,Size=UDim2.fromOffset(20,20),Position=UDim2.fromOffset(x,6),BackgroundColor3=colors[team],BackgroundTransparency=.78,BorderSizePixel=0});round(frame,4)
-  local portrait=make('ImageLabel',frame,{Name='Avatar',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=''});round(portrait,4)
+  local x=team==1 and 5+(i-1)*20 or 183+(i-1)*20
+  local frame=make('Frame',root,{Name='Team'..team..'Slot'..i,Size=UDim2.fromOffset(18,18),Position=UDim2.fromOffset(x,5),BackgroundColor3=colors[team],BackgroundTransparency=.78,BorderSizePixel=0});round(frame,4)
+  local portrait=make('ImageLabel',frame,{Name='Avatar',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=''});round(portrait,6)
   local line=make('Frame',frame,{Name='Status',Size=UDim2.new(1,-8,0,2),Position=UDim2.new(0,4,1,-2),BackgroundColor3=colors[team],BorderSizePixel=0,Visible=false})
   slots[team][i]={portrait=portrait,status=line}
  end end
  return {screen=screen,safe=safe,root=root,scale=scale,score=score,clock=clock,slots=slots}
 end
--- Narrow and flush with the top edge on landscape, below native buttons on portrait.
-function UI.fitScoreboard(board,viewport,topbarRect)
- local available=viewport.X>0 and viewport.X or 820
- board.fallback=available<620
- board.screen.ScreenInsets=Enum.ScreenInsets.None
- board.root.AnchorPoint=Vector2.new(.5,0)
- board.root.Position=UDim2.new(.5,0,0,board.fallback and 54 or 2)
- board.scale.Scale=math.min(1,math.max(.6,(available-16)/UI.ScoreWidth))
+function UI.fitScoreboard(board,viewport,topbarRect,deviceRect)
+ -- Both rectangles come from GetInsetArea, so their coordinate origins agree.
+ deviceRect=deviceRect or Rect.new(0,0,viewport.X,viewport.Y)
+ local safeWidth=math.max(1,deviceRect.Width)
+ local scale=math.min(viewport.Y<500 and .92 or 1,math.max(.1,(safeWidth-16)/UI.ScoreWidth))
+ local width=UI.ScoreWidth*scale
+ local left=math.max(0,topbarRect.Min.X-deviceRect.Min.X)+4
+ local right=math.min(safeWidth,topbarRect.Max.X-deviceRect.Min.X)-4
+ local centered=safeWidth/2
+ local top=0
+ board.fallback=right-left<width or topbarRect.Height<UI.ScoreHeight*scale
+ if board.fallback then
+  top=math.max(0,topbarRect.Max.Y-deviceRect.Min.Y)
+ else
+  -- Center on the screen; only move sideways when a Roblox control would overlap.
+  centered=math.clamp(centered,left+width/2,right-width/2)
+ end
+ board.root.Position=UDim2.fromOffset(centered,top)
+ board.scale.Scale=scale
 end
 function UI.wallet(parent)
- local root=make('Frame',parent,{Name='Wallet',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-10,0,6),Size=UDim2.fromOffset(100,34),BackgroundColor3=Color3.fromRGB(14,20,24),BackgroundTransparency=.12,BorderSizePixel=0})
- round(root,17)
- make('UIStroke',root,{Color=Color3.fromRGB(150,157,162),Thickness=1,Transparency=.78})
- UI.coin(root,22,UDim2.fromOffset(7,6))
- local balance=text(root,'Balance','…',UDim2.new(1,-37,1,0),UDim2.fromOffset(36,0),16)
- balance.TextXAlignment=Enum.TextXAlignment.Left
- balance.Font=Enum.Font.GothamBold
- local progress=text(root,'Progress','',UDim2.fromOffset(1,1),UDim2.new(),1)
- progress.Visible=false -- The pill contains only a coin and the balance.
- return {root=root,balance=balance,progress=progress}
+ local root=make('Frame',parent,{Name='Wallet',AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-10,0,6),Size=UDim2.fromOffset(64,26),BackgroundColor3=Color3.fromRGB(18,24,26),BackgroundTransparency=.14,BorderSizePixel=0})
+ make('UICorner',root,{CornerRadius=UDim.new(1,0)})
+ UI.coin(root,18,UDim2.fromOffset(5,4))
+ local balance=text(root,'Balance','…',UDim2.new(1,-36,1,0),UDim2.fromOffset(28,0),14);balance.TextXAlignment=Enum.TextXAlignment.Right;balance.Font=Enum.Font.GothamBold
+ return {root=root,balance=balance}
 end
-function UI.matchHUD(parent)
- local root=make('Frame',parent,{Name='MatchHUD',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
- local function panel(name,size,pos,anchor,radius)
-  local frame=make('Frame',root,{Name=name,AnchorPoint=anchor or Vector2.new(),Size=size,Position=pos,BackgroundColor3=Color3.fromRGB(18,23,27),BackgroundTransparency=.26,BorderSizePixel=0})
-  round(frame,radius or 4)
-  make('UIStroke',frame,{Color=Color3.fromRGB(207,215,214),Transparency=.83,Thickness=1})
-  return frame
- end
- local healthPanel=panel('Health',UDim2.fromOffset(220,30),UDim2.new(.5,0,1,-22),Vector2.new(.5,1),3)
- local healthBg=make('Frame',healthPanel,{Name='MeterBackground',Size=UDim2.fromOffset(146,5),Position=UDim2.fromOffset(62,14),BackgroundColor3=Color3.fromRGB(69,78,79),BorderSizePixel=0})
- local healthFill=make('Frame',healthBg,{Name='Meter',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(190,214,205),BorderSizePixel=0})
- local hp=text(healthPanel,'HealthText','100',UDim2.fromOffset(48,30),UDim2.fromOffset(8,0),18);hp.Font=Enum.Font.GothamBold
- local ammoPanel=panel('Ammo',UDim2.fromOffset(172,70),UDim2.new(1,-16,1,-18),Vector2.new(1,1),3)
- local ammoBig=text(ammoPanel,'Magazine','030',UDim2.fromOffset(69,37),UDim2.fromOffset(9,10),30);ammoBig.Font=Enum.Font.GothamBold
- local ammoReserve=text(ammoPanel,'Reserve','/ 090',UDim2.fromOffset(60,16),UDim2.fromOffset(73,29),11)
- ammoReserve.TextColor3=Color3.fromRGB(165,177,182)
- local weaponName=text(ammoPanel,'Weapon','',UDim2.new(1,-16,0,12),UDim2.fromOffset(8,55),9)
- weaponName.TextXAlignment=Enum.TextXAlignment.Right;weaponName.TextTruncate=Enum.TextTruncate.AtEnd
- local radar=panel('Radar',UDim2.fromOffset(124,124),UDim2.new(0,14,1,-18),Vector2.new(0,1),1)
- for i=1,3 do
-  make('Frame',radar,{Name='VerticalGrid'..i,Size=UDim2.new(0,1,1,-12),Position=UDim2.new(i/4,0,0,6),BackgroundColor3=Color3.fromRGB(111,131,140),BackgroundTransparency=.77,BorderSizePixel=0})
-  make('Frame',radar,{Name='HorizontalGrid'..i,Size=UDim2.new(1,-12,0,1),Position=UDim2.new(0,6,i/4,0),BackgroundColor3=Color3.fromRGB(111,131,140),BackgroundTransparency=.77,BorderSizePixel=0})
- end
- local north=text(radar,'North','N',UDim2.fromOffset(15,14),UDim2.new(.5,-8,0,1),10);north.TextColor3=Color3.fromRGB(198,210,215)
- local localDot=make('Frame',radar,{Name='LocalPlayer',Size=UDim2.fromOffset(7,7),Position=UDim2.new(.5,-3,.5,-3),BackgroundColor3=Color3.fromRGB(235,239,236),BorderSizePixel=0})
- round(localDot,4)
- local dots={}
- for i=1,9 do
-  local dot=make('Frame',radar,{Name='Teammate'..i,Size=UDim2.fromOffset(5,5),BackgroundColor3=Color3.fromRGB(77,172,228),BorderSizePixel=0,Visible=false})
-  round(dot,3);dots[i]=dot
- end
- local reticle=make('Frame',root,{Name='Reticle',Size=UDim2.fromOffset(28,28),Position=UDim2.new(.5,-14,.5,-14),BackgroundTransparency=1})
- for _,segment in ipairs({
-  {'Top',UDim2.fromOffset(2,7),UDim2.fromOffset(13,0)},
-  {'Bottom',UDim2.fromOffset(2,7),UDim2.fromOffset(13,21)},
-  {'Left',UDim2.fromOffset(7,2),UDim2.fromOffset(0,13)},
-  {'Right',UDim2.fromOffset(7,2),UDim2.fromOffset(21,13)},
-  {'Center',UDim2.fromOffset(2,2),UDim2.fromOffset(13,13)}
- }) do
-  make('Frame',reticle,{Name=segment[1],Size=segment[2],Position=segment[3],BackgroundColor3=Color3.fromRGB(230,237,239),BackgroundTransparency=.12,BorderSizePixel=0})
- end
- local feed=panel('Eliminations',UDim2.fromOffset(240,30),UDim2.new(1,-16,0,64),Vector2.new(1,0),3)
- local feedLabel=text(feed,'FeedText','',UDim2.new(1,-12,1,0),UDim2.fromOffset(6,0),12)
- feedLabel.TextXAlignment=Enum.TextXAlignment.Right;feed.Visible=false
- return {root=root,healthFill=healthFill,hp=hp,ammoBig=ammoBig,ammoReserve=ammoReserve,weaponName=weaponName,radar=radar,dots=dots,feed=feed,feedLabel=feedLabel,reticle=reticle}
+function UI.setBalance(wallet,value)
+ wallet.balance.Text=value
+ local bounds=game:GetService('TextService'):GetTextSize(value,14,Enum.Font.GothamBold,Vector2.new(200,26))
+ wallet.root.Size=UDim2.fromOffset(math.clamp(math.ceil(bounds.X)+38,64,168),26)
 end
 -- Code-drawn silhouettes stay visible even if a model's external mesh is unavailable.
 function UI.itemIcon(parent,item)
@@ -172,3 +137,4 @@ function UI.catalogPreview(parent,visual,item)
  return viewport,clone
 end
 return UI
+

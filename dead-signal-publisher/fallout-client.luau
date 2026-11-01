@@ -9,6 +9,8 @@ local GuiService=game:GetService('GuiService')
 local player=Players.LocalPlayer
 local C=require(RS:WaitForChild('FalloutConfig'))
 local UI=require(RS:WaitForChild('FalloutUI'))
+local LobbyHealth=require(RS:WaitForChild('FalloutHealthUI'))
+local CombatHUD=require(RS:WaitForChild('FalloutCombatHUD'))
 local net=RS:WaitForChild('FalloutNet')
 local gui=Instance.new('ScreenGui');gui.Name='FalloutHUD';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.DisplayOrder=30;gui.Parent=player:WaitForChild('PlayerGui')
 local state={phase='Waiting',deadline=0,scores={0,0},roster={}}
@@ -27,37 +29,27 @@ end
 local board=UI.scoreboard(player.PlayerGui,colors)
 local score,clock,slots=board.score,board.clock,board.slots
 local wallet=UI.wallet(gui)
-local matchHUD=UI.matchHUD(gui)
--- 2014 health asset is installed as visual UI only. We control the original bar here.
-local classicSource=RS:WaitForChild('LobbyHealthTemplate',30)
-local classicHealth=classicSource and classicSource:Clone() or nil
-local classicBar
-if classicHealth then
- classicHealth.Name='LobbyClassicHealth'
- classicHealth.ResetOnSpawn=false
- classicHealth.DisplayOrder=32
- classicHealth.ScreenInsets=Enum.ScreenInsets.None
- classicHealth.Enabled=false
- classicHealth.Parent=player.PlayerGui
- local layer=classicHealth:FindFirstChild('HealthGui')
- local frame=layer and layer:FindFirstChild('HealthFrame')
- classicBar=frame and frame:FindFirstChild('HealthBar')
- if layer then
-  layer.Size=UDim2.fromScale(1,1)
-  layer.Position=UDim2.new()
+local lobbyHealth=LobbyHealth.create(player.PlayerGui,RS:WaitForChild('LobbyHealthTemplate'))
+local combat=CombatHUD.create(player.PlayerGui,UI,function(id)
+ if state.phase~='Match' or player:GetAttribute('Downed') then return end
+ local character=player.Character;local humanoid=character and character:FindFirstChildOfClass('Humanoid')
+ local backpack=player:FindFirstChildOfClass('Backpack');if not humanoid or not backpack then return end
+ for _,tool in ipairs(backpack:GetChildren()) do if tool:IsA('Tool') and tool:GetAttribute('FalloutItem')==id then humanoid:EquipTool(tool);return end end
+end)
+task.spawn(function()
+ for _=1,10 do
+  local ok=pcall(function()
+   game:GetService('StarterGui'):SetCoreGuiEnabled(Enum.CoreGuiType.Health,false)
+   game:GetService('StarterGui'):SetCoreGuiEnabled(Enum.CoreGuiType.Backpack,false)
+  end)
+  if ok then return end;task.wait(.25)
  end
- if frame then frame.Position=UDim2.new(.5,-85,1,-52) end
- pcall(function()game:GetService('StarterGui'):SetCoreGuiEnabled(Enum.CoreGuiType.Health,false)end)
-end
+end)
 local notice=label(gui,'',UDim2.new(.7,0,0,40),UDim2.new(.15,0,.19,0));notice.TextSize=16
 local noticeSerial=0
 local function showNotice(text)
  noticeSerial+=1;local n=noticeSerial;notice.Text=text;task.delay(3,function()if noticeSerial==n then notice.Text='' end end)
 end
-local ammo=label(gui,'',UDim2.fromOffset(260,46),UDim2.new(1,-280,1,-70),Enum.Font.GothamBold);ammo.TextXAlignment=Enum.TextXAlignment.Right;ammo.TextSize=19;ammo.Visible=false
-local health=label(gui,'100 PV',UDim2.fromOffset(180,28),UDim2.new(0,16,1,-66),Enum.Font.GothamBold);health.TextXAlignment=Enum.TextXAlignment.Left;health.Visible=false
-local cross=label(gui,'+',UDim2.fromOffset(32,32),UDim2.new(.5,-16,.5,-16));cross.TextSize=26;cross.Visible=false
-local hitmark=label(gui,'',UDim2.fromOffset(34,34),UDim2.new(.5,-17,.5,-17));hitmark.TextSize=30
 local down=label(gui,'',UDim2.new(.7,0,0,60),UDim2.new(.15,0,.7,0),Enum.Font.GothamBold);down.TextColor3=Color3.fromRGB(255,145,120)
 local results=make('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(12,18,19),BackgroundTransparency=.06,BorderSizePixel=0,Visible=false})
 local resultTitle=label(results,'',UDim2.new(.9,0,0,60),UDim2.new(.05,0,.06,0),Enum.Font.GothamBlack);resultTitle.TextSize=30
@@ -97,9 +89,7 @@ local dialogueController
 local function updateWallet()
  local ready=player:GetAttribute('ProfileReady')==true
  local coins=ready and UI.money(player:GetAttribute('Coins')) or '…'
- wallet.balance.Text=coins
- wallet.root.Size=UDim2.fromOffset(math.clamp(61+#coins*10,96,142),34)
- wallet.progress.Text=ready and ('NÍV. '..UI.integer(player:GetAttribute('Level'))..'  •  '..UI.money(player:GetAttribute('XP'))..' XP') or 'CARREGANDO'
+ UI.setBalance(wallet,coins)
  shopBalance.Text=ready and (coins..' moedas disponíveis') or 'Carregando saldo…'
 end
 for _,name in ipairs({'Coins','XP','Level','ProfileReady'}) do player:GetAttributeChangedSignal(name):Connect(updateWallet) end
@@ -153,13 +143,12 @@ end
 local function applyState(new)
  if type(new)~='table' then return end
  local previous=state.phase;state=new
- matchHUD.root.Visible=state.phase=='Match'
- if classicHealth then classicHealth.Enabled=state.phase=='Waiting' or state.phase=='Intermission' end
  score.Text=string.format('%d  —  %d',state.scores[1],state.scores[2])
  for team=1,2 do for i=1,5 do slots[team][i].portrait.Image='';slots[team][i].status.Visible=false end end
  local counts={0,0}
  for _,p in ipairs(state.roster) do if p.team==1 or p.team==2 then counts[p.team]+=1;local s=slots[p.team][counts[p.team]];if s then s.portrait.Image='rbxthumb://type=AvatarHeadShot&id='..p.userId..'&w=150&h=150';s.portrait.ImageTransparency=p.alive and 0 or .65;s.status.Visible=p.downed;s.status.BackgroundColor3=Color3.fromRGB(225,185,101) end end end
  results.Visible=state.phase=='Results';if state.phase=='Results' then showResults(state.results) end
+ board.root.BackgroundTransparency=state.phase=='Match' and .76 or .15
  if previous~=state.phase then
   closeShop()
   if dialogueController then dialogueController:hideGui() end
@@ -214,28 +203,36 @@ end
 CAS:BindAction('FalloutFire',input,false,Enum.UserInputType.MouseButton1,Enum.KeyCode.ButtonR2)
 CAS:BindAction('FalloutReload',input,false,Enum.KeyCode.R,Enum.KeyCode.ButtonX)
 CAS:BindAction('FalloutHeal',input,false,Enum.KeyCode.G,Enum.KeyCode.ButtonY)
+for index,key in ipairs({Enum.KeyCode.One,Enum.KeyCode.Two,Enum.KeyCode.Three,Enum.KeyCode.Four}) do
+ CAS:BindAction('FalloutEquip'..index,function(_,status)
+  if state.phase~='Match' then return Enum.ContextActionResult.Pass end
+  if options:isOpen() then return Enum.ContextActionResult.Sink end
+  if status==Enum.UserInputState.Begin then CombatHUD.equipSlot(combat,index) end
+  return Enum.ContextActionResult.Sink
+ end,false,key)
+end
 UIS.InputBegan:Connect(function(i,processed)if not processed and not options:isOpen() and i.UserInputType==Enum.UserInputType.MouseButton2 then if options:get('aimMode')=='toggle' then aiming=not aiming else aiming=true end end end)
+CAS:BindAction('FalloutCycleEquipment',function(_,status,inputObject)
+ if state.phase~='Match' then return Enum.ContextActionResult.Pass end
+ if options:isOpen() then return Enum.ContextActionResult.Sink end
+ if status==Enum.UserInputState.Begin then CombatHUD.cycleEquipment(combat,inputObject.KeyCode==Enum.KeyCode.ButtonR1 and 1 or -1) end
+ return Enum.ContextActionResult.Sink
+end,false,Enum.KeyCode.ButtonL1,Enum.KeyCode.ButtonR1)
 UIS.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton2 and options:get('aimMode')=='hold' then aiming=false end end)
 UIS.WindowFocusReleased:Connect(function()firing=false;aiming=false end)
-local mobile=make('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=touch})
-local fire=button(mobile,'TIRO',UDim2.fromOffset(76,76),UDim2.new(1,-108,.48,-38),function()end);corner(fire,38)
-fire.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch then firing=true;shoot() end end)
-fire.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch then firing=false end end)
-local aim=button(mobile,'MIRA',UDim2.fromOffset(54,54),UDim2.new(1,-184,.43,-27),function()
- if not options:isOpen() and options:get('aimMode')=='toggle' then aiming=not aiming end
-end);corner(aim,27)
-aim.InputBegan:Connect(function(i)
- if i.UserInputType==Enum.UserInputType.Touch and options:get('aimMode')=='hold' and not options:isOpen() then aiming=true end
-end)
-aim.InputEnded:Connect(function(i)
- if i.UserInputType==Enum.UserInputType.Touch and options:get('aimMode')=='hold' then aiming=false end
-end)
-local reloadButton=button(mobile,'R',UDim2.fromOffset(54,54),UDim2.new(1,-184,.61,-27),function()net.Action:FireServer('Reload')end);corner(reloadButton,27)
-local healButton=button(mobile,'CURAR',UDim2.fromOffset(58,58),UDim2.new(1,-256,.61,-29),healNearest);corner(healButton,29)
+local mobile=make('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
+local fire=button(mobile,'',UDim2.fromOffset(60,60),UDim2.new(1,-66,.44,-30),function()end);corner(fire,30);CombatHUD.styleControl(fire,'fire')
+local fireTouch
+fire.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch then fireTouch=i;firing=true;shoot() end end)
+UIS.InputEnded:Connect(function(i)if i==fireTouch then fireTouch=nil;firing=false end end)
+local aim=button(mobile,'',UDim2.fromOffset(44,44),UDim2.new(1,-122,.31,-22),function()if not options:isOpen() and options:get('aimMode')=='toggle' then aiming=not aiming end end);corner(aim,22);CombatHUD.styleControl(aim,'aim')
+local aimTouch
+aim.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch and options:get('aimMode')=='hold' and not options:isOpen() then aimTouch=i;aiming=true end end)
+UIS.InputEnded:Connect(function(i)if i==aimTouch then aimTouch=nil;aiming=false end end)
+local reloadButton=button(mobile,'',UDim2.fromOffset(44,44),UDim2.new(1,-122,.57,-22),function()net.Action:FireServer('Reload')end);corner(reloadButton,22);CombatHUD.styleControl(reloadButton,'reload')
+local healButton=button(mobile,'',UDim2.fromOffset(44,44),UDim2.new(1,-174,.57,-22),healNearest);corner(healButton,22);CombatHUD.styleControl(healButton,'heal')
 local mobileScale={}
-for _,control in ipairs({fire,aim,reloadButton,healButton}) do
- mobileScale[control]=make('UIScale',control,{Scale=1})
-end
+for _,control in ipairs({fire,aim,reloadButton,healButton}) do mobileScale[control]=make('UIScale',control,{Scale=1}) end
 local function cleanupView()
  if viewModel then viewModel:Destroy();viewModel=nil end
  if activeTool then for _,p in ipairs(activeTool:GetDescendants()) do if p:IsA('BasePart') then p.LocalTransparencyModifier=0 end end end
@@ -245,13 +242,8 @@ player.CharacterAdded:Connect(function()firing=false;aiming=false;cleanupView() 
 net.Fx.OnClientEvent:Connect(function(info)
  if info.kind=='Notice' then showNotice(info.text)
  elseif info.kind=='Reward' then showNotice('+'..info.xp..' XP  •  +'..info.coins..' moedas  —  '..info.reason)
- elseif info.kind=='Hit' then hitmark.Visible=options:get('hitmarker') and not options:isOpen();hitmark.Text='×';hitmark.TextColor3=info.headshot and Color3.fromRGB(255,128,94) or Color3.new(1,1,1);task.delay(.13,function()hitmark.Text='' end)
- elseif info.kind=='Kill' then
-  showNotice(info.killer..'  '..(info.headshot and '◎' or '→')..'  '..info.victim)
-  matchHUD.feedLabel.Text=info.killer..'   ›   '..info.victim
-  matchHUD.feed.Visible=state.phase=='Match' and options:get('killfeed') and not options:isOpen()
-  local stamp=os.clock();matchHUD.feed:SetAttribute('Stamp',stamp)
-  task.delay(4,function()if matchHUD.feed:GetAttribute('Stamp')==stamp then matchHUD.feed.Visible=false end end)
+ elseif info.kind=='Hit' then if options:get('hitmarker') and not options:isOpen() then CombatHUD.hit(combat,info.headshot) end
+ elseif info.kind=='Kill' then if options:get('killfeed') then CombatHUD.addKill(combat,info) end
  elseif info.kind=='Shot' then
   if not info.melee then
    local length=(info.to-info.from).Magnitude
@@ -264,55 +256,27 @@ net.Fx.OnClientEvent:Connect(function(info)
 end)
 Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
- UI.fitScoreboard(board,camera.ViewportSize,GuiService.TopbarInset)
- wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 96 or 6)
+ UI.fitScoreboard(board,camera.ViewportSize,GuiService:GetInsetArea(Enum.ScreenInsets.TopbarSafeInsets),GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets))
+ wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 34 or 6)
  notice.Visible=options:get('notices') and not options:isOpen()
- matchHUD.reticle.Visible=options:get('reticle') and not options:isOpen()
- matchHUD.radar.Visible=options:get('radar') and not options:isOpen()
- if not options:get('killfeed') or options:isOpen() then matchHUD.feed.Visible=false end
- local touchScale=options:get('buttonScale')/100
- local touchOpacity=1-options:get('buttonOpacity')/100
- for control,scale in pairs(mobileScale) do
-  scale.Scale=touchScale
-  control.BackgroundTransparency=touchOpacity
+ for control,scale in pairs(mobileScale) do scale.Scale=options:get('buttonScale')/100;control.BackgroundTransparency=1-options:get('buttonOpacity')/100 end
+ if touch then
+  local height=GuiService:GetInsetArea(Enum.ScreenInsets.CoreUISafeInsets).Height
+  local hotbarTop=height-130
+  local reloadY=math.max(52,hotbarTop-52)
+  reloadButton.Position=UDim2.new(1,-122,0,reloadY);healButton.Position=UDim2.new(1,-174,0,reloadY)
+  aim.Position=UDim2.new(1,-122,0,math.max(0,reloadY-54))
+  fire.Position=UDim2.new(1,-66,0,math.max(38,math.min(height*.4,hotbarTop-26))-30)
  end
  local left=math.max(0,math.ceil((state.deadline or 0)-workspace:GetServerTimeNow()))
- clock.Text=state.phase=='Waiting' and 'AGUARDANDO 2 JOGADORES' or (state.phase=='Match' and '' or 'INTERVALO  ')..string.format('%02d:%02d',math.floor(left/60),left%60)
+ clock.Text=state.phase=='Waiting' and 'AGUARDANDO' or (state.phase=='Match' and '' or 'INTERV. ')..string.format('%02d:%02d',math.floor(left/60),left%60)
  local char=player.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
- health.Text=hum and (math.ceil(hum.Health)..' PV') or 'AGUARDANDO'
- local fraction=hum and hum.MaxHealth>0 and math.clamp(hum.Health/hum.MaxHealth,0,1) or 0
- matchHUD.hp.Text=tostring(hum and math.ceil(hum.Health) or 0)
- matchHUD.healthFill.Size=UDim2.fromScale(fraction,1)
- if classicBar then
-  classicBar.Size=UDim2.fromScale(fraction,1)
-  classicBar.Image=fraction>.25 and 'rbxassetid://35238053' or 'rbxassetid://35238036'
- end
+ LobbyHealth.update(lobbyHealth,state.phase,hum)
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
- mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping and not options:isOpen();cross.Visible=false;matchHUD.root.Visible=state.phase=='Match' and not shopping
+ mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping and not options:isOpen()
  local tool,def=equipped()
- if firing and def and def.automatic and not options:isOpen() then shoot() end
- ammo.Text=tool and def and (def.name..'\n'..(tool:GetAttribute('Reloading') and 'RECARREGANDO' or ((tool:GetAttribute('Ammo') or -1)>=0 and tostring(tool:GetAttribute('Ammo'))..' / '..tostring(tool:GetAttribute('Reserve') or 0) or 'CORPO A CORPO'))) or ''
- matchHUD.weaponName.Text=def and def.name or ''
- matchHUD.ammoBig.Text=tool and (tool:GetAttribute('Reloading') and '...' or tostring(math.max(0,tool:GetAttribute('Ammo') or 0))) or '--'
- matchHUD.ammoReserve.Text=tool and ('/ '..tostring(math.max(0,tool:GetAttribute('Reserve') or 0))) or ''
- -- Team-only radar does not expose enemy positions or modify match rules.
- local rootPart=char and char:FindFirstChild('HumanoidRootPart')
- local dotIndex=0
- for _,teammate in ipairs(Players:GetPlayers()) do
-  if teammate~=player and teammate.Team==player.Team and rootPart and dotIndex<#matchHUD.dots then
-   local other=teammate.Character and teammate.Character:FindFirstChild('HumanoidRootPart')
-   if other then
-    local relative=other.Position-rootPart.Position
-    if relative.Magnitude<=170 then
-     dotIndex+=1
-     local dot=matchHUD.dots[dotIndex]
-     dot.Position=UDim2.new(.5+math.clamp(relative.X/340,-.46,.46),-2,.5+math.clamp(relative.Z/340,-.46,.46),-2)
-     dot.Visible=true
-    end
-   end
-  end
- end
- for i=dotIndex+1,#matchHUD.dots do matchHUD.dots[i].Visible=false end
+ CombatHUD.update(combat,{phase=state.phase,humanoid=hum,character=char,backpack=player:FindFirstChildOfClass('Backpack'),player=player,catalog=C.ById,tool=tool,def=def,downed=isDown,touch=touch,aiming=aiming,recoil=recoil,menuOpen=options:isOpen(),reticleEnabled=options:get('reticle'),radarEnabled=options:get('radar'),killfeedEnabled=options:get('killfeed')})
+ if firing and def and def.automatic then shoot() end
  if state.phase=='Match' and tool and def and not isDown then
   if activeTool~=tool then
    cleanupView();activeTool=tool
@@ -342,3 +306,4 @@ task.spawn(function()
   elseif option==3 then dialog:hideGui('Aqui estão os itens de combate e de cura.');openShop(true) end
  end)
 end)
+
