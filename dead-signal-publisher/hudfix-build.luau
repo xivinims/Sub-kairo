@@ -7,6 +7,8 @@ local files={
  FalloutClient={'LocalScript','fallout-client.luau'},FalloutUI={'ModuleScript','fallout-ui.luau'},
  ShopkeeperLayout={'ModuleScript','fallout-shopkeeper.luau'},
  FrozenAvatar={'ModuleScript','fallout-frozen-avatar.luau'},
+ OptionsStore={'ModuleScript','fallout-options-store.luau'},
+ FalloutOptionsClient={'ModuleScript','fallout-options-client.luau'},
 }
 for name,entry in pairs(files) do
  local source=fs.readFile(entry[2]);luau.load(source,{debugName=entry[2]})
@@ -33,4 +35,4 @@ legacy.Parent=bundle
 for _,name in ipairs({'hudfix-invariants.luau','hudfix-install.luau','hudfix-verify.luau'}) do luau.load(fs.readFile(name),{debugName=name}) end
 require('./hudfix-tests')
 fs.writeFile('/tmp/hudfix-bundle.rbxm',R.serializeModel({bundle}))
-print('HUDFIX_BUILD scripts=6 retroLobbyBar=original-sanitized compiled=true')
+print('HUDFIX_BUILD scripts=8 options=on retroLobbyBar=original-sanitized compiled=true')
