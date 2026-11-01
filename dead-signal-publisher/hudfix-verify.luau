@@ -1,9 +1,27 @@
 local runtime=game.ServerScriptService.FalloutRuntime
 local C=require(game.ReplicatedStorage.FalloutConfig)
 local UI=require(game.ReplicatedStorage.FalloutUI)
-assert(workspace:GetAttribute('FalloutHUDRevision')=='fps-hud-2014-lobby-v3')
+assert(workspace:GetAttribute('FalloutHUDRevision')=='fps-left-options-v4')
 assert(workspace:GetAttribute('FalloutNametagBuild')=='nametags-v1')
 assert(C.MaxPlayers==10 and C.TeamSize==5 and C.RoundSeconds==600 and C.IntermissionSeconds==90)
+-- Validate the installed settings system, responsive corner layout and strict server whitelist.
+local options=require(runtime.OptionsStore)
+local normalized=options.normalize({
+ brightness=200,buttonOpacity=-10,radar=false,language='en',extra='unexpected'
+})
+assert(normalized.brightness==100 and normalized.buttonOpacity==30)
+assert(normalized.radar==false and normalized.language=='en' and normalized.extra==nil)
+assert(options.clean('aimMode','evil')==nil and options.clean('brightness',0/0)==nil)
+assert(options.clean('effectsVolume',35)==35)
+local optionsClient=game.ReplicatedStorage:FindFirstChild('FalloutOptionsClient')
+assert(optionsClient and optionsClient:IsA('ModuleScript'),'Options client module missing')
+local source=optionsClient.Source
+assert(source:find("SmallLeftSettings",1,true) and source:find("CameraOverlayGradient",1,true),'Compact left overlay missing')
+assert(source:find("panel.Position=UDim2.fromOffset",1,true),'Viewport-adaptive placement missing')
+assert(source:find("ScreenInsets=Enum.ScreenInsets.None",1,true),'Camera-visible inset missing')
+assert(source:find("Modal=true",1,true),'FPS cursor input missing')
+assert(source:find("SettingsSave",1,true),'Persistent settings save missing')
+assert(source:find("SunRays",1,true)==nil,'Do not hardcode environmental assets')
 local before=protectedSnapshot()
 local fixture=Instance.new('Folder')
 local board=UI.scoreboard(fixture,{Color3.new(0,0,1),Color3.new(1,0,0)})
@@ -69,4 +87,4 @@ local smoke=Instance.new('ModuleScript');smoke.Name='WalletStartupCheck';smoke.S
 local oldInitialized=workspace:GetAttribute('FalloutServerInitialized')
 assert(require(smoke)==true);smoke:Destroy();workspace:SetAttribute('FalloutServerInitialized',oldInitialized)
 assert(protectedSnapshot()==before,'Verification mutated protected content')
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='fps-hud-2014-lobby-v3',preserved=before,portraits=portraits,scoreSize={334,32},icons=icons,npcRig=npc.Humanoid.RigType.Name,npcPosition={npc.PrimaryPart.Position.X,npc.PrimaryPart.Position.Y,npc.PrimaryPart.Position.Z},npcFloorGap=feet-npc:GetAttribute('FloorHeight'),npcWindowOffset=lateral,npcJoints=poseJoints,wallet='transactional-integer-coins'})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='fps-left-options-v4',preserved=before,portraits=portraits,scoreSize={334,32},icons=icons,npcRig=npc.Humanoid.RigType.Name,npcPosition={npc.PrimaryPart.Position.X,npc.PrimaryPart.Position.Y,npc.PrimaryPart.Position.Z},npcFloorGap=feet-npc:GetAttribute('FloorHeight'),npcWindowOffset=lateral,npcJoints=poseJoints,wallet='transactional-integer-coins'})
