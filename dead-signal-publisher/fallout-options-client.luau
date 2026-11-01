@@ -218,13 +218,15 @@ function Menu.new(args)
   local camera=workspace.CurrentCamera
   local viewport=camera and camera.ViewportSize or Vector2.new(896,414)
   local width=math.floor(math.min(270,math.max(208,viewport.X*.32)))
-  local height=math.floor(math.max(205,viewport.Y-115))
+  local height=math.floor(math.min(410,math.max(205,viewport.Y-115)))
   if viewport.Y<330 then height=math.max(170,viewport.Y-105) end
   panel.Size=UDim2.fromOffset(width,height)
   panel.Position=UDim2.fromOffset(viewport.X<460 and 9 or 14,viewport.Y<330 and 91 or 96)
   openButton.Position=UDim2.fromOffset(viewport.X<460 and 11 or 16,61)
  end
+ local nextRowOrder=0
  local function clearRows()
+  nextRowOrder=0
   drag=nil
   for _,child in ipairs(list:GetChildren()) do
    if child~=layout then child:Destroy() end
@@ -232,7 +234,8 @@ function Menu.new(args)
   list.CanvasPosition=Vector2.zero
  end
  local function baseRow(name,height)
-  local row=make('Frame',list,{Name=name,Size=UDim2.new(1,-4,0,height),BackgroundTransparency=1,BorderSizePixel=0})
+  nextRowOrder+=1
+  local row=make('Frame',list,{Name=name,LayoutOrder=nextRowOrder,Size=UDim2.new(1,-4,0,height),BackgroundTransparency=1,BorderSizePixel=0})
   make('Frame',row,{Name='Divider',Position=UDim2.new(0,5,1,-1),Size=UDim2.new(1,-14,0,1),BackgroundColor3=Color3.fromRGB(93,105,103),BackgroundTransparency=.74,BorderSizePixel=0})
   return row
  end
@@ -320,8 +323,9 @@ function Menu.new(args)
  end
  local function addReset(page)
   if not sectionKeys[page] then return end
+  nextRowOrder+=1
   local b=make('TextButton',list,{
-   Name='ResetSection',Size=UDim2.new(1,-6,0,34),BackgroundTransparency=1,Text=t('resetCategory'),
+   Name='ResetSection',LayoutOrder=nextRowOrder,Size=UDim2.new(1,-6,0,34),BackgroundTransparency=1,Text=t('resetCategory'),
    TextXAlignment=Enum.TextXAlignment.Left,Font=Enum.Font.GothamMedium,TextSize=10,
    TextColor3=Color3.fromRGB(179,192,190),AutoButtonColor=true,Modal=true
   })
