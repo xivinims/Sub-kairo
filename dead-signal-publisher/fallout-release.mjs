@@ -6,7 +6,7 @@ const cloud='https://apis.roblox.com/cloud/v2/';
 const key=process.env.ROBLOX_API_KEY;
 if(!key)throw Error('Missing ROBLOX_API_KEY');
 const read=file=>fs.readFile(new URL(file,import.meta.url),'utf8');
-const hashes={8438960542:'63fe18a8206c1c03a1f1b449fccf7b8f2479677c8eacf75e6d44fb3d0faa3f0f',95512398319263:'5732010af7e03bba350c6b5be2485632411696e7ca494565bce22641a825c6fc',12987749061:'0b41c77276e18389d9a0ee96c096211925abcc3b0acf1479a6027f21daea52f4',86582491164528:'84d15dea4796973ac00984f3f6ecec55b8af8215c3362e2b5edfd105f47e1e1d',80608769509945:'c5ab30013b27e7c2404bca14a7ab40473026f346f8c09110b4a7a21b08248105',110602808776017:'a5615c0b4a8c1981a8618dfaa46976bf897e51f475d2188f811a11cc84780f29',15864801103:'6cd1bc3e7a71505b38965acc3e8219bc84bda1b8ac4ca64ae0ca4151800a2d02'};
+const hashes={72094860266497:'adf4de6a1dc99460d27c8362fea8e259f61bc5ce6bfa01662e07cd1e5a481a37',8438960542:'63fe18a8206c1c03a1f1b449fccf7b8f2479677c8eacf75e6d44fb3d0faa3f0f',95512398319263:'5732010af7e03bba350c6b5be2485632411696e7ca494565bce22641a825c6fc',12987749061:'0b41c77276e18389d9a0ee96c096211925abcc3b0acf1479a6027f21daea52f4',86582491164528:'84d15dea4796973ac00984f3f6ecec55b8af8215c3362e2b5edfd105f47e1e1d',80608769509945:'c5ab30013b27e7c2404bca14a7ab40473026f346f8c09110b4a7a21b08248105',110602808776017:'a5615c0b4a8c1981a8618dfaa46976bf897e51f475d2188f811a11cc84780f29',15864801103:'6cd1bc3e7a71505b38965acc3e8219bc84bda1b8ac4ca64ae0ca4151800a2d02'};
 async function api(url,{method='GET',body}={}){
  const r=await fetch(url,{method,headers:{'x-api-key':key,'content-type':'application/json'},body,signal:AbortSignal.timeout(240000)});
  const raw=await r.text();let result;try{result=JSON.parse(raw)}catch{result={message:raw.slice(0,1500)}}
@@ -35,6 +35,8 @@ for(const id of Object.keys(hashes))await download(id);
 const r=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');if(!r.ok)throw Error('Lune download failed');const zip=Buffer.from(await r.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum mismatch');
 await fs.writeFile('/tmp/fallout-lune.zip',zip);execFileSync('unzip',['-q','-o','/tmp/fallout-lune.zip','-d','/tmp/fallout-lune']);await fs.chmod('/tmp/fallout-lune/lune',0o755);
+await fs.copyFile('/tmp/fallout-input-72094860266497','/tmp/nametag-source.rbxm');
+execFileSync('/tmp/fallout-lune/lune',['run','nametag-build.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
 execFileSync('/tmp/fallout-lune/lune',['run','fallout-build.luau'],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
 const bundle=await fs.readFile('/tmp/fallout-bundle.rbxm');
 const upload=await api(cloud+'universes/'+universe+'/luau-execution-session-task-binary-inputs',{method:'POST',body:JSON.stringify({size:bundle.length})});
