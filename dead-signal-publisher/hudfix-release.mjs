@@ -44,7 +44,7 @@ const upload=await api(cloud+'universes/'+universe+'/luau-execution-session-task
 const put=await fetch(upload.uploadUri,{method:'PUT',headers:{'content-type':'application/octet-stream'},body:bundle});if(!put.ok)throw Error('Input upload failed');
 const install=await read('hudfix-install.luau'),verify=await read('hudfix-verify.luau');
 const script=invariants+'\n'+install+'\n';
-const preview=await execute(script+verify,upload.path,baseline.version);
+const preview=await execute(script+(await read('hudfix-wallet-probe.luau'))+'\n'+verify,upload.path,baseline.version);
 if(!preview?.ok||preview.preserved!==baseline.preserved)throw Error('Native preflight failed or unrelated content changed');
 console.log('HUDFIX_PREFLIGHT '+JSON.stringify(preview));
 if(mode.startsWith('hudfix-preview-'))console.log('HUDFIX_PREVIEW_COMPLETE '+JSON.stringify({published:false,verified:true}));
