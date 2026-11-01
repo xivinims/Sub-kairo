@@ -28,12 +28,35 @@ function HUD.create(parent,UI,onEquip)
  local root=make('Frame',screen,{Name='Combat',Size=UDim2.fromScale(1,1),BackgroundTransparency=1})
  local reticleScreen=make('ScreenGui',parent,{Name='FalloutCombatReticle',ResetOnSpawn=false,Enabled=false,DisplayOrder=33,ScreenInsets=Enum.ScreenInsets.None,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None})
  local cross=make('Frame',reticleScreen,{Name='Reticle',Size=UDim2.fromOffset(32,32),Position=UDim2.fromScale(.5,.5),AnchorPoint=Vector2.new(.5,.5),BackgroundTransparency=1})
- local dot=line(cross,'Dot',UDim2.fromOffset(2,2),UDim2.fromOffset(15,15),white,.08)
+ local dot=line(cross,'Dot',UDim2.fromOffset(2,2),UDim2.fromOffset(15,15),red,.04)
  local arms={}
- for i=1,4 do arms[i]=line(cross,'Arm'..i,UDim2.fromOffset(i<=2 and 5 or 1,i<=2 and 1 or 5),UDim2.new(),white,.14) end
+ for i=1,4 do arms[i]=line(cross,'Arm'..i,UDim2.fromOffset(i<=2 and 5 or 1,i<=2 and 1 or 5),UDim2.new(),red,.08) end
  local hit=make('Frame',cross,{Name='HitMarker',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
  for i,offset in ipairs({Vector2.new(7,7),Vector2.new(24,7),Vector2.new(7,24),Vector2.new(24,24)}) do
   local stroke=line(hit,'Hit'..i,UDim2.fromOffset(7,1),UDim2.fromOffset(offset.X,offset.Y));stroke.AnchorPoint=Vector2.new(.5,.5);stroke.Rotation=(i==1 or i==4) and 45 or -45
+ end
+ local brand=text(root,'Brand','DEAD SIGNAL',UDim2.fromOffset(160,26),UDim2.fromOffset(14,11),20)
+ brand.Font=Enum.Font.GothamBlack
+ brand.TextColor3=Color3.fromRGB(238,239,236)
+ local subtitle=text(root,'BrandSubtitle','MULTIPLAYER FPS',UDim2.fromOffset(160,12),UDim2.fromOffset(15,35),9)
+ subtitle.TextColor3=Color3.fromRGB(185,195,195)
+ local scoreboard=make('Frame',root,{Name='MatchScoreStrip',AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,20),Size=UDim2.fromOffset(260,25),BackgroundTransparency=1})
+ line(scoreboard,'BlueLine',UDim2.fromOffset(87,4),UDim2.fromOffset(0,4),blue,.08)
+ line(scoreboard,'BlueRail',UDim2.fromOffset(20,4),UDim2.fromOffset(88,4),white,.83)
+ line(scoreboard,'RedLine',UDim2.fromOffset(87,4),UDim2.fromOffset(173,4),red,.08)
+ line(scoreboard,'RedRail',UDim2.fromOffset(20,4),UDim2.fromOffset(152,4),white,.83)
+ local scoreText=text(scoreboard,'CurrentScore','0  —  0',UDim2.fromOffset(72,19),UDim2.fromOffset(95,-4),16)
+ scoreText.Font=Enum.Font.GothamBold;scoreText.TextXAlignment=Enum.TextXAlignment.Center
+ local timeText=text(scoreboard,'MatchTimer','10:00',UDim2.fromOffset(72,10),UDim2.fromOffset(95,15),8)
+ timeText.TextXAlignment=Enum.TextXAlignment.Center;timeText.TextColor3=muted
+ local markers={}
+ for team,label in ipairs({'A','B'}) do
+  local marker=make('BillboardGui',parent,{Name='TeamMarker'..label,Enabled=false,AlwaysOnTop=true,Size=UDim2.fromOffset(42,46),StudsOffsetWorldSpace=Vector3.new(0,5,0),MaxDistance=260})
+  local badge=make('Frame',marker,{Name='Flag',Size=UDim2.fromOffset(25,25),Position=UDim2.fromOffset(8,0),BorderSizePixel=0,BackgroundTransparency=.22,BackgroundColor3=team==1 and blue or red})
+  local flag=text(badge,'Label',label,UDim2.fromScale(1,1),UDim2.new(),13);flag.Font=Enum.Font.GothamBold;flag.TextXAlignment=Enum.TextXAlignment.Center
+  local distance=text(marker,'Distance','',UDim2.fromOffset(42,12),UDim2.fromOffset(0,27),9);distance.TextXAlignment=Enum.TextXAlignment.Center
+  distance.TextColor3=white
+  markers[team]={screen=marker,label=distance}
  end
  local health=panel(root,'Vital',UDim2.fromOffset(160,24),UDim2.new(.5,0,1,-14),Vector2.new(.5,1));health.BackgroundTransparency=1
  local hp=text(health,'Value','100',UDim2.fromOffset(32,14),UDim2.new(),10)
@@ -42,7 +65,7 @@ function HUD.create(parent,UI,onEquip)
  local fill=line(track,'Fill',UDim2.fromScale(1,1),UDim2.new(),white,.15)
  line(health,'LeftCap',UDim2.fromOffset(1,8),UDim2.fromOffset(0,16),white,.35)
  line(health,'RightCap',UDim2.fromOffset(1,8),UDim2.new(1,-1,0,16),white,.35)
- local ammo=panel(root,'Ammo',UDim2.fromOffset(180,54),UDim2.new(1,-16,1,-14),Vector2.new(1,1));brackets(ammo,7)
+ local ammo=panel(root,'Ammo',UDim2.fromOffset(180,54),UDim2.new(1,-16,1,-14),Vector2.new(1,1));ammo.BackgroundTransparency=1;brackets(ammo,7)
  local count=text(ammo,'Magazine','—',UDim2.fromOffset(58,30),UDim2.fromOffset(8,2),25);count.Font=Enum.Font.Gotham
  local reserve=text(ammo,'Reserve','',UDim2.fromOffset(58,14),UDim2.fromOffset(10,31),9);reserve.TextColor3=muted
  local weapon=text(ammo,'Weapon','',UDim2.new(1,-77,0,13),UDim2.fromOffset(68,37),8);weapon.TextTruncate=Enum.TextTruncate.AtEnd
@@ -61,7 +84,7 @@ function HUD.create(parent,UI,onEquip)
  end
  local feed=make('Frame',root,{Name='Eliminations',AnchorPoint=Vector2.new(1,0),Size=UDim2.fromOffset(244,66),Position=UDim2.new(1,-12,0,40),BackgroundTransparency=1})
  local feedRows={};for i=1,3 do local row=text(feed,'Entry'..i,'',UDim2.new(1,0,0,18),UDim2.fromOffset(0,(i-1)*20),10);row.TextXAlignment=Enum.TextXAlignment.Right;row.TextTruncate=Enum.TextTruncate.AtEnd;feedRows[i]=row end
- local radar=panel(root,'Radar',UDim2.fromOffset(106,96),UDim2.new(0,12,1,-14),Vector2.new(0,1));brackets(radar,9)
+ local radar=panel(root,'Radar',UDim2.fromOffset(106,96),UDim2.new(0,12,1,-14),Vector2.new(0,1));radar.BackgroundTransparency=.82;brackets(radar,9)
  local map=make('Frame',radar,{Name='Map',ClipsDescendants=true,Size=UDim2.new(1,-8,1,-8),Position=UDim2.fromOffset(4,4),BackgroundTransparency=1})
  local data=require(game.ReplicatedStorage:WaitForChild('FalloutRadarData'))
  for _,p in ipairs(data.rects) do
@@ -70,7 +93,7 @@ function HUD.create(parent,UI,onEquip)
  local north=text(radar,'North','N',UDim2.fromOffset(12,12),UDim2.fromOffset(5,3),7);north.TextColor3=muted
  local own=text(map,'Player','▲',UDim2.fromOffset(12,12),UDim2.fromScale(.5,.5),12);own.AnchorPoint=Vector2.new(.5,.5);own.TextXAlignment=Enum.TextXAlignment.Center;own.ZIndex=4
  local allies={};for i=1,4 do local marker=line(map,'Ally'..i,UDim2.fromOffset(4,4),UDim2.new(),blue);marker.AnchorPoint=Vector2.new(.5,.5);marker.Visible=false;marker.ZIndex=3;make('UICorner',marker,{CornerRadius=UDim.new(1,0)});allies[i]=marker end
- return {screen=screen,reticleScreen=reticleScreen,root=root,cross=cross,arms=arms,hit=hit,health=health,hp=hp,hpTitle=hpTitle,fill=fill,ammo=ammo,count=count,reserve=reserve,weapon=weapon,preview=preview,reloadFill=reloadFill,hotbar=hotbar,slots=slots,feed=feed,feedRows=feedRows,kills={},radar=radar,map=map,own=own,allies=allies,data=data,UI=UI,onEquip=onEquip,lastSlow=0}
+ return {screen=screen,reticleScreen=reticleScreen,root=root,cross=cross,arms=arms,hit=hit,brand=brand,scoreboard=scoreboard,scoreText=scoreText,timeText=timeText,markers=markers,health=health,hp=hp,hpTitle=hpTitle,fill=fill,ammo=ammo,count=count,reserve=reserve,weapon=weapon,preview=preview,reloadFill=reloadFill,hotbar=hotbar,slots=slots,feed=feed,feedRows=feedRows,kills={},radar=radar,map=map,own=own,allies=allies,data=data,UI=UI,onEquip=onEquip,lastSlow=0}
 end
 function HUD.hit(view,headshot)
  view.hitSerial=(view.hitSerial or 0)+1;local serial=view.hitSerial
@@ -109,7 +132,24 @@ function HUD.update(view,context)
  local active=context.phase=='Match' and not context.menuOpen
  view.screen.Enabled=active;view.reticleScreen.Enabled=active and not context.downed and context.reticleEnabled~=false
  view.radar.Visible=context.radarEnabled~=false;view.feed.Visible=context.killfeedEnabled~=false
- if not active then view.kills={};return end
+ if not active then
+  view.kills={}
+  for _,marker in ipairs(view.markers) do marker.screen.Enabled=false end
+  return
+ end
+ local currentScores=context.scores or {0,0}
+ view.scoreText.Text=string.format('%d   —   %d',currentScores[1] or 0,currentScores[2] or 0)
+ local remaining=math.max(0,math.ceil((context.deadline or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
+ view.timeText.Text=string.format('%02d:%02d',math.floor(remaining/60),remaining%60)
+ local spawns=workspace:FindFirstChild('FalloutSpawns')
+ for team,marker in ipairs(view.markers) do
+  local folder=spawns and spawns:FindFirstChild('Team'..team)
+  local anchor=folder and (folder:FindFirstChild('1') or folder:FindFirstChildWhichIsA('BasePart'))
+  marker.screen.Adornee=anchor
+  marker.screen.Enabled=anchor~=nil
+  local ownRoot=context.character and context.character:FindFirstChild('HumanoidRootPart')
+  marker.label.Text=ownRoot and anchor and (tostring(math.floor((ownRoot.Position-anchor.Position).Magnitude))..'m') or ''
+ end
  local touch=context.touch
  view.health.Size=UDim2.fromOffset(touch and 124 or 160,24)
  view.health.Position=UDim2.new(.5,0,1,touch and -8 or -14)
