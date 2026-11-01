@@ -6,6 +6,7 @@ local Debris=game:GetService('Debris')
 local C=require(RS.FalloutConfig)
 local Rules=require(script.Parent.Rules)
 local Profiles=require(script.Parent.Profiles)
+local OptionsStore=require(script.Parent.OptionsStore)
 local Net=RS.FalloutNet
 local Action,Fx,State=Net.Action,Net.Fx,Net.State
 local records,states,cooldowns={},{},{}
@@ -234,6 +235,8 @@ local function shopNear(p)
  return phase~='Match' and root and npc and npc.PrimaryPart and (root.Position-npc.PrimaryPart.Position).Magnitude<24
 end
 Net.Query.OnServerInvoke=function(p,command,id)
+ if command=='SettingsGet' then return OptionsStore.Get(p) end
+ if command=='SettingsSave' then return OptionsStore.Set(p,id) end
  local profile=Profiles.cache[p]
  if command=='State' then return snapshot() end
  if not profile then return {ok=false,message='Seus dados ainda estão carregando.'} end
@@ -254,6 +257,7 @@ Action.OnServerEvent:Connect(function(p,action,a,b)
  if action=='Fire' then attack(p,a,b) elseif action=='Reload' then reload(p) elseif action=='Heal' then heal(p,a) end
 end)
 local function add(p)
+ task.spawn(OptionsStore.Get,p)
  states[p]={life=0,ammo={},protectedUntil=0,remoteCount=0,damage={},healCredit=0}
  if not assign(p) then return end
  records[p.UserId]={name=p.DisplayName,team=teamIndex(p),kills=0,downs=0,deaths=0,heals=0,headshots=0}
@@ -273,10 +277,18 @@ local function add(p)
 end
 Players.CharacterAutoLoads=false
 Players.PlayerAdded:Connect(add)
-Players.PlayerRemoving:Connect(function(p)Profiles.Save(p,true);states[p]=nil;cooldowns[p]=nil;task.defer(broadcast) end)
+Players.PlayerRemoving:Connect(function(p)
+ task.spawn(OptionsStore.Release,p)
+ Profiles.Save(p,true);states[p]=nil;cooldowns[p]=nil;task.defer(broadcast)
+end)
 for _,p in ipairs(Players:GetPlayers()) do task.spawn(add,p) end
 task.spawn(function()while true do task.wait(45);for p in pairs(Profiles.cache) do task.spawn(Profiles.Save,p,false) end end end)
-game:BindToClose(function()for p in pairs(Profiles.cache) do task.spawn(Profiles.Save,p,true) end;local limit=os.clock()+25;while next(Profiles.cache) and os.clock()<limit do task.wait(.2) end end)
+game:BindToClose(function()
+ for p in pairs(Profiles.cache) do task.spawn(Profiles.Save,p,true) end
+ for p in pairs(OptionsStore.cache) do task.spawn(OptionsStore.Release,p) end
+ local limit=os.clock()+25
+ while (next(Profiles.cache) or next(OptionsStore.cache)) and os.clock()<limit do task.wait(.2) end
+end)
 local function setPhase(value,duration)
  phase=value;deadline=now()+duration;workspace:SetAttribute('FalloutPhase',value);workspace:SetAttribute('FalloutDeadline',deadline)
  broadcast()
