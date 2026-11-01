@@ -96,7 +96,7 @@ for _,item in ipairs(C.Catalog) do
  local rotation=mesh.Size.X>mesh.Size.Z and item.kind=='Gun' and CFrame.Angles(0,math.pi/2,0) or CFrame.identity
  mesh.CFrame=rotation;mesh.Parent=tool
  tool.Grip=CFrame.new(0,-.12,-.35)*rotation
- local muzzle=Instance.new('Attachment');muzzle.Name='Muzzle';muzzle.Position=Vector3.new(0,.1,-mesh.Size.Z/2);muzzle.Parent=mesh
+ local muzzle=Instance.new('Attachment');muzzle.Name='Muzzle';muzzle.Position=rotation:VectorToObjectSpace(Vector3.new(0,.1,-length*.45));muzzle.Parent=mesh
  local visual=mesh:Clone();visual.Name=item.id;visual.Anchored=true;visual.CFrame=rotation;visual.Parent=visuals
  tool.Parent=templates
 end
