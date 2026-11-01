@@ -35,6 +35,17 @@ try{
  }
  console.log('HUDFIX_MESH_ACCESS '+JSON.stringify(statuses));
 }catch(error){console.log('HUDFIX_REFERENCE_WARNING '+String(error));}
+// Pin the exact 2014 GUI audited from the supplied Roblox asset, not a lookalike.
+const legacy=await api('https://apis.roblox.com/asset-delivery-api/v1/assetId/84860453909277');
+const legacyUrl=legacy.location||legacy.locations?.[0]?.location;
+if(!legacyUrl)throw Error('Original 2014 Roblox health GUI unavailable');
+const legacyResponse=await fetch(legacyUrl,{signal:AbortSignal.timeout(60000)});
+if(!legacyResponse.ok)throw Error('Original lobby health GUI download HTTP '+legacyResponse.status);
+const legacyBytes=Buffer.from(await legacyResponse.arrayBuffer());
+const legacyDigest=createHash('sha256').update(legacyBytes).digest('hex');
+if(legacyDigest!=='35bbef11373c32284c354fc7102af891af85fd133c2ac4be5e3df2ec7ad2deca')throw Error('Classic health asset changed since audited version');
+await fs.writeFile('/tmp/lobby-health-source.rbxm',legacyBytes);
+console.log('RETRO_LOBBY_HEALTH_VERIFIED '+JSON.stringify({assetId:84860453909277,bytes:legacyBytes.length,sha256:legacyDigest}));
 const r=await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip');if(!r.ok)throw Error('Lune download failed');const zip=Buffer.from(await r.arrayBuffer());
 if(createHash('sha256').update(zip).digest('hex')!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune checksum mismatch');
 await fs.writeFile('/tmp/hudfix-lune.zip',zip);execFileSync('unzip',['-q','-o','/tmp/hudfix-lune.zip','-d','/tmp/hudfix-lune']);await fs.chmod('/tmp/hudfix-lune/lune',0o755);
@@ -47,7 +58,7 @@ const script=invariants+'\n'+install+'\n';
 const preview=await execute(script+(await read('hudfix-wallet-probe.luau'))+'\n'+verify,upload.path,baseline.version);
 if(!preview?.ok||preview.preserved!==baseline.preserved)throw Error('Native preflight failed or unrelated content changed');
 console.log('HUDFIX_PREFLIGHT '+JSON.stringify(preview));
-if(mode.startsWith('hudfix-preview-'))console.log('HUDFIX_PREVIEW_COMPLETE '+JSON.stringify({published:false,verified:true}));
+if(mode.startsWith('hudfix-preview-'))console.log('FPS_HUD_PREVIEW_COMPLETE '+JSON.stringify({published:false,verified:true}));
 else{
  const current=await execute("return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion})");if(current.version!==baseline.version)throw Error('Place changed while preparing release');
  let saved=false;
@@ -58,7 +69,7 @@ else{
   if(!live?.ok||live.version<=baseline.version||live.preserved!==baseline.preserved)throw Error('Live verification failed');
   const config=await api(cloud+'universes/'+universe+'/places/'+place);if(config.serverSize!==10)throw Error('Server size changed');
   await api(cloud+'universes/'+universe+':restartServers',{method:'POST',body:'{}'});
-  console.log('HUDFIX_RELEASE_COMPLETE '+JSON.stringify({...live,serverSize:config.serverSize,rollbackVersion:baseline.version,restarted:true}));
+  console.log('FPS_HUD_RELEASE_COMPLETE '+JSON.stringify({...live,serverSize:config.serverSize,rollbackVersion:baseline.version,restarted:true}));
  }catch(error){
   if(saved){try{console.error('HUDFIX_ROLLBACK '+JSON.stringify(await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restoredFromVersion=game.PlaceVersion})',undefined,baseline.version)))}catch(rollback){console.error('HUDFIX_ROLLBACK_FAILED '+String(rollback))}}
   throw error;
