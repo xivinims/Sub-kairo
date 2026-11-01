@@ -37,8 +37,3 @@ jobs:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/publish.mjs --preview
 
-      - name: Publish the verified hotel build
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release-hotel]')
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        run: node dead-signal-publisher/publish.mjs
