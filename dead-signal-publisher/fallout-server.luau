@@ -311,11 +311,11 @@ Net.Query.OnServerInvoke=function(p,command,id)
  if command=='SettingsSave' then return OptionsStore.Set(p,id) end
  if command=='BotAdd' or command=='BotRemove' then
   if p.UserId~=C.OwnerUserId then return {ok=false,message='Apenas o criador pode controlar bots.'} end
-  if phase=='Match' then return {ok=false,message='Altere os bots no lobby.'} end
+  if phase~='Match' then return {ok=false,message='Bots de treino disponíveis apenas durante a partida FPS.'} end
   local current=CombatBots:Count()
   local ok,value=CombatBots:SetCount(current+(command=='BotAdd' and 1 or -1))
   broadcast()
-  return {ok=ok,count=ok and value or current,message=ok and ('NPCs configurados: '..value) or tostring(value)}
+  return {ok=ok,count=ok and value or current,message=ok and ('Bots inimigos na partida: '..value) or tostring(value)}
  end
  local profile=Profiles.cache[p]
  if command=='State' then return snapshot() end
