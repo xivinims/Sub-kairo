@@ -309,7 +309,7 @@ Run.RenderStepped:Connect(function(dt)
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
  mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping and not options:isOpen()
  local tool,def=equipped()
- CombatHUD.update(combat,{phase=state.phase,humanoid=hum,character=char,backpack=player:FindFirstChildOfClass('Backpack'),player=player,catalog=C.ById,tool=tool,def=def,downed=isDown,touch=touch,aiming=aiming,recoil=recoil,menuOpen=options:isOpen(),scores=state.scores,deadline=state.deadline,reticleEnabled=options:get('reticle'),radarEnabled=options:get('radar'),killfeedEnabled=options:get('killfeed')})
+ CombatHUD.update(combat,{phase=state.phase,humanoid=hum,character=char,backpack=player:FindFirstChildOfClass('Backpack'),player=player,catalog=C.ById,tool=tool,def=def,downed=isDown,touch=touch,aiming=aiming,recoil=recoil,menuOpen=options:isOpen(),scores=state.scores,deadline=state.deadline,botRoster=state.roster,reticleEnabled=options:get('reticle'),radarEnabled=options:get('radar'),killfeedEnabled=options:get('killfeed')})
  if firing and def and def.automatic then shoot() end
  if state.phase=='Match' and tool and def and not isDown then
   if activeTool~=tool then
