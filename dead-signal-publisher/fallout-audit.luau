@@ -1,7 +1,7 @@
 local fs=require('@lune/fs')
 local R=require('@lune/roblox')
 local serde=require('@lune/serde')
-for _,name in ipairs({'current','fallout','lobby','animations'}) do
+for _,name in ipairs({'current','fallout','lobby','animations','fps'}) do
  if not fs.isFile('/tmp/fallout-'..name) then continue end
  local bytes=fs.readFile('/tmp/fallout-'..name)
  local ok,root=pcall(R.deserializePlace,bytes)
@@ -21,13 +21,13 @@ for _,name in ipairs({'current','fallout','lobby','animations'}) do
   end
   if item:IsA('Animation') then table.insert(animations,{path=item:GetFullName(),id=item.AnimationId}) end
   if item:IsA('SpawnLocation') or (item:IsA('BasePart') and item.Name:lower():match('spawn')) or item.Name:lower():match('shop') or item.Name:lower():match('store') then
-   local r={path=item:GetFullName(),class=item.ClassName};if item:IsA('BasePart') then r.position=tostring(item.Position);r.size=tostring(item.Size) end;table.insert(special,r)
+   local r={path=item:GetFullName(),class=item.ClassName};if item:IsA('BasePart') then r.position=tostring(item.CFrame.Position);r.size=tostring(item.Size) end;table.insert(special,r)
   end
  end
  local summaries={}
  for _,s in ipairs(scripts) do
   local entry={path=s.path,class=s.class,bytes=#s.source}
-  if name=='animations' or (name=='current' and (s.path:lower():match('weapon') or s.path:lower():match('combat'))) then entry.source=s.source end
+  if name=='animations' or (name=='current' and (s.path:lower():match('weapon') or s.path:lower():match('combat'))) or (name=='fps' and s.path:find('ServerScriptService.Weapons',1,true)) then entry.source=s.source end
   table.insert(summaries,entry)
  end
  print('ASSET_STRUCTURE '..serde.encode('json',{name=name,kind=kind,instances=#root:GetDescendants(),counts=counts,top=top,special=special,scripts=summaries,animations=animations}))
