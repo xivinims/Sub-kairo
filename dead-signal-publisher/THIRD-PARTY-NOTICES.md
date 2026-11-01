@@ -40,3 +40,9 @@ Todos os assets foram solicitados pelo usuário nesta conversa. A aparência do 
 ## Nametags (versão 252)
 
 - **Custom Nametags System** — Bconggs (Roblox user 1345004125), asset [72094860266497](https://create.roblox.com/store/asset/72094860266497/Custom-Nametags-System). BillboardGui, labels, Inconsolata fonts and strokes adapted to name, tenure title and XP level. Original device lookup, sample stats scripts, health and membership icons are not installed. Server persistence and lifecycle handling are project-specific. Audited SHA-256: `adf4de6a1dc99460d27c8362fea8e259f61bc5ce6bfa01662e07cd1e5a481a37`.
+
+## Ícones da loja e ajustes de interface (versão 253)
+
+- As silhuetas vetoriais das armas e itens foram desenhadas para esta interface e são arte original do projeto.
+- O template de nametag citado na seção da versão 252 continua na experiência.
+- O pack de modelos e armas citado na seção da versão 251 continua em uso conforme as permissões verificadas; prévias de catálogo usam silhuetas próprias quando uma malha/textura externa retorna sem acesso.
