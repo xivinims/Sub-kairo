@@ -119,4 +119,10 @@ function UI.preview(viewport,visual,item)
  viewport:SetAttribute('FitDistance',distance);viewport:SetAttribute('FitAspect',aspect)
  return clone
 end
+function UI.catalogPreview(parent,visual,item)
+ local viewport=make('ViewportFrame',parent,{Name='ModelPreview',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=true})
+ local clone=UI.preview(viewport,visual,item)
+ viewport:SetAttribute('SourceItemId',item.id)
+ return viewport,clone
+end
 return UI
