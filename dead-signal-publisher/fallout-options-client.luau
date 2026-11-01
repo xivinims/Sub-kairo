@@ -99,47 +99,78 @@ function Menu.new(args)
   Name='FalloutOptionsMenu',DisplayOrder=51,ResetOnSpawn=false,IgnoreGuiInset=true,
   ScreenInsets=Enum.ScreenInsets.None,SafeAreaCompatibility=Enum.SafeAreaCompatibility.None
  })
- local openButton=make('TextButton',gui,{
-  Name='OpenOptions',Position=UDim2.fromOffset(16,62),Size=UDim2.fromOffset(99,29),
-  BackgroundColor3=Color3.fromRGB(18,22,23),BackgroundTransparency=.34,
-  BorderSizePixel=0,Text='OPÇÕES  ☰',TextSize=10,Font=Enum.Font.GothamBold,
-  TextColor3=Color3.fromRGB(241,239,228),AutoButtonColor=true,Modal=false
+ -- Icon-only gear button. Built from primitives to avoid unavailable image asset IDs.
+ local openButton=make('ImageButton',gui,{
+  Name='OpenOptions',Position=UDim2.fromOffset(14,58),Size=UDim2.fromOffset(38,38),
+  BackgroundColor3=Color3.fromRGB(11,16,18),BackgroundTransparency=.35,
+  BorderSizePixel=0,Image='',AutoButtonColor=true,Selectable=true,Modal=false,
+  ZIndex=20
  })
- make('UICorner',openButton,{CornerRadius=UDim.new(0,3)})
+ make('UICorner',openButton,{CornerRadius=UDim.new(0,8)})
+ make('UIStroke',openButton,{Color=Color3.fromRGB(194,204,202),Thickness=1,Transparency=.77})
+ local gear=make('Frame',openButton,{
+  Name='SettingsGearIcon',AnchorPoint=Vector2.new(.5,.5),
+  Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(25,25),
+  BackgroundTransparency=1,BorderSizePixel=0,ZIndex=21
+ })
+ local ivory=Color3.fromRGB(222,229,225)
+ for index=0,7 do
+  local radians=math.rad(index*45)
+  local centerX=12.5+math.sin(radians)*9.3
+  local centerY=12.5-math.cos(radians)*9.3
+  make('Frame',gear,{
+   Name='GearTooth'..index,AnchorPoint=Vector2.new(.5,.5),
+   Position=UDim2.fromOffset(centerX,centerY),
+   Size=UDim2.fromOffset(5.3,7.1),Rotation=index*45,
+   BackgroundColor3=ivory,BorderSizePixel=0,ZIndex=22
+  })
+ end
+ local gearRing=make('Frame',gear,{
+  Name='GearRing',AnchorPoint=Vector2.new(.5,.5),
+  Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(17,17),
+  BackgroundColor3=ivory,BorderSizePixel=0,ZIndex=23
+ })
+ make('UICorner',gearRing,{CornerRadius=UDim.new(1,0)})
+ local hole=make('Frame',gearRing,{
+  Name='CenterHole',AnchorPoint=Vector2.new(.5,.5),
+  Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(7,7),
+  BackgroundColor3=Color3.fromRGB(17,22,24),BorderSizePixel=0,ZIndex=24
+ })
+ make('UICorner',hole,{CornerRadius=UDim.new(1,0)})
  local panel=make('Frame',gui,{
-  Name='SmallLeftSettings',Position=UDim2.fromOffset(14,96),
-  Size=UDim2.fromOffset(266,320),BackgroundTransparency=1,
-  BorderSizePixel=0,Visible=false,ClipsDescendants=true
+  Name='SmallLeftSettings',Position=UDim2.fromOffset(11,102),
+  Size=UDim2.fromOffset(228,306),BackgroundTransparency=1,
+  BorderSizePixel=0,Visible=false,ClipsDescendants=true,ZIndex=3
  })
  local shadow=make('Frame',panel,{
   Name='CameraOverlayGradient',Position=UDim2.fromOffset(0,0),Size=UDim2.fromScale(1,1),
-  BackgroundColor3=Color3.fromRGB(3,5,6),BackgroundTransparency=.08,BorderSizePixel=0
+  BackgroundColor3=Color3.fromRGB(5,8,10),BackgroundTransparency=.31,BorderSizePixel=0
  })
  make('UIGradient',shadow,{
   Rotation=0,
   Transparency=NumberSequence.new({
-   NumberSequenceKeypoint.new(0,0),
-   NumberSequenceKeypoint.new(.62,.18),
+   NumberSequenceKeypoint.new(0,.02),
+   NumberSequenceKeypoint.new(.58,.24),
    NumberSequenceKeypoint.new(1,1)
   })
  })
- local header=addText(panel,'OPTIONS',UDim2.new(1,-30,0,28),UDim2.fromOffset(14,5),18,Color3.fromRGB(242,242,233),true)
- local hint=addText(panel,'',UDim2.new(1,-20,0,15),UDim2.fromOffset(14,33),10,Color3.fromRGB(146,158,156))
+ local header=addText(panel,'OPÇÕES',UDim2.new(1,-25,0,24),UDim2.fromOffset(12,5),15,Color3.fromRGB(224,227,222),true)
+ local hint=addText(panel,'',UDim2.new(1,-24,0,15),UDim2.fromOffset(12,30),9,Color3.fromRGB(149,164,163))
  local list=make('ScrollingFrame',panel,{
-  Name='SmallOptionList',Position=UDim2.fromOffset(9,55),
-  Size=UDim2.new(1,-19,1,-95),BackgroundTransparency=1,
-  BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=Color3.fromRGB(180,190,183),
+  Name='SmallOptionList',Position=UDim2.fromOffset(10,49),
+  Size=UDim2.new(1,-23,1,-87),BackgroundTransparency=1,
+  BorderSizePixel=0,ScrollBarThickness=2,ScrollBarImageColor3=Color3.fromRGB(155,166,159),
   CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,
   ScrollingDirection=Enum.ScrollingDirection.Y,ClipsDescendants=true,
  })
- local layout=make('UIListLayout',list,{FillDirection=Enum.FillDirection.Vertical,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2)})
+ local layout=make('UIListLayout',list,{FillDirection=Enum.FillDirection.Vertical,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,3)})
  local footer=make('TextButton',panel,{
-  Name='Back',Position=UDim2.new(0,15,1,-37),Size=UDim2.new(1,-30,0,31),
-  BackgroundTransparency=1,Text='‹  BACK',TextXAlignment=Enum.TextXAlignment.Left,
-  Font=Enum.Font.GothamMedium,TextColor3=Color3.fromRGB(218,220,211),
-  TextSize=12,AutoButtonColor=true,Modal=true
+  Name='Back',Position=UDim2.new(0,13,1,-37),Size=UDim2.new(1,-27,0,30),
+  BackgroundTransparency=1,Text='‹  VOLTAR',TextXAlignment=Enum.TextXAlignment.Left,
+  Font=Enum.Font.GothamMedium,TextColor3=Color3.fromRGB(217,219,211),
+  TextSize=10,AutoButtonColor=true,Modal=true
  })
- local status=addText(panel,'',UDim2.fromOffset(70,18),UDim2.new(1,-77,1,-31),9,Color3.fromRGB(146,164,156))
+ local status=addText(panel,'',UDim2.fromOffset(76,18),UDim2.new(1,-83,1,-31),9,Color3.fromRGB(146,164,156))
  status.TextXAlignment=Enum.TextXAlignment.Right
  local drag
  local t=function(key) return (dictionary[values.language] or dictionary.pt)[key] or key end
@@ -217,12 +248,13 @@ function Menu.new(args)
  local function resize()
   local camera=workspace.CurrentCamera
   local viewport=camera and camera.ViewportSize or Vector2.new(896,414)
-  local width=math.floor(math.min(270,math.max(208,viewport.X*.32)))
-  local height=math.floor(math.min(410,math.max(205,viewport.Y-115)))
-  if viewport.Y<330 then height=math.max(170,viewport.Y-105) end
+  -- A slim column (never a centered modal); world remains visible around it.
+  local width=math.floor(math.clamp(viewport.X*.265,188,235))
+  local top=(viewport.Y<355 and 91 or 98)
+  local height=math.floor(math.clamp(viewport.Y-top-10,168,352))
   panel.Size=UDim2.fromOffset(width,height)
-  panel.Position=UDim2.fromOffset(viewport.X<460 and 9 or 14,viewport.Y<330 and 91 or 96)
-  openButton.Position=UDim2.fromOffset(viewport.X<460 and 11 or 16,61)
+  panel.Position=UDim2.fromOffset(viewport.X<460 and 8 or 11,top)
+  openButton.Position=UDim2.fromOffset(viewport.X<460 and 11 or 14,55)
  end
  local nextRowOrder=0
  local function clearRows()
@@ -235,19 +267,23 @@ function Menu.new(args)
  end
  local function baseRow(name,height)
   nextRowOrder+=1
-  local row=make('Frame',list,{Name=name,LayoutOrder=nextRowOrder,Size=UDim2.new(1,-4,0,height),BackgroundTransparency=1,BorderSizePixel=0})
-  make('Frame',row,{Name='Divider',Position=UDim2.new(0,5,1,-1),Size=UDim2.new(1,-14,0,1),BackgroundColor3=Color3.fromRGB(93,105,103),BackgroundTransparency=.74,BorderSizePixel=0})
+  local row=make('Frame',list,{Name=name,LayoutOrder=nextRowOrder,Size=UDim2.new(1,-3,0,height),BackgroundTransparency=1,BorderSizePixel=0})
+  make('Frame',row,{Name='Divider',Position=UDim2.new(0,5,1,-1),Size=UDim2.new(1,-14,0,1),BackgroundColor3=Color3.fromRGB(103,112,109),BackgroundTransparency=.88,BorderSizePixel=0})
   return row
  end
  local function optionButton(key,isCategory,action)
-  local row=baseRow(key,30)
+  local row=baseRow(key,isCategory and 33 or 29)
   local b=make('TextButton',row,{
    Name='Option',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,
-   Text='',AutoButtonColor=true,Modal=true
+   BackgroundColor3=Color3.fromRGB(184,198,191),Text='',AutoButtonColor=false,Modal=true
   })
-  local left=addText(b,isCategory and t(key) or t(key),UDim2.new(.59,0,1,0),UDim2.fromOffset(5,0),11,Color3.fromRGB(202,212,210),false)
-  local right=addText(b,isCategory and '›' or tostring(values[key]),UDim2.new(.41,-8,1,0),UDim2.new(.59,0,0,0),11,Color3.fromRGB(224,226,219))
+  local left=addText(b,t(key),UDim2.new(.66,0,1,0),UDim2.fromOffset(7,0),
+   isCategory and 12 or 10,Color3.fromRGB(214,220,215),isCategory)
+  local right=addText(b,isCategory and '›' or tostring(values[key]),UDim2.new(.34,-8,1,0),UDim2.new(.66,0,0,0),
+   isCategory and 14 or 10,Color3.fromRGB(185,195,189))
   right.TextXAlignment=Enum.TextXAlignment.Right
+  b.MouseEnter:Connect(function()b.BackgroundTransparency=.91;left.TextColor3=Color3.fromRGB(255,255,250) end)
+  b.MouseLeave:Connect(function()b.BackgroundTransparency=1;left.TextColor3=Color3.fromRGB(214,220,215) end)
   b.Activated:Connect(action)
   return left,right
  end
@@ -360,9 +396,8 @@ function Menu.new(args)
  end
  redraw=function()
   clearRows()
-  header.Text=t('options')
-  openButton.Text=t('open')..'  ☰'
-  hint.Text=currentPage=='home' and '' or t(currentPage)
+  header.Text=currentPage=='home' and t('options') or t(currentPage)
+  hint.Text=currentPage=='home' and '' or t('options')
   footer.Text='‹  '..t('back')
   status.Text=saveStatus
   if currentPage=='home' then
@@ -389,6 +424,8 @@ function Menu.new(args)
   panel.Visible=opened
   openButton.Modal=opened
   if opened then resize();redraw() end
+  openButton.BackgroundTransparency=opened and .17 or .35
+  gear.Rotation=opened and 24 or 0
   if args.onToggle then args.onToggle(opened) end
  end
  function Menu:isOpen() return opened end
