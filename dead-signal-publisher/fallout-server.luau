@@ -296,6 +296,7 @@ local function startRound()
  for _,p in ipairs(Players:GetPlayers()) do if alive(p) then movePlayer(p) else p:LoadCharacterAsync() end end
  broadcast()
 end
+workspace:SetAttribute('FalloutServerInitialized',true)
 local function finishRound()
  local winning=Rules.winner(scores)
  lastResults={winner=winning,scores=table.clone(scores),rows=rows(),round=round}
