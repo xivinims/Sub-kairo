@@ -1,17 +1,20 @@
 {
   "preflightVersion": 256,
-  "rollbackVersion": 255,
-  "lastVerifiedVersion": 256,
+  "rollbackVersion": 256,
+  "lastVerifiedVersion": 257,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41321055429,
+  "releaseRunId": 41331592359,
   "nametagBuild": "nametags-v1",
   "hudFix": "fps-left-options-v4",
   "viewportRevision": "weapon-clones-v1",
   "frozenOutfit": "2026-11-01-owner-avatar",
   "classicLobbyHealthAssetId": 84860453909277,
   "optionsMenu": "camera-visible-left-corner",
-  "optionsStore": "FalloutOptions_v1"
+  "optionsStore": "FalloutOptions_v1",
+  "combatHUDRevision": "reference-tactical-v1",
+  "protectedContent": "6167:325047229",
+  "clientVisualTested": false
 }

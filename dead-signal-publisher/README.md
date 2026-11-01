@@ -1,4 +1,4 @@
-# Fallout 5×5 — versão publicada 254
+# Fallout 5×5 — versão publicada 257
 
 Branch ativa: `dead-signal-publisher`  
 Experiência: `9421311218` · Place: `118064584465155`  
@@ -11,7 +11,7 @@ O hotel antigo foi substituído no place publicado. A versão 250 permanece no h
 - Fallout Map (FPS): 680 peças, usado no combate.
 - Floating Lobby: intervalo e área segura; 25 peças de grama escurecidas.
 - Abandoned Shop: substitui a loja original do lobby, com 31 peças.
-- Avatar atual de ch_ckz2n (8344738123) em R6 na loja.
+- Avatar de ch_ckz2n (8344738123) em R6 na loja, com roupa e acessórios fixados na captura de 01/11/2026.
 - Quatro animações R6 do Dynamic NPC Animations V2, reproduzidas a partir dos keyframes do pacote.
 - Interface e módulo do NPC Dialogue System com “Sobre o jogo”, “Loja” e “Itens”.
 - 14 produtos do pacote de armas: oito armas de fogo, faca, machado, granada, mina, kit médico e seringa. Barco e avião do pacote não são armas e não fazem parte do catálogo.
@@ -74,3 +74,16 @@ O patch usa `nametag-release.mjs`; a reconstrução completa em `fallout-release
 - [Publicação 254 e verificações](https://github.com/xivinims/Sub-kairo/actions/runs/41315002137): compilação Luau, criação dos 14 clones, preservação das malhas/texturas originais e enquadramento completo em prévias de 76 e 96 pixels de largura. Verificado novamente após salvar; servidores reiniciados e limite de 10 jogadores confirmado.
 - Assinatura do restante do lugar preservada (`6170:1847713054`), incluindo mapas, NPC, armas equipáveis e scripts de combate. Patch restrito a `FalloutClient`, `FalloutUI` e aos atributos da prévia, via `viewport-release.mjs`.
 - Não houve teste visual em cliente Roblox ou celular. Esses testes confirmam a estrutura e o enquadramento, não que cada dependência externa tenha sido renderizada no aparelho do jogador.
+
+## HUD de combate inspirado na referência — versão 257
+
+- Placar de 286 × 28, com dez retratos; 263 × 26 em telas baixas. Centraliza na área segura da tela e encosta no topo, respeitando os controles do Roblox. Em retrato sem espaço, fica imediatamente abaixo deles.
+- Pílula de moedas com ícone e saldo, 64 × 26 quando o saldo é zero; expande só conforme o número.
+- Combate com bordas finas, vida em barra, munição do equipamento real, prévia do modelo, progresso de recarga, quatro atalhos de equipamento e três linhas de eliminações. Teclado 1–4, toques e botões L1/R1 alternam equipamentos existentes.
+- Mira centralizada no viewport, alinhada ao raio do disparo; indicador de acerto e espaçamento de mira. Minimap com 120 contornos derivados do CombatMap, jogador e até quatro aliados; não revela inimigos.
+- Controles móveis compactos, com espaço para o joystick e o pulo nativos. Preferências publicadas na v256 de mira, radar, notificações, eliminações, campo de visão e botões continuam conectadas.
+- Mantidos o template original da barra de 2014, exclusivo de Waiting/Intermission, e o NPC já congelado na v255. O controlador da vida acompanha morte e respawn.
+
+[Publicação 257 e verificação nativa](https://github.com/xivinims/Sub-kairo/actions/runs/41331592359): compilação, seis layouts, alternância lobby/partida, morte/respawn, munição, equipamento, minimapa e opções de visibilidade. Conteúdo fora dos módulos de HUD preservado (`6167:325047229`), incluindo mapa, NPC, combate, loja, configurações e persistência. Limite 10; servidores reiniciados. Versão anterior: 256.
+
+O fluxo `lobby-hud-release.mjs` exige a base inspecionada antes de publicar. A reconstrução completa também inclui os novos módulos e as dependências das opções da v256. Não houve teste visual em cliente Roblox/iPhone; a verificação nativa confirma estrutura e comportamento dos componentes, não aparência final no aparelho.
