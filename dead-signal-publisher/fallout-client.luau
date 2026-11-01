@@ -5,8 +5,11 @@ local UIS=game:GetService('UserInputService')
 local CAS=game:GetService('ContextActionService')
 local Tween=game:GetService('TweenService')
 local Debris=game:GetService('Debris')
+local ContentProvider=game:GetService('ContentProvider')
+local GuiService=game:GetService('GuiService')
 local player=Players.LocalPlayer
 local C=require(RS:WaitForChild('FalloutConfig'))
+local UI=require(RS:WaitForChild('FalloutUI'))
 local net=RS:WaitForChild('FalloutNet')
 local gui=Instance.new('ScreenGui');gui.Name='FalloutHUD';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.DisplayOrder=30;gui.Parent=player:WaitForChild('PlayerGui')
 local state={phase='Waiting',deadline=0,scores={0,0},roster={}}
@@ -22,26 +25,14 @@ local function corner(o,n)make('UICorner',o,{CornerRadius=UDim.new(0,n or 10)}) 
 local function button(parent,text,size,pos,callback)
  local b=make('TextButton',parent,{Text=text,Size=size,Position=pos,Font=Enum.Font.GothamBold,TextSize=15,TextColor3=Color3.fromRGB(240,241,228),BackgroundColor3=Color3.fromRGB(39,47,43),BorderSizePixel=0,AutoButtonColor=true});corner(b,8);b.Activated:Connect(callback);return b
 end
-local top=make('Frame',gui,{AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,8),Size=UDim2.fromOffset(620,64),BackgroundColor3=Color3.fromRGB(18,22,23),BackgroundTransparency=.16,BorderSizePixel=0});corner(top,12)
-local topScale=make('UIScale',top,{Scale=1})
-local score=label(top,'0  —  0',UDim2.fromOffset(132,32),UDim2.fromOffset(244,1),Enum.Font.GothamBold);score.TextSize=26
-local clock=label(top,'AGUARDANDO JOGADORES',UDim2.fromOffset(240,24),UDim2.fromOffset(190,35));clock.TextSize=12
-local slots={{},{}}
-for team=1,2 do
- for i=1,5 do
-  local x=team==1 and 12+(i-1)*44 or 390+(i-1)*44
-  local frame=make('Frame',top,{Size=UDim2.fromOffset(38,38),Position=UDim2.fromOffset(x,12),BackgroundColor3=colors[team],BackgroundTransparency=.6,BorderSizePixel=0});corner(frame,9)
-  local portrait=make('ImageLabel',frame,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=''});corner(portrait,9)
-  local mark=label(frame,'',UDim2.fromScale(1,1),UDim2.fromScale(0,0),Enum.Font.GothamBlack);mark.TextSize=23
-  slots[team][i]={portrait=portrait,mark=mark}
- end
-end
+local board=UI.scoreboard(player.PlayerGui,colors)
+local score,clock,slots=board.score,board.clock,board.slots
+local wallet=UI.wallet(gui)
 local notice=label(gui,'',UDim2.new(.7,0,0,40),UDim2.new(.15,0,.19,0));notice.TextSize=16
 local noticeSerial=0
 local function showNotice(text)
  noticeSerial+=1;local n=noticeSerial;notice.Text=text;task.delay(3,function()if noticeSerial==n then notice.Text='' end end)
 end
-local stats=label(gui,'',UDim2.fromOffset(260,28),UDim2.new(0,16,1,-36));stats.TextXAlignment=Enum.TextXAlignment.Left;stats.TextSize=14
 local ammo=label(gui,'',UDim2.fromOffset(260,46),UDim2.new(1,-280,1,-70),Enum.Font.GothamBold);ammo.TextXAlignment=Enum.TextXAlignment.Right;ammo.TextSize=19
 local health=label(gui,'100 PV',UDim2.fromOffset(180,28),UDim2.new(0,16,1,-66),Enum.Font.GothamBold);health.TextXAlignment=Enum.TextXAlignment.Left
 local cross=label(gui,'+',UDim2.fromOffset(32,32),UDim2.new(.5,-16,.5,-16));cross.TextSize=26
@@ -75,10 +66,23 @@ local function showResults(data)
 end
 local shop=make('Frame',gui,{Size=UDim2.fromScale(.9,.83),Position=UDim2.fromScale(.05,.1),BackgroundColor3=Color3.fromRGB(18,24,22),BorderSizePixel=0,Visible=false});corner(shop,12)
 local shopTitle=label(shop,'ARMARIA',UDim2.new(.65,0,0,42),UDim2.fromOffset(18,6),Enum.Font.GothamBold);shopTitle.TextSize=24;shopTitle.TextXAlignment=Enum.TextXAlignment.Left
-local shopList=make('ScrollingFrame',shop,{Position=UDim2.fromOffset(14,58),Size=UDim2.new(1,-28,1,-72),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new()})
+UI.coin(shop,18,UDim2.fromOffset(18,48))
+local shopBalance=label(shop,'…',UDim2.new(1,-60,0,24),UDim2.fromOffset(44,44),Enum.Font.GothamMedium);shopBalance.TextXAlignment=Enum.TextXAlignment.Left;shopBalance.TextSize=14
+local shopList=make('ScrollingFrame',shop,{Position=UDim2.fromOffset(14,80),Size=UDim2.new(1,-28,1,-94),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,AutomaticCanvasSize=Enum.AutomaticSize.Y,CanvasSize=UDim2.new()})
 make('UIListLayout',shopList,{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder})
 local shopping=false
+local shopMode
+local previewStatus={}
 local dialogueController
+local function updateWallet()
+ local ready=player:GetAttribute('ProfileReady')==true
+ local coins=ready and UI.money(player:GetAttribute('Coins')) or '…'
+ wallet.balance.Text=coins
+ wallet.progress.Text=ready and ('NÍV. '..UI.integer(player:GetAttribute('Level'))..'  •  '..UI.money(player:GetAttribute('XP'))..' XP') or 'CARREGANDO'
+ shopBalance.Text=ready and (coins..' moedas disponíveis') or 'Carregando saldo…'
+end
+for _,name in ipairs({'Coins','XP','Level','ProfileReady'}) do player:GetAttributeChangedSignal(name):Connect(updateWallet) end
+updateWallet()
 local function closeShop()shop.Visible=false;shopping=false end
 button(shop,'FECHAR',UDim2.fromOffset(88,34),UDim2.new(1,-104,0,10),closeShop)
 local function query(command,id)
@@ -89,36 +93,57 @@ end
 local function openShop(itemsOnly)
  if state.phase=='Match' then return end
  local profile=query('Profile');if not profile or not profile.ok then showNotice(profile and profile.message or 'Carregando…');return end
- shopping=true;shop.Visible=true;shopTitle.Text=(itemsOnly and 'ITENS' or 'ARMARIA')..'  •  '..profile.coins..' MOEDAS'
+ local scroll=shopping and shopMode==itemsOnly and shopList.CanvasPosition or Vector2.zero
+ shopping=true;shopMode=itemsOnly;shop.Visible=true;shopTitle.Text=itemsOnly and 'ITENS' or 'ARMARIA'
+ shopBalance.Text=UI.money(profile.coins)..' moedas disponíveis'
  for _,child in ipairs(shopList:GetChildren()) do if child:IsA('Frame') then child:Destroy() end end
  for index,item in ipairs(C.Catalog) do
   if not itemsOnly or item.kind=='Heal' or item.kind=='Mine' or item.kind=='Grenade' then
-   local row=make('Frame',shopList,{Size=UDim2.new(1,-8,0,92),BackgroundColor3=Color3.fromRGB(31,39,34),BorderSizePixel=0,LayoutOrder=index});corner(row,8)
-   local viewport=make('ViewportFrame',row,{Size=UDim2.fromOffset(90,82),Position=UDim2.fromOffset(5,5),BackgroundTransparency=1,Ambient=Color3.fromRGB(210,218,205),LightColor=Color3.fromRGB(255,238,215)})
+   local iconWidth=shop.AbsoluteSize.X<420 and 76 or 96
+   local iconHeight=iconWidth/1.17
+   local contentX=iconWidth+12
+   local row=make('Frame',shopList,{Name='Item_'..item.id,Size=UDim2.new(1,-8,0,94),BackgroundColor3=Color3.fromRGB(31,39,34),BorderSizePixel=0,LayoutOrder=index});corner(row,8)
+   local iconBox=make('Frame',row,{Name='Preview',Size=UDim2.fromOffset(iconWidth,iconHeight),Position=UDim2.fromOffset(5,(94-iconHeight)/2),BackgroundColor3=Color3.fromRGB(25,32,30),BorderSizePixel=0});corner(iconBox,6)
+   local icon=UI.itemIcon(iconBox,item)
+   local viewport=make('ViewportFrame',iconBox,{Name='ModelPreview',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
    local visual=RS.FalloutItemVisuals:FindFirstChild(item.id)
-   if visual then local clone=visual:Clone();clone.Anchored=true;clone.CFrame=CFrame.new()*visual.CFrame.Rotation;clone.Parent=viewport;local cam=Instance.new('Camera');cam.CFrame=CFrame.lookAt(Vector3.new(2,1.2,3),Vector3.zero);cam.FieldOfView=40;cam.Parent=viewport;viewport.CurrentCamera=cam end
-   local name=label(row,item.name,UDim2.new(1,-224,0,42),UDim2.fromOffset(100,4),Enum.Font.GothamBold);name.TextXAlignment=Enum.TextXAlignment.Left;name.TextSize=15
+   if visual then
+    local clone=UI.preview(viewport,visual,item)
+    task.spawn(function()
+     if previewStatus[item.id]==nil then
+      local failed=false
+      local ok=pcall(function()ContentProvider:PreloadAsync({clone},function(_,status)if status~=Enum.AssetFetchStatus.Success then failed=true end end)end)
+      previewStatus[item.id]=ok and not failed
+     end
+     if viewport.Parent and previewStatus[item.id] then viewport.Visible=true;icon.Visible=false end
+    end)
+   end
+   local name=label(row,item.name,UDim2.new(1,-contentX-12,0,23),UDim2.fromOffset(contentX,5),Enum.Font.GothamBold);name.TextXAlignment=Enum.TextXAlignment.Left;name.TextSize=14;name.TextWrapped=false;name.TextTruncate=Enum.TextTruncate.AtEnd
    local description=item.kind=='Gun' and (item.damage..' dano • '..item.mag..' tiros') or item.kind=='Heal' and (item.healing..' PV • cura aliados') or item.kind=='Melee' and (item.damage..' dano • corpo a corpo') or (item.charges..' por partida')
-   local text=label(row,description..'\n'..(item.price==0 and 'GRÁTIS' or item.price..' moedas'),UDim2.new(1,-224,0,42),UDim2.fromOffset(100,44));text.TextXAlignment=Enum.TextXAlignment.Left;text.TextSize=12
+   local text=label(row,description,UDim2.new(1,-contentX-12,0,18),UDim2.fromOffset(contentX,30));text.TextXAlignment=Enum.TextXAlignment.Left;text.TextSize=11;text.TextWrapped=false;text.TextTruncate=Enum.TextTruncate.AtEnd
+   local price=label(row,item.price==0 and 'GRÁTIS' or UI.money(item.price),UDim2.new(1,-contentX-122,0,32),UDim2.fromOffset(contentX,56),Enum.Font.GothamBold);price.TextXAlignment=Enum.TextXAlignment.Left;price.TextSize=13;price.TextColor3=Color3.fromRGB(226,185,91);price.TextWrapped=false
    local owned=profile.owned[item.id]
    local equipped=false;for _,id in pairs(profile.loadout) do if id==item.id then equipped=true end end
    local buy
-   buy=button(row,equipped and 'EQUIPADO' or owned and 'EQUIPAR' or 'COMPRAR',UDim2.fromOffset(108,40),UDim2.new(1,-116,.5,-20),function()
+   buy=button(row,equipped and 'EQUIPADO' or owned and 'EQUIPAR' or 'COMPRAR',UDim2.fromOffset(108,32),UDim2.new(1,-116,0,56),function()
+    if equipped then return end
     if buy:GetAttribute('Busy') then return end;buy:SetAttribute('Busy',true)
     local result=query(owned and 'Equip' or 'Buy',item.id)
     if result then showNotice(result.message or '');if result.ok then openShop(itemsOnly) end end
     if buy.Parent then buy:SetAttribute('Busy',false) end
    end)
+   buy.TextSize=12
   end
  end
+ shopList.CanvasPosition=scroll
 end
 local function applyState(new)
  if type(new)~='table' then return end
  local previous=state.phase;state=new
  score.Text=string.format('%d  —  %d',state.scores[1],state.scores[2])
- for team=1,2 do for i=1,5 do slots[team][i].portrait.Image='';slots[team][i].mark.Text='' end end
+ for team=1,2 do for i=1,5 do slots[team][i].portrait.Image='';slots[team][i].status.Visible=false end end
  local counts={0,0}
- for _,p in ipairs(state.roster) do if p.team==1 or p.team==2 then counts[p.team]+=1;local s=slots[p.team][counts[p.team]];if s then s.portrait.Image='rbxthumb://type=AvatarHeadShot&id='..p.userId..'&w=150&h=150';s.portrait.ImageTransparency=p.alive and 0 or .65;s.mark.Text=p.downed and '↓' or not p.alive and '×' or '' end end end
+ for _,p in ipairs(state.roster) do if p.team==1 or p.team==2 then counts[p.team]+=1;local s=slots[p.team][counts[p.team]];if s then s.portrait.Image='rbxthumb://type=AvatarHeadShot&id='..p.userId..'&w=150&h=150';s.portrait.ImageTransparency=p.alive and 0 or .65;s.status.Visible=p.downed;s.status.BackgroundColor3=Color3.fromRGB(225,185,101) end end end
  results.Visible=state.phase=='Results';if state.phase=='Results' then showResults(state.results) end
  if previous~=state.phase then
   closeShop()
@@ -196,10 +221,10 @@ net.Fx.OnClientEvent:Connect(function(info)
 end)
 Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
- topScale.Scale=math.min(1,(camera.ViewportSize.X-28)/620)
+ UI.fitScoreboard(board,camera.ViewportSize,GuiService.TopbarInset)
+ wallet.root.Position=UDim2.new(1,-12,0,board.fallback and 52 or 6)
  local left=math.max(0,math.ceil((state.deadline or 0)-workspace:GetServerTimeNow()))
- clock.Text=state.phase=='Waiting' and 'AGUARDANDO PELO MENOS 2 JOGADORES' or (state.phase=='Match' and '' or 'INTERVALO  ')..string.format('%02d:%02d',math.floor(left/60),left%60)
- stats.Text=string.format('%d XP  •  %d moedas',player:GetAttribute('XP') or 0,player:GetAttribute('Coins') or 0)
+ clock.Text=state.phase=='Waiting' and 'AGUARDANDO 2 JOGADORES' or (state.phase=='Match' and '' or 'INTERVALO  ')..string.format('%02d:%02d',math.floor(left/60),left%60)
  local char=player.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
  health.Text=hum and (math.ceil(hum.Health)..' PV') or 'AGUARDANDO'
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
