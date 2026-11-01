@@ -1,4 +1,4 @@
-# Fallout 5×5 — versão publicada 252
+# Fallout 5×5 — versão publicada 253
 
 Branch ativa: `dead-signal-publisher`  
 Experiência: `9421311218` · Place: `118064584465155`  
@@ -57,3 +57,12 @@ Base: [Custom Nametags System, Bconggs](https://create.roblox.com/store/asset/72
 [Publicação 252 e testes](https://github.com/xivinims/Sub-kairo/actions/runs/41299522661): limites de 2h/29h, migração, múltiplos salvamentos, reentrada, tempo offline, falha temporária de gravação e saída durante carregamento. Verificação nativa do template, inicialização e transições. Assinatura do conteúdo protegido igual antes/depois (`6158:268125991`): mapa e scripts de combate preservados. Não houve teste visual com cliente/jogadores nesta atualização.
 
 O patch usa `nametag-release.mjs`; a reconstrução completa em `fallout-release.mjs` também inclui o mesmo pacote. Plugins de IK e IA não foram necessários para tags.
+
+## Ajustes visuais e da loja — versão 253
+
+- Placar compacto de 430 × 42, centralizado na área da barra superior do Roblox. Retratos continuam visíveis; o estado de queda usa uma linha dourada, sem o `X` sobre a foto. Em telas estreitas, o placar passa para a área segura logo abaixo da barra.
+- Saldo em moedas inteiras no canto superior direito, com ícone, nível e XP. A tela da loja mostra o saldo separado do título.
+- As 14 armas e itens agora têm silhuetas desenhadas na interface que continuam visíveis mesmo quando a prévia 3D não carrega. As dependências de malha/textura verificadas da pistola retornam 403 no Asset Delivery; o jogo não tenta contornar a permissão do criador.
+- NPC R6 recriado com o avatar atual e colocado atrás do balcão, centralizado na janela e com os pés alinhados ao chão. Mantém o diálogo e as animações.
+- Compra/equipamento salva saldo e item juntos. Se a gravação falhar, nenhuma moeda é descontada. Recompensas recebidas durante a gravação são mantidas. Moedas e XP aparecem como inteiros.
+- [Execução e testes da versão 253](https://github.com/xivinims/Sub-kairo/actions/runs/41305265341): layout para paisagem e retrato, 10 retratos, 14 ícones, enquadramento de cada malha na câmera quando disponível, posição do NPC, recompensa e falha de gravação simulada, salvamento e leitura do saldo em uma chave temporária removida ao final. Assinatura do restante do lugar igual antes/depois (`6033:140825198`). Servidores reiniciados; limite 10 conferido. O fluxo visual ainda não foi testado com clientes em uma partida pública.
