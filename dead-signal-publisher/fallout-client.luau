@@ -5,7 +5,6 @@ local UIS=game:GetService('UserInputService')
 local CAS=game:GetService('ContextActionService')
 local Tween=game:GetService('TweenService')
 local Debris=game:GetService('Debris')
-local ContentProvider=game:GetService('ContentProvider')
 local GuiService=game:GetService('GuiService')
 local player=Players.LocalPlayer
 local C=require(RS:WaitForChild('FalloutConfig'))
@@ -72,7 +71,6 @@ local shopList=make('ScrollingFrame',shop,{Position=UDim2.fromOffset(14,80),Size
 make('UIListLayout',shopList,{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder})
 local shopping=false
 local shopMode
-local previewStatus={}
 local dialogueController
 local function updateWallet()
  local ready=player:GetAttribute('ProfileReady')==true
@@ -104,19 +102,11 @@ local function openShop(itemsOnly)
    local contentX=iconWidth+12
    local row=make('Frame',shopList,{Name='Item_'..item.id,Size=UDim2.new(1,-8,0,94),BackgroundColor3=Color3.fromRGB(31,39,34),BorderSizePixel=0,LayoutOrder=index});corner(row,8)
    local iconBox=make('Frame',row,{Name='Preview',Size=UDim2.fromOffset(iconWidth,iconHeight),Position=UDim2.fromOffset(5,(94-iconHeight)/2),BackgroundColor3=Color3.fromRGB(25,32,30),BorderSizePixel=0});corner(iconBox,6)
-   local icon=UI.itemIcon(iconBox,item)
-   local viewport=make('ViewportFrame',iconBox,{Name='ModelPreview',Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=false})
-   local visual=not RS.FalloutItemVisuals:GetAttribute('UseReliableIcons') and RS.FalloutItemVisuals:FindFirstChild(item.id)
+   local visual=RS.FalloutItemVisuals:FindFirstChild(item.id)
    if visual then
-    local clone=UI.preview(viewport,visual,item)
-    task.spawn(function()
-     if previewStatus[item.id]==nil then
-      local failed=false
-      local ok=pcall(function()ContentProvider:PreloadAsync({clone},function(_,status)if status~=Enum.AssetFetchStatus.Success then failed=true end end)end)
-      previewStatus[item.id]=ok and not failed
-     end
-     if viewport.Parent and previewStatus[item.id] then viewport.Visible=true;icon.Visible=false end
-    end)
+    UI.catalogPreview(iconBox,visual,item)
+   else
+    local missing=label(iconBox,'Prévia indisponível',UDim2.fromScale(1,1),UDim2.new());missing.TextSize=10
    end
    local name=label(row,item.name,UDim2.new(1,-contentX-12,0,23),UDim2.fromOffset(contentX,5),Enum.Font.GothamBold);name.TextXAlignment=Enum.TextXAlignment.Left;name.TextSize=14;name.TextWrapped=false;name.TextTruncate=Enum.TextTruncate.AtEnd
    local description=item.kind=='Gun' and (item.damage..' dano • '..item.mag..' tiros') or item.kind=='Heal' and (item.healing..' PV • cura aliados') or item.kind=='Melee' and (item.damage..' dano • corpo a corpo') or (item.charges..' por partida')
