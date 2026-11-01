@@ -1,13 +1,11 @@
 name: Dead Signal Publisher
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - dead-signal-publisher
     paths:
       - "dead-signal-publisher/preview.trigger"
-      - "dead-signal-publisher/release.trigger"
 
 permissions:
   contents: read
