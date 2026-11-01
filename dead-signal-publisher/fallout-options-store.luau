@@ -4,12 +4,12 @@ local DataStore=game:GetService('DataStoreService'):GetDataStore('FalloutOptions
 local Options={}
 Options.defaults={
  reticle=true,radar=true,killfeed=true,hitmarker=true,notices=true,
- aimMode='hold',buttonScale=100,buttonOpacity=85,
+ aimMode='hold',buttonScale=100,buttonOpacity=85,cameraFov=78,
  brightness=50,contrast=50,saturation=50,shadows=true,performance=false,
  effectsVolume=100,musicVolume=100,dialogueVolume=100,language='pt'
 }
 local numeric={
- buttonScale={80,110},buttonOpacity={30,100},
+ buttonScale={80,110},buttonOpacity={30,100},cameraFov={65,95},
  brightness={0,100},contrast={0,100},saturation={0,100},
  effectsVolume={0,100},musicVolume={0,100},dialogueVolume={0,100}
 }
