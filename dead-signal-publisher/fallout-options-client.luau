@@ -144,6 +144,9 @@ function Menu.new(args)
  local drag
  local t=function(key) return (dictionary[values.language] or dictionary.pt)[key] or key end
 
+ local trackedSound=setmetatable({},{__mode='k'})
+ local lastVisualSignature
+ local lastAudioSignature
  local function classifySound(sound)
   local name=(sound.Name..' '..(sound.Parent and sound.Parent.Name or '')):lower()
   if name:find('music',1,true) or name:find('song',1,true) or name:find('bgm',1,true) or name:find('theme',1,true) then return 'musicVolume' end
@@ -153,23 +156,39 @@ function Menu.new(args)
  local function applySound(sound)
   if not sound or not sound:IsA('Sound') then return end
   if originalSound[sound]==nil then originalSound[sound]=sound.Volume end
+  trackedSound[sound]=true
   sound.Volume=originalSound[sound]*(values[classifySound(sound)]/100)
  end
  local function applyVisuals()
-  effect.Brightness=(values.brightness-50)/260
-  effect.Contrast=(values.contrast-50)/220
-  effect.Saturation=(values.saturation-50)/160
-  pcall(function()Lighting.GlobalShadows=values.shadows and originalShadows or false end)
-  for _,desc in ipairs(Lighting:GetDescendants()) do
-   if desc:IsA('PostEffect') and desc~=effect then
-    if originalPost[desc]==nil then originalPost[desc]=desc.Enabled end
-    if values.performance then desc.Enabled=false else desc.Enabled=originalPost[desc] end
+  local signature=table.concat({
+   values.brightness,values.contrast,values.saturation,
+   tostring(values.shadows),tostring(values.performance)
+  },':')
+  if signature~=lastVisualSignature then
+   lastVisualSignature=signature
+   effect.Brightness=(values.brightness-50)/260
+   effect.Contrast=(values.contrast-50)/220
+   effect.Saturation=(values.saturation-50)/160
+   pcall(function()Lighting.GlobalShadows=values.shadows and originalShadows or false end)
+   for _,desc in ipairs(Lighting:GetDescendants()) do
+    if desc:IsA('PostEffect') and desc~=effect then
+     if originalPost[desc]==nil then originalPost[desc]=desc.Enabled end
+     if values.performance then desc.Enabled=false else desc.Enabled=originalPost[desc] end
+    end
    end
   end
-  for _,root in ipairs(audioRoots) do
-   for _,inst in ipairs(root:GetDescendants()) do
-    if inst:IsA('Sound') then applySound(inst) end
+  local audioSignature=values.effectsVolume..':'..values.musicVolume..':'..values.dialogueVolume
+  if audioSignature~=lastAudioSignature then
+   if not lastAudioSignature then
+    for _,root in ipairs(audioRoots) do
+     for _,inst in ipairs(root:GetDescendants()) do
+      if inst:IsA('Sound') then applySound(inst) end
+     end
+    end
+   else
+    for sound in pairs(trackedSound) do if sound.Parent then applySound(sound) end end
    end
+   lastAudioSignature=audioSignature
   end
  end
  local function changed()
