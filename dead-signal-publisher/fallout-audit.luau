@@ -19,7 +19,7 @@ for _,name in ipairs({'current','fallout','lobby','animations','fps'}) do
   if item:IsA('LuaSourceContainer') then
    table.insert(scripts,{path=item:GetFullName(),class=item.ClassName,source=item.Source})
   end
-  if item:IsA('Animation') then table.insert(animations,{path=item:GetFullName(),id=item.AnimationId}) end
+  if item:IsA('Animation') then local id='';pcall(function() id=item.AnimationId end);table.insert(animations,{path=item:GetFullName(),id=id}) end
   if item:IsA('SpawnLocation') or (item:IsA('BasePart') and item.Name:lower():match('spawn')) or item.Name:lower():match('shop') or item.Name:lower():match('store') then
    local r={path=item:GetFullName(),class=item.ClassName};if item:IsA('BasePart') then r.position=tostring(item.CFrame.Position);r.size=tostring(item.Size) end;table.insert(special,r)
   end
@@ -30,5 +30,6 @@ for _,name in ipairs({'current','fallout','lobby','animations','fps'}) do
   if name=='animations' or (name=='current' and (s.path:lower():match('weapon') or s.path:lower():match('combat'))) or (name=='fps' and s.path:find('ServerScriptService.Weapons',1,true)) then entry.source=s.source end
   table.insert(summaries,entry)
  end
+ if #top>80 then for i=#top,81,-1 do table.remove(top,i) end end
  print('ASSET_STRUCTURE '..serde.encode('json',{name=name,kind=kind,instances=#root:GetDescendants(),counts=counts,top=top,special=special,scripts=summaries,animations=animations}))
 end
