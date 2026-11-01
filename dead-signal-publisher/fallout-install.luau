@@ -117,5 +117,6 @@ local headGui=SS.NpcDialogueGui:Clone();headGui.Name='gui';headGui:FindFirstChil
 local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Conversar';prompt.ObjectText='Armeiro';prompt.MaxActivationDistance=10;prompt.RequiresLineOfSight=false;prompt.Parent=npc
 game:GetService('CollectionService'):AddTag(prompt,'NPCprompt')
 workspace:SetAttribute('LobbyGrassDarkened',darkened)
+workspace:SetAttribute('FalloutNametagBuild','nametags-v1')
 workspace:SetAttribute('WorldReady',true)
 b:Destroy()
