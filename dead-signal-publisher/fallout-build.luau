@@ -56,6 +56,10 @@ local config=scriptFile(RS,'FalloutConfig','ModuleScript','fallout-config.luau')
 local runtime=instance('Folder','FalloutRuntime',folders.ServerScriptService)
 scriptFile(runtime,'Rules','ModuleScript','fallout-rules.luau')
 scriptFile(runtime,'Profiles','ModuleScript','fallout-profiles.luau')
+local nametagPatch=R.deserializeModel(fs.readFile('/tmp/nametag-bundle.rbxm'))[1]
+nametagPatch.FalloutNametagTemplate.Parent=SS
+for _,name in ipairs({'Progress','Nametags','NametagController'}) do nametagPatch[name].Parent=runtime end
+nametagPatch:Destroy()
 scriptFile(runtime,'Server','Script','fallout-server.luau')
 local smoke=instance('ModuleScript','StartupSmoke',runtime);smoke.Source=fs.readFile('fallout-server.luau')..'\nreturn true'
 scriptFile(folders.StarterPlayerScripts,'FalloutClient','LocalScript','fallout-client.luau')
