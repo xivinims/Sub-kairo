@@ -8,7 +8,7 @@ local RunService=game:GetService('RunService')
 local Menu={}
 local defaults={
  reticle=true,radar=true,killfeed=true,hitmarker=true,notices=true,
- aimMode='hold',buttonScale=100,buttonOpacity=85,
+ aimMode='hold',buttonScale=100,buttonOpacity=85,cameraFov=78,
  brightness=50,contrast=50,saturation=50,shadows=true,performance=false,
  effectsVolume=100,musicVolume=100,dialogueVolume=100,language='pt'
 }
@@ -18,8 +18,8 @@ local dictionary={
   options='OPÇÕES',back='VOLTAR',game='JOGO',controls='CONTROLES',display='VISUAL',audio='ÁUDIO',language='IDIOMA',credits='CRÉDITOS',
   on='Ligado',off='Desligado',hold='Segurar',toggle='Alternar',pt='Português',en='English',
   reticle='MIRA CENTRAL',radar='RADAR DA EQUIPE',killfeed='ELIMINAÇÕES',hitmarker='MARCADOR DE ACERTO',notices='AVISOS DO JOGO',
-  aimMode='TIPO DE MIRA',buttonScale='BOTÕES MOBILE',buttonOpacity='VISIBILIDADE DOS BOTÕES',
-  brightness='BRILHO',contrast='CONTRASTE',saturation='SATURAÇÃO',shadows='SOMBRAS',performance='MODO LEVE',
+  aimMode='TIPO DE MIRA',buttonScale='BOTÕES MOBILE',buttonOpacity='VISIBILIDADE DOS BOTÕES',cameraFov='CAMPO DE VISÃO',
+  brightness='BRILHO',contrast='CONTRASTE',saturation='SATURAÇÃO',shadows='SOMBRAS',performance='MODO LEVE',calibration='CALIBRAÇÃO',calibrationNote='AJUSTE O BRILHO ATÉ VER TODAS AS FAIXAS',audioDevice='SAÍDA DE ÁUDIO',audioDeviceValue='Dispositivo padrão',
   effectsVolume='EFEITOS',musicVolume='MÚSICA',dialogueVolume='DIÁLOGOS',
   textLanguage='IDIOMA DO MENU',creditsText='CRIAÇÃO: AURIVANE WORKS',creditsGame='FPS • 5 VS 5',
   videoNote='Ajustes visuais aplicados somente à sua câmera.',controlNote='As ações básicas seguem os controles do Roblox.',
@@ -31,8 +31,8 @@ local dictionary={
   options='OPTIONS',back='BACK',game='GAME',controls='CONTROLS',display='DISPLAY',audio='AUDIO',language='LANGUAGE',credits='CREDITS',
   on='On',off='Off',hold='Hold',toggle='Toggle',pt='Português',en='English',
   reticle='CROSSHAIR',radar='TEAM RADAR',killfeed='KILL FEED',hitmarker='HIT MARKER',notices='GAME NOTICES',
-  aimMode='AIM MODE',buttonScale='MOBILE BUTTON SIZE',buttonOpacity='BUTTON VISIBILITY',
-  brightness='BRIGHTNESS',contrast='CONTRAST',saturation='SATURATION',shadows='SHADOWS',performance='LIGHT MODE',
+  aimMode='AIM MODE',buttonScale='MOBILE BUTTON SIZE',buttonOpacity='BUTTON VISIBILITY',cameraFov='FIELD OF VIEW',
+  brightness='BRIGHTNESS',contrast='CONTRAST',saturation='SATURATION',shadows='SHADOWS',performance='LIGHT MODE',calibration='CALIBRATION',calibrationNote='ADJUST UNTIL ALL BARS ARE VISIBLE',audioDevice='AUDIO OUTPUT',audioDeviceValue='Device default',
   effectsVolume='EFFECTS',musicVolume='MUSIC',dialogueVolume='DIALOGUE',
   textLanguage='MENU LANGUAGE',creditsText='CREATED BY: AURIVANE WORKS',creditsGame='FPS • 5 VS 5',
   videoNote='Display changes only affect your own camera.',controlNote='Core movement uses Roblox controls.',
@@ -43,15 +43,15 @@ local dictionary={
 }
 local pages={
  game={{'readonly','gameMode'},{'toggle','reticle'},{'toggle','radar'},{'toggle','killfeed'},{'toggle','hitmarker'},{'toggle','notices'}},
- controls={{'enum','aimMode',{'hold','toggle'}},{'range','buttonScale',80,110,5},{'range','buttonOpacity',30,100,5},{'note','controlNote'}},
- display={{'range','brightness',0,100,5},{'range','contrast',0,100,5},{'range','saturation',0,100,5},{'toggle','shadows'},{'toggle','performance'},{'note','videoNote'}},
- audio={{'range','effectsVolume',0,100,5},{'range','musicVolume',0,100,5},{'range','dialogueVolume',0,100,5}},
+ controls={{'enum','aimMode',{'hold','toggle'}},{'range','cameraFov',65,95,5},{'range','buttonScale',80,110,5},{'range','buttonOpacity',30,100,5},{'note','controlNote'}},
+ display={{'calibration','calibration'},{'range','brightness',0,100,5},{'range','contrast',0,100,5},{'range','saturation',0,100,5},{'toggle','shadows'},{'toggle','performance'},{'note','videoNote'}},
+ audio={{'readonly','audioDevice'},{'range','effectsVolume',0,100,5},{'range','musicVolume',0,100,5},{'range','dialogueVolume',0,100,5}},
  language={{'enum','language',{'pt','en'}},{'note','languageNote'}},
  credits={{'note','creditsText'},{'note','creditsGame'}}
 }
 local sectionKeys={
  game={'reticle','radar','killfeed','hitmarker','notices'},
- controls={'aimMode','buttonScale','buttonOpacity'},
+ controls={'aimMode','cameraFov','buttonScale','buttonOpacity'},
  display={'brightness','contrast','saturation','shadows','performance'},
  audio={'effectsVolume','musicVolume','dialogueVolume'},
  language={'language'}
@@ -318,8 +318,31 @@ function Menu.new(args)
  local function addReadonly(key)
   local row=baseRow(key,32)
   addText(row,t(key),UDim2.new(.58,0,1,0),UDim2.fromOffset(5,0),11,Color3.fromRGB(205,214,212))
-  local value=addText(row,t('gameValue'),UDim2.new(.4,-5,1,0),UDim2.new(.58,0,0,0),11,Color3.fromRGB(224,225,220))
+  local value=addText(row,key=='audioDevice' and t('audioDeviceValue') or t('gameValue'),UDim2.new(.4,-5,1,0),UDim2.new(.58,0,0,0),11,Color3.fromRGB(224,225,220))
   value.TextXAlignment=Enum.TextXAlignment.Right
+ end
+ local function addCalibration()
+  local row=baseRow('Calibration',82)
+  addText(row,t('calibrationNote'),UDim2.new(1,-10,0,15),UDim2.fromOffset(5,1),8,Color3.fromRGB(180,188,182))
+  local palette={
+   Color3.fromRGB(255,35,33),Color3.fromRGB(27,221,59),
+   Color3.fromRGB(25,95,255),Color3.fromRGB(244,245,242)
+  }
+  for i,target in ipairs(palette) do
+   local bar=make('Frame',row,{
+    Name='ColorCalibration'..i,Size=UDim2.new(1,-22,0,7),
+    Position=UDim2.fromOffset(9,19+(i-1)*13),BackgroundColor3=Color3.new(1,1,1),
+    BorderSizePixel=0
+   })
+   make('UIGradient',bar,{
+    Color=ColorSequence.new({
+     ColorSequenceKeypoint.new(0,Color3.fromRGB(3,3,3)),
+     ColorSequenceKeypoint.new(.27,target:Lerp(Color3.fromRGB(0,0,0),.75)),
+     ColorSequenceKeypoint.new(.65,target:Lerp(Color3.fromRGB(0,0,0),.3)),
+     ColorSequenceKeypoint.new(1,target)
+    })
+   })
+  end
  end
  local function addReset(page)
   if not sectionKeys[page] then return end
@@ -355,6 +378,7 @@ function Menu.new(args)
     elseif spec[1]=='enum' then addValue(spec[2],'enum',spec[3])
     elseif spec[1]=='range' then addRange(spec[2],spec[3],spec[4],spec[5])
     elseif spec[1]=='note' then addNote(spec[2])
+    elseif spec[1]=='calibration' then addCalibration()
     elseif spec[1]=='readonly' then addReadonly(spec[2]) end
    end
    addReset(currentPage)
