@@ -101,21 +101,9 @@ for _,item in ipairs(C.Catalog) do
  tool.Parent=templates
 end
 SS.SourceWeaponMeshes:Destroy()
-local description=Players:GetHumanoidDescriptionFromUserIdAsync(C.OwnerUserId)
-local npc=Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
-description:Destroy();npc.Name='Shopkeeper'
-for _,v in ipairs(npc:GetDescendants()) do
- if v:IsA('LuaSourceContainer') then v:Destroy() elseif v:IsA('BasePart') then v.Anchored=false;v.CanCollide=false;v.CanTouch=false end
-end
-local humanoid=npc:FindFirstChildOfClass('Humanoid');assert(humanoid.RigType==Enum.HumanoidRigType.R6,'NPC must be R6');humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None;humanoid.AutoRotate=false
-npc.PrimaryPart=npc.HumanoidRootPart;npc.PrimaryPart.Anchored=true
-local floor=shop:FindFirstChild('Floor',true);assert(floor and floor:IsA('BasePart'),'Shop floor missing')
-local front=(Vector3.new(originalSpawn.Position.X,0,originalSpawn.Position.Z)-Vector3.new(floor.Position.X,0,floor.Position.Z)).Unit
-local npcPos=floor.Position+Vector3.new(0,floor.Size.Y/2+3,0)+front*math.min(2,math.min(floor.Size.X,floor.Size.Z)*.18)
-npc:PivotTo(CFrame.lookAt(npcPos,npcPos+front));npc:SetAttribute('OwnerAvatarUserId',C.OwnerUserId);npc:SetAttribute('AnimationPackAssetId',86582491164528);npc.ModelStreamingMode=Enum.ModelStreamingMode.Persistent;npc.Parent=workspace
-local headGui=SS.NpcDialogueGui:Clone();headGui.Name='gui';headGui:FindFirstChild('name').Text='ch_ckz2n';headGui.Adornee=npc.Head;headGui.Parent=npc.Head
-local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Conversar';prompt.ObjectText='Armeiro';prompt.MaxActivationDistance=10;prompt.RequiresLineOfSight=false;prompt.Parent=npc
-game:GetService('CollectionService'):AddTag(prompt,'NPCprompt')
+require(game.ServerScriptService.FalloutRuntime.ShopkeeperLayout).refresh()
+visuals:SetAttribute('UseReliableIcons',true)
+workspace:SetAttribute('FalloutHUDRevision','hud-shop-npc-v2')
 workspace:SetAttribute('LobbyGrassDarkened',darkened)
 workspace:SetAttribute('FalloutNametagBuild','nametags-v1')
 workspace:SetAttribute('WorldReady',true)
