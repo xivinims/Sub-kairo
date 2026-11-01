@@ -9,7 +9,7 @@ local runtime=game.ServerScriptService.FalloutRuntime
 runtime.Profiles.Source=bundle.Profiles.Source
 runtime.Server.Source=bundle.Server.Source
 game.StarterPlayer.StarterPlayerScripts.FalloutClient.Source=bundle.FalloutClient.Source
-for _,entry in ipairs({{name='FalloutUI',parent=game.ReplicatedStorage},{name='ShopkeeperLayout',parent=runtime}}) do
+for _,entry in ipairs({{name='FalloutUI',parent=game.ReplicatedStorage},{name='LobbyHealthTemplate',parent=game.ReplicatedStorage},{name='FrozenAvatar',parent=runtime},{name='ShopkeeperLayout',parent=runtime}}) do
  local old=entry.parent:FindFirstChild(entry.name);if old then old:Destroy() end
  bundle[entry.name].Parent=entry.parent
 end
@@ -17,5 +17,5 @@ bundle:Destroy()
 require(runtime.ShopkeeperLayout).refresh()
 game.ReplicatedStorage.FalloutItemVisuals:SetAttribute('UseReliableIcons',nil)
 workspace:SetAttribute('FalloutViewportRevision','weapon-clones-v1')
-workspace:SetAttribute('FalloutHUDRevision','hud-shop-npc-v2')
+workspace:SetAttribute('FalloutHUDRevision','fps-hud-2014-lobby-v3')
 assert(protectedSnapshot()==before,'Unrelated game content changed')
