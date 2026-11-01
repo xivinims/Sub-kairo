@@ -1,1 +1,1 @@
-viewport-publish-2026-11-01-v1
+viewport-publish-2026-11-01-v2
