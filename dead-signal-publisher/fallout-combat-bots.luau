@@ -83,6 +83,22 @@ local function animate(bot)
   end
   bot.raise()
  end
+ -- Some experiences cannot load built-in animation assets. Procedural R6
+ -- leg movement keeps mobile NPCs animated even when a track is unavailable.
+ if not walk then
+  local leftHip=torso and torso:FindFirstChild('Left Hip')
+  local rightHip=torso and torso:FindFirstChild('Right Hip')
+  if leftHip and rightHip then
+   local leftBase,rightBase=leftHip.C0,rightHip.C0
+   bot.fallbackWalk=function()
+    if bot.dead then return end
+    local speed=bot.root.AssemblyLinearVelocity.Magnitude
+    local angle=speed>1.5 and math.sin(os.clock()*8)*.34 or 0
+    leftHip.C0=leftBase*CFrame.Angles(angle,0,0)
+    rightHip.C0=rightBase*CFrame.Angles(-angle,0,0)
+   end
+  end
+ end
 end
 local function chooseSpawn(team,id)
  local locations=workspace:FindFirstChild('FalloutSpawns')
@@ -352,6 +368,7 @@ function Bots:_loop(bot,generation)
    local spot=chooseSpawn(bot.slot.team,rng:NextInteger(1,5))
    if spot then bot.hum:MoveTo(spot.Position) end
   end
+  if bot.fallbackWalk then bot.fallbackWalk() end
   task.wait(.22+rng:NextNumber(0,.09))
  end
 end
