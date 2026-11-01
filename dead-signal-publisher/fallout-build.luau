@@ -53,8 +53,10 @@ local function scriptFile(parent,name,class,file)
  local o=instance(class,name,parent);o.Source=source;return o
 end
 local config=scriptFile(RS,'FalloutConfig','ModuleScript','fallout-config.luau')
+scriptFile(RS,'FalloutUI','ModuleScript','fallout-ui.luau')
 local runtime=instance('Folder','FalloutRuntime',folders.ServerScriptService)
 scriptFile(runtime,'Rules','ModuleScript','fallout-rules.luau')
+scriptFile(runtime,'ShopkeeperLayout','ModuleScript','fallout-shopkeeper.luau')
 scriptFile(runtime,'Profiles','ModuleScript','fallout-profiles.luau')
 local nametagPatch=R.deserializeModel(fs.readFile('/tmp/nametag-bundle.rbxm'))[1]
 nametagPatch.FalloutNametagTemplate.Parent=SS
