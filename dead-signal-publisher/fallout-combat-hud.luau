@@ -207,6 +207,27 @@ function HUD.update(view,context)
    if r and h and h.Health>0 and index<4 then index+=1;view.allies[index].Visible=true;view.allies[index].Position=mapPoint(view.data,r.Position) end
   end
  end
+ -- Bots appear on the team radar using the same blue markers as player allies.
+ if ownPlayer and index<#view.allies then
+  local folder=workspace:FindFirstChild('FalloutCombatBots')
+  for _,info in ipairs(context.botRoster or {}) do
+   if index>=#view.allies then break end
+   if info.bot and info.alive and info.team==(ownPlayer.Team and (ownPlayer.Team.Name=='Azul' and 1 or ownPlayer.Team.Name=='Vermelho' and 2 or 0)) then
+    local botId=-10000-(info.userId or -10001)
+    for _,model in ipairs(folder and folder:GetChildren() or {}) do
+     if model:GetAttribute('FalloutBotId')==botId then
+      local botRoot=model:FindFirstChild('HumanoidRootPart')
+      if botRoot then
+       index+=1
+       view.allies[index].Visible=true
+       view.allies[index].Position=mapPoint(view.data,botRoot.Position)
+      end
+      break
+     end
+    end
+   end
+  end
+ end
  for i=index+1,4 do view.allies[i].Visible=false end
 end
 return HUD
