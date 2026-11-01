@@ -1,6 +1,6 @@
 local function protectedSnapshot()
  local rows={}
- local excluded={['Workspace.Shopkeeper']=true,['ReplicatedStorage.FalloutUI']=true,['ServerScriptService.FalloutRuntime.ShopkeeperLayout']=true}
+ local excluded={['Workspace.Shopkeeper']=true,['ReplicatedStorage.FalloutUI']=true,['ServerScriptService.FalloutRuntime.ShopkeeperLayout']=true,['ServerScriptService.FalloutRuntime.FrozenAvatar']=true,['ReplicatedStorage.LobbyHealthTemplate']=true}
  local changedSource={['ServerScriptService.FalloutRuntime.Profiles']=true,['ServerScriptService.FalloutRuntime.Server']=true,['StarterPlayer.StarterPlayerScripts.FalloutClient']=true}
  local function ignored(item)
   local current=item
