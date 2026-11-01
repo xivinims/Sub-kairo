@@ -171,6 +171,16 @@ net.State.OnClientEvent:Connect(applyState)
 task.spawn(function()local initial=query('State');if initial then applyState(initial) end end)
 local firing=false
 local aiming=false
+local options=require(RS:WaitForChild('FalloutOptionsClient')).new({
+ remote=net.Query,
+ onToggle=function(isOpen)
+  if isOpen then
+   firing=false;aiming=false
+   closeShop()
+   if dialogueController then dialogueController:hideGui() end
+  end
+ end
+})
 local lastFire=0
 local recoil=0
 local activeTool,viewModel
@@ -178,7 +188,7 @@ local function equipped()
  local char=player.Character;local t=char and char:FindFirstChildOfClass('Tool');local id=t and t:GetAttribute('FalloutItem');return t,C.ById[id]
 end
 local function shoot()
- if state.phase~='Match' or shopping or player:GetAttribute('Downed') then return end
+ if state.phase~='Match' or shopping or options:isOpen() or player:GetAttribute('Downed') then return end
  local tool,def=equipped();if not def then return end
  if def.kind=='Heal' then return end
  if tool:GetAttribute('Reloading') or (tool:GetAttribute('Ammo') or 0)==0 then return end
@@ -196,6 +206,7 @@ local function healNearest()
  if target then net.Action:FireServer('Heal',target.UserId) else showNotice('Aproxime-se de um companheiro ferido') end
 end
 local function input(action,status)
+ if options:isOpen() then firing=false;return Enum.ContextActionResult.Sink end
  if action=='FalloutFire' then firing=status==Enum.UserInputState.Begin;if firing then shoot() end
  elseif status==Enum.UserInputState.Begin then if action=='FalloutReload' then net.Action:FireServer('Reload') elseif action=='FalloutHeal' then healNearest() end end
  return state.phase=='Match' and Enum.ContextActionResult.Sink or Enum.ContextActionResult.Pass
@@ -203,16 +214,28 @@ end
 CAS:BindAction('FalloutFire',input,false,Enum.UserInputType.MouseButton1,Enum.KeyCode.ButtonR2)
 CAS:BindAction('FalloutReload',input,false,Enum.KeyCode.R,Enum.KeyCode.ButtonX)
 CAS:BindAction('FalloutHeal',input,false,Enum.KeyCode.G,Enum.KeyCode.ButtonY)
-UIS.InputBegan:Connect(function(i,processed)if not processed and i.UserInputType==Enum.UserInputType.MouseButton2 then aiming=true end end)
-UIS.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton2 then aiming=false end end)
+UIS.InputBegan:Connect(function(i,processed)if not processed and not options:isOpen() and i.UserInputType==Enum.UserInputType.MouseButton2 then if options:get('aimMode')=='toggle' then aiming=not aiming else aiming=true end end end)
+UIS.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton2 and options:get('aimMode')=='hold' then aiming=false end end)
 UIS.WindowFocusReleased:Connect(function()firing=false;aiming=false end)
 local mobile=make('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=touch})
 local fire=button(mobile,'TIRO',UDim2.fromOffset(76,76),UDim2.new(1,-108,.48,-38),function()end);corner(fire,38)
 fire.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch then firing=true;shoot() end end)
 fire.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.Touch then firing=false end end)
-local aim=button(mobile,'MIRA',UDim2.fromOffset(54,54),UDim2.new(1,-184,.43,-27),function()aiming=not aiming end);corner(aim,27)
+local aim=button(mobile,'MIRA',UDim2.fromOffset(54,54),UDim2.new(1,-184,.43,-27),function()
+ if not options:isOpen() and options:get('aimMode')=='toggle' then aiming=not aiming end
+end);corner(aim,27)
+aim.InputBegan:Connect(function(i)
+ if i.UserInputType==Enum.UserInputType.Touch and options:get('aimMode')=='hold' and not options:isOpen() then aiming=true end
+end)
+aim.InputEnded:Connect(function(i)
+ if i.UserInputType==Enum.UserInputType.Touch and options:get('aimMode')=='hold' then aiming=false end
+end)
 local reloadButton=button(mobile,'R',UDim2.fromOffset(54,54),UDim2.new(1,-184,.61,-27),function()net.Action:FireServer('Reload')end);corner(reloadButton,27)
 local healButton=button(mobile,'CURAR',UDim2.fromOffset(58,58),UDim2.new(1,-256,.61,-29),healNearest);corner(healButton,29)
+local mobileScale={}
+for _,control in ipairs({fire,aim,reloadButton,healButton}) do
+ mobileScale[control]=make('UIScale',control,{Scale=1})
+end
 local function cleanupView()
  if viewModel then viewModel:Destroy();viewModel=nil end
  if activeTool then for _,p in ipairs(activeTool:GetDescendants()) do if p:IsA('BasePart') then p.LocalTransparencyModifier=0 end end end
@@ -222,11 +245,11 @@ player.CharacterAdded:Connect(function()firing=false;aiming=false;cleanupView() 
 net.Fx.OnClientEvent:Connect(function(info)
  if info.kind=='Notice' then showNotice(info.text)
  elseif info.kind=='Reward' then showNotice('+'..info.xp..' XP  •  +'..info.coins..' moedas  —  '..info.reason)
- elseif info.kind=='Hit' then hitmark.Text='×';hitmark.TextColor3=info.headshot and Color3.fromRGB(255,128,94) or Color3.new(1,1,1);task.delay(.13,function()hitmark.Text='' end)
+ elseif info.kind=='Hit' then hitmark.Visible=options:get('hitmarker') and not options:isOpen();hitmark.Text='×';hitmark.TextColor3=info.headshot and Color3.fromRGB(255,128,94) or Color3.new(1,1,1);task.delay(.13,function()hitmark.Text='' end)
  elseif info.kind=='Kill' then
   showNotice(info.killer..'  '..(info.headshot and '◎' or '→')..'  '..info.victim)
   matchHUD.feedLabel.Text=info.killer..'   ›   '..info.victim
-  matchHUD.feed.Visible=state.phase=='Match'
+  matchHUD.feed.Visible=state.phase=='Match' and options:get('killfeed') and not options:isOpen()
   local stamp=os.clock();matchHUD.feed:SetAttribute('Stamp',stamp)
   task.delay(4,function()if matchHUD.feed:GetAttribute('Stamp')==stamp then matchHUD.feed.Visible=false end end)
  elseif info.kind=='Shot' then
@@ -243,6 +266,16 @@ Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
  UI.fitScoreboard(board,camera.ViewportSize,GuiService.TopbarInset)
  wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 96 or 6)
+ notice.Visible=options:get('notices') and not options:isOpen()
+ matchHUD.reticle.Visible=options:get('reticle') and not options:isOpen()
+ matchHUD.radar.Visible=options:get('radar') and not options:isOpen()
+ if not options:get('killfeed') or options:isOpen() then matchHUD.feed.Visible=false end
+ local touchScale=options:get('buttonScale')/100
+ local touchOpacity=1-options:get('buttonOpacity')/100
+ for control,scale in pairs(mobileScale) do
+  scale.Scale=touchScale
+  control.BackgroundTransparency=touchOpacity
+ end
  local left=math.max(0,math.ceil((state.deadline or 0)-workspace:GetServerTimeNow()))
  clock.Text=state.phase=='Waiting' and 'AGUARDANDO 2 JOGADORES' or (state.phase=='Match' and '' or 'INTERVALO  ')..string.format('%02d:%02d',math.floor(left/60),left%60)
  local char=player.Character;local hum=char and char:FindFirstChildOfClass('Humanoid')
@@ -255,9 +288,9 @@ Run.RenderStepped:Connect(function(dt)
   classicBar.Image=fraction>.25 and 'rbxassetid://35238053' or 'rbxassetid://35238036'
  end
  local isDown=player:GetAttribute('Downed');down.Text=isDown and ('VOCÊ CAIU • AGUARDE UM COMPANHEIRO\n'..math.max(0,math.ceil((player:GetAttribute('BleedEnds') or 0)-workspace:GetServerTimeNow()))..'s') or ''
- mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping;cross.Visible=false;matchHUD.root.Visible=state.phase=='Match' and not shopping
+ mobile.Visible=touch and state.phase=='Match' and not isDown and not shopping and not options:isOpen();cross.Visible=false;matchHUD.root.Visible=state.phase=='Match' and not shopping
  local tool,def=equipped()
- if firing and def and def.automatic then shoot() end
+ if firing and def and def.automatic and not options:isOpen() then shoot() end
  ammo.Text=tool and def and (def.name..'\n'..(tool:GetAttribute('Reloading') and 'RECARREGANDO' or ((tool:GetAttribute('Ammo') or -1)>=0 and tostring(tool:GetAttribute('Ammo'))..' / '..tostring(tool:GetAttribute('Reserve') or 0) or 'CORPO A CORPO'))) or ''
  matchHUD.weaponName.Text=def and def.name or ''
  matchHUD.ammoBig.Text=tool and (tool:GetAttribute('Reloading') and '...' or tostring(math.max(0,tool:GetAttribute('Ammo') or 0))) or '--'
