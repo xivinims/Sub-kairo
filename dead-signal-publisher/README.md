@@ -1,4 +1,4 @@
-# Fallout 5×5 — versão publicada 251
+# Fallout 5×5 — versão publicada 252
 
 Branch ativa: `dead-signal-publisher`  
 Experiência: `9421311218` · Place: `118064584465155`  
@@ -41,3 +41,19 @@ Publicação pela API nativa `AssetService:SavePlaceAsync()`, preservando as uni
 Execução confirmada: https://github.com/xivinims/Sub-kairo/actions/runs/41282505420
 
 Essas verificações não substituem uma partida real em cliente Roblox: controles de celular, enquadramento das armas, áudio e fluxo visual da loja ainda precisam dessa validação.
+
+## Nametags — versão 252
+
+Base: [Custom Nametags System, Bconggs](https://create.roblox.com/store/asset/72094860266497/Custom-Nametags-System). Preserva as fontes e contornos do template, adaptando-o para nome, título e nível. A própria tag fica oculta para o dono durante o jogo; os demais jogadores a veem até 65 studs, sem atravessar paredes.
+
+- Menos de 2 horas acumuladas conectado: **Iniciante**.
+- De 2 horas até antes de 29 horas: nome e nível, sem título.
+- A partir de 29 horas: **Veterano**.
+- Nível = 1 + piso(XP / 1.000). XP anterior também conta.
+- Tempo começa a ser registrado nesta versão; versões anteriores não guardavam esse dado. Tempo offline não conta. Lobby e partidas contam.
+- Migração no mesmo `FalloutProfiles_v1`, preservando XP, moedas, inventário e equipamento. Salva a cada 45 segundos, em compras, na saída e no fechamento do servidor. A tag atualiza a cada segundo e acompanha o respawn.
+- Se o perfil não carregar, mostra o nome e `Nível —`, sem inventar um título.
+
+[Publicação 252 e testes](https://github.com/xivinims/Sub-kairo/actions/runs/41299522661): limites de 2h/29h, migração, múltiplos salvamentos, reentrada, tempo offline, falha temporária de gravação e saída durante carregamento. Verificação nativa do template, inicialização e transições. Assinatura do conteúdo protegido igual antes/depois (`6158:268125991`): mapa e scripts de combate preservados. Não houve teste visual com cliente/jogadores nesta atualização.
+
+O patch usa `nametag-release.mjs`; a reconstrução completa em `fallout-release.mjs` também inclui o mesmo pacote. Plugins de IK e IA não foram necessários para tags.
