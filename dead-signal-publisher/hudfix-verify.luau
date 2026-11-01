@@ -1,13 +1,13 @@
 local runtime=game.ServerScriptService.FalloutRuntime
 local C=require(game.ReplicatedStorage.FalloutConfig)
 local UI=require(game.ReplicatedStorage.FalloutUI)
-assert(workspace:GetAttribute('FalloutHUDRevision')=='hud-shop-npc-v2')
+assert(workspace:GetAttribute('FalloutHUDRevision')=='fps-hud-2014-lobby-v3')
 assert(workspace:GetAttribute('FalloutNametagBuild')=='nametags-v1')
 assert(C.MaxPlayers==10 and C.TeamSize==5 and C.RoundSeconds==600 and C.IntermissionSeconds==90)
 local before=protectedSnapshot()
 local fixture=Instance.new('Folder')
 local board=UI.scoreboard(fixture,{Color3.new(0,0,1),Color3.new(1,0,0)})
-assert(board.root.Size.X.Offset==430 and board.root.Size.Y.Offset==42)
+assert(board.root.Size.X.Offset==334 and board.root.Size.Y.Offset==32)
 local portraits=0
 for _,child in ipairs(board.root:GetDescendants()) do
  if child:IsA('ImageLabel') then portraits+=1 end
@@ -15,13 +15,21 @@ for _,child in ipairs(board.root:GetDescendants()) do
 end
 assert(portraits==10)
 UI.fitScoreboard(board,Vector2.new(896,414),Rect.new(240,0,840,58))
-assert(board.screen.ScreenInsets==Enum.ScreenInsets.TopbarSafeInsets and board.scale.Scale==1)
+assert(board.screen.ScreenInsets==Enum.ScreenInsets.None and board.scale.Scale==1 and not board.fallback and board.root.Position.Y.Offset==2)
 UI.fitScoreboard(board,Vector2.new(640,360),Rect.new(220,0,610,58))
-assert(board.scale.Scale<1 and board.scale.Scale>.8 and not board.fallback)
+assert(board.scale.Scale==1 and not board.fallback)
 UI.fitScoreboard(board,Vector2.new(390,844),Rect.new(180,0,360,58))
-assert(board.fallback and board.scale.Scale<=1 and board.root.Position.Y.Offset==58)
+assert(board.fallback and board.scale.Scale<=1 and board.root.Position.Y.Offset==54)
 assert(UI.money(0)=='0' and UI.money(1234567.9)=='1.234.567' and UI.money(-30)=='0')
-local wallet=UI.wallet(fixture);assert(wallet.balance.Text=='…' and wallet.root:FindFirstChild('CoinIcon'))
+local wallet=UI.wallet(fixture)
+assert(wallet.balance.Text=='…' and wallet.root:FindFirstChild('CoinIcon') and wallet.root.Size.X.Offset<=104)
+assert(wallet.progress.Visible==false and wallet.root.Size.Y.Offset==34)
+local match=UI.matchHUD(fixture)
+assert(match.root.Visible==false and match.healthFill and match.ammoBig and match.radar and #match.dots==9)
+local retro=game.ReplicatedStorage:FindFirstChild('LobbyHealthTemplate')
+assert(retro and retro:IsA('ScreenGui') and retro.HealthGui.HealthFrame.HealthBar:IsA('ImageLabel'))
+for _,instance in ipairs(retro:GetDescendants()) do assert(not instance:IsA('LuaSourceContainer'),'Unsafe imported script: '..instance:GetFullName()) end
+assert(retro.HealthGui.HealthFrame.HealthBar.Image:find('35238053',1,true),'2014 Roblox fill asset missing')
 local icons=0
 for _,item in ipairs(C.Catalog) do
  local holder=Instance.new('Frame');holder.Parent=fixture
@@ -41,6 +49,12 @@ fixture:Destroy()
 local npc=workspace.Shopkeeper
 assert(npc:GetAttribute('PlacementVersion')=='serving-window-v2')
 assert(npc:GetAttribute('OwnerAvatarUserId')==C.OwnerUserId and npc.Humanoid.RigType==Enum.HumanoidRigType.R6)
+assert(npc:GetAttribute('FrozenOutfitRevision')=='2026-11-01-owner-avatar','Owner outfit is not frozen')
+local frozen=require(runtime.FrozenAvatar).create()
+local applied=npc.Humanoid:GetAppliedDescription()
+assert(frozen.Shirt==123193711263166 and frozen.Pants==12900240938 and frozen.GraphicTShirt==0)
+assert(applied.Shirt==frozen.Shirt and applied.Pants==frozen.Pants,'NPC shirt or pants differ from frozen snapshot')
+frozen:Destroy();applied:Destroy()
 assert(npc.PrimaryPart.Anchored and not npc.Humanoid.EvaluateStateMachine)
 assert(npc.Head:FindFirstChild('gui') and npc:FindFirstChild('ProximityPrompt'))
 local window=workspace.Lobby.Shop:FindFirstChild('WindowFrame',true)
@@ -55,4 +69,4 @@ local smoke=Instance.new('ModuleScript');smoke.Name='WalletStartupCheck';smoke.S
 local oldInitialized=workspace:GetAttribute('FalloutServerInitialized')
 assert(require(smoke)==true);smoke:Destroy();workspace:SetAttribute('FalloutServerInitialized',oldInitialized)
 assert(protectedSnapshot()==before,'Verification mutated protected content')
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='hud-shop-npc-v2',preserved=before,portraits=portraits,scoreSize={430,42},icons=icons,npcRig=npc.Humanoid.RigType.Name,npcPosition={npc.PrimaryPart.Position.X,npc.PrimaryPart.Position.Y,npc.PrimaryPart.Position.Z},npcFloorGap=feet-npc:GetAttribute('FloorHeight'),npcWindowOffset=lateral,npcJoints=poseJoints,wallet='transactional-integer-coins'})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='fps-hud-2014-lobby-v3',preserved=before,portraits=portraits,scoreSize={334,32},icons=icons,npcRig=npc.Humanoid.RigType.Name,npcPosition={npc.PrimaryPart.Position.X,npc.PrimaryPart.Position.Y,npc.PrimaryPart.Position.Z},npcFloorGap=feet-npc:GetAttribute('FloorHeight'),npcWindowOffset=lateral,npcJoints=poseJoints,wallet='transactional-integer-coins'})
