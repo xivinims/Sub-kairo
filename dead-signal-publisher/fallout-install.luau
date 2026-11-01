@@ -22,7 +22,8 @@ for _,child in ipairs(b.Workspace:GetChildren()) do child.Parent=workspace end
 local C=require(RS.FalloutConfig)
 workspace:SetAttribute('DeadSignalBuildId',C.Build)
 workspace:SetAttribute('FalloutPhase','Waiting')
-workspace.StreamingEnabled=true;workspace.StreamingMinRadius=64;workspace.StreamingTargetRadius=256
+workspace.StreamingEnabled=true
+pcall(function()workspace.StreamingMinRadius=64;workspace.StreamingTargetRadius=256 end)
 workspace.FallenPartsDestroyHeight=-500
 SP.CameraMode=Enum.CameraMode.Classic;SP.CameraMinZoomDistance=8;SP.CameraMaxZoomDistance=18;SP.CharacterWalkSpeed=16
 Players.CharacterAutoLoads=false
@@ -112,7 +113,7 @@ local floor=shop:FindFirstChild('Floor',true);assert(floor and floor:IsA('BasePa
 local front=(Vector3.new(originalSpawn.Position.X,0,originalSpawn.Position.Z)-Vector3.new(floor.Position.X,0,floor.Position.Z)).Unit
 local npcPos=floor.Position+Vector3.new(0,floor.Size.Y/2+3,0)+front*math.min(2,math.min(floor.Size.X,floor.Size.Z)*.18)
 npc:PivotTo(CFrame.lookAt(npcPos,npcPos+front));npc:SetAttribute('OwnerAvatarUserId',C.OwnerUserId);npc:SetAttribute('AnimationPackAssetId',86582491164528);npc.ModelStreamingMode=Enum.ModelStreamingMode.Persistent;npc.Parent=workspace
-local headGui=SS.NpcDialogueGui:Clone();headGui.Name='gui';headGui.name.Text='ch_ckz2n';headGui.Adornee=npc.Head;headGui.Parent=npc.Head
+local headGui=SS.NpcDialogueGui:Clone();headGui.Name='gui';headGui:FindFirstChild('name').Text='ch_ckz2n';headGui.Adornee=npc.Head;headGui.Parent=npc.Head
 local prompt=Instance.new('ProximityPrompt');prompt.ActionText='Conversar';prompt.ObjectText='Armeiro';prompt.MaxActivationDistance=10;prompt.RequiresLineOfSight=false;prompt.Parent=npc
 game:GetService('CollectionService'):AddTag(prompt,'NPCprompt')
 workspace:SetAttribute('LobbyGrassDarkened',darkened)
