@@ -8,7 +8,9 @@ local function inspect(item)
  if item:IsA('LuaSourceContainer') then row.source=item.Source end
  if item:IsA('GuiObject') then
   row.size=tostring(item.Size);row.position=tostring(item.Position);row.anchor=tostring(item.AnchorPoint);row.visible=item.Visible
-  if item:IsA('ImageLabel') or item:IsA('ImageButton') then row.image=item.Image;row.imageRectOffset=tostring(item.ImageRectOffset);row.imageRectSize=tostring(item.ImageRectSize) end
+  if item:IsA('ImageLabel') or item:IsA('ImageButton') then
+   for _,key in ipairs({'Image','ImageContent','ImageRectOffset','ImageRectSize'}) do local ok,v=pcall(function()return item[key]end);if ok then row[key]=tostring(v) end end
+  end
   if item:IsA('TextLabel') then row.text=item.Text end
  end
  table.insert(rows,row)
