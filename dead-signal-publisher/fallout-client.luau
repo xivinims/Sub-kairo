@@ -178,12 +178,12 @@ local function applyState(new)
 end
 net.State.OnClientEvent:Connect(applyState)
 task.spawn(function()local initial=query('State');if initial then applyState(initial) end end)
-local botControls=make('Frame',gui,{Name='OwnerNPCControls',Size=UDim2.fromOffset(129,26),Position=UDim2.new(1,-139,0,55),BackgroundTransparency=1,Visible=false})
+local botControls=make('Frame',gui,{Name='OwnerMatchBotControls',Size=UDim2.fromOffset(124,24),Position=UDim2.fromOffset(14,99),BackgroundTransparency=1,Visible=false})
 local botMinus=button(botControls,'−',UDim2.fromOffset(30,26),UDim2.fromOffset(0,0),function()
  local response=query('BotRemove')
  if response and response.message then showNotice(response.message) end
 end)
-local botAmount=label(botControls,'NPC: 1',UDim2.fromOffset(67,26),UDim2.fromOffset(30,0),Enum.Font.GothamBold)
+local botAmount=label(botControls,'IA: 2',UDim2.fromOffset(67,26),UDim2.fromOffset(30,0),Enum.Font.GothamBold)
 botAmount.TextSize=10;botAmount.TextXAlignment=Enum.TextXAlignment.Center
 local botPlus=button(botControls,'+',UDim2.fromOffset(30,26),UDim2.fromOffset(98,0),function()
  local response=query('BotAdd')
@@ -290,8 +290,9 @@ Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
  UI.fitScoreboard(board,camera.ViewportSize,GuiService:GetInsetArea(Enum.ScreenInsets.TopbarSafeInsets),GuiService:GetInsetArea(Enum.ScreenInsets.DeviceSafeInsets))
  wallet.root.Position=UDim2.new(1,-10,0,board.fallback and 34 or 6)
- botControls.Visible=player.UserId==C.OwnerUserId and state.phase~='Match' and state.phase~='Results' and not options:isOpen()
- botAmount.Text='NPC: '..tostring(state.botCount or 1)
+ -- Creator-only training controls appear solely inside the live combat match.
+ botControls.Visible=player.UserId==C.OwnerUserId and state.phase=='Match' and not options:isOpen()
+ botAmount.Text='IA: '..tostring(state.botCount or 2)
  notice.Visible=options:get('notices') and not options:isOpen()
  for control,scale in pairs(mobileScale) do scale.Scale=options:get('buttonScale')/100;control.BackgroundTransparency=1-options:get('buttonOpacity')/100 end
  if touch then
