@@ -17,7 +17,7 @@ local function modelFrom(id,name)
   if v:IsA('LuaSourceContainer') or v:IsA('Camera') or v:IsA('Humanoid') or v:IsA('ProximityPrompt') then v:Destroy()
   elseif v:IsA('BasePart') then v.Anchored=true end
  end
- root:SetAttribute('SourceAssetId',id)
+ root:SetAttribute('SourceAssetId',tostring(id))
  return root
 end
 local map=modelFrom(8438960542,'CombatMap');map.Parent=W
@@ -57,6 +57,7 @@ local runtime=instance('Folder','FalloutRuntime',folders.ServerScriptService)
 scriptFile(runtime,'Rules','ModuleScript','fallout-rules.luau')
 scriptFile(runtime,'Profiles','ModuleScript','fallout-profiles.luau')
 scriptFile(runtime,'Server','Script','fallout-server.luau')
+local smoke=instance('ModuleScript','StartupSmoke',runtime);smoke.Source=fs.readFile('fallout-server.luau')..'\nreturn true'
 scriptFile(folders.StarterPlayerScripts,'FalloutClient','LocalScript','fallout-client.luau')
 scriptFile(folders.StarterPlayerScripts,'FalloutNpcClient','LocalScript','fallout-npc-client.luau')
 local net=instance('Folder','FalloutNet',RS)
