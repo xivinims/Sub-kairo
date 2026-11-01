@@ -259,12 +259,13 @@ CombatBots=require(script.Parent.CombatBots).new({
   Fx:FireClient(attacker,{kind='Hit',headshot=headshot,damage=amount})
  end,
  onBotEliminated=function(bot,killer,headshot)
-  if phase~='Match' or killer.Parent~=Players or teamIndex(killer)==bot.slot.team then return end
+  local killerTeam=teamIndex(killer)
+  if phase~='Match' or killer.Parent~=Players or killerTeam==0 or killerTeam==bot.slot.team then return end
   local row=records[killer.UserId]
   if not row then return end
   row.kills+=1
   if headshot then row.headshots+=1 end
-  scores[teamIndex(killer)]+=1
+  scores[killerTeam]+=1
   reward(killer,C.KillXP+(headshot and C.HeadshotXP or 0),C.KillCoins,'Eliminação de NPC')
   Fx:FireAllClients({kind='Kill',killer=killer.DisplayName,victim='BOT '..string.format('%02d',bot.slot.id),headshot=headshot})
   broadcast()
