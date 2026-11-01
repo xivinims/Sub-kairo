@@ -75,6 +75,10 @@ if(trigger.trim().startsWith('fallout-preview-')||trigger.trim().startsWith('fal
   }
  }
  console.log('FPS_DEMO_AUDIT '+JSON.stringify({assetId:id,economyHttp:economyResponse.status,metadata:{name:economy.Name,description:economy.Description,assetTypeId:economy.AssetTypeId,creator:economy.Creator},deliveryHttp:deliveryResponse.status,delivery:{assetType:delivery.assetType,assetId:delivery.assetId,versionNumber:delivery.versionNumber,error:delivery.errors?.[0]?.message},file,inspection}));
+}else if(trigger.trim().startsWith('hudfix-audit-')){
+ await import('./hudfix-audit.mjs');
+}else if(trigger.trim().startsWith('hudfix-preview-')||trigger.trim().startsWith('hudfix-publish-')){
+ await import('./hudfix-release.mjs');
 }else if(trigger.trim().startsWith('nametag-audit-')){
  await import('./nametag-audit.mjs');
 }else if(trigger.trim().startsWith('nametag-preview-')||trigger.trim().startsWith('nametag-publish-')){
