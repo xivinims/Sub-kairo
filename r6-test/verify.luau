@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-original-best-run-v15")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
@@ -9,6 +9,25 @@ assert(sc:FindFirstChild("BoogieSwapInput") and not sc.BoogieSwapInput.Disabled)
 assert(sc:FindFirstChild("NaturalR6Climb") and not sc.NaturalR6Climb.Disabled)
 assert(sc:FindFirstChild("R6CombatInput") and not sc.R6CombatInput.Disabled)
 assert(sc:FindFirstChild("R6PoseController") and not sc.R6PoseController.Disabled)
+assert(workspace:GetAttribute("OriginalUnmodifiedR6RunInstalled") == true)
+assert(sc.R6PoseController.Source:find("originalR6RunCF",1,true))
+assert(sc.R6PoseController.Source:find("originals[name]*originalPose",1,true))
+local savedRuns = sc:FindFirstChild("R6RunSource")
+assert(savedRuns and savedRuns:IsA("Folder"),"Original R6 source sequence folder missing")
+local sourceRunCounts = {["Run1 [by M0rsDev]"]=40,["Run2 [by Gusthabuo777]"]=41,
+ ["Run3 [by Newb1e27]"]=17}
+assert(#savedRuns:GetChildren()==3,"Original R6 run source should contain exactly three clips")
+for clipName,total in pairs(sourceRunCounts) do
+ local original=savedRuns:FindFirstChild(clipName)
+ assert(original and original:IsA("KeyframeSequence"),"Original source sequence missing: "..clipName)
+ local frames=original:GetKeyframes()
+ assert(#frames==total,"Original R6 running frames were modified: "..clipName)
+ local poseCount=0
+ for _,frame in ipairs(frames) do
+  for _,p in ipairs(frame:GetDescendants()) do if p:IsA("Pose") then poseCount+=1 end end
+ end
+ assert(poseCount>=total*4,"The original run sequence has insufficient R6 pose channels")
+end
 assert(sc.R6PoseController.Source:find("RunService.PreSimulation",1,true))
 assert(sc.R6PoseController.Source:find("joint.C0=originals[name]",1,true))
 assert(sc.R6PoseController.Source:find("originals[name]*CFrame.Angles",1,true))
@@ -105,6 +124,7 @@ end
 assert(character.Humanoid.RigType == Enum.HumanoidRigType.R6)
 assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb and character.R6CombatInput and character.R6PoseController)
 assert(character:FindFirstChild("CombatAnimations"))
+assert(character:FindFirstChild("R6RunSource"),"Original R6 run KeyframeSequences did not clone to avatar")
 local c0Joints={}
 for _,jointName in ipairs({"Left Shoulder","Right Shoulder","Left Hip","Right Hip","Neck","RootJoint"}) do
  local joint=character:FindFirstChild(jointName,true)
@@ -156,11 +176,14 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-real-motion-v14",
+ ok=true,version=game.PlaceVersion,build="r6-original-best-run-v15",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
  allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=true,
  runPoseFromMotor6D=true,runBaseTrackIsR6=true,
+ originalRunModelAssetId=136548520660837,
+ actualRunSequence="Run3 [by Newb1e27]",
+ originalKeyframeCounts=sourceRunCounts,runOriginalAssetsModified=false,
  underlyingRunAndWalkTrackSame=runningIds.run==runningIds.walk,
  sprintTouchButton=true,sprintShiftKey=true,buttonsForAnimationBanks=0,
  boogieMobileButton=true,boogieSwapClapAssets=true,boogieServerValidated=true,
