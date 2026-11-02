@@ -246,7 +246,9 @@ local function rawPose(dt)
             if left.ease == Enum.PoseEasingStyle.Constant then alpha = 0 end
             local cf = left.cf:Lerp(right.cf, alpha)
             local weight = left.weight + (right.weight-left.weight)*alpha
-            -- C0 updates immediately and visibly on R6, even if Roblox\n            -- has no permission to stream the original animation ID.\n            motor.C0 = originalC0[motor] * CFrame.identity:Lerp(cf, weight)
+            -- C0 updates immediately and visibly on R6, even if Roblox
+            -- has no permission to stream the original animation ID.
+            motor.C0 = originalC0[motor] * CFrame.identity:Lerp(cf, weight)
         end
     end
 end
@@ -304,7 +306,23 @@ heartbeat = RunService.PreSimulation:Connect(function(dt)
     if procedural then emergencyPose(dt)
     elseif currentTrack and currentTrack.Length > 0 then
         if not currentTrack.IsPlaying then currentTrack:Play(0.1) end
-        -- A small, real joint overlay also makes movement visible when a\n        -- loaded Roblox track reports success but fails to pose this R6 rig.\n        -- Raw KeyframeSequences are exempt; they keep their exact poses.\n        elapsed += dt\n        if mode == "walk" or mode == "run" or mode == "climb" then\n            local kick = math.sin(elapsed * (mode == "run" and 12 or 8)) * 0.3\n            for name, angle in pairs({["Left Shoulder"] = kick, ["Right Shoulder"] = -kick, ["Left Hip"] = -kick, ["Right Hip"] = kick}) do\n                local motor = motors[name]\n                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(angle, 0, 0) end\n            end\n        elseif mode == "idle" then\n            local breathe = math.sin(elapsed * 2.2) * 0.08\n            for _, name in ipairs({"Left Shoulder", "Right Shoulder"}) do\n                local motor = motors[name]\n                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(breathe, 0, 0) end\n            end\n        end
+        -- A small, real joint overlay also makes movement visible when a
+        -- loaded Roblox track reports success but fails to pose this R6 rig.
+        -- Raw KeyframeSequences are exempt; they keep their exact poses.
+        elapsed += dt
+        if mode == "walk" or mode == "run" or mode == "climb" then
+            local kick = math.sin(elapsed * (mode == "run" and 12 or 8)) * 0.3
+            for name, angle in pairs({["Left Shoulder"] = kick, ["Right Shoulder"] = -kick, ["Left Hip"] = -kick, ["Right Hip"] = kick}) do
+                local motor = motors[name]
+                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(angle, 0, 0) end
+            end
+        elseif mode == "idle" then
+            local breathe = math.sin(elapsed * 2.2) * 0.08
+            for _, name in ipairs({"Left Shoulder", "Right Shoulder"}) do
+                local motor = motors[name]
+                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(breathe, 0, 0) end
+            end
+        end
         if mode == "walk" or mode == "run" then
             currentTrack:AdjustSpeed(math.clamp(humanoid.WalkSpeed / 16, 0.7, 2))
         end
