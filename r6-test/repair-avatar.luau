@@ -13,7 +13,8 @@ assert(archived, "Missing preserved original packs in v6")
 local naruto = archived:FindFirstChild("WallWalkNaruto_R6")
 assert(naruto, "Naruto original was not preserved")
 assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-v7"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-wallwalk-v8",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-wallwalk-v8"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -55,6 +56,97 @@ local function install(object, parent)
 end
 local animator = install(sourceAnimate, characterScripts)
 animator.Disabled = false
+
+-- Probe the actual universe before selecting assets from the user's Boogie R6
+-- pack. Unavailable uploaded IDs are NEVER selected as playable motion.
+local probed = S.decode("json", fs.readFile("r6-test/animation-probe.json"))
+local choices = {
+    idle = {102425446560812, 180435571, 180435792},
+    walk = {17747141146, 180426354},
+    run = {11605590459, 11123175969, 17747141146, 180426354},
+    jump = {17747185294, 125750702},
+    fall = {17747187834, 180436148},
+    climb = {11605578996, 180436334},
+    sit = {178130996},
+}
+local animationNames = {
+    idle = "Animation1", walk = "WalkAnim", run = "RunAnim",
+    jump = "JumpAnim", fall = "FallAnim", climb = "ClimbAnim", sit = "SitAnim",
+}
+local selected = {}
+for mode, candidates in pairs(choices) do
+    local usable
+    for _, id in ipairs(candidates) do
+        local data = probed[tostring(id)]
+        if data and data.loaded and data.length and data.length > 0.07 then
+            usable = id
+            break
+        end
+    end
+    assert(usable, "No usable R6 animation for " .. mode)
+    selected[mode] = usable
+    local previous = animator:FindFirstChild(mode)
+    if previous then previous:Destroy() end
+    local folder = R.Instance.new("Folder")
+    folder.Name = mode
+    folder.Parent = animator
+    local animation = R.Instance.new("Animation")
+    animation.Name = animationNames[mode]
+    animation.AnimationId = "rbxassetid://" .. tostring(usable)
+    animation.Parent = folder
+end
+-- The original Naruto Animate/Controller and GravityController remain installed.
+-- Patch only the R6 motion selection: formerly it forced WALK even at run speed,
+-- and its unused run entry was literally "run.xml".
+local module = animator:FindFirstChild("R6")
+assert(module and module:IsA("ModuleScript"))
+assert(S.hash("sha256", module.Source)
+    == "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
+    "Unexpected original Naruto R6 module source")
+local r6source = module.Source
+local oldRun = '{ id = "run.xml", weight = 10 }'
+assert(r6source:find(oldRun, 1, true), "Naruto R6 run config changed")
+r6source = r6source:gsub('run%.xml', "rbxassetid://" .. tostring(selected.run), 1)
+local startMark = "function onRunning(speed)"
+local endMark = "\nfunction onDied()"
+local startIndex = assert(r6source:find(startMark, 1, true))
+local endIndex = assert(r6source:find(endMark, startIndex, true))
+local newRunning = [[local runningSpeed = 0
+function onRunning(speed)
+    runningSpeed = speed
+    if speed > 0.01 then
+        local mode = speed >= 19 and "run" or "walk"
+        playAnimation(mode, 0.13, Humanoid)
+        if currentAnimTrack then
+            local nominal = mode == "run" and 23 or 14.5
+            setAnimationSpeed(math.clamp(speed / nominal, 0.75, 1.85))
+        end
+        pose = "Running"
+    else
+        if emoteNames[currentAnim] == nil then
+            playAnimation("idle", 0.15, Humanoid)
+            pose = "Standing"
+        end
+    end
+end
+]]
+r6source = r6source:sub(1, startIndex - 1) .. newRunning .. r6source:sub(endIndex)
+local oldMove = 'elseif (pose == "Running") then\n\t\tplayAnimation("walk", 0.1, Humanoid)'
+assert(r6source:find(oldMove, 1, true), "Naruto movement loop changed")
+r6source = r6source:gsub('playAnimation%("walk", 0%.1, Humanoid%)',
+    'playAnimation(runningSpeed >= 19 and "run" or "walk", 0.1, Humanoid)', 1)
+module.Source = r6source
+L.compile(module.Source)
+
+-- ContextActionService only changes WalkSpeed. There is no second animator,
+-- no animated GUI catalog, no custom RenderStepped joint manipulation.
+local sprint = R.Instance.new("LocalScript")
+sprint.Name = "NarutoSprintInput"
+sprint.Source = fs.readFile("r6-test/sprint-input.luau")
+L.compile(sprint.Source)
+sprint.Disabled = false
+sprint.Parent = characterScripts
+
 -- The real WallWalk script is INSIDE the player R6 model.
 local walker = install(sourceWall, characterScripts)
 walker.Name = "ChakraWallWalk"
@@ -98,23 +190,28 @@ assert(#place.ServerScriptService:GetChildren() == 1)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-chakra-wallwalk-v8")
+place.Workspace:SetAttribute("R6TestBuild", "r6-chakra-r6-motion-v9")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
+place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
 
 local manifest = {
- build = "r6-chakra-wallwalk-v8",
+ build = "r6-chakra-r6-motion-v9",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
- playerCharacter = {"Animate", "ChakraWallWalk"},
+ playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput"},
+ selectedAnimationIds = selected,
+ nativeCandidateMeasurements = probed,
+ patchedNarutoR6Motion = true,
+ originalNarutoR6SHA256 = "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
  playerScripts = {"RbxCharacterSounds", "PlayerScriptsLoader"},
  replicatedDependencies = {"GravityController", "DrawClass", "VFX"},
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "Original Naruto wall gravity and ChakraFeet VFX; only BindAction made touch-capable. Classic camera loader replaced with an inert Loaded shim. Visual playtest needed.",
+ note = "Original Naruto chakra gravity and VFX; R6 original motion selector patched to use a separate running track chosen from accessible Boogie assets. Native probe selects accessible idle/walk/run/jump/fall/climb/sit. Minimal mobile sprint speed input, no per-frame motor animations. Visual client playtest pending.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
-print("CHAKRA_WALLWALK_SOURCE_OK", #sourceWall.Source, #sourceGravity.Source, #sourceVfx:GetDescendants())
+print("CHAKRA_R6_ANIMATIONS_OK", S.encode("json", selected))
