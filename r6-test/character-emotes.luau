@@ -12,7 +12,7 @@ local playing, connection = false, nil
 local saved = {}
 local function stop()
  if connection then connection:Disconnect(); connection=nil end
- for motor, transform in pairs(saved) do if motor.Parent then motor.Transform=transform end end
+ for motor, c0 in pairs(saved) do if motor.Parent then motor.C0=c0 end end
  saved={}
  if playing then character:SetAttribute('R6EmotePlaying',false) end
  playing=false
@@ -36,7 +36,7 @@ local function play(sequence)
  local motors={}
  for _,motor in ipairs(character:GetDescendants()) do
   if motor:IsA('Motor6D') and motor.Part1 and channels[motor.Part1.Name] then
-   motors[motor]=channels[motor.Part1.Name];saved[motor]=motor.Transform
+   motors[motor]=channels[motor.Part1.Name];saved[motor]=motor.C0
   end
  end
  local started=os.clock()
@@ -53,7 +53,7 @@ local function play(sequence)
    end
    local alpha=right.time>left.time and math.clamp((t-left.time)/(right.time-left.time),0,1) or 0
    if left.style==Enum.PoseEasingStyle.Constant then alpha=0 end
-   motor.Transform=CFrame.identity:Lerp(left.cf:Lerp(right.cf,alpha),left.weight+(right.weight-left.weight)*alpha)
+   motor.C0=saved[motor]*CFrame.identity:Lerp(left.cf:Lerp(right.cf,alpha),left.weight+(right.weight-left.weight)*alpha)
   end
  end)
 end
