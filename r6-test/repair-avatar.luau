@@ -17,7 +17,8 @@ assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -200,6 +201,43 @@ staminaModule.Source = fs.readFile("r6-test/climb-stamina-original.luau")
 L.compile(staminaModule.Source)
 staminaModule.Parent = autoClimb
 
+-- R6 fighting animation package: only the actual user-supplied AnimationIds
+-- that the Roblox animation probe loaded are inserted as tracks. Everything
+-- else has a short local action-only pose fallback instead of misleading IDs.
+local combatProbe = S.decode("json", fs.readFile("r6-test/combat-probe.json"))
+local combatAnimations = {
+    M1_1 = 10469493270, M1_2 = 10469630950,
+    M1_3 = 10469639222, M1_4 = 10469643643,
+    Block = 10470389827, DodgeFront = 10479335397,
+    DodgeBack = 10491993682, Uppercut = 10503381238,
+    Downslam = 10470104242, HeavyPunch = 12983333733,
+    Barrage = 10466974800, Kick_1 = 2515090838,
+    Kick_2 = 13874028312,
+}
+local combatFolder = R.Instance.new("Folder")
+combatFolder.Name = "CombatAnimations"
+combatFolder.Parent = characterScripts
+local usableCombat, unavailableCombat = {}, {}
+for name, id in pairs(combatAnimations) do
+    local metadata = combatProbe[tostring(id)]
+    if metadata and metadata.loaded and metadata.length and metadata.length > 0.07 then
+        local clip = R.Instance.new("Animation")
+        clip.Name = name
+        clip.AnimationId = "rbxassetid://" .. tostring(id)
+        clip:SetAttribute("NativeVerifiedR6", true)
+        clip.Parent = combatFolder
+        usableCombat[name] = id
+    else
+        unavailableCombat[name] = id
+    end
+end
+local combatClient = R.Instance.new("LocalScript")
+combatClient.Name = "R6CombatInput"
+combatClient.Source = fs.readFile("r6-test/combat-client.luau")
+L.compile(combatClient.Source)
+combatClient.Disabled = false
+combatClient.Parent = characterScripts
+
 -- Boogie Woogie, sourced from BoogieWoogieV1(5).rbxl and restored from the
 -- complete earlier test arena. Install only the original clap assets.
 local clapAssetNames = {"ClapAnimation", "ClapVFX", "SwapSound"}
@@ -323,7 +361,7 @@ L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-natural-climb-optional-chakra-v12")
+place.Workspace:SetAttribute("R6TestBuild", "r6-combat-animations-v13")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
@@ -333,13 +371,29 @@ place.Workspace:SetAttribute("R6WanderingNPCCount", 4)
 place.Workspace:SetAttribute("R6DeathMenuInstalled", true)
 place.Workspace:SetAttribute("NaturalR6ClimbingInstalled", true)
 place.Workspace:SetAttribute("OptionalChakraToggle", true)
+place.Workspace:SetAttribute("R6CombatAnimationsInstalled", true)
 
 local manifest = {
- build = "r6-natural-climb-optional-chakra-v12",
+ build = "r6-combat-animations-v13",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
- playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb"},
+ playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb", "R6CombatInput"},
+ combat = {
+    sourceModelCatalog = {16663903306, 75164220659481, 125909948357929, 114132474839078},
+    allSuppliedAnimationIds = combatAnimations,
+    usableAnimationIds = usableCombat,
+    unavailableAnimationIds = unavailableCombat,
+    measuredInUniverse = combatProbe,
+    combo = {"M1_1", "M1_2", "M1_3", "M1_4"},
+    actions = {"Block", "DodgeFront", "DodgeBack", "Uppercut", "Downslam",
+        "HeavyPunch", "Barrage", "Kick_1", "Kick_2"},
+    mobileButtons = {"SOCO", "DEF", "ESQ", "CHUTE", "ESP."},
+    pcKeys = {"MouseButton1", "F", "Q", "E", "R"},
+    fallback = "Local R6 cosmetic pose for unavailable animation IDs; not original Roblox uploaded clips",
+    networkAttacks = false,
+    onlyR6 = true,
+ },
  naturalClimb = {package = "R15 & R6 Wall Climbing System.rbxl", rig = "R6",
    mode = "automatic-on-forward-into-wall", usesJoystick = true, button = false,
    climbingAnimation = "Animate.climb.ClimbAnim", staminaModule = "StaminaBar",
@@ -364,7 +418,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "v12: automatic R6 wall climbing from supplied R6/R15 pack and original StaminaBar, driven by mobile joystick and keyboard movement. Chakra retains its own optional labeled touch button; when enabled it takes priority over natural climbing. Previous UI, NPCs, Boogie and R6 running preserved.",
+ note = "v13 adds native-probed R6 combat IDs and cosmetic fallback for blocked clips, with on-demand mobile actions and no continuous animation loop; retained existing Ninja Run, natural climbing, optional Chakra, cinematic menu, NPCs and Boogie.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
