@@ -4,7 +4,7 @@ local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-boogie-v10")
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-cinematic-menu-npcs-v11")
 assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
 assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
@@ -49,7 +49,36 @@ local count=0
 for _,obj in ipairs(g:GetDescendants()) do
  if obj:IsA("LuaSourceContainer") then L.compile(obj.Source);count+=1 end
 end
-assert(#g.ServerScriptService:GetChildren()==2 and g.ServerScriptService.R6AvatarServer)
+assert(#g.ServerScriptService:GetChildren()==3 and g.ServerScriptService.R6AvatarServer)
+assert(g.ServerScriptService.R6AvatarServer.Source==fs.readFile("r6-test/avatar-server.luau"))
+assert(g.ServerScriptService.R6AvatarServer.Source:find("respawnRemote.OnServerEvent",1,true))
+assert(g.ServerScriptService.NPCWanderServer and
+ g.ServerScriptService.NPCWanderServer.Source==fs.readFile("r6-test/npc-wander-server.luau"))
+assert(g.ServerScriptService.NPCWanderServer.Source:find("MoveTo(",1,true))
+local ps=g.StarterPlayer.StarterPlayerScripts
+assert(ps.R6CinematicMenu and ps.R6CinematicMenu.Source==fs.readFile("r6-test/cinematic-menu-client.luau"))
+assert(not ps.R6CinematicMenu.Disabled)
+for _,text in ipairs({"YOU DIED","RESPAWN","RETURN TO MENU","UPDATE LOG",
+ "Settings","Credits","Camera Banking","Neon Glow Pulse","createBackground"}) do
+ if text~="createBackground" then
+  assert(ps.R6CinematicMenu.Source:find(text,1,true),"Cinematic GUI missing: "..text)
+ end
+end
+assert(g.ReplicatedStorage.R6MenuRespawn and g.ReplicatedStorage.R6MenuRespawn:IsA("RemoteEvent"))
+local walkers=g.Workspace:FindFirstChild("NPCWanderers")
+assert(walkers and #walkers:GetChildren()==4)
+for _,npc in ipairs(walkers:GetChildren()) do
+ assert(npc.Humanoid.RigType==R.Enum.HumanoidRigType.R6)
+ assert(npc:GetAttribute("NPCWanderer")==true)
+ assert(npc.HumanoidRootPart.Anchored==false)
+end
+assert(g.Workspace:GetAttribute("R6DynamicCinematicMenu")==true)
+assert(g.Workspace:GetAttribute("R6WanderingNPCCount")==4)
+assert(g.Workspace:GetAttribute("R6DeathMenuInstalled")==true)
+assert(m.walkingNPCs.count==4 and m.dynamicMenu.deathRespawn=="R6MenuRespawn")
+assert(m.runCatalogCandidateIds[1]==72900620651167
+ and m.runCatalogCandidateIds[2]==107952007153363
+ and m.runCatalogCandidateIds[3]==93499989310243)
 assert(g.ServerScriptService.BoogieSwapServer
  and g.ServerScriptService.BoogieSwapServer.Source==fs.readFile("r6-test/boogie-server.luau"))
 assert(g.ReplicatedStorage.BoogieSwap and g.ReplicatedStorage.ClapAnimation
@@ -61,4 +90,5 @@ assert(dummy.Humanoid.RigType==R.Enum.HumanoidRigType.R6)
 assert(m.boogieWoogie and m.boogieWoogie.testDummy=="BoogieTestDummy")
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
- playerCharacterScripts=4,accessibleR6Animations=7,runningMode=true,boogieSwap=true,lightweightSoloDummy=true,touchButton=true},true))
+ playerCharacterScripts=4,accessibleR6Animations=7,runningMode=true,
+ boogieSwap=true,walkingNPCs=4,cinematicMenu=true,deathMenu=true,touchButton=true},true))
