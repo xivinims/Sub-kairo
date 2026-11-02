@@ -200,7 +200,7 @@ local function fallbackUnavailableTrack()
     if currentGroup == "Arquivos" and sourceLabel:sub(1, 8) == "arquivo:" then
         if useSequence(embeddedSequence(currentMode)) then return end
     end
-    if sourceLabel:sub(1, 7) ~= "publico:" then
+    if sourceLabel:sub(1, 8) ~= "publico:" then
         stopCurrent()
         local fallback = Instance.new("Animation")
         fallback.AnimationId = "rbxassetid://" .. defaults[currentMode]
@@ -217,7 +217,7 @@ local function rawPose(dt)
     if not currentSequence then return end
     sequenceTime = os.clock() - sequenceStart
     local time = sequenceDuration > 0 and
-        (currentSequence.Loop and sequenceTime % sequenceDuration or math.min(sequenceTime, sequenceDuration)) or 0
+        ((currentSequence.Loop or currentMode == "walk" or currentMode == "run" or currentMode == "idle" or currentMode == "climb") and sequenceTime % sequenceDuration or math.min(sequenceTime, sequenceDuration)) or 0
     for motor, samples in pairs(framesByJoint) do
         if motor.Parent then
             local left, right = samples[1], samples[1]
