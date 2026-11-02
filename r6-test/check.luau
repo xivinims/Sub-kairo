@@ -4,12 +4,28 @@ local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-wallwalk-v8")
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-r6-motion-v9")
 assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
 assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
-assert(#sc:GetChildren()==2 and sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
+assert(#sc:GetChildren()==3 and sc:FindFirstChild("Animate")
+ and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput"))
+assert(not sc.NarutoSprintInput.Disabled)
+assert(sc.NarutoSprintInput.Source==fs.readFile("r6-test/sprint-input.luau"))
+assert(sc.Animate.R6.Source:find('runningSpeed >= 19',1,true))
+assert(not sc.Animate.R6.Source:find('run.xml',1,true))
+assert(m.patchedNarutoR6Motion and m.selectedAnimationIds)
+local animNames={idle="Animation1",walk="WalkAnim",run="RunAnim",jump="JumpAnim",fall="FallAnim",climb="ClimbAnim",sit="SitAnim"}
+for mode,name in pairs(animNames) do
+ local target=sc.Animate:FindFirstChild(mode)
+ assert(target and #target:GetChildren()==1 and target:FindFirstChild(name), "R6 mode missing: "..mode)
+ local id=m.selectedAnimationIds[mode]
+ assert(id and tostring(target[name].AnimationContent):find(tostring(id),1,true),"R6 selected ID mismatch: "..mode)
+ local details=m.nativeCandidateMeasurements[tostring(id)]
+ assert(details and details.loaded and details.length>0.07,"Unplayable R6 animation selected for "..mode)
+end
 assert(sc.Animate.Source and sc.Animate.R6 and sc.Animate.Controller)
+assert(S.hash("sha256",sc.Animate.Source)==m.originalSHA256.Animate)
 assert(not sc.ChakraWallWalk.Disabled)
 assert(sc.ChakraWallWalk.Source:find('SetTitle("ToggleChakraFeet"',1,true))
 assert(sc.ChakraWallWalk.Source:find('Enum.KeyCode.B',1,true))
@@ -33,4 +49,4 @@ end
 assert(#g.ServerScriptService:GetChildren()==1 and g.ServerScriptService.R6AvatarServer)
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
- playerCharacterScripts=2,otherPacksRemoved=true,touchButton=true},true))
+ playerCharacterScripts=3,accessibleR6Animations=7,runningMode=true,otherPacksRemoved=true,touchButton=true},true))
