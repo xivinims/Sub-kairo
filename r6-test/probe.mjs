@@ -28,9 +28,8 @@ async function publish(bytes){
  const raw=await response.text();if(!response.ok)throw Error('Place upload HTTP '+response.status+': '+raw.slice(0,500));return JSON.parse(raw);
 }
 async function main(){
- const result=await execute(`local list={};local n=0;for _,x in ipairs(game:GetDescendants()) do if x:IsA('LuaSourceContainer') and x:GetAttribute('OriginalId') then n+=1;table.insert(list,{id=x:GetAttribute('OriginalId'),path=x:GetFullName()}) end end;return game:GetService('HttpService'):JSONEncode({version=game.PlaceVersion,count=n,list=list})`,269);
- console.log('NATIVE_INVENTORY '+JSON.stringify(result));
  const verify=(await fs.readFile('r6-test/verify.luau','utf8')).replace("assert(count==132,'Imported script count changed')",'');
- console.log('DIAGNOSTIC_TEST '+JSON.stringify(await execute(verify,269)));
+ const source=await fs.readFile('r6-test/arena-server.luau','utf8');
+ console.log('DIAGNOSTIC_TEST '+JSON.stringify(await execute('game.ServerScriptService.ArenaServer.Source=[==========['+source+']==========]\n'+verify,269)));
 }
 main().catch(error=>{console.error(String(error.stack||error).split(key).join('[REDACTED]'));process.exitCode=1;});

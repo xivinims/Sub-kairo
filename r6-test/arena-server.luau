@@ -6,13 +6,17 @@ local bots=workspace:WaitForChild('TrainingBots')
 local function hook(bot)
  local hum=bot:WaitForChild('Humanoid');local home=bot:GetPivot();local index=bot:GetAttribute('BotIndex')
  assert(hum.RigType==Enum.HumanoidRigType.R6)
- hum.Died:Once(function()
+ local scheduled=false
+ local function respawn()
+  if scheduled then return end;scheduled=true
   task.delay(5,function()
    bot:Destroy();local fresh=Storage.R6BotTemplate:Clone();fresh.Name='Bot '..index;fresh:SetAttribute('TrainingBot',true);fresh:SetAttribute('BotIndex',index)
    fresh.Humanoid.MaxHealth=100;fresh.Humanoid.Health=100;fresh.Humanoid.DisplayName='ALVO '..index;fresh.Humanoid.HealthDisplayType=Enum.HumanoidHealthDisplayType.AlwaysOn
    fresh:PivotTo(home);fresh.Parent=bots;hook(fresh)
   end)
- end)
+ end
+ hum.Died:Once(respawn)
+ hum.HealthChanged:Connect(function(health) if health<=0 then respawn() end end)
 end
 for _,bot in ipairs(bots:GetChildren()) do hook(bot) end
 local function playerAdded(player)

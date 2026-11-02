@@ -24,5 +24,5 @@ for i=1,7 do
  assert((i<7 and bot.Humanoid.Health==100-15*i) or (i==7 and bot.Humanoid.Health<=0),'Arrow damage incorrect at hit '..i..': '..bot.Humanoid.Health)
 end
 assert(bot.Humanoid.Health<=0,'Bot not killable');task.wait(5.5)
-local respawn=workspace.TrainingBots:FindFirstChild('Bot 1');assert(respawn and respawn~=bot and respawn.Humanoid.Health==100,'Bot respawn failed')
+local respawn=workspace.TrainingBots:FindFirstChild('Bot 1');assert(respawn and respawn~=bot and respawn.Humanoid.Health==100,'Bot respawn failed');assert(#workspace.TrainingBots:GetChildren()==6,'Respawn duplicated bots')
 return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='r6-arena-v1',originalScriptsUnchanged=count,r6Rigs=rigs,bots=6,arrowDamage=15,killAndRespawn=true,r15Rigs=0})
