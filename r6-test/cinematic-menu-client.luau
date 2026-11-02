@@ -362,6 +362,7 @@ end
 local function enterMenu()
  busy=false
  menu=true
+ player:SetAttribute("R6MenuActive",true)
  death.Visible=false
  makeScene()
  Lighting.ClockTime=11.9;Lighting.Brightness=3
@@ -407,7 +408,7 @@ local function beginPlay()
  Tween:Create(progressInner,TweenInfo.new(.57,Enum.EasingStyle.Quad),{
   Size=UDim2.fromScale(1,1)}):Play()
  task.wait(.65)
- menu=false;frameRoot.Visible=false;vignette.Visible=false
+ menu=false;player:SetAttribute("R6MenuActive",false);frameRoot.Visible=false;vignette.Visible=false
  hideScene()
  restoreGameplay()
  local cam=workspace.CurrentCamera
@@ -439,10 +440,12 @@ local function showDeath(humanoid)
  if humanoid.Health>0 then return end
  if menu then return end
  death.Visible=true
+ player:SetAttribute("R6MenuActive",true)
  reopen.Visible=false
 end
 deathButton("RESPAWN",5,function()
  death.Visible=false
+ player:SetAttribute("R6MenuActive",false)
  remote:FireServer()
 end)
 deathButton("RETURN TO MENU",206,function()
