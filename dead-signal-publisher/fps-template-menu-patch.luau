@@ -19,7 +19,7 @@ local originalWeapons = scripts.Weapons
 local originalWeaponsCount = #originalWeapons:GetDescendants()
 local originalScripts = {}
 for _, item in ipairs(game:GetDescendants()) do
-	if item:IsA('LuaSourceContainer') then originalScripts[item:GetFullName()] = item end
+	if item:IsA('LuaSourceContainer') then originalScripts[item] = true end
 end
 
 local source = fs.readFile('fps-template-menu-client.luau')
@@ -40,7 +40,7 @@ assert(#workspace:GetDescendants() == originalWorkspaceCount, 'Map changed while
 assert(scripts.Weapons == originalWeapons and #originalWeapons:GetDescendants() == originalWeaponsCount, 'Weapon system changed while installing the menu')
 for _, item in ipairs(game:GetDescendants()) do
 	if item:IsA('LuaSourceContainer') and item ~= menu then
-		assert(originalScripts[item:GetFullName()] == item, 'Original FPS script was replaced: ' .. item:GetFullName())
+		assert(originalScripts[item] == true, 'Original FPS script was replaced: ' .. item:GetFullName())
 	end
 end
 local preservedScripts = 0
