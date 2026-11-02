@@ -1,5 +1,20 @@
 {
-  "build": "r6-chakra-r6-motion-v9",
+  "boogieWoogie": {
+    "ability": "Swap positions with one target",
+    "cooldownSeconds": 1.6,
+    "maxDistanceStuds": 65,
+    "mobileKey": "G",
+    "originalClapAssets": [
+      "ClapAnimation",
+      "ClapVFX",
+      "SwapSound"
+    ],
+    "package": "BoogieWoogieV1(5).rbxl",
+    "remote": "BoogieSwap",
+    "server": "BoogieSwapServer",
+    "testDummy": "BoogieTestDummy"
+  },
+  "build": "r6-chakra-boogie-v10",
   "mobileChakraButton": true,
   "nativeCandidateMeasurements": {
     "102425446560812": {
@@ -59,7 +74,7 @@
       "loaded": true
     }
   },
-  "note": "Original Naruto chakra gravity and VFX; R6 original motion selector patched to use a separate running track chosen from accessible Boogie assets. Native probe selects accessible idle/walk/run/jump/fall/climb/sit. Minimal mobile sprint speed input, no per-frame motor animations. Visual client playtest pending.",
+  "note": "Naruto chakra stays intact. Boogie positional exchange is a minimal mobile/server adaptation of the supplied package; only original clap assets imported. Previously verified R6 locomotion clips reused. A mobile rendered playtest is still required.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalSHA256": {
@@ -75,7 +90,8 @@
   "playerCharacter": [
     "Animate",
     "ChakraWallWalk",
-    "NarutoSprintInput"
+    "NarutoSprintInput",
+    "BoogieSwapInput"
   ],
   "playerScripts": [
     "RbxCharacterSounds",
