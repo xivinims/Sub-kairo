@@ -8,10 +8,19 @@
     "climb",
     "sit"
   ],
-  "build": "r6-character-motion-v4",
+  "bankButtons": [
+    "R6 PADRÃO",
+    "R6 ARQUIVOS"
+  ],
+  "build": "r6-character-motion-v5",
   "characterController": "R6Locomotion (LocalScript in StarterCharacterScripts)",
   "characterEmotes": 19,
-  "fallbackNote": "Public R6 default animation; if inaccessible, procedural local Motor6D movement. Original uploaded keyframes and sources are unchanged.",
+  "exclusiveBanks": {
+    "Arquivos": "UploadedMotion Animation IDs and compatible raw KeyframeSequences",
+    "Padrao": "R6 default locomotion animations"
+  },
+  "fallbackNote": "The Files bank tries original imported animation IDs, then matching embedded KeyframeSequence, then public R6 fallback. Inaccessible original IDs are NOT claimed playable. Original data untouched.",
+  "hudScript": "StarterPlayer.StarterCharacterScripts.AnimationBankGUI",
   "originalControllerPreservedDisabled": true,
   "originals": [
     {
