@@ -14,7 +14,7 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-combat-animations-v13",
+  "build": "r6-real-motion-v14",
   "chakraToggle": {
     "button": "CHAKRA OFF / CHAKRA ON",
     "initialState": false,
@@ -175,6 +175,22 @@
       "Death"
     ]
   },
+  "locomotionPoseDriver": {
+    "joint": "Motor6D.C0",
+    "mode": [
+      "idle",
+      "walk",
+      "run",
+      "jump",
+      "fall"
+    ],
+    "priority": "Yield to optional Chakra and natural wall climb",
+    "rig": "R6",
+    "runningWhenWalkSpeedAtLeast": 19,
+    "script": "R6PoseController",
+    "sharedWithCombat": true,
+    "sprint": "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset"
+  },
   "mobileChakraButton": true,
   "nativeCandidateMeasurements": {
     "102425446560812": {
@@ -252,7 +268,7 @@
     "staminaModule": "StaminaBar",
     "usesJoystick": true
   },
-  "note": "v13 adds native-probed R6 combat IDs and cosmetic fallback for blocked clips, with on-demand mobile actions and no continuous animation loop; retained existing Ninja Run, natural climbing, optional Chakra, cinematic menu, NPCs and Boogie.",
+  "note": "v14 fixes R15 run-on-R6 stiffness and frozen cosmetic fighting with ONE actual Motor6D.C0 R6 keypose runtime for locomotion and combat. Imported fight IDs still inaccessible in this universe; preserve originals in manifest. Chakra, auto-climb, Boogie and 3D menu preserved.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalSHA256": {
@@ -271,7 +287,8 @@
     "NarutoSprintInput",
     "BoogieSwapInput",
     "NaturalR6Climb",
-    "R6CombatInput"
+    "R6CombatInput",
+    "R6PoseController"
   ],
   "playerScripts": [
     "RbxCharacterSounds",
@@ -310,7 +327,7 @@
     "fall": 180436148,
     "idle": 180435571,
     "jump": 125750702,
-    "run": 656118852,
+    "run": 180426354,
     "sit": 178130996,
     "walk": 180426354
   },
