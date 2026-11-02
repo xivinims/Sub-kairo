@@ -70,15 +70,22 @@ wallrun.Parent = sc
 game.StarterPlayer.StarterPlayerScripts:ClearAllChildren()
 game.StarterGui:ClearAllChildren()
 game.StarterPack:ClearAllChildren()
+local spawner = game.ServerScriptService:FindFirstChild("R6AvatarServer")
+assert(spawner and spawner:IsA("Script"), "R6 user avatar spawner missing")
+spawner = spawner:Clone()
 game.ServerScriptService:ClearAllChildren()
+spawner.Source = fs.readFile("r6-test/avatar-server.luau")
+L.compile(spawner.Source)
+spawner.Enabled = true
+spawner.Disabled = false
+spawner.Parent = game.ServerScriptService
 game.ServerStorage:ClearAllChildren()
 game.ReplicatedStorage:ClearAllChildren()
 
--- Let the Roblox character spawn pipeline supply the native Roblox Animate
--- script for ordinary walking, avoiding ANY custom per-frame animation driver.
-game.Players.CharacterAutoLoads = true
-game.StarterPlayer.CharacterRigType = R.Enum.HumanoidRigType.R6
-game.StarterPlayer.LoadCharacterAppearance = true
+-- Keep just the tiny R6 avatar spawner, no other animation controller.
+game.Players.CharacterAutoLoads = false
+-- R6AvatarServer builds each player's own avatar in R6. It is not an
+-- animation controller and is the only script outside Wallrun.
 -- Keep the test arena and the original wallrun walls, but remove training bots.
 local bots = ws:FindFirstChild("TrainingBots")
 if bots then bots:Destroy() end
@@ -97,9 +104,10 @@ local manifest = {
     originalSourceHashes = hashes,
     originalModuleCount = 10,
     originalAnimationsCount = 4,
-    nativeR6Walk = true,
+    nativeR6Walk = false,
+    R6AvatarSpawner = "ServerScriptService.R6AvatarServer",
     originalSourceUnmodified = true,
-    notes = "No other upload packs, R6Locomotion, MotionInput, CharacterEmotes, GUI or procedural movements. The original wallrun AnimationIds still require permission to load.",
+    notes = "Only original Wallrun and the server R6 avatar spawn helper. No other animation packs, GUI or procedural movement. Wallrun animation IDs still require permission.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(game))
