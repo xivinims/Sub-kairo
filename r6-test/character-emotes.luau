@@ -7,7 +7,6 @@ local player = Players.LocalPlayer
 local character = script.Parent
 local humanoid = character:WaitForChild('Humanoid')
 local animator = humanoid:WaitForChild('Animator')
-local animate = character:WaitForChild('Animate')
 local sequences = character:WaitForChild('Animations'):WaitForChild('Emotes')
 local playing, connection = false, nil
 local saved = {}
@@ -15,14 +14,14 @@ local function stop()
  if connection then connection:Disconnect(); connection=nil end
  for motor, transform in pairs(saved) do if motor.Parent then motor.Transform=transform end end
  saved={}
- if playing and animate.Parent then animate.Enabled=true end
+ if playing then character:SetAttribute('R6EmotePlaying',false) end
  playing=false
 end
 local function normalize(text) return text:lower():gsub('[^%w]','') end
 local function play(sequence)
  stop()
  if humanoid.Health<=0 or humanoid.MoveDirection.Magnitude>.05 then return end
- playing=true;animate.Enabled=false
+ playing=true;character:SetAttribute('R6EmotePlaying',true)
  for _,track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop(0) end
  local channels={};local length=0
  local frames=sequence:GetKeyframes();table.sort(frames,function(a,b)return a.Time<b.Time end)
