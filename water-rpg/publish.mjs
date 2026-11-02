@@ -57,29 +57,35 @@ async function main(){
  await requirePrivate();
  const fresh=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
  if(fresh.version!==baseline.version)throw Error('Place changed during preflight; refusing overwrite');
- const guarded=`assert(game.PlaceVersion==${baseline.version},'Place changed before save')\n`+install;
- let saved=false;
+ const backup=await api(base+`asset-delivery-api/v1/assetId/${place}`);
+ const location=backup.location||backup.locations?.[0]?.location;
+ if(!location)throw Error('Backup download URL missing');
+ const backupResponse=await fetch(location,{signal:AbortSignal.timeout(120000)});
+ if(!backupResponse.ok)throw Error('Cannot back up current place');
+ const backupBytes=Buffer.from(await backupResponse.arrayBuffer());
+ async function publishFile(bytes){
+  const response=await fetch(base+`universes/v1/${universe}/places/${place}/versions?versionType=Published`,{method:'POST',headers:{'x-api-key':key,'content-type':'application/octet-stream'},body:bytes,signal:AbortSignal.timeout(240000)});
+  const raw=await response.text();let result;try{result=JSON.parse(raw)}catch{result={message:raw.slice(0,500)}}
+  if(!response.ok)throw Error('Place publication HTTP '+response.status+': '+JSON.stringify(result));return result;
+ }
+ let candidate;
  try{
-  await execute(guarded+'\nlocal checked=(function()\n'+verify+'\nend)()\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn checked',upload.path);
-  saved=true;
+  candidate=await publishFile(await fs.readFile(new URL('water-rpg.rbxl',root)));
+  console.log('WATER_RPG_FILE_PUBLISHED '+JSON.stringify(candidate));
+  if(!candidate.versionNumber)throw Error('No published version returned');
   const live=await execute(verify);
-  if(!live?.ok||live.version!==baseline.version+1)throw Error('Published verification mismatch: '+JSON.stringify(live));
+  if(!live?.ok||live.version!==candidate.versionNumber)throw Error('Saved file failed verification');
   await requirePrivate();
-  // Rename only after the tested build is saved. Visibility is never widened.
   await api(cloud+`universes/${universe}?updateMask=displayName,description`,{method:'PATCH',body:{displayName:'Water Castle [RPG privado]',description:'RPG de exploração em desenvolvimento por Aurivane Works. Teste privado.'}});
   await api(cloud+`universes/${universe}/places/${place}?updateMask=displayName,serverSize`,{method:'PATCH',body:{displayName:'Water Castle [RPG privado]',serverSize:12}});
-  try{await api(cloud+`universes/${universe}:restartServers`,{method:'POST',body:{}})}catch{console.log('WATER_RPG_NOTICE existing servers could not be restarted');}
   const report={...live,private:true,universe,place,rollbackVersion:baseline.version,url:`https://www.roblox.com/games/${place}/`};
   await fs.writeFile(new URL('publication.json',root),JSON.stringify(report,null,2));
   console.log('WATER_RPG_PRIVATE_RELEASE_COMPLETE '+JSON.stringify(report));
  }catch(error){
-  console.error('WATER_RPG_POST_SAVE_ERROR '+String(error));
-  if(saved){
+  console.error('WATER_RPG_FILE_ERROR '+String(error));
+  if(candidate?.versionNumber){
    const latest=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
-   if(latest.version===baseline.version+1){
-    await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restored=true})',undefined,baseline.version);
-    console.error('WATER_RPG_ROLLBACK restored version '+baseline.version+'; universe remains private');
-   }
+   if(latest.version===candidate.versionNumber){await publishFile(backupBytes);console.error('WATER_RPG_ROLLBACK restored previous private place');}
   }
   throw error;
  }

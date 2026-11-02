@@ -94,3 +94,41 @@ end
 assert(#profile.npcs>=17 and profile.sourceParts>90000 and profile.terrainBytes>1000000,'Source map incomplete')
 fs.writeFile(here..'payload.rbxm',R.serializeModel({bundle}));fs.writeFile(here..'manifest.json',J.encode('json',profile,true))
 print(J.encode('json',{npcs=#profile.npcs,parts=profile.sourceParts,terrainBytes=profile.terrainBytes,scripts=count,removed=profile.removedScripts}))
+-- Preserve the original place's CSG dictionary services and native terrain when publishing the full file.
+-- Deserializing CSG into an isolated model can trigger a second geometry upload on SavePlaceAsync.
+for _,name in ipairs({'ServerScriptService','ServerStorage','ReplicatedStorage','ReplicatedFirst','StarterGui','SoundService','Lighting','MaterialService','StarterPack','Teams'}) do
+ local service=source:GetService(name)
+ for _,child in ipairs(service:GetChildren()) do child:Destroy() end
+ local f=folders[name]
+ if f then for _,child in ipairs(f:GetChildren()) do
+  if not child:IsA('TerrainRegion') then child:Clone().Parent=service end
+ end end
+end
+for _,child in ipairs(W:GetChildren()) do if not child:IsA('Terrain') and not child:IsA('Camera') then child:Destroy() end end
+for _,child in ipairs(folders.Workspace:GetChildren()) do child:Clone().Parent=W end
+local SP=source:GetService('StarterPlayer')
+for _,name in ipairs({'StarterPlayerScripts','StarterCharacterScripts'}) do
+ local container=SP:FindFirstChildOfClass(name)
+ if not container then container=I.new(name);container.Parent=SP end
+ for _,child in ipairs(container:GetChildren()) do child:Destroy() end
+ local f=folders.StarterPlayer:FindFirstChild(name);if f then for _,child in ipairs(f:GetChildren()) do child:Clone().Parent=container end end
+end
+W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=220;W.FallenPartsDestroyHeight=-750
+W:SetAttribute('WaterRPGBuild','water-rpg-v1-assets');W:SetAttribute('RPGTerrainRestored',true);W:SetAttribute('RPGGroundedResidents',0);W:SetAttribute('LightingPreset','Luminos / After Rain')
+W.RPGMarkers.Arrival.CFrame=C.lookAt(V.new(1678.8,9.340625,1119.7),V.new(1312,9.340625,1800))
+SP.CameraMode=R.Enum.CameraMode.Classic;SP.CameraMinZoomDistance=4;SP.CameraMaxZoomDistance=22
+source:GetService('Players').CharacterAutoLoads=false
+local light=source:GetService('Lighting');light.ClockTime=14;light.Brightness=2;light.Ambient=R.Color3.fromRGB(83,100,67);light.OutdoorAmbient=R.Color3.fromRGB(67,125,109);light.ExposureCompensation=.1
+for _,x in ipairs(light:GetChildren()) do if x:IsA('BlurEffect') or x:IsA('DepthOfFieldEffect') then x.Enabled=false end end
+local allowedScripts={
+ ['ReplicatedStorage.WaterRPG.Config']=true,['ReplicatedStorage.WaterRPG.Rules']=true,['ReplicatedStorage.WaterRPG.PlayerAssets.LuminosPreset']=true,
+ ['ServerScriptService.WaterRPGServer']=true,['ServerScriptService.Profiles']=true,['ServerScriptService.Residents']=true,['ServerScriptService.PlayerAbilities']=true,
+ ['StarterPlayer.StarterPlayerScripts.WaterRPGClient']=true,['StarterPlayer.StarterPlayerScripts.PlayerAbilities']=true,
+}
+local finalCount=0
+for _,obj in ipairs(source:GetDescendants()) do
+ if obj:IsA('LuaSourceContainer') then if allowedScripts[obj:GetFullName()] then finalCount+=1 else obj:Destroy() end end
+end
+assert(finalCount==9,'Unexpected source scripts')
+fs.writeFile(here..'water-rpg.rbxl',R.serializePlace(source))
+print('Full source place saved, including original terrain and CSG dictionaries')

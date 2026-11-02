@@ -163,7 +163,7 @@ local function finishFade()
  task.delay(.6,function() if not transitionActive then fade.Visible=false;fadeText.TextTransparency=0 end end)
 end
 beginPlay=function()
- if not player:GetAttribute('ProfileReady') then showModal('Log');return end
+ if not player:GetAttribute('ProfileReady') then return end
  transition('Preparando a estrada…');Net:FireServer('Play')
 end
 local death=frame(gui,UDim2.fromScale(1,1),UDim2.new(),Color3.fromRGB(3,10,12),0);death.ZIndex=50;death.Visible=false
@@ -189,9 +189,9 @@ local function notify(value)
  noticeId+=1;local id=noticeId;notice.Text=value
  task.delay(5,function() if noticeId==id then notice.Text='' end end)
 end
-button(hud,'⚙',UDim2.fromOffset(40,40),UDim2.new(1,-56,1,-65),function() showModal('Settings') end)
+button(hud,'⚙',UDim2.fromOffset(40,40),UDim2.new(1,-56,0,15),function() showModal('Settings') end)
 local sprint=button(hud,'CORRER',UDim2.fromOffset(85,42),UDim2.new(1,-200,1,-175),function() Net:FireServer('Sprint',not player:GetAttribute('Sprinting')) end);corner(sprint,22);sprint.Visible=UIS.TouchEnabled;sprint.TextSize=15
-local potion=button(hud,'TÔNICO',UDim2.fromOffset(85,38),UDim2.new(1,-295,1,-169),function() Net:FireServer('UsePotion') end);corner(potion,20);potion.TextSize=15
+local potion=button(hud,'TÔNICO',UDim2.fromOffset(85,38),UDim2.new(1,-110,0,153),function() Net:FireServer('UsePotion') end);corner(potion,20);potion.TextSize=15
 local dialogue=Shared.PlayerAssets.DialogueSkin:Clone();dialogue.Name='ResidentDialogue';dialogue.Size=UDim2.fromOffset(570,250);dialogue.Position=UDim2.new(.5,-285,1,-275);dialogue.Visible=false;dialogue.Parent=gui
 for _,obj in ipairs(dialogue:GetDescendants()) do if obj:IsA('GuiObject') then obj.Visible=false end end
 local dialogueScale=make('UIScale',dialogue,{Scale=1})
