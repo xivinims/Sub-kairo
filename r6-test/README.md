@@ -1,5 +1,14 @@
 # R6 character motion
 
+## Correção do avatar R6 (v4)
+
+O jogo agora inclui `R6Locomotion`, um LocalScript instalado **dentro de cada avatar** pelo `StarterCharacterScripts`. Ele executa idle, caminhada, corrida, pulo, queda, escalada e sentar automaticamente, conforme o Humanoid, sem catálogo ou botão de animações. Ele usa primeiro os objetos de animação do módulo R6 importado, depois os R6 públicos e, caso Roblox não carregue o ID, uma animação local de emergência por Motor6D. O controle original e todos os KeyframeSequences originais continuam preservados, com o Animate antigo desabilitado para não disputar as juntas.
+
+Os emotes copiados dos arquivos ficam no próprio personagem, e `/r6` é opcional. Não são usados para substituir locomoção. O sprint continua acessível pela jogabilidade; não existe menu para escolher a animação.
+
+Para reconstruir a versão v4 a partir do lugar existente: `lune run r6-test/repair-avatar.luau` e `lune run r6-test/check.luau`. A workflow de publicação faz isso antes de testar e publicar. As verificações em servidor não equivalem a assistir à animação num cliente Roblox, e o fallback procedural é local quando o asset estiver bloqueado.
+
+
 The test now runs the original uploaded Naruto R6 Animate controller inside each player character. Its supplied public R6 defaults handle idle, walk, jump, fall, climb and sit automatically. The controller, R6 module and sprint/wallrun sources are unchanged. There is no animation preview GUI or catalog controller.
 
 The avatar server builds each player from their own HumanoidDescription as R6 and clones StarterCharacterScripts, including the animation controller and Animations folder, into that character. Original motion Animation objects and the 19 original KeyframeSequences are copied into character.Animations. The archive retains the complete original emote package for hash comparisons.
