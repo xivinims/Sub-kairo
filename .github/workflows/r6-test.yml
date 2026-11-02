@@ -25,8 +25,8 @@ jobs:
           chmod +x /tmp/water-lune/lune
       - name: Recover user's original Naruto package from previous saved test
         run: |
-          git fetch --no-tags --depth=1 origin ef592d7b64d0e2a122ea5cf718151c875a0b4f95
-          git show ef592d7b64d0e2a122ea5cf718151c875a0b4f95:r6-test/arena.rbxl > r6-test/naruto-archive-v6.rbxl
+          git fetch --no-tags --depth=1 origin e3bb564c600660303b5507c6ce1f34be1937a2dd
+          git show e3bb564c600660303b5507c6ce1f34be1937a2dd:r6-test/arena.rbxl > r6-test/naruto-archive-v6.rbxl
       - name: Install Naruto Chakra WallWalk in each R6 avatar
         run: /tmp/water-lune/lune run r6-test/repair-avatar.luau
       - name: Validate Naruto R6 scripts against uploaded file hashes
