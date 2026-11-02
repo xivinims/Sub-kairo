@@ -9,8 +9,17 @@ local result = {workspaceRoots = {}, map3 = nil, spawns = {}, floors = {}, start
 for _, child in ipairs(workspace:GetChildren()) do
 	table.insert(result.workspaceRoots, child.Name .. ' [' .. child.ClassName .. ']')
 	if child.Name == 'Map3' then
-		local cf, size = child:GetBoundingBox()
-		result.map3 = {class = child.ClassName, center = vector(cf.Position), size = vector(size), descendants = #child:GetDescendants()}
+		local min = {x = math.huge, y = math.huge, z = math.huge}
+		local max = {x = -math.huge, y = -math.huge, z = -math.huge}
+		for _, part in ipairs(child:GetDescendants()) do
+			if part:IsA('BasePart') then
+				local p, s = part.Position, part.Size
+				min.x = math.min(min.x, p.X - s.X / 2); max.x = math.max(max.x, p.X + s.X / 2)
+				min.y = math.min(min.y, p.Y - s.Y / 2); max.y = math.max(max.y, p.Y + s.Y / 2)
+				min.z = math.min(min.z, p.Z - s.Z / 2); max.z = math.max(max.z, p.Z + s.Z / 2)
+			end
+		end
+		result.map3 = {class = child.ClassName, min = min, max = max, descendants = #child:GetDescendants()}
 	end
 end
 table.sort(result.workspaceRoots)
