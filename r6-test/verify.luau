@@ -1,15 +1,24 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
 assert(sc:FindFirstChild("BoogieSwapInput") and not sc.BoogieSwapInput.Disabled)
+assert(sc:FindFirstChild("NaturalR6Climb") and not sc.NaturalR6Climb.Disabled)
+assert(sc.NaturalR6Climb.StaminaBar and sc.NaturalR6Climb.StaminaBar:IsA("ModuleScript"))
+assert(sc.NaturalR6Climb.Source:find("MoveDirection",1,true), "Mobile joystick movement is not supported")
+assert(sc.NaturalR6Climb.Source:find("not chakra",1,true), "Chakra priority guard missing")
+assert(not sc.NaturalR6Climb.Source:find("BindAction",1,true), "Climbing should be automatic")
 assert(sc.BoogieSwapInput.Source:find('Enum.KeyCode.G',1,true))
 assert(not sc:FindFirstChild("R6Locomotion") and not sc:FindFirstChild("Wallrun")
     and not sc:FindFirstChild("AnimationBankGUI"),"Legacy animation controller remains")
 assert(sc.ChakraWallWalk.Source:find('SetTitle("ToggleChakraFeet"',1,true))
+assert(sc.ChakraWallWalk.Source:find('"CHAKRA OFF"',1,true))
+assert(sc.ChakraWallWalk.Source:find('"CHAKRA ON"',1,true))
+assert(sc.ChakraWallWalk.Source:find('script.Parent:SetAttribute("ChakraActive", ChakraFeetEnabled)',1,true))
+assert(workspace:GetAttribute("NaturalR6ClimbingInstalled") and workspace:GetAttribute("OptionalChakraToggle"))
 assert(sc.Animate.Controller and sc.Animate.R6 and sc.Animate.Loaded)
 assert(sc.Animate.R6.Source:find('runningSpeed >= 19',1,true),"Run remains walk-only")
 assert(not sc.Animate.R6.Source:find('run.xml',1,true))
@@ -64,7 +73,8 @@ for _, child in ipairs(sc:GetChildren()) do
  clone.Parent = character
 end
 assert(character.Humanoid.RigType == Enum.HumanoidRigType.R6)
-assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput)
+assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb)
+assert(character.NaturalR6Climb.StaminaBar, "Original stamina module not copied into avatar")
 local animator = character.Humanoid:FindFirstChildOfClass("Animator")
     or Instance.new("Animator", character.Humanoid)
 local clips = {
@@ -105,16 +115,19 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-cinematic-menu-npcs-v11",
+ ok=true,version=game.PlaceVersion,build="r6-natural-climb-optional-chakra-v12",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
  allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=runningIds.run~=runningIds.walk,
  sprintTouchButton=true,sprintShiftKey=true,buttonsForAnimationBanks=0,
  boogieMobileButton=true,boogieSwapClapAssets=true,boogieServerValidated=true,
  boogieSoloR6Target=true,positionSwapPivotTest=true,
+ automaticR6WallClimb=true,climbButton=false,climbUsesMoveDirection=true,
+ originalStaminaModule=true,chakraOptionalTouchButton=true,chakraInitiallyOff=true,
+ mutuallyExclusiveChakraAndClimb=true,
  cinematicMenu=true,cinematic3DScene=true,deathScreen=true,
  deathRespawnRemote=true,npcPatrolScript=true,walkingNPCs=4,npcNames=npcResults,
- characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput"},
+ characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput","NaturalR6Climb"},
  noMotor6DPerFrameDriver=true,renderedPlaytest=false,
  nativeAnimationResults=results,
  requestedRunAnimationId=runningIds.run
