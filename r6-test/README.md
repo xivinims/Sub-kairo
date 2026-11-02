@@ -1,3 +1,13 @@
+# Escalada natural R6 + chakra opcional (v12)
+
+O jogador **não recebe botão para escalar**. O sistema do arquivo `R15 & R6 Wall Climbing System.rbxl` foi adaptado apenas para R6: caminhe para a frente contra uma superfície vertical, com **joystick no celular ou WASD no PC**, para começar a escalar. Parar de avançar, se afastar da parede ou ficar sem energia termina a escalada. O sistema detecta paredes com raycast a cada 0,09 s, movimenta o personagem para cima e toca a animação R6 `Animate.climb.ClimbAnim`. Não instala a variante R15. O script `NaturalR6Climb` fica dentro do avatar junto ao módulo `StaminaBar` original, com 100 de energia, consumo de 15/s, recuperação de 12/s e recarga de 2 s quando esgota. A barra de energia aparece só durante a escalada ou recuperação, para não ficar poluindo o GUI.
+
+O **CHAKRA** é opcional e continua com seu próprio botão `CHAKRA OFF` / `CHAKRA ON` no canto direito ou tecla **B**. Começa **desligado**. Ligá-lo ativa o sistema original `ChakraWallWalk` do Naruto, com efeitos e gravidade; ao mesmo tempo, `NaturalR6Climb` é desativado enquanto o chakra estiver ligado. Desligá-lo reativa a escalada natural sem precisar de um segundo botão.
+
+Tudo o mais foi mantido: corrida R6 separada de caminhada, quatro NPCs na arena, Boogie Woogie, menu 3D e tela de morte. Não adicionamos scripts de R15, controles extras ou um segundo controlador de locomoção por quadro. Como antes, a verificação automatizada confere instalação e scripts; **só uma partida real no Roblox confirma a sensação física de escalada**.
+
+---
+
 # R6 cinematic menu + NPCs + Forsaken run selection (v11)
 
 Esta é a experiência **privada de teste R6**, não os projetos antigos. Branch `dead-signal-publisher`, pasta `r6-test/`. Mantém os recursos existentes do Naruto (chakra nos pés) e a troca de posição Boogie Woogie.
