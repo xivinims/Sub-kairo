@@ -52,7 +52,7 @@ local function selectTarget()
     else
      score=800+distance
     end
-    if score<bestScore then bestScore,best=model,score end
+    if score<bestScore then best,bestScore=model,score end
    end
   end
  end
