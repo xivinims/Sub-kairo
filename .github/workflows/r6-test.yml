@@ -1,4 +1,4 @@
-name: R6 Naruto Chakra WallWalk test
+name: R6 Naruto Chakra + verified idle walk run jump
 on:
   push:
     branches: [dead-signal-publisher]
@@ -47,7 +47,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add r6-test/arena.rbxl r6-test/animation-manifest.json r6-test/animation-probe.json
           if ! git diff --cached --quiet; then
-            git commit -m 'Build Naruto chakra wallwalk in R6 character'
+            git commit -m 'Build verified R6 idle walk run jump with Naruto chakra wallwalk'
             git push origin HEAD:dead-signal-publisher
           fi
       - uses: actions/upload-artifact@v4
