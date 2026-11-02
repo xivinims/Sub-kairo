@@ -58,7 +58,8 @@ switchingGui.Parent = sc
 
 -- Preserve the user's avatar, manual R6 spawn, camera and existing systems.
 local spawner = place.ServerScriptService.R6AvatarServer
-assert(spawner.Source == fs.readFile("r6-test/avatar-server.luau"))
+spawner.Source = fs.readFile("r6-test/avatar-server.luau")
+L.compile(spawner.Source)
 assert(#place.StarterPlayer.StarterPlayerScripts:GetChildren() == 0, "Preview UI must stay removed")
 place.Workspace:SetAttribute("R6TestBuild", "r6-character-motion-v6")
 place.Workspace:SetAttribute("R6LocomotionInstalled", true)
