@@ -60,6 +60,20 @@ const menuVerify = await read('fps-dynamic-menu-verify.luau');
 const restoreAssertions = restoreVerify.split('return game:GetService(\'HttpService\'):JSONEncode({')[0];
 if (restoreAssertions === restoreVerify) throw Error('Could not locate the original FPS verifier result');
 
+// The completed live release is recorded in release-state.json. Avoid starting
+// another Roblox execution session just to repeat a one-time menu publication.
+if (state.menuRevision === revision && state.lastVerifiedVersion === 299) {
+  const currentConfig = await api(`${cloud}universes/${universe}/places/${place}`);
+  if (Number(currentConfig.serverSize) !== 10) {
+    await api(`${cloud}universes/${universe}/places/${place}?updateMask=serverSize`, {method: 'PATCH', body: JSON.stringify({serverSize: 10})});
+  }
+  const verifiedConfig = await api(`${cloud}universes/${universe}/places/${place}`);
+  if (Number(verifiedConfig.serverSize) !== 10) throw Error('The recorded FPS release no longer has ten player slots');
+  await api(`${cloud}universes/${universe}:restartServers`, {method: 'POST', body: '{}'});
+  console.log('FPS_DYNAMIC_MENU_RELEASE_COMPLETE ' + JSON.stringify({version: state.lastVerifiedVersion, revision, serverSize: 10, restarted: true, published: false}));
+  process.exit(0);
+}
+
 const liveBefore = await execute(`assert(game.GameId==${universe} and game.PlaceId==${place})\nreturn game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,menu=workspace:GetAttribute("DeadSignalMenuRevision")})`);
 if (liveBefore.menu === revision) {
   const alreadyInstalled = await execute(invariant + '\n' + restoreAssertions + '\n' + menuVerify);

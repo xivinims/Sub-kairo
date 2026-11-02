@@ -1,12 +1,12 @@
 {
-  "preflightVersion": 260,
-  "rollbackVersion": 260,
-  "lastVerifiedVersion": 261,
+  "preflightVersion": 298,
+  "rollbackVersion": 261,
+  "lastVerifiedVersion": 299,
   "buildId": "fallout-5v5-v1",
   "universeId": 9421311218,
   "placeId": 118064584465155,
   "serverSize": 10,
-  "releaseRunId": 41342935823,
+  "releaseRunId": 41525459261,
   "nametagBuild": "nametags-v1",
   "hudFix": "fps-left-options-v4",
   "viewportRevision": "weapon-clones-v1",
@@ -15,7 +15,7 @@
   "optionsMenu": "camera-visible-left-corner",
   "optionsStore": "FalloutOptions_v1",
   "combatHUDRevision": "original-fps-v1",
-  "protectedContent": "6167:325047229",
+  "protectedContent": "6166:2648412241",
   "clientVisualTested": false,
   "optionsVisualRevision": "fps-gear-icon-settings-v2",
   "optionsButton": "icon-only-gear",
@@ -34,5 +34,10 @@
   "originalFPSRestored": true,
   "originalFPSEightGunsVerified": true,
   "originalFPSClientSourceRef": "0a448d2a584",
-  "originalFPSServerSourceRef": "dedc49b870c"
+  "originalFPSServerSourceRef": "dedc49b870c",
+  "menuRevision": "fps-menu-sliding-v1",
+  "menuSourceVersion": 261,
+  "menuPlaceVersion": 299,
+  "menuVisualTested": false,
+  "serverSizeUpdateRunId": 41526903352
 }

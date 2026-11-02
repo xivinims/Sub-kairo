@@ -1,4 +1,4 @@
-# Fallout 5×5 — versão publicada 257
+# Fallout 5×5 — versão publicada 299
 
 Branch ativa: `dead-signal-publisher`  
 Experiência: `9421311218` · Place: `118064584465155`  
@@ -15,6 +15,19 @@ O hotel antigo foi substituído no place publicado. A versão 250 permanece no h
 - Quatro animações R6 do Dynamic NPC Animations V2, reproduzidas a partir dos keyframes do pacote.
 - Interface e módulo do NPC Dialogue System com “Sobre o jogo”, “Loja” e “Itens”.
 - 14 produtos do pacote de armas: oito armas de fogo, faca, machado, granada, mina, kit médico e seringa. Barco e avião do pacote não são armas e não fazem parte do catálogo.
+
+## Menu dinâmico — versão 299
+
+- Retorno ao FPS verificado da versão 261: HUD original, oito armas, mapa e itens preservados; bots experimentais desligados.
+- Menu inicial local com **Jogar**, **Configurações**, **Créditos** e **Registro de atualizações**.
+- Cada aba entra como uma tela que desliza horizontalmente. A câmera acompanha a transição pelo cenário azul quadriculado e pela faixa d’água de vidro.
+- Cenário criado localmente pelo cliente; não altera o mapa de combate nem os scripts do servidor. O menu bloqueia o movimento até **Jogar** e se ajusta a telas menores.
+- Configurações da sessão para áudio, sombras e movimento suave da câmera.
+- Versão 299 confirmada com o menu e sistemas FPS originais; place limitado a 10 jogadores e servidores reiniciados.
+- A interface foi compilada e verificada no Roblox, mas ainda não foi observada num cliente renderizado.
+
+[Verificação do menu e da versão 299](https://github.com/xivinims/Sub-kairo/actions/runs/41525459261) · [Limite de 10 jogadores](https://github.com/xivinims/Sub-kairo/actions/runs/41526903352)
+
 
 ## Partidas
 
@@ -38,7 +51,7 @@ O publicador atual está em `fallout-release.mjs`. Baixa versões de assets fixa
 
 Publicação pela API nativa `AssetService:SavePlaceAsync()`, preservando as unions da loja. Após publicar, confere o conteúdo da nova versão, define `serverSize=10` e reinicia os servidores.
 
-Execução confirmada: https://github.com/xivinims/Sub-kairo/actions/runs/41282505420
+Execução confirmada: https://github.com/xivinims/Sub-kairo/actions/runs/41525459261
 
 Essas verificações não substituem uma partida real em cliente Roblox: controles de celular, enquadramento das armas, áudio e fluxo visual da loja ainda precisam dessa validação.
 
