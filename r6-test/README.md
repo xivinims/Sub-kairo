@@ -1,21 +1,15 @@
-# R6 animation test
+# R6 character motion
 
-The private test place now starts directly on a clean grid floor with two wallrun walls. The old camera menu, bots, weapons, dialogue, lighting packs and fixed StarterCharacter are removed. Other projects in this repository are unchanged.
+The test now runs the original uploaded Naruto R6 Animate controller inside each player character. Its supplied public R6 defaults handle idle, walk, jump, fall, climb and sit automatically. The controller, R6 module and sprint/wallrun sources are unchanged. There is no animation preview GUI or catalog controller.
 
-`avatar-server.luau` obtains each joining player’s HumanoidDescription and explicitly creates an R6 model. It retries avatar retrieval without substituting a fixed dummy. Death and reset recreate the player’s own avatar as R6. R15 body shapes and layered clothing cannot be reproduced on an R6 skeleton.
+The avatar server builds each player from their own HumanoidDescription as R6 and clones StarterCharacterScripts, including the animation controller and Animations folder, into that character. Original motion Animation objects and the 19 original KeyframeSequences are copied into character.Animations. The archive retains the complete original emote package for hash comparisons.
 
-The original R6 Animate, sprint and wallrun scripts are preserved byte for byte. Their original dependencies and animation IDs are retained. Double-tap W or use the circular » button to sprint. Hold Roblox’s jump action beside a wall for wallrun.
+The native diagnostic on version 275 found that the custom idle, walk, sprint, wallrun and Naruto demo IDs loaded tracks with Length=0 after six seconds. The public R6 idle/walk/jump IDs supplied by the Naruto R6 module loaded successfully in the same session. This is why the prior custom movement configuration could leave the avatar unanimated. These custom objects and IDs are retained unchanged; they are not claimed to work without asset access. Full Naruto wall walking remains inactive due to the original legacy camera incompatibility.
 
-The circular ▶ button (or M) opens the animation test list. The catalog includes 27 original Animation objects from Naruto, bow, sprint, wallrun and Boogie packs. Duplicate/default animations are retained as provided. These are previews; the bow and Boogie gameplay systems are not installed.
+Sprint and wallrun controllers are installed on the character. Sprint uses its original double-W action or Shift / the native touch Correr action. Its custom run animation and wallrun custom animations remain subject to the loading failure above; normal R6 locomotion is still active.
 
-The existing 19 R6 KeyframeSequences are preserved unchanged, with a SHA-256 comparison over the complete original package. A separate local preview reader applies their original pose CFrames, weights, timing, and their Linear/Constant easing to Motor6Ds. It does not upload, replace, or rewrite the original sequences. These pose previews are visible locally only. Movement, jump, death, or Parar stops preview and restores Animate. Normal published Animation IDs load through Animator and remain subject to creator ownership/experience permissions; failed loads display a message.
+Raw emotes live in character.Animations.Emotes and can be requested with /r6 CatDance, /r6 Idle Sit, etc.; /r6 parar stops playback. A separate character-owned reader uses the exact poses, timing, easing and weights. It does not change the imported sequences. Raw pose playback is local only, and movement/jumping stops it. It does not replace automatic movement with a dance.
 
-`naruto-camera-original.luau` is the untouched PlayerScriptsLoader from the uploaded Naruto pack. It is also retained inactive under ServerStorage/Conflicts. Its camera override calls the legacy ApplyVRTransform method; no compatibility edits were made. Only its animation objects are included in the catalog. Full Naruto wall walking is inactive.
+Validation checks the original source hashes, character-owned controllers, absence of the preview UI and R15 controller, and unchanged emote archive. Native verification creates a real R6 character, clones the exact character contents, and requires idle/walk/jump/fall/climb tracks to load with nonzero duration. It records walk playback and joint samples; this is not a rendered phone playtest.
 
-R15 Wall Climb and Swim are excluded. VirtualVogue and water castle are maps, so they are excluded from this clean animation test. Lantern is not an animation pack and is not installed.
-
-Validation: `check.luau` compiles every script, verifies the original source hashes and complete emote package hash, checks that the fixed avatar/menu/bots/tools are absent, and requires the supported pose easing styles. `verify.luau` runs in Roblox’s native execution environment, checks imported data and floor collision, and creates an actual R6 model with the same API used by the server. These checks do not constitute a rendered phone/desktop playtest or prove access to third-party animation IDs.
-
-The existing publication workflow backs up the current private place, requires an existing R6 test build, checks that its version did not change, publishes, verifies, and rolls back on failure. It does not change experience privacy.
-
-Rebuild: unpack the bow model as ../upload/Bow.rbxm, keep the attached files under ../upload using their current (3)/(2) filenames, then run `lune run r6-test/clean-animation-build.luau` from the repository root. The prebuilt arena.rbxl is self-contained for CI.
+Rebuild with lune run r6-test/apply-character-motion.luau. The older clean-animation-build and animation-test-client files are retired and not installed. Publication continues to back up the private experience and roll back if native checks fail.

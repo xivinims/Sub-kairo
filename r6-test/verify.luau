@@ -1,30 +1,44 @@
 local Players=game:GetService('Players')
-assert(workspace:GetAttribute('R6TestBuild')=='r6-animation-test-v2')
-assert(not game.StarterPlayer:FindFirstChild('StarterCharacter'),'Fixed character remains')
-assert(not workspace:FindFirstChild('TrainingBots'),'Bots remain')
-assert(#game.StarterPack:GetChildren()==0,'Weapons remain')
-assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild('DynamicMenu'))
-assert(game.StarterPlayer.StarterPlayerScripts.R6AnimationTest:IsA('LocalScript'))
-assert(Players.CharacterAutoLoads==false)
-local unchanged=0;local sequences=0;local poses=0
+assert(workspace:GetAttribute('R6TestBuild')=='r6-character-motion-v3')
+assert(#game.StarterPlayer.StarterPlayerScripts:GetChildren()==0,'Preview script remains')
+assert(not game.ReplicatedStorage:FindFirstChild('R6AnimationCatalog'))
+assert(not game.StarterPlayer:FindFirstChild('StarterCharacter'))
+local sc=game.StarterPlayer.StarterCharacterScripts
+assert(sc.Animate.Controller and sc.Animate.R6 and sc.Animate.Loaded)
+assert(not sc.Animate:FindFirstChild('R15'))
+local unchanged=0
 for _,x in ipairs(game:GetDescendants()) do
- if x:IsA('Humanoid') then assert(x.RigType==Enum.HumanoidRigType.R6) end
  if x:IsA('LuaSourceContainer') and x:GetAttribute('OriginalId') then
   assert(x.Source==game.ServerStorage.OriginalSources[x:GetAttribute('OriginalId')].Source,'Modified original: '..x:GetFullName());unchanged+=1
  end
 end
-for _,x in ipairs(game.ReplicatedStorage.OriginalR6Emotes:GetDescendants()) do
- if x:IsA('KeyframeSequence') then sequences+=1;assert(#x:GetKeyframes()>0) end
- if x:IsA('Pose') then poses+=1;assert(x.EasingStyle==Enum.PoseEasingStyle.Linear or x.EasingStyle==Enum.PoseEasingStyle.Constant) end
-end
-assert(sequences==19)
-local animationCount=#game.ReplicatedStorage.R6AnimationCatalog:GetChildren()
-assert(animationCount==workspace:GetAttribute('AnimationCatalogCount') and animationCount>0)
-local floor=workspace:Raycast(Vector3.new(0,30,0),Vector3.new(0,-60,0));assert(floor and floor.Instance.Name=='Floor')
--- Exercise the exact R6 avatar creation API used by the server, in the native engine.
 local desc=Instance.new('HumanoidDescription')
 local character=Players:CreateHumanoidModelFromDescriptionAsync(desc,Enum.HumanoidRigType.R6)
-assert(character.Humanoid.RigType==Enum.HumanoidRigType.R6 and character:FindFirstChild('Torso') and not character:FindFirstChild('UpperTorso'))
-character:Destroy();desc:Destroy()
-local runner=Instance.new('ModuleScript');runner.Source=game.ServerScriptService.R6AvatarServer.Source..'\nreturn true';runner.Parent=game.ServerStorage;require(runner)
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='r6-animation-test-v2',originalScriptsUnchanged=unchanged,originalSequences=sequences,poses=poses,animationCatalog=animationCount,nativeR6Creation=true,floor=true,fixedAvatar=false,menu=false,bots=false,renderedPlaytest=false,rawEmotePreview='local'})
+character:PivotTo(CFrame.new(0,6,0));character.Parent=workspace
+local humanoid=character.Humanoid
+assert(humanoid.RigType==Enum.HumanoidRigType.R6)
+for _,child in ipairs(sc:GetChildren()) do
+ local old=character:FindFirstChild(child.Name);if old then old:Destroy() end
+ local clone=child:Clone();if clone:IsA('LocalScript') then clone.Disabled=true end;clone.Parent=character
+end
+assert(character.Animate.R6 and character.Run and character.Wallrun and character.Animations)
+assert(#character.Animations.Emotes:GetChildren()==19)
+local animator=humanoid:FindFirstChildOfClass('Animator') or Instance.new('Animator',humanoid)
+local tracks={};local results={}
+for _,entry in ipairs({{'idle','Animation1'},{'walk','WalkAnim'},{'jump','JumpAnim'},{'fall','FallAnim'},{'climb','ClimbAnim'}}) do
+ local animation=character.Animate[entry[1]][entry[2]]
+ local track=animator:LoadAnimation(animation);track.Looped=true;track:Play(0);track:AdjustWeight(0);tracks[entry[1]]=track
+end
+task.wait(6)
+for name,track in pairs(tracks) do
+ assert(track.Length>0,'Character animation failed to load: '..name)
+ results[name]={length=track.Length,loaded=true};track:Stop(0)
+end
+local walk=tracks.walk;walk:Play(0);walk:AdjustWeight(1)
+task.wait(.5)
+results.walk.playing=walk.IsPlaying;results.walk.weight=walk.WeightCurrent;results.walk.time=walk.TimePosition
+assert(walk.IsPlaying,'Walk track not playing')
+local jointSamples={}
+for _,motor in ipairs(character:GetDescendants()) do if motor:IsA('Motor6D') then jointSamples[motor.Name]={motor.Transform:GetComponents()} end end
+walk:Stop(0);character:Destroy();desc:Destroy()
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='r6-character-motion-v3',characterOwnedAnimationController=true,previewUI=false,originalScriptsUnchanged=unchanged,emotesInsideCharacter=19,nativeAnimationLoads=results,jointSamples=jointSamples,renderedPlaytest=false,customPackIDsUnavailable=true})
