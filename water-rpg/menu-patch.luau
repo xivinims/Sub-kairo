@@ -33,4 +33,4 @@ local abilityCode=fs.readFile('water-rpg/src/Abilities.client.lua');luau.load(ab
 game.Workspace:SetAttribute('ControlsRevision','right-circles-jump-safe-v1')
 game.Workspace:SetAttribute('MenuRevision','reference-3d-transitions-v2')
 fs.writeFile('water-rpg/menu-patched.rbxl',R.serializePlace(game))
-print('Targeted menu patch: geometry, resident outfits, gameplay and ability sources preserved')
+print('Targeted menu patch: geometry, resident outfits, server gameplay preserved; circular action client updated')

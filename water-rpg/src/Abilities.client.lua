@@ -33,7 +33,7 @@ btn('Shoot','ATIRAR',121,48,shoot)
 local target
 btn('Swap','TROCAR\nT',242,48,function() if target then Remote:FireServer('Swap',target) end end)
 btn('Sprint','CORRER',0,0,function() Shared.Action:FireServer('Sprint',not p:GetAttribute('Sprinting')) end)
-btn('Potion','TÔNICO',0,0,function() Shared.Net:FireServer('UsePotion') end)
+btn('Potion','TÔNICO',0,0,function() Shared.Action:FireServer('UsePotion') end)
 local dockClock=0
 local function layoutDock()
  local size=gui.AbsoluteSize
