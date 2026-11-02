@@ -1,0 +1,17 @@
+name: R6 motion diagnostic
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths: ['r6-test/motion-probe.trigger']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Inspect native animation playback without publishing
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node r6-test/motion-probe.mjs
