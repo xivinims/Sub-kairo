@@ -8,7 +8,7 @@ local L = require("@lune/luau")
 local place = R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local sc = place.StarterPlayer.StarterCharacterScripts
 local old = place.Workspace:GetAttribute("R6TestBuild")
-assert(old == "r6-character-motion-v3" or old == "r6-character-motion-v4", "Not the R6 motion test place")
+assert(old == "r6-character-motion-v3" or old == "r6-character-motion-v4" or old == "r6-character-motion-v5", "Not the R6 motion test place")
 assert(sc and sc:FindFirstChild("Animate") and sc:FindFirstChild("Animations"), "Missing original character animation assets")
 assert(sc:FindFirstChild("Run") and sc:FindFirstChild("Wallrun"), "Missing source motion scripts")
 assert(place.ServerScriptService:FindFirstChild("R6AvatarServer"), "Missing R6 character spawner")
@@ -46,19 +46,33 @@ L.compile(emotes.Source)
 emotes.Enabled = true
 emotes.Disabled = false
 
+-- Keep only the two switching buttons. UI also lives in the character.
+local previousGui = sc:FindFirstChild("AnimationBankGUI")
+if previousGui then previousGui:Destroy() end
+local switchingGui = R.Instance.new("LocalScript")
+switchingGui.Name = "AnimationBankGUI"
+switchingGui.Source = fs.readFile("r6-test/animation-bank-gui.luau")
+L.compile(switchingGui.Source)
+switchingGui.Disabled = false
+switchingGui.Parent = sc
+
 -- Preserve the user's avatar, manual R6 spawn, camera and existing systems.
 local spawner = place.ServerScriptService.R6AvatarServer
 assert(spawner.Source == fs.readFile("r6-test/avatar-server.luau"))
 assert(#place.StarterPlayer.StarterPlayerScripts:GetChildren() == 0, "Preview UI must stay removed")
-place.Workspace:SetAttribute("R6TestBuild", "r6-character-motion-v4")
+place.Workspace:SetAttribute("R6TestBuild", "r6-character-motion-v5")
 place.Workspace:SetAttribute("R6LocomotionInstalled", true)
+place.Workspace:SetAttribute("R6ExclusiveAnimationBanks", true)
 
 local manifest = S.decode("json", fs.readFile("r6-test/animation-manifest.json"))
-manifest.build = "r6-character-motion-v4"
+manifest.build = "r6-character-motion-v5"
 manifest.characterController = "R6Locomotion (LocalScript in StarterCharacterScripts)"
+manifest.exclusiveBanks = {Padrao = "R6 default locomotion animations", Arquivos = "UploadedMotion Animation IDs and compatible raw KeyframeSequences"}
+manifest.bankButtons = {"R6 PADRÃO", "R6 ARQUIVOS"}
+manifest.hudScript = "StarterPlayer.StarterCharacterScripts.AnimationBankGUI"
 manifest.originalControllerPreservedDisabled = true
 manifest.automaticMovement = {"idle", "walk", "run", "jump", "fall", "climb", "sit"}
-manifest.fallbackNote = "Public R6 default animation; if inaccessible, procedural local Motor6D movement. Original uploaded keyframes and sources are unchanged."
+manifest.fallbackNote = "The Files bank tries original imported animation IDs, then matching embedded KeyframeSequence, then public R6 fallback. Inaccessible original IDs are NOT claimed playable. Original data untouched."
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
 print("R6_AUTO_CHARACTER_REPAIR_OK", originalCount)
