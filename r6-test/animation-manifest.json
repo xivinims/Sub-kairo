@@ -12,14 +12,14 @@
     "R6 PADRÃO",
     "R6 ARQUIVOS"
   ],
-  "build": "r6-character-motion-v5",
+  "build": "r6-character-motion-v6",
   "characterController": "R6Locomotion (LocalScript in StarterCharacterScripts)",
   "characterEmotes": 19,
   "exclusiveBanks": {
     "Arquivos": "UploadedMotion Animation IDs and compatible raw KeyframeSequences",
     "Padrao": "R6 default locomotion animations"
   },
-  "fallbackNote": "The Files bank tries original imported animation IDs, then matching embedded KeyframeSequence, then public R6 fallback. Inaccessible original IDs are NOT claimed playable. Original data untouched.",
+  "fallbackNote": "v6 waits for Workspace to load tracks and applies real R6 KeyframeSequence poses to C0; unavailable IDs fall back to visibly animated C0 joints. R15 source clips are not installed on an R6 rig.",
   "hudScript": "StarterPlayer.StarterCharacterScripts.AnimationBankGUI",
   "originalControllerPreservedDisabled": true,
   "originals": [
