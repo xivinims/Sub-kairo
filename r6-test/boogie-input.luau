@@ -29,6 +29,12 @@ local function targets()
  end
  local dummy=workspace:FindFirstChild("BoogieTestDummy")
  if dummy then table.insert(found,dummy) end
+ local wanderers=workspace:FindFirstChild("NPCWanderers")
+ if wanderers then
+  for _,model in ipairs(wanderers:GetChildren()) do
+   if model:GetAttribute("NPCWanderer")==true then table.insert(found,model) end
+  end
+ end
  return found
 end
 local function selectTarget()
