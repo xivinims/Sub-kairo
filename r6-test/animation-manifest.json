@@ -1,31 +1,29 @@
 {
-  "R6AvatarSpawner": "ServerScriptService.R6AvatarServer",
-  "build": "r6-original-wallrun-only-v7",
-  "installedCharacterScripts": [
-    "Wallrun"
+  "build": "r6-chakra-wallwalk-v8",
+  "mobileChakraButton": true,
+  "note": "Original Naruto wall gravity and ChakraFeet VFX; only BindAction made touch-capable. Classic camera loader replaced with an inert Loaded shim. Visual playtest needed.",
+  "olderWallRunRemoved": true,
+  "originalSHA256": {
+    "Animate": "255cc6c9c8144b8962851a4ab0ab9aa80e415741afc5dbdaaecf5e6678ffe03d",
+    "DrawClass": "11d6dc3209b17406cf915c505b53e292c5b3b7595de84eaf8fe7426027af8d88",
+    "GravityController": "3ff2b6d8a425f1ef61b2ee84ddd138035d9d75acb706c5a830ce097f92129f3e",
+    "RbxCharacterSounds": "eced77a0fe96ffd1fc5cb0914718434c12c61c5bcf9be457f13e7b00453be233",
+    "WallWalk": "5d41e96a5dd7393a2d238e2726022371125f72db7929586708c54355135016ca"
+  },
+  "originalWallWalkSourceSHA256": "5d41e96a5dd7393a2d238e2726022371125f72db7929586708c54355135016ca",
+  "otherPacksExcluded": true,
+  "playerCharacter": [
+    "Animate",
+    "ChakraWallWalk"
   ],
-  "nativeR6Walk": false,
-  "notes": "Only original Wallrun and the server R6 avatar spawn helper. No other animation packs, GUI or procedural movement. Wallrun animation IDs still require permission.",
-  "originalAnimationIds": {
-    "Wall Jump Left": "111048455288189",
-    "Wall Jump RIght": "99302485980949",
-    "Wall Run Left": "137711855043043",
-    "Wall Run Right": "131232629152198"
-  },
-  "originalAnimationsCount": 4,
-  "originalModuleCount": 10,
-  "originalSourceHashes": {
-    "Config": "96224dc6bdf7e13d049fd42bbb4b8094f746d5e2b653cf5ca04f4f9f217766b2",
-    "Log": "c2de060998a31f5b2f5cf8bd1fd081bc4a92462f5a64410c47f9d6dbf7c64a0a",
-    "PID": "7a645d52b54476421468be8636467d2784ed51e4b540eed7b3fe40e4dd86d58b",
-    "Raycaster": "1afe74c5959e968a3dc5e45ce421cd45995b1ddb66604dc0d51a322a4cb77b03",
-    "Shake": "20a395f69fab19b27f0eda9297685470d78b30167e916f371173d931a5cf508c",
-    "Signal": "a2c3a044ad291f1b8ea7d9ab38147d0ca8807c22532a45f31f33c79b89b74124",
-    "Sounds": "a5a5df25a48bd10b8735983423b7e069e25865a9a94721400ece1508c44df120",
-    "Spring": "9ed98ecff13288f8a196f9c3d6879752f6beac0bcb0b75eee2fce588d7417660",
-    "Trails": "b4d368a16e0b3d90f4ab4b5b9cd8b9fd7d94f4a922e6fb25b91ad21d49f0e3c0",
-    "Trove": "6037d12780509f4d7b6119c437b29918f230c2b90344247d591c58179ecef4b1",
-    "Wallrun": "5ff3fc36d6023d5dda2bb13cce13d50d3554fa4d7361865a84b9c7a5a0ebfd41"
-  },
-  "originalSourceUnmodified": true
+  "playerScripts": [
+    "RbxCharacterSounds",
+    "PlayerScriptsLoader"
+  ],
+  "replicatedDependencies": [
+    "GravityController",
+    "DrawClass",
+    "VFX"
+  ],
+  "source": "WallWalkNarutoV1(5).rbxl"
 }
