@@ -41,8 +41,13 @@ for name,id in pairs(expected) do
  assert(obj and tostring(obj.AnimationContent):find(id,1,true),"Missing imported AnimationId")
 end
 for _,bucket in ipairs({game.ReplicatedStorage,game.StarterGui,game.StarterPack,
- game.ServerStorage,StarterPlayer.StarterPlayerScripts}) do
+ game.ServerStorage}) do
  assert(#bucket:GetChildren()==0,"Unrequested modules: "..bucket.Name)
+end
+-- Roblox injects its own default PlayerScripts after loading a live place.
+-- Only forbid the custom controllers and preview tools from prior builds.
+for _, name in ipairs({"R6AnimationTest","R6TestControls","ArenaControls","R6Locomotion","MotionInput","CharacterEmotes","AnimationBankGUI"}) do
+ assert(not StarterPlayer.StarterPlayerScripts:FindFirstChild(name), "Old injected controller still present: "..name)
 end
 assert(#game.ServerScriptService:GetChildren()==1)
 local character=Players:CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
