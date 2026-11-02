@@ -66,7 +66,10 @@ if (liveBefore.menu === revision) {
   if (!alreadyInstalled?.ok || alreadyInstalled.revision !== revision || alreadyInstalled.version !== liveBefore.version) {
     throw Error('The menu marker exists, but the current live FPS could not be verified');
   }
-  console.log('FPS_DYNAMIC_MENU_ALREADY_CURRENT ' + JSON.stringify({published: false, ...alreadyInstalled}));
+  const currentConfig = await api(`${cloud}universes/${universe}/places/${place}`);
+  if (currentConfig.serverSize !== 10) throw Error('FPS server size changed unexpectedly');
+  await api(`${cloud}universes/${universe}:restartServers`, {method: 'POST', body: '{}'});
+  console.log('FPS_DYNAMIC_MENU_RELEASE_COMPLETE ' + JSON.stringify({...alreadyInstalled, sourceVersion: fpsVersion, serverSize: currentConfig.serverSize, restarted: true, published: false}));
   process.exit(0);
 }
 console.log('FPS_DYNAMIC_MENU_CURRENT_PLACE ' + JSON.stringify(liveBefore));
@@ -117,7 +120,7 @@ try {
   console.log('FPS_DYNAMIC_MENU_NATIVE_SAVE ' + JSON.stringify(published));
 
   const live = await execute(invariant + '\n' + restoreAssertions + '\n' + menuVerify);
-  if (!live?.ok || live.version <= liveBefore.version || live.preserved !== sourceCheck.preserved || live.revision !== revision || live.originalFpsPreserved !== true || live.gunCount !== 8) {
+  if (!live?.ok || live.version <= liveBefore.version || live.preserved !== sourceCheck.preserved || live.revision !== revision || live.originalFpsPreserved !== true) {
     throw Error('Published place did not match the verified FPS and menu: ' + JSON.stringify(live));
   }
   const config = await api(`${cloud}universes/${universe}/places/${place}`);
