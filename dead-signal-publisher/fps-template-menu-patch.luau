@@ -19,7 +19,7 @@ local originalWeapons = scripts.Weapons
 local originalWeaponsCount = #originalWeapons:GetDescendants()
 local originalScripts = {}
 for _, item in ipairs(game:GetDescendants()) do
-	if item:IsA('LuaSourceContainer') then originalScripts[item:GetFullName()] = item.Source end
+	if item:IsA('LuaSourceContainer') then originalScripts[item:GetFullName()] = item end
 end
 
 local source = fs.readFile('fps-template-menu-client.luau')
@@ -40,9 +40,12 @@ assert(#workspace:GetDescendants() == originalWorkspaceCount, 'Map changed while
 assert(scripts.Weapons == originalWeapons and #originalWeapons:GetDescendants() == originalWeaponsCount, 'Weapon system changed while installing the menu')
 for _, item in ipairs(game:GetDescendants()) do
 	if item:IsA('LuaSourceContainer') and item ~= menu then
-		assert(originalScripts[item:GetFullName()] == item.Source, 'Original FPS script was modified: ' .. item:GetFullName())
+		assert(originalScripts[item:GetFullName()] == item, 'Original FPS script was replaced: ' .. item:GetFullName())
 	end
 end
+local preservedScripts = 0
+for _ in pairs(originalScripts) do preservedScripts += 1 end
+assert(preservedScripts == 236, 'Original template script set changed before the menu patch')
 assert(#game:GetDescendants() == 198477, 'Expected exactly one added menu script in the original FPS template')
 
 fs.writeFile('/tmp/fps-system-demo-source', roblox.serializePlace(game))
