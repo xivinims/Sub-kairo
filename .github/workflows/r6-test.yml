@@ -1,4 +1,4 @@
-name: R6 natural climbing and optional Chakra mode
+name: R6 combat animations and running with Chakra/climb
 on:
   push:
     branches: [dead-signal-publisher]
@@ -33,12 +33,19 @@ jobs:
         run: |
           node --check r6-test/run-probe-quick.mjs
           node r6-test/run-probe-quick.mjs
-      - name: Install automatic R6 climbing and optional Chakra in every avatar
+      - name: Probe all thirteen requested R6 combat animation IDs
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          node --check r6-test/combat-probe.mjs
+          node r6-test/combat-probe.mjs
+      - name: Build combat animation set and preserve existing R6 systems
         run: /tmp/water-lune/lune run r6-test/repair-avatar.luau
       - name: Validate Naruto R6 scripts against uploaded file hashes
         run: |
           node --check r6-test/publish.mjs
           node --check r6-test/run-probe-quick.mjs
+          node --check r6-test/combat-probe.mjs
           /tmp/water-lune/lune run r6-test/check.luau
       - name: Publish private animation test and verify native R6 creation
         env:
@@ -48,9 +55,9 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add r6-test/arena.rbxl r6-test/animation-manifest.json r6-test/forbidden-or-available-run-ids.json
+          git add r6-test/arena.rbxl r6-test/animation-manifest.json r6-test/forbidden-or-available-run-ids.json r6-test/combat-probe.json
           if ! git diff --cached --quiet; then
-            git commit -m 'Build natural R6 wall climbing and optional Chakra button'
+            git commit -m 'Install verified R6 combat animations and retain Ninja running'
             git push origin HEAD:dead-signal-publisher
           fi
       - uses: actions/upload-artifact@v4
