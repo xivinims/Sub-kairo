@@ -27,6 +27,7 @@ assert(originalCount >= 15, "Original R6 sources unavailable")
 -- Preserve imported Naruto Animate and its animation data inside the avatar.
 -- Only its runtime is disabled, so it cannot fight the new motion driver.
 sc.Animate.Enabled = false
+sc.Animate.Disabled = true
 local existing = sc:FindFirstChild("R6Locomotion")
 if existing then existing:Destroy() end
 local driver = R.Instance.new("LocalScript")
@@ -34,6 +35,7 @@ driver.Name = "R6Locomotion"
 driver.Source = fs.readFile("r6-test/locomotion-client.luau")
 L.compile(driver.Source)
 driver.Enabled = true
+driver.Disabled = false
 driver.Parent = sc
 
 -- Emotes are likewise owned by the avatar; don't re-enable old Animate.
@@ -42,6 +44,7 @@ assert(emotes, "CharacterEmotes is missing")
 emotes.Source = fs.readFile("r6-test/character-emotes.luau")
 L.compile(emotes.Source)
 emotes.Enabled = true
+emotes.Disabled = false
 
 -- Preserve the user's avatar, manual R6 spawn, camera and existing systems.
 local spawner = place.ServerScriptService.R6AvatarServer
