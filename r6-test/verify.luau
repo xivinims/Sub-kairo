@@ -3,8 +3,8 @@ local HttpService=game:GetService("HttpService")
 local StarterPlayer=game:GetService("StarterPlayer")
 assert(workspace:GetAttribute("R6TestBuild")=="r6-original-wallrun-only-v7")
 assert(workspace:GetAttribute("R6OriginalWallrunOnly")==true)
-assert(StarterPlayer.CharacterRigType==Enum.HumanoidRigType.R6)
-assert(Players.CharacterAutoLoads, "Normal Roblox automatic spawning must be enabled")
+assert(game.ServerScriptService:FindFirstChild("R6AvatarServer"))
+assert(not Players.CharacterAutoLoads, "R6 custom avatar spawner must be in control")
 local sc=StarterPlayer.StarterCharacterScripts
 assert(#sc:GetChildren()==1, "Expected ONLY original Wallrun")
 local wall=sc:FindFirstChild("Wallrun")
@@ -27,7 +27,7 @@ local expected={
  ["Wall Jump Left"]="111048455288189",["Wall Jump RIght"]="99302485980949",
 }
 local count=0
-assert(game:GetService("ServerScriptService"):FindFirstChild("R6AvatarServer")==nil)
+assert(game.ServerScriptService.R6AvatarServer.Source:find("CreateHumanoidModelFromDescriptionAsync",1,true))
 for _,instance in ipairs(wall:GetDescendants()) do
  if instance:IsA("ModuleScript") then
   assert(hashes[instance.Name],"Unrecognized module "..instance.Name)
@@ -41,9 +41,10 @@ for name,id in pairs(expected) do
  assert(obj and tostring(obj.AnimationContent):find(id,1,true),"Missing imported AnimationId")
 end
 for _,bucket in ipairs({game.ReplicatedStorage,game.StarterGui,game.StarterPack,
- game.ServerStorage,game.ServerScriptService,StarterPlayer.StarterPlayerScripts}) do
+ game.ServerStorage,StarterPlayer.StarterPlayerScripts}) do
  assert(#bucket:GetChildren()==0,"Unrequested modules: "..bucket.Name)
 end
+assert(#game.ServerScriptService:GetChildren()==1)
 local character=Players:CreateHumanoidModelFromDescriptionAsync(Instance.new("HumanoidDescription"),Enum.HumanoidRigType.R6)
 character.Parent=workspace
 local animator=character.Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator",character.Humanoid)
@@ -67,7 +68,7 @@ end
 character:Destroy()
 return HttpService:JSONEncode({
  ok=true,version=game.PlaceVersion,build="r6-original-wallrun-only-v7",
- characterRig="R6",automaticSpawn=true,originalWallrunScript=true,
+ characterRig="R6",R6AvatarSpawner=true,automaticSpawn=false,originalWallrunScript=true,
  originalModules=10,wallAnimations=4,removedOtherPacks=true,
  removedTwoButtons=true,animationLengths=lengths,
  renderedPhonePlaytest=false
