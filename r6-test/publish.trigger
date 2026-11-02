@@ -1,1 +1,1 @@
-r6-arena-v1-validated-respawn
+r6-dynamic-menu-v1

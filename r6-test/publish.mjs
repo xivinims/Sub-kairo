@@ -30,7 +30,7 @@ async function publish(bytes){
 async function main(){
  await privateOnly();
  const before=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
- if(before.version!==270)throw Error('Expected version 270; refusing to overwrite another change');
+ if(before.version!==271)throw Error('Expected version 271; refusing to overwrite another change');
  const delivery=await api(base+`asset-delivery-api/v1/assetId/${place}/version/${before.version}`);
  const location=delivery.location||delivery.locations?.[0]?.location;if(!location)throw Error('Backup URL missing');
  const response=await fetch(location,{signal:AbortSignal.timeout(180000)});if(!response.ok)throw Error('Backup download failed');

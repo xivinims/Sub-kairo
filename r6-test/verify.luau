@@ -1,3 +1,6 @@
+assert(workspace:GetAttribute('DynamicMenuRevision')=='r6-camera-menu-v1','Missing menu')
+assert(game.ReplicatedStorage.MenuR6Template.Humanoid.RigType==Enum.HumanoidRigType.R6)
+assert(game.StarterPlayer.StarterPlayerScripts.DynamicMenu:IsA('LocalScript'))
 local SS=game:GetService('ServerStorage')
 assert(workspace:GetAttribute('R6TestBuild')=='r6-arena-v1','Wrong arena build')
 local count=0;local rigs=0
