@@ -15,7 +15,8 @@ assert(naruto, "Naruto original was not preserved")
 assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-v7"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-wallwalk-v8"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -61,10 +62,16 @@ animator.Disabled = false
 -- Probe the actual universe before selecting assets from the user's Boogie R6
 -- pack. Unavailable uploaded IDs are NEVER selected as playable motion.
 local probed = S.decode("json", fs.readFile("r6-test/animation-probe.json"))
+local freshRuns = S.decode("json", fs.readFile("r6-test/forbidden-or-available-run-ids.json"))
+for id, result in pairs(freshRuns) do
+    if result and result.loaded and result.length and result.length > 0.07 then
+        probed[id] = result
+    end
+end
 local choices = {
     idle = {102425446560812, 180435571, 180435792},
     walk = {17747141146, 180426354},
-    run = {11605590459, 11123175969, 45828430, 1721906652, 15256643328, 11872298900, 17747141146, 180426354},
+    run = {72900620651167, 107952007153363, 93499989310243, 656118852, 180426354},
     jump = {17747185294, 125750702},
     fall = {17747187834, 180436148},
     climb = {11605578996, 180436334},
@@ -214,6 +221,50 @@ dummyRoot.Anchored = true
 dummyHumanoid.DisplayName = "BOOGIE | ALVO"
 dummy:SetAttribute("BoogieTestTarget", true)
 
+-- Three lightweight R6 wanderers near the spawn, visible after Play.
+local npcFolder = R.Instance.new("Folder")
+npcFolder.Name = "NPCWanderers"
+npcFolder.Parent = place.Workspace
+for index = 1, 4 do
+    local npc = install(sourceDummy, npcFolder)
+    npc.Name = "Explorer_" .. index
+    npc:SetAttribute("NPCWanderer", true)
+    npc:SetAttribute("NPCIndex", index)
+    local npcHum = npc:FindFirstChildOfClass("Humanoid")
+    local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+    assert(npcRoot and npcHum and npcHum.RigType == R.Enum.HumanoidRigType.R6)
+    npcHum.DisplayName = "EXPLORADOR 0" .. index
+    npcHum.WalkSpeed = 11.5
+    local target = testArena.Spawn.CFrame * R.CFrame.new(-27 + index * 11, 4, -15 - (index % 2) * 14)
+    local adjustment = target * npcRoot.CFrame:Inverse()
+    for _,part in ipairs(npc:GetDescendants()) do
+        assert(not part:IsA("LuaSourceContainer"), "NPC template must have no extra scripts")
+        if part:IsA("BasePart") then
+            part.CFrame = adjustment * part.CFrame
+            part.Anchored = false
+        end
+    end
+end
+local npcScript = R.Instance.new("Script")
+npcScript.Name = "NPCWanderServer"
+npcScript.Source = fs.readFile("r6-test/npc-wander-server.luau")
+L.compile(npcScript.Source)
+npcScript.Enabled = true
+npcScript.Disabled = false
+npcScript.Parent = place.ServerScriptService
+
+-- The menu is a single client script with a local 3D checkerboard backdrop.
+-- It is independent of the avatar and survives R6 respawns.
+local menuRemote = R.Instance.new("RemoteEvent")
+menuRemote.Name = "R6MenuRespawn"
+menuRemote.Parent = rep
+local menuScript = R.Instance.new("LocalScript")
+menuScript.Name = "R6CinematicMenu"
+menuScript.Source = fs.readFile("r6-test/cinematic-menu-client.luau")
+L.compile(menuScript.Source)
+menuScript.Disabled = false
+menuScript.Parent = playerScripts
+
 -- Only Naruto walking-on-surfaces dependencies. No old PlayerScriptsLoader
 -- camera patch: it relies on 2020 internals removed from modern Roblox.
 install(sourceGravity, rep)
@@ -234,24 +285,36 @@ shim.Parent = playerScripts
 -- Keep the R6 avatar spawner and only this Naruto ability.
 local server = place.ServerScriptService:FindFirstChild("R6AvatarServer")
 assert(server and server.Source:find("CreateHumanoidModelFromDescriptionAsync", 1, true))
-assert(#place.ServerScriptService:GetChildren() == 2)
+assert(#place.ServerScriptService:GetChildren() == 3)
+server.Source = fs.readFile("r6-test/avatar-server.luau")
+L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-chakra-boogie-v10")
+place.Workspace:SetAttribute("R6TestBuild", "r6-cinematic-menu-npcs-v11")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
 place.Workspace:SetAttribute("BoogieWoogieInstalled", true)
+place.Workspace:SetAttribute("R6DynamicCinematicMenu", true)
+place.Workspace:SetAttribute("R6WanderingNPCCount", 4)
+place.Workspace:SetAttribute("R6DeathMenuInstalled", true)
 
 local manifest = {
- build = "r6-chakra-boogie-v10",
+ build = "r6-cinematic-menu-npcs-v11",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
  playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput"},
  boogieWoogie = {package = "BoogieWoogieV1(5).rbxl", ability = "Swap positions with one target", remote = "BoogieSwap", originalClapAssets = clapAssetNames, server = "BoogieSwapServer", cooldownSeconds = 1.6, maxDistanceStuds = 65, testDummy = "BoogieTestDummy", mobileKey = "G"},
  selectedAnimationIds = selected,
+ runCatalogCandidateIds = {72900620651167, 107952007153363, 93499989310243},
+ runCandidateProbe = freshRuns,
+ dynamicMenu = {screens = {"Home", "Settings", "Credits", "Update", "Death"},
+    loadingTransition = true, editableSettings = true, client3DCheckerboard = true,
+    deathRespawn = "R6MenuRespawn"},
+ walkingNPCs = {count = 4, rig = "R6", humanoidMoveTo = true, testableBoogieTargets = true},
+
  nativeCandidateMeasurements = probed,
  patchedNarutoR6Motion = true,
  originalNarutoR6SHA256 = "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
@@ -260,7 +323,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "Naruto chakra stays intact. Boogie positional exchange is a minimal mobile/server adaptation of the supplied package; only original clap assets imported. Previously verified R6 locomotion clips reused. A mobile rendered playtest is still required.",
+ note = "v11: dynamic reference-inspired cinematic 3D menu, settings, update, credits and death respawn plus 4 real patrolling R6 NPCs. Chakra and Boogie preserved. The running asset is selected only if a real R6 native probe loads it.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
