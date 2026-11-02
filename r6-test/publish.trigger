@@ -1,1 +1,1 @@
-r6-original-wallrun-only-v7-live-roblox-default-player-scripts-3
+r6-naruto-chakra-wallwalk-v8-original-binary-restored-with-mobile-button
