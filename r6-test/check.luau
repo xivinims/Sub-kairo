@@ -6,6 +6,7 @@ assert(not g.ReplicatedStorage:FindFirstChild('R6AnimationCatalog'))
 assert(not g.StarterPlayer:FindFirstChild('StarterCharacter'))
 local sc=g.StarterPlayer.StarterCharacterScripts
 assert(sc.Animate.Controller and sc.Animate.R6 and sc.Animate.Loaded and not sc.Animate:FindFirstChild('R15'))
+print('R6_SCRIPT_ENABLED',sc.Animate.Enabled,sc.R6Locomotion.Enabled,sc.MotionInput.Enabled,sc.CharacterEmotes.Enabled)
 assert(not sc.Animate.Enabled, 'Original Animate must be disabled')
 assert(sc.R6Locomotion.Enabled, 'Avatar R6Locomotion must be enabled')
 assert(sc.MotionInput.Enabled and sc.CharacterEmotes.Enabled, 'Avatar companion controllers disabled')
