@@ -5,7 +5,7 @@ local game = roblox.deserializePlace(fs.readFile('/tmp/fps-system-demo-source'))
 assert(game and game:IsA('DataModel'), 'Source FPS place is not readable')
 local workspace = game:GetService('Workspace')
 local function vector(v) return {x = v.X, y = v.Y, z = v.Z} end
-local result = {workspaceRoots = {}, map3 = nil, spawns = {}, floors = {}, starterPack = {}, weaponScripts = {}, coreScripts = {}}
+local result = {workspaceRoots = {}, map3 = nil, spawns = {}, outsideParts = {}, floors = {}, starterPack = {}, weaponScripts = {}, coreScripts = {}}
 for _, child in ipairs(workspace:GetChildren()) do
 	table.insert(result.workspaceRoots, child.Name .. ' [' .. child.ClassName .. ']')
 	if child.Name == 'Map3' then
@@ -14,7 +14,7 @@ for _, child in ipairs(workspace:GetChildren()) do
 		for _, part in ipairs(child:GetDescendants()) do
 			if part:IsA('BasePart') then
 				pcall(function()
-					local p, s = part.Position, part.Size
+					local p, s = part.CFrame.Position, part.Size
 					min.x = math.min(min.x, p.X - s.X / 2); max.x = math.max(max.x, p.X + s.X / 2)
 					min.y = math.min(min.y, p.Y - s.Y / 2); max.y = math.max(max.y, p.Y + s.Y / 2)
 					min.z = math.min(min.z, p.Z - s.Z / 2); max.z = math.max(max.z, p.Z + s.Z / 2)
@@ -28,9 +28,15 @@ table.sort(result.workspaceRoots)
 for _, item in ipairs(workspace:GetDescendants()) do
 	pcall(function()
 		if item:IsA('SpawnLocation') then
-			table.insert(result.spawns, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), enabled = item.Enabled, neutral = item.Neutral, teamColor = tostring(item.TeamColor)})
+			table.insert(result.spawns, {path = item:GetFullName(), position = vector(item.CFrame.Position), size = vector(item.Size), enabled = item.Enabled, neutral = item.Neutral, teamColor = tostring(item.TeamColor)})
 		elseif item:IsA('BasePart') and (item.Name:lower():find('spawn') or item.Name:lower():find('floor') or item.Name:lower():find('baseplate')) then
-			table.insert(result.floors, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), anchored = item.Anchored, transparency = item.Transparency, canCollide = item.CanCollide})
+			table.insert(result.floors, {path = item:GetFullName(), position = vector(item.CFrame.Position), size = vector(item.Size), anchored = item.Anchored, transparency = item.Transparency, canCollide = item.CanCollide})
+		end
+		if item:IsA('BasePart') and not item:IsDescendantOf(workspace:FindFirstChild('Map3')) then
+			local p = item.CFrame.Position
+			if #result.outsideParts < 100 then
+				table.insert(result.outsideParts, {path = item:GetFullName(), position = vector(p), size = vector(item.Size), anchored = item.Anchored, transparency = item.Transparency, canCollide = item.CanCollide})
+			end
 		end
 	end)
 end
