@@ -5,7 +5,7 @@ local game = roblox.deserializePlace(fs.readFile('/tmp/fps-system-demo-source'))
 assert(game and game:IsA('DataModel'), 'Source FPS place is not readable')
 local workspace = game:GetService('Workspace')
 local function vector(v) return {x = v.X, y = v.Y, z = v.Z} end
-local result = {workspaceRoots = {}, map3 = nil, spawns = {}, outsideParts = {}, floors = {}, starterPack = {}, weaponScripts = {}, coreScripts = {}}
+local result = {workspaceRoots = {}, map3 = nil, spawns = {}, outsideParts = {}, floors = {}, starterPack = {}, weaponScripts = {}, coreScripts = {}, weaponSource = {}, weaponGuiScripts = {}, toolInventory = {}}
 for _, child in ipairs(workspace:GetChildren()) do
 	table.insert(result.workspaceRoots, child.Name .. ' [' .. child.ClassName .. ']')
 	if child.Name == 'Map3' then
@@ -50,6 +50,9 @@ if weapons then
 			local disabled = false
 			pcall(function() disabled = item.Disabled end)
 			table.insert(result.weaponScripts, {path = item:GetFullName(), class = item.ClassName, disabled = disabled, sourceBytes = #item.Source})
+			if item.Name == 'StarterWeapons' or item.Name == 'WeaponsServer' then
+				result.weaponSource[item.Name] = item.Source
+			end
 		end
 	end
 end
@@ -60,6 +63,23 @@ for _, serviceName in ipairs({'ReplicatedStorage', 'ServerStorage', 'StarterGui'
 			pcall(function() disabled = item.Disabled end)
 			table.insert(result.coreScripts, {path = item:GetFullName(), class = item.ClassName, disabled = disabled, sourceBytes = #item.Source})
 		end
+	end
+end
+for _, item in ipairs(game:GetService('StarterGui'):GetDescendants()) do
+	if item:IsA('LuaSourceContainer') and (item.Name:lower():find('weapon') or item.Name:lower():find('inventory') or item.Name:lower():find('hotbar') or item.Name:lower():find('tool')) then
+		table.insert(result.weaponGuiScripts, {path = item:GetFullName(), class = item.ClassName, source = item.Source})
+	end
+end
+for _, item in ipairs(game:GetDescendants()) do
+	if item:IsA('Tool') then
+		local handle = item:FindFirstChild('Handle')
+		local row = {path = item:GetFullName(), parent = item.Parent and item.Parent:GetFullName(), requiresHandle = item.RequiresHandle, grip = tostring(item.Grip), descendants = #item:GetDescendants(), hasHandle = handle ~= nil}
+		if handle and handle:IsA('BasePart') then
+			row.handleClass = handle.ClassName
+			row.handleAnchored = handle.Anchored
+			row.handleTransparency = handle.Transparency
+		end
+		table.insert(result.toolInventory, row)
 	end
 end
 print(serde.encode('json', result))
