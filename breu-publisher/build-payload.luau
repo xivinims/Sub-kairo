@@ -1,7 +1,9 @@
 local fs=require('@lune/fs')
 local roblox=require('@lune/roblox')
 local luau=require('@lune/luau')
-local place=roblox.deserializePlace(fs.readFile('breu-publisher/unpacked/BREU-Playtest-01.rbxlx'))
+local xml=fs.readFile('breu-publisher/unpacked/BREU-Playtest-01.rbxlx'):gsub('^<%?xml.-%?>%s*','')
+xml=xml:gsub('<float name="Duration">0</float>','<int name="Duration">0</int>')
+local place=roblox.deserializePlace(xml)
 local bundle=roblox.Instance.new('Model')
 bundle.Name='BREUPayload'
 local scripts=0
