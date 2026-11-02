@@ -14,7 +14,7 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-real-motion-v14",
+  "build": "r6-original-best-run-v15",
   "chakraToggle": {
     "button": "CHAKRA OFF / CHAKRA ON",
     "initialState": false,
@@ -268,9 +268,22 @@
     "staminaModule": "StaminaBar",
     "usesJoystick": true
   },
-  "note": "v14 fixes R15 run-on-R6 stiffness and frozen cosmetic fighting with ONE actual Motor6D.C0 R6 keypose runtime for locomotion and combat. Imported fight IDs still inaccessible in this universe; preserve originals in manifest. Chakra, auto-climb, Boogie and 3D menu preserved.",
+  "note": "v15 installs three original unchanged R6 run sequences from the public Best Run Animations R6 model and plays Run3 directly from its saved keyframes. Existing combat, menu, chakra, Boogie and automatic climbing preserved.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
+  "originalR6Run": {
+    "assetId": 136548520660837,
+    "modifiedOriginals": false,
+    "originalKeyframeCounts": {
+      "Run1 [by M0rsDev]": 40,
+      "Run2 [by Gusthabuo777]": 41,
+      "Run3 [by Newb1e27]": 17
+    },
+    "selected": "Run3 [by Newb1e27]",
+    "source": "Best Run Animations R6",
+    "sourceHash": "6e67ff947d8d6b138ea1a858fbc93c1e5889122f15ddb09f64f0af9fdcd36df9",
+    "sourceOfTruth": "raw KeyframeSequence (NOT a published animation ID)"
+  },
   "originalSHA256": {
     "Animate": "255cc6c9c8144b8962851a4ab0ab9aa80e415741afc5dbdaaecf5e6678ffe03d",
     "DrawClass": "11d6dc3209b17406cf915c505b53e292c5b3b7595de84eaf8fe7426027af8d88",
