@@ -38,8 +38,11 @@ local function spawn(player)
  end
  local previous = player.Character
  character:PivotTo(workspace.TestArena.Spawn.CFrame + Vector3.new(0, 4, 0))
- player.Character = character
+ -- Animator animation assets require the complete rig in Workspace.
+ -- Parent first, THEN assign Player.Character, so character LocalScripts
+ -- never begin loading animation clips while the rig is unparented.
  character.Parent = workspace
+ player.Character = character
  if previous and previous ~= character then previous:Destroy() end
  busy[player] = nil
  humanoid.Died:Once(function()
