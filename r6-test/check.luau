@@ -4,13 +4,27 @@ local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-real-motion-v14")
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-original-best-run-v15")
 assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
 assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
-assert(#sc:GetChildren()==8 and sc:FindFirstChild("Animate")
+assert(#sc:GetChildren()==9 and sc:FindFirstChild("Animate")
  and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput") and sc:FindFirstChild("BoogieSwapInput") and sc:FindFirstChild("NaturalR6Climb")
- and sc:FindFirstChild("R6CombatInput") and sc:FindFirstChild("R6PoseController") and sc:FindFirstChild("CombatAnimations"))
+ and sc:FindFirstChild("R6CombatInput") and sc:FindFirstChild("R6PoseController") and sc:FindFirstChild("CombatAnimations")
+ and sc:FindFirstChild("R6RunSource"))
+assert(#sc.R6RunSource:GetChildren()==3)
+for title,count in pairs({["Run1 [by M0rsDev]"]=40,["Run2 [by Gusthabuo777]"]=41,
+ ["Run3 [by Newb1e27]"]=17}) do
+ local original=sc.R6RunSource:FindFirstChild(title)
+ assert(original and original:IsA("KeyframeSequence"),"Missing source R6 run clip: "..title)
+ assert(#original:GetChildren()==count,"Original R6 run keyframes modified: "..title)
+end
+assert(m.originalR6Run and m.originalR6Run.assetId==136548520660837)
+assert(m.originalR6Run.modifiedOriginals==false)
+assert(m.originalR6Run.selected=="Run3 [by Newb1e27]")
+assert(m.originalR6Run.sourceHash==S.hash("sha256",fs.readFile("r6-test/free-r6-run-model.rbxm")))
+assert(sc.R6PoseController.Source:find("originalR6RunCF",1,true))
+assert(sc.R6PoseController.Source:find("originals[name]*originalPose",1,true))
 assert(sc.R6PoseController:IsA("LocalScript") and not sc.R6PoseController.Disabled)
 assert(sc.R6PoseController.Source==fs.readFile("r6-test/r6-pose-controller.luau"))
 assert(sc.R6PoseController.Source:find("RunService.PreSimulation",1,true))
@@ -123,6 +137,7 @@ assert(m.selectedAnimationIds.run==180426354,"Run base must be genuine R6, never
 assert(m.locomotionPoseDriver and m.locomotionPoseDriver.rig=="R6")
 assert(m.locomotionPoseDriver.sharedWithCombat==true)
 assert(g.Workspace:GetAttribute("R6RealJointPoseInstalled")==true)
+assert(g.Workspace:GetAttribute("OriginalUnmodifiedR6RunInstalled")==true)
 assert(sc.R6CombatInput.Source:find("R6CombatStarted",1,true))
 assert(not sc.R6CombatInput.Source:find("TweenService",1,true),
  "Combat input must not have a second, competing pose system")
@@ -145,6 +160,6 @@ assert(dummy.Humanoid.RigType==R.Enum.HumanoidRigType.R6)
 assert(m.boogieWoogie and m.boogieWoogie.testDummy=="BoogieTestDummy")
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
- playerCharacterScripts=7,R6PoseMotorController=true,visualRunFixed=true,combatActions=13,verifiedCombatTracks=#sc.CombatAnimations:GetChildren(),
+ playerCharacterScripts=7,R6PoseMotorController=true,rawOriginalR6Run3=true,originalRunKeyframesUnmodified=true,visualRunFixed=true,combatActions=13,verifiedCombatTracks=#sc.CombatAnimations:GetChildren(),
  ninjaRunReplacedBecauseR15=true,automaticClimb=true,chakraOptional=true,accessibleR6Animations=7,runningMode=true,
  boogieSwap=true,walkingNPCs=4,cinematicMenu=true,deathMenu=true,touchButton=true},true))
