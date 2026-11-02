@@ -1,3 +1,5 @@
+-- R6 motion runtime v16. The Animator writes Transform between PreAnimation
+-- and PreSimulation; this script overrides it in PreSimulation, never C0.
 -- ONE lightweight R6 pose controller shared by locomotion + combat.
 -- Replaces stiff R15-only run and unavailable combat IDs with fully local R6
 -- keyed joint poses. Nothing here causes damage or modifies other players.
@@ -151,6 +153,29 @@ local actionStarted=0
 local actionExpires=0
 local smooth=pose(v(),v(),v(),v(),v(),v())
 local used=false
+local lastJump=-1000
+local lastLanding=-1000
+local airborne=false
+hum.StateChanged:Connect(function(_,newState)
+ if newState==Enum.HumanoidStateType.Jumping then
+  lastJump=os.clock();airborne=true
+ elseif newState==Enum.HumanoidStateType.Freefall then
+  airborne=true
+ elseif newState==Enum.HumanoidStateType.Landed then
+  lastLanding=os.clock();airborne=false
+ elseif newState==Enum.HumanoidStateType.Running then
+  airborne=false
+ end
+end)
+local lastReported=""
+local lastReport=0
+local function report(mode)
+ local now=os.clock()
+ if mode~=lastReported or now-lastReport>2.5 then
+  lastReported=mode;lastReport=now
+  rig:SetAttribute("R6AnimationState",mode)
+ end
+end
 local function interpolated(left,right,a)
  local result={}
  for name in pairs(jointNames) do
@@ -198,8 +223,11 @@ local function motionFrame(kind,dt)
   return pose(v(-48,0,12),v(-48,0,-12),v(23),v(29),
    v(-12),v(4))
  elseif kind=="fall" then
-  return pose(v(-15,0,32),v(-15,0,-32),v(-12),v(11),
-   v(6),v(-4))
+  local flutter=math.sin(phase*.6)*7
+  return pose(v(-18,0,26+flutter),v(-18,0,-26-flutter),
+   v(-15+flutter*.2),v(11-flutter*.2),v(8),v(-5))
+ elseif kind=="land" then
+  return pose(v(26,0,7),v(26,0,-7),v(35),v(35),v(22),v(-10))
  else
   local breath=math.sin(phase)*2.3
   return pose(v(-4+breath),v(-4+breath),Z,Z,
@@ -213,23 +241,32 @@ local function activeKind()
  if state==Enum.HumanoidStateType.Climbing or
   state==Enum.HumanoidStateType.Swimming or
   state==Enum.HumanoidStateType.Seated then return nil end
- if state==Enum.HumanoidStateType.Jumping then return "jump" end
- if state==Enum.HumanoidStateType.Freefall or state==Enum.HumanoidStateType.FallingDown then return "fall" end
- if hum.MoveDirection.Magnitude>.1 then
-  return hum.WalkSpeed>=19 and "run" or "walk"
- end
+
+ local now=os.clock()
+ local aerial=hum.FloorMaterial==Enum.Material.Air
+    or state==Enum.HumanoidStateType.Freefall
+    or state==Enum.HumanoidStateType.FallingDown
+    or state==Enum.HumanoidStateType.Jumping
+ if (state==Enum.HumanoidStateType.Jumping or now-lastJump<0.23) and aerial then return "jump" end
+ if aerial then return "fall" end
+ if now-lastLanding<0.12 and not airborne then return "land" end
+ local horizontal=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
+ local moving=hum.MoveDirection.Magnitude>.12 or
+  (horizontal>2.2 and hum.MoveDirection.Magnitude>.02)
+ if moving then return hum.WalkSpeed>=19 and "run" or "walk" end
  return "idle"
 end
 local function release()
- for name,joint in pairs(joints) do
-  if joint.Parent then joint.C0=originals[name] end
+ -- Release only once when other native systems take priority.
+ for _,joint in pairs(joints) do
+  if joint.Parent then joint.Transform=CFrame.identity end
  end
  used=false
 end
 local loop
 loop=RunService.PreSimulation:Connect(function(dt)
  if not rig.Parent or hum.Health<=0 then
-  release()
+  if used then release() end
   if loop then loop:Disconnect()end
   return
  end
@@ -239,6 +276,7 @@ loop=RunService.PreSimulation:Connect(function(dt)
  local guard=rig:GetAttribute("CombatBlocking")==true
  local allowed=player.Character==rig and player:GetAttribute("R6MenuActive")~=true
  local kind=allowed and activeKind() or nil
+ if kind then report(kind) end
  if allowed and not (kind==nil and not guard) and guard then
   requested="Block"
   stamp=now
@@ -252,7 +290,7 @@ loop=RunService.PreSimulation:Connect(function(dt)
     local a=math.rad(angle[1])
     local b=math.rad(angle[2])
     local c=math.rad(angle[3])
-    joint.C0=originals[name]*CFrame.Angles(a,b,c)
+    joint.Transform=CFrame.Angles(a,b,c)
    end
    used=true
    return
@@ -275,10 +313,10 @@ loop=RunService.PreSimulation:Connect(function(dt)
    local partName=joint.Part1 and joint.Part1.Name
    local originalPose=partName and originalR6RunCF(partName,nowT)
    if originalPose and joint.Parent then
-    joint.C0=originals[name]*originalPose
+    joint.Transform=originalPose
     applied+=1
    elseif joint.Parent then
-    joint.C0=originals[name]
+    joint.Transform=CFrame.identity
    end
   end
   if applied>=4 then
@@ -292,9 +330,10 @@ loop=RunService.PreSimulation:Connect(function(dt)
   local target=motion[name] or Z
   local existing=smooth[name]
   for i=1,3 do existing[i]=existing[i]+(target[i]-existing[i])*lag end
-  -- R6 actual joints are C0; unlike R15 assets this always moves limbs.
+  -- Transform is the frame's animated joint pose. PreSimulation is
+  -- after Animator evaluation and before physics.
   if joint.Parent then
-   joint.C0=originals[name]*CFrame.Angles(math.rad(existing[1]),
+   joint.Transform=CFrame.Angles(math.rad(existing[1]),
      math.rad(existing[2]),math.rad(existing[3]))
   end
  end
@@ -302,5 +341,5 @@ loop=RunService.PreSimulation:Connect(function(dt)
 end)
 script.Destroying:Once(function()
  if loop then loop:Disconnect();loop=nil end
- release()
+ if used then release() end
 end)
