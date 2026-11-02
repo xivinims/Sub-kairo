@@ -1,1 +1,1 @@
-audit-20261102-spawn-locations-v4
+audit-20261103-weapon-equip-v1
