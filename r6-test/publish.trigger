@@ -1,1 +1,1 @@
-r6-arena-probe269-respawn
+r6-arena-v1-validated-respawn

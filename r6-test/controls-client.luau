@@ -6,6 +6,7 @@ local info=Instance.new('TextLabel');info.Size=UDim2.new(0,330,0,50);info.Positi
 local corner=Instance.new('UICorner');corner.CornerRadius=UDim.new(0,12);corner.Parent=info
 local aim=Instance.new('TextLabel');aim.Size=UDim2.fromOffset(22,22);aim.AnchorPoint=Vector2.new(.5,.5);aim.Position=UDim2.fromScale(.5,.5);aim.BackgroundTransparency=1;aim.Text='+';aim.TextSize=24;aim.TextColor3=Color3.new(1,1,1);aim.Parent=gui
 local panel=Instance.new('Frame');panel.Name='Actions';panel.BackgroundTransparency=1;panel.AnchorPoint=Vector2.new(1,0);panel.Size=UDim2.fromOffset(116,116);panel.Parent=gui
+local panelScale=Instance.new('UIScale');panelScale.Parent=panel
 local buttons={}
 local function button(name,label,x,y,fn)
  local b=Instance.new('TextButton');b.Name=name;b.Size=UDim2.fromOffset(52,52);b.Position=UDim2.fromOffset(x,y);b.Text=label;b.Font=Enum.Font.GothamBold;b.TextSize=10;b.TextColor3=Color3.new(1,1,1);b.BackgroundColor3=Color3.fromRGB(28,44,58);b.BackgroundTransparency=.12;b.Parent=panel
@@ -46,8 +47,10 @@ local function layout()
  local size=gui.AbsoluteSize
  local top=math.max(66,size.Y*.32)
  local jump=pg:FindFirstChild('JumpButton',true)
- if jump and jump:IsA('GuiObject') and jump.Visible then top=math.min(top,jump.AbsolutePosition.Y-gui.AbsolutePosition.Y-128) end
- top=math.max(62,top)
+ local limit=size.Y-12
+ if jump and jump:IsA('GuiObject') and jump.Visible then limit=jump.AbsolutePosition.Y-gui.AbsolutePosition.Y-12 end
+ top=math.max(12,math.min(top,limit-116))
+ panelScale.Scale=math.min(1,math.max(.1,(limit-top)/116))
  panel.Position=UDim2.new(1,-14,0,top)
  info.Size=UDim2.fromOffset(math.min(330,math.max(200,size.X-160)),50)
 end

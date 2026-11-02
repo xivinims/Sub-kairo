@@ -43,7 +43,7 @@ local prompts=copy(dk.DialoguePrompts,ws)
 local p=prompts.TestPrompt1.PromptPart;p.CFrame=C.new(-12,3,18)
 local stored=new('Folder','StudioPacks',ss);copy(luminos,stored)
 local nstore=new('Folder','WallWalkNaruto_R6',stored)
-for _,sn in ipairs({'ReplicatedStorage','StarterPlayer','StarterGui'}) do local f=new('Folder',sn,nstore);for _,x in ipairs(naruto[sn]:GetChildren()) do copy(x,f) end end
+for _,sn in ipairs({'ReplicatedStorage','StarterPlayer','StarterGui'}) do local f=new('Folder',sn,nstore);for _,x in ipairs(naruto[sn]:GetChildren()) do if x:IsA('StarterPlayerScripts') or x:IsA('StarterCharacterScripts') then local bucket=new('Folder',x.Name,f);merge(x,bucket) else copy(x,f) end end end
 nstore:SetAttribute('Status','Original preserved; inactive: old PlayerScriptsLoader incompatible with current camera API')
 local env=service('Lighting');env.Ambient=Color.fromRGB(83,100,67);env.Brightness=2;env.ColorShift_Bottom=Color.new(0,0,0);env.ColorShift_Top=Color.fromRGB(201,229,255);env.EnvironmentDiffuseScale=1;env.EnvironmentSpecularScale=0;env.GlobalShadows=true;env.OutdoorAmbient=Color.fromRGB(67,125,109);env.ClockTime=9.55;env.GeographicLatitude=22.8;env.ExposureCompensation=.5
 local a=new('Atmosphere','AfterRain',env);a.Density=.25;a.Offset=.25;a.Color=Color.new(0,0,0);a.Decay=Color.new(0,0,0);a.Glare=0;a.Haze=0

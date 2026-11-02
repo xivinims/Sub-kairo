@@ -41,9 +41,10 @@ async function main(){
  await privateOnly();let version;
  try {
   const uploaded=await publish(bytes);version=uploaded.versionNumber;if(!version)throw Error('No published version');
-  const after=await execute(await fs.readFile('r6-test/verify.luau','utf8'));
+  const after=await execute(await fs.readFile('r6-test/verify.luau','utf8'),version);
   if(!after.ok||after.version!==version)throw Error('Saved place verification failed');
   await privateOnly();after.private=true;after.previousVersion=before.version;after.sha256=createHash('sha256').update(bytes).digest('hex');
+  try {await api(cloud+`universes/${universe}:restartServers`,'POST',{});after.restarted=true;} catch(error){after.restarted=false;console.warn('Server restart unavailable: '+error.message);}
   await fs.writeFile('r6-test/publication.json',JSON.stringify(after,null,2));console.log('R6_ARENA_COMPLETE '+JSON.stringify(after));
  } catch(error) {
   if(version){const latest=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');if(latest.version===version){const rollback=await publish(old);console.error('R6_ARENA_ROLLBACK '+JSON.stringify(rollback));}}
