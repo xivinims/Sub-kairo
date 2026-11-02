@@ -1,5 +1,5 @@
 local Players=game:GetService('Players')
-assert(workspace:GetAttribute('R6TestBuild')=='r6-character-motion-v5')
+assert(workspace:GetAttribute('R6TestBuild')=='r6-character-motion-v6')
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild('R6AnimationTest'),'Old preview remains')
 assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild('R6TestControls'),'Old UI remains')
 assert(not game.ReplicatedStorage:FindFirstChild('R6AnimationCatalog'))
@@ -10,6 +10,9 @@ assert(sc.Animate.Disabled and sc.R6Locomotion and not sc.R6Locomotion.Disabled,
 assert(sc.R6Locomotion.Source:find('RunService.PreSimulation',1,true))
 assert(workspace:GetAttribute('R6LocomotionInstalled')==true)
 assert(workspace:GetAttribute('R6ExclusiveAnimationBanks')==true)
+assert(workspace:GetAttribute('R6VisibleJointAnimation')==true)
+assert(sc.R6Locomotion.Source:find('originalC0',1,true) and sc.R6Locomotion.Source:find('motor.C0',1,true))
+assert(game.ServerScriptService.R6AvatarServer.Source:find('character.Parent = workspace',1,true))
 assert(sc.AnimationBankGUI and not sc.AnimationBankGUI.Disabled,'Top bank switch UI missing')
 assert(sc.R6Locomotion.Source:find('R6AnimationGroup',1,true))
 assert(sc.AnimationBankGUI.Source:find('R6 PADRÃO',1,true) and sc.AnimationBankGUI.Source:find('R6 ARQUIVOS',1,true))
@@ -48,10 +51,28 @@ local walk=tracks.walk;walk:Play(0);walk:AdjustWeight(1)
 task.wait(.5)
 results.walk.playing=walk.IsPlaying;results.walk.weight=walk.WeightCurrent;results.walk.time=walk.TimePosition
 assert(walk.IsPlaying,'Walk track not playing')
+-- Check the original recorded R6 keyframes actually contain compatible limb poses.
+local originalPoses = 0
+for _, clip in ipairs(character.Animations.Emotes:GetChildren()) do
+ if clip:IsA('KeyframeSequence') then
+  for _, frame in ipairs(clip:GetKeyframes()) do
+   for _, pose in ipairs(frame:GetDescendants()) do
+    if pose:IsA('Pose') and (pose.Name=='Left Arm' or pose.Name=='Right Arm' or pose.Name=='Left Leg' or pose.Name=='Right Leg') then originalPoses+=1 end
+   end
+  end
+ end
+end
+local leftShoulder=character.Torso:FindFirstChild('Left Shoulder')
+assert(leftShoulder and leftShoulder:IsA('Motor6D'),'R6 Left Shoulder joint missing')
+local initial=leftShoulder.C0
+leftShoulder.C0=initial*CFrame.Angles(0.35,0,0)
+assert(leftShoulder.C0~=initial,'R6 joint C0 did not update')
+leftShoulder.C0=initial
 local jointSamples={}
+
 for _,motor in ipairs(character:GetDescendants()) do if motor:IsA('Motor6D') then jointSamples[motor.Name]={motor.Transform:GetComponents()} end end
 local uploadNames={};local uploaded=character.Animations:FindFirstChild('UploadedMotion')
 if uploaded then for _,item in ipairs(uploaded:GetDescendants()) do if item:IsA('Animation') then table.insert(uploadNames,item.Name) end end end
 local keyframeNames={};for _,item in ipairs(character.Animations.Emotes:GetChildren()) do table.insert(keyframeNames,item.Name) end
 walk:Stop(0);character:Destroy();desc:Destroy()
-return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='r6-character-motion-v5',characterOwnedAnimationController=true,automaticR6ControllerInsideAvatar=true,exclusiveBanks=true,topGuiButtons=2,uploadedAnimationNames=uploadNames,embeddedSequenceNames=keyframeNames,previewUI=false,originalScriptsUnchanged=unchanged,emotesInsideCharacter=19,nativeAnimationLoads=results,jointSamples=jointSamples,renderedPlaytest=false,customPackIDsUnavailable=true})
+return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build='r6-character-motion-v6',characterOwnedAnimationController=true,automaticR6ControllerInsideAvatar=true,exclusiveBanks=true,topGuiButtons=2,originalPoseChannels=originalPoses,C0Writable=true,uploadedAnimationNames=uploadNames,embeddedSequenceNames=keyframeNames,previewUI=false,originalScriptsUnchanged=unchanged,emotesInsideCharacter=19,nativeAnimationLoads=results,jointSamples=jointSamples,renderedPlaytest=false,customPackIDsUnavailable=true})
