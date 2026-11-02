@@ -1,10 +1,16 @@
--- Two EXCLUSIVE R6 animation banks. This LocalScript lives inside each avatar.
+-- v6: Two EXCLUSIVE R6 animation banks. Visible C0 movement + raw clips. This LocalScript lives inside each avatar.
 -- "Padrao" = R6 original default movement; "Arquivos" = uploaded motions
 -- plus any matching embedded KeyframeSequence. No preview/catalog buttons.
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 local character = script.Parent
 local humanoid = character:WaitForChild("Humanoid")
 if humanoid.RigType ~= Enum.HumanoidRigType.R6 then return end
+-- Client tracks cannot be loaded until the avatar is actually inside Workspace.
+while character.Parent and not character:IsDescendantOf(workspace) do task.wait() end
+if not character:IsDescendantOf(workspace) then return end
+if player.Character ~= character then return end
 local animator = humanoid:WaitForChild("Animator", 10)
 if not animator then warn("[R6] Animator ausente"); return end
 local imported = character:WaitForChild("Animate", 10)
@@ -90,13 +96,19 @@ local function defaultAnimation(mode)
     return temp, true
 end
 
-local motors = {}
+local motors, originalC0 = {}, {}
 for _, motor in ipairs(character:GetDescendants()) do
-    if motor:IsA("Motor6D") then motors[motor.Name] = motor end
+    if motor:IsA("Motor6D") then
+        motors[motor.Name] = motor
+        originalC0[motor] = motor.C0
+    end
 end
 local function resetMotors()
     for _, motor in pairs(motors) do
-        if motor.Parent then motor.Transform = CFrame.identity end
+        if motor.Parent then
+            motor.C0 = originalC0[motor]
+            motor.Transform = CFrame.identity
+        end
     end
 end
 local currentTrack, currentSequence, currentMode, currentGroup
@@ -186,6 +198,9 @@ local function startMode(mode, group)
         return
     end
     if group == "Arquivos" then
+        -- These are genuine embedded clips from the uploaded pack, not IDs.
+        -- Play the originals immediately for idle/sit, without asset permissions.
+        if (mode == "idle" or mode == "sit") and useSequence(embeddedSequence(mode)) then return end
         local candidate = uploadedAnimation(mode)
         if candidate and playTrack(candidate, "arquivo:" .. candidate.Name, false) then return end
         if useSequence(embeddedSequence(mode)) then return end
@@ -231,7 +246,7 @@ local function rawPose(dt)
             if left.ease == Enum.PoseEasingStyle.Constant then alpha = 0 end
             local cf = left.cf:Lerp(right.cf, alpha)
             local weight = left.weight + (right.weight-left.weight)*alpha
-            motor.Transform = CFrame.identity:Lerp(cf, weight)
+            -- C0 updates immediately and visibly on R6, even if Roblox\n            -- has no permission to stream the original animation ID.\n            motor.C0 = originalC0[motor] * CFrame.identity:Lerp(cf, weight)
         end
     end
 end
@@ -253,7 +268,7 @@ local function emergencyPose(dt)
     }
     for jointName, value in pairs(pairsToApply) do
         local joint = motors[jointName]
-        if joint and joint.Parent then joint.Transform = CFrame.Angles(value, 0, 0) end
+        if joint and joint.Parent then joint.C0 = originalC0[joint] * CFrame.Angles(value, 0, 0) end
     end
 end
 local function desired()
@@ -289,6 +304,7 @@ heartbeat = RunService.PreSimulation:Connect(function(dt)
     if procedural then emergencyPose(dt)
     elseif currentTrack and currentTrack.Length > 0 then
         if not currentTrack.IsPlaying then currentTrack:Play(0.1) end
+        -- A small, real joint overlay also makes movement visible when a\n        -- loaded Roblox track reports success but fails to pose this R6 rig.\n        -- Raw KeyframeSequences are exempt; they keep their exact poses.\n        elapsed += dt\n        if mode == "walk" or mode == "run" or mode == "climb" then\n            local kick = math.sin(elapsed * (mode == "run" and 12 or 8)) * 0.3\n            for name, angle in pairs({["Left Shoulder"] = kick, ["Right Shoulder"] = -kick, ["Left Hip"] = -kick, ["Right Hip"] = kick}) do\n                local motor = motors[name]\n                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(angle, 0, 0) end\n            end\n        elseif mode == "idle" then\n            local breathe = math.sin(elapsed * 2.2) * 0.08\n            for _, name in ipairs({"Left Shoulder", "Right Shoulder"}) do\n                local motor = motors[name]\n                if motor and motor.Parent then motor.C0 = originalC0[motor] * CFrame.Angles(breathe, 0, 0) end\n            end\n        end
         if mode == "walk" or mode == "run" then
             currentTrack:AdjustSpeed(math.clamp(humanoid.WalkSpeed / 16, 0.7, 2))
         end
