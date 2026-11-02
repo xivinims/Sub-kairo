@@ -6,7 +6,14 @@ local CAS=game:GetService("ContextActionService")
 local localPlayer=Players.LocalPlayer
 local character=script.Parent
 local humanoid=character:WaitForChild("Humanoid")
-if humanoid.RigType~=Enum.HumanoidRigType.R6 or localPlayer.Character~=character then return end
+if humanoid.RigType~=Enum.HumanoidRigType.R6 then return end
+-- The server parents the R6 rig before assigning Player.Character.
+-- Waiting for assignment avoids losing SprintInput to a spawn race.
+local deadline=os.clock()+7
+while localPlayer.Character~=character and character.Parent and os.clock()<deadline do
+ task.wait()
+end
+if localPlayer.Character~=character then return end
 local baseSpeed=16
 local sprintSpeed=24
 local sprinting=false
