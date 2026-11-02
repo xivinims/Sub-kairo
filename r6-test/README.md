@@ -1,5 +1,10 @@
 # R6 character motion
 
+## R6 animation runtime repair (v6)
+
+Fixed manual R6 character spawn to parent the rig into Workspace BEFORE assigning Player.Character (animation tracks require a character under Workspace). The local animation script waits for Workspace before loading assets. Raw embedded R6 KeyframeSequences now drive the avatar's Motor6D C0 while selected instead of relying on Transform updates. If an AnimationId loads but its visual pose is missing, a lightweight C0 movement overlay drives actual limb joints; inaccessible IDs use a bigger movement fallback. All 19 original emotes can also drive C0 in the Files bank. Both top buttons remain mutually exclusive. Native verification additionally checks genuine embedded limb poses and direct C0 editing, but real phone rendering still requires a playtest.
+
+
 ## R6 animation bank selector (v5)
 
 **Dois botões no topo** do HUD (`R6 PADRÃO` e `R6 ARQUIVOS`) alternam os bancos, nunca tocando os dois simultaneamente. `AnimationBankGUI` só escolhe o banco, e o script `R6Locomotion` continua dentro do avatar, responsável por parar as tracks antigas e iniciar apenas as do banco selecionado. Padrão: animações R6 acessíveis do controlador original. Arquivos: animações `UploadedMotion` identificadas por movimento e, se uma animation ID não carregar, `KeyframeSequence` correspondente ao mesmo movimento em `Animations.Emotes`. Se ambos falharem, utiliza R6 padrão sem fingir que o arquivo importado funcionou. Os demais emotes em KeyframeSequence são acessíveis por `/r6 nome` apenas no banco ARQUIVOS, e param quando se escolhe PADRÃO.
