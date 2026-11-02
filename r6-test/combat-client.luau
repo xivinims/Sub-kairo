@@ -97,18 +97,13 @@ local function play(action)
  if asset and asset:IsA("Animation") and asset.AnimationId~="" then
   local ok,track=pcall(function()return animator:LoadAnimation(asset)end)
   if ok and track then
-   if track.Length<=0 then
-    -- Some Roblox assets report zero until the engine finishes fetching.
-    -- The server previously checked which IDs actually load; do not wait
-    -- here or spin in a heartbeat on every punch.
-    track:Destroy()
-   else
-    activeTrack=track
-    track.Priority=Enum.AnimationPriority.Action
-    track.Looped=action=="Block"
-    track:Play(.08,1,1)
-    return true
-   end
+   -- Builder inserts ONLY tracks that passed the native Roblox R6
+   -- duration probe. Length can still be zero on the first local frame.
+   activeTrack=track
+   track.Priority=Enum.AnimationPriority.Action
+   track.Looped=action=="Block"
+   track:Play(.08,1,1)
+   return true
   end
  end
  fallbackGesture(action)
@@ -153,7 +148,7 @@ local function specialAction()
  play(specialNames[special])
 end
 local function block(toggle)
- if restricted() and toggle then return end
+ if toggle and restricted() then return end
  if toggle==blocking then return end
  blocking=toggle
  char:SetAttribute("CombatBlocking",blocking)
