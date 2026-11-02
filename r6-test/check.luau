@@ -34,7 +34,7 @@ assert(sc.ChakraWallWalk.Source:find('SetTitle("ToggleChakraFeet"',1,true))
 assert(sc.ChakraWallWalk.Source:find('Enum.KeyCode.B',1,true))
 assert(not sc:FindFirstChild("Wallrun") and not sc:FindFirstChild("R6Locomotion"))
 local ps=g.StarterPlayer.StarterPlayerScripts
-assert(#ps:GetChildren()==2 and ps.RbxCharacterSounds and ps.PlayerScriptsLoader)
+assert(#ps:GetChildren()==3 and ps.RbxCharacterSounds and ps.PlayerScriptsLoader and ps.R6CinematicMenu)
 assert(ps.PlayerScriptsLoader.Loaded.Value==true and ps.PlayerScriptsLoader.Disabled)
 assert(g.ReplicatedStorage.GravityController and g.ReplicatedStorage.DrawClass and g.ReplicatedStorage.VFX.ChakraFeet)
 for name, hash in pairs(m.originalSHA256) do
