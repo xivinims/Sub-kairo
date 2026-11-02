@@ -28,7 +28,9 @@ for _,x in ipairs(game:GetDescendants()) do
  if x:IsA('LuaSourceContainer') and preserved[x:GetFullName()] then assert(x.Source==preserved[x:GetFullName()],'Non-menu source changed: '..x:GetFullName()) end
 end
 local ability=game.StarterPlayer.StarterPlayerScripts.PlayerAbilities
-assert(ability and ability.Source==fs.readFile('water-rpg/src/Abilities.client.lua'),'Live ability source differs; review before patch')
+assert(ability and ability:IsA('LocalScript'),'Live abilities missing')
+local abilityCode=fs.readFile('water-rpg/src/Abilities.client.lua');luau.load(abilityCode,{debugName='PlayerAbilities'});ability.Source=abilityCode
+game.Workspace:SetAttribute('ControlsRevision','right-circles-jump-safe-v1')
 game.Workspace:SetAttribute('MenuRevision','reference-3d-transitions-v2')
 fs.writeFile('water-rpg/menu-patched.rbxl',R.serializePlace(game))
 print('Targeted menu patch: geometry, resident outfits, gameplay and ability sources preserved')

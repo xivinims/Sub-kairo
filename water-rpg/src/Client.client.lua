@@ -251,8 +251,6 @@ local function notify(value)
  task.delay(5,function() if noticeId==id then notice.Text='' end end)
 end
 button(hud,'⚙',UDim2.fromOffset(40,40),UDim2.new(1,-56,0,15),function() showModal('Settings') end)
-local sprint=button(hud,'CORRER',UDim2.fromOffset(85,42),UDim2.new(1,-200,1,-175),function() Net:FireServer('Sprint',not player:GetAttribute('Sprinting')) end);corner(sprint,22);sprint.Visible=UIS.TouchEnabled;sprint.TextSize=15
-local potion=button(hud,'TÔNICO',UDim2.fromOffset(85,38),UDim2.new(1,-110,0,153),function() Net:FireServer('UsePotion') end);corner(potion,20);potion.TextSize=15
 local dialogue=Shared.PlayerAssets.DialogueSkin:Clone();dialogue.Name='ResidentDialogue';dialogue.Size=UDim2.fromOffset(570,250);dialogue.Position=UDim2.new(.5,-285,1,-275);dialogue.Visible=false;dialogue.Parent=gui
 for _,obj in ipairs(dialogue:GetDescendants()) do if obj:IsA('GuiObject') then obj.Visible=false end end
 local dialogueScale=make('UIScale',dialogue,{Scale=1})
@@ -374,7 +372,6 @@ Run.RenderStepped:Connect(function(dt)
  questText.Text=stage==0 and 'PRIMEIROS PASSOS\nConverse com Nasos, na estrada.' or (stage==1 and 'ENCOMENDA\nEntregue as ervas à boticária.' or 'EXPLORAÇÃO LIVRE\nConheça os moradores e a cidade.')
  statusText.Text='NÍVEL '..(player:GetAttribute('Level') or 1)..'  ·  '..(player.DisplayName)
  money.Text=(player:GetAttribute('Coins') or 20)..' moedas  ·  '..(player:GetAttribute('XP') or 0)..' XP'
- potion.Text='TÔNICO '..(player:GetAttribute('Potions') or 0)
  local h=player.Character and player.Character:FindFirstChildOfClass('Humanoid')
  if h then healthFill.Size=UDim2.fromScale(math.clamp(h.Health/h.MaxHealth,0,1),1) end
  if t-cacheAt>2 then

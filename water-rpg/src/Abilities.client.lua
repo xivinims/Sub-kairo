@@ -12,17 +12,18 @@ pcall(function() controls=require(p.PlayerScripts:WaitForChild('PlayerModule',10
 local function label(parent,text,size,pos)
  local x=Instance.new('TextLabel');x.Size=size;x.Position=pos;x.Text=text;x.Font=Enum.Font.Gotham;x.TextSize=12;x.TextColor3=Color3.fromRGB(235,241,239);x.BackgroundTransparency=1;x.Parent=parent;return x
 end
-local panel=Instance.new('Frame');panel.Size=UDim2.fromOffset(360,96);panel.Position=UDim2.new(.5,-180,1,-147);panel.BackgroundTransparency=1;panel.Parent=gui
+local panel=Instance.new('Frame');panel.Name='RightActionDock';panel.Size=UDim2.fromOffset(124,260);panel.Position=UDim2.new(1,-140,0,150);panel.BackgroundTransparency=1;panel.Parent=gui
 local buttons={}
+local order={}
 local function btn(key,title,x,y,callback)
- local b=Instance.new('TextButton');b.Name=key;b.Size=UDim2.fromOffset(112,40);b.Position=UDim2.fromOffset(x,y);b.BackgroundColor3=Color3.fromRGB(15,27,39);b.BackgroundTransparency=.18;b.TextColor3=Color3.fromRGB(235,241,239);b.Font=Enum.Font.GothamMedium;b.TextSize=12;b.Text=title;b.Parent=panel
- local corner=Instance.new('UICorner');corner.CornerRadius=UDim.new(0,9);corner.Parent=b
+ local b=Instance.new('TextButton');b.Name=key;b.Size=UDim2.fromOffset(56,56);b.Position=UDim2.fromOffset(x,y);b.BackgroundColor3=Color3.fromRGB(15,27,39);b.BackgroundTransparency=.18;b.TextColor3=Color3.fromRGB(235,241,239);b.Font=Enum.Font.GothamMedium;b.TextSize=10;b.TextWrapped=true;b.Text=title;b.Parent=panel
+ local corner=Instance.new('UICorner');corner.CornerRadius=UDim.new(1,0);corner.Parent=b
  local border=Instance.new('UIStroke');border.Color=Color3.fromRGB(148,175,193);border.Transparency=.5;border.Parent=b
- b.Activated:Connect(callback);buttons[key]=b;return b
+ b.Activated:Connect(callback);buttons[key]=b;table.insert(order,b);return b
 end
-btn('Lantern','LANTERNA · R',0,0,function() Remote:FireServer('Lantern') end)
-btn('Bow','ARCO · 1',121,0,function() Remote:FireServer('Bow') end)
-btn('Wall','PAREDES · B',242,0,function() Remote:FireServer('WallWalk') end)
+btn('Lantern','LUZ\nR',0,0,function() Remote:FireServer('Lantern') end)
+btn('Bow','ARCO\n1',121,0,function() Remote:FireServer('Bow') end)
+btn('Wall','PAREDE\nB',242,0,function() Remote:FireServer('WallWalk') end)
 btn('Aim','MIRAR',0,48,function() Remote:FireServer('Aim',not p:GetAttribute('BowAiming')) end)
 local function shoot()
  local cam=workspace.CurrentCamera;local size=cam.ViewportSize;local ray=cam:ViewportPointToRay(size.X/2,size.Y/2)
@@ -30,7 +31,36 @@ local function shoot()
 end
 btn('Shoot','ATIRAR',121,48,shoot)
 local target
-btn('Swap','TROCAR · T',242,48,function() if target then Remote:FireServer('Swap',target) end end)
+btn('Swap','TROCAR\nT',242,48,function() if target then Remote:FireServer('Swap',target) end end)
+btn('Sprint','CORRER',0,0,function() Shared.Action:FireServer('Sprint',not p:GetAttribute('Sprinting')) end)
+btn('Potion','TÔNICO',0,0,function() Shared.Net:FireServer('UsePotion') end)
+local dockClock=0
+local function layoutDock()
+ local size=gui.AbsoluteSize
+ if size.X<=0 or size.Y<=0 then return end
+ local bottom=size.Y-150
+ local touch=p.PlayerGui:FindFirstChild('TouchGui')
+ local jump=touch and touch:FindFirstChild('JumpButton',true)
+ if jump and jump:IsA('GuiObject') and jump.Visible and jump.AbsoluteSize.Y>0 then
+  bottom=math.min(bottom,jump.AbsolutePosition.Y-gui.AbsolutePosition.Y-18)
+ end
+ local visible={}
+ for _,b in ipairs(order) do if b.Visible then table.insert(visible,b) end end
+ local gap=8
+ local diameter=math.clamp(math.floor(size.Y*.12),44,58)
+ local available=math.max(44,bottom-60)
+ local rows=math.max(1,math.floor((available+gap)/(diameter+gap)))
+ local cols=math.max(2,math.ceil(#visible/rows))
+ rows=math.ceil(#visible/cols)
+ local width=cols*(diameter+gap)-gap
+ local height=rows*(diameter+gap)-gap
+ panel.Size=UDim2.fromOffset(width,height)
+ panel.Position=UDim2.fromOffset(size.X-width-16,math.max(8,bottom-height))
+ for i,b in ipairs(visible) do
+  b.Size=UDim2.fromOffset(diameter,diameter)
+  b.Position=UDim2.fromOffset(((i-1)%cols)*(diameter+gap),math.floor((i-1)/cols)*(diameter+gap))
+ end
+end
 local track=Instance.new('Frame');track.Size=UDim2.fromOffset(220,5);track.Position=UDim2.new(.5,-110,1,-39);track.BackgroundColor3=Color3.fromRGB(30,39,40);track.BorderSizePixel=0;track.Parent=gui
 local stamina=Instance.new('Frame');stamina.Size=UDim2.fromScale(1,1);stamina.BackgroundColor3=Color3.fromRGB(219,199,144);stamina.BorderSizePixel=0;stamina.Parent=track
 local airLabel=label(gui,'',UDim2.fromOffset(230,22),UDim2.new(.5,-115,1,-66))
@@ -111,10 +141,13 @@ Run.RenderStepped:Connect(function(dt)
  airLabel.Text=submerged and ('FÔLEGO  '..(p:GetAttribute('Breath') or 60)..'s') or ''
  local bow=p:GetAttribute('BowEquipped');local aiming=p:GetAttribute('BowAiming')
  buttons.Aim.Visible=bow==true;buttons.Shoot.Visible=bow==true;aimDot.Visible=bow==true
- buttons.Lantern.Text=p:GetAttribute('LanternOn') and 'LANTERNA · ON' or 'LANTERNA · R'
- buttons.Wall.Text=p:GetAttribute('WallWalkEnabled') and 'PAREDES · ON' or 'PAREDES · B'
+ buttons.Potion.Text='TÔNICO\n'..(p:GetAttribute('Potions') or 0)
+ buttons.Sprint.Visible=UIS.TouchEnabled
+ dockClock+=dt;if dockClock>=.15 then dockClock=0;layoutDock() end
+ buttons.Lantern.Text=p:GetAttribute('LanternOn') and 'LUZ\nON' or 'LUZ\nR'
+ buttons.Wall.Text=p:GetAttribute('WallWalkEnabled') and 'PAREDE\nON' or 'PAREDE\nB'
  local cd=math.max(0,math.ceil((p:GetAttribute('SwapReadyAt') or 0)-workspace:GetServerTimeNow()))
- buttons.Swap.Text=cd>0 and ('TROCAR · '..cd..'s') or 'TROCAR · T'
+ buttons.Swap.Text=cd>0 and ('TROCAR\n'..cd..'s') or 'TROCAR\nT'
  hints.Text=swimming and 'Natação automática · pule para subir' or (p:GetAttribute('WallMode')~='' and 'Pule para se soltar da parede' or 'Corra e pule junto à parede para fazer wall run')
  local mode=p:GetAttribute('WallMode') or ''
  if mode~=activeMode then if mode~='' then startWall(mode) else clearWall() end end
