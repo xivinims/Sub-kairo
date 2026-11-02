@@ -1,3 +1,32 @@
+# Corrida R6 e luta com movimentos reais (v14)
+
+**Motivo da tábua identificado:** `656118852` é a animação Ninja do catálogo **R15**, não um clipe R6. O teste antigo examinava só `AnimationTrack.Length`, o que não prova que um asset possui poses para o rig. Os 13 IDs individuais de combate também retornaram comprimento zero.
+
+## Correção instalada
+
+O avatar possui agora um **único** `R6PoseController` que atualiza suavemente as juntas reais R6 (`Right Shoulder`, `Left Shoulder`, `Right Hip`, `Left Hip`, `RootJoint`, `Neck`) com curvas interpoladas. Os movimentos foram criados para esse teste, **não são clipes copiados dos modelos**.
+
+- **Parado:** respiração discreta, sem travar.
+- **Andar:** braços alternados, inclinação e passos moderados.
+- **Correr:** passadas maiores, braços fortes alternados, tronco inclinado e contraposição de cabeça. Diferente da caminhada, funciona diretamente no R6. A referência base `run.xml` volta para o movimento clássico R6 `180426354`, que não é uma animação R15 incompatível.
+- **Pulo e queda:** poses adaptadas ao estado humanoide.
+- **Combate:** quatro socos sequenciais com preparação, impacto visual e recuperação; defesa; duas esquivas; dois chutes; uppercut; downslam; golpe forte; sequência de golpes. Tudo **apenas visual**: sem dano, força de combate, ferramentas ou efeitos de violência.
+- **Controle unificado:** `R6CombatInput` cuida só de toque e teclado; `R6PoseController` é o único script novo que manipula juntas. Nenhum `TweenService` concorrente, menu de animações ou controlador extra por golpe.
+- **Segurança contra conflito:** o controlador libera imediatamente as juntas quando o chakra opcional ou a escalada natural estiverem ativos. Mantém Boogie Woogie, quatro NPCs, menu 3D e tela de morte.
+
+## Opções de assets reais encontrados
+
+Foram encontrados pacotes R6 editáveis que servem para substituição futura após importar seus `AnimSaves` e publicar os clipes na conta/grupo proprietário do jogo:
+- `16663903306`: Free R6 Battleground Animations V7, com M1 4 hits, corrida, caminhada, dashes, uppercut e downslam.
+- `136548520660837`: Best Run Animations R6.
+- `74065807270952`: Free R6 Battle Punch Kick Idle Run Jump Anim Pack.
+
+Eles foram **pesquisados, mas não importados** neste build. Os 13 IDs de luta antigos continuam registrados como referências não carregáveis, e não são anunciados como clips ativos. A nova animação motorizada R6 é reprodutível sem depender das permissões desses IDs.
+
+Os testes da publicação verificam scripts, seis `Motor6D` em uma instância R6, atributos e carregamento do movimento clássico. A reprodução visual precisa ser validada em sessão real do cliente móvel.
+
+---
+
 # Animações de combate R6 + corrida Ninja (v13)
 
 Atualização do **teste R6** (branch `dead-signal-publisher`, `r6-test/`). O pacote de combate foi integrado **como animações visuais**, sem dano ou novos scripts de física de combate. O avatar preserva `Animate`, corrida Ninja, Chakra opcional, escalada automática, Boogie Woogie, menu 3D e NPCs.
