@@ -19,7 +19,8 @@ assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-original-best-run-v15",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -242,6 +243,35 @@ L.compile(combatClient.Source)
 combatClient.Disabled = false
 combatClient.Parent = characterScripts
 
+-- Install the ORIGINAL unmodified KeyframeSequences from the public
+-- [Best Run Animations R6] Creator Store model. No rekeyframing, no guessing IDs.
+-- Model downloaded read-only through Roblox asset-delivery just before build.
+local runArchive = fs.readFile("r6-test/free-r6-run-model.rbxm")
+local runArchiveHash = S.hash("sha256", runArchive)
+local sourceRunModels = R.deserializeModel(runArchive)
+local runFolder = R.Instance.new("Folder")
+runFolder.Name = "R6RunSource"
+runFolder.Parent = characterScripts
+local originalRunCounts = {}
+for _, root in ipairs(sourceRunModels) do
+    for _, obj in ipairs({root, table.unpack(root:GetDescendants())}) do
+        if obj:IsA("KeyframeSequence")
+            and (obj.Name == "Run1 [by M0rsDev]"
+              or obj.Name == "Run2 [by Gusthabuo777]"
+              or obj.Name == "Run3 [by Newb1e27]") then
+            local sourceCount = #obj:GetChildren()
+            assert(sourceCount > 8, "Original R6 run must have actual keyframes")
+            assert(not runFolder:FindFirstChild(obj.Name), "Duplicate R6 run sequence")
+            local exactCopy=obj:Clone()
+            exactCopy.Parent=runFolder
+            assert(#exactCopy:GetChildren()==sourceCount, "Original R6 keyframe count changed")
+            originalRunCounts[obj.Name]=sourceCount
+        end
+    end
+end
+assert(#runFolder:GetChildren()==3 and originalRunCounts["Run3 [by Newb1e27]"]==17,
+    "Public Best Run Animations R6 model content changed; stop instead of altering clips")
+
 -- One locally running true R6 controller, shared between sprint and all
 -- fighting actions. It moves the actual six Motor6D joints of the avatar.
 -- No extra Animator tracks, no R15 IDs and no other duplicated pose drivers.
@@ -375,7 +405,7 @@ L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-real-motion-v14")
+place.Workspace:SetAttribute("R6TestBuild", "r6-original-best-run-v15")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
@@ -387,13 +417,18 @@ place.Workspace:SetAttribute("NaturalR6ClimbingInstalled", true)
 place.Workspace:SetAttribute("OptionalChakraToggle", true)
 place.Workspace:SetAttribute("R6CombatAnimationsInstalled", true)
 place.Workspace:SetAttribute("R6RealJointPoseInstalled", true)
+place.Workspace:SetAttribute("OriginalUnmodifiedR6RunInstalled", true)
 
 local manifest = {
- build = "r6-real-motion-v14",
+ build = "r6-original-best-run-v15",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
  playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb", "R6CombatInput", "R6PoseController"},
+ originalR6Run = {source = "Best Run Animations R6", assetId=136548520660837,
+   sourceHash = runArchiveHash, selected="Run3 [by Newb1e27]",
+   originalKeyframeCounts=originalRunCounts, modifiedOriginals=false,
+   sourceOfTruth="raw KeyframeSequence (NOT a published animation ID)"},
  locomotionPoseDriver = {script="R6PoseController",rig="R6",
    joint="Motor6D.C0",mode={"idle","walk","run","jump","fall"},
    sprint = "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset",
@@ -438,7 +473,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "v14 fixes R15 run-on-R6 stiffness and frozen cosmetic fighting with ONE actual Motor6D.C0 R6 keypose runtime for locomotion and combat. Imported fight IDs still inaccessible in this universe; preserve originals in manifest. Chakra, auto-climb, Boogie and 3D menu preserved.",
+ note = "v15 installs three original unchanged R6 run sequences from the public Best Run Animations R6 model and plays Run3 directly from its saved keyframes. Existing combat, menu, chakra, Boogie and automatic climbing preserved.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
