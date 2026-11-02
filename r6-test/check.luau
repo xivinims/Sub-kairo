@@ -4,12 +4,18 @@ local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-natural-climb-optional-chakra-v12")
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-combat-animations-v13")
 assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
 assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
-assert(#sc:GetChildren()==5 and sc:FindFirstChild("Animate")
- and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput") and sc:FindFirstChild("BoogieSwapInput") and sc:FindFirstChild("NaturalR6Climb"))
+assert(#sc:GetChildren()==7 and sc:FindFirstChild("Animate")
+ and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput") and sc:FindFirstChild("BoogieSwapInput") and sc:FindFirstChild("NaturalR6Climb")
+ and sc:FindFirstChild("R6CombatInput") and sc:FindFirstChild("CombatAnimations"))
+assert(not sc.R6CombatInput.Disabled and sc.R6CombatInput:IsA("LocalScript"))
+assert(sc.R6CombatInput.Source==fs.readFile("r6-test/combat-client.luau"))
+assert(sc.R6CombatInput.Source:find("M1_4",1,true))
+assert(sc.R6CombatInput.Source:find("UIS.TouchEnabled",1,true))
+assert(sc.R6CombatInput.Source:find("CombatBlocking",1,true))
 assert(sc.NaturalR6Climb.StaminaBar and not sc.NaturalR6Climb.Disabled)
 assert(sc.NaturalR6Climb.Source==fs.readFile("r6-test/natural-climb-r6.luau"))
 assert(sc.NaturalR6Climb.StaminaBar.Source==fs.readFile("r6-test/climb-stamina-original.luau"))
@@ -85,6 +91,28 @@ assert(g.Workspace:GetAttribute("R6DynamicCinematicMenu")==true)
 assert(g.Workspace:GetAttribute("R6WanderingNPCCount")==4)
 assert(g.Workspace:GetAttribute("R6DeathMenuInstalled")==true)
 assert(g.Workspace:GetAttribute("NaturalR6ClimbingInstalled")==true)
+assert(g.Workspace:GetAttribute("R6CombatAnimationsInstalled")==true)
+local tracked = {}
+local supplied = 0
+for name,id in pairs(m.combat.allSuppliedAnimationIds) do
+ supplied += 1
+ local entry=sc.CombatAnimations:FindFirstChild(name)
+ local measurement=m.combat.measuredInUniverse[tostring(id)]
+ local canLoad=measurement and measurement.loaded and measurement.length>0.07
+ if canLoad then
+  assert(entry and entry:IsA("Animation"),"Missing verified R6 combat track: "..name)
+  assert(tostring(entry.AnimationContent):find(tostring(id),1,true),"Wrong ID for "..name)
+  assert(entry:GetAttribute("NativeVerifiedR6")==true)
+  tracked[name]=true
+ else
+  assert(not entry, "Blocked combat animation must not be represented as playable: "..name)
+  assert(m.combat.unavailableAnimationIds[name]==id)
+ end
+end
+assert(supplied==13)
+assert(#m.combat.mobileButtons==5)
+assert(m.combat.networkAttacks==false and m.combat.onlyR6==true)
+assert(m.selectedAnimationIds.run==656118852,"Keep the already verified Ninja Run")
 assert(g.Workspace:GetAttribute("OptionalChakraToggle")==true)
 assert(m.naturalClimb.rig=="R6" and m.naturalClimb.usesJoystick)
 assert(m.naturalClimb.blockedWhenChakraActive and m.naturalClimb.button==false)
@@ -104,5 +132,6 @@ assert(dummy.Humanoid.RigType==R.Enum.HumanoidRigType.R6)
 assert(m.boogieWoogie and m.boogieWoogie.testDummy=="BoogieTestDummy")
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
- playerCharacterScripts=5,automaticClimb=true,chakraOptional=true,accessibleR6Animations=7,runningMode=true,
+ playerCharacterScripts=6,combatActions=13,verifiedCombatTracks=#sc.CombatAnimations:GetChildren(),
+ ninjaRunPreserved=true,automaticClimb=true,chakraOptional=true,accessibleR6Animations=7,runningMode=true,
  boogieSwap=true,walkingNPCs=4,cinematicMenu=true,deathMenu=true,touchButton=true},true))
