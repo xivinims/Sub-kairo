@@ -20,6 +20,7 @@ end
 local function normalize(text) return text:lower():gsub('[^%w]','') end
 local function play(sequence)
  stop()
+ if character:GetAttribute('R6AnimationGroup')~='Arquivos' then return end
  if humanoid.Health<=0 or humanoid.MoveDirection.Magnitude>.05 then return end
  playing=true;character:SetAttribute('R6EmotePlaying',true)
  for _,track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop(0) end
@@ -62,9 +63,13 @@ if previous then previous:Destroy() end
 local command=Instance.new('TextChatCommand');command.Name='OriginalR6EmotesCommand';command.PrimaryAlias='/r6';command.Parent=TextChatService
 command.Triggered:Connect(function(source,text)
  if not source or source.UserId~=player.UserId or player.Character~=character then return end
+ if character:GetAttribute('R6AnimationGroup')~='Arquivos' then return end
  local name=normalize(text:gsub('^%S+%s*',''))
  if name=='stop' or name=='parar' then stop();return end
  for _,sequence in ipairs(sequences:GetChildren()) do if normalize(sequence.Name)==name then play(sequence);return end end
+end)
+character:GetAttributeChangedSignal('R6AnimationGroup'):Connect(function()
+ if character:GetAttribute('R6AnimationGroup')~='Arquivos' then stop() end
 end)
 humanoid.Running:Connect(function(speed) if speed>.5 then stop() end end)
 humanoid.Jumping:Connect(function(jumping) if jumping then stop() end end)
