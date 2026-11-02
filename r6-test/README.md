@@ -1,3 +1,15 @@
+# Corrida R6 original do Creator Store, sem edição (v15)
+
+A corrida anterior era produzida por movimentos programados porque o ID Ninja era R15 e não movimentava corretamente um avatar R6. Agora a experiência usa **a sequência original `Run3 [by Newb1e27]`**, dentro do modelo gratuito [Best Run Animations R6](https://create.roblox.com/store/asset/136548520660837/Best-Run-Animations-R6). O modelo público contém exatamente três `KeyframeSequence`: `Run1 [by M0rsDev]` (40 keyframes), `Run2 [by Gusthabuo777]` (41) e `Run3 [by Newb1e27]` (17).
+
+**Nenhum dos keyframes originais foi modificado.** O arquivo binário `free-r6-run-model.rbxm` é baixado do Creator Store e armazenado intacto no repositório, com SHA-256 salvo em `animation-manifest.json`. O `repair-avatar.luau` clona exatamente as três sequências para `StarterCharacterScripts.R6RunSource`. O script `R6PoseController` lê os keyframes da `Run3` e interpola as poses `Motor6D.C0` do avatar R6. Isso evita depender de um AnimationId privado que não funciona fora da conta original do criador. Os combates usam a mesma infraestrutura anterior, sem modificar `Run1`, `Run2` ou `Run3`.
+
+O novo arquivo anexado pelo usuário, `Glider System.rbxl`, foi inspecionado: ele contém um `Glide` com `Gliding` (AnimationId `140674740609979`), um `GlideServer`, dez módulos e uma sequência local R6 `Gliding` com duas keyframes. Não há neste arquivo uma faca nem uma divisão em dois pacotes separados R6/R15. **Não acrescentamos objetos ausentes nem editamos esse código original.** A instalação desse sistema foi mantida fora da experiência para não alterar o arquivo nem supor o conteúdo de um pacote diferente.
+
+Os testes verificam a presença e as quantidades dos keyframes originais do modelo, o controlador R6, a corrida selecionada e os poderes existentes. Não substituem uma inspeção visual em partida.
+
+---
+
 # Corrida R6 e luta com movimentos reais (v14)
 
 **Motivo da tábua identificado:** `656118852` é a animação Ninja do catálogo **R15**, não um clipe R6. O teste antigo examinava só `AnimationTrack.Length`, o que não prova que um asset possui poses para o rig. Os 13 IDs individuais de combate também retornaram comprimento zero.
