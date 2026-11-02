@@ -7,8 +7,9 @@ local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local manifest=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
 assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-original-wallrun-only-v7")
 assert(g.Workspace:GetAttribute("R6OriginalWallrunOnly")==true)
-assert(g.StarterPlayer.CharacterRigType==R.Enum.HumanoidRigType.R6)
-assert(g.Players.CharacterAutoLoads==true)
+assert(g.ServerScriptService:FindFirstChild("R6AvatarServer"))
+assert(g.ServerScriptService.R6AvatarServer.Source==fs.readFile("r6-test/avatar-server.luau"))
+assert(g.Players.CharacterAutoLoads==false)
 local sc=g.StarterPlayer.StarterCharacterScripts
 assert(#sc:GetChildren()==1, "Other animation controllers must be deleted")
 local wall=sc:FindFirstChild("Wallrun")
@@ -32,9 +33,10 @@ for name,id in pairs(manifest.originalAnimationIds) do
  assert(tostring(clip.AnimationContent):find(id,1,true), "Original AnimationId changed")
 end
 for _,group in ipairs({g.StarterPlayer.StarterPlayerScripts,g.StarterGui,g.StarterPack,
-  g.ServerScriptService,g.ServerStorage,g.ReplicatedStorage}) do
+  g.ServerStorage,g.ReplicatedStorage}) do
  assert(#group:GetChildren()==0, "Other packs still installed: "..group.Name)
 end
+assert(#g.ServerScriptService:GetChildren()==1)
 assert(not g.Workspace:FindFirstChild("TrainingBots"))
 assert(#manifest.installedCharacterScripts==1 and manifest.installedCharacterScripts[1]=="Wallrun")
 print(S.encode("json",{ok=true,build=manifest.build,characterScripts=1,originalModules=count,
