@@ -16,7 +16,8 @@ assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-wallwalk-v8"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -164,15 +165,40 @@ local needle = 'end,\n\tfalse,\n\tEnum.KeyCode.B'
 assert(originalWallSource:find(needle, 1, true), "Naruto B-key action layout changed")
 walker.Source = originalWallSource:gsub('end,\n\tfalse,\n\tEnum.KeyCode.B',
     'end,\n\ttrue,\n\tEnum.KeyCode.B', 1)
+-- When Naruto switches chakra on, tell the natural climber to stop.
+-- Keep the original gravity system and effects untouched otherwise.
+local originalToggle = 'ChakraFeetEnabled = not ChakraFeetEnabled'
+assert(walker.Source:find(originalToggle, 1, true), "Original chakra toggle changed")
+walker.Source = 'script.Parent:SetAttribute("ChakraActive", false)\n'
+    .. walker.Source:gsub(originalToggle,
+        originalToggle .. [[
+
+        script.Parent:SetAttribute("ChakraActive", ChakraFeetEnabled)
+        ContextActionService:SetTitle("ToggleChakraFeet",
+            ChakraFeetEnabled and "CHAKRA ON" or "CHAKRA OFF")]], 1)
 walker.Source = walker.Source .. [[
 
--- Mobile control for the original B chakra toggle.
+-- Only chakra gets a button; natural wall climbing needs no action button.
 local CAS = game:GetService("ContextActionService")
-CAS:SetTitle("ToggleChakraFeet", "CHAKRA")
+CAS:SetTitle("ToggleChakraFeet", "CHAKRA OFF")
 CAS:SetPosition("ToggleChakraFeet", UDim2.new(1,-150,1,-300))
 ]]
 L.compile(walker.Source)
 walker.Disabled = false
+
+-- Adapt only the user's supplied R6 climbing branch. The original stamina
+-- module is preserved, and the R6 climb animation comes from Naruto Animate.
+local autoClimb = R.Instance.new("LocalScript")
+autoClimb.Name = "NaturalR6Climb"
+autoClimb.Source = fs.readFile("r6-test/natural-climb-r6.luau")
+L.compile(autoClimb.Source)
+autoClimb.Disabled = false
+autoClimb.Parent = characterScripts
+local staminaModule = R.Instance.new("ModuleScript")
+staminaModule.Name = "StaminaBar"
+staminaModule.Source = fs.readFile("r6-test/climb-stamina-original.luau")
+L.compile(staminaModule.Source)
+staminaModule.Parent = autoClimb
 
 -- Boogie Woogie, sourced from BoogieWoogieV1(5).rbxl and restored from the
 -- complete earlier test arena. Install only the original clap assets.
@@ -297,7 +323,7 @@ L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-cinematic-menu-npcs-v11")
+place.Workspace:SetAttribute("R6TestBuild", "r6-natural-climb-optional-chakra-v12")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
@@ -305,13 +331,22 @@ place.Workspace:SetAttribute("BoogieWoogieInstalled", true)
 place.Workspace:SetAttribute("R6DynamicCinematicMenu", true)
 place.Workspace:SetAttribute("R6WanderingNPCCount", 4)
 place.Workspace:SetAttribute("R6DeathMenuInstalled", true)
+place.Workspace:SetAttribute("NaturalR6ClimbingInstalled", true)
+place.Workspace:SetAttribute("OptionalChakraToggle", true)
 
 local manifest = {
- build = "r6-cinematic-menu-npcs-v11",
+ build = "r6-natural-climb-optional-chakra-v12",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
- playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput"},
+ playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb"},
+ naturalClimb = {package = "R15 & R6 Wall Climbing System.rbxl", rig = "R6",
+   mode = "automatic-on-forward-into-wall", usesJoystick = true, button = false,
+   climbingAnimation = "Animate.climb.ClimbAnim", staminaModule = "StaminaBar",
+   drainPerSecond = 15, recoverPerSecond = 12, maxStamina = 100, cooldownSeconds = 2,
+   blockedWhenChakraActive = true},
+ chakraToggle = {button = "CHAKRA OFF / CHAKRA ON", key = "B",
+   initialState = false, stateAttribute = "ChakraActive", optional = true},
  boogieWoogie = {package = "BoogieWoogieV1(5).rbxl", ability = "Swap positions with one target", remote = "BoogieSwap", originalClapAssets = clapAssetNames, server = "BoogieSwapServer", cooldownSeconds = 1.6, maxDistanceStuds = 65, testDummy = "BoogieTestDummy", mobileKey = "G"},
  selectedAnimationIds = selected,
  runCatalogCandidateIds = {72900620651167, 107952007153363, 93499989310243},
@@ -329,7 +364,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "v11: dynamic reference-inspired cinematic 3D menu, settings, update, credits and death respawn plus 4 real patrolling R6 NPCs. Chakra and Boogie preserved. The running asset is selected only if a real R6 native probe loads it.",
+ note = "v12: automatic R6 wall climbing from supplied R6/R15 pack and original StaminaBar, driven by mobile joystick and keyboard movement. Chakra retains its own optional labeled touch button; when enabled it takes priority over natural climbing. Previous UI, NPCs, Boogie and R6 running preserved.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
