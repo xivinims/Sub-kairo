@@ -1,0 +1,25 @@
+local fs=require('@lune/fs');local R=require('@lune/roblox');local luau=require('@lune/luau')
+local env={CFrame=R.CFrame,Vector3=R.Vector3};setmetatable(env,{__index=getfenv()})
+local M=luau.load(fs.readFile('water-rpg/src/MenuScene.lua'),{environment=env})()
+local base=R.CFrame.new(1540,158,2140)
+local main,plane=M.route(base,'Main');local settings,sPlane=M.route(base,'Settings');local credits=M.route(base,'Credits');local log=M.route(base,'Log')
+assert(settings.Position.X>main.Position.X+8 and credits.Position.X<main.Position.X-8)
+assert((log.Position-main.Position).Magnitude>7)
+assert((settings.Position-main.Position).Magnitude>9)
+assert(sPlane.LookVector:Dot((sPlane.Position-settings.Position).Unit)>.99)
+assert(settings.LookVector:Dot((sPlane.Position-settings.Position).Unit)>.99)
+local midpoint=main:Lerp(settings,.5);assert((midpoint.Position-main.Position).Magnitude>3)
+for _,viewport in ipairs({R.Vector2.new(844,390),R.Vector2.new(640,360),R.Vector2.new(1920,1080)}) do
+ local distance=(sPlane.Position-settings.Position).Magnitude
+ local box=M.panelSize(viewport,58,distance,'Section')
+ local projected=box.Y/(2*distance*math.tan(math.rad(29)))*viewport.Y
+ assert(projected<=viewport.Y-30 and projected>200)
+ assert(box.X/box.Y>1.24 and box.X/box.Y<1.26)
+end
+local ui=fs.readFile('water-rpg/src/Client.client.lua')
+assert(ui:find('menuPlane.CanQuery=true',1,true))
+assert(ui:find('modalPlane.CanQuery=true',1,true))
+assert(ui:find('WaterMenuSection3D',1,true))
+assert(ui:find('Enum.EasingStyle.Quart',1,true))
+luau.load(ui,{debugName='WaterRPGClient'})
+print('3D menu routes, opposite camera directions, panel facing, viewport size, click queries and Luau syntax passed')

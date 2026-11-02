@@ -9,6 +9,7 @@ local StarterGui=game:GetService('StarterGui')
 local player=Players.LocalPlayer
 local Shared=RS:WaitForChild('WaterRPG')
 local Config=require(Shared.Config)
+local MenuScene=require(Shared.MenuScene)
 local Net=Shared:WaitForChild('Action')
 local Feedback=Shared:WaitForChild('Feedback')
 local settings=table.clone(Config.Defaults)
@@ -62,6 +63,20 @@ local blur=make('BlurEffect',Lighting,{Name='RPGMenuBlur',Size=0,Enabled=true})
 local dof=make('DepthOfFieldEffect',Lighting,{Name='RPGMenuDepth',Enabled=false,FarIntensity=.22,NearIntensity=.08,FocusDistance=220,InFocusRadius=100})
 local menuActive=true
 local modalName=nil
+local displayedSection='Settings'
+local sceneName='Main'
+local sceneRevision=0
+local menuCameraValue=make('CFrameValue',nil,{Value=MenuScene.route(Config.MenuCamera,'Main')})
+local cameraTween
+local closeModal
+local function travel(section)
+ sceneRevision+=1;sceneName=section
+ if cameraTween then cameraTween:Cancel() end
+ local target=MenuScene.route(Config.MenuCamera,section)
+ cameraTween=Tween:Create(menuCameraValue,TweenInfo.new(MenuScene.Duration,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Value=target})
+ cameraTween:Play()
+ return sceneRevision
+end
 local transitionActive=false
 local dying=false
 local pointer=Vector2.zero
@@ -74,8 +89,9 @@ local function menuPart(name,size)
  return p
 end
 local menuPlane=menuPart('MenuPlane',Vector3.new(12.5,10,.02))
-local surface=make('SurfaceGui',player.PlayerGui,{Name='WaterMenu3D',Adornee=menuPlane,Face=Enum.NormalId.Back,SizingMode=Enum.SurfaceGuiSizingMode.FixedSize,CanvasSize=Vector2.new(1000,800),AlwaysOnTop=true,LightInfluence=0,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
-local content=frame(surface,UDim2.fromScale(1,1),UDim2.new(),C.glass,1)
+local surface=make('SurfaceGui',player.PlayerGui,{Name='WaterMenu3D',Adornee=menuPlane,Face=Enum.NormalId.Back,SizingMode=Enum.SurfaceGuiSizingMode.FixedSize,CanvasSize=Vector2.new(1000,800),AlwaysOnTop=true,Active=true,LightInfluence=0,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
+menuPlane.CanQuery=true
+local content=make('CanvasGroup',surface,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,GroupTransparency=0})
 local glow=text(content,Config.Title,UDim2.fromOffset(850,92),UDim2.fromOffset(88,70),67,true);glow.TextTransparency=.68;glow.TextStrokeTransparency=.6
 local title=text(content,Config.Title,UDim2.fromOffset(850,92),UDim2.fromOffset(85,66),67,true)
 local menuCaption=text(content,'MENU',UDim2.fromOffset(680,45),UDim2.fromOffset(110,165),28,true);menuCaption.TextXAlignment=Enum.TextXAlignment.Center
@@ -99,12 +115,15 @@ for i,entry in ipairs({{'Play','Play'},{'Settings','Settings'},{'Credits','Credi
  b.MouseEnter:Connect(function() Tween:Create(row,TweenInfo.new(.2),{Position=UDim2.fromOffset(122,y)}):Play() end)
  b.MouseLeave:Connect(function() Tween:Create(row,TweenInfo.new(.2),{Position=UDim2.fromOffset(105,y)}):Play() end)
 end
-local modal=frame(gui,UDim2.fromOffset(500,400),UDim2.new(.5,-250,.5,-200),C.glass,.28);corner(modal,14);stroke(modal,C.edge,.25);modal.Visible=false
+local modalPlane=menuPart('SectionPlane',Vector3.new(12,9.6,.035))
+modalPlane.CanQuery=false
+local modalSurface=make('SurfaceGui',player.PlayerGui,{Name='WaterMenuSection3D',Adornee=modalPlane,Face=Enum.NormalId.Back,SizingMode=Enum.SurfaceGuiSizingMode.FixedSize,CanvasSize=Vector2.new(500,400),AlwaysOnTop=true,Active=true,LightInfluence=0,Enabled=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
+local modal=make('CanvasGroup',modalSurface,{Size=UDim2.fromScale(1,1),Position=UDim2.new(),BackgroundColor3=C.glass,BackgroundTransparency=.28,BorderSizePixel=0,GroupTransparency=1});corner(modal,14);stroke(modal,C.edge,.25);modal.Visible=false
 local modalScale=make('UIScale',modal,{Scale=1})
 local modalHeader=text(modal,'',UDim2.new(1,-65,0,36),UDim2.fromOffset(14,9),28);modalHeader.Font=Enum.Font.SourceSansLight
 frame(modal,UDim2.new(1,-30,0,1),UDim2.fromOffset(15,48),C.white,.1)
 local closeGlow=frame(modal,UDim2.fromOffset(44,44),UDim2.new(1,-50,0,-1),C.pink,.75);corner(closeGlow,30)
-local close=button(modal,'×',UDim2.fromOffset(30,30),UDim2.new(1,-43,0,6),function() modal.Visible=false;modalName=nil end);close.TextSize=34;close.BackgroundColor3=C.pink;close.BackgroundTransparency=.15;corner(close,20);stroke(close,C.white,.15)
+local close=button(modal,'×',UDim2.fromOffset(30,30),UDim2.new(1,-43,0,6),function() closeModal() end);close.TextSize=34;close.BackgroundColor3=C.pink;close.BackgroundTransparency=.15;corner(close,20);stroke(close,C.white,.15)
 local panelBody=make('ScrollingFrame',modal,{Size=UDim2.new(1,-28,1,-66),Position=UDim2.fromOffset(14,58),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=C.edge,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y})
 local function clearBody() for _,x in ipairs(panelBody:GetChildren()) do x:Destroy() end end
 local function applySettings()
@@ -130,9 +149,43 @@ local function settingRow(label,key,y)
   toggle.Activated:Connect(function() settings[key]=not settings[key];paint();applySettings() end);paint()
  end
 end
+closeModal=function()
+ if not modal.Visible then return end
+ modalName=nil
+ local revision=menuActive and travel('Main') or (sceneRevision+1)
+ if not menuActive then sceneRevision=revision end
+ modalPlane.CanQuery=false
+ Tween:Create(modal,TweenInfo.new(.3,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position=UDim2.fromScale(-1.1,0),GroupTransparency=1}):Play()
+ task.delay(.31,function() if sceneRevision==revision then modal.Visible=false;modalSurface.Enabled=false end end)
+ if menuActive then
+  surface.Enabled=true;content.Visible=true;content.GroupTransparency=1
+  for i,row in ipairs(rows) do
+   row.frame.Position=UDim2.fromOffset(950,row.base)
+   task.delay(.25+i*.045,function()
+    if sceneRevision==revision then Tween:Create(row.frame,TweenInfo.new(.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromOffset(105,row.base)}):Play() end
+   end)
+  end
+  task.delay(.3,function() if sceneRevision==revision then Tween:Create(content,TweenInfo.new(.35),{GroupTransparency=0}):Play();menuPlane.CanQuery=true end end)
+ end
+end
 showModal=function(kind)
- modalName=kind;clearBody();modal.Visible=true;modal.BackgroundTransparency=.65
- Tween:Create(modal,TweenInfo.new(.25),{BackgroundTransparency=.28}):Play()
+ modalName=kind;displayedSection=kind;clearBody();modal.Visible=true;modalSurface.Enabled=true;modalPlane.CanQuery=false
+ modal.Position=UDim2.fromScale(1.15,0);modal.GroupTransparency=1
+ local revision=menuActive and travel(kind) or (sceneRevision+1)
+ if not menuActive then sceneRevision=revision end
+ menuPlane.CanQuery=false
+ if menuActive then
+  Tween:Create(content,TweenInfo.new(.28),{GroupTransparency=1}):Play()
+  for i,row in ipairs(rows) do task.delay(i*.035,function()
+   if sceneRevision==revision then Tween:Create(row.frame,TweenInfo.new(.35,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position=UDim2.fromOffset(-950,row.base)}):Play() end
+  end) end
+  task.delay(.5,function() if sceneRevision==revision then surface.Enabled=false end end)
+ end
+ task.delay(menuActive and .45 or 0,function()
+  if sceneRevision~=revision then return end
+  Tween:Create(modal,TweenInfo.new(.52,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(),GroupTransparency=0}):Play()
+  modalPlane.CanQuery=true
+ end)
  if kind=='Settings' then
   modalHeader.Text='<i>SETTINGS</i>'
   local names={{'Camera Banking','CameraBanking'},{'Camera Tilt','CameraTilt'},{'High Quality Graphics','HighQuality'},{'Music Volume','MusicVolume'},{'Neon Glow Pulse','GlowPulse'},{'Panel Bob','PanelBob'},{'Realistic DOF','DepthOfField'}}
@@ -154,7 +207,7 @@ local fadeText=text(fade,'',UDim2.new(1,-40,0,65),UDim2.new(0,20,.5,-32),22);fad
 local loadingBar=frame(fade,UDim2.fromOffset(240,2),UDim2.new(.5,-120,.5,45),C.white,.8);loadingBar.ZIndex=71
 local barFill=frame(loadingBar,UDim2.fromScale(.05,1),UDim2.new(),C.white,0);barFill.ZIndex=72
 local function transition(message)
- transitionActive=true;modal.Visible=false;fade.Visible=true;fadeText.Text=message;fade.BackgroundTransparency=1
+ transitionActive=true;sceneRevision+=1;modal.Visible=false;modalSurface.Enabled=false;modalPlane.CanQuery=false;fade.Visible=true;fadeText.Text=message;fade.BackgroundTransparency=1
  Tween:Create(fade,TweenInfo.new(.35),{BackgroundTransparency=0}):Play()
 end
 local function finishFade()
@@ -164,7 +217,15 @@ local function finishFade()
 end
 beginPlay=function()
  if not player:GetAttribute('ProfileReady') then return end
- transition('Preparando a estrada…');Net:FireServer('Play')
+ if transitionActive then return end
+ transitionActive=true;menuPlane.CanQuery=false;sceneRevision+=1
+ if cameraTween then cameraTween:Cancel() end
+ local start=MenuScene.route(Config.MenuCamera,'Main')
+ cameraTween=Tween:Create(menuCameraValue,TweenInfo.new(.65,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Value=start*CFrame.new(0,.25,-4)*CFrame.Angles(0,math.rad(-7),0)})
+ cameraTween:Play()
+ Tween:Create(content,TweenInfo.new(.38),{GroupTransparency=1}):Play()
+ for i,row in ipairs(rows) do task.delay(i*.035,function() Tween:Create(row.frame,TweenInfo.new(.3),{Position=UDim2.fromOffset(-950,row.base)}):Play() end) end
+ task.delay(.45,function() transition('Preparando a estrada…');Net:FireServer('Play') end)
 end
 local death=frame(gui,UDim2.fromScale(1,1),UDim2.new(),Color3.fromRGB(3,10,12),0);death.ZIndex=50;death.Visible=false
 make('UIGradient',death,{Color=ColorSequence.new(Color3.fromRGB(18,33,36),Color3.fromRGB(0,0,0)),Rotation=0})
@@ -222,7 +283,7 @@ player:GetAttributeChangedSignal('QuestStage'):Connect(refreshQuestMarker)
 Feedback.OnClientEvent:Connect(function(kind,value)
  if kind=='Transition' then transition(value)
  elseif kind=='Started' then
-  menuActive=false;surface.Enabled=false;modal.Visible=false;dying=false;death.Visible=false;hud.Visible=true
+  menuActive=false;surface.Enabled=false;menuPlane.CanQuery=false;modalSurface.Enabled=false;modalPlane.CanQuery=false;modal.Visible=false;dying=false;death.Visible=false;hud.Visible=true
   camera=workspace.CurrentCamera;camera.CameraType=Enum.CameraType.Custom
   local h=player.Character and player.Character:FindFirstChildOfClass('Humanoid');if h then camera.CameraSubject=h end
   player.CameraMinZoomDistance=4;player.CameraMaxZoomDistance=22
@@ -230,7 +291,7 @@ Feedback.OnClientEvent:Connect(function(kind,value)
   dof.Enabled=false;Tween:Create(blur,TweenInfo.new(.6),{Size=0}):Play();finishFade();refreshQuestMarker()
   if not player:GetAttribute('PersistentProfile') then notify('Progresso temporário nesta sessão: o salvamento está indisponível.') end
  elseif kind=='Menu' then
-  menuActive=true;menuAt=os.clock();dying=false;death.Visible=false;hud.Visible=false;dialogue.Visible=false;surface.Enabled=true;finishFade()
+  menuActive=true;menuAt=os.clock();dying=false;death.Visible=false;hud.Visible=false;dialogue.Visible=false;surface.Enabled=true;content.Visible=true;content.GroupTransparency=0;menuPlane.CanQuery=true;sceneName='Main';menuCameraValue.Value=MenuScene.route(Config.MenuCamera,'Main');for _,row in ipairs(rows) do row.frame.Position=UDim2.fromOffset(105,row.base) end;finishFade()
  elseif kind=='Died' then
   dying=true;death.Visible=true;hud.Visible=false;dialogue.Visible=false
  elseif kind=='Dialogue' then showDialogue(value)
@@ -249,7 +310,7 @@ UIS.InputBegan:Connect(function(input,processed)
  if processed then return end
  if input.KeyCode==Enum.KeyCode.LeftShift then Net:FireServer('Sprint',true)
  elseif input.KeyCode==Enum.KeyCode.H then Net:FireServer('UsePotion')
- elseif input.KeyCode==Enum.KeyCode.M then if modal.Visible then modal.Visible=false;modalName=nil else showModal('Settings') end end
+ elseif input.KeyCode==Enum.KeyCode.M then if modal.Visible then closeModal() else showModal('Settings') end end
 end)
 UIS.InputEnded:Connect(function(input) if input.KeyCode==Enum.KeyCode.LeftShift then Net:FireServer('Sprint',false) end end)
 local residentCache={}
@@ -257,35 +318,54 @@ local cacheAt=0
 Run.RenderStepped:Connect(function(dt)
  camera=workspace.CurrentCamera
  local t=os.clock();local size=camera.ViewportSize
- local modalFactor=math.min(1,(size.X-40)/500,(size.Y-70)/400)
- modalScale.Scale=modalFactor;modal.Position=UDim2.new(.5,-250*modalFactor,.5,-200*modalFactor+(settings.PanelBob and math.sin(t*1.2)*2 or 0));modal.Rotation=settings.CameraBanking and tilt.X*.6 or 0
+ modalScale.Scale=1
  local ds=math.min(1,(size.X-30)/570,(size.Y-30)/330);dialogueScale.Scale=ds;dialogue.Position=UDim2.new(.5,-285*ds,1,-265*ds)
  tilt=tilt:Lerp(settings.CameraTilt and pointer or Vector2.zero,math.min(1,dt*4))
  if menuActive then
   camera.CameraType=Enum.CameraType.Scriptable;camera.FieldOfView=58
-  local orbit=math.sin((t-menuAt)*.12)*7
-  local base=Config.MenuCamera*CFrame.new(orbit,math.sin(t*.25)*1.2,0)*CFrame.Angles(math.rad(-tilt.Y*1.8),math.rad(-tilt.X*3),settings.CameraBanking and math.rad(-tilt.X*.8) or 0)
-  camera.CFrame=camera.CFrame:Lerp(base,math.min(1,dt*5));camera.Focus=CFrame.new(Config.MenuFocus)
-  local z=size.Y<500 and -12.4 or -15
-  local bob=settings.PanelBob and math.sin(t*1.1)*.055 or 0
-  local entrance=math.max(0,1-(t-menuAt)/.65)
-  local panelCF=camera.CFrame*CFrame.new(-.7-entrance*3,.1+bob,z)*CFrame.Angles(0,math.rad(-10+tilt.X*2),math.rad(-1))
-  menuPlane.CFrame=panelCF
+  local base=menuCameraValue.Value
+  local drift=CFrame.new(math.sin(t*.22)*.16,math.sin(t*.3)*.1,0)
+  camera.CFrame=base*drift*CFrame.Angles(math.rad(-tilt.Y*1.2),math.rad(-tilt.X*2),settings.CameraBanking and math.rad(-tilt.X*.55) or 0)
+  local _,mainAnchor=MenuScene.route(Config.MenuCamera,'Main')
+  local bob=settings.PanelBob and math.sin(t*1.1)*.035 or 0
+  local mainDistance=(camera.CFrame.Position-mainAnchor.Position).Magnitude
+  -- Main size is based on its own camera, so it does not inflate while the camera travels away.
+  local mainCamera=MenuScene.route(Config.MenuCamera,'Main')
+  menuPlane.Size=MenuScene.panelSize(size,58,(mainCamera.Position-mainAnchor.Position).Magnitude,'Main')
+  menuPlane.CFrame=mainAnchor*CFrame.new(0,bob,0)*CFrame.Angles(math.rad(-tilt.Y*.3),math.rad(tilt.X*.5),0)
   for i,v in ipairs(shapes) do
-   local yy=(.5-(v.y+42)/800)*10
-   v.body.CFrame=panelCF*CFrame.new(.43,yy,.025)
-   v.tip.CFrame=panelCF*CFrame.new(4.85,yy,.025)*CFrame.Angles(0,math.rad(90),0)
-   v.body.Transparency=modal.Visible and 1 or .52;v.tip.Transparency=modal.Visible and 1 or .52
+   local row=rows[i].frame
+   local centerX=row.Position.X.Offset+92+345
+   local centerY=row.Position.Y.Offset+42
+   local x=(.5-centerX/1000)*menuPlane.Size.X
+   local yy=(.5-centerY/800)*menuPlane.Size.Y
+   v.body.Size=Vector3.new(menuPlane.Size.X*.69,menuPlane.Size.Y*.105,.035)
+   v.body.CFrame=menuPlane.CFrame*CFrame.new(x,yy,.025)
+   v.tip.Size=Vector3.new(.035,menuPlane.Size.Y*.105,menuPlane.Size.X*.06)
+   v.tip.CFrame=menuPlane.CFrame*CFrame.new(x-menuPlane.Size.X*.375,yy,.025)*CFrame.Angles(0,math.rad(-90),0)
+   local opacity=content.GroupTransparency
+   v.body.Transparency=.52+.48*opacity;v.tip.Transparency=.52+.48*opacity
   end
-  content.Visible=not modal.Visible
-  dof.Enabled=settings.DepthOfField
-  blur.Size=modal.Visible and 3 or 0
+  local focus=sceneName=='Main' and mainAnchor.Position or select(2,MenuScene.route(Config.MenuCamera,sceneName)).Position
+  camera.Focus=CFrame.new(focus)
+  dof.Enabled=settings.DepthOfField;dof.FocusDistance=(focus-camera.CFrame.Position).Magnitude;dof.InFocusRadius=6
+  blur.Size=0
   glow.TextTransparency=settings.GlowPulse and (.72+math.sin(t*2)*.12) or .8
   closeGlow.BackgroundTransparency=settings.GlowPulse and (.7+math.sin(t*3)*.12) or .85
   rows[1].button.Text=player:GetAttribute('ProfileReady') and '<i>Play</i>' or '<i>Loading…</i>'
  else
   local desired=player:GetAttribute('BowAiming') and 48 or (70+(player:GetAttribute('Sprinting') and 5 or 0))
   camera.FieldOfView=camera.FieldOfView+(desired-camera.FieldOfView)*math.min(1,dt*5)
+ end
+ if modal.Visible then
+  local anchor
+  if menuActive then local _,plane=MenuScene.route(Config.MenuCamera,displayedSection);anchor=plane
+  else anchor=camera.CFrame*CFrame.new(0,0,-13) end
+  local distance=(camera.CFrame.Position-anchor.Position).Magnitude
+  local targetCamera=menuActive and MenuScene.route(Config.MenuCamera,displayedSection) or camera.CFrame
+  local designedDistance=(targetCamera.Position-anchor.Position).Magnitude
+  modalPlane.Size=MenuScene.panelSize(size,camera.FieldOfView,designedDistance,'Section')
+  modalPlane.CFrame=anchor*CFrame.new(0,settings.PanelBob and math.sin(t*1.2)*.025 or 0,0)*CFrame.Angles(math.rad(-tilt.Y*.3),math.rad(tilt.X*.4),0)
  end
  if transitionActive then barFill.Size=UDim2.fromScale(.15+((t*.2)% .75),1) end
  hud.Visible=not menuActive and not dying and not transitionActive
