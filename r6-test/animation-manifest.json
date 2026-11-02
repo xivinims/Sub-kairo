@@ -14,13 +14,153 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-natural-climb-optional-chakra-v12",
+  "build": "r6-combat-animations-v13",
   "chakraToggle": {
     "button": "CHAKRA OFF / CHAKRA ON",
     "initialState": false,
     "key": "B",
     "optional": true,
     "stateAttribute": "ChakraActive"
+  },
+  "combat": {
+    "actions": [
+      "Block",
+      "DodgeFront",
+      "DodgeBack",
+      "Uppercut",
+      "Downslam",
+      "HeavyPunch",
+      "Barrage",
+      "Kick_1",
+      "Kick_2"
+    ],
+    "allSuppliedAnimationIds": {
+      "Barrage": 10466974800,
+      "Block": 10470389827,
+      "DodgeBack": 10491993682,
+      "DodgeFront": 10479335397,
+      "Downslam": 10470104242,
+      "HeavyPunch": 12983333733,
+      "Kick_1": 2515090838,
+      "Kick_2": 13874028312,
+      "M1_1": 10469493270,
+      "M1_2": 10469630950,
+      "M1_3": 10469639222,
+      "M1_4": 10469643643,
+      "Uppercut": 10503381238
+    },
+    "combo": [
+      "M1_1",
+      "M1_2",
+      "M1_3",
+      "M1_4"
+    ],
+    "fallback": "Local R6 cosmetic pose for unavailable animation IDs; not original Roblox uploaded clips",
+    "measuredInUniverse": {
+      "10466974800": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469493270": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469630950": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469639222": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469643643": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10470104242": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10470389827": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10479335397": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10491993682": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10503381238": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "12983333733": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "13874028312": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "2515090838": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      }
+    },
+    "mobileButtons": [
+      "SOCO",
+      "DEF",
+      "ESQ",
+      "CHUTE",
+      "ESP."
+    ],
+    "networkAttacks": false,
+    "onlyR6": true,
+    "pcKeys": [
+      "MouseButton1",
+      "F",
+      "Q",
+      "E",
+      "R"
+    ],
+    "sourceModelCatalog": [
+      16663903306,
+      75164220659481,
+      125909948357929,
+      114132474839078
+    ],
+    "unavailableAnimationIds": {
+      "Barrage": 10466974800,
+      "Block": 10470389827,
+      "DodgeBack": 10491993682,
+      "DodgeFront": 10479335397,
+      "Downslam": 10470104242,
+      "HeavyPunch": 12983333733,
+      "Kick_1": 2515090838,
+      "Kick_2": 13874028312,
+      "M1_1": 10469493270,
+      "M1_2": 10469630950,
+      "M1_3": 10469639222,
+      "M1_4": 10469643643,
+      "Uppercut": 10503381238
+    },
+    "usableAnimationIds": {}
   },
   "dynamicMenu": {
     "client3DCheckerboard": true,
@@ -112,7 +252,7 @@
     "staminaModule": "StaminaBar",
     "usesJoystick": true
   },
-  "note": "v12: automatic R6 wall climbing from supplied R6/R15 pack and original StaminaBar, driven by mobile joystick and keyboard movement. Chakra retains its own optional labeled touch button; when enabled it takes priority over natural climbing. Previous UI, NPCs, Boogie and R6 running preserved.",
+  "note": "v13 adds native-probed R6 combat IDs and cosmetic fallback for blocked clips, with on-demand mobile actions and no continuous animation loop; retained existing Ninja Run, natural climbing, optional Chakra, cinematic menu, NPCs and Boogie.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalSHA256": {
@@ -130,7 +270,8 @@
     "ChakraWallWalk",
     "NarutoSprintInput",
     "BoogieSwapInput",
-    "NaturalR6Climb"
+    "NaturalR6Climb",
+    "R6CombatInput"
   ],
   "playerScripts": [
     "RbxCharacterSounds",
