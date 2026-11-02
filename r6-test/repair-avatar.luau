@@ -20,15 +20,13 @@ local hashes = {
     Raycaster = "1afe74c5959e968a3dc5e45ce421cd45995b1ddb66604dc0d51a322a4cb77b03",
     Trails = "b4d368a16e0b3d90f4ab4b5b9cd8b9fd7d94f4a922e6fb25b91ad21d49f0e3c0",
     Sounds = "a5a5df25a48bd10b8735983423b7e069e25865a9a94721400ece1508c44df120",
-    Shake = "20a395f69fab19b27f0eda929768547d591c58179ecef4b540eed7b3fe40e4f15", -- replaced below
+    Shake = "20a395f69fab19b27f0eda9297685470d78b30167e916f371173d931a5cf508c",
     Signal = "a2c3a044ad291f1b8ea7d9ab38147d0ca8807c22532a45f31f33c79b89b74124",
     Trove = "6037d12780509f4d7b6119c437b29918f230c2b90344247d591c58179ecef4b1",
     Spring = "9ed98ecff13288f8a196f9c3d6879752f6beac0bcb0b75eee2fce588d7417660",
     PID = "7a645d52b54476421468be8636467d2784ed51e4b540eed7b3fe40e4dd86d58b",
-    Log = "c2de060998a31f5b2f5cf8bd1fd081bc4ac61a92462f5a64410c47f9d6dbf7c64a0a",
+    Log = "c2de060998a31f5b2f5cf8bd1fd081bc4a92462f5a64410c47f9d6dbf7c64a0a",
 }
--- Exact SHA-256 values extracted directly from the user's new RBXM.
-hashes.Shake = "20a395f69fab19b27f0eda929768547d591c58179ecef4b540eed7b3fe40e4f15"
 -- Map normalized names to expected original source digests.
 for name, hash in pairs(hashes) do
     local source
