@@ -49,13 +49,21 @@ end
 local function inspectModel(kind)
 	local roots = roblox.deserializeModel(fs.readFile('/tmp/fps-recovery-' .. kind))
 	assert(roots and #roots > 0, 'Could not deserialize model ' .. kind)
-	local out = {kind = kind, roots = {}, classes = {}, scripts = {}, parts = 0, spawnLocations = {}}
+	local out = {kind = kind, roots = {}, classes = {}, scripts = {}, parts = 0, spawnLocations = {}, bounds = {min = {x = math.huge, y = math.huge, z = math.huge}, max = {x = -math.huge, y = -math.huge, z = -math.huge}}}
 	for _, root in ipairs(roots) do
 		table.insert(out.roots, {name = root.Name, class = root.ClassName, descendants = #root:GetDescendants()})
 		local function visit(item)
 			out.classes[item.ClassName] = (out.classes[item.ClassName] or 0) + 1
-			if item:IsA('BasePart') then out.parts += 1 end
-			if item:IsA('SpawnLocation') then table.insert(out.spawnLocations, item:GetFullName()) end
+			if item:IsA('BasePart') then
+				out.parts += 1
+				pcall(function()
+					local p, s = item.CFrame.Position, item.Size
+					out.bounds.min.x = math.min(out.bounds.min.x, p.X - s.X / 2); out.bounds.max.x = math.max(out.bounds.max.x, p.X + s.X / 2)
+					out.bounds.min.y = math.min(out.bounds.min.y, p.Y - s.Y / 2); out.bounds.max.y = math.max(out.bounds.max.y, p.Y + s.Y / 2)
+					out.bounds.min.z = math.min(out.bounds.min.z, p.Z - s.Z / 2); out.bounds.max.z = math.max(out.bounds.max.z, p.Z + s.Z / 2)
+				end)
+			end
+			if item:IsA('SpawnLocation') then table.insert(out.spawnLocations, {path = item:GetFullName(), position = tostring(item.CFrame.Position), size = tostring(item.Size), enabled = item.Enabled}) end
 			if item:IsA('LuaSourceContainer') then table.insert(out.scripts, item:GetFullName() .. ':' .. #item.Source) end
 		end
 		visit(root)
