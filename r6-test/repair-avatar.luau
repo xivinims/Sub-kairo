@@ -18,7 +18,8 @@ assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -73,7 +74,10 @@ end
 local choices = {
     idle = {102425446560812, 180435571, 180435792},
     walk = {17747141146, 180426354},
-    run = {72900620651167, 107952007153363, 93499989310243, 656118852, 180426354},
+    -- Native R6 run.xml is walk animation. A DIFFERENT R6 sprint gait
+    -- will be played by R6PoseController rather than the incompatible R15
+    -- Ninja Run 656118852, which has Length>0 but does not pose R6 limbs.
+    run = {180426354},
     jump = {17747185294, 125750702},
     fall = {17747187834, 180436148},
     climb = {11605578996, 180436334},
@@ -238,6 +242,16 @@ L.compile(combatClient.Source)
 combatClient.Disabled = false
 combatClient.Parent = characterScripts
 
+-- One locally running true R6 controller, shared between sprint and all
+-- fighting actions. It moves the actual six Motor6D joints of the avatar.
+-- No extra Animator tracks, no R15 IDs and no other duplicated pose drivers.
+local poses=R.Instance.new("LocalScript")
+poses.Name="R6PoseController"
+poses.Source=fs.readFile("r6-test/r6-pose-controller.luau")
+L.compile(poses.Source)
+poses.Disabled=false
+poses.Parent=characterScripts
+
 -- Boogie Woogie, sourced from BoogieWoogieV1(5).rbxl and restored from the
 -- complete earlier test arena. Install only the original clap assets.
 local clapAssetNames = {"ClapAnimation", "ClapVFX", "SwapSound"}
@@ -361,7 +375,7 @@ L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-combat-animations-v13")
+place.Workspace:SetAttribute("R6TestBuild", "r6-real-motion-v14")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
@@ -372,13 +386,19 @@ place.Workspace:SetAttribute("R6DeathMenuInstalled", true)
 place.Workspace:SetAttribute("NaturalR6ClimbingInstalled", true)
 place.Workspace:SetAttribute("OptionalChakraToggle", true)
 place.Workspace:SetAttribute("R6CombatAnimationsInstalled", true)
+place.Workspace:SetAttribute("R6RealJointPoseInstalled", true)
 
 local manifest = {
- build = "r6-combat-animations-v13",
+ build = "r6-real-motion-v14",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
- playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb", "R6CombatInput"},
+ playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput", "NaturalR6Climb", "R6CombatInput", "R6PoseController"},
+ locomotionPoseDriver = {script="R6PoseController",rig="R6",
+   joint="Motor6D.C0",mode={"idle","walk","run","jump","fall"},
+   sprint = "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset",
+   runningWhenWalkSpeedAtLeast=19, sharedWithCombat=true,
+   priority = "Yield to optional Chakra and natural wall climb"},
  combat = {
     sourceModelCatalog = {16663903306, 75164220659481, 125909948357929, 114132474839078},
     allSuppliedAnimationIds = combatAnimations,
@@ -418,7 +438,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "v13 adds native-probed R6 combat IDs and cosmetic fallback for blocked clips, with on-demand mobile actions and no continuous animation loop; retained existing Ninja Run, natural climbing, optional Chakra, cinematic menu, NPCs and Boogie.",
+ note = "v14 fixes R15 run-on-R6 stiffness and frozen cosmetic fighting with ONE actual Motor6D.C0 R6 keypose runtime for locomotion and combat. Imported fight IDs still inaccessible in this universe; preserve originals in manifest. Chakra, auto-climb, Boogie and 3D menu preserved.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
