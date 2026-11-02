@@ -14,7 +14,8 @@ local naruto = archived:FindFirstChild("WallWalkNaruto_R6")
 assert(naruto, "Naruto original was not preserved")
 assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-v7"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-wallwalk-v8"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-r6-motion-v9"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -166,6 +167,53 @@ CAS:SetPosition("ToggleChakraFeet", UDim2.new(1,-150,1,-300))
 L.compile(walker.Source)
 walker.Disabled = false
 
+-- Boogie Woogie, sourced from BoogieWoogieV1(5).rbxl and restored from the
+-- complete earlier test arena. Install only the original clap assets.
+local clapAssetNames = {"ClapAnimation", "ClapVFX", "SwapSound"}
+for _, assetName in ipairs(clapAssetNames) do
+    local source = original.ReplicatedStorage:FindFirstChild(assetName)
+    assert(source, "Original Boogie Woogie asset missing: " .. assetName)
+    install(source, rep)
+end
+local boogieRemote = R.Instance.new("RemoteEvent")
+boogieRemote.Name = "BoogieSwap"
+boogieRemote.Parent = rep
+local input = R.Instance.new("LocalScript")
+input.Name = "BoogieSwapInput"
+input.Source = fs.readFile("r6-test/boogie-input.luau")
+L.compile(input.Source)
+input.Disabled = false
+input.Parent = characterScripts
+local boogieServer = R.Instance.new("Script")
+boogieServer.Name = "BoogieSwapServer"
+boogieServer.Source = fs.readFile("r6-test/boogie-server.luau")
+L.compile(boogieServer.Source)
+boogieServer.Disabled = false
+boogieServer.Parent = place.ServerScriptService
+
+-- A single R6 target makes the position swap testable even for one player.
+-- Use the original pack's stripped-down NPC template; no AI or loop scripts.
+local sourceDummy = original.ServerStorage:FindFirstChild("R6BotTemplate")
+assert(sourceDummy, "Original R6 dummy template missing")
+local oldDummy = place.Workspace:FindFirstChild("BoogieTestDummy")
+if oldDummy then oldDummy:Destroy() end
+local dummy = install(sourceDummy, place.Workspace)
+dummy.Name = "BoogieTestDummy"
+local dummyRoot = dummy:FindFirstChild("HumanoidRootPart")
+local dummyHumanoid = dummy:FindFirstChildOfClass("Humanoid")
+assert(dummyRoot and dummyHumanoid and dummyHumanoid.RigType == R.Enum.HumanoidRigType.R6)
+local testArena = place.Workspace:FindFirstChild("TestArena")
+assert(testArena and testArena:FindFirstChild("Spawn"), "Arena spawn missing")
+local pivot = testArena.Spawn.CFrame * R.CFrame.new(12, 4, -14)
+local delta = pivot * dummyRoot.CFrame:Inverse()
+for _, part in ipairs(dummy:GetDescendants()) do
+    assert(not part:IsA("LuaSourceContainer"), "Test dummy cannot contain unrelated scripts")
+    if part:IsA("BasePart") then part.CFrame = delta * part.CFrame end
+end
+dummyRoot.Anchored = true
+dummyHumanoid.DisplayName = "BOOGIE | ALVO"
+dummy:SetAttribute("BoogieTestTarget", true)
+
 -- Only Naruto walking-on-surfaces dependencies. No old PlayerScriptsLoader
 -- camera patch: it relies on 2020 internals removed from modern Roblox.
 install(sourceGravity, rep)
@@ -186,21 +234,23 @@ shim.Parent = playerScripts
 -- Keep the R6 avatar spawner and only this Naruto ability.
 local server = place.ServerScriptService:FindFirstChild("R6AvatarServer")
 assert(server and server.Source:find("CreateHumanoidModelFromDescriptionAsync", 1, true))
-assert(#place.ServerScriptService:GetChildren() == 1)
+assert(#place.ServerScriptService:GetChildren() == 2)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-chakra-r6-motion-v9")
+place.Workspace:SetAttribute("R6TestBuild", "r6-chakra-boogie-v10")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
+place.Workspace:SetAttribute("BoogieWoogieInstalled", true)
 
 local manifest = {
- build = "r6-chakra-r6-motion-v9",
+ build = "r6-chakra-boogie-v10",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
- playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput"},
+ playerCharacter = {"Animate", "ChakraWallWalk", "NarutoSprintInput", "BoogieSwapInput"},
+ boogieWoogie = {package = "BoogieWoogieV1(5).rbxl", ability = "Swap positions with one target", remote = "BoogieSwap", originalClapAssets = clapAssetNames, server = "BoogieSwapServer", cooldownSeconds = 1.6, maxDistanceStuds = 65, testDummy = "BoogieTestDummy", mobileKey = "G"},
  selectedAnimationIds = selected,
  nativeCandidateMeasurements = probed,
  patchedNarutoR6Motion = true,
@@ -210,7 +260,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "Original Naruto chakra gravity and VFX; R6 original motion selector patched to use a separate running track chosen from accessible Boogie assets. Native probe selects accessible idle/walk/run/jump/fall/climb/sit. Minimal mobile sprint speed input, no per-frame motor animations. Visual client playtest pending.",
+ note = "Naruto chakra stays intact. Boogie positional exchange is a minimal mobile/server adaptation of the supplied package; only original clap assets imported. Previously verified R6 locomotion clips reused. A mobile rendered playtest is still required.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
