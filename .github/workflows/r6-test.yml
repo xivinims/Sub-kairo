@@ -1,4 +1,4 @@
-name: Original unmodified Best Run Animations R6
+name: Repair R6 run walk and jump playback
 on:
   push:
     branches: [dead-signal-publisher]
@@ -64,7 +64,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add r6-test/arena.rbxl r6-test/animation-manifest.json r6-test/forbidden-or-available-run-ids.json r6-test/combat-probe.json r6-test/free-r6-run-model.rbxm
           if ! git diff --cached --quiet; then
-            git commit -m 'Install unchanged original Run3 KeyframeSequence on R6 avatar'
+            git commit -m 'Fix R6 running walking jumping and landing rendering'
             git push origin HEAD:dead-signal-publisher
           fi
       - uses: actions/upload-artifact@v4
