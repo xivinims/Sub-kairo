@@ -1,1 +1,1 @@
-fps-map-spawn-publish-original-map-v1
+fps-map-spawn-publish-original-map-v2
