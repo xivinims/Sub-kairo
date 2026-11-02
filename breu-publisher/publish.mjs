@@ -43,6 +43,16 @@ async function execute(script,input,version){
 async function main(){
  // This gate precedes every write to the place. No activation endpoint is called.
  await requirePrivate();
+ if((await read('publish.trigger')).includes('finalize')){
+  const live=await execute(await read('verify.luau'));
+  if(!live?.ok)throw Error('Saved BREU failed verification');
+  await api(cloud+`universes/${universe}?updateMask=displayName,description`,{method:'PATCH',body:{displayName:'BREU [Playtest privado]',description:'Playtest privado de sobrevivência cooperativa. Em desenvolvimento por Aurivane Works.'}});
+  await api(cloud+`universes/${universe}/places/${place}?updateMask=displayName,serverSize`,{method:'PATCH',body:{displayName:'BREU [Playtest privado]',serverSize:12}});
+  await requirePrivate();
+  const report={...live,private:true,universe,place,rollbackVersion:261,url:`https://www.roblox.com/games/${place}/`};
+  await fs.writeFile(new URL('publication.json',root),JSON.stringify(report,null,2));
+  console.log('BREU_PRIVATE_RELEASE_COMPLETE '+JSON.stringify(report));return;
+ }
  if((await read('publish.trigger')).includes('inspect')){
   const verify=await read('verify.luau');
   const diagnostic=await execute('local result={version=game.PlaceVersion,build=workspace:GetAttribute("BreuBuild"),scripts={}}\nfor _,v in ipairs(game:GetDescendants()) do if v:IsA("LuaSourceContainer") then table.insert(result.scripts,v:GetFullName()) end end\nlocal ok,value=pcall(function()\n'+verify+'\nend)\nresult.verified=ok;result.detail=tostring(value)\nreturn game:GetService("HttpService"):JSONEncode(result)');

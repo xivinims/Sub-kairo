@@ -16,6 +16,14 @@ local config=require(game.ReplicatedStorage.Breu.Config)
 local rules=require(game.ReplicatedStorage.Breu.Rules)
 assert(config.MaxPlayers==12 and rules.requiredGenerators(1,5)==2,'Rules failed')
 local count=0
-for _,child in ipairs(game:GetDescendants()) do if child:IsA('LuaSourceContainer') then count+=1 end end
+local playerScripts=game.StarterPlayer.StarterPlayerScripts
+for _,child in ipairs(game:GetDescendants()) do
+ if child:IsA('LuaSourceContainer') then
+  local root=child
+  while root.Parent and root.Parent~=playerScripts do root=root.Parent end
+  local core=root.Parent==playerScripts and (root.Name=='PlayerModule' or root.Name=='PlayerScriptsLoader' or root.Name=='RbxCharacterSounds')
+  if not core then count+=1 end
+ end
+end
 assert(count==6,'Unexpected legacy gameplay scripts remain: '..count)
 return game:GetService('HttpService'):JSONEncode({ok=true,version=game.PlaceVersion,build=workspace:GetAttribute('BreuBuild'),maps=mapCount,scripts=count,streaming=workspace.StreamingEnabled})
