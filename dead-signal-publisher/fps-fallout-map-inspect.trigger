@@ -1,1 +1,1 @@
-inspect-fallout-map-20261102
+inspect-fallout-map-model-20261102
