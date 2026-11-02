@@ -17,6 +17,8 @@ local function controlledTarget(player,target)
  if not target:IsDescendantOf(workspace) then return nil end
  if target==player.Character then return nil end
  local isDummy=target==workspace:FindFirstChild("BoogieTestDummy")
+  or (target.Parent==workspace:FindFirstChild("NPCWanderers")
+   and target:GetAttribute("NPCWanderer")==true)
  local other=Players:GetPlayerFromCharacter(target)
  if not isDummy and (not other or other==player) then return nil end
  local targetHumanoid=target:FindFirstChildOfClass("Humanoid")
