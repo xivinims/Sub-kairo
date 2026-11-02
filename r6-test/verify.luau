@@ -1,3 +1,6 @@
+assert(workspace:GetAttribute('TestGridRevision')=='clean-grid-v1')
+local sequences=0;for _,x in ipairs(game.ReplicatedStorage.OriginalR6Emotes:GetDescendants()) do if x:IsA('KeyframeSequence') then sequences+=1 end end;assert(sequences==19,'Emotes missing')
+assert(workspace.TestArena.Floor:FindFirstChild('TestGrid'))
 assert(workspace:GetAttribute('DynamicMenuRevision')=='r6-camera-menu-v1','Missing menu')
 assert(game.ReplicatedStorage.MenuR6Template.Humanoid.RigType==Enum.HumanoidRigType.R6)
 assert(game.StarterPlayer.StarterPlayerScripts.DynamicMenu:IsA('LocalScript'))
