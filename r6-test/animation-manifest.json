@@ -1,6 +1,18 @@
 {
-  "build": "r6-character-motion-v3",
+  "automaticMovement": [
+    "idle",
+    "walk",
+    "run",
+    "jump",
+    "fall",
+    "climb",
+    "sit"
+  ],
+  "build": "r6-character-motion-v4",
+  "characterController": "R6Locomotion (LocalScript in StarterCharacterScripts)",
   "characterEmotes": 19,
+  "fallbackNote": "Public R6 default animation; if inaccessible, procedural local Motor6D movement. Original uploaded keyframes and sources are unchanged.",
+  "originalControllerPreservedDisabled": true,
   "originals": [
     {
       "id": "Motion_1",
