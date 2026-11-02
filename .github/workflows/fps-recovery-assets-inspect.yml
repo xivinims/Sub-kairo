@@ -1,0 +1,26 @@
+name: Inspect FPS Recovery Assets
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - "dead-signal-publisher/fps-recovery-assets-inspect.trigger"
+permissions:
+  contents: read
+concurrency:
+  group: roblox-fps-recovery-assets-inspect
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check read-only asset inspector
+        run: node --check dead-signal-publisher/fps-recovery-assets-inspect.mjs
+      - name: Inspect original place, map, lobby, and requested reference
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/fps-recovery-assets-inspect.mjs
