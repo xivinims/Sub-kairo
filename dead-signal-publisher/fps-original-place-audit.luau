@@ -13,10 +13,12 @@ for _, child in ipairs(workspace:GetChildren()) do
 		local max = {x = -math.huge, y = -math.huge, z = -math.huge}
 		for _, part in ipairs(child:GetDescendants()) do
 			if part:IsA('BasePart') then
-				local p, s = part.Position, part.Size
-				min.x = math.min(min.x, p.X - s.X / 2); max.x = math.max(max.x, p.X + s.X / 2)
-				min.y = math.min(min.y, p.Y - s.Y / 2); max.y = math.max(max.y, p.Y + s.Y / 2)
-				min.z = math.min(min.z, p.Z - s.Z / 2); max.z = math.max(max.z, p.Z + s.Z / 2)
+				pcall(function()
+					local p, s = part.Position, part.Size
+					min.x = math.min(min.x, p.X - s.X / 2); max.x = math.max(max.x, p.X + s.X / 2)
+					min.y = math.min(min.y, p.Y - s.Y / 2); max.y = math.max(max.y, p.Y + s.Y / 2)
+					min.z = math.min(min.z, p.Z - s.Z / 2); max.z = math.max(max.z, p.Z + s.Z / 2)
+				end)
 			end
 		end
 		result.map3 = {class = child.ClassName, min = min, max = max, descendants = #child:GetDescendants()}
@@ -24,11 +26,13 @@ for _, child in ipairs(workspace:GetChildren()) do
 end
 table.sort(result.workspaceRoots)
 for _, item in ipairs(workspace:GetDescendants()) do
-	if item:IsA('SpawnLocation') then
-		table.insert(result.spawns, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), enabled = item.Enabled, neutral = item.Neutral, teamColor = tostring(item.TeamColor)})
-	elseif item:IsA('BasePart') and (item.Name:lower():find('spawn') or item.Name:lower():find('floor') or item.Name:lower():find('baseplate')) then
-		table.insert(result.floors, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), anchored = item.Anchored, transparency = item.Transparency, canCollide = item.CanCollide})
-	end
+	pcall(function()
+		if item:IsA('SpawnLocation') then
+			table.insert(result.spawns, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), enabled = item.Enabled, neutral = item.Neutral, teamColor = tostring(item.TeamColor)})
+		elseif item:IsA('BasePart') and (item.Name:lower():find('spawn') or item.Name:lower():find('floor') or item.Name:lower():find('baseplate')) then
+			table.insert(result.floors, {path = item:GetFullName(), position = vector(item.Position), size = vector(item.Size), anchored = item.Anchored, transparency = item.Transparency, canCollide = item.CanCollide})
+		end
+	end)
 end
 for _, item in ipairs(game:GetService('StarterPack'):GetChildren()) do
 	table.insert(result.starterPack, {name = item.Name, class = item.ClassName, tool = item:IsA('Tool')})
