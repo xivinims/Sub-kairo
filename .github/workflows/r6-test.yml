@@ -1,4 +1,4 @@
-name: R6 combat animations and running with Chakra/climb
+name: Fix real R6 running and combat poses
 on:
   push:
     branches: [dead-signal-publisher]
@@ -57,7 +57,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add r6-test/arena.rbxl r6-test/animation-manifest.json r6-test/forbidden-or-available-run-ids.json r6-test/combat-probe.json
           if ! git diff --cached --quiet; then
-            git commit -m 'Install verified R6 combat animations and retain Ninja running'
+            git commit -m 'Replace stiff R15 running and combat with actual R6 motor poses'
             git push origin HEAD:dead-signal-publisher
           fi
       - uses: actions/upload-artifact@v4
