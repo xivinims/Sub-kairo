@@ -14,7 +14,7 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-original-best-run-v15",
+  "build": "r6-motion-transform-v16",
   "chakraToggle": {
     "button": "CHAKRA OFF / CHAKRA ON",
     "initialState": false,
@@ -176,7 +176,9 @@
     ]
   },
   "locomotionPoseDriver": {
+    "application": "Motor6D.Transform in RunService.PreSimulation (after Animator)",
     "joint": "Motor6D.C0",
+    "jumpStateDelaySeconds": 0.23,
     "mode": [
       "idle",
       "walk",
@@ -189,7 +191,16 @@
     "runningWhenWalkSpeedAtLeast": 19,
     "script": "R6PoseController",
     "sharedWithCombat": true,
-    "sprint": "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset"
+    "sprint": "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset",
+    "states": [
+      "idle",
+      "walk",
+      "run",
+      "jump",
+      "fall",
+      "land"
+    ],
+    "tracksOwnedByNarutoAnimator": true
   },
   "mobileChakraButton": true,
   "nativeCandidateMeasurements": {
@@ -268,7 +279,7 @@
     "staminaModule": "StaminaBar",
     "usesJoystick": true
   },
-  "note": "v15 installs three original unchanged R6 run sequences from the public Best Run Animations R6 model and plays Run3 directly from its saved keyframes. Existing combat, menu, chakra, Boogie and automatic climbing preserved.",
+  "note": "v16 fixes animation invisibility from writing C0 concurrently with the Naruto Animator: one R6 PoseController writes Transform after Animator in PreSimulation; jump state is latched and fall/land are distinct. The original Run3 raw keyframes stay untouched. Existing powers/menu/NPCs preserved.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalR6Run": {
