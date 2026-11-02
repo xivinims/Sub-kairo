@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - name: Check release runner syntax
         run: node --check dead-signal-publisher/fps-dynamic-menu-release.mjs
-      - name: Compile, preserve the FPS place, and publish the sliding menu
+      - name: Restore verified FPS source, install the sliding menu, and publish
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node dead-signal-publisher/fps-dynamic-menu-release.mjs

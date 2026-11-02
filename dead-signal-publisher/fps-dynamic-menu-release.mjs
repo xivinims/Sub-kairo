@@ -1,3 +1,4 @@
+// Restore the last verified FPS place version, add the sliding menu, and publish as one new place version.
 import fs from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -12,6 +13,8 @@ const read = name => fs.readFile(new URL(name, import.meta.url), 'utf8');
 const mode = (await read('fps-dynamic-menu.trigger')).trim();
 if (!/^fps-dynamic-menu-(preview|publish)-[a-zA-Z0-9-]+$/.test(mode)) throw Error('Unexpected dynamic menu operation');
 const state = JSON.parse(await read('release-state.json'));
+const fpsVersion = state.lastVerifiedVersion;
+if (!Number.isInteger(fpsVersion) || fpsVersion < 1 || state.buildId !== 'fallout-5v5-v1') throw Error('No verified FPS source version is recorded');
 
 async function api(url, {method = 'GET', body} = {}) {
   const response = await fetch(url, {
@@ -51,19 +54,29 @@ const invariant = originalInvariant.replace(
   "['Workspace.FalloutCombatBots']=true,",
   "['Workspace.FalloutCombatBots']=true,\n  ['StarterPlayer.StarterPlayerScripts.DeadSignalMenu']=true,",
 );
-if (invariant === originalInvariant) throw Error('Could not scope the preservation check to the new menu script');
+if (invariant === originalInvariant) throw Error('Could not scope preservation to the new menu script');
+const restoreVerify = await read('fps-original-restore-verify.luau');
+const menuVerify = await read('fps-dynamic-menu-verify.luau');
+const restoreAssertions = restoreVerify.split('return game:GetService(\'HttpService\'):JSONEncode({')[0];
+if (restoreAssertions === restoreVerify) throw Error('Could not locate the original FPS verifier result');
 
-const baseline = await execute(invariant + `\nassert(game.GameId==${universe} and game.PlaceId==${place})\nreturn game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,build=workspace:GetAttribute("DeadSignalBuildId"),combatHud=workspace:GetAttribute("FalloutCombatHUDRevision"),botBuild=workspace:GetAttribute("FalloutBotsBuild"),options=workspace:GetAttribute("FalloutOptionsVisualRevision"),menu=workspace:GetAttribute("DeadSignalMenuRevision"),preserved=protectedSnapshot()})`);
-if (baseline.menu === revision) {
-  console.log('FPS_DYNAMIC_MENU_ALREADY_CURRENT ' + JSON.stringify({published: false, version: baseline.version, revision}));
+const liveBefore = await execute(`assert(game.GameId==${universe} and game.PlaceId==${place})\nreturn game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,menu=workspace:GetAttribute("DeadSignalMenuRevision")})`);
+if (liveBefore.menu === revision) {
+  const alreadyInstalled = await execute(invariant + '\n' + restoreAssertions + '\n' + menuVerify);
+  if (!alreadyInstalled?.ok || alreadyInstalled.revision !== revision || alreadyInstalled.version !== liveBefore.version) {
+    throw Error('The menu marker exists, but the current live FPS could not be verified');
+  }
+  console.log('FPS_DYNAMIC_MENU_ALREADY_CURRENT ' + JSON.stringify({published: false, ...alreadyInstalled}));
   process.exit(0);
 }
-if (baseline.version !== state.lastVerifiedVersion || baseline.build !== 'fallout-5v5-v1' ||
-    baseline.combatHud !== 'original-fps-v1' || baseline.botBuild !== 'disabled-original-fps' ||
-    baseline.options !== 'fps-gear-icon-settings-v2') {
-  throw Error('Live FPS differs from the verified original state; refusing to publish: ' + JSON.stringify(baseline));
+console.log('FPS_DYNAMIC_MENU_CURRENT_PLACE ' + JSON.stringify(liveBefore));
+
+// Validate the exact last verified FPS version before using it as the restoration source.
+const sourceCheck = await execute(invariant + '\n' + restoreVerify, undefined, fpsVersion);
+if (!sourceCheck?.ok || sourceCheck.version !== fpsVersion || sourceCheck.originalGui !== true || sourceCheck.gunCount !== 8 || !sourceCheck.mapAndItemsPreserved) {
+  throw Error('The recorded FPS restoration source did not pass the original-system verifier: ' + JSON.stringify(sourceCheck));
 }
-console.log('FPS_DYNAMIC_MENU_BASELINE ' + JSON.stringify(baseline));
+console.log('FPS_DYNAMIC_MENU_RESTORATION_SOURCE ' + JSON.stringify(sourceCheck));
 
 const luneResponse = await fetch('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip', {signal: AbortSignal.timeout(90000)});
 if (!luneResponse.ok) throw Error('Could not download the pinned Luau compiler');
@@ -82,46 +95,47 @@ const uploaded = await fetch(slot.uploadUri, {method: 'PUT', headers: {'content-
 if (!uploaded.ok) throw Error('Could not upload the menu patch bundle');
 
 const install = await read('fps-dynamic-menu-install.luau');
-const verify = await read('fps-dynamic-menu-verify.luau');
-const prefix = invariant + `\nassert(game.PlaceVersion==${baseline.version},"FPS place changed during preflight")\nlocal beforeSnapshot=${JSON.stringify(baseline.preserved)}\n`;
-const preflight = await execute(prefix + install + '\n' + verify, slot.path);
-if (!preflight?.ok || preflight.preserved !== baseline.preserved || preflight.revision !== revision || !preflight.originalFpsPreserved) {
-  throw Error('Sliding menu preflight failed ' + JSON.stringify(preflight));
+const installPrefix = invariant + `\nassert(game.PlaceVersion==${fpsVersion},"Unexpected restoration source version")\nlocal beforeSnapshot=${JSON.stringify(sourceCheck.preserved)}\n`;
+const preflight = await execute(installPrefix + restoreAssertions + '\n' + install + '\n' + menuVerify, slot.path, fpsVersion);
+if (!preflight?.ok || preflight.preserved !== sourceCheck.preserved || preflight.revision !== revision || preflight.originalFpsPreserved !== true) {
+  throw Error('FPS restoration plus sliding menu did not pass isolated preflight: ' + JSON.stringify(preflight));
 }
 console.log('FPS_DYNAMIC_MENU_PREFLIGHT ' + JSON.stringify(preflight));
 if (mode.startsWith('fps-dynamic-menu-preview-')) {
-  console.log('FPS_DYNAMIC_MENU_PREVIEW_COMPLETE ' + JSON.stringify({published: false, version: baseline.version, verified: true}));
+  console.log('FPS_DYNAMIC_MENU_PREVIEW_COMPLETE ' + JSON.stringify({published: false, sourceVersion: fpsVersion, currentVersion: liveBefore.version, verified: true}));
   process.exit(0);
 }
 
-const latest = await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
-if (latest.version !== baseline.version) throw Error('FPS place changed after preflight');
+const fresh = await execute(`assert(game.GameId==${universe} and game.PlaceId==${place})\nreturn game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})`);
+if (fresh.version !== liveBefore.version) throw Error('The live place changed after restoration preflight');
+
 let saved = false;
 try {
-  const published = await execute(prefix + install + '\nlocal checked=(function()\n' + verify + '\nend)()\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn checked', slot.path);
+  const publishScript = installPrefix + restoreAssertions + '\n' + install + '\nlocal checked=(function()\n' + menuVerify + '\nend)()\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn checked';
+  const published = await execute(publishScript, slot.path, fpsVersion);
   saved = true;
   console.log('FPS_DYNAMIC_MENU_NATIVE_SAVE ' + JSON.stringify(published));
-  const live = await execute(invariant + '\n' + verify);
-  if (!live?.ok || live.version !== baseline.version + 1 || live.preserved !== baseline.preserved || live.revision !== revision || !live.originalFpsPreserved) {
-    throw Error('Published FPS menu did not pass live verification ' + JSON.stringify(live));
+
+  const live = await execute(invariant + '\n' + restoreAssertions + '\n' + menuVerify);
+  if (!live?.ok || live.version <= liveBefore.version || live.preserved !== sourceCheck.preserved || live.revision !== revision || live.originalFpsPreserved !== true || live.gunCount !== 8) {
+    throw Error('Published place did not match the verified FPS and menu: ' + JSON.stringify(live));
   }
   const config = await api(`${cloud}universes/${universe}/places/${place}`);
   if (config.serverSize !== 10) throw Error('FPS server size changed unexpectedly');
   await api(`${cloud}universes/${universe}:restartServers`, {method: 'POST', body: '{}'});
-  console.log('FPS_DYNAMIC_MENU_RELEASE_COMPLETE ' + JSON.stringify({...live, serverSize: config.serverSize, rollbackVersion: baseline.version, restarted: true}));
+  console.log('FPS_DYNAMIC_MENU_RELEASE_COMPLETE ' + JSON.stringify({...live, sourceVersion: fpsVersion, previousVersion: liveBefore.version, serverSize: config.serverSize, restarted: true}));
 } catch (error) {
   if (saved) {
     try {
       const current = await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
-      if (current.version === baseline.version + 1) {
-        await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restored:game.PlaceVersion})', undefined, baseline.version);
+      if (current.version > liveBefore.version) {
+        // A failed menu release falls back to the same verified FPS, without experimental RPG content.
+        await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restored:game.PlaceVersion})', undefined, fpsVersion);
         await api(`${cloud}universes/${universe}:restartServers`, {method: 'POST', body: '{}'});
-        console.error('FPS_DYNAMIC_MENU_ROLLED_BACK ' + baseline.version);
-      } else {
-        console.error('FPS_DYNAMIC_MENU_ROLLBACK_SKIPPED: a later version exists');
+        console.error('FPS_DYNAMIC_MENU_FALLBACK_TO_VERIFIED_FPS ' + fpsVersion);
       }
     } catch (rollbackError) {
-      console.error('FPS_DYNAMIC_MENU_ROLLBACK_ERROR ' + String(rollbackError));
+      console.error('FPS_DYNAMIC_MENU_FALLBACK_ERROR ' + String(rollbackError));
     }
   }
   throw error;
