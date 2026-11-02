@@ -43,6 +43,11 @@ async function execute(script,input,version){
 async function main(){
  // This gate precedes every write to the place. No activation endpoint is called.
  await requirePrivate();
+ if((await read('publish.trigger')).includes('inspect')){
+  const verify=await read('verify.luau');
+  const diagnostic=await execute('local result={version=game.PlaceVersion,build=workspace:GetAttribute("BreuBuild"),scripts={}}\nfor _,v in ipairs(game:GetDescendants()) do if v:IsA("LuaSourceContainer") then table.insert(result.scripts,v:GetFullName()) end end\nlocal ok,value=pcall(function()\n'+verify+'\nend)\nresult.verified=ok;result.detail=tostring(value)\nreturn game:GetService("HttpService"):JSONEncode(result)');
+  console.log('BREU_LIVE_DIAGNOSTIC '+JSON.stringify(diagnostic));return;
+ }
  const baseline=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,gameId=game.GameId,placeId=game.PlaceId})');
  if(baseline.gameId!==universe||baseline.placeId!==place)throw Error('Wrong target');
  console.log('BREU_BASELINE '+JSON.stringify(baseline));
@@ -73,10 +78,11 @@ async function main(){
   await fs.writeFile(new URL('publication.json',root),JSON.stringify(report,null,2));
   console.log('BREU_PRIVATE_RELEASE_COMPLETE '+JSON.stringify(report));
  }catch(error){
+  console.error('BREU_POST_SAVE_ERROR '+String(error));
   if(saved){
    const latest=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
    if(latest.version===baseline.version+1){
-    await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restored:true})',undefined,baseline.version);
+    await execute('game:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({restored=true})',undefined,baseline.version);
     console.error('BREU_ROLLBACK restored version '+baseline.version+'; universe remains private');
    }
   }
