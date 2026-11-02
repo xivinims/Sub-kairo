@@ -22,6 +22,7 @@ assert(target and target:IsA('LocalScript'),'Live RPG client missing')
 local code=fs.readFile('water-rpg/src/Client.client.lua');luau.load(code,{debugName='WaterRPGClient'});target.Source=code
 local m=game.ReplicatedStorage.WaterRPG:FindFirstChild('MenuScene')
 if not m then m=R.Instance.new('ModuleScript');m.Name='MenuScene';m.Parent=game.ReplicatedStorage.WaterRPG end
+preserved[m:GetFullName()]=nil
 m.Source=fs.readFile('water-rpg/src/MenuScene.lua');luau.load(m.Source,{debugName='MenuScene'})
 assert(snapshot()==before,'Menu patch changed world geometry, positions or outfits')
 for _,x in ipairs(game:GetDescendants()) do
@@ -31,6 +32,15 @@ local ability=game.StarterPlayer.StarterPlayerScripts.PlayerAbilities
 assert(ability and ability:IsA('LocalScript'),'Live abilities missing')
 local abilityCode=fs.readFile('water-rpg/src/Abilities.client.lua');luau.load(abilityCode,{debugName='PlayerAbilities'});ability.Source=abilityCode
 game.Workspace:SetAttribute('ControlsRevision','right-circles-jump-safe-v1')
-game.Workspace:SetAttribute('MenuRevision','reference-3d-transitions-v2')
+local function install(parent,class,name,path)
+ local obj=parent:FindFirstChild(name)
+ if obj then assert(obj.ClassName==class,'Wrong class for '..name) else obj=R.Instance.new(class);obj.Name=name;obj.Parent=parent end
+ if path then obj.Source=fs.readFile(path);luau.load(obj.Source,{debugName=name}) end
+ return obj
+end
+install(game.ReplicatedStorage.WaterRPG,'ModuleScript','MenuSettingsSchema','water-rpg/src/MenuSettingsSchema.lua')
+install(game.ReplicatedStorage.WaterRPG,'RemoteEvent','MenuSettingsEvent')
+install(game.ServerScriptService,'Script','WaterMenuSettings','water-rpg/src/MenuSettings.server.lua')
+game.Workspace:SetAttribute('MenuRevision','reference-complete-v3')
 fs.writeFile('water-rpg/menu-patched.rbxl',R.serializePlace(game))
 print('Targeted menu patch: geometry, resident outfits, server gameplay preserved; circular action client updated')

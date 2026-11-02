@@ -11,9 +11,15 @@ local hit=workspace:Raycast(settings.Position,(settingsPlane.Position-settings.P
 assert(hit and hit.Instance==part,'3D menu plane cannot receive ray queries');part:Destroy()
 local ui=game.StarterPlayer.StarterPlayerScripts.WaterRPGClient.Source
 for _,text in ipairs({'menuPlane.CanQuery=true','modalPlane.CanQuery=true','WaterMenuSection3D','Enum.EasingStyle.Quart',"travel('Main')",'displayedSection=kind'}) do assert(ui:find(text,1,true),'Missing menu feature '..text) end
-assert(workspace:GetAttribute('MenuRevision')=='reference-3d-transitions-v2','Menu revision not saved')
+assert(workspace:GetAttribute('MenuRevision')=='reference-complete-v3','Menu revision not saved')
 local ability=game.StarterPlayer.StarterPlayerScripts.PlayerAbilities.Source
 for _,s in ipairs({'RightActionDock','UDim.new(1,0)',"FindFirstChild('JumpButton',true)",'jump.AbsolutePosition.Y-gui.AbsolutePosition.Y-18',"Shared.Action:FireServer('Sprint'","Shared.Action:FireServer('UsePotion'"}) do assert(ability:find(s,1,true),'Missing control: '..s) end
 assert(not ui:find("local sprint=button",1,true),'Duplicate sprint button')
 assert(workspace:GetAttribute('ControlsRevision')=='right-circles-jump-safe-v1','Controls revision missing')
+local schema=require(game.ReplicatedStorage.WaterRPG.MenuSettingsSchema)
+assert(schema.clean({MusicVolume=10}).MusicVolume==1)
+assert(schema.patch({CameraTilt=false}).CameraTilt==false)
+assert(game.ReplicatedStorage.WaterRPG.MenuSettingsEvent:IsA('RemoteEvent'))
+assert(game.ServerScriptService.WaterMenuSettings:IsA('Script'))
+for _,feature in ipairs({'DiagonalRibbon','ReturnToMenuPrompt','PreloadAsync','ReduceMotion','SFXVolume','MenuSettingsJSON','sliderPoint'}) do assert(ui:find(feature,1,true),'Missing '..feature) end
 return game:GetService('HttpService'):JSONEncode({ok=true,controls='right-circles-jump-safe-v1',version=game.PlaceVersion,revision=workspace:GetAttribute('MenuRevision'),cameraRight=true,cameraLeft=true,worldPanel=true,clickQueries=true,residents=#workspace.Residents:GetChildren()})

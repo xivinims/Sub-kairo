@@ -74,12 +74,12 @@ local terrain=I.new('TerrainRegion');terrain.Name='OriginalWaterCastleTerrain';t
 terrain.ExtentsMin=R.Vector3int16.new(-2816,-192,-512);terrain.ExtentsMax=R.Vector3int16.new(1536,256,1536);terrain.Parent=folders.ServerStorage
 for _,n in ipairs({'Lighting','MaterialService','SoundService'}) do local s=source:GetService(n);strip(s);for _,child in ipairs(s:GetChildren()) do child.Parent=folders[n] end end
 local shared=I.new('Folder');shared.Name='WaterRPG';shared.Parent=folders.ReplicatedStorage
-for _,n in ipairs({'Action','Feedback','Ability'}) do local e=I.new('RemoteEvent');e.Name=n;e.Parent=shared end
+for _,n in ipairs({'Action','Feedback','Ability','MenuSettingsEvent'}) do local e=I.new('RemoteEvent');e.Name=n;e.Parent=shared end
 local assets=R.deserializeModel(fs.readFile(here..'player-assets.rbxm'))[1];assets.Parent=shared
 local state=I.new('Folder');state.Name='State';state:SetAttribute('WorldReady',true);state.Parent=shared
 local scripts=I.new('Folder');scripts.Name='StarterPlayerScripts';scripts.Parent=folders.StarterPlayer
 local count=0
-for _,entry in ipairs({{shared,'Config','ModuleScript','Config.lua'},{shared,'Rules','ModuleScript','Rules.lua'},{folders.ServerScriptService,'WaterRPGServer','Script','Server.server.lua'},{folders.ServerScriptService,'Profiles','ModuleScript','Profiles.lua'},{folders.ServerScriptService,'Residents','ModuleScript','Residents.lua'},{scripts,'WaterRPGClient','LocalScript','Client.client.lua'},{scripts,'PlayerAbilities','LocalScript','Abilities.client.lua'},{folders.ServerScriptService,'PlayerAbilities','Script','Abilities.server.lua'}}) do
+for _,entry in ipairs({{shared,'MenuScene','ModuleScript','MenuScene.lua'},{shared,'MenuSettingsSchema','ModuleScript','MenuSettingsSchema.lua'},{folders.ServerScriptService,'WaterMenuSettings','Script','MenuSettings.server.lua'},{shared,'Config','ModuleScript','Config.lua'},{shared,'Rules','ModuleScript','Rules.lua'},{folders.ServerScriptService,'WaterRPGServer','Script','Server.server.lua'},{folders.ServerScriptService,'Profiles','ModuleScript','Profiles.lua'},{folders.ServerScriptService,'Residents','ModuleScript','Residents.lua'},{scripts,'WaterRPGClient','LocalScript','Client.client.lua'},{scripts,'PlayerAbilities','LocalScript','Abilities.client.lua'},{folders.ServerScriptService,'PlayerAbilities','Script','Abilities.server.lua'}}) do
  local s=I.new(entry[3]);s.Name=entry[2];s.Source=fs.readFile(here..'src/'..entry[4]);luau.load(s.Source,{debugName=entry[2]});s.Parent=entry[1];count+=1
 end
 local training=I.new('Folder');training.Name='TrainingTargets';training.Parent=folders.Workspace
@@ -121,6 +121,7 @@ source:GetService('Players').CharacterAutoLoads=false
 local light=source:GetService('Lighting');light.ClockTime=14;light.Brightness=2;light.Ambient=R.Color3.fromRGB(83,100,67);light.OutdoorAmbient=R.Color3.fromRGB(67,125,109);light.ExposureCompensation=.1
 for _,x in ipairs(light:GetChildren()) do if x:IsA('BlurEffect') or x:IsA('DepthOfFieldEffect') then x.Enabled=false end end
 local allowedScripts={
+ ['ReplicatedStorage.WaterRPG.MenuScene']=true,['ReplicatedStorage.WaterRPG.MenuSettingsSchema']=true,['ServerScriptService.WaterMenuSettings']=true,
  ['ReplicatedStorage.WaterRPG.Config']=true,['ReplicatedStorage.WaterRPG.Rules']=true,['ReplicatedStorage.WaterRPG.PlayerAssets.LuminosPreset']=true,
  ['ServerScriptService.WaterRPGServer']=true,['ServerScriptService.Profiles']=true,['ServerScriptService.Residents']=true,['ServerScriptService.PlayerAbilities']=true,
  ['StarterPlayer.StarterPlayerScripts.WaterRPGClient']=true,['StarterPlayer.StarterPlayerScripts.PlayerAbilities']=true,
@@ -129,6 +130,6 @@ local finalCount=0
 for _,obj in ipairs(source:GetDescendants()) do
  if obj:IsA('LuaSourceContainer') then if allowedScripts[obj:GetFullName()] then finalCount+=1 else obj:Destroy() end end
 end
-assert(finalCount==9,'Unexpected source scripts')
+assert(finalCount==12,'Unexpected source scripts')
 fs.writeFile(here..'water-rpg.rbxl',R.serializePlace(source))
 print('Full source place saved, including original terrain and CSG dictionaries')
