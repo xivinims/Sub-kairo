@@ -102,6 +102,48 @@ local actions={
   {.74,pose(v(-96),v(31),v(13),v(-12),v(0,15),Z)},
   {1,neutral}}},
 }
+-- The original R6 RUN source model contains these three untouched assets.
+-- Read actual published-style Keyframe/Pose CFrames, not model IDs or invented
+-- animation curves. The original KeyframeSequences themselves never change.
+local runFolder=rig:WaitForChild("R6RunSource",10)
+local originalRun=runFolder and runFolder:FindFirstChild("Run3 [by Newb1e27]")
+local rawChannels={}
+local rawLength=0
+if originalRun and originalRun:IsA("KeyframeSequence") then
+ local ok,frames=pcall(function() return originalRun:GetKeyframes() end)
+ if ok and #frames>=8 then
+  table.sort(frames,function(a,b) return a.Time<b.Time end)
+  for _,frame in ipairs(frames) do
+   rawLength=math.max(rawLength,frame.Time)
+   for _,poseObj in ipairs(frame:GetDescendants()) do
+    if poseObj:IsA("Pose") then
+     local partName=poseObj.Name
+     local points=rawChannels[partName] or {}
+     table.insert(points,{t=frame.Time,cf=poseObj.CFrame,weight=poseObj.Weight,
+       constant=poseObj.EasingStyle==Enum.PoseEasingStyle.Constant})
+     rawChannels[partName]=points
+    end
+   end
+  end
+ end
+end
+local function originalR6RunCF(partName,t)
+ local points=rawChannels[partName]
+ if not points or #points==0 or rawLength<=0 then return nil end
+ local elapsed=t%rawLength
+ local a,b=points[1],points[#points]
+ for index=2,#points do
+  local nextPose=points[index]
+  if elapsed<=nextPose.t then a=points[index-1];b=nextPose;break end
+ end
+ local interval=b.t-a.t
+ local alpha=interval>0 and math.clamp((elapsed-a.t)/interval,0,1) or 0
+ if a.constant then alpha=0 end
+ local transform=a.cf:Lerp(b.cf,alpha)
+ local weight=a.weight+(b.weight-a.weight)*alpha
+ return CFrame.identity:Lerp(transform,math.clamp(weight,0,1))
+end
+local runStart=os.clock()
 local lastMove="none"
 local phase=0
 local currentAction=nil
@@ -219,6 +261,30 @@ loop=RunService.PreSimulation:Connect(function(dt)
  if not kind then
   if used then release()end
   return
+ end
+ if kind=="run" and originalRun and rawLength>0 then
+  if kind~=lastMove then
+   lastMove=kind
+   runStart=os.clock()
+  end
+  local nowT=(os.clock()-runStart)*math.clamp(hum.WalkSpeed/23,.65,1.4)
+  -- R6 Motor6D.Part1 names match the original R6 poses. The original
+  -- model's Run3 keyframes remain unchanged, only interpolated at playback.
+  local applied=0
+  for name,joint in pairs(joints) do
+   local partName=joint.Part1 and joint.Part1.Name
+   local originalPose=partName and originalR6RunCF(partName,nowT)
+   if originalPose and joint.Parent then
+    joint.C0=originals[name]*originalPose
+    applied+=1
+   elseif joint.Parent then
+    joint.C0=originals[name]
+   end
+  end
+  if applied>=4 then
+   used=true
+   return
+  end
  end
  local motion=motionFrame(kind,math.min(dt,.06))
  local lag=math.clamp(dt*15,0,1)
