@@ -1,4 +1,4 @@
-name: R6 test arena
+name: R6 animation test
 on:
   push:
     branches: [dead-signal-publisher]
@@ -27,7 +27,7 @@ jobs:
         run: |
           node --check r6-test/publish.mjs
           /tmp/water-lune/lune run r6-test/check.luau
-      - name: Publish private R6 arena and verify damage and respawn
+      - name: Publish private animation test and verify native R6 creation
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
         run: node r6-test/publish.mjs

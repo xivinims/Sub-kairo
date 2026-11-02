@@ -1,0 +1,104 @@
+{
+  "animations": 27,
+  "build": "r6-animation-test-v2",
+  "excluded": [
+    "R15 Wall Climb",
+    "Swim (R15)",
+    "Maps",
+    "Weapons",
+    "Bots",
+    "Menu"
+  ],
+  "inactive": [
+    "Naruto WallWalk camera loader: ApplyVRTransform incompatibility"
+  ],
+  "originals": [
+    {
+      "id": "R6_1",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun",
+      "sha256": "5ff3fc36d6023d5dda2bb13cce13d50d3554fa4d7361865a84b9c7a5a0ebfd41"
+    },
+    {
+      "id": "R6_2",
+      "path": "StarterPlayer.StarterCharacterScripts.Run",
+      "sha256": "36ab1d0ab23a073c2e275b3ad88fd2f7094b5bb28fd987b8936f2ec72ab7a319"
+    },
+    {
+      "id": "R6_3",
+      "path": "StarterPlayer.StarterCharacterScripts.Animate",
+      "sha256": "d448e840e459ed7b984efe7dd0ad54650e3e4e820256e61aa6331976c44cd9ec"
+    },
+    {
+      "id": "R6_4",
+      "path": "StarterPlayer.StarterCharacterScripts.Run.StaminaBar",
+      "sha256": "06b252f8c4195002eade3f9923ad048eb08ba67882346397198ec68540b48f61"
+    },
+    {
+      "id": "R6_5",
+      "path": "ReplicatedStorage.Modules.Shared.HelperFunctions",
+      "sha256": "ed6d7bc46fb4c7d1c2adcfec22866756a473a588133bcf130ee5a0f76509f16c"
+    },
+    {
+      "id": "R6_6",
+      "path": "ReplicatedStorage.Modules.Run.Settings",
+      "sha256": "8d63c070c6fd221b85d299278c6afc085821d499b088ec6adbf2185c3d53e42d"
+    },
+    {
+      "id": "R6_7",
+      "path": "ReplicatedStorage.Modules.Run.RunClient",
+      "sha256": "80f62d37b85e9b64f2ee40d48d8d7b444e9337d926a4c1a020e4c75c692cbcfb"
+    },
+    {
+      "id": "R6_8",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.Log",
+      "sha256": "c2de060998a31f5b2f5cf8bd1fd081bc4a92462f5a64410c47f9d6dbf7c64a0a"
+    },
+    {
+      "id": "R6_9",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.PID",
+      "sha256": "7a645d52b54476421468be8636467d2784ed51e4b540eed7b3fe40e4dd86d58b"
+    },
+    {
+      "id": "R6_10",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.Spring",
+      "sha256": "9ed98ecff13288f8a196f9c3d6879752f6beac0bcb0b75eee2fce588d7417660"
+    },
+    {
+      "id": "R6_11",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.Trove",
+      "sha256": "6037d12780509f4d7b6119c437b29918f230c2b90344247d591c58179ecef4b1"
+    },
+    {
+      "id": "R6_12",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.Signal",
+      "sha256": "a2c3a044ad291f1b8ea7d9ab38147d0ca8807c22532a45f31f33c79b89b74124"
+    },
+    {
+      "id": "R6_13",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Packages.Shake",
+      "sha256": "20a395f69fab19b27f0eda9297685470d78b30167e916f371173d931a5cf508c"
+    },
+    {
+      "id": "R6_14",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Modules.Sounds",
+      "sha256": "a5a5df25a48bd10b8735983423b7e069e25865a9a94721400ece1508c44df120"
+    },
+    {
+      "id": "R6_15",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Modules.Trails",
+      "sha256": "b4d368a16e0b3d90f4ab4b5b9cd8b9fd7d94f4a922e6fb25b91ad21d49f0e3c0"
+    },
+    {
+      "id": "R6_16",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Modules.Raycaster",
+      "sha256": "1afe74c5959e968a3dc5e45ce421cd45995b1ddb66604dc0d51a322a4cb77b03"
+    },
+    {
+      "id": "R6_17",
+      "path": "StarterPlayer.StarterCharacterScripts.Wallrun.Modules.Config",
+      "sha256": "96224dc6bdf7e13d049fd42bbb4b8094f746d5e2b653cf5ca04f4f9f217766b2"
+    }
+  ],
+  "rawEmoteSHA256": "35c1073200a4321b7c0a0591b94aff3b70debf32768e4b926a2fb71b06ccf477",
+  "rawSequences": 19
+}
