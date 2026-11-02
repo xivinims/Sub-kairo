@@ -1,3 +1,15 @@
+# Correção de andar, correr e pular no R6 (v16)
+
+**Causa corrigida:** o `R6PoseController` colocava as poses diretamente em `Motor6D.C0`, enquanto o `Animator` original do Naruto continuava executando tracks. Agora ele aplica `Motor6D.Transform` no evento `RunService.PreSimulation`, após a avaliação do `Animator`. O Roblox recomenda essa propriedade para movimentos customizados sem alterar a posição estrutural das juntas.
+
+As três sequências originais R6 (`Run1`, `Run2` e `Run3`) continuam **idênticas** aos keyframes recebidos. A corrida usa a `Run3` original, lida quadro a quadro; a caminhada utiliza balanço R6 real nas juntas; o pulo é mantido visualmente por 0,23 s ao sair do chão, passa para pose de queda e termina em pose curta de aterrissagem. O script de sprint aguarda até a criação do avatar ser atribuída a `Player.Character`, evitando uma condição de corrida na inicialização.
+
+O Chakra e a escalada natural continuam prioritários; nesses modos o controlador libera as juntas para o sistema correspondente. Os sistemas Boogie, menu, NPCs e combate ficam preservados.
+
+**Limite de verificação:** CI e executor Roblox conseguem validar o código, o rig e a propriedade Transform, mas não reproduzem uma sessão cliente móvel com movimento real. A confirmação visual requer abrir o jogo. O atributo `R6AnimationState` no avatar agora registra `idle`, `walk`, `run`, `jump`, `fall` ou `land` para facilitar a identificação de falhas futuras sem adicionar HUD.
+
+---
+
 # Corrida R6 original do Creator Store, sem edição (v15)
 
 A corrida anterior era produzida por movimentos programados porque o ID Ninja era R15 e não movimentava corretamente um avatar R6. Agora a experiência usa **a sequência original `Run3 [by Newb1e27]`**, dentro do modelo gratuito [Best Run Animations R6](https://create.roblox.com/store/asset/136548520660837/Best-Run-Animations-R6). O modelo público contém exatamente três `KeyframeSequence`: `Run1 [by M0rsDev]` (40 keyframes), `Run2 [by Gusthabuo777]` (41) e `Run3 [by Newb1e27]` (17).
