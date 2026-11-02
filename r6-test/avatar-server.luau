@@ -2,6 +2,8 @@
 local Players = game:GetService('Players')
 Players.CharacterAutoLoads = false
 local busy = {}
+local respawnCooldown = {}
+local respawnRemote = game:GetService('ReplicatedStorage'):WaitForChild('R6MenuRespawn')
 local function spawn(player)
  if busy[player] or player.Parent ~= Players then return end
  busy[player] = true
@@ -46,9 +48,24 @@ local function spawn(player)
  if previous and previous ~= character then previous:Destroy() end
  busy[player] = nil
  humanoid.Died:Once(function()
-  task.delay(Players.RespawnTime, function() spawn(player) end)
+  task.delay(Players.RespawnTime, function()
+   if player.Character == character then spawn(player) end
+  end)
  end)
 end
 Players.PlayerAdded:Connect(function(player) task.spawn(spawn, player) end)
-Players.PlayerRemoving:Connect(function(player) busy[player] = nil end)
+Players.PlayerRemoving:Connect(function(player)
+ busy[player] = nil
+ respawnCooldown[player] = nil
+end)
+respawnRemote.OnServerEvent:Connect(function(player)
+ if busy[player] or player.Parent ~= Players then return end
+ local char = player.Character
+ local hum = char and char:FindFirstChildOfClass('Humanoid')
+ if hum and hum.Health > 0 then return end
+ local now = os.clock()
+ if respawnCooldown[player] and now - respawnCooldown[player] < 3 then return end
+ respawnCooldown[player] = now
+ task.spawn(spawn,player)
+end)
 for _, player in ipairs(Players:GetPlayers()) do task.spawn(spawn, player) end
