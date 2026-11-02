@@ -30,7 +30,7 @@ async function publish(bytes){
 async function main(){
  await privateOnly();
  const before=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,build=workspace:GetAttribute("R6TestBuild")})');
- if(!["r6-animation-test-v2","r6-character-motion-v3","r6-character-motion-v4","r6-character-motion-v5","r6-character-motion-v6","r6-original-wallrun-only-v7","r6-chakra-wallwalk-v8","r6-chakra-r6-motion-v9","r6-chakra-boogie-v10","r6-cinematic-menu-npcs-v11","r6-natural-climb-optional-chakra-v12","r6-combat-animations-v13"].includes(before.build))throw Error("Active place is not the R6 test; refusing to overwrite another project");
+ if(!["r6-animation-test-v2","r6-character-motion-v3","r6-character-motion-v4","r6-character-motion-v5","r6-character-motion-v6","r6-original-wallrun-only-v7","r6-chakra-wallwalk-v8","r6-chakra-r6-motion-v9","r6-chakra-boogie-v10","r6-cinematic-menu-npcs-v11","r6-natural-climb-optional-chakra-v12","r6-combat-animations-v13","r6-real-motion-v14"].includes(before.build))throw Error("Active place is not the R6 test; refusing to overwrite another project");
  const delivery=await api(base+`asset-delivery-api/v1/assetId/${place}/version/${before.version}`);
  const location=delivery.location||delivery.locations?.[0]?.location;if(!location)throw Error('Backup URL missing');
  const response=await fetch(location,{signal:AbortSignal.timeout(180000)});if(!response.ok)throw Error('Backup download failed');
