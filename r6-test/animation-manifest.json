@@ -14,7 +14,14 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-cinematic-menu-npcs-v11",
+  "build": "r6-natural-climb-optional-chakra-v12",
+  "chakraToggle": {
+    "button": "CHAKRA OFF / CHAKRA ON",
+    "initialState": false,
+    "key": "B",
+    "optional": true,
+    "stateAttribute": "ChakraActive"
+  },
   "dynamicMenu": {
     "client3DCheckerboard": true,
     "deathRespawn": "R6MenuRespawn",
@@ -91,7 +98,21 @@
       "loaded": true
     }
   },
-  "note": "v11: dynamic reference-inspired cinematic 3D menu, settings, update, credits and death respawn plus 4 real patrolling R6 NPCs. Chakra and Boogie preserved. The running asset is selected only if a real R6 native probe loads it.",
+  "naturalClimb": {
+    "blockedWhenChakraActive": true,
+    "button": false,
+    "climbingAnimation": "Animate.climb.ClimbAnim",
+    "cooldownSeconds": 2,
+    "drainPerSecond": 15,
+    "maxStamina": 100,
+    "mode": "automatic-on-forward-into-wall",
+    "package": "R15 & R6 Wall Climbing System.rbxl",
+    "recoverPerSecond": 12,
+    "rig": "R6",
+    "staminaModule": "StaminaBar",
+    "usesJoystick": true
+  },
+  "note": "v12: automatic R6 wall climbing from supplied R6/R15 pack and original StaminaBar, driven by mobile joystick and keyboard movement. Chakra retains its own optional labeled touch button; when enabled it takes priority over natural climbing. Previous UI, NPCs, Boogie and R6 running preserved.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalSHA256": {
@@ -108,7 +129,8 @@
     "Animate",
     "ChakraWallWalk",
     "NarutoSprintInput",
-    "BoogieSwapInput"
+    "BoogieSwapInput",
+    "NaturalR6Climb"
   ],
   "playerScripts": [
     "RbxCharacterSounds",
