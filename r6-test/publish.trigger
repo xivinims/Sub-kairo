@@ -1,1 +1,1 @@
-r6-character-motion-v3-automatic-avatar
+r6-character-motion-v4-auto-avatar-locomotion-fix
