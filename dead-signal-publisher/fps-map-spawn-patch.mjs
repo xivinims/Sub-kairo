@@ -48,7 +48,7 @@ if (liveBefore.version !== sourceVersion || !liveBefore.map || !liveBefore.spawn
   throw Error('Live FPS place is not the expected original build with its requested menu: ' + JSON.stringify(liveBefore));
 }
 
-const candidate = await execute(`assert(game.PlaceVersion==${sourceVersion},"Unexpected FPS source version")\n${patch}`, sourceVersion);
+const candidate = await execute(`assert(game.PlaceVersion==${sourceVersion},"Unexpected FPS source version")\nlocal result=(function()\n${patch}\nend)()\nreturn result`, sourceVersion);
 if (!candidate?.mapRemoved || !candidate.spawnMoved || !candidate.weaponsPreserved || candidate.newSpawn?.x !== 500 || candidate.newSpawn?.z !== 500) {
   throw Error('Map/spawn preflight did not pass: ' + JSON.stringify(candidate));
 }
@@ -62,7 +62,7 @@ const current = await execute(`assert(game.GameId==${universe} and game.PlaceId=
 if (current.version !== sourceVersion) throw Error('FPS place changed after preview; refusing to publish');
 let saved = false;
 try {
-  const published = await execute(`assert(game.PlaceVersion==${sourceVersion},"Unexpected FPS source version")\n${patch}\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({saved=true})`, sourceVersion);
+  const published = await execute(`assert(game.PlaceVersion==${sourceVersion},"Unexpected FPS source version")\nlocal result=(function()\n${patch}\nend)()\ngame:GetService("AssetService"):SavePlaceAsync()\nreturn game:GetService("HttpService"):JSONEncode({saved=true,result=result})`, sourceVersion);
   saved = true;
   if (!published?.saved) throw Error('Roblox did not confirm the map/spawn save');
   const live = await execute(`assert(game.GameId==${universe} and game.PlaceId==${place})\nlocal spawn=workspace:FindFirstChild("SpawnLocation")\nassert(not workspace:FindFirstChild("Map3"),"Map3 still exists")\nassert(spawn and math.abs(spawn.Position.X-500)<0.01 and math.abs(spawn.Position.Z-500)<0.01,"Spawn position is incorrect")\nassert(game:GetService("ServerScriptService").Weapons:FindFirstChild("WeaponsServer"),"Original weapon server script missing")\nassert(game:GetService("ReplicatedStorage").Game.Weapons:FindFirstChild("M4A1"),"Original weapon data missing")\nassert(game:GetService("StarterPlayer").StarterPlayerScripts:FindFirstChild("DeadSignalMenu"),"Requested menu missing")\nreturn game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,mapRemoved=true,spawn={x=spawn.Position.X,y=spawn.Position.Y,z=spawn.Position.Z},weaponsPreserved=true,menuPreserved=true})`);
