@@ -20,7 +20,8 @@ assert(place.Workspace:GetAttribute("R6TestBuild") == "r6-original-wallrun-only-
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13"
     or place.Workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14"
-    or place.Workspace:GetAttribute("R6TestBuild") == "r6-original-best-run-v15",
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-original-best-run-v15"
+    or place.Workspace:GetAttribute("R6TestBuild") == "r6-motion-transform-v16",
     "Wrong private R6 test version")
 
 local function find(root, name, kind)
@@ -405,7 +406,7 @@ L.compile(server.Source)
 place.StarterPack:ClearAllChildren()
 place.StarterGui:ClearAllChildren()
 place.ServerStorage:ClearAllChildren()
-place.Workspace:SetAttribute("R6TestBuild", "r6-original-best-run-v15")
+place.Workspace:SetAttribute("R6TestBuild", "r6-motion-transform-v16")
 place.Workspace:SetAttribute("R6OriginalWallrunOnly", false)
 place.Workspace:SetAttribute("R6ChakraWallWalk", true)
 place.Workspace:SetAttribute("R6MotionVerifiedAssets", true)
@@ -418,9 +419,11 @@ place.Workspace:SetAttribute("OptionalChakraToggle", true)
 place.Workspace:SetAttribute("R6CombatAnimationsInstalled", true)
 place.Workspace:SetAttribute("R6RealJointPoseInstalled", true)
 place.Workspace:SetAttribute("OriginalUnmodifiedR6RunInstalled", true)
+place.Workspace:SetAttribute("R6TransformAfterAnimator", true)
+place.Workspace:SetAttribute("R6JumpFallLandingFixed", true)
 
 local manifest = {
- build = "r6-original-best-run-v15",
+ build = "r6-motion-transform-v16",
  source = "WallWalkNarutoV1(5).rbxl",
  originalSHA256 = expected,
  originalWallWalkSourceSHA256 = S.hash("sha256", originalWallSource),
@@ -430,6 +433,9 @@ local manifest = {
    originalKeyframeCounts=originalRunCounts, modifiedOriginals=false,
    sourceOfTruth="raw KeyframeSequence (NOT a published animation ID)"},
  locomotionPoseDriver = {script="R6PoseController",rig="R6",
+   application = "Motor6D.Transform in RunService.PreSimulation (after Animator)",
+   states = {"idle","walk","run","jump","fall","land"},
+   jumpStateDelaySeconds=0.23,tracksOwnedByNarutoAnimator=true,
    joint="Motor6D.C0",mode={"idle","walk","run","jump","fall"},
    sprint = "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset",
    runningWhenWalkSpeedAtLeast=19, sharedWithCombat=true,
@@ -473,7 +479,7 @@ local manifest = {
  mobileChakraButton = true,
  olderWallRunRemoved = true,
  otherPacksExcluded = true,
- note = "v15 installs three original unchanged R6 run sequences from the public Best Run Animations R6 model and plays Run3 directly from its saved keyframes. Existing combat, menu, chakra, Boogie and automatic climbing preserved.",
+ note = "v16 fixes animation invisibility from writing C0 concurrently with the Naruto Animator: one R6 PoseController writes Transform after Animator in PreSimulation; jump state is latched and fall/land are distinct. The original Run3 raw keyframes stay untouched. Existing powers/menu/NPCs preserved.",
 }
 fs.writeFile("r6-test/animation-manifest.json", S.encode("json", manifest, true))
 fs.writeFile("r6-test/arena.rbxl", R.serializePlace(place))
