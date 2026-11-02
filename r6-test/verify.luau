@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-original-best-run-v15")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-motion-transform-v16")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
@@ -11,7 +11,7 @@ assert(sc:FindFirstChild("R6CombatInput") and not sc.R6CombatInput.Disabled)
 assert(sc:FindFirstChild("R6PoseController") and not sc.R6PoseController.Disabled)
 assert(workspace:GetAttribute("OriginalUnmodifiedR6RunInstalled") == true)
 assert(sc.R6PoseController.Source:find("originalR6RunCF",1,true))
-assert(sc.R6PoseController.Source:find("originals[name]*originalPose",1,true))
+assert(sc.R6PoseController.Source:find("joint.Transform=originalPose",1,true))
 local savedRuns = sc:FindFirstChild("R6RunSource")
 assert(savedRuns and savedRuns:IsA("Folder"),"Original R6 source sequence folder missing")
 local sourceRunCounts = {["Run1 [by M0rsDev]"]=40,["Run2 [by Gusthabuo777]"]=41,
@@ -29,13 +29,19 @@ for clipName,total in pairs(sourceRunCounts) do
  assert(poseCount>=total*4,"The original run sequence has insufficient R6 pose channels")
 end
 assert(sc.R6PoseController.Source:find("RunService.PreSimulation",1,true))
-assert(sc.R6PoseController.Source:find("joint.C0=originals[name]",1,true))
+assert(sc.R6PoseController.Source:find("joint.Transform",1,true))
+assert(not sc.R6PoseController.Source:find("joint.C0=",1,true))
+assert(sc.R6PoseController.Source:find("lastJump",1,true))
+assert(sc.R6PoseController.Source:find('return "land"',1,true))
+assert(sc.R6PoseController.Source:find("hum.FloorMaterial",1,true))
 assert(sc.R6PoseController.Source:find("originals[name]*CFrame.Angles",1,true))
 assert(sc.R6PoseController.Source:find('kind=="run"',1,true))
 assert(sc.R6PoseController.Source:find("M1_1",1,true) and sc.R6PoseController.Source:find("M1_4",1,true))
 assert(sc.R6PoseController.Source:find("ChakraActive",1,true)
   and sc.R6PoseController.Source:find("Climbing",1,true))
 assert(workspace:GetAttribute("R6RealJointPoseInstalled")==true)
+assert(workspace:GetAttribute("R6TransformAfterAnimator")==true)
+assert(workspace:GetAttribute("R6JumpFallLandingFixed")==true)
 assert(not sc.R6CombatInput.Source:find("TweenService",1,true))
 assert(sc.R6CombatInput.Source:find('UIS.TouchEnabled',1,true))
 assert(sc.R6CombatInput.Source:find('MouseButton1',1,true))
@@ -132,6 +138,10 @@ for _,jointName in ipairs({"Left Shoulder","Right Shoulder","Left Hip","Right Hi
  local base=joint.C0
  joint.C0=base*CFrame.Angles(.35,0,0)
  assert(joint.C0~=base,"Cannot change R6 C0 pose "..jointName)
+ local transform=CFrame.Angles(0,.21,0)
+ joint.Transform=transform
+ assert(joint.Transform==transform,"R6 Transform cannot be animated "..jointName)
+ joint.Transform=CFrame.identity
  joint.C0=base
  table.insert(c0Joints,jointName)
 end
@@ -176,12 +186,13 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-original-best-run-v15",
+ ok=true,version=game.PlaceVersion,build="r6-motion-transform-v16",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
  allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=true,
  runPoseFromMotor6D=true,runBaseTrackIsR6=true,
  originalRunModelAssetId=136548520660837,
+ postAnimatorTransform=true,jumpLatched=true,fallAndLandingPose=true,
  actualRunSequence="Run3 [by Newb1e27]",
  originalKeyframeCounts=sourceRunCounts,runOriginalAssetsModified=false,
  underlyingRunAndWalkTrackSame=runningIds.run==runningIds.walk,
