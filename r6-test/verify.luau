@@ -1,13 +1,23 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-real-motion-v14")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
 assert(sc:FindFirstChild("BoogieSwapInput") and not sc.BoogieSwapInput.Disabled)
 assert(sc:FindFirstChild("NaturalR6Climb") and not sc.NaturalR6Climb.Disabled)
 assert(sc:FindFirstChild("R6CombatInput") and not sc.R6CombatInput.Disabled)
+assert(sc:FindFirstChild("R6PoseController") and not sc.R6PoseController.Disabled)
+assert(sc.R6PoseController.Source:find("RunService.PreSimulation",1,true))
+assert(sc.R6PoseController.Source:find("joint.C0=originals[name]",1,true))
+assert(sc.R6PoseController.Source:find("originals[name]*CFrame.Angles",1,true))
+assert(sc.R6PoseController.Source:find('kind=="run"',1,true))
+assert(sc.R6PoseController.Source:find("M1_1",1,true) and sc.R6PoseController.Source:find("M1_4",1,true))
+assert(sc.R6PoseController.Source:find("ChakraActive",1,true)
+  and sc.R6PoseController.Source:find("Climbing",1,true))
+assert(workspace:GetAttribute("R6RealJointPoseInstalled")==true)
+assert(not sc.R6CombatInput.Source:find("TweenService",1,true))
 assert(sc.R6CombatInput.Source:find('UIS.TouchEnabled',1,true))
 assert(sc.R6CombatInput.Source:find('MouseButton1',1,true))
 assert(sc.R6CombatInput.Source:find('Combo',1,true)==nil or sc.R6CombatInput.Source:find('comboNames',1,true))
@@ -93,8 +103,18 @@ for _, child in ipairs(sc:GetChildren()) do
  clone.Parent = character
 end
 assert(character.Humanoid.RigType == Enum.HumanoidRigType.R6)
-assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb and character.R6CombatInput)
+assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb and character.R6CombatInput and character.R6PoseController)
 assert(character:FindFirstChild("CombatAnimations"))
+local c0Joints={}
+for _,jointName in ipairs({"Left Shoulder","Right Shoulder","Left Hip","Right Hip","Neck","RootJoint"}) do
+ local joint=character:FindFirstChild(jointName,true)
+ assert(joint and joint:IsA("Motor6D"),"Missing essential R6 joint "..jointName)
+ local base=joint.C0
+ joint.C0=base*CFrame.Angles(.35,0,0)
+ assert(joint.C0~=base,"Cannot change R6 C0 pose "..jointName)
+ joint.C0=base
+ table.insert(c0Joints,jointName)
+end
 assert(character.NaturalR6Climb.StaminaBar, "Original stamina module not copied into avatar")
 local animator = character.Humanoid:FindFirstChildOfClass("Animator")
     or Instance.new("Animator", character.Humanoid)
@@ -136,22 +156,25 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-combat-animations-v13",
+ ok=true,version=game.PlaceVersion,build="r6-real-motion-v14",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
- allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=runningIds.run~=runningIds.walk,
+ allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=true,
+ runPoseFromMotor6D=true,runBaseTrackIsR6=true,
+ underlyingRunAndWalkTrackSame=runningIds.run==runningIds.walk,
  sprintTouchButton=true,sprintShiftKey=true,buttonsForAnimationBanks=0,
  boogieMobileButton=true,boogieSwapClapAssets=true,boogieServerValidated=true,
  boogieSoloR6Target=true,positionSwapPivotTest=true,
  automaticR6WallClimb=true,climbButton=false,climbUsesMoveDirection=true,
  combatR6Actions=13,verifiedCombatNames=nativeCombat,combatButtons=5,
  originalBlockedCombatIdsExcluded=true,combatsAreVisualOnly=true,
+ realR6JointAnimation=true,oneR6PoseController=true,jointsValidated=c0Joints,
  originalStaminaModule=true,chakraOptionalTouchButton=true,chakraInitiallyOff=true,
  mutuallyExclusiveChakraAndClimb=true,
  cinematicMenu=true,cinematic3DScene=true,deathScreen=true,
  deathRespawnRemote=true,npcPatrolScript=true,walkingNPCs=4,npcNames=npcResults,
- characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput","NaturalR6Climb","R6CombatInput"},
- noMotor6DPerFrameDriver=true,renderedPlaytest=false,
+ characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput","NaturalR6Climb","R6CombatInput","R6PoseController"},
+ singleMotor6DPreSimulationPoseDriver=true,renderedPlaytest=false,
  nativeAnimationResults=results,
  requestedRunAnimationId=runningIds.run
 })
