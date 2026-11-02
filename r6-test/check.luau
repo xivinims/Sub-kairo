@@ -4,12 +4,15 @@ local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
 local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-r6-motion-v9")
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-boogie-v10")
 assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
 assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
-assert(#sc:GetChildren()==3 and sc:FindFirstChild("Animate")
- and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput"))
+assert(#sc:GetChildren()==4 and sc:FindFirstChild("Animate")
+ and sc:FindFirstChild("ChakraWallWalk") and sc:FindFirstChild("NarutoSprintInput") and sc:FindFirstChild("BoogieSwapInput"))
+assert(sc.BoogieSwapInput.Source==fs.readFile("r6-test/boogie-input.luau"))
+assert(not sc.BoogieSwapInput.Disabled)
+assert(sc.BoogieSwapInput.Source:find("Enum.KeyCode.G",1,true))
 assert(not sc.NarutoSprintInput.Disabled)
 assert(sc.NarutoSprintInput.Source==fs.readFile("r6-test/sprint-input.luau"))
 assert(sc.Animate.R6.Source:find('runningSpeed >= 19',1,true))
@@ -46,7 +49,16 @@ local count=0
 for _,obj in ipairs(g:GetDescendants()) do
  if obj:IsA("LuaSourceContainer") then L.compile(obj.Source);count+=1 end
 end
-assert(#g.ServerScriptService:GetChildren()==1 and g.ServerScriptService.R6AvatarServer)
+assert(#g.ServerScriptService:GetChildren()==2 and g.ServerScriptService.R6AvatarServer)
+assert(g.ServerScriptService.BoogieSwapServer
+ and g.ServerScriptService.BoogieSwapServer.Source==fs.readFile("r6-test/boogie-server.luau"))
+assert(g.ReplicatedStorage.BoogieSwap and g.ReplicatedStorage.ClapAnimation
+ and g.ReplicatedStorage.ClapVFX and g.ReplicatedStorage.SwapSound)
+assert(g.Workspace:GetAttribute("BoogieWoogieInstalled")==true)
+local dummy=g.Workspace:FindFirstChild("BoogieTestDummy")
+assert(dummy and dummy.HumanoidRootPart and dummy.Humanoid)
+assert(dummy.Humanoid.RigType==R.Enum.HumanoidRigType.R6)
+assert(m.boogieWoogie and m.boogieWoogie.testDummy=="BoogieTestDummy")
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
- playerCharacterScripts=3,accessibleR6Animations=7,runningMode=true,otherPacksRemoved=true,touchButton=true},true))
+ playerCharacterScripts=4,accessibleR6Animations=7,runningMode=true,boogieSwap=true,lightweightSoloDummy=true,touchButton=true},true))
