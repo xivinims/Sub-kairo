@@ -43,6 +43,12 @@ async function execute(script,input,version){
 async function main(){
  // This gate precedes every write to the place. No activation endpoint is called.
  await requirePrivate();
+ if((await read('publish.trigger')).includes('runtime-check')){
+  const prelude='local script=game.ServerScriptService.WaterRPGServer\ndo\n'+await read('src/Server.server.lua')+'\nend\n';
+  const abilities='local script=game.ServerScriptService.PlayerAbilities\ndo\n'+await read('src/Abilities.server.lua')+'\nend\n';
+  const checked=await execute(prelude+abilities+'\ntask.wait(.5)\nassert(game.ReplicatedStorage.WaterRPG.State:GetAttribute("RuntimeReady"),"Runtime startup incomplete")\nreturn game:GetService("HttpService"):JSONEncode({ok=true,version=game.PlaceVersion,runtimeReady=true,residents=#workspace.Residents:GetChildren(),abilityReady=true})');
+  console.log('WATER_RPG_RUNTIME_STARTUP '+JSON.stringify(checked));return;
+ }
  const baseline=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion,gameId=game.GameId,placeId=game.PlaceId})');
  if(baseline.gameId!==universe||baseline.placeId!==place)throw Error('Wrong target');
  console.log('WATER_RPG_BASELINE '+JSON.stringify(baseline));
