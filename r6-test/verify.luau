@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-chakra-boogie-v10")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-cinematic-menu-npcs-v11")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
@@ -27,6 +27,32 @@ assert(testTarget and testTarget:FindFirstChild("HumanoidRootPart") and testTarg
 assert(testTarget.Humanoid.RigType==Enum.HumanoidRigType.R6)
 assert(#game.StarterPack:GetChildren() == 0 and #game.StarterGui:GetChildren() == 0)
 assert(game.ServerScriptService.R6AvatarServer)
+assert(game.ServerScriptService.R6AvatarServer.Source:find("respawnRemote.OnServerEvent",1,true),
+ "Death screen respawn remote is not serviced")
+assert(game.ReplicatedStorage.R6MenuRespawn:IsA("RemoteEvent"))
+local menu=game.StarterPlayer.StarterPlayerScripts:FindFirstChild("R6CinematicMenu")
+assert(menu and not menu.Disabled,"Cinematic menu must run on client")
+for _,name in ipairs({"YOU DIED","RESPAWN","RETURN TO MENU","Settings","Credits",
+ "Update Log","Camera Banking","High Quality Graphics","Panel Bob"}) do
+ assert(menu.Source:find(name,1,true),"Missing requested menu element: "..name)
+end
+assert(menu.Source:find('ClientOnlyMenuWorld',1,true))
+assert(menu.Source:find('createBackground',1,true)==nil)
+assert(workspace:GetAttribute("R6DynamicCinematicMenu")==true)
+assert(workspace:GetAttribute("R6DeathMenuInstalled")==true)
+local wanderers=workspace:FindFirstChild("NPCWanderers")
+assert(wanderers and #wanderers:GetChildren()==4,"Expected four NPC walkers in map")
+local npcScript=game.ServerScriptService.NPCWanderServer
+assert(npcScript and not npcScript.Disabled and npcScript.Source:find("hum:MoveTo",1,true))
+local npcResults={}
+for _,npc in ipairs(wanderers:GetChildren()) do
+ assert(npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChildOfClass("Humanoid"))
+ assert(npc.Humanoid.RigType==Enum.HumanoidRigType.R6)
+ assert(npc:GetAttribute("NPCWanderer")==true)
+ assert(not npc.HumanoidRootPart.Anchored,"NPC cannot walk when anchored")
+ table.insert(npcResults,npc.Name)
+end
+assert(workspace:GetAttribute("R6WanderingNPCCount")==4)
 local description = Instance.new("HumanoidDescription")
 local character = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R6)
 character.Parent = workspace
@@ -79,14 +105,17 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-chakra-boogie-v10",
+ ok=true,version=game.PlaceVersion,build="r6-cinematic-menu-npcs-v11",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
  allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=runningIds.run~=runningIds.walk,
  sprintTouchButton=true,sprintShiftKey=true,buttonsForAnimationBanks=0,
  boogieMobileButton=true,boogieSwapClapAssets=true,boogieServerValidated=true,
  boogieSoloR6Target=true,positionSwapPivotTest=true,
+ cinematicMenu=true,cinematic3DScene=true,deathScreen=true,
+ deathRespawnRemote=true,npcPatrolScript=true,walkingNPCs=4,npcNames=npcResults,
  characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput"},
  noMotor6DPerFrameDriver=true,renderedPlaytest=false,
- nativeAnimationResults=results
+ nativeAnimationResults=results,
+ requestedRunAnimationId=runningIds.run
 })
