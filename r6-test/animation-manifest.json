@@ -14,7 +14,20 @@
     "server": "BoogieSwapServer",
     "testDummy": "BoogieTestDummy"
   },
-  "build": "r6-chakra-boogie-v10",
+  "build": "r6-cinematic-menu-npcs-v11",
+  "dynamicMenu": {
+    "client3DCheckerboard": true,
+    "deathRespawn": "R6MenuRespawn",
+    "editableSettings": true,
+    "loadingTransition": true,
+    "screens": [
+      "Home",
+      "Settings",
+      "Credits",
+      "Update",
+      "Death"
+    ]
+  },
   "mobileChakraButton": true,
   "nativeCandidateMeasurements": {
     "102425446560812": {
@@ -72,9 +85,13 @@
     "180436334": {
       "length": 0.45833298563957214,
       "loaded": true
+    },
+    "656118852": {
+      "length": 0.625,
+      "loaded": true
     }
   },
-  "note": "Naruto chakra stays intact. Boogie positional exchange is a minimal mobile/server adaptation of the supplied package; only original clap assets imported. Previously verified R6 locomotion clips reused. A mobile rendered playtest is still required.",
+  "note": "v11: dynamic reference-inspired cinematic 3D menu, settings, update, credits and death respawn plus 4 real patrolling R6 NPCs. Chakra and Boogie preserved. The running asset is selected only if a real R6 native probe loads it.",
   "olderWallRunRemoved": true,
   "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
   "originalSHA256": {
@@ -102,14 +119,43 @@
     "DrawClass",
     "VFX"
   ],
+  "runCandidateProbe": {
+    "107952007153363": {
+      "length": 0,
+      "loaded": true
+    },
+    "656118852": {
+      "length": 0.625,
+      "loaded": true
+    },
+    "72900620651167": {
+      "length": 0,
+      "loaded": true
+    },
+    "93499989310243": {
+      "length": 0,
+      "loaded": true
+    }
+  },
+  "runCatalogCandidateIds": [
+    72900620651167,
+    107952007153363,
+    93499989310243
+  ],
   "selectedAnimationIds": {
     "climb": 180436334,
     "fall": 180436148,
     "idle": 180435571,
     "jump": 125750702,
-    "run": 180426354,
+    "run": 656118852,
     "sit": 178130996,
     "walk": 180426354
   },
-  "source": "WallWalkNarutoV1(5).rbxl"
+  "source": "WallWalkNarutoV1(5).rbxl",
+  "walkingNPCs": {
+    "count": 4,
+    "humanoidMoveTo": true,
+    "rig": "R6",
+    "testableBoogieTargets": true
+  }
 }
