@@ -19,7 +19,7 @@ for _,x in ipairs(rig:GetDescendants()) do if x:IsA('BasePart') then x.Anchored=
 rig.Humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
 local pages={};local frames={};local cameraPose=Instance.new('CFrameValue');local active=false;local busy=false;local hidden={};local disabledBow
 local function page(name,x)
- local p=part(name,Vector3.new(15,12,.1),CFrame.new(origin+Vector3.new(x,3,2)),Color3.fromRGB(17,26,32));p.Transparency=.08
+ local p=part(name,Vector3.new(15,12,.1),CFrame.new(origin+Vector3.new(x,3,2)),Color3.fromRGB(17,26,32));p.Transparency=.08;p.CanQuery=true
  local surface=Instance.new('SurfaceGui');surface.Name=name;surface.Adornee=p;surface.Face=Enum.NormalId.Back;surface.CanvasSize=Vector2.new(750,600);surface.Active=true;surface.LightInfluence=0;surface.Parent=pg
  local f=Instance.new('Frame');f.Size=UDim2.fromScale(1,1);f.BackgroundTransparency=1;f.Parent=surface
  pages[name]=surface;frames[name]=f
@@ -41,7 +41,7 @@ text(main,'Treine. Explore. Teste seus poderes.',205,22)
 local function target(name)
  local x=name=='Settings' and 18 or name=='Help' and -34 or -8
  -- Widen the camera for portrait screens so the complete panel remains visible.
- local aspect=math.max(.4,camera.ViewportSize.X/math.max(1,camera.ViewportSize.Y));local distance=math.max(19,10/aspect)
+ local aspect=math.max(.4,camera.ViewportSize.X/math.max(1,camera.ViewportSize.Y));local distance=math.max(13,12/aspect)
  return CFrame.lookAt(origin+Vector3.new(x+3,4,2+distance),origin+Vector3.new(x,3,2))
 end
 local current='Main';local function route(name)
@@ -57,7 +57,7 @@ local function bowOff(char)
  local b=char:WaitForChild('BowClient',5);if active and b and not b.Disabled then b.Disabled=true;disabledBow=b end
 end
 local function enter()
- if active then return end;active=true;reopen.Visible=false;controls:Disable()
+ if active then return end;active=true;reopen.Visible=false;controls:Disable();UIS.MouseBehavior=Enum.MouseBehavior.Default;UIS.MouseIconEnabled=true
  for _,x in ipairs(pg:GetChildren()) do conceal(x) end
  pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack,false);StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health,false) end)
  if player.Character then task.spawn(bowOff,player.Character) end
