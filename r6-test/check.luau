@@ -168,6 +168,6 @@ assert(m.boogieWoogie and m.boogieWoogie.testDummy=="BoogieTestDummy")
 assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
 print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
  playerCharacterScripts=7,R6PoseMotorController=true,rawOriginalR6Run3=true,originalRunKeyframesUnmodified=true,visualRunFixed=true,
- postAnimatorTransform=true,jumpFallLandModes=true,,combatActions=13,verifiedCombatTracks=#sc.CombatAnimations:GetChildren(),
+ postAnimatorTransform=true,jumpFallLandModes=true,combatActions=13,verifiedCombatTracks=#sc.CombatAnimations:GetChildren(),
  ninjaRunReplacedBecauseR15=true,automaticClimb=true,chakraOptional=true,accessibleR6Animations=7,runningMode=true,
  boogieSwap=true,walkingNPCs=4,cinematicMenu=true,deathMenu=true,touchButton=true},true))
