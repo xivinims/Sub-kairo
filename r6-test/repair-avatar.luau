@@ -191,6 +191,10 @@ input.Source = fs.readFile("r6-test/boogie-input.luau")
 L.compile(input.Source)
 input.Disabled = false
 input.Parent = characterScripts
+local oldBoogieServer = place.ServerScriptService:FindFirstChild("BoogieSwapServer")
+if oldBoogieServer then oldBoogieServer:Destroy() end
+local oldNPCServer = place.ServerScriptService:FindFirstChild("NPCWanderServer")
+if oldNPCServer then oldNPCServer:Destroy() end
 local boogieServer = R.Instance.new("Script")
 boogieServer.Name = "BoogieSwapServer"
 boogieServer.Source = fs.readFile("r6-test/boogie-server.luau")
