@@ -1,43 +1,36 @@
--- Static test of the original Wallrun-only character build.
 local fs=require("@lune/fs")
 local R=require("@lune/roblox")
 local S=require("@lune/serde")
 local L=require("@lune/luau")
 local g=R.deserializePlace(fs.readFile("r6-test/arena.rbxl"))
-local manifest=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
-assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-original-wallrun-only-v7")
-assert(g.Workspace:GetAttribute("R6OriginalWallrunOnly")==true)
-assert(g.ServerScriptService:FindFirstChild("R6AvatarServer"))
-assert(g.ServerScriptService.R6AvatarServer.Source==fs.readFile("r6-test/avatar-server.luau"))
-assert(g.Players.CharacterAutoLoads==false)
+local m=S.decode("json",fs.readFile("r6-test/animation-manifest.json"))
+assert(g.Workspace:GetAttribute("R6TestBuild")=="r6-chakra-wallwalk-v8")
+assert(g.Workspace:GetAttribute("R6ChakraWallWalk")==true)
+assert(m.source=="WallWalkNarutoV1(5).rbxl")
 local sc=g.StarterPlayer.StarterCharacterScripts
-assert(#sc:GetChildren()==1, "Other animation controllers must be deleted")
-local wall=sc:FindFirstChild("Wallrun")
-assert(wall and wall:IsA("LocalScript") and not wall.Disabled)
-assert(S.hash("sha256",wall.Source)==manifest.originalSourceHashes.Wallrun)
-local count=0
-for _,obj in ipairs(wall:GetDescendants()) do
- if obj:IsA("ModuleScript") then
-  assert(manifest.originalSourceHashes[obj.Name], "Unknown module: "..obj.Name)
-  assert(S.hash("sha256",obj.Source)==manifest.originalSourceHashes[obj.Name],
-      "Original module changed: "..obj.Name)
-  L.compile(obj.Source)
-  count+=1
+assert(#sc:GetChildren()==2 and sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
+assert(sc.Animate.Source and sc.Animate.R6 and sc.Animate.Controller)
+assert(not sc.ChakraWallWalk.Disabled)
+assert(sc.ChakraWallWalk.Source:find('SetTitle("ToggleChakraFeet"',1,true))
+assert(sc.ChakraWallWalk.Source:find('Enum.KeyCode.B',1,true))
+assert(not sc:FindFirstChild("Wallrun") and not sc:FindFirstChild("R6Locomotion"))
+local ps=g.StarterPlayer.StarterPlayerScripts
+assert(#ps:GetChildren()==2 and ps.RbxCharacterSounds and ps.PlayerScriptsLoader)
+assert(ps.PlayerScriptsLoader.Loaded.Value==true and ps.PlayerScriptsLoader.Disabled)
+assert(g.ReplicatedStorage.GravityController and g.ReplicatedStorage.DrawClass and g.ReplicatedStorage.VFX.ChakraFeet)
+for name, hash in pairs(m.originalSHA256) do
+ if name~="WallWalk" then
+  local src=(name=="Animate" and sc.Animate)
+   or (name=="RbxCharacterSounds" and ps.RbxCharacterSounds)
+   or g.ReplicatedStorage:FindFirstChild(name)
+  assert(src and S.hash("sha256",src.Source)==hash,"Original Naruto script changed: "..name)
  end
 end
-L.compile(wall.Source)
-assert(count==10 and #wall.Animations:GetChildren()==4)
-for name,id in pairs(manifest.originalAnimationIds) do
- local clip=wall.Animations:FindFirstChild(name)
- assert(clip and clip:IsA("Animation"))
- assert(tostring(clip.AnimationContent):find(id,1,true), "Original AnimationId changed")
+local count=0
+for _,obj in ipairs(g:GetDescendants()) do
+ if obj:IsA("LuaSourceContainer") then L.compile(obj.Source);count+=1 end
 end
-for _,group in ipairs({g.StarterPlayer.StarterPlayerScripts,g.StarterGui,g.StarterPack,
-  g.ServerStorage,g.ReplicatedStorage}) do
- assert(#group:GetChildren()==0, "Other packs still installed: "..group.Name)
-end
-assert(#g.ServerScriptService:GetChildren()==1)
-assert(not g.Workspace:FindFirstChild("TrainingBots"))
-assert(#manifest.installedCharacterScripts==1 and manifest.installedCharacterScripts[1]=="Wallrun")
-print(S.encode("json",{ok=true,build=manifest.build,characterScripts=1,originalModules=count,
- originalAnimations=4,previousAnimationGUI=false,otherPacksRemoved=true},true))
+assert(#g.ServerScriptService:GetChildren()==1 and g.ServerScriptService.R6AvatarServer)
+assert(#g.StarterGui:GetChildren()==0 and #g.StarterPack:GetChildren()==0)
+print(S.encode("json",{ok=true,build=m.build,checked=count,chakraFeet=true,
+ playerCharacterScripts=2,otherPacksRemoved=true,touchButton=true},true))
