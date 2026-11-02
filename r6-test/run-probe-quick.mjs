@@ -41,7 +41,8 @@ try{
  while(["QUEUED","PENDING","PROCESSING"].includes(job.state)){
   if(Date.now()>deadline)throw Error("Roblox animation probe budget expired");
   await new Promise(r=>setTimeout(r,1500));
-  job=await api(job.path.replace(/^\\/cloud\\/v2\\//,""));
+  const route = job.path.startsWith("/cloud/v2/") ? job.path.slice("/cloud/v2/".length) : job.path;
+  job=await api(route);
  }
  if(job.state!=="COMPLETE"||job.error)throw Error("R6 probe task "+JSON.stringify(job.error||job.state).slice(0,250));
  const raw=job.output?.results?.[0];
