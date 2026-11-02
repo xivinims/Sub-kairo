@@ -1,0 +1,26 @@
+name: FPS Map Removal and Spawn Move
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - "dead-signal-publisher/fps-map-spawn-patch.trigger"
+permissions:
+  contents: read
+concurrency:
+  group: roblox-fps-map-spawn-9421311218
+  cancel-in-progress: false
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check release runner syntax
+        run: node --check dead-signal-publisher/fps-map-spawn-patch.mjs
+      - name: Move spawn and remove only the original FPS map
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/fps-map-spawn-patch.mjs
