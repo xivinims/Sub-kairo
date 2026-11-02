@@ -30,7 +30,7 @@ jobs:
       - name: Publish private R6 arena and verify damage and respawn
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        run: node r6-test/publish.mjs
+        run: node r6-test/probe.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

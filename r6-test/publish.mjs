@@ -14,8 +14,8 @@ async function privateOnly(){
  const info=await api(`https://develop.roblox.com/v1/universes/${universe}`);
  if(info.isActive!==false)throw Error('Experience is not confirmed private; patch stopped');
 }
-async function execute(script){
- let job=await api(cloud+`universes/${universe}/places/${place}/luau-execution-session-tasks`,'POST',{timeout:'300s',script});
+async function execute(script,version){
+ let job=await api(cloud+`universes/${universe}/places/${place}/${version?'versions/'+version+'/':''}luau-execution-session-tasks`,'POST',{timeout:'300s',script});
  const until=Date.now()+420000;
  while(['QUEUED','PENDING','PROCESSING'].includes(job.state)){
   if(Date.now()>until)throw Error('Native task timeout');await new Promise(r=>setTimeout(r,1500));job=await api(cloud+job.path);
@@ -30,7 +30,7 @@ async function publish(bytes){
 async function main(){
  await privateOnly();
  const before=await execute('return game:GetService("HttpService"):JSONEncode({version=game.PlaceVersion})');
- if(before.version!==268)throw Error('Expected version 268; refusing to overwrite another change');
+ if(before.version!==270)throw Error('Expected version 270; refusing to overwrite another change');
  const delivery=await api(base+`asset-delivery-api/v1/assetId/${place}/version/${before.version}`);
  const location=delivery.location||delivery.locations?.[0]?.location;if(!location)throw Error('Backup URL missing');
  const response=await fetch(location,{signal:AbortSignal.timeout(180000)});if(!response.ok)throw Error('Backup download failed');
