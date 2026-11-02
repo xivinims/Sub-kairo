@@ -1,12 +1,32 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local sc = game.StarterPlayer.StarterCharacterScripts
-assert(workspace:GetAttribute("R6TestBuild") == "r6-natural-climb-optional-chakra-v12")
+assert(workspace:GetAttribute("R6TestBuild") == "r6-combat-animations-v13")
 assert(workspace:GetAttribute("R6ChakraWallWalk") and workspace:GetAttribute("R6MotionVerifiedAssets"))
 assert(sc:FindFirstChild("Animate") and sc:FindFirstChild("ChakraWallWalk"))
 assert(sc:FindFirstChild("NarutoSprintInput") and not sc.NarutoSprintInput.Disabled)
 assert(sc:FindFirstChild("BoogieSwapInput") and not sc.BoogieSwapInput.Disabled)
 assert(sc:FindFirstChild("NaturalR6Climb") and not sc.NaturalR6Climb.Disabled)
+assert(sc:FindFirstChild("R6CombatInput") and not sc.R6CombatInput.Disabled)
+assert(sc.R6CombatInput.Source:find('UIS.TouchEnabled',1,true))
+assert(sc.R6CombatInput.Source:find('MouseButton1',1,true))
+assert(sc.R6CombatInput.Source:find('Combo',1,true)==nil or sc.R6CombatInput.Source:find('comboNames',1,true))
+assert(workspace:GetAttribute("R6CombatAnimationsInstalled") == true)
+local combatFolder=sc:FindFirstChild("CombatAnimations")
+assert(combatFolder and combatFolder:IsA("Folder"))
+local knownCombatIds={10469493270,10469630950,10469639222,10469643643,
+ 10470389827,10479335397,10491993682,10503381238,10470104242,
+ 12983333733,10466974800,2515090838,13874028312}
+local nativeCombat={}
+for _,animation in ipairs(combatFolder:GetChildren()) do
+ assert(animation:IsA("Animation"),"No scripts or unsupported files within CombatAnimations")
+ assert(animation:GetAttribute("NativeVerifiedR6") == true)
+ local assetId=tonumber(tostring(animation.AnimationId):match("(%d+)$"))
+ local recognized=false
+ for _,candidate in ipairs(knownCombatIds) do if candidate==assetId then recognized=true break end end
+ assert(recognized,"Unrequested combat ID was inserted")
+ table.insert(nativeCombat,animation.Name)
+end
 assert(sc.NaturalR6Climb.StaminaBar and sc.NaturalR6Climb.StaminaBar:IsA("ModuleScript"))
 assert(sc.NaturalR6Climb.Source:find("MoveDirection",1,true), "Mobile joystick movement is not supported")
 assert(sc.NaturalR6Climb.Source:find("not chakra",1,true), "Chakra priority guard missing")
@@ -73,7 +93,8 @@ for _, child in ipairs(sc:GetChildren()) do
  clone.Parent = character
 end
 assert(character.Humanoid.RigType == Enum.HumanoidRigType.R6)
-assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb)
+assert(character.Animate.R6 and character.ChakraWallWalk and character.NarutoSprintInput and character.BoogieSwapInput and character.NaturalR6Climb and character.R6CombatInput)
+assert(character:FindFirstChild("CombatAnimations"))
 assert(character.NaturalR6Climb.StaminaBar, "Original stamina module not copied into avatar")
 local animator = character.Humanoid:FindFirstChildOfClass("Animator")
     or Instance.new("Animator", character.Humanoid)
@@ -115,7 +136,7 @@ clone:Destroy()
 character:Destroy()
 description:Destroy()
 return HttpService:JSONEncode({
- ok=true,version=game.PlaceVersion,build="r6-natural-climb-optional-chakra-v12",
+ ok=true,version=game.PlaceVersion,build="r6-combat-animations-v13",
  chakraWallWalkingPreserved=true,originalNarutoAnimationEvents=true,
  originalNarutoR6RunSelectionFixed=true,animationAssets=runningIds,
  allSevenNativeAnimationsLoaded=true,runAndWalkDistinct=runningIds.run~=runningIds.walk,
@@ -123,11 +144,13 @@ return HttpService:JSONEncode({
  boogieMobileButton=true,boogieSwapClapAssets=true,boogieServerValidated=true,
  boogieSoloR6Target=true,positionSwapPivotTest=true,
  automaticR6WallClimb=true,climbButton=false,climbUsesMoveDirection=true,
+ combatR6Actions=13,verifiedCombatNames=nativeCombat,combatButtons=5,
+ originalBlockedCombatIdsExcluded=true,combatsAreVisualOnly=true,
  originalStaminaModule=true,chakraOptionalTouchButton=true,chakraInitiallyOff=true,
  mutuallyExclusiveChakraAndClimb=true,
  cinematicMenu=true,cinematic3DScene=true,deathScreen=true,
  deathRespawnRemote=true,npcPatrolScript=true,walkingNPCs=4,npcNames=npcResults,
- characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput","NaturalR6Climb"},
+ characterScripts={"Animate","ChakraWallWalk","NarutoSprintInput","BoogieSwapInput","NaturalR6Climb","R6CombatInput"},
  noMotor6DPerFrameDriver=true,renderedPlaytest=false,
  nativeAnimationResults=results,
  requestedRunAnimationId=runningIds.run
