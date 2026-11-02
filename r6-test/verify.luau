@@ -1,11 +1,12 @@
 local Players=game:GetService('Players')
 assert(workspace:GetAttribute('R6TestBuild')=='r6-character-motion-v4')
-assert(#game.StarterPlayer.StarterPlayerScripts:GetChildren()==0,'Preview script remains')
+assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild('R6AnimationTest'),'Old preview remains')
+assert(not game.StarterPlayer.StarterPlayerScripts:FindFirstChild('R6TestControls'),'Old UI remains')
 assert(not game.ReplicatedStorage:FindFirstChild('R6AnimationCatalog'))
 assert(not game.StarterPlayer:FindFirstChild('StarterCharacter'))
 local sc=game.StarterPlayer.StarterCharacterScripts
 assert(sc.Animate.Controller and sc.Animate.R6 and sc.Animate.Loaded)
-assert(sc.Animate.Disabled and sc.R6Locomotion and not sc.R6Locomotion.Disabled,'R6 local movement driver missing')
+assert(not sc.Animate.Enabled and sc.R6Locomotion and sc.R6Locomotion.Enabled,'R6 local movement driver missing')
 assert(sc.R6Locomotion.Source:find('RunService.PreSimulation',1,true))
 assert(workspace:GetAttribute('R6LocomotionInstalled')==true)
 assert(not sc.Animate:FindFirstChild('R15'))
@@ -22,7 +23,7 @@ local humanoid=character.Humanoid
 assert(humanoid.RigType==Enum.HumanoidRigType.R6)
 for _,child in ipairs(sc:GetChildren()) do
  local old=character:FindFirstChild(child.Name);if old then old:Destroy() end
- local clone=child:Clone();if clone:IsA('LocalScript') then clone.Disabled=true end;clone.Parent=character
+ local clone=child:Clone();if clone:IsA('LocalScript') then clone.Enabled=false end;clone.Parent=character
 end
 assert(character.Animate.R6 and character.Run and character.Wallrun and character.Animations)
 assert(character.R6Locomotion and not character.R6Locomotion.Enabled,'Locomotion must be inside the avatar but disabled only in server-side probe')
