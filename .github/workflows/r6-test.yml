@@ -1,0 +1,40 @@
+name: R6 test arena
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths: ['r6-test/publish.trigger']
+permissions:
+  contents: read
+concurrency:
+  group: roblox-water-rpg-9421311218
+  cancel-in-progress: false
+jobs:
+  menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Install verified Luau runtime
+        run: |
+          curl -fsSL https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip -o /tmp/lune.zip
+          echo '39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1  /tmp/lune.zip' | sha256sum --check
+          unzip -q /tmp/lune.zip -d /tmp/water-lune
+          chmod +x /tmp/water-lune/lune
+      - name: Validate R6 rigs and unmodified imported sources
+        run: |
+          node --check r6-test/publish.mjs
+          /tmp/water-lune/lune run r6-test/check.luau
+      - name: Publish private R6 arena and verify damage and respawn
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node r6-test/publish.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r6-arena-verification
+          path: |
+            r6-test/publication.json
+            r6-test/backup-before-arena.rbxl
