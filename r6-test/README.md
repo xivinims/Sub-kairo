@@ -1,5 +1,12 @@
 # R6 character motion
 
+## R6 animation bank selector (v5)
+
+**Dois botões no topo** do HUD (`R6 PADRÃO` e `R6 ARQUIVOS`) alternam os bancos, nunca tocando os dois simultaneamente. `AnimationBankGUI` só escolhe o banco, e o script `R6Locomotion` continua dentro do avatar, responsável por parar as tracks antigas e iniciar apenas as do banco selecionado. Padrão: animações R6 acessíveis do controlador original. Arquivos: animações `UploadedMotion` identificadas por movimento e, se uma animation ID não carregar, `KeyframeSequence` correspondente ao mesmo movimento em `Animations.Emotes`. Se ambos falharem, utiliza R6 padrão sem fingir que o arquivo importado funcionou. Os demais emotes em KeyframeSequence são acessíveis por `/r6 nome` apenas no banco ARQUIVOS, e param quando se escolhe PADRÃO.
+
+Apenas os dois botões são criados: nenhum painel de catálogo. Os arquivos originais e 19 emotes continuam intactos. Para construir v5: `lune run r6-test/repair-avatar.luau`; a workflow automatiza a checagem e publicação apenas na experiência privada de teste.
+
+
 ## Correção do avatar R6 (v4)
 
 O jogo agora inclui `R6Locomotion`, um LocalScript instalado **dentro de cada avatar** pelo `StarterCharacterScripts`. Ele executa idle, caminhada, corrida, pulo, queda, escalada e sentar automaticamente, conforme o Humanoid, sem catálogo ou botão de animações. Ele usa primeiro os objetos de animação do módulo R6 importado, depois os R6 públicos e, caso Roblox não carregue o ID, uma animação local de emergência por Motor6D. O controle original e todos os KeyframeSequences originais continuam preservados, com o Animate antigo desabilitado para não disputar as juntas.
