@@ -1,3 +1,19 @@
+# Animações de combate R6 + corrida Ninja (v13)
+
+Atualização do **teste R6** (branch `dead-signal-publisher`, `r6-test/`). O pacote de combate foi integrado **como animações visuais**, sem dano ou novos scripts de física de combate. O avatar preserva `Animate`, corrida Ninja, Chakra opcional, escalada automática, Boogie Woogie, menu 3D e NPCs.
+
+**Quatro socos em sequência:** M1 / toque em **SOCO** alterna as animações `10469493270`, `10469630950`, `10469639222`, `10469643643` se disponíveis. **Defesa** `10470389827` (F / DEF). **Esquiva** frente `10479335397` ou trás `10491993682` conforme direção (Q / ESQ). **Chutes** alternados `2515090838` e `13874028312` (E / CHUTE). **Especiais** ciclam uppercut `10503381238`, downslam `10470104242`, soco forte `12983333733` e socos consecutivos `10466974800` (R / ESP.).
+
+Os **quatro links de pacotes completos** enviados pelo usuário ficam registrados no manifesto como referências para importação futura: `16663903306`, `75164220659481`, `125909948357929`, `114132474839078`. Não executamos scripts de terceiros contidos em modelos inteiros sem inspecioná-los; os 13 AnimationIds individuais são testados diretamente dentro do Roblox. Apenas tracks com `AnimationTrack.Length > 0.07` entram no `CombatAnimations`. IDs bloqueados recebem um gesto local e breve das juntas R6, claramente indicado no manifesto como **alternativa**, não a animação original. Não foram adicionadas animações R15 ou controles de seleção para a caminhada.
+
+Os movimentos não interferem com a escalada natural: os comandos ficam indisponíveis enquanto `Climbing=true`. O menu e a tela de morte bloqueiam o combate, e a HUD no celular usa pequenos botões circulares no lado direito central para não cobrir os controles de corrida/chakra/boogie.
+
+**Corrida:** preservada a `656118852` Ninja Run real, testada com duração positiva, diferente do `180426354` de caminhada. Os IDs fornecidos para Survivor `72900620651167`, Chance `107952007153363` e Two Time `93499989310243` foram testados e deram duração zero nessa experiência. Por isso não é correto ativá-los como corrida funcional sem permissão do criador.
+
+A workflow `r6-test.yml` gera `combat-probe.json`, reconstrói `arena.rbxl`, valida o lugar com Lune, faz backup da experiência privada e confirma no Roblox os scripts e pistas de animação R6. A verificação automática não reproduz uma partida mobile completa; a aparência final das ações precisa ser observada pelo jogador.
+
+---
+
 # Escalada natural R6 + chakra opcional (v12)
 
 O jogador **não recebe botão para escalar**. O sistema do arquivo `R15 & R6 Wall Climbing System.rbxl` foi adaptado apenas para R6: caminhe para a frente contra uma superfície vertical, com **joystick no celular ou WASD no PC**, para começar a escalar. Parar de avançar, se afastar da parede ou ficar sem energia termina a escalada. O sistema detecta paredes com raycast a cada 0,09 s, movimenta o personagem para cima e toca a animação R6 `Animate.climb.ClimbAnim`. Não instala a variante R15. O script `NaturalR6Climb` fica dentro do avatar junto ao módulo `StaminaBar` original, com 100 de energia, consumo de 15/s, recuperação de 12/s e recarga de 2 s quando esgota. A barra de energia aparece só durante a escalada ou recuperação, para não ficar poluindo o GUI.
