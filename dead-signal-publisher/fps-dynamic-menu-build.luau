@@ -9,7 +9,7 @@ assert(source:find("local REVISION = 'fps-menu-sliding-v1'", 1, true), 'Menu rev
 assert(source:find("TweenService:Create(old", 1, true), 'Tab transition must slide the old screen out')
 assert(source:find("TweenService:Create(nextPage", 1, true), 'Tab transition must slide the next screen in')
 assert(source:find("CFrame.lookAt(origin + Vector3.new(offset", 1, true), 'Tab transitions must pan the menu camera')
-assert(source:find("'JOGAR'", 1, true) and source:find("'CONFIGURAÇÕES'", 1, true), 'Main menu navigation is incomplete')
+assert(source:find('JOGAR', 1, true) and source:find('CONFIGURAÇÕES', 1, true), 'Main menu navigation is incomplete')
 
 local bundle = Roblox.Instance.new('Model')
 bundle.Name = 'FPSDynamicMenuPatch'
