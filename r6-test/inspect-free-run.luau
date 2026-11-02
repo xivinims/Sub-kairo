@@ -11,7 +11,7 @@ for _,top in ipairs(model) do
  for _,x in ipairs({top,table.unpack(top:GetDescendants())}) do
   counts[x.ClassName]=(counts[x.ClassName] or 0)+1
   if x:IsA("Animation") then table.insert(animations,{name=x.Name,id=x.AnimationId}) end
-  if x:IsA("KeyframeSequence") then table.insert(keyframes,{name=x.Name,length=#x:GetKeyframes()}) end
+  if x:IsA("KeyframeSequence") then table.insert(keyframes,{name=x.Name,length=#x:GetChildren()}) end
   if x:IsA("LuaSourceContainer") then
    table.insert(scripts,{name=x.Name,className=x.ClassName,sourceSize=#x.Source})
   end
