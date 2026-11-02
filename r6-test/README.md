@@ -1,11 +1,21 @@
-# Naruto R6 com animações completas: parado, andar, correr, pular (v9)
+# Naruto R6 + Boogie Woogie (v10)
 
-Os arquivos `WallWalkNarutoV1(5).rbxl` e `BoogieWoogieV1(5).rbxl` foram inspecionados. O **Naruto** oferece o chakra nos pés, o movimento na parede e o controlador R6 com a integração de gravidade. O **Boogie** traz candidatos diferentes de animação R6 para parado (`102425446560812`), andar (`17747141146`), correr (`11605590459`), pular (`17747185294`), cair (`17747187834`) e escalar (`11605578996`).
+O pacote principal de movimento continua sendo `WallWalkNarutoV1(5).rbxl` com seu chakra nos pés, animações R6 verificadas, o botão **CHAKRA** e **CORRER**. Sem os antigos menus de seleção de animações nem um controlador que mova joints a cada quadro.
 
-**Antes de construir**, o teste executa a rotina `animation-probe.mjs` diretamente no universo Roblox e mede `AnimationTrack.Length` em um boneco R6 real. O arquivo `animation-probe.json` registra os resultados. O construtor usa apenas animações com duração não zero; caso os IDs do Boogie estejam inacessíveis, escolhe os IDs R6 públicos efetivamente carregados. Não troca nenhum ID por uma referência inventada.
+## Boogie Woogie do Jujutsu Kaisen
 
-No avatar ficam somente **`Animate`**, **`ChakraWallWalk`** e **`NarutoSprintInput`**. O `Animate` mantém os scripts originais do Naruto e a integração do `GravityController`. A mudança é localizada no módulo R6 original: ele agora seleciona **run** de forma distinta de **walk** em velocidades acima de 19, inclusive quando o chakra está ativo, e usa as animações verificadas. O arquivo original Naruto continua preservado no histórico do Git.
+Adicionado a partir de `BoogieWoogieV1(5).rbxl`. A habilidade troca **as posições de dois personagens**, e não as roupas, avatares ou identidades.
 
-O script `NarutoSprintInput` altera exclusivamente `Humanoid.WalkSpeed` entre 16 e 24 com Shift ou o botão mobile **CORRER**. Ele não reproduz tracks, não altera Motor6D e não usa RenderStepped. O botão de **CHAKRA** permanece disponível. Não são reinstalados o catálogo de animações, o Wall Run antigo, NPCs, arco nem outros pacotes.
+- **Celular:** botão **BOOGIE** à direita, acima de CHAKRA. Olhe na direção de outro personagem e toque. Se não houver outro jogador, existe um único `BoogieTestDummy` R6 próximo ao spawn para testar sozinho.
+- **Computador:** tecla **G**. O alvo mais próximo do centro da câmera tem prioridade.
+- **Efeito:** reaproveita o `ClapAnimation`, o `ClapVFX` e o `SwapSound` originais do Boogie. As permissões do ID da animação de bater palmas ainda podem impedir a animação visual, mas a troca de posições funciona independentemente da animação de palmas.
+- **Sem conflito:** dois novos scripts leves, `BoogieSwapInput` dentro do avatar e `BoogieSwapServer` no servidor. Não executam loops contínuos. Validação no servidor limita a troca a 65 studs, entre o jogador e outro personagem vivo ou o boneco de teste, com intervalo de 1,6 segundo. Não permite selecionar peças soltas do mapa.
+- **Desempenho:** partículas com emissão limitada, sem câmera personalizada, sem catálogo de animações, sem extras de combate e sem outros scripts do Boogie que modificariam movimento ou animação.
 
-A publicação ainda necessita de teste visual real em um cliente Roblox. A verificação nativa confirma que cada animação carrega e o avatar é R6, mas não simula uma sessão mobile.
+Por que não copiamos literalmente o servidor inteiro do modelo: o código original aceita duas peças arbitrárias enviadas pelo cliente, sem limitar distância. Foi usada uma adaptação compacta e validada, preservando a habilidade e os recursos audiovisuais originais.
+
+O arquivo original de Boogie está preservado pelo histórico do repositório. A verificação técnica de publicação confirma modelos R6, scripts e uma troca de posição entre dois modelos, mas **não substitui o teste visual jogando no celular**.
+
+## Animações R6
+
+O carregamento dos IDs Boogie originais de correr, caminhar e pular retornou duração zero na experiência de teste; o Naruto usa os R6 básicos que carregaram. A tentativa seguinte de conferir candidatos adicionais no Roblox expirou, então a publicação v10 reutiliza as animações R6 que haviam sido efetivamente verificadas, sem assumir que novos IDs funcionam.
