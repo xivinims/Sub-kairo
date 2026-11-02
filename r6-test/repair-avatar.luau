@@ -222,6 +222,8 @@ dummyHumanoid.DisplayName = "BOOGIE | ALVO"
 dummy:SetAttribute("BoogieTestTarget", true)
 
 -- Three lightweight R6 wanderers near the spawn, visible after Play.
+local previousNPCFolder = place.Workspace:FindFirstChild("NPCWanderers")
+if previousNPCFolder then previousNPCFolder:Destroy() end
 local npcFolder = R.Instance.new("Folder")
 npcFolder.Name = "NPCWanderers"
 npcFolder.Parent = place.Workspace
