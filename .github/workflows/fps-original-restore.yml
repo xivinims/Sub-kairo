@@ -1,0 +1,30 @@
+name: Restore Original FPS GUI and Guns
+
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - "dead-signal-publisher/fps-original-restore.trigger"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-fps-original-restore-9421311218
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Validate restore script syntax
+        run: node --check dead-signal-publisher/fps-original-restore-release.mjs
+      - name: Native Roblox original FPS restore preflight or publication
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node dead-signal-publisher/fps-original-restore-release.mjs

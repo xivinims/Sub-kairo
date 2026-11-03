@@ -1,0 +1,365 @@
+{
+  "boogieWoogie": {
+    "ability": "Swap positions with one target",
+    "cooldownSeconds": 1.6,
+    "maxDistanceStuds": 65,
+    "mobileKey": "G",
+    "originalClapAssets": [
+      "ClapAnimation",
+      "ClapVFX",
+      "SwapSound"
+    ],
+    "package": "BoogieWoogieV1(5).rbxl",
+    "remote": "BoogieSwap",
+    "server": "BoogieSwapServer",
+    "testDummy": "BoogieTestDummy"
+  },
+  "build": "r6-motion-transform-v16",
+  "chakraToggle": {
+    "button": "CHAKRA OFF / CHAKRA ON",
+    "initialState": false,
+    "key": "B",
+    "optional": true,
+    "stateAttribute": "ChakraActive"
+  },
+  "combat": {
+    "actions": [
+      "Block",
+      "DodgeFront",
+      "DodgeBack",
+      "Uppercut",
+      "Downslam",
+      "HeavyPunch",
+      "Barrage",
+      "Kick_1",
+      "Kick_2"
+    ],
+    "allSuppliedAnimationIds": {
+      "Barrage": 10466974800,
+      "Block": 10470389827,
+      "DodgeBack": 10491993682,
+      "DodgeFront": 10479335397,
+      "Downslam": 10470104242,
+      "HeavyPunch": 12983333733,
+      "Kick_1": 2515090838,
+      "Kick_2": 13874028312,
+      "M1_1": 10469493270,
+      "M1_2": 10469630950,
+      "M1_3": 10469639222,
+      "M1_4": 10469643643,
+      "Uppercut": 10503381238
+    },
+    "combo": [
+      "M1_1",
+      "M1_2",
+      "M1_3",
+      "M1_4"
+    ],
+    "fallback": "Local R6 cosmetic pose for unavailable animation IDs; not original Roblox uploaded clips",
+    "measuredInUniverse": {
+      "10466974800": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469493270": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469630950": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469639222": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10469643643": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10470104242": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10470389827": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10479335397": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10491993682": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "10503381238": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "12983333733": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "13874028312": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      },
+      "2515090838": {
+        "length": 0,
+        "loaded": true,
+        "usable": false
+      }
+    },
+    "mobileButtons": [
+      "SOCO",
+      "DEF",
+      "ESQ",
+      "CHUTE",
+      "ESP."
+    ],
+    "networkAttacks": false,
+    "onlyR6": true,
+    "pcKeys": [
+      "MouseButton1",
+      "F",
+      "Q",
+      "E",
+      "R"
+    ],
+    "sourceModelCatalog": [
+      16663903306,
+      75164220659481,
+      125909948357929,
+      114132474839078
+    ],
+    "unavailableAnimationIds": {
+      "Barrage": 10466974800,
+      "Block": 10470389827,
+      "DodgeBack": 10491993682,
+      "DodgeFront": 10479335397,
+      "Downslam": 10470104242,
+      "HeavyPunch": 12983333733,
+      "Kick_1": 2515090838,
+      "Kick_2": 13874028312,
+      "M1_1": 10469493270,
+      "M1_2": 10469630950,
+      "M1_3": 10469639222,
+      "M1_4": 10469643643,
+      "Uppercut": 10503381238
+    },
+    "usableAnimationIds": {}
+  },
+  "dynamicMenu": {
+    "client3DCheckerboard": true,
+    "deathRespawn": "R6MenuRespawn",
+    "editableSettings": true,
+    "loadingTransition": true,
+    "screens": [
+      "Home",
+      "Settings",
+      "Credits",
+      "Update",
+      "Death"
+    ]
+  },
+  "locomotionPoseDriver": {
+    "application": "Motor6D.Transform in RunService.PreSimulation (after Animator)",
+    "joint": "Motor6D.C0",
+    "jumpStateDelaySeconds": 0.23,
+    "mode": [
+      "idle",
+      "walk",
+      "run",
+      "jump",
+      "fall"
+    ],
+    "priority": "Yield to optional Chakra and natural wall climb",
+    "rig": "R6",
+    "runningWhenWalkSpeedAtLeast": 19,
+    "script": "R6PoseController",
+    "sharedWithCombat": true,
+    "sprint": "Distinct handcrafted R6 pose cycle; replaces incompatible Ninja R15 asset",
+    "states": [
+      "idle",
+      "walk",
+      "run",
+      "jump",
+      "fall",
+      "land"
+    ],
+    "tracksOwnedByNarutoAnimator": true
+  },
+  "mobileChakraButton": true,
+  "nativeCandidateMeasurements": {
+    "102425446560812": {
+      "length": 0,
+      "loaded": true
+    },
+    "11123175969": {
+      "length": 0,
+      "loaded": true
+    },
+    "11605578996": {
+      "length": 0,
+      "loaded": true
+    },
+    "11605590459": {
+      "length": 0,
+      "loaded": true
+    },
+    "125750702": {
+      "length": 0.625,
+      "loaded": true
+    },
+    "17747141146": {
+      "length": 0,
+      "loaded": true
+    },
+    "17747185294": {
+      "length": 0,
+      "loaded": true
+    },
+    "17747187834": {
+      "length": 0,
+      "loaded": true
+    },
+    "178130996": {
+      "length": 2,
+      "loaded": true
+    },
+    "180426354": {
+      "length": 0.6666669845581055,
+      "loaded": true
+    },
+    "180435571": {
+      "length": 1,
+      "loaded": true
+    },
+    "180435792": {
+      "length": 2,
+      "loaded": true
+    },
+    "180436148": {
+      "length": 0.6499999761581421,
+      "loaded": true
+    },
+    "180436334": {
+      "length": 0.45833298563957214,
+      "loaded": true
+    },
+    "656118852": {
+      "length": 0.625,
+      "loaded": true
+    }
+  },
+  "naturalClimb": {
+    "blockedWhenChakraActive": true,
+    "button": false,
+    "climbingAnimation": "Animate.climb.ClimbAnim",
+    "cooldownSeconds": 2,
+    "drainPerSecond": 15,
+    "maxStamina": 100,
+    "mode": "automatic-on-forward-into-wall",
+    "package": "R15 & R6 Wall Climbing System.rbxl",
+    "recoverPerSecond": 12,
+    "rig": "R6",
+    "staminaModule": "StaminaBar",
+    "usesJoystick": true
+  },
+  "note": "v16 fixes animation invisibility from writing C0 concurrently with the Naruto Animator: one R6 PoseController writes Transform after Animator in PreSimulation; jump state is latched and fall/land are distinct. The original Run3 raw keyframes stay untouched. Existing powers/menu/NPCs preserved.",
+  "olderWallRunRemoved": true,
+  "originalNarutoR6SHA256": "571a1392e3bab92efc4ac61f3e70df784f8aad2bfb0865d582b841243f7e283b",
+  "originalR6Run": {
+    "assetId": 136548520660837,
+    "modifiedOriginals": false,
+    "originalKeyframeCounts": {
+      "Run1 [by M0rsDev]": 40,
+      "Run2 [by Gusthabuo777]": 41,
+      "Run3 [by Newb1e27]": 17
+    },
+    "selected": "Run3 [by Newb1e27]",
+    "source": "Best Run Animations R6",
+    "sourceHash": "6e67ff947d8d6b138ea1a858fbc93c1e5889122f15ddb09f64f0af9fdcd36df9",
+    "sourceOfTruth": "raw KeyframeSequence (NOT a published animation ID)"
+  },
+  "originalSHA256": {
+    "Animate": "255cc6c9c8144b8962851a4ab0ab9aa80e415741afc5dbdaaecf5e6678ffe03d",
+    "DrawClass": "11d6dc3209b17406cf915c505b53e292c5b3b7595de84eaf8fe7426027af8d88",
+    "GravityController": "3ff2b6d8a425f1ef61b2ee84ddd138035d9d75acb706c5a830ce097f92129f3e",
+    "RbxCharacterSounds": "eced77a0fe96ffd1fc5cb0914718434c12c61c5bcf9be457f13e7b00453be233",
+    "WallWalk": "5d41e96a5dd7393a2d238e2726022371125f72db7929586708c54355135016ca"
+  },
+  "originalWallWalkSourceSHA256": "5d41e96a5dd7393a2d238e2726022371125f72db7929586708c54355135016ca",
+  "otherPacksExcluded": true,
+  "patchedNarutoR6Motion": true,
+  "playerCharacter": [
+    "Animate",
+    "ChakraWallWalk",
+    "NarutoSprintInput",
+    "BoogieSwapInput",
+    "NaturalR6Climb",
+    "R6CombatInput",
+    "R6PoseController"
+  ],
+  "playerScripts": [
+    "RbxCharacterSounds",
+    "PlayerScriptsLoader"
+  ],
+  "replicatedDependencies": [
+    "GravityController",
+    "DrawClass",
+    "VFX"
+  ],
+  "runCandidateProbe": {
+    "107952007153363": {
+      "length": 0,
+      "loaded": true
+    },
+    "656118852": {
+      "length": 0.625,
+      "loaded": true
+    },
+    "72900620651167": {
+      "length": 0,
+      "loaded": true
+    },
+    "93499989310243": {
+      "length": 0,
+      "loaded": true
+    }
+  },
+  "runCatalogCandidateIds": [
+    72900620651167,
+    107952007153363,
+    93499989310243
+  ],
+  "selectedAnimationIds": {
+    "climb": 180436334,
+    "fall": 180436148,
+    "idle": 180435571,
+    "jump": 125750702,
+    "run": 180426354,
+    "sit": 178130996,
+    "walk": 180426354
+  },
+  "source": "WallWalkNarutoV1(5).rbxl",
+  "walkingNPCs": {
+    "count": 4,
+    "humanoidMoveTo": true,
+    "rig": "R6",
+    "testableBoogieTargets": true
+  }
+}

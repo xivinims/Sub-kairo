@@ -1,0 +1,221 @@
+{
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "branch": "roblox-publisher",
+  "version": 88,
+  "publishCommit": "192cc78c36b2b9470275e40404d564fc729ff45d",
+  "workflowRunId": 38486776784,
+  "installerSha256": "4ed96cb287d2902201ad89f0c729e67251db32a2ddf29b0afa113c9f4858c4aa",
+  "publicationTime": "2026-10-13T23:51:43.159Z",
+  "freshVerificationTime": "2026-10-13T23:51:53.26Z",
+  "freshVerification": {
+    "rendererBeforeStartup": "Enum.LightingStyle.Soft",
+    "renderingBootstrapVerified": true,
+    "forestOnly": true,
+    "tests": {
+      "greetingAudioLoaded": true,
+      "grassCoverageMisses": 0,
+      "pbrAppearances": 3430,
+      "sunDirectionSamples": [
+        [
+          0.9969170093536377,
+          1.6241840228303772e-07,
+          0.07846290618181229
+        ],
+        [
+          -3.2483652034898114e-07,
+          0.9969161152839661,
+          0.0784742534160614
+        ],
+        [
+          -0.9969146251678467,
+          -1.1888087847466977e-08,
+          0.0784931629896164
+        ],
+        [
+          0,
+          -0.9969173073768616,
+          0.07845912873744965
+        ]
+      ],
+      "streamingEnabled": true,
+      "rendering": "Enum.LightingStyle.Realistic",
+      "cycleSeconds": 960,
+      "lanterns": 22,
+      "yayAudioLoaded": true,
+      "ownerAvatarUserId": 8344738123,
+      "grassRootOverlap": 1.6151506900787354,
+      "plants": 1709,
+      "grassRootWindStable": true,
+      "maximumSupportGap": 0,
+      "yayAudioLength": 1.123265306122449,
+      "woodenBridges": 2,
+      "grassSampledZones": 3,
+      "trees": 483,
+      "shaderPresetAssetId": 8490242417,
+      "continuousWalkwayProbes": 82,
+      "parts": 6103,
+      "validGrassRoots": 33957,
+      "foreignScripts": 0,
+      "treeHeightRange": [
+        31.165424346923828,
+        103.47746276855469
+      ],
+      "grassPriorityCorrect": true,
+      "forestOnly": true,
+      "npcSeated": true,
+      "grassCoveragePoints": 860,
+      "compiledScriptsAndModules": 25,
+      "buriedExamples": [
+        {
+          "scale": 1.8509657296431816,
+          "position": [
+            -199.29180908203125,
+            16.033123016357422,
+            -297.2133483886719
+          ],
+          "kind": "Trees",
+          "burial": 2.7806434631347656,
+          "name": "DogwoodTree_Var01"
+        },
+        {
+          "scale": 0.8621093255212016,
+          "position": [
+            -324.21368408203125,
+            26.654817581176758,
+            -205.06651306152344
+          ],
+          "kind": "Trees",
+          "burial": 2.770811080932617,
+          "name": "MapleLeafTreeVar01"
+        },
+        {
+          "scale": 2.6635484268029535,
+          "position": [
+            -148.86453247070312,
+            38.37788391113281,
+            -149.19667053222656
+          ],
+          "kind": "Trees",
+          "burial": 2.7572479248046875,
+          "name": "DogwoodTree_Var01"
+        },
+        {
+          "scale": 2.545989524610224,
+          "position": [
+            87.24019622802734,
+            12.842058181762695,
+            -327.6651611328125
+          ],
+          "kind": "Trees",
+          "burial": 2.6481151580810547,
+          "name": "BeechwoodTree_Var02"
+        },
+        {
+          "scale": 1.4947178851689586,
+          "position": [
+            -80.85900115966797,
+            9.314948081970215,
+            -339.82659912109375
+          ],
+          "kind": "Trees",
+          "burial": 2.640679359436035,
+          "name": "MapleLeafTreeVar01"
+        },
+        {
+          "scale": 0.42577054601590975,
+          "position": [
+            205.7063446044922,
+            79.48905944824219,
+            189.0757293701172
+          ],
+          "kind": "Trees",
+          "burial": 2.6285781860351562,
+          "name": "RedwoodTree-Var01"
+        },
+        {
+          "scale": 2.0880232460754935,
+          "position": [
+            -141.89337158203125,
+            33.90419387817383,
+            -120.14277648925781
+          ],
+          "kind": "Trees",
+          "burial": 2.6260147094726562,
+          "name": "BeechwoodTree_Var02"
+        },
+        {
+          "scale": 1.3403664306220546,
+          "position": [
+            220.4319305419922,
+            11.67148494720459,
+            -288.45196533203125
+          ],
+          "kind": "Trees",
+          "burial": 2.6240434646606445,
+          "name": "MapleLeafTreeVar01"
+        },
+        {
+          "scale": 0.5349972203330511,
+          "position": [
+            -19.677213668823242,
+            13.4771728515625,
+            192.26268005371094
+          ],
+          "kind": "Trees",
+          "burial": 2.6109771728515625,
+          "name": "BeechwoodTree_Var01"
+        },
+        {
+          "scale": 2.3060483256525393,
+          "position": [
+            32.05891036987305,
+            18.114055633544922,
+            -39.037818908691406
+          ],
+          "kind": "Trees",
+          "burial": 2.601215362548828,
+          "name": "BeechwoodTree_Var02"
+        },
+        {
+          "scale": 1.729386339630016,
+          "position": [
+            -305.01806640625,
+            42.95341491699219,
+            136.2243194580078
+          ],
+          "kind": "Trees",
+          "burial": 2.597728729248047,
+          "name": "MapleLeafTreeVar01"
+        },
+        {
+          "scale": 0.5325324684246766,
+          "position": [
+            -292.0213317871094,
+            22.282482147216797,
+            222.32647705078125
+          ],
+          "kind": "Trees",
+          "burial": 2.582134246826172,
+          "name": "BeechwoodTree_Var01"
+        }
+      ],
+      "maximumSupportBurial": 2.7806434631347656,
+      "greetingAudioLength": 2.5542083333333334,
+      "cutTrunks": 25,
+      "greenTerrainProbes": 684,
+      "terrainProbes": 899,
+      "npcWaveAndLookKeepBodyFixed": true,
+      "logSeats": 16,
+      "trailProbes": 21,
+      "waterProbes": 168,
+      "extendedWaterSurface": true,
+      "riverContinuityProbes": 73,
+      "realMeshParts": 3430,
+      "supportPoints": 29386
+    },
+    "version": 88,
+    "ok": true
+  },
+  "visualAndPhoneFpsChecked": false
+}

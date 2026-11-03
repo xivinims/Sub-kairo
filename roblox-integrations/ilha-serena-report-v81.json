@@ -1,0 +1,291 @@
+{
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "baseVersion": 80,
+  "publishedVersion": 81,
+  "repository": "xivinims/Sub-kairo",
+  "branch": "roblox-publisher",
+  "sourceCommit": "fa21bbbf403661cffe263e74e1174dc657cd7c04",
+  "sourceSHA256": {
+    "install81.luau": "8b942dfadea33fa7da21fa5cd20b1adae5bfa17c547cdb698e8163c3ac9d7bf7",
+    "verify81.luau": "69a647068c193f4e5d1311f852595f4c16064dd5fbc0745fefa203403072b286",
+    "notes81.md": "3406cd42c2ca8e7424ec8bae6cfaa67593a657811a0571703ebcd4dae1b3a54a"
+  },
+  "publicationDeployment": "dpl_3TdAyRWbz8ex3QAGbxqRCnCGSxbA",
+  "verificationDeployment": "dpl_6rBY8pUTrdmk2npRNpw5UfNJRCff",
+  "staging": {
+    "sourceVersion": 80,
+    "geometry": {
+      "parts": 4960,
+      "realOaks": 100,
+      "realMeshParts": 407,
+      "personalWeatherPreserved": true,
+      "clearHouseDoors": 7,
+      "usableBoatOnWater": true,
+      "maxGrade": 0.5385004679361979,
+      "groundedTrees": 100,
+      "hdSkyPreserved": true,
+      "compiledScripts": 15,
+      "walkSamples": 354,
+      "interactiveGrassPreserved": true,
+      "unanchoredMasslessRealTools": true
+    },
+    "interiors": {
+      "assets": [
+        {
+          "creator": "visionpsyche7",
+          "id": 2109355142
+        },
+        {
+          "creator": "BIond_e",
+          "id": 6319697240
+        }
+      ],
+      "readyFurnishedCabins": 4,
+      "cottagesWithStoreInterior": 3
+    },
+    "behavior": {
+      "bridgeGraceAndRepeat": true,
+      "boatReturnsAfter60Seconds": true,
+      "boatDriverOnly": true,
+      "unequipCleanup": true,
+      "boatInputTimeout": true,
+      "stationaryCollision": true,
+      "boatMovement": true,
+      "privateCurrency": true,
+      "boatObstacleStop": true,
+      "fishingCatchAndTimeout": true,
+      "failedSaleRetryWithoutDuplicateCoins": true,
+      "waterOnlyCasting": true
+    },
+    "published": false,
+    "clients": {
+      "exactWindShake": true,
+      "exactWindTrails": true,
+      "touchBoatForwardReleaseAndExit": true,
+      "personalNightRainAndDawn": true,
+      "stationaryBridgeCollision": true,
+      "bridgeReappearsAndAnimates": true,
+      "actualClientSources": true,
+      "actualWholeMapGrassLoader": true,
+      "nativeSkinnedGrassCollisionAndRecovery": true,
+      "touchCastReelAndSale": true,
+      "scrollingClimateMenu": true
+    },
+    "assets": {
+      "removedRuntimeObjects": 8,
+      "oaks": 100,
+      "assets": [
+        {
+          "title": "Apple",
+          "creator": "kinglalu",
+          "id": 2759295720
+        },
+        {
+          "title": "Streetlamp",
+          "creator": "AmirkhanMul",
+          "id": 14845961545
+        },
+        {
+          "title": "Fishing Rod",
+          "creator": "BambooPandaTime",
+          "id": 75167845877982
+        },
+        {
+          "title": "Boat",
+          "creator": "notorofkil",
+          "id": 9617142471
+        },
+        {
+          "title": "Boat Dock",
+          "creator": "sSkyI4r",
+          "id": 17010090897
+        },
+        {
+          "title": "Cottage House",
+          "creator": "paraghoul",
+          "id": 12346232595
+        },
+        {
+          "title": "Realistic Oak Tree",
+          "creator": "Letaij",
+          "id": 128707014921507
+        },
+        {
+          "title": "Fish",
+          "creator": "Biryuvignette",
+          "id": 9223655599
+        }
+      ],
+      "pierEndZ": 356.08487426757813,
+      "lamps": 7,
+      "houses": 7
+    },
+    "grass": {
+      "color": [
+        104,
+        171,
+        65
+      ],
+      "spacing": 22,
+      "variant": "StudioFine",
+      "meshId": "rbxassetid://80159239673273",
+      "bonesPerPatch": 100,
+      "patches": 503,
+      "wholeIsland": true,
+      "assetId": 87377915371959,
+      "greenRoots": 44994
+    }
+  },
+  "publication": {
+    "sourceVersion": 80,
+    "geometry": {
+      "parts": 4960,
+      "realOaks": 100,
+      "realMeshParts": 407,
+      "personalWeatherPreserved": true,
+      "clearHouseDoors": 7,
+      "usableBoatOnWater": true,
+      "maxGrade": 0.5385004679361979,
+      "groundedTrees": 100,
+      "hdSkyPreserved": true,
+      "compiledScripts": 15,
+      "walkSamples": 354,
+      "interactiveGrassPreserved": true,
+      "unanchoredMasslessRealTools": true
+    },
+    "interiors": {
+      "assets": [
+        {
+          "creator": "visionpsyche7",
+          "id": 2109355142
+        },
+        {
+          "creator": "BIond_e",
+          "id": 6319697240
+        }
+      ],
+      "readyFurnishedCabins": 4,
+      "cottagesWithStoreInterior": 3
+    },
+    "behavior": {
+      "bridgeGraceAndRepeat": true,
+      "boatReturnsAfter60Seconds": true,
+      "boatDriverOnly": true,
+      "unequipCleanup": true,
+      "boatInputTimeout": true,
+      "stationaryCollision": true,
+      "boatMovement": true,
+      "privateCurrency": true,
+      "boatObstacleStop": true,
+      "fishingCatchAndTimeout": true,
+      "failedSaleRetryWithoutDuplicateCoins": true,
+      "waterOnlyCasting": true
+    },
+    "published": true,
+    "clients": {
+      "exactWindShake": true,
+      "exactWindTrails": true,
+      "touchBoatForwardReleaseAndExit": true,
+      "personalNightRainAndDawn": true,
+      "stationaryBridgeCollision": true,
+      "bridgeReappearsAndAnimates": true,
+      "actualClientSources": true,
+      "actualWholeMapGrassLoader": true,
+      "nativeSkinnedGrassCollisionAndRecovery": true,
+      "touchCastReelAndSale": true,
+      "scrollingClimateMenu": true
+    },
+    "assets": {
+      "removedRuntimeObjects": 8,
+      "oaks": 100,
+      "assets": [
+        {
+          "title": "Apple",
+          "creator": "kinglalu",
+          "id": 2759295720
+        },
+        {
+          "title": "Streetlamp",
+          "creator": "AmirkhanMul",
+          "id": 14845961545
+        },
+        {
+          "title": "Fishing Rod",
+          "creator": "BambooPandaTime",
+          "id": 75167845877982
+        },
+        {
+          "title": "Boat",
+          "creator": "notorofkil",
+          "id": 9617142471
+        },
+        {
+          "title": "Boat Dock",
+          "creator": "sSkyI4r",
+          "id": 17010090897
+        },
+        {
+          "title": "Cottage House",
+          "creator": "paraghoul",
+          "id": 12346232595
+        },
+        {
+          "title": "Realistic Oak Tree",
+          "creator": "Letaij",
+          "id": 128707014921507
+        },
+        {
+          "title": "Fish",
+          "creator": "Biryuvignette",
+          "id": 9223655599
+        }
+      ],
+      "pierEndZ": 356.08487426757813,
+      "lamps": 7,
+      "houses": 7
+    },
+    "grass": {
+      "color": [
+        104,
+        171,
+        65
+      ],
+      "spacing": 22,
+      "variant": "StudioFine",
+      "meshId": "rbxassetid://80159239673273",
+      "bonesPerPatch": 100,
+      "patches": 503,
+      "wholeIsland": true,
+      "assetId": 87377915371959,
+      "greenRoots": 44994
+    }
+  },
+  "freshVerification": {
+    "singleMap": true,
+    "cottagesWithStoreInterior": 3,
+    "greenRoots": 44994,
+    "windAsset": 11946229834,
+    "appleCooldownSeconds": 60,
+    "mapParts": 4960,
+    "readyCabins": 4,
+    "vividColorSunriseAndWaves": true,
+    "realMeshParts": 407,
+    "grassVariant": "StudioFine",
+    "grassPatches": 503,
+    "bridgeEmptyGraceSeconds": 60,
+    "grassAsset": 87377915371959,
+    "appleInvisibilitySeconds": 3,
+    "personalWeatherAndScroll": true,
+    "publishedVersion": 81,
+    "boatAndFishing": true,
+    "compiledScripts": 15,
+    "furnishedHouses": 7,
+    "ok": true
+  },
+  "limitations": [
+    "No rendered Roblox Studio/client screenshot or FPS test in this environment.",
+    "No physical boat driving playtest with a real avatar in the Roblox client.",
+    "Fish basket is session-only; coins and apple inventory use the existing persistent save."
+  ]
+}

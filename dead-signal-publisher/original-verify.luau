@@ -1,0 +1,62 @@
+local W=workspace
+local RS=game:GetService('ReplicatedStorage')
+local SS=game:GetService('ServerStorage')
+local SSS=game:GetService('ServerScriptService')
+local SP=game:GetService('StarterPlayer')
+local RF=game:GetService('ReplicatedFirst')
+assert(game.GameId==9421311218 and game.PlaceId==118064584465155,'Wrong mystery place target')
+assert(W:GetAttribute('ExperienceChapter')==1 and W:GetAttribute('SelectedChapter')==1,'Single-place mystery markers missing')
+assert(W:GetAttribute('GameMode')=='Match' and W:GetAttribute('MysteryWorldReady')==true,'Public join does not start directly in the mansion')
+assert(W:GetAttribute('DeadSignalBuildId')=='still-here-mystery-only-v1','Wrong mystery build')
+assert(W:GetAttribute('DisplayEpisodeLabel')=='MISTÉRIO','Mystery label missing')
+assert(W.Content and W.Content.Interior and W.Content.Exterior,'Original mystery mansion is not active')
+assert(W.Content.Interior.Foyer and W.Content.Interior.Livingroom and W.Content.Interior.Kitchen,'Mansion rooms missing')
+assert(not W:FindFirstChild('ChapterTwoWorld') and not RS:FindFirstChild('ChapterTwoMap'),'A second map is active')
+assert(not SSS.StillHereRuntime:FindFirstChild('ChapterTwoRuntime') and not RF:FindFirstChild('ChapterTwoHUD'),'Chapter Two runtime was installed')
+assert(not RS:FindFirstChild('MenuBackdrop') and not RF:FindFirstChild('SessionMenuClient'),'Main menu scene or menu script remains')
+assert(not RF:FindFirstChild('MenuAvatarClient') and not RF:FindFirstChild('OriginalMissionHUD'),'Menu avatar or story objective HUD remains')
+assert(not SSS:FindFirstChild('SessionRuntime') and not RS:FindFirstChild('SessionMenu'),'Custom multiplayer menu/session system remains')
+assert(not SSS:FindFirstChild('Weapons') and not SSS.StillHereRuntime:FindFirstChild('OriginalWeaponPickups'),'Weapon server or loadout remains')
+assert(not RF:FindFirstChild('OriginalWeaponHoldPrompt'),'Weapon pickup interface remains')
+assert(SP.CameraMode==Enum.CameraMode.Classic and SP.CameraMinZoomDistance>=8 and SP.CameraMaxZoomDistance>SP.CameraMinZoomDistance,'First-person camera is still enabled')
+assert(W:GetAttribute('ThirdPersonOnly')==true and W:GetAttribute('WeaponsRemoved')==true and W:GetAttribute('MysteryWeaponsRemoved')==true,'Third-person or weapon-free markers missing')
+assert(W:GetAttribute('MysteryStoryTriggersRemoved')==true and (W:GetAttribute('MysteryStoryTriggerRemovalCount') or 0)>0 and W:GetAttribute('MysteryRitualObjectsRemoved')==true,'Story trigger cleanup missing')
+assert(W:GetAttribute('MysteryCloudRemoved')==true and W:GetAttribute('WreckRemoved')==true,'Cloud or wreck cleanup missing')
+assert(not W.Content.Exterior:FindFirstChild('EventTriggers'),'Mystery event trigger folder remains')
+assert(not W.Content.Interior.Foyer:FindFirstChild('Ritual-DemoVersion'),'Foyer ritual remains')
+for _,d in ipairs(W.Content:GetDescendants()) do
+ local name=string.lower(d.Name)
+ assert(not name:find('ritual',1,true),'Ritual object remains: '..d:GetFullName())
+ assert(name~='suv_damaged' and not name:find('wreck',1,true),'Wreck remains: '..d:GetFullName())
+ assert(not d:IsA('Tool') or name:find('key',1,true),'Weapon Tool remains in the map: '..d:GetFullName())
+ assert(not name:find('weapon',1,true) and not name:find('firearm',1,true) and not name:find('rifle',1,true) and not name:find('pistol',1,true) and not name:find('shotgun',1,true) and name~='gun','Weapon prop remains in the map: '..d:GetFullName())
+ assert(not name:find('triggervolume',1,true),'Mystery trigger volume remains: '..d:GetFullName())
+ if name:find('trigger',1,true) then
+  local path=string.lower(d:GetFullName())
+  assert(path:find('.door_interior_frame_',1,true) or path:find('.click_sit.',1,true),'Non-interaction mystery trigger remains: '..d:GetFullName())
+ end
+end
+for _,service in ipairs({W,SS,RS,SSS}) do
+ for _,d in ipairs(service:GetDescendants()) do
+  if d:IsA('Tool') then assert(string.lower(d.Name):find('key',1,true),'Weapon Tool remains in live services: '..d:GetFullName()) end
+ end
+end
+local globalClouds=workspace.Terrain:FindFirstChildOfClass('Clouds')
+assert(not globalClouds,'Global clouds remain above the house')
+local storm=W.Content.Exterior:FindFirstChild('Storm')
+assert(not storm or not storm:FindFirstChild('CloudMesh'),'Storm cloud mesh remains above the house')
+assert(W.Content.Exterior.House.Front.Design.DoorKey,'The entrance key was removed')
+local worldScript=assert(SSS.StillHereRuntime:FindFirstChild('WorldInteractions'),'World interaction script missing')
+assert(worldScript.Source:find('MainDoorKeyRequired',1,true) and worldScript.Source:find('doorManager.EnableDoor(door)',1,true),'Main door remains key-gated')
+assert(worldScript.Source:find("ActionText='Abrir'",1,true) and worldScript.Source:find('d.Enabled=false',1,true),'Main door still offers a key-only interaction')
+assert(worldScript.Source:find("ActionText='Sentar'",1,true) and worldScript.Source:find('seat:Sit(humanoid)',1,true),'Chair seating prompts missing')
+assert(SSS.EventManager.Disabled and SSS.MissionsLogic.Disabled,'Story event controllers are still active')
+assert(SSS.GameStateManager.Disabled,'Campaign state machine remains active')
+assert(RS.OriginalStarterGui and RS.OriginalStarterGui.HUD,'Mansion HUD is missing')
+assert(RS.SettingsSchema and RS.SessionInterface,'Portuguese settings are missing')
+assert(RS.SessionInterface.Source:find('CONFIGURAÇÕES',1,true) and RS.SessionInterface.Source:find('APLICAR',1,true),'Settings text was not translated')
+assert(RF.SessionLoadingClient and RF.OriginalUIBootstrap and RF.OriginalPortugueseText,'Loading screen or Portuguese UI pass is missing')
+assert(RF.SessionLoadingClient.Source:find('Carregando o casarão',1,true),'Loading screen is missing')
+assert(W:GetAttribute('GameplayFixVersion')=='third-person-exploration-v1','Gameplay presentation fix version is missing')
+assert(not W.Content:FindFirstChild('Lobby') or W.Content.Lobby:IsA('Folder'),'Mystery map content is malformed')
+return {verified=true,version=game.PlaceVersion,experience='mystery-only',map='original-mansion',menu=false,weapons=false,firstPerson=false,storyTriggers=false,ritual=false,cloud=false,wreck=false}

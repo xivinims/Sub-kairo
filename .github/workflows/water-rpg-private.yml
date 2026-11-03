@@ -1,0 +1,43 @@
+name: Water Castle RPG private release
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths: ['water-rpg/publish.trigger']
+permissions:
+  contents: read
+concurrency:
+  group: roblox-water-rpg-9421311218
+  cancel-in-progress: false
+jobs:
+  rpg:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Reassemble unchanged supplied castle
+        run: |
+          cat water-rpg/source/part-* > /tmp/castle.gz
+          python -c "import gzip,pathlib;pathlib.Path('water-rpg/water-castle.rbxl').write_bytes(gzip.decompress(pathlib.Path('/tmp/castle.gz').read_bytes()))"
+          node --check water-rpg/publish.mjs
+      - name: Install pinned Luau runtime, compile scripts and test rules
+        run: |
+          curl -fsSL https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip -o /tmp/lune.zip
+          echo '39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1  /tmp/lune.zip' | sha256sum --check
+          unzip -q /tmp/lune.zip -d /tmp/water-lune
+          chmod +x /tmp/water-lune/lune
+          /tmp/water-lune/lune run water-rpg/tests/rules.luau
+          /tmp/water-lune/lune run water-rpg/build.luau
+      - name: Private access, complete-map preflight and native publication
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node water-rpg/publish.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: water-rpg-verification
+          path: |
+            water-rpg/manifest.json
+            water-rpg/publication.json

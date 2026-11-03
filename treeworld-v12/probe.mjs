@@ -1,0 +1,3 @@
+import fs from 'node:fs';
+import {execute,first} from './cloud.mjs';
+console.log(JSON.stringify(first(await execute(fs.readFileSync('treeworld-v12/probe.luau','utf8')))));

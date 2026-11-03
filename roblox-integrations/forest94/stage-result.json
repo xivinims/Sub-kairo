@@ -1,0 +1,78 @@
+{
+  "sourceSha256": "479adb47af372dfad1f9fc862d214cfd9db7025c33833ab36da44fc2e7db95c0",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/93/luau-execution-sessions/36a7d598-e313-4a60-802b-eba2ddb984ef/tasks/36a7d598-e313-4a60-802b-eba2ddb984ef",
+    "createTime": "2026-10-14T12:17:05.162Z",
+    "updateTime": "2026-10-14T12:17:12.649Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "staged": true,
+          "baseVersion": 93,
+          "reports": {
+            "water": {
+              "stoneFaces": 210,
+              "waterAsset": 6833503207,
+              "stones": 10,
+              "waterTiles": 188,
+              "shoreFoam": 138
+            },
+            "bridges": {
+              "parts": 1142,
+              "bridges": 2
+            },
+            "landscape": {
+              "stairSteps": 20,
+              "lakeColumns": 1118,
+              "flowers": 114,
+              "removedLogs": 12,
+              "removedVegetation": 29
+            },
+            "tests": {
+              "cartoonWaterTiles": 188,
+              "facetedStones": 10,
+              "exactLampPosts": 30,
+              "teaTables": 4,
+              "teaCups": 16,
+              "noAnimals": true,
+              "directCupServe": true,
+              "trees": 453,
+              "parts": 10455,
+              "actualRootProbes": 7723,
+              "nativeGrassRequested": true,
+              "lakeWaterProbes": 45,
+              "stoneWalkProbes": 30,
+              "pbr": 3074,
+              "lowLakeFlowers": 114,
+              "fogStable": true,
+              "plants": 1443,
+              "ruins": 4,
+              "noTeaPopups": true,
+              "walkProbes": 855,
+              "audio": 7,
+              "compiled": 28,
+              "finiteWorldGeometry": true
+            },
+            "roots": {
+              "plants": 1443,
+              "removedDecor": 0,
+              "rootProbes": 7723,
+              "trees": 453,
+              "removedPlants": 0
+            },
+            "lamps": {
+              "lamps": 30,
+              "sourceAssetId": 11324928349
+            }
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "publication": null,
+  "freshVerification": null
+}

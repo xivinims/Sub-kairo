@@ -1,0 +1,30 @@
+name: Overyard Whole Map Photo Detail V14
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-map-v14/**"
+      - ".github/workflows/overyard-map-v14.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: overyard-place-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Apply whole-map detail pass and verify
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-map-v14/publish.mjs

@@ -1,0 +1,41 @@
+{
+  "build": "still-here-hotel-mystery-ui-v1",
+  "branch": "dead-signal-publisher",
+  "releaseCommit": "f7706b5e2e88eb8180af0348bcffbf34053909cb",
+  "workflowRun": 41210827168,
+  "publishedVersion": 247,
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "ok": true,
+  "separateMapAndUI": true,
+  "version": 247,
+  "spawns": 10,
+  "doors": 4,
+  "parts": 8714,
+  "screens": 7,
+  "restarted": true,
+  "fileChecks": {
+    "sourceGuiObjects": 28,
+    "sourceScreens": 7,
+    "sourceMapParts": 8714,
+    "compiledAndComparedControllers": 8,
+    "separateGuiAsset": "assets/ui/mystery-interface.rbxm",
+    "sourceMapAsset": "assets/hotel/1940sHotelLobby.rbxm",
+    "guiSha256": "6e4b2f1e7454cc4b69148ef99c0e55497779e0d2944178c568ff02fc9641dd8f",
+    "mapSha256": "03520ce828d3a652b58133424577df2fd1125497dc2a40d2b9fdc45b786b3700"
+  },
+  "verified": {
+    "sourceDesignComparison": true,
+    "nativeDoorOpenClose": true,
+    "nativeSpawnSupport": true,
+    "exactPublishedFile": true,
+    "renderedRobloxClient": false,
+    "mobileVisualWalkthrough": false
+  },
+  "sourceMissingMaterials": [
+    "Bricks 02",
+    "Marble Speckled",
+    "Metal",
+    "Wood Floor Rough MV"
+  ]
+}

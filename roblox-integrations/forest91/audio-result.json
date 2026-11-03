@@ -1,0 +1,64 @@
+{
+  "sourceSha256": "c40013416d86ed93309a85938ca27d4e5c4e00f5872f14b73fb94c950c1591ac",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/90/luau-execution-sessions/465482c1-a8b2-4634-a7f1-943a260265f1/tasks/465482c1-a8b2-4634-a7f1-943a260265f1",
+    "createTime": "2026-10-14T03:23:07.619Z",
+    "updateTime": "2026-10-14T03:23:11.907Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "audio": [
+            {
+              "length": 41.728,
+              "id": 9116971475,
+              "name": "Morning Forest Birds 4 (SFX)",
+              "loaded": true,
+              "ok": true
+            },
+            {
+              "length": 11.648,
+              "id": 9114518779,
+              "name": "Foliage Rustle 3 (SFX)",
+              "loaded": true,
+              "ok": true
+            },
+            {
+              "length": 36.010020833333336,
+              "id": 9112854613,
+              "name": "Rain On Water 2 (SFX)",
+              "loaded": true,
+              "ok": true
+            },
+            {
+              "length": 1.408,
+              "id": 9116279358,
+              "name": "Lightning Flashes Quick Electrical Bursts 53 (SFX)",
+              "loaded": true,
+              "ok": true
+            },
+            {
+              "length": 6.414875283446712,
+              "id": 177940963,
+              "name": "GMod Walking Sound Grass",
+              "loaded": true,
+              "ok": true
+            },
+            {
+              "length": 6.821587301587302,
+              "id": 178190837,
+              "name": "GMod Walking Sound Tile",
+              "loaded": true,
+              "ok": true
+            }
+          ],
+          "readOnly": true
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "freshVerification": null
+}

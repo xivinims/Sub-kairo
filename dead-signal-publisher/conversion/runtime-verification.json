@@ -1,0 +1,24 @@
+{
+  "stage": "staged-source-runtime-check",
+  "result": {
+    "clips": {
+      "jumpscare": {
+        "movingBones": 100,
+        "targets": 0,
+        "length": 1.4583332538604736,
+        "manualStep": true,
+        "playing": true
+      },
+      "walk": {
+        "movingBones": 109,
+        "targets": 0,
+        "length": 1.5,
+        "manualStep": true,
+        "playing": true
+      }
+    },
+    "version": 158,
+    "build": "dead-signal-source-port-assets-v1",
+    "restart": {}
+  }
+}

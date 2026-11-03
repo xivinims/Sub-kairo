@@ -1,0 +1,29 @@
+name: Suvivers Quality Hotfix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [roblox-publisher]
+    paths:
+      - 'roblox-live-verify/suvivers-quality-hotfix.mjs'
+      - '.github/workflows/suvivers-quality-hotfix.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: suvivers-quality-hotfix-v1
+  cancel-in-progress: true
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Apply quality hotfix
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node roblox-live-verify/suvivers-quality-hotfix.mjs

@@ -1,0 +1,30 @@
+name: TreeWorld V3 Rock Hotfix
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-v3-hotfix/**"
+      - ".github/workflows/treeworld-v3-hotfix.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roblox-universe-9421311218-place-118064584465155-v3-hotfix
+  cancel-in-progress: false
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Complete stylized rocks and verify full v3
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v3-hotfix/publish.mjs

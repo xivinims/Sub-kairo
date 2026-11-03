@@ -1,0 +1,117 @@
+{
+  "stage": "dead-signal-chapter-published",
+  "universeId": "9421311218",
+  "placeId": "118064584465155",
+  "installed": {
+    "ok": true,
+    "hubs": 5,
+    "originalParts": 2669,
+    "build": "dead-signal-runtime-quality-v4",
+    "sourceVersion": 158,
+    "doors": 6,
+    "published": true
+  },
+  "verified": {
+    "importedParts": 2669,
+    "errors": [],
+    "doors": 6,
+    "lightingControls": 6,
+    "hubs": [
+      {
+        "id": "RECEPTION",
+        "purpose": "Reception",
+        "centre": [
+          8,
+          -0.6301512718200684,
+          243.8563995361328
+        ],
+        "entry": [
+          7.442601203918457,
+          -1.0301513671875,
+          226.86553955078125
+        ]
+      },
+      {
+        "id": "WORKSHOP",
+        "purpose": "Workshop",
+        "centre": [
+          -210,
+          -0.0959688127040863,
+          -30
+        ],
+        "entry": [
+          -193.17086791992188,
+          -0.4959688186645508,
+          -27.595809936523438
+        ]
+      },
+      {
+        "id": "POWER",
+        "purpose": "Power",
+        "centre": [
+          221,
+          -0.6301512718200684,
+          -30
+        ],
+        "entry": [
+          204.1544952392578,
+          -1.0301513671875,
+          -27.7132511138916
+        ]
+      },
+      {
+        "id": "STORAGE",
+        "purpose": "Storage",
+        "centre": [
+          -180,
+          -0.595944881439209,
+          -290
+        ],
+        "entry": [
+          -171.03488159179688,
+          -0.9959449768066406,
+          -275.55609130859375
+        ]
+      },
+      {
+        "id": "OBSERVATION",
+        "purpose": "Observation",
+        "centre": [
+          193.8563995361328,
+          -0.5959450006484985,
+          -282
+        ],
+        "entry": [
+          184.2259521484375,
+          -0.9959449768066406,
+          -267.99090576171875
+        ]
+      }
+    ],
+    "invalidTransforms": 0,
+    "mapAssetId": 18509954401,
+    "build": "dead-signal-runtime-quality-v4",
+    "ok": true,
+    "stalkerPaused": true,
+    "externalScripts": 0,
+    "version": 159,
+    "benchCount": 12,
+    "lights": 26,
+    "routes": {
+      "RECEPTION": true,
+      "OBSERVATION": true,
+      "WORKSHOP": true,
+      "STORAGE": true,
+      "POWER": true
+    },
+    "functionTests": {
+      "midCloseProtection": true,
+      "recovery": true,
+      "interactionGuard": true,
+      "convertedAssetsPreserved": true,
+      "cancelPendingClose": true
+    },
+    "parts": 3269
+  },
+  "restart": {}
+}

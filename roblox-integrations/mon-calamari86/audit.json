@@ -1,0 +1,177 @@
+{
+  "status": "published_and_fresh_verified",
+  "published": true,
+  "target": {
+    "universe": 9421311218,
+    "place": 118064584465155,
+    "baseVersion": 85,
+    "liveVersion": 86
+  },
+  "assets": {
+    "map": 485800451,
+    "wind": 11946229834
+  },
+  "sourceSha256": "f4f3215d81335dacf528cfe7853734627d53bb0c4c1303c3abea9ea201393bbe",
+  "publisher": {
+    "service": "GitHub Actions",
+    "commit": "7f2b5e92d915f3f944a167ababbb1619e237b7b3",
+    "workflowRun": 38474945375,
+    "job": 115563216534,
+    "url": "https://github.com/xivinims/Sub-kairo/actions/runs/38474945375",
+    "conclusion": "success"
+  },
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/85/luau-execution-sessions/2ec596e4-593b-4971-9a75-b3d88a56a6da/tasks/2ec596e4-593b-4971-9a75-b3d88a56a6da",
+    "createTime": "2026-10-13T22:02:13.01Z",
+    "updateTime": "2026-10-13T22:02:17.106Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "expectedVersion": 86,
+          "tests": {
+            "nativePostProcessing": true,
+            "retiredGameplayRemoved": true,
+            "nativeWindTrail": true,
+            "originalUnions": 542,
+            "safeSpawnFloorChecks": 9,
+            "parts": 1906,
+            "materials": {
+              "Metal": 920,
+              "Neon": 6,
+              "SmoothPlastic": 134,
+              "Plastic": 820,
+              "Concrete": 18,
+              "Foil": 8
+            },
+            "streamingTargetRadius": "Unavailable in this edit-session engine",
+            "spawnBodyClear": true,
+            "streamingMinRadius": "Unavailable in this edit-session engine",
+            "originalWedges": 331,
+            "originalDoors": 3,
+            "realisticRendering": true,
+            "streamingEnabled": true,
+            "importedScripts": 0,
+            "compiledScriptsAndModules": 11,
+            "nativeOceanSamples": 18
+          },
+          "geometry": {
+            "removedImportedScripts": 6,
+            "oceanSize": [
+              4160,
+              60,
+              4812
+            ],
+            "windAsset": 11946229834,
+            "bounds": {
+              "max": [
+                1153.775146484375,
+                402.1970520019531,
+                1447.7421875
+              ],
+              "min": [
+                -1202.367919921875,
+                -37.76841735839844,
+                -1560.983154296875
+              ]
+            },
+            "assetId": 485800451,
+            "streaming": {
+              "StreamingEnabled": {
+                "actual": "true",
+                "applied": true
+              },
+              "ModelStreamingBehavior": {
+                "actual": "Unavailable in this edit-session engine",
+                "applied": false
+              },
+              "StreamingMinRadius": {
+                "actual": "Unavailable in this edit-session engine",
+                "applied": false
+              },
+              "StreamOutBehavior": {
+                "actual": "Unavailable in this edit-session engine",
+                "applied": false
+              },
+              "StreamingTargetRadius": {
+                "actual": "Unavailable in this edit-session engine",
+                "applied": false
+              },
+              "StreamingIntegrityMode": {
+                "actual": "Unavailable in this edit-session engine",
+                "applied": false
+              }
+            },
+            "originalGeometryPreserved": 1906,
+            "originalDoors": 3,
+            "waterSurface": -10,
+            "entry": [
+              -11.591092109680176,
+              3.499969482421875,
+              -3.105823278427124
+            ]
+          },
+          "published": true,
+          "baseVersion": 85
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "freshVerification": {
+    "path": "universes/9421311218/places/118064584465155/versions/86/luau-execution-sessions/7e8a6d73-ecf9-4792-bbc8-5f957cb74165/tasks/7e8a6d73-ecf9-4792-bbc8-5f957cb74165",
+    "createTime": "2026-10-13T22:02:18.429Z",
+    "updateTime": "2026-10-13T22:02:19.269Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "rendererBeforeStartup": "Enum.LightingStyle.Soft",
+          "tests": {
+            "nativePostProcessing": true,
+            "retiredGameplayRemoved": true,
+            "nativeWindTrail": true,
+            "originalUnions": 542,
+            "safeSpawnFloorChecks": 9,
+            "parts": 1906,
+            "materials": {
+              "Metal": 920,
+              "Neon": 6,
+              "SmoothPlastic": 134,
+              "Plastic": 820,
+              "Concrete": 18,
+              "Foil": 8
+            },
+            "streamingTargetRadius": "Unavailable in this edit-session engine",
+            "spawnBodyClear": true,
+            "streamingMinRadius": "Unavailable in this edit-session engine",
+            "originalWedges": 331,
+            "originalDoors": 3,
+            "realisticRendering": true,
+            "streamingEnabled": true,
+            "importedScripts": 0,
+            "compiledScriptsAndModules": 11,
+            "nativeOceanSamples": 18
+          },
+          "version": 86,
+          "renderingBootstrapVerified": true,
+          "assetId": 485800451,
+          "ok": true
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "vercel": {
+    "publicationBlocked": true,
+    "code": "api-deployments-free-per-day",
+    "stageDeployment": "dpl_H5bRgrkmbpDB4ufb22g67eqMzQje",
+    "stageStatus": "READY"
+  },
+  "visualClientTest": false,
+  "fpsMeasured": false
+}

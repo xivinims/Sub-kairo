@@ -1,0 +1,26 @@
+name: TreeWorld Asset Probe
+
+on:
+  push:
+    branches:
+      - roblox-publisher
+    paths:
+      - "treeworld-rebuild-v3-probe/**"
+      - ".github/workflows/treeworld-asset-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Probe Roblox Creator Store assets
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-rebuild-v3-probe/probe.mjs

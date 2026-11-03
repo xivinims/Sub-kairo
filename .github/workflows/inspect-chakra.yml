@@ -1,0 +1,21 @@
+name: Inspect original chakra action without game changes
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths: ['r6-test/inspect.trigger']
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install verified Luau runtime
+        run: |
+          curl -fsSL https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip -o /tmp/lune.zip
+          echo '39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1  /tmp/lune.zip' | sha256sum --check
+          unzip -q /tmp/lune.zip -d /tmp/water-lune
+          chmod +x /tmp/water-lune/lune
+      - name: Read original chakra toggle logic
+        run: |
+          git fetch --no-tags --depth=1 origin e3bb564c600660303b5507c6ce1f34be1937a2dd
+          git show e3bb564c600660303b5507c6ce1f34be1937a2dd:r6-test/arena.rbxl > r6-test/naruto-archive-v6.rbxl
+          /tmp/water-lune/lune run r6-test/inspect-chakra.luau

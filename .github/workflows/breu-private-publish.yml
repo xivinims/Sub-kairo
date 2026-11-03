@@ -1,0 +1,40 @@
+name: BREU private playtest publication
+on:
+  push:
+    branches: [dead-signal-publisher]
+    paths:
+      - 'breu-publisher/publish.trigger'
+permissions:
+  contents: read
+concurrency:
+  group: roblox-breu-private-9421311218
+  cancel-in-progress: false
+jobs:
+  private-playtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Extract tested game and validate source
+        run: |
+          python -m zipfile -e breu-publisher/playtest.zip breu-publisher/unpacked
+          node --check breu-publisher/publish.mjs
+      - name: Install pinned Luau compiler
+        run: |
+          curl -fsSL https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip -o /tmp/lune.zip
+          echo '39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1  /tmp/lune.zip' | sha256sum --check
+          unzip -q /tmp/lune.zip -d /tmp/breu-lune
+          chmod +x /tmp/breu-lune/lune
+          /tmp/breu-lune/lune run breu-publisher/build-payload.luau
+      - name: Confirm private access, native preflight and publish
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node breu-publisher/publish.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: breu-private-publication
+          path: breu-publisher/publication.json

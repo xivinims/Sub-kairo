@@ -1,0 +1,150 @@
+{
+  "sourceSha256": "9c2888420a00ede614bc4f28f6729649563cea4db93411802c429046e26e4400",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/94/luau-execution-sessions/b1ed1d13-5332-45f5-828f-dc93bd8b63df/tasks/b1ed1d13-5332-45f5-828f-dc93bd8b63df",
+    "createTime": "2026-10-14T12:43:11.836Z",
+    "updateTime": "2026-10-14T12:43:22.378Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "expectedVersion": 95,
+          "published": true,
+          "reports": {
+            "lamps": {
+              "lamps": 31,
+              "sourceAssetId": 11324928349
+            },
+            "cottage": {
+              "parts": 200,
+              "walkwaySegments": 21
+            },
+            "radio": {
+              "serverSounds": 0,
+              "sourceAssetId": 15855506991,
+              "radioMeshes": 8
+            },
+            "roots": {
+              "plants": 1443,
+              "removedDecor": 0,
+              "rootProbes": 7781,
+              "trees": 453,
+              "removedPlants": 0
+            },
+            "tests": {
+              "cottageWalkwayProbes": 189,
+              "parts": 10282,
+              "stoneWalkProbes": 30,
+              "cottageTeaFloor": true,
+              "facetedStones": 10,
+              "teaTables": 4,
+              "noAnimals": true,
+              "fogStable": true,
+              "directCupServe": true,
+              "trees": 453,
+              "plants": 1443,
+              "actualRootProbes": 7781,
+              "pbr": 2978,
+              "exactLampPosts": 31,
+              "cartoonWaterTiles": 188,
+              "musicStatusValidation": true,
+              "audio": 7,
+              "radioMeshes": 8,
+              "noTeaPopups": true,
+              "lowLakeFlowers": 114,
+              "lakeWaterProbes": 45,
+              "teaCups": 16,
+              "nativeGrassRequested": true,
+              "musicPresets": 7,
+              "accentRocks": 46,
+              "cottageEntranceProbes": 18,
+              "compiled": 33,
+              "walkProbes": 855,
+              "personalPlaybackIsolation": true,
+              "ruins": 4,
+              "musicScrollUI": true,
+              "finiteWorldGeometry": true
+            },
+            "water": {
+              "stoneFaces": 210,
+              "waterAsset": 6833503207,
+              "stones": 10,
+              "waterTiles": 188,
+              "shoreFoam": 138
+            },
+            "terrain": {
+              "keptRocks": 46,
+              "trimmedTrees": 70,
+              "smoothedColumns": 22397,
+              "palePathColumns": 969,
+              "removedRocks": 96
+            },
+            "bridges": {
+              "parts": 1142,
+              "bridges": 2
+            }
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "publication": null,
+  "freshVerification": {
+    "path": "universes/9421311218/places/118064584465155/versions/95/luau-execution-sessions/2f213c31-9a09-4594-b80d-b1562708a9c9/tasks/2f213c31-9a09-4594-b80d-b1562708a9c9",
+    "createTime": "2026-10-14T12:43:24.038Z",
+    "updateTime": "2026-10-14T12:43:33.037Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "version": 95,
+          "tests": {
+            "cottageWalkwayProbes": 189,
+            "parts": 10282,
+            "stoneWalkProbes": 30,
+            "cottageTeaFloor": true,
+            "facetedStones": 10,
+            "teaTables": 4,
+            "noAnimals": true,
+            "fogStable": true,
+            "directCupServe": true,
+            "trees": 453,
+            "plants": 1443,
+            "actualRootProbes": 7781,
+            "pbr": 2978,
+            "exactLampPosts": 31,
+            "cartoonWaterTiles": 188,
+            "musicStatusValidation": true,
+            "audio": 7,
+            "radioMeshes": 8,
+            "noTeaPopups": true,
+            "lowLakeFlowers": 114,
+            "lakeWaterProbes": 45,
+            "teaCups": 16,
+            "nativeGrassRequested": true,
+            "musicPresets": 7,
+            "accentRocks": 46,
+            "cottageEntranceProbes": 18,
+            "compiled": 33,
+            "walkProbes": 855,
+            "personalPlaybackIsolation": true,
+            "ruins": 4,
+            "musicScrollUI": true,
+            "finiteWorldGeometry": true
+          },
+          "ok": true,
+          "nativeGrassSettings": {
+            "Decoration": true,
+            "GrassLength": 0.4000000059604645
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  }
+}

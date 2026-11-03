@@ -1,0 +1,47 @@
+{
+  "universeId": 9421311218,
+  "placeId": 118064584465155,
+  "baseVersion": 92,
+  "expectedVersion": 93,
+  "stageRun": 38556547450,
+  "installerSha256": "1299f5c4a7d797dfd7371c67fec8162292cefd1a13447725c167fd74c7444272",
+  "sources": {
+    "tests.luau": "43c0d8999a8372539ecdee9e0c48738e09d34132fe4c5849cd6c98033a0618fb",
+    "verify.luau": "8ce3e63596cd3145e4653affa9b234ac16ca93481b9387c9866801591b42e417",
+    "stage.luau": "a2cfe39a04346225c529e6c92354ee64a7b8a2d91b2cd04b2b6412404831c00a",
+    "vegetation.luau": "2ae432b660049e44cbaabf51b2ec775e3138d9554e4b914ca1db47064e3d35c0",
+    "install.luau": "1299f5c4a7d797dfd7371c67fec8162292cefd1a13447725c167fd74c7444272"
+  },
+  "publishedVersion": 93,
+  "publishRun": 38556756014,
+  "publishCommit": "e2b14d7065762b76ac71e330c1141f10a7710bcd",
+  "publishRunUrl": "https://github.com/xivinims/Sub-kairo/actions/runs/38556756014",
+  "verifiedAt": "2026-10-14T11:28:18.745Z",
+  "freshVerification": {
+    "version": 93,
+    "tests": {
+      "pbr": 3009,
+      "audio": 7,
+      "nativeGrassRequested": true,
+      "compiled": 27,
+      "fogStable": true,
+      "actualRootProbes": 5586,
+      "parts": 10485,
+      "directCupServe": true,
+      "trees": 459,
+      "plants": 1344,
+      "noTeaPopups": true,
+      "ruins": 4,
+      "teaTables": 4,
+      "teaCups": 16,
+      "walkProbes": 1170
+    },
+    "ok": true,
+    "nativeGrassSettings": {
+      "Decoration": true,
+      "GrassLength": 0.4000000059604645
+    }
+  },
+  "clientRenderingMeasured": false,
+  "phone3GBPerformanceMeasured": false
+}

@@ -1,0 +1,24 @@
+name: Overyard V11 Lakes Distance Fog and Plants
+on:
+  push:
+    branches: [roblox-publisher]
+    paths: ["treeworld-v11/*.luau", "treeworld-v11/publish.mjs", ".github/workflows/treeworld-v11-publish.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: overyard-place-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate publisher syntax
+        run: node --check treeworld-v11/publish.mjs
+      - name: Remove loose rocks, refine lakes and plants, validate and publish
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: node treeworld-v11/publish.mjs

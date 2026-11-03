@@ -1,0 +1,46 @@
+{
+  "sourceSha256": "a2cfe39a04346225c529e6c92354ee64a7b8a2d91b2cd04b2b6412404831c00a",
+  "installation": {
+    "path": "universes/9421311218/places/118064584465155/versions/92/luau-execution-sessions/47784912-eb88-4cf1-93ee-8a57e6dc8b27/tasks/47784912-eb88-4cf1-93ee-8a57e6dc8b27",
+    "createTime": "2026-10-14T11:26:19.932Z",
+    "updateTime": "2026-10-14T11:26:23.523Z",
+    "user": "8344738123",
+    "state": "COMPLETE",
+    "timeout": "180s",
+    "output": {
+      "results": [
+        {
+          "baseVersion": 92,
+          "staged": true,
+          "roots": {
+            "plants": 1344,
+            "removedDecor": 0,
+            "rootProbes": 5586,
+            "trees": 459,
+            "removedPlants": 0
+          },
+          "tests": {
+            "pbr": 3009,
+            "audio": 7,
+            "nativeGrassRequested": true,
+            "compiled": 27,
+            "fogStable": true,
+            "actualRootProbes": 5586,
+            "parts": 10485,
+            "directCupServe": true,
+            "trees": 459,
+            "plants": 1344,
+            "noTeaPopups": true,
+            "ruins": 4,
+            "teaTables": 4,
+            "teaCups": 16,
+            "walkProbes": 1170
+          }
+        }
+      ]
+    },
+    "enableBinaryOutput": false
+  },
+  "publication": null,
+  "freshVerification": null
+}

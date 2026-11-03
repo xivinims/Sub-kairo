@@ -1,0 +1,259 @@
+{
+  "target": {
+    "universe": 9421311218,
+    "place": 118064584465155,
+    "upgrade": 84,
+    "sourceVersion": 83,
+    "repository": "xivinims/Sub-kairo",
+    "branch": "roblox-publisher"
+  },
+  "publication": {
+    "state": "COMPLETE",
+    "confirmedSave": true,
+    "executionPath": "universes/9421311218/places/118064584465155/versions/83/luau-execution-sessions/67c436a6-185e-48f5-ad8e-d167f9b873d7/tasks/67c436a6-185e-48f5-ad8e-d167f9b873d7",
+    "sourceSha256": "7f93a504563a9b57f7f7500b92ca3b7511745bc1b6d17e279123447558f1ccd9",
+    "deploymentId": "dpl_H94q45Azba8o2QGfCtD984nKX8n7"
+  },
+  "nativeBeforeSave": {
+    "geometry": {
+      "benches": 6,
+      "stripped": 199,
+      "bridgeEndpoints": [
+        [
+          -113,
+          0.39972126483917236,
+          63.9999885559082
+        ],
+        [
+          140.99996948242188,
+          2.518683433532715,
+          63.999996185302734
+        ]
+      ],
+      "secretSpawn": [
+        1938,
+        26.112163543701172,
+        1170,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "spawn": [
+        -170.00001525878906,
+        14.809004783630371,
+        21.999996185302734,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "assets": [
+        {
+          "min": [
+            -228.05599975585938,
+            -2.534261703491211,
+            -86.73171997070312
+          ],
+          "name": "IlhaDoFarol",
+          "max": [
+            -51.944007873535156,
+            57.18287658691406,
+            86.73171997070312
+          ],
+          "id": 13138901447
+        },
+        {
+          "min": [
+            57.026432037353516,
+            -22.049888610839844,
+            -88.5670166015625
+          ],
+          "name": "IlhaVerde",
+          "max": [
+            222.97357177734375,
+            59.81129455566406,
+            88.56702423095703
+          ],
+          "id": 8143419396
+        },
+        {
+          "min": [
+            1795.1807861328125,
+            -1.74698805809021,
+            1091.1798095703125
+          ],
+          "name": "IlhaDoSol",
+          "max": [
+            2004.8192138671875,
+            51.40382766723633,
+            1308.820068359375
+          ],
+          "id": 139196111
+        }
+      ],
+      "dock": {
+        "shore": [
+          -150,
+          0.3999967575073242,
+          -65.7317123413086
+        ],
+        "deck": [
+          -150,
+          2.200000047683716,
+          -81.7317123413086
+        ],
+        "boat": [
+          -138,
+          0.8999999761581421,
+          -81.7317123413086
+        ],
+        "rampGrade": 0.28666721781094867
+      },
+      "trader": {
+        "position": [
+          -154.66253662109375,
+          6.499996662139893,
+          -56.860660552978516
+        ],
+        "rig": "R6",
+        "underCoconutPalm": true
+      }
+    },
+    "bridgeSurfaceAudit": {
+      "blocked": 0,
+      "examples": [],
+      "checked": 918,
+      "stoneY": 0.3197212815284729
+    },
+    "coverageAudit": {
+      "roots": 79892,
+      "islands": [
+        {
+          "name": "IlhaDoFarol",
+          "samples": 1507,
+          "maxRootDistance": 0.49522173404693604,
+          "gaps": 0
+        },
+        {
+          "name": "IlhaVerde",
+          "samples": 1414,
+          "maxRootDistance": 0.45810583233833313,
+          "gaps": 0
+        },
+        {
+          "name": "IlhaDoSol",
+          "samples": 264,
+          "maxRootDistance": 0.5200123190879822,
+          "gaps": 0
+        }
+      ],
+      "samples": 3185,
+      "gaps": 0,
+      "maxRootDistance": 0.5200123190879822
+    },
+    "sourceVersion": 83,
+    "compiledScripts": 20,
+    "navigation": {
+      "bridgeFloorSamples": 102,
+      "underPier": 0,
+      "maxGrade": 0.24224767823616905,
+      "pierUnderMaterial": "Enum.Material.Water",
+      "boatOnOpenWater": true,
+      "pierTop": 2.2000001072883606
+    },
+    "published": true,
+    "tests": {
+      "stoneTriggerAnd60SecondGrace": true,
+      "foreignScripts": 0,
+      "selfBanBlocked": true,
+      "ownerOnlyAdmin": true,
+      "benches": 6,
+      "privateSecretRoute": true,
+      "realRodUnanchored": true,
+      "bridgeStableFloor": true,
+      "parts": 6130,
+      "protectedMoveAndUndo": true,
+      "shorelineBridgeAligned": true,
+      "seatCount": 13,
+      "adminIdentity": 8344738123,
+      "appleAndRodPersistentPurchases": true,
+      "oldIslandRemoved": true,
+      "secretDoubleClick": true,
+      "threeRealIslands": true
+    },
+    "clients": {
+      "portugueseGraphemes": true,
+      "dialogueCleanup": true,
+      "robloxChatTransport": true,
+      "importedDialogueUI": true,
+      "actualOwnerAdminClient": true,
+      "nonOwnerNoAdminGUI": true,
+      "flightAndBringButtons": true,
+      "scrollingAdminPanel": true
+    },
+    "grass": {
+      "spacing": 4,
+      "islands": [
+        {
+          "name": "IlhaDoFarol",
+          "roots": 38119,
+          "patches": 456,
+          "bounds": [
+            -228.05599975585938,
+            -86.73171997070312,
+            -51.944007873535156,
+            86.73171997070312
+          ]
+        },
+        {
+          "name": "IlhaVerde",
+          "roots": 35383,
+          "patches": 417,
+          "bounds": [
+            57.026432037353516,
+            -88.56694030761719,
+            222.9735107421875,
+            88.56694030761719
+          ]
+        },
+        {
+          "name": "IlhaDoSol",
+          "roots": 6390,
+          "patches": 96,
+          "bounds": [
+            1795.180908203125,
+            1091.1829833984375,
+            2004.819091796875,
+            1308.81689453125
+          ]
+        }
+      ],
+      "chunks": 8,
+      "patches": 969,
+      "greenRoots": 79892
+    }
+  },
+  "postSaveVerification": {
+    "status": "BLOCKED_NOT_RUN",
+    "reason": "Vercel api-deployments-free-per-day exceeded 100; new deployment returned 402 payment_required, retryAfter 86400 seconds.",
+    "preparedScript": "verify.luau",
+    "expectedPlaceVersion": 84
+  },
+  "limits": {
+    "realClientVisualTest": false,
+    "phoneFpsTest": false,
+    "realModerationCommandsSent": false,
+    "chatUsesRobloxFilteringAndCommunicationPermissions": true
+  }
+}
