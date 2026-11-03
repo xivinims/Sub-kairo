@@ -12,7 +12,7 @@ for _,entry in ipairs({{'Config','ModuleScript',package},{'EmotePolicy','ModuleS
 		if not parent then parent=R.Instance.new('StarterPlayerScripts');parent.Parent=dm:GetService('StarterPlayer') end
 	end
 	local source=fs.readFile(name..'.luau')
-	local ok,err=pcall(luau.load,source,{debugName=name});assert(ok,err)
+	local ok,err=pcall(luau.load,source,{debugName=name});assert(ok,name..": "..tostring(err))
 	local script=R.Instance.new(class);script.Name=name;script.Source=source;script.Parent=parent
 	table.insert(scripts,name)
 end
