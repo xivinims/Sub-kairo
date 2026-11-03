@@ -8,7 +8,11 @@ local function property(item,name)
 end
 for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/meta.json'))) do
 	if meta.file then
-		local roots=R.deserializeModel(fs.readFile(meta.file))
+		local ok,roots=pcall(R.deserializeModel,fs.readFile(meta.file))
+		if not ok then
+			table.insert(result,{id=meta.id,name=meta.name,error=tostring(roots),sha256=meta.sha256})
+			continue
+		end
 		local report={id=meta.id,name=meta.name,sha256=meta.sha256,roots={},animations={},sounds={},scripts={},parts=0,thumbnails={}}
 		for _,root in ipairs(roots) do
 			table.insert(report.roots,{name=root.Name,class=root.ClassName,descendants=#root:GetDescendants()})
