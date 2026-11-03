@@ -14,8 +14,10 @@ local function circle(text,x,y)
  return b
 end
 local lightButton=circle('LUZ',.09,.70)
-local utilityButton=circle('USAR',.48,.88)
-local indicator=circle('',.57,.88);indicator.Active=false
+local utilityButton=circle('USAR',.53,.88)
+local powerButton=circle('BASTÃO',.44,.88)
+powerButton.Activated:Connect(function()local id=player:GetAttribute('NBPower');if id and id~=''then remote:FireServer('Use',id)end end)
+local indicator=circle('',.62,.88);indicator.Active=false
 local function useLight()remote:FireServer('Use','flashlight')end
 local function useUtility()local id=player:GetAttribute('NBUtility');if id and id~='' then remote:FireServer('Use',id)end end
 lightButton.Activated:Connect(useLight);utilityButton.Activated:Connect(useUtility)
@@ -27,6 +29,7 @@ local night=Instance.new('ColorCorrectionEffect');night.Name='NBNightVision';nig
 local elapsed=0;local phase=0
 Run.RenderStepped:Connect(function(dt)
  local active=player:GetAttribute('NBInRound')==true
+ powerButton.Visible=active and (player:GetAttribute('NBPower')or '')~=''
  gui.Enabled=active;lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
  night.Enabled=active and player:GetAttribute('NBFlashlight')==true and player:GetAttribute('NBLightID')=='nvg'
  local camera=workspace.CurrentCamera
@@ -69,3 +72,10 @@ remote.OnClientEvent:Connect(function(status,userId,position)
   game:GetService('Debris'):AddItem(marker,8)
  end
 end)
+
+local function headphones()
+ local equipped=player:GetAttribute('NBPerk')=='headphones'or player:GetAttribute('NBPerk2')=='headphones'
+ for _,bot in ipairs(Collection:GetTagged('NBNextbot'))do for _,sound in ipairs(bot:GetDescendants())do if sound:IsA('Sound')then sound.RollOffMaxDistance=equipped and 180 or 100 end end end
+end
+Collection:GetInstanceAddedSignal('NBNextbot'):Connect(function()task.defer(headphones)end)
+player:GetAttributeChangedSignal('NBPerk'):Connect(headphones);player:GetAttributeChangedSignal('NBPerk2'):Connect(headphones)

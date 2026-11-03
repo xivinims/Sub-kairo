@@ -36,20 +36,22 @@ local function light(p,s)
  local weld=Instance.new('WeldConstraint');weld.Part0=arm;weld.Part1=handle;weld.Parent=handle
  local lamp=Instance.new('SpotLight');lamp.Face=Enum.NormalId.Front;lamp.Range=mode=='headlamp'and 65 or 50;lamp.Angle=65;lamp.Brightness=2;lamp.Shadows=true;lamp.Parent=handle
 end
-remote.OnServerEvent:Connect(function(p,action,id)
+remote.OnServerEvent:Connect(function(p,action,id,slot)
  if type(action)~='string'or type(id)~='string'or not Rules.items[id]then return end
  local s=sessions[p];local profile=Profiles.Get(p);if not s or not profile or os.clock()-s.last<.2 then return end;s.last=os.clock()
  if action=='Equip'then
   if p:GetAttribute('NBInRound')then return end
   local _,status=Profiles.Mutate(p,function(v)
    if not Rules.canEquip(id,v.equipment)then return false,'empty'end
-   if Rules.items[id].slot=='Light'then v.light=id else v.utility=id end;return true,'equipped'
+   if Rules.items[id].slot=='Light'then v.light=id elseif Rules.items[id].slot=='Power'then v.power=id elseif Rules.items[id].slot=='Usable'then
+    local index=type(slot)=='number'and slot%1==0 and slot>=1 and slot<=4 and slot or 1;for key,value in pairs(v.usables)do if value==id then v.usables[key]=nil end end;v.usables[tostring(index)]=id
+   else v.utility=id end;return true,'equipped'
   end);remote:FireClient(p,status);return
  end
  local char=p.Character;local root=char and char:FindFirstChild('HumanoidRootPart');local hum=char and char:FindFirstChildOfClass('Humanoid')
  if action~='Use'or not p:GetAttribute('NBInRound')or p:GetAttribute('NBDowned')or not root or not hum or hum.Health<=0 then return end
  if id=='flashlight'then light(p,s);return end
- if profile.utility~=id then return end
+ local equipped=profile.utility==id or profile.power==id;for _,value in pairs(profile.usables)do if value==id then equipped=true end end;if not equipped then return end
  if id=='compass'or id=='timer'or id=='radar'then return end
  if workspace:GetServerTimeNow()<s.ready then return end
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Exclude;rp.FilterDescendantsInstances={char}

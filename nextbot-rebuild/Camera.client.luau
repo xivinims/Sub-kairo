@@ -34,13 +34,14 @@ Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,functio
   local crouch=player:GetAttribute('NBMobility')=='Crouch'or player:GetAttribute('NBMobility')=='Slide'or player:GetAttribute('NBDowned')
   time+=dt*math.clamp(h.WalkSpeed*.45,5,16)
   local moving=h.MoveDirection.Magnitude>.1 and h.FloorMaterial~=Enum.Material.Air
-  local bob=moving and player:GetAttribute('NBSetting_Viewbob')~=false and .07 or 0
+  local legacy=player:GetAttribute('NBSetting_LegacyCamera')==true
+  local bob=moving and not legacy and player:GetAttribute('NBSetting_Viewbob')~=false and .07 or 0
   local target=Vector3.new(math.cos(time)*bob,(crouch and -.65 or 0)+math.abs(math.sin(time))*bob,0)
   offset=offset:Lerp(target,1-math.exp(-dt*12));h.CameraOffset=offset
   local first=(camera.CFrame.Position-camera.Focus.Position).Magnitude<1
   for _,name in ipairs({'Left Arm','Right Arm'})do local arm=char:FindFirstChild(name);if arm then arm.LocalTransparencyModifier=first and player:GetAttribute('NBSetting_RunningViewmodel')~=false and moving and 0 or first and 1 or 0 end end
   local fov=player:GetAttribute('NBSetting_FOV')or 70
-  camera.FieldOfView=camera.FieldOfView+(fov+(player:GetAttribute('NBMobility')=='Sprint'and 5 or 0)-camera.FieldOfView)*math.min(dt*8,1)
+  camera.FieldOfView=camera.FieldOfView+(fov+(not legacy and player:GetAttribute('NBMobility')=='Sprint'and 5 or 0)-camera.FieldOfView)*math.min(dt*8,1)
  end
 end)
 script.Destroying:Connect(function()Run:UnbindFromRenderStep('ExactRunCamera');if controls then controls:Enable()end end)

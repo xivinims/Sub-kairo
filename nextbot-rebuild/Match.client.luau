@@ -35,7 +35,8 @@ end
 local function showWheel()wheel.Visible=not wheel.Visible;for i,b in ipairs(emoteButtons)do local item=byId[player:GetAttribute('NBEmoteSlot'..i)];b.Text=item and item.name or 'VAZIO\nEquipe no inventário'end end
 circle('☺',1310,238,88,showWheel)
 local inventory=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(1010,140),Size=UDim2.fromOffset(340,340),BackgroundColor3=Color3.fromRGB(24,25,30),BackgroundTransparency=.1})
-new('UICorner',inventory,{CornerRadius=UDim.new(0,12)});local invText=text(inventory,'',14,10,312,312,18);invText.TextWrapped=true
+new('UICorner',inventory,{CornerRadius=UDim.new(0,12)});local invText=text(inventory,'',14,10,312,140,18);invText.TextWrapped=true
+for i=1,4 do local use=new('TextButton',inventory,{Position=UDim2.fromOffset(12+(i-1)%2*162,165+math.floor((i-1)/2)*78),Size=UDim2.fromOffset(152,68),BackgroundColor3=Color3.fromRGB(60,70,87),TextColor3=Color3.new(1,1,1),Text='USÁVEL '..i,TextSize=17,Font=Enum.Font.GothamBold});new('UICorner',use,{CornerRadius=UDim.new(0,8)});use.Activated:Connect(function()local id=player:GetAttribute('NBUsable'..i);if id and id~=''then package.Equipment:FireServer('Use',id)end end)end
 circle('BOLSA',1250,105,112,function()
  inventory.Visible=not inventory.Visible
  local lines={'EQUIPAMENTO'};for _,item in ipairs(require(package.Config).Catalog)do local n=player:GetAttribute('NBOwned_'..item.id)or 0;if n>0 then table.insert(lines,item.name..' ×'..n)end end

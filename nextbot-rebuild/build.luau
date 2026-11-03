@@ -8,7 +8,7 @@ local atlas=serde.decode('json',fs.readFile('/tmp/nb-assets/atlas-result.json'))
 if atlas.imageId then package:SetAttribute('MenuAtlas','rbxassetid://'..atlas.imageId)end
 local scripts={}
 local server=dm:GetService('ServerScriptService')
-for _,entry in ipairs({{'PosePlayer','ModuleScript',package},{'Movement.server','Script',server},{'Locomotion.client','LocalScript'},{'Camera.client','LocalScript'},{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'AudioConfig','ModuleScript',package},{'Boombox.server','Script',server},{'Music.client','LocalScript'},{'Loading.client','LocalScript'},{'PosePlayer','ModuleScript',package},{'Movement.server','Script',server},{'Locomotion.client','LocalScript'},{'Camera.client','LocalScript'},{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -28,7 +28,7 @@ for _,root in ipairs(emoteRoots) do
    local duration=0;for _,frame in ipairs(sequence:GetChildren())do if frame:IsA('Keyframe') then duration=math.max(duration,frame.Time)end end
    local id='pack_'..sequence.Name:lower():gsub('[^%w]+','_')
    local original=sequence:Clone();original.Name=id;original.Parent=clips
-   table.insert(emoteCatalog,{id=id,name=sequence.Name,category='Animações',price=250,available=true,soundId=sequence.Name=='Jumpstyle' and 1839246711 or 0,duration=duration,loop=sequence.Loop,description=sequence.Name=='Jumpstyle' and 'Emote R6 do pacote enviado. Música Jumpstyle do Creator Store; teste de áudio pendente.' or 'Emote R6 do pacote enviado. Música pendente.',source='user-r6-emotes.rbxm'})
+   table.insert(emoteCatalog,{id=id,name=sequence.Name,category='Animações',price=250,available=true,soundId=sequence.Name=='Jumpstyle' and 1839246711 or sequence.Name=='Electro Shuffle'and 1847238776 or 0,duration=duration,loop=sequence.Loop,description=sequence.Name=='Jumpstyle' and 'Emote R6 do pacote enviado. Música Jumpstyle do Creator Store; teste de áudio pendente.' or 'Emote R6 do pacote enviado. Música pendente.',source='user-r6-emotes.rbxm'})
   end
  end
 end
@@ -89,7 +89,7 @@ local remote=R.Instance.new('RemoteEvent');remote.Name='Settings';remote.Parent=
 local matchRemote=R.Instance.new('RemoteEvent');matchRemote.Name='MatchAction';matchRemote.Parent=package
 local equipmentRemote=R.Instance.new('RemoteEvent');equipmentRemote.Name='Equipment';equipmentRemote.Parent=package
 local W=dm:GetService('Workspace')
-for _,name in ipairs({'Economy','Rescue','Movement'})do local e=R.Instance.new('RemoteEvent');e.Name=name;e.Parent=package end
+for _,name in ipairs({'Economy','Rescue','Movement','Boombox'})do local e=R.Instance.new('RemoteEvent');e.Name=name;e.Parent=package end
 local mapCatalog=require('./SceneBuild')(dm,package)
 W:SetAttribute('ReferencePreviewOnly',false)
 W:SetAttribute('ExactReplicaVerified',false)

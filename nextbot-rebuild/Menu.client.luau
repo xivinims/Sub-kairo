@@ -48,7 +48,7 @@ local function show(name)
  active=name
  local page=pages[name];page.Position=UDim2.fromOffset(35,0)
  transition=Tween:Create(page,TweenInfo.new(.24,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromOffset(0,0)});transition:Play()
- player:SetAttribute('NBMenuPage',name)
+ player:SetAttribute('NBMenuPage',name);player:SetAttribute('NBMenuOpen',true)
 end
 local home=pages.Home
 local title=label(home,'EXACT RUN',550,210,440,110,78)
@@ -118,6 +118,8 @@ local selectedTitle=label(pages.Shop,'',963,457,220,46,25)
 local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label(description,'',16,10,374,110,23)
 local selectedItem
 local emoteSlot=1
+local equipmentSlot=1
+local perkSlot=1
 local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()
  if selectedItem and selectedItem.available then if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end else message('Item ainda não disponível.')end
 end)
@@ -125,11 +127,11 @@ buy.Active=false;buy.Selectable=false
 button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
  if not selectedItem then return end
  if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot);return end
- if selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id);return end
+ if selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id,perkSlot);return end
  local owned=player:GetAttribute('NBOwned_'..selectedItem.id) or 0
  if owned<=0 then message('Você não possui este item.');return end
  if player:GetAttribute('NBInRound') then message('Equipe no lobby antes da rodada.');return end
- package:WaitForChild('Equipment'):FireServer('Equip',selectedItem.id)
+ package:WaitForChild('Equipment'):FireServer('Equip',selectedItem.id,equipmentSlot)
 end)
 local inspect=false
 button(pages.Shop,'INSPECIONAR',870,650,197,46,colors[1],function()
@@ -142,6 +144,8 @@ local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA(
 local function select(item)selectedItem=item;buy.Active=item.available==true;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.available and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
 function drawShop(category)
  shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedTitle.Text='';detail.Text='Selecione um item.'
+ if category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',true);return end
+ if category=='Robux'then detail.Text='Compras em Robux não estão configuradas neste teste.';buy.Active=false;buy.Selectable=false;return end
  for _,item in ipairs(combined) do
   if item.category==category or category=='Em destaque' then
    local p=panel(grid,0,0,136,200,colors[3]);p.LayoutOrder=(item.available and 0 or 1000)+#grid:GetChildren()
@@ -161,20 +165,28 @@ for i,name in ipairs({'Em destaque','Equipamento','Personagem','Animações','Ca
  button(pages.Shop,string.upper(name),95+(i-1)*207,124,198,58,colors[i],function()drawShop(name)end)
 end
 local slots=make('Frame',pages.Inventory,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=1})
+local itemsById={};for _,item in ipairs(combined)do itemsById[item.id]=item end
 function drawInventory(category)
  invCategory=category;clear(slots)
- local names=category=='Emotes' and {'EMOTE 1','EMOTE 2','EMOTE 3','EMOTE 4','EMOTE 5','EMOTE 6'} or category=='Equipamento' and {'LUZ','UTILIDADE','BASTÃO','MARTELO','USÁVEL 1','USÁVEL 2','USÁVEL 3','USÁVEL 4'} or category=='Caixa de som' and {'CAIXA DE SOM','AURA','LISTAS DE MÚSICAS'} or {'ESPAÇO 1','ESPAÇO 2','ESPAÇO 3','ESPAÇO 4'}
+ local names=category=='Emotes'and {'EMOTE 1','EMOTE 2','EMOTE 3','EMOTE 4','EMOTE 5','EMOTE 6'}or category=='Equipamento'and {'LUZ','UTILIDADE','PODER','MARTELO','USÁVEL 1','USÁVEL 2','USÁVEL 3','USÁVEL 4'}or category=='Personagem'and {'VANTAGEM 1','VANTAGEM 2'}or category=='Caixa de som'and {'CAIXA DE SOM','LISTAS DE MÚSICAS'}or {'COSMÉTICO 1','COSMÉTICO 2','PERSONAGEM','EFEITO'}
  local count=#names;local half=math.ceil(count/2)
- for i,name in ipairs(names) do
+ for i,name in ipairs(names)do
   local side=i>half;local index=side and i-half-1 or i-1
   local x=side and 1120 or 95;local y=255+math.floor(index/2)*172
   if count<=6 then y=245+index*143 else x+=index%2*168 end
-  local p=button(slots,'+',x,y,150,132,colors[3],function()if category=='Emotes' then
-    emoteSlot=i
-    local id=player:GetAttribute('NBEmoteSlot'..i)
-    if id and id~='' then package.Emotes:FireServer('Play',id);message('Emote iniciado. Pule para parar.')else show('Shop');drawShop('Animações')end
-   else show('Shop');drawShop('Equipamento')end end)
-  label(p,name,5,98,140,30,15)
+  local id
+  if category=='Emotes'then id=player:GetAttribute('NBEmoteSlot'..i)
+  elseif category=='Equipamento'then id=i==1 and (player:GetAttribute('NBLightID')or 'flashlight')or i==2 and player:GetAttribute('NBUtility')or i==3 and player:GetAttribute('NBPower')or i>=5 and player:GetAttribute('NBUsable'..(i-4))or ''
+  elseif category=='Personagem'then id=player:GetAttribute(i==1 and 'NBPerk'or 'NBPerk2')end
+  local item=id and itemsById[id]
+  local p=button(slots,item and item.name or '+',x,y,150,132,colors[3],function()
+   if category=='Emotes'then emoteSlot=i;show('Shop');drawShop('Animações');if item then select(item)end
+   elseif category=='Personagem'then perkSlot=i;show('Shop');drawShop('Personagem');if item then select(item)end
+   elseif category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',not player:GetAttribute('NBOpenBoombox'))
+   elseif category=='Cosméticos'then message('Os cosméticos desta versão ainda não estão disponíveis.')
+   else equipmentSlot=i>=5 and i-4 or 1;show('Shop');drawShop('Equipamento');if item then select(item)end end
+  end)
+  label(p,name,5,100,140,27,14)
  end
 end
 for i,name in ipairs({'Equipamento','Personagem','Cosméticos','Emotes','Caixa de som'}) do
@@ -221,8 +233,8 @@ UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCo
 show('Home')
 
 local function transaction(status)
- local messages={purchased='Emote comprado.',owned='Você já possui este emote.',funds='Moedas insuficientes.',equipped='Emote equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
- message(messages[status] or 'Operação recusada.')
+ local messages={purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
+ message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)end
 end
 package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
 

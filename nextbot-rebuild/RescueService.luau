@@ -38,7 +38,7 @@ local function revive(helper,target)
  if not downed[target]or not close(helper,target)or carriers[target]then return end
  if reviving[target]then return end
  reviving[target]=helper
- local start=workspace:GetServerTimeNow();local duration=Config.ReviveDuration/(helper:GetAttribute('NBPerk')=='stethoscope'and 1.4 or 1)
+ local start=workspace:GetServerTimeNow();local duration=Config.ReviveDuration/((helper:GetAttribute('NBPerk')=='stethoscope'or helper:GetAttribute('NBPerk2')=='stethoscope')and 1.4 or 1)
  while downed[target]and close(helper,target)and not carriers[target]and workspace:GetServerTimeNow()-start<duration do
   target:SetAttribute('NBReviveProgress',(workspace:GetServerTimeNow()-start)/duration);task.wait(.1)
  end

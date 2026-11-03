@@ -4,7 +4,7 @@ local Config=require(package.Config)
 local remote=package:WaitForChild('Economy')
 local items={};for _,v in ipairs(Config.Catalog)do items[v.id]=v end
 local last={}
-remote.OnServerEvent:Connect(function(p,action,id)
+remote.OnServerEvent:Connect(function(p,action,id,slot)
  if type(id)~='string' or #id>80 or os.clock()-(last[p]or -10)<.4 then return end
  last[p]=os.clock()
  local item=items[id]
@@ -17,7 +17,7 @@ remote.OnServerEvent:Connect(function(p,action,id)
    return true,'purchased'
   end);remote:FireClient(p,status)
  elseif action=='Perk'and item and item.category=='Personagem'and not p:GetAttribute('NBInRound')then
-  local _,status=Profiles.Mutate(p,function(v)if not v.owned[id]then return false,'invalid'end;v.perk=id;return true,'equipped'end);remote:FireClient(p,status)
+  local _,status=Profiles.Mutate(p,function(v)if not v.owned[id]then return false,'invalid'end;if slot==2 then if v.perk==id then v.perk=''end;v.perk2=id else if v.perk2==id then v.perk2=''end;v.perk=id end;return true,'equipped'end);remote:FireClient(p,status)
  elseif action=='Claim'then
   local requirements={survivor={field='wins',goal=2,coins=150},medic={field='rescues',goal=3,coins=200},runner={field='rounds',goal=5,coins=300}}
   local rule=requirements[id];if not rule then return end
