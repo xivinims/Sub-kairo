@@ -2,6 +2,7 @@ local Players=game:GetService('Players')
 local Storage=game:GetService('ServerStorage')
 local Replicated=game:GetService('ReplicatedStorage')
 local Pathfinding=game:GetService('PathfindingService')
+local Collection=game:GetService('CollectionService')
 local package=Replicated:WaitForChild('NextbotReference')
 local config=require(package.Config)
 local State=require(package.RoundState)
@@ -45,6 +46,11 @@ local function targetFrom(position)
 			if d<distance then closest=root;distance=d end
 		end
 	end
+	local folder=workspace:FindFirstChild('NBDecoys')
+	if folder then for _,decoy in ipairs(folder:GetChildren()) do
+		local root=decoy:FindFirstChild('HumanoidRootPart');local h=decoy:FindFirstChildOfClass('Humanoid')
+		if root and h and h.Health>0 then local d=(root.Position-position).Magnitude;if d<distance then closest=root;distance=d end end
+	end end
 	return closest,distance
 end
 local function startBots()
@@ -57,7 +63,7 @@ local function startBots()
 		for _,v in ipairs(bot:GetDescendants()) do if v:IsA('LuaSourceContainer') then v:Destroy() end end
 		local h=bot:FindFirstChildOfClass('Humanoid');local root=bot:FindFirstChild('HumanoidRootPart')
 		if not bot:IsA('Model') or not h or not root then bot:Destroy();continue end
-		bot:PivotTo(points[(i-1)%#points+1].CFrame+Vector3.new(0,3,0));bot.Parent=workspace
+		bot:PivotTo(points[(i-1)%#points+1].CFrame+Vector3.new(0,3,0));bot.Parent=workspace;Collection:AddTag(bot,'NBNextbot')
 		for _,part in ipairs(bot:GetDescendants()) do
 			if part:IsA('BasePart') and not part.Anchored then pcall(function()part:SetNetworkOwner(nil)end) end
 		end
@@ -116,6 +122,7 @@ while true do
 	package:SetAttribute('MapReady',#markers('RoundSpawns')>0 and #markers('LobbySpawns')>0)
 	if State.tick(state,workspace:GetServerTimeNow(),ready) then
 		clearBots()
+		publish() -- Replicate the new round ID before equipment consumption.
 		for _,p in ipairs(Players:GetPlayers()) do
 			local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid')
 			if state.phase=='Round' and admitted[p] and h and h.Health>0 and teleport(p,'RoundSpawns') then setActive(p,true)

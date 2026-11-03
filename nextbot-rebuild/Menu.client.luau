@@ -79,6 +79,13 @@ local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label
 local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()message('Este item ainda não tem assets e função validados.')end)
 buy.Active=false;buy.Selectable=false
 local selectedItem
+button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
+ if not selectedItem then return end
+ local owned=player:GetAttribute('NBOwned_'..selectedItem.id) or 0
+ if owned<=0 then message('Você não possui este item.');return end
+ if player:GetAttribute('NBInRound') then message('Equipe no lobby antes da rodada.');return end
+ package:WaitForChild('Equipment'):FireServer('Equip',selectedItem.id)
+end)
 local inspect=false
 button(pages.Shop,'INSPECIONAR',870,650,197,46,colors[1],function()
  inspect=not inspect;description.Visible=not inspect;buyPanel.Visible=not inspect
@@ -114,7 +121,7 @@ function drawInventory(category)
   local side=i>half;local index=side and i-half-1 or i-1
   local x=side and 1120 or 95;local y=255+math.floor(index/2)*172
   if count<=6 then y=245+index*143 else x+=index%2*168 end
-  local p=button(slots,'+',x,y,150,132,colors[3],function()message('Nenhum item equipado neste espaço.')end)
+  local p=button(slots,'+',x,y,150,132,colors[3],function()show('Shop');drawShop('Equipamento')end)
   label(p,name,5,98,140,30,15)
  end
 end
