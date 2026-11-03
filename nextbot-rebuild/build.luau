@@ -5,7 +5,8 @@ local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local scripts={}
-for _,entry in ipairs({{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+local server=dm:GetService('ServerScriptService')
+for _,entry in ipairs({{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -86,9 +87,9 @@ local remote=R.Instance.new('RemoteEvent');remote.Name='Settings';remote.Parent=
 local matchRemote=R.Instance.new('RemoteEvent');matchRemote.Name='MatchAction';matchRemote.Parent=package
 local equipmentRemote=R.Instance.new('RemoteEvent');equipmentRemote.Name='Equipment';equipmentRemote.Parent=package
 local W=dm:GetService('Workspace')
-local floor=R.Instance.new('Part');floor.Name='PreviewFloor';floor.Size=R.Vector3.new(120,1,120);floor.Anchored=true;floor.Parent=W
-local spawn=R.Instance.new('SpawnLocation');spawn.Name='PreviewSpawn';spawn.Anchored=true;spawn.Position=R.Vector3.new(0,2,0);spawn.Parent=W
-W:SetAttribute('ReferencePreviewOnly',true)
+for _,name in ipairs({'Economy','Rescue','Movement'})do local e=R.Instance.new('RemoteEvent');e.Name=name;e.Parent=package end
+local mapCatalog=require('./SceneBuild')(dm,package)
+W:SetAttribute('ReferencePreviewOnly',false)
 W:SetAttribute('ExactReplicaVerified',false)
 for _,name in ipairs({'GameMusic','LobbyMusic','BoomboxVolume','NextbotVolume','EmoteVolume'}) do
 	local group=R.Instance.new('SoundGroup');group.Name='NB_'..name;group.Parent=dm:GetService('SoundService')
@@ -97,4 +98,4 @@ fs.writeFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl',R.serializePlace(dm))
 local roundtrip=R.deserializePlace(fs.readFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl'))
 assert(roundtrip.ReplicatedStorage.NextbotReference.Settings:IsA('RemoteEvent'))
 assert(roundtrip.StarterPlayer.StarterPlayerScripts:FindFirstChild('Settings.client'))
-print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',roundStateTests='passed',equipmentTests='passed',emotePolicyTests='passed',uploadedEmotes=#emoteCatalog,placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
+print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',roundStateTests='passed',equipmentTests='passed',emotePolicyTests='passed',uploadedEmotes=#emoteCatalog,placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,maps=#mapCatalog,previewOnly=false,published=false}))

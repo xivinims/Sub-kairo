@@ -16,8 +16,9 @@ async function get(url,auth=false){
 const original=Buffer.concat(await Promise.all(Array.from({length:7},(_,i)=>fs.readFile(new URL(`assets/emotes.part${i}`,import.meta.url)))));
 if(hash(original)!=='acc4f67fa3e686020dc7e4ed1302770156eb106837958ed691ae0acfa4546995')throw Error('Emote source integrity mismatch');
 await fs.writeFile(new URL('assets/user-r6-emotes.rbxm',import.meta.url),original);
+await import('./probe.mjs');
 const metadata=[];
-for(const id of [14026023204,11128061931,124805122537927,12686575749]){
+for(const id of [14026023204,11128061931,124805122537927,123713126320438,113165227370713,14047690859]){
  try{
   const meta=await (await get(`https://economy.roblox.com/v2/assets/${id}/details`)).json();
   const delivery=await (await get(`https://apis.roblox.com/asset-delivery-api/v1/assetId/${id}`,true)).json();
