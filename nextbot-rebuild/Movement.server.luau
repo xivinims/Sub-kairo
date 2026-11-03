@@ -38,11 +38,14 @@ Run.Heartbeat:Connect(function(dt)
   local active=p:GetAttribute('NBInRound')
   if not active then s.sprint=false;s.crouch=false;s.slideUntil=0 end
   local down=p:GetAttribute('NBDowned');local sliding=active and not down and (s.slideUntil or 0)>os.clock()
-  local speed=down and 3 or s.crouch and config.CrouchSpeed or s.sprint and 34 or config.WalkSpeed
-  if p:GetAttribute('NBPerk')=='hermes'and not down and not s.crouch then speed*=1.08 end
+  local speed=down and 3 or s.crouch and config.CrouchSpeed or s.sprint and 33.3 or config.WalkSpeed
+  if p:GetAttribute('NBPerk')=='stilts'and not down and not s.crouch then speed*=1.08 end
   if (p:GetAttribute('NBCarrying')or 0)>0 then speed*=.82 end
   if (p:GetAttribute('NBSpeedBoostUntil')or 0)>workspace:GetServerTimeNow()then speed*=1.2 end
-  h.WalkSpeed=active and speed or 16;h.JumpPower=down and 0 or s.crouch and 0 or p:GetAttribute('NBPerk')=='stilts'and 53 or 45;h.UseJumpPower=true
+  local desired=active and speed or 16
+  local acceleration=p:GetAttribute('NBPerk')=='hermes'and 1.7 or 1
+  if h.MoveDirection.Magnitude<.1 and not down then s.speed=math.min(desired,16)else s.speed=math.min(desired,(s.speed or 16)+35*.05*acceleration)end
+  h.WalkSpeed=down and 3 or s.crouch and desired or s.speed;h.JumpPower=down and 0 or s.crouch and 0 or 45;h.UseJumpPower=true
   h.HipHeight=s.hip-((s.crouch or down)and .7 or 0)
   if sliding then
    local velocity=s.direction*(30+20*math.clamp(((s.slideUntil or 0)-os.clock())/.65,0,1))

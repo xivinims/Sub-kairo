@@ -63,6 +63,7 @@ local function startBots()
   task.spawn(function()
    local prev=root.Position;local stuck=0
    while bot.Parent and state.phase=='Round'do
+    if workspace:GetServerTimeNow()<(bot:GetAttribute('NBStunnedUntil')or 0)then h:MoveTo(root.Position);task.wait(.2);continue end
     local target,distance=targetFrom(root.Position)
     if target then
      local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Exclude;rp.FilterDescendantsInstances={bot}

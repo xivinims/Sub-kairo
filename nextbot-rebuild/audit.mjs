@@ -37,3 +37,5 @@ await fs.writeFile('/tmp/nb-lune.zip',zip);
 execFileSync('unzip',['-q','-o','/tmp/nb-lune.zip','-d','/tmp/nb-lune']);
 await fs.chmod('/tmp/nb-lune/lune',0o755);
 for(const file of ['audit.luau','build.luau'])execFileSync('/tmp/nb-lune/lune',['run',file],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
+
+await import("./stage-test.mjs");

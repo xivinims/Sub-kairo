@@ -56,7 +56,22 @@ remote.OnServerEvent:Connect(function(p,action,id)
  if (id=='decoy'or id=='barrier')and workspace:Raycast(root.Position,root.CFrame.LookVector*5,rp)then return end
  if not consume(p,s,id,id=='baton'or id=='barrier'or id=='cola')then remote:FireClient(p,'empty');return end
  s.ready=workspace:GetServerTimeNow()+(id=='radio'and 5 or 15);p:SetAttribute('NBDecoyReadyAt',s.ready)
- if id=='baton'or id=='cola'then p:SetAttribute('NBSpeedBoostUntil',workspace:GetServerTimeNow()+(id=='cola'and 10 or 3));return end
+ if id=='cola'then p:SetAttribute('NBSpeedBoostUntil',workspace:GetServerTimeNow()+10);return end
+ if id=='baton'then
+  local hit=false
+  for _,bot in ipairs(game:GetService('CollectionService'):GetTagged('NBNextbot'))do
+   local br=bot:FindFirstChild('HumanoidRootPart')
+   if br then
+    local delta=br.Position-root.Position
+    if delta.Magnitude<9 and delta.Magnitude>.01 and root.CFrame.LookVector:Dot(delta.Unit)>.3 then
+     local obstruction=workspace:Raycast(root.Position,delta,rp)
+     if not obstruction or obstruction.Instance:IsDescendantOf(bot)then bot:SetAttribute('NBStunnedUntil',workspace:GetServerTimeNow()+3);hit=true end
+    end
+   end
+  end
+  if hit then p:SetAttribute('NBInvulnerableUntil',workspace:GetServerTimeNow()+3)else hum:TakeDamage(20)end
+  return
+ end
  if id=='radio'then for _,other in ipairs(Players:GetPlayers())do if other:GetAttribute('NBInRound')then remote:FireClient(other,'ping',p.UserId,root.Position)end end;return end
  if id=='barrier'then
   local wall=Instance.new('Part');wall.Name='PlayerBarrier';wall.Size=Vector3.new(10,8,1);wall.CFrame=root.CFrame*CFrame.new(0,1,-5);wall.Anchored=true;wall.Color=Color3.fromRGB(130,173,223);wall.Transparency=.35;wall.Material=Enum.Material.ForceField;wall.Parent=workspace;Debris:AddItem(wall,15);return

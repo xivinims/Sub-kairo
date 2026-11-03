@@ -1,7 +1,9 @@
--- Native reference layout. Art IDs remain unset until audited; never invent ownership or balances.
+-- Screenshot-driven layout; functionality is supplied by validated server remotes.
 local Players=game:GetService('Players')
 local Tween=game:GetService('TweenService')
 local UIS=game:GetService('UserInputService')
+local Run=game:GetService('RunService')
+local Http=game:GetService('HttpService')
 local player=Players.LocalPlayer
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local config=require(package:WaitForChild('Config'))
@@ -49,7 +51,7 @@ local function show(name)
  player:SetAttribute('NBMenuPage',name)
 end
 local home=pages.Home
-local title=label(home,'EVADE',550,210,440,110,78)
+local title=label(home,'EXACT RUN',550,210,440,110,78)
 make('UIGradient',title,{Color=ColorSequence.new({ColorSequenceKeypoint.new(0,colors[2]),ColorSequenceKeypoint.new(.45,Color3.fromRGB(164,239,243)),ColorSequenceKeypoint.new(1,colors[4])})})
 local xp=panel(home,95,121,540,38,colors[1]);local xpText=label(xp,'NÍVEL —',8,0,520,38,20);xpText.TextXAlignment=Enum.TextXAlignment.Left
 local amounts={}
@@ -60,34 +62,70 @@ local note=label(canvas,'',420,665,700,34,16)
 local function message(text)note.Text=text;task.delay(4,function()if note.Text==text then note.Text='' end end)end
 local shopCategory='Equipamento';local invCategory='Equipamento'
 local drawShop,drawInventory
-button(home,'LOJA',400,375,235,104,colors[3],function()show('Shop');drawShop(shopCategory)end)
-button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
- if not package:GetAttribute('MapReady') then message('O mapa desta prévia ainda não está integrado.');return end
- package.MatchAction:FireServer('Join')
+local shopCard=button(home,'LOJA',400,375,235,104,colors[3],function()show('Shop');drawShop(shopCategory)end)
+local playCard=button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
+ if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
+ package.MatchAction:FireServer('Join');message(package:GetAttribute('Phase')=='Round' and 'Entrando na rodada…'or 'Você entrou na fila. A rodada começa após o intervalo.')
 end)
-button(home,'INVENTÁRIO',903,375,234,104,colors[4],function()show('Inventory');drawInventory(invCategory)end)
+local inventoryCard=button(home,'INVENTÁRIO',903,375,234,104,colors[4],function()show('Inventory');drawInventory(invCategory)end)
 local infoTitle=label(pages.Info,'',350,180,840,65,30)
 local infoBody=label(pages.Info,'',350,270,840,200,23)
 local function info(title,text)infoTitle.Text=title;infoBody.Text=text;show('Info')end
-for i,name in ipairs({'TABELA DE CLASSIFICAÇÃO','MISSÕES','COMUNIDADE','COLETÍVEIS'}) do
- button(home,name,1230,450+(i-1)*64,210,52,colors[(i+1)%6+1],function()info(name,'Esta seção ainda não está integrada nesta prévia.')end)
+local infoContent=make('ScrollingFrame',pages.Info,{Position=UDim2.fromOffset(330,250),Size=UDim2.fromOffset(900,390),BackgroundTransparency=1,BorderSizePixel=0,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=5})
+local function resetInfo(title)
+ for _,v in ipairs(infoContent:GetChildren())do v:Destroy()end
+ infoTitle.Text=title;infoBody.Text='';show('Info')
 end
-button(home,'EVENTO',95,598,220,95,colors[6],function()info('EVENTO','Nenhum evento foi configurado para esta experiência.')end)
-button(home,'REGISTRO DE MUDANÇAS',532,625,130,69,colors[6],function()info('REGISTRO DE MUDANÇAS','Menu, navegação, prévia do avatar e configurações em desenvolvimento.')end)
-button(home,'Navegador de Modos',672,610,192,84,colors[3],function()info('MODOS','Intervalo: 1:30\nPartida: 3:00\nIntegração do mapa pendente.')end)
-button(home,'ASSISTIR',878,625,126,69,colors[4],function()info('ASSISTIR','O modo espectador ainda não está integrado.')end)
+local function leaderboard()
+ resetInfo('TABELA DE CLASSIFICAÇÃO')
+ local list=Players:GetPlayers();table.sort(list,function(a,b)return (a:GetAttribute('NBXP')or 0)>(b:GetAttribute('NBXP')or 0)end)
+ for i,p in ipairs(list)do label(infoContent,i..'. '..p.DisplayName..'   •   Nível '..tostring(p:GetAttribute('NBLevel')or 1)..'   •   '..tostring(p:GetAttribute('NBWins')or 0)..' vitórias',0,(i-1)*52,890,46,23)end
+end
+local function missions()
+ resetInfo('MISSÕES')
+ for i,m in ipairs({{'survivor','Sobreviva a 2 rodadas','NBWins',2,150},{'medic','Reanime 3 jogadores','NBRescues',3,200},{'runner','Complete 5 rodadas','NBRounds',5,300}})do
+  local row=panel(infoContent,5,(i-1)*110,880,92,colors[2])
+  label(row,m[2]..'  '..math.min(player:GetAttribute(m[3])or 0,m[4])..'/'..m[4],10,10,600,65,23)
+  button(row,'RESGATAR '..m[5],640,20,220,52,colors[3],function()package.Economy:FireServer('Claim',m[1])end)
+ end
+end
+local function maps()
+ resetInfo('MAPAS • VOTE NA PRÓXIMA ARENA')
+ local list=require(package.MapCatalog)
+ for i,m in ipairs(list)do
+  button(infoContent,m.name,10,(i-1)*115,870,96,colors[(i-1)%6+1],function()package.MatchAction:FireServer('Vote',m.name);message('Voto enviado para '..m.name)end)
+ end
+end
+button(home,'TABELA DE CLASSIFICAÇÃO',1230,450,210,52,colors[3],leaderboard)
+button(home,'MISSÕES',1230,514,210,52,colors[1],missions)
+button(home,'COMUNIDADE',1230,578,210,52,colors[4],function()resetInfo('COMUNIDADE');label(infoContent,'Jogue em equipe. Use o rádio para marcar sua posição, carregue colegas caídos e reanime para ganhar recompensas.',25,30,850,210,26)end)
+button(home,'COLETÍVEIS',1230,642,210,52,colors[3],function()show('Inventory');drawInventory('Cosméticos')end)
+button(home,'EVENTO',95,598,220,95,colors[6],function()resetInfo('RODADAS ESPECIAIS');label(infoContent,'A cada 3 rodadas: escuridão, Nextbots mais rápidos ou o dobro de bots. Sobreviva para receber moedas e experiência.',25,30,850,210,26)end)
+button(home,'REGISTRO DE MUDANÇAS',532,625,130,69,colors[6],function()resetInfo('REGISTRO DE MUDANÇAS');label(infoContent,'Arenas da comunidade, votação, lobby, 19 emotes R6, progressão, equipamentos, queda, resgate e carregamento. Intervalo de 1:30 e rodadas de 3:00.',25,25,850,240,24)end)
+button(home,'Navegador de Modos',672,610,192,84,colors[3],maps)
+button(home,'ASSISTIR',878,625,126,69,colors[4],function()package.MatchAction:FireServer('Spectate')end)
+for i,card in ipairs({shopCard,playCard,inventoryCard})do
+ local atlas=package:GetAttribute('MenuAtlas')
+ if atlas then
+  local art=make('ImageLabel',card,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=atlas,ImageRectOffset=Vector2.new(0,(i-1)*512),ImageRectSize=Vector2.new(1024,512),ScaleType=Enum.ScaleType.Crop,ZIndex=1})
+  make('UICorner',art,{CornerRadius=UDim.new(0,10)})
+  local b=card:FindFirstChildOfClass('TextButton');b.ZIndex=2;local l=b:FindFirstChildOfClass('TextLabel');l.ZIndex=3;l.Position=UDim2.new(0,5,1,-36);l.Size=UDim2.new(1,-10,0,32)
+ end
+end
+local queue=label(home,'',520,518,510,35,20)
 for _,name in ipairs({'Shop','Inventory','Info'}) do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()show('Home')end) end
 local selectedTitle=label(pages.Shop,'',963,457,220,46,25)
 local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label(description,'',16,10,374,110,23)
 local selectedItem
 local emoteSlot=1
 local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()
- if selectedItem and selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else message('Item ainda não disponível.')end
+ if selectedItem and selectedItem.available then if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end else message('Item ainda não disponível.')end
 end)
 buy.Active=false;buy.Selectable=false
 button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
  if not selectedItem then return end
  if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot);return end
+ if selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id);return end
  local owned=player:GetAttribute('NBOwned_'..selectedItem.id) or 0
  if owned<=0 then message('Você não possui este item.');return end
  if player:GetAttribute('NBInRound') then message('Equipe no lobby antes da rodada.');return end
@@ -101,16 +139,19 @@ local grid=make('ScrollingFrame',pages.Shop,{Position=UDim2.fromOffset(100,278),
 make('UIGridLayout',grid,{CellSize=UDim2.fromOffset(136,200),CellPadding=UDim2.fromOffset(7,12),SortOrder=Enum.SortOrder.LayoutOrder})
 local heading=label(pages.Shop,'',95,210,575,53,26);heading.TextXAlignment=Enum.TextXAlignment.Left
 local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA('GuiObject') then v:Destroy() end end end
-local function select(item)selectedItem=item;buy.Active=item.source~=nil;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.source and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
+local function select(item)selectedItem=item;buy.Active=item.available==true;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.available and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
 function drawShop(category)
  shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedTitle.Text='';detail.Text='Selecione um item.'
  for _,item in ipairs(combined) do
   if item.category==category or category=='Em destaque' then
-   local p=panel(grid,0,0,136,200,colors[3]);p.LayoutOrder=#grid:GetChildren()
+   local p=panel(grid,0,0,136,200,colors[3]);p.LayoutOrder=(item.available and 0 or 1000)+#grid:GetChildren()
    label(p,tostring(item.price),8,8,120,30,22)
    label(p,item.name,6,145,124,49,18)
    local thumb=make('ImageLabel',p,{Position=UDim2.fromOffset(15,40),Size=UDim2.fromOffset(106,100),BackgroundTransparency=1,Image=item.thumbnailId and 'rbxassetid://'..item.thumbnailId or ''})
-   if thumb.Image=='' then label(p,'PRÉVIA\nPENDENTE',10,60,116,70,15) end
+   if thumb.Image=='' then
+    local icons={flashlight='◉',compass='✥',timer='3:00',radio='▥',baton='╱',radar='◎',decoy='♟',headlamp='◉',nvg='◉◉',barrier='▦',cola='▯'}
+    local icon=label(p,icons[item.id]or (item.category=='Animações'and '♫'or '♟'),10,48,116,90,45);icon.TextColor3=colors[item.category=='Animações'and 4 or 2]
+   end
    local b=make('TextButton',p,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text=''});b.Activated:Connect(function()select(item)end)
   end
  end
@@ -155,10 +196,10 @@ local function refreshAvatar(char)
   if not char:WaitForChild('HumanoidRootPart',10) or token~=generation then return end
   local original=char.Archivable;char.Archivable=true;local ok,clone=pcall(function()return char:Clone()end);char.Archivable=original
   if not ok or not clone then return end
-  for _,v in ipairs(clone:GetDescendants()) do if v:IsA('LuaSourceContainer') or v:IsA('Sound') or v:IsA('Tool') then v:Destroy() elseif v:IsA('BasePart') then v.Anchored=true end end
+  for _,v in ipairs(clone:GetDescendants()) do if v:IsA('LuaSourceContainer') or v:IsA('Sound') or v:IsA('Tool') then v:Destroy() elseif v:IsA('BasePart')then v.Anchored=v.Name=='HumanoidRootPart';v.CanCollide=false end end
   clone:PivotTo(CFrame.new())
   for _,entry in pairs(previewFrames) do
-   entry.world:ClearAllChildren();local copy=clone:Clone();copy.Parent=entry.world
+   entry.world:ClearAllChildren();local copy=clone:Clone();copy.Parent=entry.world;entry.character=copy;entry.motors=require(package.PosePlayer).Motors(copy)
    local cf,size=copy:GetBoundingBox();local center=cf.Position
    entry.camera.CFrame=CFrame.lookAt(center+Vector3.new(0,size.Y*.08,-math.max(size.Y*1.3,7)),center)
   end
@@ -168,17 +209,32 @@ end
 player.CharacterAppearanceLoaded:Connect(refreshAvatar)
 if player.Character then refreshAvatar(player.Character) end
 local function updateStats()
- xpText.Text='NÍVEL '..tostring(player:GetAttribute('NBLevel') or '—')
+ xpText.Text='NÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)..'                                    '..tostring((player:GetAttribute('NBXP')or 0)%250)..'/250'
  local names={Coins='MOEDAS',Points='PONTOS',Vouchers='CUPONS',Wisps='WISPS',Wins='VITÓRIAS'}
  for key,l in pairs(amounts) do l.Text=names[key]..' '..tostring(player:GetAttribute('NB'..key) or '—') end
 end
 for _,key in ipairs({'Level','Coins','Points','Vouchers','Wisps','Wins'}) do player:GetAttributeChangedSignal('NB'..key):Connect(updateStats) end
 updateStats()
-player:GetAttributeChangedSignal('NBInRound'):Connect(function()gui.Enabled=not player:GetAttribute('NBInRound')end)
-UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then gui.Enabled=not gui.Enabled end end)
+local function visibility()gui.Enabled=not player:GetAttribute('NBInRound')and not player:GetAttribute('NBSpectating')end
+player:GetAttributeChangedSignal('NBInRound'):Connect(visibility);player:GetAttributeChangedSignal('NBSpectating'):Connect(visibility);visibility()
+UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInRound')then package.MatchAction:FireServer('Lobby')else show('Home')end end end)
 show('Home')
 
-package:WaitForChild('Emotes').OnClientEvent:Connect(function(status)
- local messages={purchased='Emote comprado.',owned='Você já possui este emote.',funds='Moedas insuficientes.',equipped='Emote equipado.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
+local function transaction(status)
+ local messages={purchased='Emote comprado.',owned='Você já possui este emote.',funds='Moedas insuficientes.',equipped='Emote equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
  message(messages[status] or 'Operação recusada.')
+end
+package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
+
+local pose=require(package.PosePlayer);local elapsed=0
+Run.RenderStepped:Connect(function(dt)
+ elapsed+=dt
+ local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
+ queue.Text=player:GetAttribute('NBQueued')and string.format('NA FILA • %d:%02d',math.floor(remaining/60),remaining%60)or (package:GetAttribute('MapName')or '')
+ if not gui.Enabled then return end
+ local entry=previewFrames[active]
+ if entry and entry.motors then
+  local sequence=selectedItem and selectedItem.source and package.EmoteClips:FindFirstChild(selectedItem.id)or package.MovementClips:FindFirstChild('idle')
+  if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and elapsed%data.duration or 0,math.min(dt*15,1))end
+ end
 end)
