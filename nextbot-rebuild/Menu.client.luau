@@ -7,6 +7,9 @@ local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReferenc
 local config=require(package:WaitForChild('Config'))
 local gui=Instance.new('ScreenGui');gui.Name='NextbotMenu';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=5;gui.Parent=player:WaitForChild('PlayerGui')
 local colors={Color3.fromRGB(91,127,198),Color3.fromRGB(77,147,104),Color3.fromRGB(181,145,82),Color3.fromRGB(142,98,180),Color3.fromRGB(177,75,86),Color3.fromRGB(72,152,166)}
+local emoteCatalog=require(package:WaitForChild('EmoteCatalog'))
+local combined=table.clone(config.Catalog)
+for _,item in ipairs(emoteCatalog) do table.insert(combined,item) end
 local white=Color3.fromRGB(239,239,240)
 local function make(class,parent,props)
  local v=Instance.new(class);for k,val in pairs(props or {}) do v[k]=val end;v.Parent=parent;return v
@@ -76,11 +79,15 @@ button(home,'ASSISTIR',878,625,126,69,colors[4],function()info('ASSISTIR','O mod
 for _,name in ipairs({'Shop','Inventory','Info'}) do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()show('Home')end) end
 local selectedTitle=label(pages.Shop,'',963,457,220,46,25)
 local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label(description,'',16,10,374,110,23)
-local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()message('Este item ainda não tem assets e função validados.')end)
-buy.Active=false;buy.Selectable=false
 local selectedItem
+local emoteSlot=1
+local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()
+ if selectedItem and selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else message('Item ainda não disponível.')end
+end)
+buy.Active=false;buy.Selectable=false
 button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
  if not selectedItem then return end
+ if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot);return end
  local owned=player:GetAttribute('NBOwned_'..selectedItem.id) or 0
  if owned<=0 then message('Você não possui este item.');return end
  if player:GetAttribute('NBInRound') then message('Equipe no lobby antes da rodada.');return end
@@ -94,10 +101,10 @@ local grid=make('ScrollingFrame',pages.Shop,{Position=UDim2.fromOffset(100,278),
 make('UIGridLayout',grid,{CellSize=UDim2.fromOffset(136,200),CellPadding=UDim2.fromOffset(7,12),SortOrder=Enum.SortOrder.LayoutOrder})
 local heading=label(pages.Shop,'',95,210,575,53,26);heading.TextXAlignment=Enum.TextXAlignment.Left
 local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA('GuiObject') then v:Destroy() end end end
-local function select(item)selectedItem=item;selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
+local function select(item)selectedItem=item;buy.Active=item.source~=nil;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.source and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
 function drawShop(category)
  shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedTitle.Text='';detail.Text='Selecione um item.'
- for _,item in ipairs(config.Catalog) do
+ for _,item in ipairs(combined) do
   if item.category==category or category=='Em destaque' then
    local p=panel(grid,0,0,136,200,colors[3]);p.LayoutOrder=#grid:GetChildren()
    label(p,tostring(item.price),8,8,120,30,22)
@@ -121,7 +128,11 @@ function drawInventory(category)
   local side=i>half;local index=side and i-half-1 or i-1
   local x=side and 1120 or 95;local y=255+math.floor(index/2)*172
   if count<=6 then y=245+index*143 else x+=index%2*168 end
-  local p=button(slots,'+',x,y,150,132,colors[3],function()show('Shop');drawShop('Equipamento')end)
+  local p=button(slots,'+',x,y,150,132,colors[3],function()if category=='Emotes' then
+    emoteSlot=i
+    local id=player:GetAttribute('NBEmoteSlot'..i)
+    if id and id~='' then package.Emotes:FireServer('Play',id);message('Emote iniciado. Pule para parar.')else show('Shop');drawShop('Animações')end
+   else show('Shop');drawShop('Equipamento')endend)
   label(p,name,5,98,140,30,15)
  end
 end
@@ -166,3 +177,8 @@ updateStats()
 player:GetAttributeChangedSignal('NBInRound'):Connect(function()gui.Enabled=not player:GetAttribute('NBInRound')end)
 UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then gui.Enabled=not gui.Enabled end end)
 show('Home')
+
+package:WaitForChild('Emotes').OnClientEvent:Connect(function(status)
+ local messages={purchased='Emote comprado.',owned='Você já possui este emote.',funds='Moedas insuficientes.',equipped='Emote equipado.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
+ message(messages[status] or 'Operação recusada.')
+end)

@@ -5,7 +5,7 @@ local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local scripts={}
-for _,entry in ipairs({{'Config','ModuleScript',package},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -16,6 +16,39 @@ for _,entry in ipairs({{'Config','ModuleScript',package},{'EquipmentRules','Modu
 	local script=R.Instance.new(class);script.Name=name;script.Source=source;script.Parent=parent
 	table.insert(scripts,name)
 end
+local clips=R.Instance.new('Folder');clips.Name='EmoteClips';clips.Parent=package
+local emoteCatalog={}
+local emoteRoots=R.deserializeModel(fs.readFile('assets/user-r6-emotes.rbxm'))
+for _,root in ipairs(emoteRoots) do
+ for _,sequence in ipairs(root:GetDescendants())do
+  if sequence:IsA('KeyframeSequence') then
+   local duration=0;for _,frame in ipairs(sequence:GetChildren())do if frame:IsA('Keyframe') then duration=math.max(duration,frame.Time)end end
+   local id='pack_'..sequence.Name:lower():gsub('[^%w]+','_')
+   local original=sequence:Clone();original.Name=id;original.Parent=clips
+   table.insert(emoteCatalog,{id=id,name=sequence.Name,category='Animações',price=250,available=true,soundId=sequence.Name=='Jumpstyle' and 1839246711 or 0,duration=duration,loop=sequence.Loop,description=sequence.Name=='Jumpstyle' and 'Emote R6 do pacote enviado. Música Jumpstyle do Creator Store; teste de áudio pendente.' or 'Emote R6 do pacote enviado. Música pendente.',source='user-r6-emotes.rbxm'})
+  end
+ end
+end
+assert(#emoteCatalog==19,'uploaded pack count changed')
+table.sort(emoteCatalog,function(a,b)return a.id<b.id end)
+local catalogModule=R.Instance.new('ModuleScript');catalogModule.Name='EmoteCatalog'
+local catalogJson=serde.encode('json',emoteCatalog)
+catalogModule.Source="return game:GetService('HttpService'):JSONDecode([==["..catalogJson.."]==])";catalogModule.Parent=package
+assert(pcall(luau.load,catalogModule.Source),'generated catalog must compile')
+local emoteRemote=R.Instance.new('RemoteEvent');emoteRemote.Name='Emotes';emoteRemote.Parent=package
+fs.writeFile('/tmp/nb-assets/emote-catalog.json',serde.encode('json',emoteCatalog,true))
+local Policy=luau.load(fs.readFile('EmotePolicy.luau'))()
+local profile={coins=500}
+local bought,status=Policy.buy(profile,'pack_jumpstyle',250)
+assert(status=='purchased' and bought.coins==250 and profile.coins==500)
+local again,duplicate=Policy.buy(bought,'pack_jumpstyle',250)
+assert(duplicate=='owned' and again.coins==250)
+assert(select(2,Policy.buy({coins=0},'x',250))=='funds')
+assert(select(2,Policy.buy(profile,'x',0/0))=='invalid')
+local equipped=Policy.equip(bought,'pack_jumpstyle',1)
+assert(equipped.slots['1']=='pack_jumpstyle')
+assert(select(2,Policy.equip(bought,'unknown',1))=='invalid')
+assert(select(2,Policy.equip(bought,'pack_jumpstyle',7))=='invalid')
 local config=luau.load(fs.readFile('Config.luau'))()
 local policy=luau.load(fs.readFile('SettingsPolicy.luau'))()
 local hostile=policy(config.Settings,{FOV=math.huge,GameMusic=0/0,MapShadows='false',UntrustedKey='ignored'})
@@ -64,4 +97,4 @@ fs.writeFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl',R.serializePlace(dm))
 local roundtrip=R.deserializePlace(fs.readFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl'))
 assert(roundtrip.ReplicatedStorage.NextbotReference.Settings:IsA('RemoteEvent'))
 assert(roundtrip.StarterPlayer.StarterPlayerScripts:FindFirstChild('Settings.client'))
-print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',roundStateTests='passed',equipmentTests='passed',placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
+print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',roundStateTests='passed',equipmentTests='passed',emotePolicyTests='passed',uploadedEmotes=#emoteCatalog,placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
