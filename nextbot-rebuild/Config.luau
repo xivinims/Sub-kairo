@@ -1,0 +1,37 @@
+-- Screenshot reference: IMG_2671 through IMG_2690, supplied by the owner.
+-- Zero asset IDs are unresolved, deliberately not replaced by unrelated animations.
+return {
+	Build = "nextbot-reference-01", Intermission = 90, RoundDuration = 180,
+	WalkSpeed = 26, CrouchSpeed = 12, ReviveDuration = 5, BleedoutDuration = 35,
+	Settings = {
+		GameMusic=1, LobbyMusic=1, BoomboxVolume=1, NextbotVolume=1, EmoteVolume=1,
+		LowGraphics=false, MapShadows=true, NextbotVignette=true,
+		FOV=70, Viewbob=true, RunningViewmodel=true, LegacyCamera=false,
+	},
+	Catalog = {
+		{id="flashlight",name="Lanterna",category="Equipamento",slot="Light",price=0,description="Ilumina um cone de luz em um raio pequeno.",available=true},
+		{id="compass",name="Bússola",category="Equipamento",slot="Utility",price=21,description="Aponta para o objetivo, ou para o norte caso nenhum objetivo esteja disponível.",available=true},
+		{id="timer",name="Temporizador",category="Equipamento",slot="Utility",price=21,description="Mostra o tempo restante da rodada.",available=true},
+		{id="radio",name="Rádio",category="Equipamento",slot="Utility",price=45,description="Rádio de comunicação.",available=false},
+		{id="baton",name="Bastão",category="Equipamento",slot="Power",price=120,description="Bastão luminoso.",available=false},
+		{id="radar",name="Radar",category="Equipamento",slot="Utility",price=141,description="Detecta Nextbots próximos.",available=true},
+		{id="decoy",name="Painel de isca",category="Equipamento",slot="Usable1",price=162,description="Atrai os Nextbots.",available=false},
+		{id="headlamp",name="Luz frontal",category="Equipamento",slot="Light",price=2000,description="Iluminação presa à cabeça.",available=false},
+		{id="nvg",name="NVG",category="Equipamento",slot="Light",price=2500,description="Visão noturna.",available=false},
+		{id="stethoscope",name="Estetoscópio",category="Personagem",slot="Perk1",price=1000,description="40% velocidade de reanimação mais rápida",available=true},
+		{id="headphones",name="Fones de ouvido",category="Personagem",slot="Perk2",price=1200,description="Fones de ouvido.",available=false},
+		{id="badge",name="Emblema",category="Personagem",slot="Perk2",price=1250,description="Emblema de personagem.",available=false},
+		{id="briefcase",name="Maleta",category="Personagem",slot="Perk2",price=1250,description="Maleta de personagem.",available=false},
+		{id="stilts",name="Pernas altas",category="Personagem",slot="Perk2",price=2500,description="Pernas altas.",available=false},
+		{id="military",name="Pacote de grau militar",category="Personagem",slot="Perk2",price=3500,description="Pacote de grau militar.",available=false},
+		{id="hermes",name="Sapatos Hermes",category="Personagem",slot="Perk2",price=4000,description="Sapatos Hermes.",available=false},
+		{id="catjam",name="Catjam",category="Animações",slot="Emote1",price=40,description="Não gerado por IA",author="WizardMaster29",animationId=0,soundId=0,available=false},
+		{id="clap",name="Aplauso",category="Animações",slot="Emote2",price=150,description="Aplauso.",animationId=0,soundId=0,available=false},
+		{id="carlton",name="Carlton",category="Animações",slot="Emote3",price=200,description="Carlton.",animationId=0,soundId=0,available=false},
+		{id="facepalm",name="Bater a mão no rosto",category="Animações",slot="Emote4",price=200,description="Bater a mão no rosto.",animationId=0,soundId=0,available=false},
+		{id="sleep",name="Dormir",category="Animações",slot="Emote5",price=250,description="Dormir.",animationId=0,soundId=0,available=false},
+		{id="caramel",name="Caramelldansen",category="Animações",slot="Emote6",price=350,description="Caramelldansen.",animationId=0,soundId=0,available=false},
+		{id="pompon",name="Pon-Pon",category="Animações",slot="Emote1",price=350,description="Pon-Pon.",animationId=0,soundId=0,available=false},
+		{id="epicaricacy",name="Epicaricácia",category="Animações",slot="Emote2",price=400,description="Epicaricácia.",animationId=0,soundId=0,available=false},
+	},
+}

@@ -1,0 +1,34 @@
+import fs from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const key=process.env.ROBLOX_API_KEY;
+if(!key) throw Error('ROBLOX_API_KEY missing');
+const hash=b=>createHash('sha256').update(b).digest('hex');
+await fs.mkdir('/tmp/nb-assets',{recursive:true});
+async function get(url,auth=false){
+ for(let attempt=0;attempt<5;attempt++){
+  const r=await fetch(url,{headers:auth?{'x-api-key':key}:{},signal:AbortSignal.timeout(120000)});
+  if(r.ok)return r;
+  if(r.status===429&&attempt<4){await new Promise(resolve=>setTimeout(resolve,Math.min(5000*2**attempt,40000)));continue;}
+  throw Error(`HTTP ${r.status} on ${new URL(url).hostname}`);
+ }
+}
+const metadata=[];
+for(const id of [14026023204,11128061931,124805122537927]){
+ try{
+  const meta=await (await get(`https://economy.roblox.com/v2/assets/${id}/details`)).json();
+  const delivery=await (await get(`https://apis.roblox.com/asset-delivery-api/v1/assetId/${id}`,true)).json();
+  const location=delivery.location||delivery.locations?.[0]?.location;
+  if(!location)throw Error('No delivery location');
+  const bytes=Buffer.from(await (await get(location)).arrayBuffer());
+  const file=`/tmp/nb-assets/${id}.rbxm`;await fs.writeFile(file,bytes);
+  metadata.push({id,name:meta.Name,creator:meta.Creator,file,sha256:hash(bytes)});
+ }catch(e){metadata.push({id,error:String(e)});}
+}
+await fs.writeFile('/tmp/nb-assets/meta.json',JSON.stringify(metadata,null,2));
+const zip=Buffer.from(await (await get('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip')).arrayBuffer());
+if(hash(zip)!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune integrity mismatch');
+await fs.writeFile('/tmp/nb-lune.zip',zip);
+execFileSync('unzip',['-q','-o','/tmp/nb-lune.zip','-d','/tmp/nb-lune']);
+await fs.chmod('/tmp/nb-lune/lune',0o755);
+for(const file of ['audit.luau','build.luau'])execFileSync('/tmp/nb-lune/lune',['run',file],{cwd:new URL('.',import.meta.url),stdio:'inherit'});
