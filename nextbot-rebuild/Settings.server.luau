@@ -6,18 +6,9 @@ local config=require(package.Config)
 local remote=package.Settings
 local store=DSS:GetDataStore('NextbotReferenceSettings_v1')
 local sessions={}
+local policy=require(package.SettingsPolicy)
 local function sanitize(input)
-	local out=table.clone(config.Settings)
-	if type(input)~='table' then return out end
-	for key,default in pairs(out) do
-		local v=input[key]
-		if typeof(v)==typeof(default) then
-			if type(v)=='number' then
-				if v==v and math.abs(v)<math.huge then out[key]=math.clamp(v,key=='FOV' and 70 or 0,key=='FOV' and 100 or 1) end
-			else out[key]=v end
-		end
-	end
-	return out
+	return policy(config.Settings,input)
 end
 local function load(p)
 	if sessions[p] then return end
@@ -50,7 +41,13 @@ remote.OnServerEvent:Connect(function(p,action,input)
 	end
 end)
 Players.PlayerRemoving:Connect(function(p)
-	local session=sessions[p];if session then save(p,session) end;sessions[p]=nil
+	local session=sessions[p]
+	if session then
+		local deadline=os.clock()+15
+		while session.saving and os.clock()<deadline do task.wait(.1) end
+		save(p,session)
+	end
+	sessions[p]=nil
 end)
 task.spawn(function()while task.wait(30) do for p,s in pairs(sessions) do task.spawn(save,p,s) end end end)
 game:BindToClose(function()

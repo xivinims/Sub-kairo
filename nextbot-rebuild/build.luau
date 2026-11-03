@@ -5,7 +5,7 @@ local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local scripts={}
-for _,entry in ipairs({{'Config','ModuleScript',package},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript',dm:GetService('StarterPlayer'):GetChildren()[1]}}) do
+for _,entry in ipairs({{'Config','ModuleScript',package},{'SettingsPolicy','ModuleScript',package},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -17,6 +17,13 @@ for _,entry in ipairs({{'Config','ModuleScript',package},{'Settings.server','Scr
 	table.insert(scripts,name)
 end
 local config=luau.load(fs.readFile('Config.luau'))()
+local policy=luau.load(fs.readFile('SettingsPolicy.luau'))()
+local hostile=policy(config.Settings,{FOV=math.huge,GameMusic=0/0,MapShadows='false',UntrustedKey='ignored'})
+assert(hostile.FOV==70 and hostile.GameMusic==1 and hostile.MapShadows==true and hostile.UntrustedKey==nil)
+local clamped=policy(config.Settings,{FOV=300,GameMusic=-2,LobbyMusic=5,LowGraphics=true})
+assert(clamped.FOV==100 and clamped.GameMusic==0 and clamped.LobbyMusic==1 and clamped.LowGraphics)
+assert(config.Settings.LowGraphics==false,'policy mutated defaults')
+assert(policy(config.Settings,nil).FOV==70,'missing payload must restore defaults')
 assert(config.Intermission==90 and config.RoundDuration==180)
 local ids={}
 for _,item in ipairs(config.Catalog) do
@@ -33,4 +40,7 @@ for _,name in ipairs({'GameMusic','LobbyMusic','BoomboxVolume','NextbotVolume','
 	local group=R.Instance.new('SoundGroup');group.Name='NB_'..name;group.Parent=dm:GetService('SoundService')
 end
 fs.writeFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl',R.serializePlace(dm))
-print(serde.encode('json',{compiled=scripts,intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
+local roundtrip=R.deserializePlace(fs.readFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl'))
+assert(roundtrip.ReplicatedStorage.NextbotReference.Settings:IsA('RemoteEvent'))
+assert(roundtrip.StarterPlayer.StarterPlayerScripts:FindFirstChild('Settings.client'))
+print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
