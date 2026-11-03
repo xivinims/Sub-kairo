@@ -3,7 +3,7 @@ local R=require('@lune/roblox')
 local serde=require('@lune/serde')
 return function(dm,package)
  local function new(class,name,parent,props)
-  local v=R.Instance.new(class);v.Name=name;for k,val in pairs(props or {})do v[k]=val end;v.Parent=parent;return v
+  local v=R.Instance.new(class);v.Name=name;for k,val in pairs(props or {})do if k=='Position'then v.CFrame=R.CFrame.new(val)else v[k]=val end end;v.Parent=parent;return v
  end
  local V,C=R.Vector3,R.CFrame
  local function part(name,parent,pos,size,color)
@@ -30,8 +30,8 @@ return function(dm,package)
   if count<20 then map:Destroy();continue end
   local low=V.new(math.huge,math.huge,math.huge);local high=V.new(-math.huge,-math.huge,-math.huge)
   for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')then
-   low=V.new(math.min(low.X,v.Position.X-v.Size.X/2),math.min(low.Y,v.Position.Y-v.Size.Y/2),math.min(low.Z,v.Position.Z-v.Size.Z/2))
-   high=V.new(math.max(high.X,v.Position.X+v.Size.X/2),math.max(high.Y,v.Position.Y+v.Size.Y/2),math.max(high.Z,v.Position.Z+v.Size.Z/2))
+   low=V.new(math.min(low.X,v.CFrame.Position.X-v.Size.X/2),math.min(low.Y,v.CFrame.Position.Y-v.Size.Y/2),math.min(low.Z,v.CFrame.Position.Z-v.Size.Z/2))
+   high=V.new(math.max(high.X,v.CFrame.Position.X+v.Size.X/2),math.max(high.Y,v.CFrame.Position.Y+v.Size.Y/2),math.max(high.Z,v.CFrame.Position.Z+v.Size.Z/2))
   end end
   local offset=V.new(-(low.X+high.X)/2,-low.Y,-(low.Z+high.Z)/2)
   for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')then v.CFrame+=offset end end
@@ -42,10 +42,10 @@ return function(dm,package)
     table.insert(candidates,v)
    end
   end
-  table.sort(candidates,function(a,b)return a.Position.Y+a.Size.Y/2<b.Position.Y+b.Size.Y/2 end)
+  table.sort(candidates,function(a,b)return a.CFrame.Position.Y+a.Size.Y/2<b.CFrame.Position.Y+b.Size.Y/2 end)
   for i,v in ipairs(candidates)do
    if i>160 then break end
-   new('Part','Candidate'..i,points,{Position=v.Position+V.new(0,v.Size.Y/2+3,0),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1})
+   new('Part','Candidate'..i,points,{Position=v.CFrame.Position+V.new(0,v.Size.Y/2+3,0),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1})
   end
   removals[def[2]]=removed;table.insert(mapCatalog,{name=def[2],assetId=def[1],parts=count,candidates=#points:GetChildren()})
  end

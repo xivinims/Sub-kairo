@@ -1,22 +1,108 @@
--- Development-only match controls. Replaced by the screenshot-based main menu later.
-local Players=game:GetService('Players')
-local Run=game:GetService('RunService')
-local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
-local player=Players.LocalPlayer
-local gui=Instance.new('ScreenGui');gui.Name='MatchPreview';gui.ResetOnSpawn=false;gui.Parent=player:WaitForChild('PlayerGui')
-local status=Instance.new('TextLabel');status.Size=UDim2.fromOffset(320,36);status.Position=UDim2.new(.5,-160,0,16);status.BackgroundColor3=Color3.fromRGB(20,24,30);status.BackgroundTransparency=.15;status.TextColor3=Color3.new(1,1,1);status.Font=Enum.Font.GothamBold;status.TextSize=16;status.Parent=gui
-local join=Instance.new('TextButton');join.Size=UDim2.fromOffset(220,44);join.Position=UDim2.new(.5,-110,1,-60);join.BackgroundColor3=Color3.fromRGB(40,90,60);join.TextColor3=Color3.new(1,1,1);join.Font=Enum.Font.GothamBold;join.TextSize=16;join.Parent=gui
-for _,v in ipairs({status,join}) do local corner=Instance.new('UICorner');corner.CornerRadius=UDim.new(0,8);corner.Parent=v end
-join.Activated:Connect(function() package.MatchAction:FireServer(player:GetAttribute('NBQueued') and 'Lobby' or 'Join') end)
-local function visibility()gui.Enabled=player:GetAttribute('NBInRound')==true end
-player:GetAttributeChangedSignal('NBInRound'):Connect(visibility)
-visibility()
-local last=''
-Run.Heartbeat:Connect(function()
-	local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline') or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
-	local phase=package:GetAttribute('Phase')=='Round' and 'PARTIDA' or 'INTERVALO'
-	local value=string.format('%s • %d:%02d',phase,math.floor(remaining/60),remaining%60)
-	if package:GetAttribute('MapReady')==false then value='PRÉVIA • mapa ainda não integrado' end
-	if value~=last then status.Text=value;last=value end
-	join.Text=player:GetAttribute('NBQueued') and 'VOLTAR AO LOBBY' or 'ENTRAR NO JOGO'
+local Players=game:GetService('Players');local Run=game:GetService('RunService');local CAS=game:GetService('ContextActionService');local UIS=game:GetService('UserInputService');local Collection=game:GetService('CollectionService')
+local player=Players.LocalPlayer;local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
+local emotes=require(package.EmoteCatalog);local byId={};for _,e in ipairs(emotes)do byId[e.id]=e end
+local function new(class,parent,props)local v=Instance.new(class);for k,val in pairs(props or {})do v[k]=val end;v.Parent=parent;return v end
+local gui=new('ScreenGui',player:WaitForChild('PlayerGui'),{Name='MatchHUD',ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=10})
+local canvas=new('Frame',gui,{Size=UDim2.fromOffset(1536,709),Position=UDim2.fromScale(.5,.5),AnchorPoint=Vector2.new(.5,.5),BackgroundTransparency=1})
+local scale=new('UIScale',canvas)
+local function fit()scale.Scale=math.min(gui.AbsoluteSize.X/1536,gui.AbsoluteSize.Y/709)end;fit();gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(fit)
+local function text(parent,value,x,y,w,h,size)
+ return new('TextLabel',parent,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),Font=Enum.Font.GothamBold,TextSize=size or 22,TextColor3=Color3.new(1,1,1),TextStrokeTransparency=.2,BackgroundTransparency=1})
+end
+local function circle(value,x,y,w,callback)
+ local b=new('TextButton',canvas,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,w),Font=Enum.Font.GothamBold,TextSize=19,TextColor3=Color3.fromRGB(220,220,220),BackgroundColor3=Color3.fromRGB(24,24,27),BackgroundTransparency=.5,AutoButtonColor=true})
+ new('UICorner',b,{CornerRadius=UDim.new(1,0)});new('UIStroke',b,{Thickness=4,Color=Color3.fromRGB(160,160,160),Transparency=.25})
+ local ring=new('Frame',b,{BackgroundTransparency=1,Position=UDim2.fromOffset(7,7),Size=UDim2.new(1,-14,1,-14)});new('UICorner',ring,{CornerRadius=UDim.new(1,0)});new('UIStroke',ring,{Thickness=2,Color=Color3.fromRGB(190,190,190),Transparency=.4})
+ b.Activated:Connect(callback);return b
+end
+local sprint,crouch=false,false
+local function setSprint(on)sprint=on;package.Movement:FireServer('Sprint',on)end
+local function setCrouch(on)crouch=on;package.Movement:FireServer('Crouch',on)end
+circle('MENU',94,238,88,function()package.MatchAction:FireServer('Lobby')end)
+local first=false
+circle('▣\nPOV',94,342,88,function()first=not first;player.CameraMode=first and Enum.CameraMode.LockFirstPerson or Enum.CameraMode.Classic end)
+local crouchButton=circle('AGACHAR',1140,588,106,function()setCrouch(not crouch)end)
+local sprintButton=circle('CORRER',1280,414,90,function()setSprint(not sprint)end)
+local drop=circle('SOLTAR',1250,272,88,function()package.Rescue:FireServer('Drop')end)
+local wheel=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(460,205),Size=UDim2.fromOffset(620,360),BackgroundColor3=Color3.fromRGB(20,20,26),BackgroundTransparency=.12})
+new('UICorner',wheel,{CornerRadius=UDim.new(0,20)});text(wheel,'EMOTES',0,8,620,36,28)
+local emoteButtons={}
+for i=1,6 do
+ local b=new('TextButton',wheel,{Position=UDim2.fromOffset(16+(i-1)%3*200,56+math.floor((i-1)/3)*145),Size=UDim2.fromOffset(188,132),BackgroundColor3=Color3.fromRGB(63,48,83),BackgroundTransparency=.25,TextColor3=Color3.new(1,1,1),TextWrapped=true,TextSize=18,Font=Enum.Font.GothamBold})
+ new('UICorner',b,{CornerRadius=UDim.new(0,10)});emoteButtons[i]=b
+ b.Activated:Connect(function()local id=player:GetAttribute('NBEmoteSlot'..i);if id and id~=''then package.Emotes:FireServer('Play',id)end;wheel.Visible=false end)
+end
+local function showWheel()wheel.Visible=not wheel.Visible;for i,b in ipairs(emoteButtons)do local item=byId[player:GetAttribute('NBEmoteSlot'..i)];b.Text=item and item.name or 'VAZIO\nEquipe no inventário'end end
+circle('☺',1310,238,88,showWheel)
+local inventory=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(1010,140),Size=UDim2.fromOffset(340,340),BackgroundColor3=Color3.fromRGB(24,25,30),BackgroundTransparency=.1})
+new('UICorner',inventory,{CornerRadius=UDim.new(0,12)});local invText=text(inventory,'',14,10,312,312,18);invText.TextWrapped=true
+circle('BOLSA',1250,105,112,function()
+ inventory.Visible=not inventory.Visible
+ local lines={'EQUIPAMENTO'};for _,item in ipairs(require(package.Config).Catalog)do local n=player:GetAttribute('NBOwned_'..item.id)or 0;if n>0 then table.insert(lines,item.name..' ×'..n)end end
+ invText.Text=table.concat(lines,'\n')
+end)
+local healthPanel=new('Frame',canvas,{Position=UDim2.fromOffset(128,592),Size=UDim2.fromOffset(192,72),BackgroundColor3=Color3.fromRGB(24,28,22),BackgroundTransparency=.45});new('UICorner',healthPanel,{CornerRadius=UDim.new(0,7)});new('UIStroke',healthPanel,{Color=Color3.fromRGB(110,159,78),Thickness=3})
+local health=text(healthPanel,'♥ 100',0,0,192,72,34);health.TextColor3=Color3.fromRGB(100,226,64)
+local cash=text(canvas,'',338,600,150,52,26);cash.TextColor3=Color3.fromRGB(244,185,77);cash.TextXAlignment=Enum.TextXAlignment.Left
+local phase=text(canvas,'',458,45,620,36,23)
+local mapLabel=text(canvas,'',458,78,620,26,16)
+local notice=text(canvas,'',358,505,820,54,27)
+local dot=text(canvas,'·',758,340,20,20,28)
+local spectate=text(canvas,'',458,575,620,40,24)
+local previous=circle('‹',530,622,60,function()
+ local candidates={};for _,p in ipairs(Players:GetPlayers())do if p~=player and p:GetAttribute('NBInRound')then table.insert(candidates,p)end end
+ local current=player:GetAttribute('NBSpectateTarget');local index=1;for i,p in ipairs(candidates)do if p.UserId==current then index=i end end
+ if #candidates>0 then player:SetAttribute('NBSpectateTarget',candidates[(index-2)%#candidates+1].UserId)end
+end)
+local nextButton=circle('›',946,622,60,function()
+ local candidates={};for _,p in ipairs(Players:GetPlayers())do if p~=player and p:GetAttribute('NBInRound')then table.insert(candidates,p)end end
+ local current=player:GetAttribute('NBSpectateTarget');local index=0;for i,p in ipairs(candidates)do if p.UserId==current then index=i end end
+ if #candidates>0 then player:SetAttribute('NBSpectateTarget',candidates[index%#candidates+1].UserId)end
+end)
+local stopWatch=circle('SAIR',738,622,60,function()package.MatchAction:FireServer('Spectate')end)
+local danger=new('Frame',gui,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=0})
+local edges={}
+for i=1,4 do
+ local edge=new('Frame',danger,{BackgroundColor3=Color3.fromRGB(160,12,20),BorderSizePixel=0,Size=i<=2 and UDim2.new(.15,0,1,0)or UDim2.new(1,0,.18,0),Position=i==2 and UDim2.fromScale(.85,0)or i==4 and UDim2.fromScale(0,.82)or UDim2.new(),BackgroundTransparency=1})
+ new('UIGradient',edge,{Rotation=({0,180,90,270})[i],Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)})});edges[i]=edge
+end
+CAS:BindAction('NBSprint',function(_,state)if state==Enum.UserInputState.Begin then setSprint(true)elseif state==Enum.UserInputState.End then setSprint(false)end;return Enum.ContextActionResult.Pass end,false,Enum.KeyCode.LeftShift,Enum.KeyCode.ButtonL3)
+CAS:BindAction('NBCrouch',function(_,state)if state==Enum.UserInputState.Begin then setCrouch(not crouch)end;return Enum.ContextActionResult.Sink end,false,Enum.KeyCode.C,Enum.KeyCode.LeftControl,Enum.KeyCode.ButtonB)
+CAS:BindAction('NBEmoteWheel',function(_,state)if state==Enum.UserInputState.Begin then showWheel()end;return Enum.ContextActionResult.Sink end,false,Enum.KeyCode.G,Enum.KeyCode.DPadDown)
+CAS:BindAction('NBDrop',function(_,state)if state==Enum.UserInputState.Begin then package.Rescue:FireServer('Drop')end;return Enum.ContextActionResult.Pass end,false,Enum.KeyCode.Q)
+local tags={}
+local function tag(p)
+ local function attach(c)
+  local head=c:WaitForChild('Head',10);local h=c:WaitForChild('Humanoid',10);if not head or not h then return end
+  h.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
+  local old=tags[p];if old then old:Destroy()end
+  local b=new('BillboardGui',head,{Name='NBNameTag',Size=UDim2.fromOffset(240,65),StudsOffset=Vector3.new(0,2,0),AlwaysOnTop=true,MaxDistance=120})
+  local l=text(b,p.DisplayName,0,0,240,65,17);tags[p]=b
+  local function refresh()l.Text=p.DisplayName..'\n'..(p:GetAttribute('NBDowned')and '✚ PRECISA DE AJUDA'or 'NÍVEL '..tostring(p:GetAttribute('NBLevel')or 1));l.TextColor3=p:GetAttribute('NBDowned')and Color3.fromRGB(255,93,104)or Color3.fromRGB(220,226,255);b.Enabled=p~=player and p:GetAttribute('NBInRound')==true end
+  refresh();for _,key in ipairs({'NBDowned','NBLevel','NBInRound'})do p:GetAttributeChangedSignal(key):Connect(function()if b.Parent then refresh()end end)end
+ end
+ p.CharacterAdded:Connect(attach);if p.Character then task.spawn(attach,p.Character)end
+end
+Players.PlayerAdded:Connect(tag);Players.PlayerRemoving:Connect(function(p)if tags[p]then tags[p]:Destroy();tags[p]=nil end end);for _,p in ipairs(Players:GetPlayers())do tag(p)end
+local elapsed=0
+Run.RenderStepped:Connect(function(dt)
+ elapsed+=dt;if elapsed<.1 then return end;elapsed=0
+ local active=player:GetAttribute('NBInRound');local watching=player:GetAttribute('NBSpectating');gui.Enabled=active==true or watching==true
+ previous.Visible=watching==true;nextButton.Visible=watching==true;stopWatch.Visible=watching==true;spectate.Visible=watching==true
+ if watching then local target=Players:GetPlayerByUserId(player:GetAttribute('NBSpectateTarget')or 0);spectate.Text=target and 'ASSISTINDO '..target.DisplayName or 'ASSISTINDO A RODADA'end
+ drop.Visible=(player:GetAttribute('NBCarrying')or 0)>0
+ local char=player.Character;local h=char and char:FindFirstChildOfClass('Humanoid');local root=char and char:FindFirstChild('HumanoidRootPart')
+ health.Text='♥ '..tostring(math.ceil(h and h.Health or 0));cash.Text='◈ '..tostring(player:GetAttribute('NBCoins')or 0)
+ local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or 0)-workspace:GetServerTimeNow()))
+ phase.Text=string.format('%s   %d:%02d',package:GetAttribute('Phase')=='Round'and 'SOBREVIVA'or 'INTERVALO',math.floor(remaining/60),remaining%60)
+ mapLabel.Text=(package:GetAttribute('MapName')or '')..'   •   RODADA '..tostring(package:GetAttribute('Round')or 0)
+ crouchButton.BackgroundTransparency=player:GetAttribute('NBMobility')=='Crouch'and .1 or .5;sprintButton.BackgroundTransparency=player:GetAttribute('NBMobility')=='Sprint'and .1 or .5
+ if player:GetAttribute('NBDowned')then
+  local t=math.max(0,math.ceil((player:GetAttribute('NBDownUntil')or 0)-workspace:GetServerTimeNow()));local progress=player:GetAttribute('NBReviveProgress')or 0
+  notice.Text=progress>0 and 'REANIMANDO '..math.floor(progress*100)..'%'or 'VOCÊ CAIU • '..t..'s • AGUARDE AJUDA'
+ else notice.Text=''end
+ local nearest=math.huge
+ if root then for _,bot in ipairs(Collection:GetTagged('NBNextbot'))do local br=bot:FindFirstChild('HumanoidRootPart');if br then nearest=math.min(nearest,(br.Position-root.Position).Magnitude)end end end
+ local opacity=active and player:GetAttribute('NBSetting_NextbotVignette')~=false and math.clamp(1-nearest/70,0,.75)or 0
+ for _,edge in ipairs(edges)do edge.BackgroundTransparency=1-opacity end
 end)

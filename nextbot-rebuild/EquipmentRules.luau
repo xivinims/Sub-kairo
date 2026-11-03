@@ -1,5 +1,5 @@
 local M={}
-M.items={flashlight={slot='Light',permanent=true},compass={slot='Utility'},timer={slot='Utility'},radar={slot='Utility'},decoy={slot='Utility'}}
+M.items={flashlight={slot='Light',permanent=true},compass={slot='Utility'},timer={slot='Utility'},radar={slot='Utility'},decoy={slot='Utility'},radio={slot='Utility'},headlamp={slot='Light',permanent=true},nvg={slot='Light',permanent=true},baton={slot='Usable'},barrier={slot='Usable'},cola={slot='Usable'}}
 function M.canEquip(id,owned)
  return type(id)=='string' and M.items[id]~=nil and type(owned)=='table' and type(owned[id])=='number' and owned[id]>0
 end

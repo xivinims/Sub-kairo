@@ -4,9 +4,11 @@ local luau=require('@lune/luau')
 local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
+local atlas=serde.decode('json',fs.readFile('/tmp/nb-assets/atlas-result.json'))
+if atlas.imageId then package:SetAttribute('MenuAtlas','rbxassetid://'..atlas.imageId)end
 local scripts={}
 local server=dm:GetService('ServerScriptService')
-for _,entry in ipairs({{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'PosePlayer','ModuleScript',package},{'Movement.server','Script',server},{'Locomotion.client','LocalScript'},{'Camera.client','LocalScript'},{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')

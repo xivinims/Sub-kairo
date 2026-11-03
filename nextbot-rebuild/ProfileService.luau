@@ -8,11 +8,12 @@ local function integer(v,default)
 end
 local function normalize(v)
  v=type(v)=='table' and v or {}
- local p={coins=integer(v.coins,0),xp=integer(v.xp,0),wins=integer(v.wins,0),rescues=integer(v.rescues,0),rounds=integer(v.rounds,0),owned={},slots={},equipment={flashlight=1},utility='',perk='',claims={},revision=integer(v.revision,0)}
+ local p={coins=integer(v.coins,0),xp=integer(v.xp,0),wins=integer(v.wins,0),rescues=integer(v.rescues,0),rounds=integer(v.rounds,0),owned={},slots={},equipment={flashlight=1},utility='',light='flashlight',perk='',claims={},revision=integer(v.revision,0)}
  for k,n in pairs(type(v.equipment)=='table' and v.equipment or {})do if type(k)=='string' then p.equipment[k]=integer(n,0)end end
  for k,b in pairs(type(v.owned)=='table' and v.owned or {})do if type(k)=='string' and b==true then p.owned[k]=true end end
  for i=1,6 do local id=type(v.slots)=='table' and v.slots[tostring(i)];if type(id)=='string' and p.owned[id]then p.slots[tostring(i)]=id end end
- if type(v.utility)=='string' and (p.equipment[v.utility]or 0)>0 then p.utility=v.utility end
+ if type(v.utility)=='string' then p.utility=v.utility end
+ if type(v.light)=='string' and (p.equipment[v.light]or 0)>0 then p.light=v.light end
  if type(v.perk)=='string' and p.owned[v.perk]then p.perk=v.perk end
  for k,b in pairs(type(v.claims)=='table' and v.claims or {})do if type(k)=='string' and b==true then p.claims[k]=true end end
  return p
@@ -24,7 +25,7 @@ function Service.Sync(p,v)
  for k,n in pairs(v.equipment)do p:SetAttribute('NBOwned_'..k,n)end
  for k in pairs(v.owned)do p:SetAttribute('NBEmoteOwned_'..k,true)end
  for i=1,6 do p:SetAttribute('NBEmoteSlot'..i,v.slots[tostring(i)]or '')end
- p:SetAttribute('NBUtility',v.utility)
+ p:SetAttribute('NBUtility',v.utility);p:SetAttribute('NBLightID',v.light)
  local leader=p:FindFirstChild('leaderstats')
  if not leader then leader=Instance.new('Folder');leader.Name='leaderstats';leader.Parent=p;for _,name in ipairs({'Nível','Vitórias','Resgates'})do local n=Instance.new('IntValue');n.Name=name;n.Parent=leader end end
  leader['Nível'].Value=1+math.floor(v.xp/250);leader['Vitórias'].Value=v.wins;leader['Resgates'].Value=v.rescues
