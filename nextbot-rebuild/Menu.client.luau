@@ -132,7 +132,7 @@ function drawInventory(category)
     emoteSlot=i
     local id=player:GetAttribute('NBEmoteSlot'..i)
     if id and id~='' then package.Emotes:FireServer('Play',id);message('Emote iniciado. Pule para parar.')else show('Shop');drawShop('Animações')end
-   else show('Shop');drawShop('Equipamento')endend)
+   else show('Shop');drawShop('Equipamento')end end)
   label(p,name,5,98,140,30,15)
  end
 end
