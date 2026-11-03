@@ -8,7 +8,10 @@ local function property(item,name)
 end
 for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/meta.json'))) do
 	if meta.file then
-		local ok,roots=pcall(R.deserializeModel,fs.readFile(meta.file))
+		local bytes=fs.readFile(meta.file)
+		-- Lune's format detector requires <roblox, while some XML models start with a declaration.
+		local parseBytes=bytes:gsub('^<%?xml.-%?>%s*','')
+		local ok,roots=pcall(R.deserializeModel,parseBytes)
 		if not ok then
 			table.insert(result,{id=meta.id,name=meta.name,error=tostring(roots),sha256=meta.sha256})
 			continue

@@ -5,7 +5,7 @@ local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local scripts={}
-for _,entry in ipairs({{'Config','ModuleScript',package},{'SettingsPolicy','ModuleScript',package},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'Config','ModuleScript',package},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -25,12 +25,21 @@ assert(clamped.FOV==100 and clamped.GameMusic==0 and clamped.LobbyMusic==1 and c
 assert(config.Settings.LowGraphics==false,'policy mutated defaults')
 assert(policy(config.Settings,nil).FOV==70,'missing payload must restore defaults')
 assert(config.Intermission==90 and config.RoundDuration==180)
+local RoundState=luau.load(fs.readFile('RoundState.luau'))()
+local state=RoundState.new(100,90,180)
+assert(not RoundState.tick(state,189,true) and state.phase=='Intermission')
+assert(not RoundState.tick(state,190,false) and state.round==0)
+assert(RoundState.tick(state,191,true) and state.deadline==371 and state.round==1)
+assert(not RoundState.tick(state,370,true))
+assert(RoundState.tick(state,371,false) and state.phase=='Intermission' and state.deadline==461)
+assert(RoundState.tick(state,461,true) and state.round==2 and state.deadline==641)
 local ids={}
 for _,item in ipairs(config.Catalog) do
 	assert(not ids[item.id],'duplicate catalog ID');ids[item.id]=true
 	if item.category=='Animações' and item.available then assert(item.animationId>0,'unresolved animation sold as available') end
 end
 local remote=R.Instance.new('RemoteEvent');remote.Name='Settings';remote.Parent=package
+local matchRemote=R.Instance.new('RemoteEvent');matchRemote.Name='MatchAction';matchRemote.Parent=package
 local W=dm:GetService('Workspace')
 local floor=R.Instance.new('Part');floor.Name='PreviewFloor';floor.Size=R.Vector3.new(120,1,120);floor.Anchored=true;floor.Parent=W
 local spawn=R.Instance.new('SpawnLocation');spawn.Name='PreviewSpawn';spawn.Anchored=true;spawn.Position=R.Vector3.new(0,2,0);spawn.Parent=W
@@ -43,4 +52,4 @@ fs.writeFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl',R.serializePlace(dm))
 local roundtrip=R.deserializePlace(fs.readFile('/tmp/nb-assets/NextbotSettingsPreview.rbxl'))
 assert(roundtrip.ReplicatedStorage.NextbotReference.Settings:IsA('RemoteEvent'))
 assert(roundtrip.StarterPlayer.StarterPlayerScripts:FindFirstChild('Settings.client'))
-print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))
+print(serde.encode('json',{compiled=scripts,settingsPolicyTests='passed',roundStateTests='passed',placeRoundtrip='passed',intermission=config.Intermission,roundDuration=config.RoundDuration,previewOnly=true,published=false}))

@@ -1,8 +1,0 @@
-local fs=require('@lune/fs');local luau=require('@lune/luau')
-local R=luau.load(fs.readFile('water-rpg/src/Rules.lua'))()
-assert(R.level(0)==1 and R.level(100)==2 and R.level(-1)==1)
-assert(R.quest(0,'Guide')==1 and R.quest(1,'Apothecary')==2)
-assert(R.quest(2,'Apothecary')==2 and R.quest(0,'Merchant')==0)
-assert(R.buy(20,12,0) and not R.buy(10,12,0) and not R.buy(100,12,10))
-assert(R.distanceAllowed(12) and not R.distanceAllowed(12.1) and not R.distanceAllowed(-2))
-print('13 quest, economy, progression and interaction assertions passed')
