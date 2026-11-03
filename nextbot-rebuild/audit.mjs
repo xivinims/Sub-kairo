@@ -14,7 +14,7 @@ async function get(url,auth=false){
  }
 }
 const metadata=[];
-for(const id of [14026023204,11128061931,124805122537927]){
+for(const id of [14026023204,11128061931,124805122537927,12686575749]){
  try{
   const meta=await (await get(`https://economy.roblox.com/v2/assets/${id}/details`)).json();
   const delivery=await (await get(`https://apis.roblox.com/asset-delivery-api/v1/assetId/${id}`,true)).json();

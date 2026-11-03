@@ -41,3 +41,7 @@ The audit workflow downloads candidate models to a build artifact, enumerates sc
 ## Inspected assets
 
 14026023204 contains 12 locomotion KeyframeSequences, no emote catalog. 11128061931 contains a Freddy model and four scripts, with audio content IDs 1847795501 and 236919724; these are not emote tracks. Rocket Arena is XML with a declaration; the audit strips that declaration only for parsing while retaining the original bytes/hash. None is claimed identical to current Evade.
+
+## Menu candidate
+
+Menu.client implements native main-menu placement, shop category navigation and selectable catalog cards, inventory category/slot layouts, isolated WorldModel avatar previews and slide transitions. It does not modify the gameplay camera. Currency values are not fabricated. Purchases are disabled until asset/function validation. Screenshots' illustrations, logo artwork, 3D backdrop, item thumbnails, owned-item integration and exact typography are still missing; no visual parity is claimed. Secondary sections explicitly report missing integration. Rockin Stride model 12686575749 has been added to the read-only audit candidates.

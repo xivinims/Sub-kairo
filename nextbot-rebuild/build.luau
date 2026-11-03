@@ -5,7 +5,7 @@ local serde=require('@lune/serde')
 local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local scripts={}
-for _,entry in ipairs({{'Config','ModuleScript',package},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'Config','ModuleScript',package},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
