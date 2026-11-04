@@ -1,13 +1,1 @@
-{
-  "mode": "inspect",
-  "queries": [
-    "Evade mobile buttons",
-    "Evade downed animations",
-    "Evade overhaul items"
-  ],
-  "assetIds": [
-    16376131182,
-    13483196074,
-    17308742859
-  ]
-}
+{"mode":"inspect","queries":[],"assetIds":[10910569163,10908416853]}

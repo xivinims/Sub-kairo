@@ -91,6 +91,9 @@ return function(dm,package)
   if root.Name=='StarterCharacter' and root:FindFirstChild('Humanoid')then
    for _,v in ipairs(root:GetDescendants())do if v:IsA('KeyframeSequence')or v:IsA('LuaSourceContainer')then v:Destroy()end end
    local saves=root:FindFirstChild('AnimSaves');if saves then saves:Destroy()end
+   local sourceRig=root:Clone();sourceRig.Name='MovementSourceRig';sourceRig.Parent=package
+   for _,v in ipairs(sourceRig:GetDescendants())do if v:IsA('BasePart')then v.Anchored=true;v.CanCollide=false;v.CanTouch=false end end
+   movement:SetAttribute('SourceAssetId','14026023204');movement:SetAttribute('OfficialSourceVerified',false)
    root.Parent=dm:GetService('StarterPlayer')
    for _,v in ipairs(root:GetDescendants())do if v:IsA('BasePart')then v.Anchored=false end end
   end
