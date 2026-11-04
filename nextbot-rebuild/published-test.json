@@ -1,13 +1,42 @@
 {
   "published": true,
-  "version": 313,
-  "stagedVersion": 313,
+  "version": 314,
+  "stagedVersion": 314,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "sha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
-  "sourceCommit": "bfa3a72421b26428a5994fa26547148482039be7",
-  "previousPublishedVersion": 312,
-  "previousPublishedSha256": "6349e488c936074d6b3ecbaea356216addebaf02c9963844e1cc56c2ebadd2f6",
+  "sha256": "7ce3bf18c1c1c92f6672dc9b0de818b7c47ba6d3f1992aa5604df7042acb89c3",
+  "sourceCommit": "51d32241ddc134a01405620d5c6ba10e371ceee9",
+  "validationRun": 41874600308,
+  "publicationCommit": "b178b5a5445c8882564bf56a2f30e021105c09f0",
+  "previousPublishedVersion": 313,
+  "previousPublishedSha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
+  "checks": [
+    "remotes",
+    "animation payloads",
+    "90/180 timing",
+    "no duplicate debit",
+    "settings validation",
+    "no imported scripts",
+    "R6 joints",
+    "19 emotes drive R6 motors",
+    "movement keys preserve active source poses",
+    "crouch retargets to standard avatar R6 joints",
+    "inventory filters ownership slots and unavailable items",
+    "map load and grounded spawns",
+    "imported map menu without generated scenery",
+    "intermission entry preserves arena on countdown end",
+    "bots appear only after countdown and clear after round",
+    "nextbot rigs",
+    "menu artwork binding",
+    "all server services initialize"
+  ],
+  "motion": {
+    "officialEvadeScripts": false,
+    "sourceAssetId": "14026023204",
+    "downedOriginalAvailable": false,
+    "speedFormulaOriginalVerified": false,
+    "sourceUnmodified": true
+  },
   "admission": {
     "sameMapAtZero": true,
     "intermissionSeconds": 90,
@@ -18,8 +47,6 @@
     "samePositionAtZero": true,
     "chaseSeconds": 180
   },
-  "originalBackupVersion": 303,
-  "originalBackupSha256": "7d575a803c47b6c0443f36835d27a9c0cb4f127ed48c53fa589b6d04d60575f7",
   "maps": [
     {
       "name": "Backrooms",
