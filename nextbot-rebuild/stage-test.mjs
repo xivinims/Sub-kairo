@@ -14,3 +14,16 @@ let logs;try{logs=await api('/cloud/v2/'+task.path+'/logs')}catch(e){logs={error
 const result={stagedVersion:stage.versionNumber,sha256:hash(bytes),backupSha256:hash(backup),task,logs,published:false};
 await fs.writeFile('/tmp/nb-assets/engine-test.json',JSON.stringify(result,null,2));console.log('Engine test',JSON.stringify(result));
 if(task.state!=='COMPLETE')throw Error('Engine smoke test failed');
+const requestPath=new URL('publish-request.json',import.meta.url);
+let request=null;try{request=JSON.parse(await fs.readFile(requestPath,'utf8'))}catch(e){if(e.code!=='ENOENT')throw e}
+if(request?.enabled===true){
+ if(String(request.universeId)!==universe||String(request.placeId)!==place)throw Error('Publish destination mismatch');
+ const report=task.output?.results?.[0];
+ if(!report||report.emotePoses!==19||report.botCount<60||report.maps.length<7||!report.checks.includes('all server services initialize'))throw Error('Publish validation incomplete');
+ if(report.maps.some(map=>map.spawns<2||map.paths.some(path=>!path.ok||path.status!=='Success')))throw Error('Navigation gate failed');
+ if(hash(await delivery())!==hash(bytes))throw Error('Place changed after validation; publication stopped');
+ const published=await api(`/universes/v1/${universe}/places/${place}/versions?versionType=Published`,{method:'POST',headers:{'content-type':'application/octet-stream'},body:bytes});
+ const readback=await delivery(published.versionNumber);if(hash(readback)!==hash(bytes))throw Error('Published version hash mismatch');
+ const publication={published:true,version:published.versionNumber,stagedVersion:stage.versionNumber,universeId:universe,placeId:place,sha256:hash(bytes),sourceCommit:process.env.GITHUB_SHA,originalBackupVersion:303,originalBackupSha256:hash(original),maps:report.maps.map(m=>({name:m.name,spawns:m.spawns})),nextbotTemplates:report.botCount,emotes:report.emotePoses,clientPlaytest:false};
+ await fs.writeFile('/tmp/nb-assets/published-test.json',JSON.stringify(publication,null,2));console.log('Published test',JSON.stringify(publication));
+}

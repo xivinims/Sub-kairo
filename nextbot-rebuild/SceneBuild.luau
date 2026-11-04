@@ -90,7 +90,10 @@ return function(dm,package)
      if not v.Parent then continue end
      if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('BodyMover')or v:IsA('ScreenGui')or v:IsA('RemoteEvent')or v:IsA('RemoteFunction')then v:Destroy()
      elseif v:IsA('BasePart')then v.Anchored=false
-     elseif v:IsA('Sound')then v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
+     elseif v:IsA('Sound')then
+      local uri=tostring(v.AudioContent)
+      if uri:find('4316136477',1,true)or uri:find('6866520692',1,true)then v:Destroy();continue end
+      v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
     end
     if bot.Name=='Hitbox'then bot:Destroy();break end
     local hr=bot:FindFirstChild('HumanoidRootPart');local humanoid=bot:FindFirstChildOfClass('Humanoid');humanoid.RequiresNeck=false;humanoid.BreakJointsOnDeath=false;humanoid.AutoRotate=true

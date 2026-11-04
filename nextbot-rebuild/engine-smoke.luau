@@ -69,6 +69,7 @@ task.wait(3)
 assert(#startupErrors==0,table.concat(startupErrors,' | '))
 assert(package:GetAttribute('Phase')=='Intermission','Round service did not initialize')
 assert(workspace:FindFirstChild('NBDecoys'),'Equipment service did not initialize')
+results.serverStartup['Rounds.server']='running'
 for _,thread in ipairs(threads)do pcall(task.cancel,thread)end
 passed('all server services initialize')
 results.isRunning=game:GetService('RunService'):IsRunning()

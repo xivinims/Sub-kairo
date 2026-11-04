@@ -1,47 +1,58 @@
-# Nextbot recreation — implementation status
+# EXACT RUN — teste integrado
 
-Target is the CURRENT Evade UI in the owner's IMG_2671–IMG_2690 screenshots. Requested timing: 90-second intermission, 180-second round. The server round state machine now uses these durations. It waits for queued players and authored LobbySpawns/RoundSpawns folders before starting.
+Referência visual: telas IMG_2671–IMG_2690 fornecidas pelo proprietário. Experiência 9421311218, place 118064584465155; branch dead-signal-publisher. Intervalo solicitado de 90 segundos, rodadas de 180 segundos.
 
-## Implemented candidate
+## Implementação
 
-- Native Roblox settings screen: audio/visual/game tabs, header, close/reset, scrolling sections, toggle controls, mouse/touch sliders, scaling from 1624×750 screenshots.
-- Local material simplification with original material restoration, shadow control, FOV, named audio group volume.
-- Validated preference remote, defaults, bounds, NaN/infinity rejection, autosave, conservative behavior after a failed DataStore read.
-- Viewbob, running viewmodel, legacy camera and vignette preferences are exposed as attributes. They still require gameplay consumers and do not yet implement those effects.
-- Standalone preview place. No live FPS replacement or Roblox publication occurs in this workflow.
+- Menu nativo responsivo, cartões ilustrados, navegação animada, fundos 3D separados, loja e inventário com prévias do próprio avatar; tela de carregamento.
+- Configurações persistentes de áudio, materiais, sombras, FOV, oscilação da câmera, braços em primeira pessoa e vinheta de proximidade.
+- Fila, entrada durante a rodada, retorno ao lobby, votação de mapa, rodadas especiais (escuridão, velocidade, dobro de bots), espectador e HUD móvel.
+- Nextbots com seleção aleatória por rodada, perseguição, navegação, detecção de obstáculos, atordoamento e sons disponíveis.
+- Corrida, aceleração, agachamento, deslize e 12 sequências R6 importadas; atualização das juntas quando a aparência do avatar termina de carregar.
+- Queda, prazo de reanimação, resgate, carregar/soltar, invulnerabilidade temporária, recompensas e nomes com nível.
+- Perfis persistentes com moedas, XP, vitórias, resgates, missões, compras, seis espaços de emotes, dois de vantagens, luz/utilidade/poder e quatro usáveis.
+- 19 emotes do arquivo enviado, incluindo poses de duração zero. Jumpstyle e Electro Shuffle têm acompanhamento musical; os demais 17 ainda não têm música associada.
+- Lanterna, luz frontal, visão noturna, bússola, temporizador, rádio, radar, isca, bastão, barreira e cola; vantagens de reanimação, audição, XP, moedas, velocidade, aceleração, kit médico e limite de construções.
+- Caixa de som com IDs validados como áudio, favoritos persistentes e controles de volume. A permissão de reprodução depende do ativo e da experiência.
+- Portas reconhecidas nos mapas têm interação; bots podem abri-las. Spawns são filtrados por chão, espaço livre e caminho conectado.
+- Streaming de cenário ativado; mapas inativos e modelos de bots ficam no servidor. Os fundos de menu permanecem disponíveis à câmera.
 
-## Match runtime candidate (not Roblox-playtested)
+## Conteúdo importado do Creator Store
 
-- Server-owned queue, timers, late joining and lobby return; respawn/death clears participation.
-- Pure timing tests cover waiting for players, both transitions and subsequent rounds.
-- Optional NextbotTemplates in ServerStorage: up to four humanoid models, server ownership, pathfinding and line-of-sight contact checks. Imported scripts are stripped from cloned bots.
-- Contact currently kills; downed/rescue/carry are NOT implemented. No reward or currency is granted.
-- Match.client is explicitly a temporary development HUD, not the final screenshot layout.
-- This preview has no map spawn folders or bot templates installed, so it deliberately waits for integration. No bots or match are advertised as playtested.
+| Conteúdo | Asset |
+| --- | --- |
+| Rocket Arena | 124805122537927 |
+| Construct | 123713126320438 |
+| gm_construct | 10828666356 |
+| Library | 10828618634 |
+| Complex | 10844642277 |
+| Elysium | 10828489513 |
+| Backrooms | 10819434129 |
+| Pacote de Nextbots | 13028240941 |
+| Freddy / Bobo / Eye | 11128061931 / 11448641842 / 10844522204 |
+| R6 e locomoção | 14026023204 |
+| Arte provisória do menu (imagem) | 93112717809068 |
 
-## Exact match still missing
+Os modelos são versões públicas da comunidade, não arquivos oficiais certificados do Evade. Seus scripts externos são removidos e a lógica do projeto controla o jogo. O ativo Desert Bus 113165227370713 era apenas um decal e foi descartado.
 
-Main menu, shop, inventory, avatar inspection, loading screen, round queue, missions, event pass, leaderboard, spectating, final mobile match HUD, Nextbot asset integration and AI playtesting, downed/rescue/carry, progression, equipment and animation runtime remain to be implemented and tested together.
+## Validação
 
-No visual verification inside Roblox has occurred. Fonts, gear glyph, gradients, transitions and underlying 3D scene are not yet certified identical. The preview floor is an inspection stage, not the requested map.
+O workflow compila os scripts Luau, verifica políticas de configuração/equipamento/compra e os estados da rodada, salva uma versão de teste e executa verificações no motor Roblox através de Luau Execution. São verificados: mapas carregados, chão e conexão dos spawns, rigs, 19 emotes aplicando transformações reais nas juntas R6, vínculo da arte e inicialização dos serviços do servidor. O relatório `engine-test.json` contém resultados e versão exatos. A publicação, quando solicitada, exige esses testes e confirma o SHA-256 do arquivo baixado novamente.
 
-Catalog entries transcribe visible screenshot names/prices, not a complete Evade catalog. All catalog items remain unavailable in this preview; no animation or music IDs are invented. Items must only be enabled after their gameplay implementation and assets are validated.
+Esses testes não executam um cliente Roblox com uma pessoa. Não comprovam equivalência visual pixel a pixel, toque no iPhone, física de uma partida multiplayer completa, persistência real entre duas sessões ou reprodução audível de todos os sons. A versão original 303 é preservada e seu hash conferido antes da publicação.
 
-## References and candidate assets
+## Ainda não corresponde ao jogo completo original
 
-- Official current game / features: https://www.roblox.com/games/9872472334/Evade
-- Public animation model previously used in this repository: https://create.roblox.com/store/asset/14026023204 — inspect actual keyframes before reuse; this does not prove identity to current Evade.
-- Candidate Nextbot model: https://create.roblox.com/store/asset/11128061931/Evade-Nextbot — third-party model, not verified official.
-- Candidate Rocket Arena map: https://create.roblox.com/store/asset/124805122537927/Rocket-Arena-Map-Evade-Kit-Obunga-Evade-Map — third-party model, not the screenshot backdrop.
-- Catjam author identified in the screenshot as WizardMaster29; community corroboration: https://evadewiki.org/wiki/m3gan-x-evade-update/
-- Community soundtrack index associates Catjam with Adele Roberts – Lose My Mind (edited), and Serious March with Ray Russell – Tense Emotion: https://evadewiki.org/wiki/soundtracks/ . These are research leads, NOT playable verified asset IDs or evidence of experience permissions.
+Os sete mapas não são todos os mapas do Evade. O cenário do lobby foi reconstruído, não extraído do jogo. Cosméticos exclusivos, catálogo completo de emotes e músicas, eventos/passe, monetização Robux, todas as rodadas especiais, acessórios exatos e todas as animações contextuais permanecem incompletos. Alguns equipamentos têm representação visual provisória. A tabela de classificação é do servidor atual. Não existe certificação de réplica idêntica.
 
-The audit workflow downloads candidate models to a build artifact, enumerates scripts without executing them, records hashes, and compiles the standalone settings preview. Exact emote motions, associated accessories, playable music, textures and the requested map remain unresolved.
+## Referências de comportamento
 
-## Inspected assets
-
-14026023204 contains 12 locomotion KeyframeSequences, no emote catalog. 11128061931 contains a Freddy model and four scripts, with audio content IDs 1847795501 and 236919724; these are not emote tracks. Rocket Arena is XML with a declaration; the audit strips that declaration only for parsing while retaining the original bytes/hash. None is claimed identical to current Evade.
-
-## Menu candidate
-
-Menu.client implements native main-menu placement, shop category navigation and selectable catalog cards, inventory category/slot layouts, isolated WorldModel avatar previews and slide transitions. It does not modify the gameplay camera. Currency values are not fabricated. Purchases are disabled until asset/function validation. Screenshots' illustrations, logo artwork, 3D backdrop, item thumbnails, owned-item integration and exact typography are still missing; no visual parity is claimed. Secondary sections explicitly report missing integration. Rockin Stride model 12686575749 has been added to the read-only audit candidates.
+- https://www.roblox.com/games/9872472334/Evade
+- https://evadewiki.org/wiki/cola/
+- https://evadewiki.org/wiki/barrier/
+- https://evadewiki.org/wiki/medkit/
+- https://evadewiki.com/wiki/mil-grade-pack/
+- https://evadewiki.org/wiki/hermes-shoes/
+- https://evadewiki.org/wiki/stilts/
+- https://evadewiki.org/wiki/stun-baton/
+- https://create.roblox.com/docs/cloud/reference/features/luau-execution
