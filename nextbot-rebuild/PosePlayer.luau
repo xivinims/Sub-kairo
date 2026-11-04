@@ -26,8 +26,7 @@ function M.Sample(keys,t)
  return a.c:Lerp(b.c,alpha),math.clamp(a.w+(b.w-a.w)*alpha,0,1)
 end
 function M.Apply(data,motors,t,blend)
- if data.duration<=0 then return end
- t=data.loop and t%data.duration or math.min(t,data.duration)
+ t=data.duration>0 and (data.loop and t%data.duration or math.min(t,data.duration))or 0
  for name,keys in pairs(data.tracks)do
   local motor=motors[name];if motor and motor.Parent then
    local cf,weight=M.Sample(keys,t);motor.Transform=motor.Transform:Lerp(CFrame.identity:Lerp(cf,weight),blend or 1)

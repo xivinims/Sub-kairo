@@ -15,6 +15,7 @@ function Service.Load(name)
  for _,n in ipairs({'RoundSpawns','NextbotSpawns'})do local f=workspace:FindFirstChild(n);if f then f:Destroy()end end
  local map=template:Clone();map.Name='ActiveMap';map.Parent=workspace
  local geometry=map:WaitForChild('Geometry')
+ require(script.Parent.DoorService).Load(geometry)
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={geometry};rp.RespectCanCollide=true
  local points={}
  local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Include;overlap.FilterDescendantsInstances={geometry};overlap.RespectCanCollide=true

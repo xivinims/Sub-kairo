@@ -36,7 +36,7 @@ local function begin(p)
  local id=p:GetAttribute('NBPlayingEmote');if not id or id=='' then return end
  local char=p.Character;local h=char and char:FindFirstChildOfClass('Humanoid')
  if not h or h.RigType~=Enum.HumanoidRigType.R6 then return end
- local data=decode(id);if not data or data.duration<=0 then return end
+ local data=decode(id);if not data then return end
  local motors={};for _,v in ipairs(char:GetDescendants())do if v:IsA('Motor6D') and v.Part1 then motors[v.Part1.Name]=v end end
  local animate=char:FindFirstChild('Animate');local enabled=animate and animate.Enabled
  if animate then animate.Enabled=false end
@@ -63,7 +63,7 @@ Run.PreSimulation:Connect(function()
  for p,s in pairs(states)do
   if not s.character.Parent then stop(p);continue end
   local t=math.max(0,workspace:GetServerTimeNow()-s.start)
-  if s.data.loop then t%=s.data.duration elseif t>s.data.duration then stop(p);continue end
+  if s.data.duration>0 then if s.data.loop then t%=s.data.duration elseif t>s.data.duration then stop(p);continue end else t=0 end
   for name,keys in pairs(s.data.tracks)do
    local motor=s.motors[name];if not motor then continue end
    local a,b=keys[1],keys[#keys]

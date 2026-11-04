@@ -41,7 +41,7 @@ Run.Heartbeat:Connect(function(dt)
  for _,p in ipairs(Players:GetPlayers())do
   if (p:GetAttribute('NBPlayingEmote')or '')~=''then
    local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid');local item=items[p:GetAttribute('NBPlayingEmote')]
-   local finished=item and not item.loop and workspace:GetServerTimeNow()-(p:GetAttribute('NBEmoteStarted')or 0)>=item.duration
+   local finished=item and item.duration>0 and not item.loop and workspace:GetServerTimeNow()-(p:GetAttribute('NBEmoteStarted')or 0)>=item.duration
    if finished or p:GetAttribute('NBDowned')or not h or h.Health<=0 or h.MoveDirection.Magnitude>.1 or h.Jump then p:SetAttribute('NBPlayingEmote','')end
   end
  end

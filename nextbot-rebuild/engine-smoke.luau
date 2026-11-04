@@ -18,7 +18,7 @@ local pose=require(package.PosePlayer);local dummy=starter:Clone();dummy.Parent=
 results.emotePoses=0
 for _,clip in ipairs(package.EmoteClips:GetChildren())do
  for _,m in pairs(motorMap)do m.Transform=CFrame.identity end
- local data=pose.Decode(clip);assert(data.duration>0,'Empty clip '..clip.Name);pose.Apply(data,motorMap,data.duration*.4,1)
+ local data=pose.Decode(clip);assert(next(data.tracks),'Empty clip '..clip.Name);pose.Apply(data,motorMap,data.duration*.4,1)
  local changed=0;for _,m in pairs(motorMap)do if m.Transform~=CFrame.identity then changed+=1 end end
  assert(changed>0,'Emote does not affect rig '..clip.Name);results.emotePoses+=1
 end

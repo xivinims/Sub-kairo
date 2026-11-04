@@ -7,6 +7,7 @@ local Lighting=game:GetService('Lighting')
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local config=require(package.Config);local State=require(package.RoundState)
 local Profiles=require(script.Parent.ProfileService);local Rescue=require(script.Parent.RescueService);local Maps=require(script.Parent.MapService)
+local Doors=require(script.Parent.DoorService)
 local remote=package:WaitForChild('MatchAction')
 local state=State.new(workspace:GetServerTimeNow(),config.Intermission,config.RoundDuration)
 local admitted,cooldowns,bots,votes,joined={},{},{},{},{}
@@ -121,6 +122,7 @@ remote.OnServerEvent:Connect(function(p,action,arg)
 end)
 publish();local rewardAt=workspace:GetServerTimeNow()+30
 while true do
+ if state.phase=='Round'then Doors.Step()end
  local ready=next(admitted)~=nil and package:GetAttribute('MapReady')==true
  if State.tick(state,workspace:GetServerTimeNow(),ready)then
   clearBots();publish()
