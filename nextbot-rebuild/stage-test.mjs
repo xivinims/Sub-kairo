@@ -21,7 +21,11 @@ if(request?.enabled===true){
  const report=task.output?.results?.[0];
  if(!report||report.emotePoses!==19||report.botCount<60||report.maps.length<7||!report.checks.includes('all server services initialize'))throw Error('Publish validation incomplete');
  if(report.maps.some(map=>map.spawns<2||map.paths.some(path=>!path.ok||path.status!=='Success')))throw Error('Navigation gate failed');
- if(hash(await delivery())!==hash(bytes))throw Error('Place changed after validation; publication stopped');
+ // Unversioned asset delivery may return a cached file. Resolve the latest version through an engine session instead.
+ let latest=await api(`/cloud/v2/universes/${universe}/places/${place}/luau-execution-session-tasks`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({script:'return game.PlaceVersion'})});
+ for(let i=0;i<40&&latest.state==='PROCESSING';i++){await new Promise(r=>setTimeout(r,1500));latest=await api('/cloud/v2/'+latest.path);}
+ const latestVersion=latest.output?.results?.[0];console.log('Publication version check',JSON.stringify({stagedVersion:stage.versionNumber,latestVersion,state:latest.state}));
+ if(latest.state!=='COMPLETE'||latestVersion!==stage.versionNumber)throw Error('Latest engine version differs from tested version; publication stopped');
  const published=await api(`/universes/v1/${universe}/places/${place}/versions?versionType=Published`,{method:'POST',headers:{'content-type':'application/octet-stream'},body:bytes});
  const readback=await delivery(published.versionNumber);if(hash(readback)!==hash(bytes))throw Error('Published version hash mismatch');
  const publication={published:true,version:published.versionNumber,stagedVersion:stage.versionNumber,universeId:universe,placeId:place,sha256:hash(bytes),sourceCommit:process.env.GITHUB_SHA,originalBackupVersion:303,originalBackupSha256:hash(original),maps:report.maps.map(m=>({name:m.name,spawns:m.spawns})),nextbotTemplates:report.botCount,emotes:report.emotePoses,clientPlaytest:false};
