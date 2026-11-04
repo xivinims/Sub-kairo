@@ -5,7 +5,8 @@ for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/reference-m
  if not ok then print('Reference parse error '..tostring(roots));continue end
  local report={meta=meta,clips={},images={},settings={},models={},animations={},motors={},firstPoses={}}
  for _,root in ipairs(roots)do
-  for _,v in ipairs(root:GetDescendants())do
+  local descendants={root};for _,v in ipairs(root:GetDescendants())do table.insert(descendants,v)end
+  for _,v in ipairs(descendants)do
    if v:IsA('Motor6D')then table.insert(report.motors,{name=v.Name,part0=v.Part0 and v.Part0.Name,part1=v.Part1 and v.Part1.Name,c0=tostring(v.C0),c1=tostring(v.C1)})
    elseif v:IsA('KeyframeSequence')then
     local max=0;local frames=0;local poseNames={}
@@ -15,7 +16,7 @@ for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/reference-m
     table.insert(report.clips,{path=v:GetFullName(),name=v.Name,duration=max,frames=frames,poses=poseNames,loop=v.Loop})
    elseif v:IsA('Animation')then local good,id=pcall(function()return v.AnimationContent end);table.insert(report.animations,{path=v:GetFullName(),id=good and tostring(id)or ''})
    elseif v:IsA('LuaSourceContainer')then
-    local lines={};for line in v.Source:gmatch('[^\r\n]+')do if line:lower():find('speed')or line:lower():find('downed')or line:lower():find('crouch')or line:lower():find('crawl')or line:lower():find('animationid')then if #lines<32 then table.insert(lines,line:sub(1,220))end end end
+    local lines={};for line in v.Source:gmatch('[^\r\n]+')do if line:lower():find('fallid')or line:lower():find('downid')or line:lower():find('runid')or line:lower():find('animationid')then if #lines<50 then table.insert(lines,line:sub(1,220))end end end
     if #lines>0 then table.insert(report.settings,{path=v:GetFullName(),lines=lines})end
    elseif v:IsA('ImageLabel')or v:IsA('ImageButton')then
     if #report.images<80 then local good,id=pcall(function()return v.ImageContent end);table.insert(report.images,{path=v:GetFullName(),id=good and tostring(id)or ''})end
