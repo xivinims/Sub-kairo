@@ -72,7 +72,7 @@ local function startBots()
      local sight=not hit or hit.Instance:IsDescendantOf(target.Parent)
      if distance<4.5 and sight then
       local victim=Players:GetPlayerFromCharacter(target.Parent)
-      if victim then Rescue.Down(victim)else local vh=target.Parent:FindFirstChildOfClass('Humanoid');if vh then vh.Health=0 end end
+      if victim then Rescue.Down(victim);local voice=bot:FindFirstChild('Voiceline',true);if voice and voice:IsA('Sound')then voice:Play()end else local vh=target.Parent:FindFirstChildOfClass('Humanoid');if vh then vh.Health=0 end end
      elseif sight and math.abs(target.Position.Y-root.Position.Y)<5 then h:MoveTo(target.Position)
      else
       local path=Pathfinding:CreatePath({AgentRadius=2,AgentHeight=5,AgentCanJump=true,WaypointSpacing=5})

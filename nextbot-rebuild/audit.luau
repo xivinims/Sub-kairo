@@ -34,4 +34,6 @@ fs.writeFile('/tmp/nb-assets/audit.json',serde.encode('json',result,true))
 for _,r in ipairs(result) do
 	if r.scripts then for _,s in ipairs(r.scripts) do s.sourceBytes=#s.source;s.source=nil end end
 end
-print(serde.encode('json',result))
+local concise={}
+for _,r in ipairs(result)do table.insert(concise,{id=r.id,name=r.name,parts=r.parts,roots=r.roots,error=r.error,sounds=type(r.sounds)=='table'and #r.sounds or 0,animations=type(r.animations)=='table'and #r.animations or 0})end
+print('Asset audit '..serde.encode('json',concise))

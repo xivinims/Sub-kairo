@@ -81,16 +81,25 @@ return function(dm,package)
  new('Part','Lobby',lsp,{Position=base+V.new(0,3,-105),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
  new('SpawnLocation','LobbySpawn',W,{Position=base+V.new(0,.5,-105),Size=V.new(8,1,8),Transparency=1,Anchored=true,Neutral=true,Duration=0})
  local templates=new('Folder','NextbotTemplates',dm:GetService('ServerStorage'))
- for _,def in ipairs({{11128061931,'Freddy'},{14047690859,'Nextbot'},{11448641842,'Bobo'},{10844522204,'Eye'},{13028240941,'Pack'}})do
+ for _,def in ipairs({{11128061931,'Freddy'},{11448641842,'Bobo'},{10844522204,'Eye'},{13028240941,'Pack'}})do
   local roots=load(def[1]);if roots then for _,root in ipairs(roots)do
    local models={root};for _,v in ipairs(root:GetDescendants())do if v:IsA('Model') and v:FindFirstChildOfClass('Humanoid')then table.insert(models,v)end end
    for _,m in ipairs(models)do if m:IsA('Model') and m:FindFirstChildOfClass('Humanoid') and m:FindFirstChild('HumanoidRootPart')then
     local bot=m:Clone();bot.Name=def[2]=='Pack'and root.Name or def[2]
     for _,v in ipairs(bot:GetDescendants())do
+     if not v.Parent then continue end
      if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('BodyMover')or v:IsA('ScreenGui')or v:IsA('RemoteEvent')or v:IsA('RemoteFunction')then v:Destroy()
      elseif v:IsA('BasePart')then v.Anchored=false
      elseif v:IsA('Sound')then v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
     end
+    if bot.Name=='Hitbox'then bot:Destroy();break end
+    local hr=bot:FindFirstChild('HumanoidRootPart');local humanoid=bot:FindFirstChildOfClass('Humanoid');humanoid.RequiresNeck=false;humanoid.BreakJointsOnDeath=false;humanoid.AutoRotate=true
+    bot.PrimaryPart=hr
+    for _,piece in ipairs(bot:GetDescendants())do if piece:IsA('BasePart')and piece~=hr then
+     piece.CanCollide=false;piece.Massless=true
+     local weld=new('WeldConstraint','NavigationWeld',hr);weld.Part0=hr;weld.Part1=piece
+    end end
+    hr.CanCollide=true;hr.Massless=false
     bot.Parent=templates;break
    end end
   end end
