@@ -15,6 +15,7 @@ local function setup(p)
  local s={used={},last=-10,ready=0,light=false};sessions[p]=s
  p.CharacterAdded:Connect(function()clear(p,s)end)
  p:GetAttributeChangedSignal('NBInRound'):Connect(function()if not p:GetAttribute('NBInRound')then clear(p,s)end end)
+ p:GetAttributeChangedSignal('NBInArena'):Connect(function()if not p:GetAttribute('NBInArena')then clear(p,s)end end)
 end
 Players.PlayerAdded:Connect(setup);for _,p in ipairs(Players:GetPlayers())do setup(p)end
 Players.PlayerRemoving:Connect(function(p)local s=sessions[p];if s then clear(p,s)end;sessions[p]=nil end)
@@ -52,8 +53,9 @@ remote.OnServerEvent:Connect(function(p,action,id,slot)
   end);remote:FireClient(p,status);return
  end
  local char=p.Character;local root=char and char:FindFirstChild('HumanoidRootPart');local hum=char and char:FindFirstChildOfClass('Humanoid')
- if action~='Use'or not p:GetAttribute('NBInRound')or p:GetAttribute('NBDowned')or not root or not hum or hum.Health<=0 then return end
+ if action~='Use'or not p:GetAttribute('NBInArena')or p:GetAttribute('NBDowned')or not root or not hum or hum.Health<=0 then return end
  if id=='flashlight'then light(p,s);return end
+ if not p:GetAttribute('NBInRound')then return end
  local equipped=profile.utility==id or profile.power==id;for _,value in pairs(profile.usables)do if value==id then equipped=true end end;if not equipped then return end
  if id=='compass'or id=='timer'or id=='radar'then return end
  if id=='cola'and (p:GetAttribute('NBCarrying')or 0)>0 then return end

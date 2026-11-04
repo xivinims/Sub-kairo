@@ -6,6 +6,35 @@ local Pathfinding=game:GetService('PathfindingService')
 local function marker(folder,cf,index)
  local v=Instance.new('Part');v.Name=tostring(index);v.Size=Vector3.one;v.CFrame=cf;v.Transparency=1;v.Anchored=true;v.CanCollide=false;v.CanTouch=false;v.CanQuery=false;v.Parent=folder
 end
+local function frameMenu(points,rp,assetId)
+ local views={}
+ for _,ground in ipairs(points)do
+  local eye=ground+Vector3.new(0,4.5,0);local best,score=nil,-1
+  for angle=0,330,30 do
+   local direction=Vector3.new(math.sin(math.rad(angle)),0,math.cos(math.rad(angle)))
+   local distance=0
+   for _,spread in ipairs({-24,0,24})do
+    local ray=CFrame.Angles(0,math.rad(spread),0):VectorToWorldSpace(direction)*100
+    local hit=workspace:Raycast(eye,ray,rp);distance+=hit and hit.Distance or 100
+   end
+   if distance>score then best=direction;score=distance end
+  end
+  table.insert(views,{eye=eye,direction=best,score=score})
+ end
+ table.sort(views,function(a,b)return a.score>b.score end)
+ local anchors=workspace:FindFirstChild('MenuCameras');if not anchors then return end
+ local home=views[1];local selected={home}
+ for _,view in ipairs(views)do
+  local d=(view.eye-home.eye).Magnitude
+  if d>12 and d<100 then table.insert(selected,view);if #selected==3 then break end end
+ end
+ for i,name in ipairs({'Home','Shop','Inventory'})do
+  local view=selected[i]or home;local anchor=anchors:FindFirstChild(name)
+  if anchor then anchor.CFrame=CFrame.lookAt(view.eye,view.eye+view.direction*30);anchor:SetAttribute('SourceAssetId',assetId)end
+ end
+ local spawn=workspace:FindFirstChild('InitialSpawn');if spawn then spawn.CFrame=CFrame.new(home.eye-Vector3.new(0,4,0))end
+ package:SetAttribute('MenuSceneSource','ImportedMap')
+end
 function Service.Names()
  local names={};for _,m in ipairs(templates:GetChildren())do table.insert(names,m.Name)end;table.sort(names);return names
 end
@@ -52,7 +81,11 @@ function Service.Load(name)
  local players=Instance.new('Folder');players.Name='RoundSpawns';players.Parent=workspace
  local bots=Instance.new('Folder');bots.Name='NextbotSpawns';bots.Parent=workspace
  for i,p in ipairs(points)do marker(players,CFrame.new(p),i);marker(bots,CFrame.new(p),i)end
- map.Candidates:Destroy();Service.current=name;package:SetAttribute('MapName',name);package:SetAttribute('MapReady',true)
+ local assetId=map:GetAttribute('SourceAssetId')
+ frameMenu(points,rp,assetId)
+ map.Candidates:Destroy();Service.current=name;package:SetAttribute('MapName',name)
+ package:SetAttribute('MapAssetId',assetId);package:SetAttribute('MapSourceUrl','https://create.roblox.com/store/asset/'..tostring(assetId))
+ package:SetAttribute('MapReady',true)
  return true
 end
 return Service

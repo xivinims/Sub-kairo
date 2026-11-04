@@ -28,7 +28,7 @@ for(const id of [14026023204,11128061931,124805122537927,123713126320438,1131652
   if(!location)throw Error('No delivery location');
   const bytes=Buffer.from(await (await get(location)).arrayBuffer());
   const file=`/tmp/nb-assets/${id}.rbxm`;await fs.writeFile(file,bytes);
-  metadata.push({id,name:meta.Name,type:meta.AssetTypeId,bytes:bytes.length,creator:meta.Creator,file,sha256:hash(bytes)});
+  metadata.push({id,name:meta.Name,type:meta.AssetTypeId,bytes:bytes.length,creator:meta.Creator,created:meta.Created,updated:meta.Updated,sourceUrl:`https://create.roblox.com/store/asset/${id}`,file,sha256:hash(bytes)});
  }catch(e){metadata.push({id,error:String(e)});}
 }
 await fs.writeFile('/tmp/nb-assets/meta.json',JSON.stringify(metadata,null,2));

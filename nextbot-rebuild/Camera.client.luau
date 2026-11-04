@@ -7,10 +7,12 @@ Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,functio
  local camera=workspace.CurrentCamera;if not camera then return end
  local char=player.Character;local h=char and char:FindFirstChildOfClass('Humanoid');local root=char and char:FindFirstChild('HumanoidRootPart')
  local spectating=player:GetAttribute('NBSpectating')==true
- local menu=not player:GetAttribute('NBInRound')and not spectating
+ local menu=not player:GetAttribute('NBInArena')and not spectating
  local newMode=menu and 'Menu'or spectating and 'Spectate'or 'Play'
+ local changed=newMode~=mode
  if newMode~=mode then
   mode=newMode
+  offset=Vector3.zero;if h then h.CameraOffset=Vector3.zero end
   if menu then if controls then controls:Disable()end;UIS.MouseBehavior=Enum.MouseBehavior.Default
   else camera.CameraType=Enum.CameraType.Custom;if h then camera.CameraSubject=h end;if controls then controls:Enable()end end
  end
@@ -22,7 +24,8 @@ Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,functio
    local mouse=UIS:GetMouseLocation();local v=camera.ViewportSize
    local x=UIS.MouseEnabled and math.clamp(mouse.X/math.max(v.X,1)-.5,-.5,.5)or 0
    local y=UIS.MouseEnabled and math.clamp(mouse.Y/math.max(v.Y,1)-.5,-.5,.5)or 0
-   camera.CFrame=camera.CFrame:Lerp(anchor.CFrame*CFrame.Angles(-y*.025,-x*.04,0),1-math.exp(-dt*5))
+   local view=anchor.CFrame*CFrame.Angles(-y*.025,-x*.04,0)
+   camera.CFrame=changed and view or camera.CFrame:Lerp(view,1-math.exp(-dt*5))
   end
  elseif spectating then
   local target=Players:GetPlayerByUserId(player:GetAttribute('NBSpectateTarget')or 0)

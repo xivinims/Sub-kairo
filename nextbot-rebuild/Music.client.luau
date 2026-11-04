@@ -4,13 +4,13 @@ local remote=package:WaitForChild('Boombox')
 local lobby=Instance.new('Sound');lobby.Name='NBLobbyMusic';lobby.Volume=.22;lobby.SoundGroup=SoundService:WaitForChild('NB_LobbyMusic');lobby.Parent=SoundService
 local track=1
 local function playLobby()lobby.SoundId='rbxassetid://'..config.Lobby[track].id;lobby:Play()end
-lobby.Ended:Connect(function()track=track%#config.Lobby+1;if not player:GetAttribute('NBInRound')then playLobby()end end)
+lobby.Ended:Connect(function()track=track%#config.Lobby+1;if not player:GetAttribute('NBInArena')then playLobby()end end)
 local ambient=Instance.new('Sound');ambient.Name='NBMapAmbience';ambient.SoundId='rbxassetid://'..config.Ambient;ambient.Volume=.12;ambient.Looped=true;ambient.SoundGroup=SoundService:WaitForChild('NB_GameMusic');ambient.Parent=SoundService
 local function state()
- if player:GetAttribute('NBInRound')then lobby:Pause();if not ambient.IsPlaying then ambient:Play()end
+ if player:GetAttribute('NBInArena')then lobby:Pause();if not ambient.IsPlaying then ambient:Play()end
  else ambient:Pause();if not lobby.IsPlaying then if lobby.TimePosition>0 then lobby:Resume()else playLobby()end end end
 end
-player:GetAttributeChangedSignal('NBInRound'):Connect(state);state()
+player:GetAttributeChangedSignal('NBInArena'):Connect(state);state()
 local function new(class,parent,props)local v=Instance.new(class);for k,val in pairs(props or {})do v[k]=val end;v.Parent=parent;return v end
 local gui=new('ScreenGui',player:WaitForChild('PlayerGui'),{Name='BoomboxMenu',ResetOnSpawn=false,DisplayOrder=50,Enabled=false,IgnoreGuiInset=true})
 local panel=new('Frame',gui,{Size=UDim2.fromOffset(700,480),Position=UDim2.fromScale(.5,.5),AnchorPoint=Vector2.new(.5,.5),BackgroundColor3=Color3.fromRGB(23,20,32),BackgroundTransparency=.08})

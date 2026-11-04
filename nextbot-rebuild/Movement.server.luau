@@ -14,7 +14,7 @@ Players.PlayerAdded:Connect(setup);for _,p in ipairs(Players:GetPlayers())do set
 Players.PlayerRemoving:Connect(function(p)states[p]=nil end)
 package:WaitForChild('Movement').OnServerEvent:Connect(function(p,action,on)
  local s=states[p];local c=p.Character;local root=c and c:FindFirstChild('HumanoidRootPart');local h=c and c:FindFirstChildOfClass('Humanoid')
- if not s or not h or not root or not p:GetAttribute('NBInRound')or p:GetAttribute('NBDowned')or h.Health<=0 or os.clock()-s.last<.07 then return end
+ if not s or not h or not root or not p:GetAttribute('NBInArena')or p:GetAttribute('NBDowned')or h.Health<=0 or os.clock()-s.last<.07 then return end
  s.last=os.clock()
  if action=='Sprint'and type(on)=='boolean'then s.sprint=on
  elseif action=='Crouch'and type(on)=='boolean'then
@@ -35,7 +35,7 @@ Run.Heartbeat:Connect(function(dt)
   local c=p.Character;local h=c and c:FindFirstChildOfClass('Humanoid');local r=c and c:FindFirstChild('HumanoidRootPart')
   if not h or not r then continue end
   s.hip=s.hip or h.HipHeight
-  local active=p:GetAttribute('NBInRound')
+  local active=p:GetAttribute('NBInArena')
   if not active then s.sprint=false;s.crouch=false;s.slideUntil=0 end
   local down=p:GetAttribute('NBDowned');local sliding=active and not down and (s.slideUntil or 0)>os.clock()
   local function perk(id)return p:GetAttribute('NBPerk')==id or p:GetAttribute('NBPerk2')==id end

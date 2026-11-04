@@ -4,6 +4,7 @@ function M.new(now,intermission,duration)
 	assert(intermission>0 and duration>0)
 	return {phase='Intermission',deadline=now+intermission,round=0,intermission=intermission,duration=duration}
 end
+function M.botsAllowed(s)return s.phase=='Round'end
 function M.tick(s,now,ready)
 	if now<s.deadline then return false end
 	if s.phase=='Intermission' then

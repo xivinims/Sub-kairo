@@ -66,7 +66,7 @@ local drawShop,drawInventory
 local shopCard=button(home,'LOJA',400,375,235,104,colors[3],function()show('Shop');drawShop(shopCategory)end)
 local playCard=button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
  if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
- package.MatchAction:FireServer('Join');message(package:GetAttribute('Phase')=='Round' and 'Entrando na rodada…'or 'Você entrou na fila. A rodada começa após o intervalo.')
+ package.MatchAction:FireServer('Join');message('Entrando na arena…')
 end)
 local inventoryCard=button(home,'INVENTÁRIO',903,375,234,104,colors[4],function()show('Inventory');drawInventory(invCategory)end)
 local infoTitle=label(pages.Info,'',350,180,840,65,30)
@@ -231,22 +231,23 @@ local function updateStats()
 end
 for _,key in ipairs({'Level','Coins','Points','Vouchers','Wisps','Wins'}) do player:GetAttributeChangedSignal('NB'..key):Connect(updateStats) end
 updateStats()
-local function visibility()gui.Enabled=not player:GetAttribute('NBInRound')and not player:GetAttribute('NBSpectating')end
-player:GetAttributeChangedSignal('NBInRound'):Connect(visibility);player:GetAttributeChangedSignal('NBSpectating'):Connect(visibility);visibility()
-UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInRound')then package.MatchAction:FireServer('Lobby')else show('Home')end end end)
+local function visibility()gui.Enabled=not player:GetAttribute('NBInArena')and not player:GetAttribute('NBSpectating')end
+player:GetAttributeChangedSignal('NBInArena'):Connect(visibility);player:GetAttributeChangedSignal('NBSpectating'):Connect(visibility);visibility()
+UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInArena')then package.MatchAction:FireServer('Lobby')else show('Home')end end end)
 show('Home')
 
 local function transaction(status)
  local messages={limit='Limite de equipamentos posicionados atingido.',purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
  message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)end
 end
+package.MatchAction.OnClientEvent:Connect(function(status)if status=='loading'then message('A arena está carregando.')elseif status=='character'then message('Seu personagem está carregando.')end end)
 package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
 
 local pose=require(package.PosePlayer);local elapsed=0
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt
  local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
- queue.Text=player:GetAttribute('NBQueued')and string.format('NA FILA • %d:%02d',math.floor(remaining/60),remaining%60)or (package:GetAttribute('MapName')or '')
+ queue.Text=string.format('%s • %s %d:%02d',package:GetAttribute('MapName')or 'Carregando arena',package:GetAttribute('Phase')=='Round'and 'RODADA'or 'INTERVALO',math.floor(remaining/60),remaining%60)
  if not gui.Enabled then return end
  local entry=previewFrames[active]
  if entry and entry.motors then

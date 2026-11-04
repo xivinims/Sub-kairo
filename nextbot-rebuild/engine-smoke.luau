@@ -24,6 +24,7 @@ for _,clip in ipairs(package.EmoteClips:GetChildren())do
 end
 dummy:Destroy();passed('19 emotes drive R6 motors')
 local Maps=require(S.MapService)
+assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absent')
 for _,name in ipairs(Maps.Names())do
  assert(Maps.Load(name),'Map cannot load: '..name)
  task.wait(.5)
@@ -38,8 +39,58 @@ for _,name in ipairs(Maps.Names())do
   table.insert(paths,{ok=ok,status=ok and path.Status.Name or tostring(err),waypoints=ok and #path:GetWaypoints()or 0})
  end
  local locations={};for i=1,math.min(6,#points)do local p=points[i].Position;table.insert(locations,{p.X,p.Y,p.Z})end
- table.insert(results.maps,{name=name,spawns=#points,parts=#workspace.ActiveMap.Geometry:GetDescendants(),paths=paths,locations=locations})
+ local source=Storage.NBMaps:FindFirstChild(name):GetAttribute('SourceAssetId')
+ assert(package:GetAttribute('MapAssetId')==source,'Arena source mismatch')
+ assert(package:GetAttribute('MenuSceneSource')=='ImportedMap','Menu uses generated scenery')
+ for _,camera in ipairs(workspace.MenuCameras:GetChildren())do
+  assert(camera:GetAttribute('SourceAssetId')==source,'Menu camera points at another source')
+  assert(workspace:Raycast(camera.Position,Vector3.new(0,-6,0),rp),'Menu camera is outside the imported arena')
+ end
+ table.insert(results.maps,{name=name,assetId=source,spawns=#points,parts=#workspace.ActiveMap.Geometry:GetDescendants(),paths=paths,locations=locations})
 end;passed('map load and grounded spawns')
+passed('imported map menu without generated scenery')
+-- Exercise the same admission and bot services used by the remote handler.
+-- The adapter supplies player attributes around a real R6 rig; this is not a client click test.
+local Arena=require(S.ArenaService);local Bots=require(S.NextbotService);local State=require(package.RoundState)
+local character=starter:Clone();character.Name='AdmissionTestRig';character.Parent=workspace
+local attrs={};local actor={Character=character,Parent=true}
+function actor:GetAttribute(key)return attrs[key]end
+function actor:SetAttribute(key,value)attrs[key]=value end
+function actor:RequestStreamAroundAsync()end
+local phase=State.new(0,90,180);package:SetAttribute('Phase',phase.phase)
+assert(Bots.Start(phase)==0 and #game:GetService('CollectionService'):GetTagged('NBNextbot')==0,'Bots appeared during intermission')
+Arena.Leave(actor)
+assert(not attrs.NBInArena and character.HumanoidRootPart.Anchored and character:GetPivot().Y<0,'Menu parking failed')
+local ok,status=Arena.Enter(actor,false);assert(ok and status=='entered','Intermission admission failed')
+assert(attrs.NBInArena and not attrs.NBInRound and not character.HumanoidRootPart.Anchored,'Waiting players cannot explore the arena')
+local placed=character:GetPivot();local originalMap=workspace.ActiveMap
+local nearest=math.huge;for _,point in ipairs(workspace.RoundSpawns:GetChildren())do nearest=math.min(nearest,(placed.Position-(point.Position+Vector3.new(0,4,0))).Magnitude)end
+assert(nearest<.01,'Entry did not place the rig on an arena spawn')
+assert(not State.tick(phase,89,true)and not State.botsAllowed(phase),'Countdown ended early')
+assert(State.tick(phase,90,true)and phase.deadline==270,'Countdown did not start a 180 second chase')
+package:SetAttribute('Phase',phase.phase)
+assert(Arena.Enter(actor,false)and attrs.NBInRound,'Waiting participant was not admitted to chase')
+assert(character:GetPivot()==placed and workspace.ActiveMap==originalMap,'Countdown teleported the participant or replaced the map')
+assert(Bots.Start(phase)==3 and #game:GetService('CollectionService'):GetTagged('NBNextbot')==3,'Bots did not appear at countdown zero')
+assert(Arena.Enter(actor,false)and character:GetPivot()==placed,'Repeated Join moved an active participant')
+Bots.Clear();assert(#game:GetService('CollectionService'):GetTagged('NBNextbot')==0,'Bots persisted after cleanup')
+Arena.Leave(actor);assert(Arena.Enter(actor,false)and attrs.NBInRound,'Late entry failed')
+assert(State.tick(phase,270,true)and phase.deadline==360,'Round did not return to 90 second intermission')
+package:SetAttribute('Phase',phase.phase);Arena.PrepareMapChange(actor)
+assert(not attrs.NBInRound and character.HumanoidRootPart.Anchored,'Map change did not suspend the participant')
+assert(Maps.Load(Config.InitialMap),'Initial imported arena could not load')
+assert(Arena.Enter(actor,true)and attrs.NBInArena and not attrs.NBInRound and not character.HumanoidRootPart.Anchored,'Next intermission admission failed')
+Arena.Leave(actor);package:SetAttribute('MapReady',false)
+assert(not Arena.Enter(actor,false)and not attrs.NBInArena,'Entry succeeded without a loaded arena')
+package:SetAttribute('MapReady',true)
+-- A menu action while streaming cancels the in-flight admission.
+function actor:RequestStreamAroundAsync()Arena.Leave(self)end
+assert(not Arena.Enter(actor,false)and not attrs.NBInArena and character.HumanoidRootPart.Anchored,'A stale Join overrode Leave')
+character:Destroy();actor.Parent=nil
+passed('intermission entry preserves arena on countdown end')
+passed('bots appear only after countdown and clear after round')
+results.admission={immediateArena=true,intermissionSeconds=90,chaseSeconds=180,sameMapAtZero=true,samePositionAtZero=true,lateEntry=true,cancelledEntry=true,clientClickTest=false}
+
 results.botCount=#Storage.NextbotTemplates:GetChildren();assert(results.botCount>=60,'Nextbot pack was not imported')
 for _,bot in ipairs(Storage.NextbotTemplates:GetChildren())do
  assert(bot:FindFirstChild('HumanoidRootPart')and bot:FindFirstChildOfClass('Humanoid'),'Invalid bot rig')

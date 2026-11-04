@@ -16,7 +16,7 @@ function Service.Load(geometry)
   local prompt=Instance.new('ProximityPrompt');prompt.Name='NBDoor';prompt.ActionText='Abrir';prompt.ObjectText='Porta';prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.MaxActivationDistance=10;prompt.HoldDuration=0;prompt.Parent=hinge;entry.prompt=prompt
   prompt.Triggered:Connect(function(p)
    local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart')
-   if p:GetAttribute('NBInRound')and not p:GetAttribute('NBDowned')and root and (root.Position-hinge.Position).Magnitude<12 then Service.Toggle(entry,not entry.open)end
+   if p:GetAttribute('NBInArena')and not p:GetAttribute('NBDowned')and root and (root.Position-hinge.Position).Magnitude<12 then Service.Toggle(entry,not entry.open)end
   end)
  end
 end

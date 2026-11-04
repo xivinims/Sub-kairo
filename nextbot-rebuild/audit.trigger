@@ -1,1 +1,1 @@
-nextbot-engine-validation-22-publish
+nextbot-engine-validation-23-immediate-arena

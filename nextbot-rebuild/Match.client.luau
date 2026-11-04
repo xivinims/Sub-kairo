@@ -79,8 +79,8 @@ local function tag(p)
   local old=tags[p];if old then old:Destroy()end
   local b=new('BillboardGui',head,{Name='NBNameTag',Size=UDim2.fromOffset(240,65),StudsOffset=Vector3.new(0,2,0),AlwaysOnTop=true,MaxDistance=120})
   local l=text(b,p.DisplayName,0,0,240,65,17);tags[p]=b
-  local function refresh()l.Text=p.DisplayName..'\n'..(p:GetAttribute('NBDowned')and '✚ PRECISA DE AJUDA'or 'NÍVEL '..tostring(p:GetAttribute('NBLevel')or 1));l.TextColor3=p:GetAttribute('NBDowned')and Color3.fromRGB(255,93,104)or Color3.fromRGB(220,226,255);b.Enabled=p~=player and p:GetAttribute('NBInRound')==true end
-  refresh();for _,key in ipairs({'NBDowned','NBLevel','NBInRound'})do p:GetAttributeChangedSignal(key):Connect(function()if b.Parent then refresh()end end)end
+  local function refresh()l.Text=p.DisplayName..'\n'..(p:GetAttribute('NBDowned')and '✚ PRECISA DE AJUDA'or 'NÍVEL '..tostring(p:GetAttribute('NBLevel')or 1));l.TextColor3=p:GetAttribute('NBDowned')and Color3.fromRGB(255,93,104)or Color3.fromRGB(220,226,255);b.Enabled=p~=player and p:GetAttribute('NBInArena')==true end
+  refresh();for _,key in ipairs({'NBDowned','NBLevel','NBInArena'})do p:GetAttributeChangedSignal(key):Connect(function()if b.Parent then refresh()end end)end
  end
  p.CharacterAdded:Connect(attach);if p.Character then task.spawn(attach,p.Character)end
 end
@@ -88,7 +88,7 @@ Players.PlayerAdded:Connect(tag);Players.PlayerRemoving:Connect(function(p)if ta
 local elapsed=0
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
- local active=player:GetAttribute('NBInRound');local watching=player:GetAttribute('NBSpectating');gui.Enabled=active==true or watching==true
+ local active=player:GetAttribute('NBInArena');local watching=player:GetAttribute('NBSpectating');gui.Enabled=active==true or watching==true
  previous.Visible=watching==true;nextButton.Visible=watching==true;stopWatch.Visible=watching==true;spectate.Visible=watching==true
  if watching then local target=Players:GetPlayerByUserId(player:GetAttribute('NBSpectateTarget')or 0);spectate.Text=target and 'ASSISTINDO '..target.DisplayName or 'ASSISTINDO A RODADA'end
  drop.Visible=(player:GetAttribute('NBCarrying')or 0)>0
@@ -101,7 +101,7 @@ Run.RenderStepped:Connect(function(dt)
  if player:GetAttribute('NBDowned')then
   local t=math.max(0,math.ceil((player:GetAttribute('NBDownUntil')or 0)-workspace:GetServerTimeNow()));local progress=player:GetAttribute('NBReviveProgress')or 0
   notice.Text=progress>0 and 'REANIMANDO '..math.floor(progress*100)..'%'or 'VOCÊ CAIU • '..t..'s • AGUARDE AJUDA'
- else notice.Text=''end
+ else notice.Text=package:GetAttribute('MapChanging')and 'CARREGANDO A PRÓXIMA ARENA…'or package:GetAttribute('Phase')=='Intermission'and 'EXPLORE O MAPA • OS BOTS CHEGAM AO FIM DO INTERVALO'or ''end
  local nearest=math.huge
  if root then for _,bot in ipairs(Collection:GetTagged('NBNextbot'))do local br=bot:FindFirstChild('HumanoidRootPart');if br then nearest=math.min(nearest,(br.Position-root.Position).Magnitude)end end end
  local opacity=active and player:GetAttribute('NBSetting_NextbotVignette')~=false and math.clamp(1-nearest/70,0,.75)or 0

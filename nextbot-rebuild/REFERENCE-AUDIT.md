@@ -6,9 +6,9 @@ Referência visual: telas IMG_2671–IMG_2690 fornecidas pelo proprietário. Exp
 
 ## Implementação
 
-- Menu nativo responsivo, cartões ilustrados, navegação animada, fundos 3D separados, loja e inventário com prévias do próprio avatar; tela de carregamento.
+- Menu nativo responsivo, cartões ilustrados, navegação animada, fundo 3D da própria arena importada, loja e inventário com prévias do próprio avatar; tela de carregamento.
 - Configurações persistentes de áudio, materiais, sombras, FOV, oscilação da câmera, braços em primeira pessoa e vinheta de proximidade.
-- Fila, entrada durante a rodada, retorno ao lobby, votação de mapa, rodadas especiais (escuridão, velocidade, dobro de bots), espectador e HUD móvel.
+- Entrada imediata na arena durante o intervalo e a rodada, retorno ao menu, votação de mapa, rodadas especiais (escuridão, velocidade, dobro de bots), espectador e HUD móvel.
 - Nextbots com seleção aleatória por rodada, perseguição, navegação, detecção de obstáculos, atordoamento e sons disponíveis.
 - Corrida, aceleração, agachamento, deslize e 12 sequências R6 importadas; atualização das juntas quando a aparência do avatar termina de carregar.
 - Queda, prazo de reanimação, resgate, carregar/soltar, invulnerabilidade temporária, recompensas e nomes com nível.
@@ -17,7 +17,7 @@ Referência visual: telas IMG_2671–IMG_2690 fornecidas pelo proprietário. Exp
 - Lanterna, luz frontal, visão noturna, bússola, temporizador, rádio, radar, isca, bastão, barreira e cola; vantagens de reanimação, audição, XP, moedas, velocidade, aceleração, kit médico e limite de construções.
 - Caixa de som com IDs validados como áudio, favoritos persistentes e controles de volume. A permissão de reprodução depende do ativo e da experiência.
 - Portas reconhecidas nos mapas têm interação; bots podem abri-las. Spawns são filtrados por chão, espaço livre e caminho conectado.
-- Streaming de cenário ativado; mapas inativos e modelos de bots ficam no servidor. Os fundos de menu permanecem disponíveis à câmera.
+- Streaming de cenário ativado; mapas inativos e modelos de bots ficam no servidor. As âncoras do menu acompanham o mapa importado; o foco de streaming acompanha a câmera do menu.
 
 ## Conteúdo importado do Creator Store
 
@@ -45,7 +45,7 @@ Esses testes não executam um cliente Roblox com uma pessoa. Não comprovam equi
 
 ## Ainda não corresponde ao jogo completo original
 
-Os sete mapas não são todos os mapas do Evade. O cenário do lobby foi reconstruído, não extraído do jogo. Cosméticos exclusivos, catálogo completo de emotes e músicas, eventos/passe, monetização Robux, todas as rodadas especiais, acessórios exatos e todas as animações contextuais permanecem incompletos. Alguns equipamentos têm representação visual provisória. A tabela de classificação é do servidor atual. Não existe certificação de réplica idêntica.
+Os sete mapas não são todos os mapas do Evade. O cenário de lobby gerado foi removido: o menu usa a arena importada. Cosméticos exclusivos, catálogo completo de emotes e músicas, eventos/passe, monetização Robux, todas as rodadas especiais, acessórios exatos e todas as animações contextuais permanecem incompletos. Alguns equipamentos têm representação visual provisória. A tabela de classificação é do servidor atual. Não existe certificação de réplica idêntica.
 
 ## Referências de comportamento
 
@@ -58,3 +58,9 @@ Os sete mapas não são todos os mapas do Evade. O cenário do lobby foi reconst
 - https://evadewiki.org/wiki/stilts/
 - https://evadewiki.org/wiki/stun-baton/
 - https://create.roblox.com/docs/cloud/reference/features/luau-execution
+
+## Correção de entrada — validação pendente
+
+Ao entrar, o personagem vai imediatamente a um spawn válido da arena e pode andar durante o intervalo de 90 segundos. O mapa e a posição são preservados quando começam os 180 segundos de perseguição. Bots aparecem apenas após a contagem. A troca de mapa ocorre no início do próximo intervalo. O cenário de blocos criado por script foi removido; gm_construct (10828666356) é a arena inicial. A fonte pública não comprova que seja o arquivo oficial atual do Evade.
+
+A validação usa os serviços de admissão e de bots reais com um rig R6 e um adaptador de atributos de jogador. Ela cobre contagem, entrada tardia, cancelamento, preservação de posição e limpeza de bots; não simula um toque real em um cliente.

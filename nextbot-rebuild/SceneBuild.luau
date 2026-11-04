@@ -6,9 +6,6 @@ return function(dm,package)
   local v=R.Instance.new(class);v.Name=name;for k,val in pairs(props or {})do if k=='Position'then v.CFrame=R.CFrame.new(val)else v[k]=val end end;v.Parent=parent;return v
  end
  local V,C=R.Vector3,R.CFrame
- local function part(name,parent,pos,size,color)
-  return new('Part',name,parent,{Position=pos,Size=size,Color=R.Color3.fromRGB(table.unpack(color)),Anchored=true,TopSurface=R.Enum.SurfaceType.Smooth,BottomSurface=R.Enum.SurfaceType.Smooth})
- end
  local function load(id)
   local path='/tmp/nb-assets/'..id..'.rbxm';if not fs.isFile(path)then return nil end
   local ok,roots=pcall(R.deserializeModel,fs.readFile(path):gsub('^<%?xml.-%?>%s*',''));return ok and roots or nil
@@ -52,34 +49,13 @@ return function(dm,package)
  end
  assert(#mapCatalog>0,'No usable maps downloaded')
  local catalog=new('ModuleScript','MapCatalog',package);catalog.Source="return game:GetService('HttpService'):JSONDecode([==["..serde.encode('json',mapCatalog).."]==])"
- local W=dm:GetService('Workspace');local lobby=new('Model','LobbyScene',W);lobby.ModelStreamingMode=R.Enum.ModelStreamingMode.Persistent
- local base=V.new(0,1100,0)
- part('LobbyFloor',lobby,base+V.new(0,-2,0),V.new(340,4,300),{210,220,205})
- -- A separate scene supplies the reference menu's pastel geometry and purple inventory garden.
- for i=1,18 do
-  local x=(i%6-2.5)*48;local z=math.floor((i-1)/6)*55-35;local h=18+(i%4)*13
-  local color=i%3==0 and {201,115,221}or i%3==1 and {160,202,83}or {102,117,186}
-  part('PastelBlock'..i,lobby,base+V.new(x,h/2,z),V.new(36,h,35),color)
+ -- Menus look into the imported arena. These invisible anchors add no scenery.
+ local W=dm:GetService('Workspace')
+ local anchors=new('Model','MenuCameras',W);anchors.ModelStreamingMode=R.Enum.ModelStreamingMode.Persistent
+ for _,name in ipairs({'Home','Shop','Inventory'})do
+  new('Part',name,anchors,{CFrame=C.new(0,4,0),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1})
  end
- local garden=base+V.new(450,0,0)
- part('GardenStage',lobby,garden+V.new(0,-2,0),V.new(220,4,190),{106,143,119})
- for i=1,20 do
-  local x=(i%5-2)*43;local z=math.floor((i-1)/5)*43+15;local h=12+(i%6)*10
-  part('GardenBlock'..i,lobby,garden+V.new(x,h/2,z),V.new(37,h,36),{34,53,91})
-  if i%2==0 then
-   part('Trunk'..i,lobby,garden+V.new(x,h+7,z),V.new(2,14,2),{61,46,80})
-   local leaf=part('Crown'..i,lobby,garden+V.new(x,h+17,z),V.new(24,19,24),i%4==0 and {203,151,244}or {92,219,213});leaf.Shape=R.Enum.PartType.Ball
-   new('PointLight','Glow',leaf,{Color=leaf.Color,Brightness=.4,Range=30})
-  end
- end
- local fall=part('GardenWaterfall',lobby,garden+V.new(60,24,35),V.new(18,48,2),{151,139,248});fall.Transparency=.45;fall.Material=R.Enum.Material.Neon;fall.CanCollide=false
- local anchors=new('Folder','MenuCameras',W)
- new('Part','Home',anchors,{CFrame=C.lookAt(base+V.new(-35,44,-105),base+V.new(5,24,25)),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
- new('Part','Shop',anchors,{CFrame=C.lookAt(garden+V.new(-38,17,-65),garden+V.new(-10,15,35)),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
- new('Part','Inventory',anchors,{CFrame=C.lookAt(garden+V.new(35,24,-68),garden+V.new(0,18,35)),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
- local lsp=new('Folder','LobbySpawns',W)
- new('Part','Lobby',lsp,{Position=base+V.new(0,3,-105),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
- new('SpawnLocation','LobbySpawn',W,{Position=base+V.new(0,.5,-105),Size=V.new(8,1,8),Transparency=1,Anchored=true,Neutral=true,Duration=0})
+ new('SpawnLocation','InitialSpawn',W,{Position=V.new(0,-100,0),Size=V.new(1,1,1),Transparency=1,Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Neutral=true,Duration=0})
  local templates=new('Folder','NextbotTemplates',dm:GetService('ServerStorage'))
  for _,def in ipairs({{11128061931,'Freddy'},{11448641842,'Bobo'},{10844522204,'Eye'},{13028240941,'Pack'}})do
   local roots=load(def[1]);if roots then for _,root in ipairs(roots)do

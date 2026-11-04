@@ -28,7 +28,7 @@ local lamp=Instance.new('SpotLight');lamp.Face=Enum.NormalId.Front;lamp.Range=50
 local night=Instance.new('ColorCorrectionEffect');night.Name='NBNightVision';night.TintColor=Color3.fromRGB(135,255,145);night.Brightness=.2;night.Contrast=.15;night.Enabled=false;night.Parent=game:GetService('Lighting')
 local elapsed=0;local phase=0
 Run.RenderStepped:Connect(function(dt)
- local active=player:GetAttribute('NBInRound')==true
+ local active=player:GetAttribute('NBInArena')==true
  powerButton.Visible=active and (player:GetAttribute('NBPower')or '')~=''
  gui.Enabled=active;lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
  night.Enabled=active and player:GetAttribute('NBFlashlight')==true and player:GetAttribute('NBLightID')=='nvg'
