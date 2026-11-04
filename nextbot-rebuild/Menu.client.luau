@@ -152,10 +152,7 @@ function drawShop(category)
    label(p,tostring(item.price),8,8,120,30,22)
    label(p,item.name,6,145,124,49,18)
    local thumb=make('ImageLabel',p,{Position=UDim2.fromOffset(15,40),Size=UDim2.fromOffset(106,100),BackgroundTransparency=1,Image=item.thumbnailId and 'rbxassetid://'..item.thumbnailId or ''})
-   if thumb.Image=='' then
-    local icons={flashlight='◉',compass='✥',timer='3:00',radio='▥',baton='╱',radar='◎',decoy='♟',headlamp='◉',nvg='◉◉',barrier='▦',cola='▯'}
-    local icon=label(p,icons[item.id]or (item.category=='Animações'and '♫'or '♟'),10,48,116,90,45);icon.TextColor3=colors[item.category=='Animações'and 4 or 2]
-   end
+   if thumb.Image==''then require(package.ItemPreview).Create(thumb,item,player.Character)end
    local b=make('TextButton',p,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text=''});b.Activated:Connect(function()select(item)end)
   end
  end
@@ -219,6 +216,7 @@ local function refreshAvatar(char)
  end)
 end
 player.CharacterAppearanceLoaded:Connect(refreshAvatar)
+player:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()if player.Character then refreshAvatar(player.Character)end;if active=='Shop'then drawShop(shopCategory)end end)
 if player.Character then refreshAvatar(player.Character) end
 local function updateStats()
  xpText.Text='NÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)..'                                    '..tostring((player:GetAttribute('NBXP')or 0)%250)..'/250'

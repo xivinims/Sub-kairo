@@ -15,7 +15,7 @@ return function(dm,package)
  end
  local removals={};local mapCatalog={}
  local maps=new('Folder','NBMaps',dm:GetService('ServerStorage'))
- for _,def in ipairs({{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{113165227370713,'Desert Bus'}})do
+ for _,def in ipairs({{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
   local roots=load(def[1]);if not roots then continue end
   local map=new('Model',def[2],maps);local geometry=new('Model','Geometry',map)
   for _,root in ipairs(roots)do root.Parent=geometry end
@@ -80,7 +80,7 @@ return function(dm,package)
  new('Part','Lobby',lsp,{Position=base+V.new(0,3,-105),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
  new('SpawnLocation','LobbySpawn',W,{Position=base+V.new(0,.5,-105),Size=V.new(8,1,8),Transparency=1,Anchored=true,Neutral=true,Duration=0})
  local templates=new('Folder','NextbotTemplates',dm:GetService('ServerStorage'))
- for _,def in ipairs({{11128061931,'Freddy'},{14047690859,'Nextbot'}})do
+ for _,def in ipairs({{11128061931,'Freddy'},{14047690859,'Nextbot'},{11448641842,'Bobo'},{10844522204,'Eye'}})do
   local roots=load(def[1]);if roots then for _,root in ipairs(roots)do
    local models={root};for _,v in ipairs(root:GetDescendants())do if v:IsA('Model') and v:FindFirstChildOfClass('Humanoid')then table.insert(models,v)end end
    for _,m in ipairs(models)do if m:IsA('Model') and m:FindFirstChildOfClass('Humanoid') and m:FindFirstChild('HumanoidRootPart')then

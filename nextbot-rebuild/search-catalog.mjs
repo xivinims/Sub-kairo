@@ -8,7 +8,7 @@ for(const [type,q]of queries){
   const result=await r.json();const ids=(result.data||[]).map(x=>x.id).filter(Boolean);
   const details=ids.length?await(await fetch('https://apis.roblox.com/toolbox-service/v1/items/details?assetIds='+ids.join(','))).json():{};
   records.push({q,result,details});
-  console.log('Store search',q,JSON.stringify(details).slice(0,12000));
+  console.log('Store search',q,JSON.stringify((details.data||[]).map(x=>({id:x.asset?.id,name:x.asset?.name,type:x.asset?.typeId}))));
  }catch(e){records.push({q,error:String(e)});}
 }
 await fs.writeFile('/tmp/nb-assets/store-search.json',JSON.stringify(records,null,2));
