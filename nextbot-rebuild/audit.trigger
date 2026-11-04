@@ -1,1 +1,1 @@
-nextbot-engine-validation-23-immediate-arena
+nextbot-engine-validation-24-map-source-precision

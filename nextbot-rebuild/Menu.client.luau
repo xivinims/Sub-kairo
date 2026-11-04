@@ -68,6 +68,11 @@ local playCard=button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
  if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
  package.MatchAction:FireServer('Join');message('Entrando na arena…')
 end)
+local function playAvailability()
+ local ready=package:GetAttribute('MapReady')==true;local b=playCard:FindFirstChildOfClass('TextButton')
+ b.Active=ready;b.Selectable=ready;b:FindFirstChildOfClass('TextLabel').Text=ready and 'ENTRAR NO JOGO'or 'CARREGANDO MAPA'
+end
+package:GetAttributeChangedSignal('MapReady'):Connect(playAvailability);playAvailability()
 local inventoryCard=button(home,'INVENTÁRIO',903,375,234,104,colors[4],function()show('Inventory');drawInventory(invCategory)end)
 local infoTitle=label(pages.Info,'',350,180,840,65,30)
 local infoBody=label(pages.Info,'',350,270,840,200,23)

@@ -1,11 +1,23 @@
 {
   "published": true,
-  "version": 311,
-  "stagedVersion": 311,
+  "version": 312,
+  "stagedVersion": 312,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "sha256": "e3a7fb2ed78e1fcaf25648966c87ac5df664a71ac2816abd85d0149890fe12a0",
-  "sourceCommit": "b4c4e967db70249f177be2cc75e163c5fa462f76",
+  "sha256": "6349e488c936074d6b3ecbaea356216addebaf02c9963844e1cc56c2ebadd2f6",
+  "sourceCommit": "7773af0612902b8149ccddefd7f3fec5be33fdea",
+  "previousPublishedVersion": 311,
+  "previousPublishedSha256": "e3a7fb2ed78e1fcaf25648966c87ac5df664a71ac2816abd85d0149890fe12a0",
+  "admission": {
+    "sameMapAtZero": true,
+    "intermissionSeconds": 90,
+    "cancelledEntry": true,
+    "immediateArena": true,
+    "lateEntry": true,
+    "clientClickTest": false,
+    "samePositionAtZero": true,
+    "chaseSeconds": 180
+  },
   "originalBackupVersion": 303,
   "originalBackupSha256": "7d575a803c47b6c0443f36835d27a9c0cb4f127ed48c53fa589b6d04d60575f7",
   "maps": [
@@ -40,20 +52,5 @@
   ],
   "nextbotTemplates": 66,
   "emotes": 19,
-  "clientPlaytest": false,
-  "workflowRun": 41755594251,
-  "checks": [
-    "remotes",
-    "animation payloads",
-    "90/180 timing",
-    "no duplicate debit",
-    "settings validation",
-    "no imported scripts",
-    "R6 joints",
-    "19 emotes drive R6 motors",
-    "map load and grounded spawns",
-    "nextbot rigs",
-    "menu artwork binding",
-    "all server services initialize"
-  ]
+  "clientPlaytest": false
 }

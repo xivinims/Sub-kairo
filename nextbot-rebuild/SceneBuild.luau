@@ -32,7 +32,8 @@ return function(dm,package)
   end end
   local offset=V.new(-(low.X+high.X)/2,-low.Y,-(low.Z+high.Z)/2)
   for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')then v.CFrame+=offset end end
-  map:SetAttribute('SourceAssetId',def[1]);map:SetAttribute('Width',high.X-low.X);map:SetAttribute('Depth',high.Z-low.Z);map:SetAttribute('Height',high.Y-low.Y)
+  -- IDs exceed 32-bit numeric attribute serialization; retain their exact decimal string.
+  map:SetAttribute('SourceAssetId',string.format('%.0f',def[1]));map:SetAttribute('Width',high.X-low.X);map:SetAttribute('Depth',high.Z-low.Z);map:SetAttribute('Height',high.Y-low.Y)
   local points=new('Folder','Candidates',map);local candidates={}
   for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')and (v:IsA('SpawnLocation')or v.Name:lower():find('spawn')or v.Parent.Name:lower():find('spawn'))then new('Part','SpawnHint',points,{CFrame=v.CFrame+V.new(0,2,0),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1})end end
   for _,v in ipairs(geometry:GetDescendants())do

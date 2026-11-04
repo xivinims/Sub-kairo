@@ -24,6 +24,7 @@ for _,clip in ipairs(package.EmoteClips:GetChildren())do
 end
 dummy:Destroy();passed('19 emotes drive R6 motors')
 local Maps=require(S.MapService)
+local sources={};for _,entry in ipairs(require(package.MapCatalog))do sources[entry.name]=string.format('%.0f',entry.assetId)end
 assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absent')
 for _,name in ipairs(Maps.Names())do
  assert(Maps.Load(name),'Map cannot load: '..name)
@@ -40,6 +41,7 @@ for _,name in ipairs(Maps.Names())do
  end
  local locations={};for i=1,math.min(6,#points)do local p=points[i].Position;table.insert(locations,{p.X,p.Y,p.Z})end
  local source=Storage.NBMaps:FindFirstChild(name):GetAttribute('SourceAssetId')
+ assert(source==sources[name],'Map asset ID lost precision during serialization: '..name)
  assert(package:GetAttribute('MapAssetId')==source,'Arena source mismatch')
  assert(package:GetAttribute('MenuSceneSource')=='ImportedMap','Menu uses generated scenery')
  for _,camera in ipairs(workspace.MenuCameras:GetChildren())do
