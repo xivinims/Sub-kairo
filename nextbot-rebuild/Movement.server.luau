@@ -18,7 +18,7 @@ package:WaitForChild('Movement').OnServerEvent:Connect(function(p,action,on)
  s.last=os.clock()
  if action=='Sprint'and type(on)=='boolean'then s.sprint=on
  elseif action=='Crouch'and type(on)=='boolean'then
-  if on and s.sprint and h.MoveDirection.Magnitude>.2 and h.FloorMaterial~=Enum.Material.Air and os.clock()-s.slide>1.8 then
+  if on and s.sprint and Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude>2 and h.FloorMaterial~=Enum.Material.Air and os.clock()-s.slide>1.8 then
    s.slide=os.clock();s.slideUntil=os.clock()+.65;s.direction=root.CFrame.LookVector;s.sprint=false
   end
   if not on then
@@ -30,7 +30,7 @@ package:WaitForChild('Movement').OnServerEvent:Connect(function(p,action,on)
 end)
 local elapsed=0
 Run.Heartbeat:Connect(function(dt)
- elapsed+=dt;if elapsed<.05 then return end;elapsed=0
+ elapsed+=dt;if elapsed<.05 then return end;local step=math.min(elapsed,.15);elapsed=0
  for p,s in pairs(states)do
   local c=p.Character;local h=c and c:FindFirstChildOfClass('Humanoid');local r=c and c:FindFirstChild('HumanoidRootPart')
   if not h or not r then continue end
@@ -47,9 +47,12 @@ Run.Heartbeat:Connect(function(dt)
   local acceleration=perk('hermes')and 1.7 or 1
   if (p:GetAttribute('NBSpeedBoostUntil')or 0)>workspace:GetServerTimeNow()then acceleration*=1.5 end
   local crawl=perk('medkit')and 3.6 or 3
-  if h.MoveDirection.Magnitude<.1 and not down then s.speed=math.min(desired,16)else s.speed=math.min(desired,(s.speed or 16)+35*.05*acceleration)end
+  local horizontalSpeed=Vector3.new(r.AssemblyLinearVelocity.X,0,r.AssemblyLinearVelocity.Z).Magnitude
+  if horizontalSpeed<.1 and not down then s.speed=math.min(desired,16)else s.speed=math.min(desired,(s.speed or 16)+35*step*acceleration)end
   h.WalkSpeed=down and crawl or s.crouch and desired or s.speed;h.JumpPower=down and 0 or s.crouch and 0 or 45;h.UseJumpPower=true
-  h.HipHeight=s.hip-((s.crouch or down)and .7 or 0)
+  -- The imported crouch clips already lower TorsoRot. A second hip offset
+  -- pushes the character into the floor and fights the camera.
+  h.HipHeight=s.hip
   if sliding then
    local velocity=s.direction*(30+20*math.clamp(((s.slideUntil or 0)-os.clock())/.65,0,1))
    r.AssemblyLinearVelocity=Vector3.new(velocity.X,r.AssemblyLinearVelocity.Y,velocity.Z)

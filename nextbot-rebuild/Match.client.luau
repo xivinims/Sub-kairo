@@ -1,5 +1,6 @@
 local Players=game:GetService('Players');local Run=game:GetService('RunService');local CAS=game:GetService('ContextActionService');local UIS=game:GetService('UserInputService');local Collection=game:GetService('CollectionService')
 local player=Players.LocalPlayer;local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
+local hud=require(package:WaitForChild('HudControls'))
 local emotes=require(package.EmoteCatalog);local byId={};for _,e in ipairs(emotes)do byId[e.id]=e end
 local function new(class,parent,props)local v=Instance.new(class);for k,val in pairs(props or {})do v[k]=val end;v.Parent=parent;return v end
 local gui=new('ScreenGui',player:WaitForChild('PlayerGui'),{Name='MatchHUD',ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=10})
@@ -18,10 +19,10 @@ end
 local sprint,crouch=false,false
 local function setSprint(on)sprint=on;package.Movement:FireServer('Sprint',on)end
 local function setCrouch(on)crouch=on;package.Movement:FireServer('Crouch',on)end
-circle('MENU',94,238,88,function()package.MatchAction:FireServer('Lobby')end)
+hud.Circle(canvas,'Menu',function()package.MatchAction:FireServer('Lobby')end)
 local first=false
-circle('▣\nPOV',94,342,88,function()first=not first;player.CameraMode=first and Enum.CameraMode.LockFirstPerson or Enum.CameraMode.Classic end)
-local crouchButton=circle('AGACHAR',1140,588,106,function()setCrouch(not crouch)end)
+hud.Circle(canvas,'POV',function()first=not first;player.CameraMode=first and Enum.CameraMode.LockFirstPerson or Enum.CameraMode.Classic end)
+local crouchButton=hud.Circle(canvas,'Crouch',function()setCrouch(not crouch)end)
 local sprintButton=circle('CORRER',1280,414,90,function()setSprint(not sprint)end)
 local drop=circle('SOLTAR',1250,272,88,function()package.Rescue:FireServer('Drop')end)
 local wheel=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(460,205),Size=UDim2.fromOffset(620,360),BackgroundColor3=Color3.fromRGB(20,20,26),BackgroundTransparency=.12})
@@ -33,18 +34,20 @@ for i=1,6 do
  b.Activated:Connect(function()local id=player:GetAttribute('NBEmoteSlot'..i);if id and id~=''then package.Emotes:FireServer('Play',id)end;wheel.Visible=false end)
 end
 local function showWheel()wheel.Visible=not wheel.Visible;for i,b in ipairs(emoteButtons)do local item=byId[player:GetAttribute('NBEmoteSlot'..i)];b.Text=item and item.name or 'VAZIO\nEquipe no inventário'end end
-circle('☺',1310,238,88,showWheel)
+hud.Circle(canvas,'Emote',showWheel)
 local inventory=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(1010,140),Size=UDim2.fromOffset(340,340),BackgroundColor3=Color3.fromRGB(24,25,30),BackgroundTransparency=.1})
 new('UICorner',inventory,{CornerRadius=UDim.new(0,12)});local invText=text(inventory,'',14,10,312,140,18);invText.TextWrapped=true
 for i=1,4 do local use=new('TextButton',inventory,{Position=UDim2.fromOffset(12+(i-1)%2*162,165+math.floor((i-1)/2)*78),Size=UDim2.fromOffset(152,68),BackgroundColor3=Color3.fromRGB(60,70,87),TextColor3=Color3.new(1,1,1),Text='USÁVEL '..i,TextSize=17,Font=Enum.Font.GothamBold});new('UICorner',use,{CornerRadius=UDim.new(0,8)});use.Activated:Connect(function()local id=player:GetAttribute('NBUsable'..i);if id and id~=''then package.Equipment:FireServer('Use',id)end end)end
-circle('BOLSA',1250,105,112,function()
+hud.Circle(canvas,'Bag',function()
  inventory.Visible=not inventory.Visible
  local lines={'EQUIPAMENTO'};for _,item in ipairs(require(package.Config).Catalog)do local n=player:GetAttribute('NBOwned_'..item.id)or 0;if n>0 then table.insert(lines,item.name..' ×'..n)end end
  invText.Text=table.concat(lines,'\n')
 end)
 local healthPanel=new('Frame',canvas,{Position=UDim2.fromOffset(128,592),Size=UDim2.fromOffset(192,72),BackgroundColor3=Color3.fromRGB(24,28,22),BackgroundTransparency=.45});new('UICorner',healthPanel,{CornerRadius=UDim.new(0,7)});new('UIStroke',healthPanel,{Color=Color3.fromRGB(110,159,78),Thickness=3})
-local health=text(healthPanel,'♥ 100',0,0,192,72,34);health.TextColor3=Color3.fromRGB(100,226,64)
-local cash=text(canvas,'',338,600,150,52,26);cash.TextColor3=Color3.fromRGB(244,185,77);cash.TextXAlignment=Enum.TextXAlignment.Left
+new('ImageLabel',healthPanel,{Name='HealthIcon',Image='rbxassetid://18788900977',BackgroundTransparency=1,Position=UDim2.fromOffset(12,18),Size=UDim2.fromOffset(45,42)})
+local health=text(healthPanel,'100',70,0,118,72,34);health.TextColor3=Color3.fromRGB(100,226,64)
+new('ImageLabel',canvas,{Name='SpeedIcon',Image='rbxassetid://13492318225',BackgroundTransparency=1,Position=UDim2.fromOffset(339,598),Size=UDim2.fromOffset(36,36)})
+local cash=text(canvas,'',380,590,90,52,26);cash.TextColor3=Color3.fromRGB(244,185,77);cash.TextXAlignment=Enum.TextXAlignment.Left
 local phase=text(canvas,'',458,45,620,36,23)
 local mapLabel=text(canvas,'',458,78,620,26,16)
 local notice=text(canvas,'',358,505,820,54,27)
@@ -85,15 +88,30 @@ local function tag(p)
  p.CharacterAdded:Connect(attach);if p.Character then task.spawn(attach,p.Character)end
 end
 Players.PlayerAdded:Connect(tag);Players.PlayerRemoving:Connect(function(p)if tags[p]then tags[p]:Destroy();tags[p]=nil end end);for _,p in ipairs(Players:GetPlayers())do tag(p)end
+
+local jumpOriginal;local jumpButton
+local function placeJump()
+ local touch=player.PlayerGui:FindFirstChild('TouchGui');local controls=touch and touch:FindFirstChild('TouchControlFrame')
+ local jump=controls and controls:FindFirstChild('JumpButton')
+ if not jump then return end
+ if jumpButton~=jump then jumpButton=jump;jumpOriginal={Size=jump.Size,Position=jump.Position,AnchorPoint=jump.AnchorPoint}end
+ if gui.Enabled then
+  local viewport=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or gui.AbsoluteSize
+  local d=hud.Layout.Jump;local factor=scale.Scale;local left=(viewport.X-1536*factor)/2;local top=(viewport.Y-709*factor)/2
+  jump.AnchorPoint=Vector2.zero;jump.Size=UDim2.fromOffset(d[3]*factor,d[3]*factor);jump.Position=UDim2.fromOffset(left+d[1]*factor,top+d[2]*factor)
+ elseif jumpOriginal then jump.Size=jumpOriginal.Size;jump.Position=jumpOriginal.Position;jump.AnchorPoint=jumpOriginal.AnchorPoint end
+end
+
 local elapsed=0
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
+ placeJump()
  local active=player:GetAttribute('NBInArena');local watching=player:GetAttribute('NBSpectating');gui.Enabled=active==true or watching==true
  previous.Visible=watching==true;nextButton.Visible=watching==true;stopWatch.Visible=watching==true;spectate.Visible=watching==true
  if watching then local target=Players:GetPlayerByUserId(player:GetAttribute('NBSpectateTarget')or 0);spectate.Text=target and 'ASSISTINDO '..target.DisplayName or 'ASSISTINDO A RODADA'end
  drop.Visible=(player:GetAttribute('NBCarrying')or 0)>0
  local char=player.Character;local h=char and char:FindFirstChildOfClass('Humanoid');local root=char and char:FindFirstChild('HumanoidRootPart')
- health.Text='♥ '..tostring(math.ceil(h and h.Health or 0));cash.Text='◈ '..tostring(player:GetAttribute('NBCoins')or 0)
+ health.Text=tostring(math.ceil(h and h.Health or 0));cash.Text=tostring(math.floor(root and Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude or 0))
  local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or 0)-workspace:GetServerTimeNow()))
  phase.Text=string.format('%s   %d:%02d',package:GetAttribute('Phase')=='Round'and 'SOBREVIVA'or 'INTERVALO',math.floor(remaining/60),remaining%60)
  mapLabel.Text=(package:GetAttribute('MapName')or '')..'   •   RODADA '..tostring(package:GetAttribute('Round')or 0)

@@ -6,18 +6,17 @@ local player=Players.LocalPlayer
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local remote=package:WaitForChild('Equipment')
 local rules=require(package:WaitForChild('EquipmentRules'))
-local gui=Instance.new('ScreenGui');gui.Name='EquipmentHUD';gui.ResetOnSpawn=false;gui.Parent=player:WaitForChild('PlayerGui')
-local function circle(text,x,y)
- local b=Instance.new('TextButton');b.Size=UDim2.fromOffset(76,76);b.Position=UDim2.new(x,-38,y,-38);b.BackgroundColor3=Color3.fromRGB(25,25,29);b.BackgroundTransparency=.45;b.TextColor3=Color3.new(1,1,1);b.Text=text;b.TextSize=16;b.Font=Enum.Font.GothamBold;b.Parent=gui
- local c=Instance.new('UICorner');c.CornerRadius=UDim.new(1,0);c.Parent=b
- local stroke=Instance.new('UIStroke');stroke.Thickness=3;stroke.Color=Color3.fromRGB(155,155,155);stroke.Parent=b
- return b
-end
-local lightButton=circle('LUZ',.09,.70)
-local utilityButton=circle('USAR',.53,.88)
-local powerButton=circle('BASTÃO',.44,.88)
+local hud=require(package:WaitForChild('HudControls'))
+local gui=Instance.new('ScreenGui');gui.Name='EquipmentHUD';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=11;gui.Parent=player:WaitForChild('PlayerGui')
+local canvas=Instance.new('Frame');canvas.Size=UDim2.fromOffset(1536,709);canvas.Position=UDim2.fromScale(.5,.5);canvas.AnchorPoint=Vector2.new(.5,.5);canvas.BackgroundTransparency=1;canvas.Parent=gui
+local scale=Instance.new('UIScale');scale.Parent=canvas
+local function fit()scale.Scale=math.min(gui.AbsoluteSize.X/1536,gui.AbsoluteSize.Y/709)end
+fit();gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(fit)
+local lightButton=hud.Circle(canvas,'Light')
+local powerButton=hud.Circle(canvas,'Power')
+local utilityButton=Instance.new('TextButton');utilityButton.Position=UDim2.fromOffset(655,501);utilityButton.Size=UDim2.fromOffset(230,44);utilityButton.BackgroundTransparency=1;utilityButton.Text='Nenhum';utilityButton.Font=Enum.Font.GothamBold;utilityButton.TextSize=32;utilityButton.TextColor3=Color3.new(1,1,1);utilityButton.TextStrokeTransparency=.35;utilityButton.Parent=canvas
 powerButton.Activated:Connect(function()local id=player:GetAttribute('NBPower');if id and id~=''then remote:FireServer('Use',id)end end)
-local indicator=circle('',.62,.88);indicator.Active=false
+local indicator=utilityButton
 local function useLight()remote:FireServer('Use','flashlight')end
 local function useUtility()local id=player:GetAttribute('NBUtility');if id and id~='' then remote:FireServer('Use',id)end end
 lightButton.Activated:Connect(useLight);utilityButton.Activated:Connect(useUtility)
@@ -35,7 +34,8 @@ Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera
  if camera then lampPart.CFrame=camera.CFrame*CFrame.new(.5,-.3,-.8) end
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
- local id=player:GetAttribute('NBUtility');indicator.Visible=active and id~=nil and id~='';utilityButton.Visible=active and id~=nil and id~='' and id~='compass' and id~='timer' and id~='radar'
+ local id=player:GetAttribute('NBUtility');indicator.Visible=active
+ if not id or id==''then indicator.Text='Nenhum'end
  if not active then return end
  local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart');if not root or not camera then return end
  indicator.Rotation=0

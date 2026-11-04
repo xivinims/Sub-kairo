@@ -23,6 +23,44 @@ for _,clip in ipairs(package.EmoteClips:GetChildren())do
  assert(changed>0,'Emote does not affect rig '..clip.Name);results.emotePoses+=1
 end
 dummy:Destroy();passed('19 emotes drive R6 motors')
+-- Regression: the imported custom rig has duplicate zero-weight editor helpers.
+-- Playback must retain one active key per joint/time and survive avatar joint replacement.
+local bindings=pose.Bindings(package.MovementSourceRig)
+for _,clip in ipairs(package.MovementClips:GetChildren())do
+ local data=pose.Decode(clip)
+ for name,keys in pairs(data.tracks)do for i=2,#keys do assert(keys[i].t>keys[i-1].t,'Duplicate animation timestamp: '..clip.Name..'/'..name)end end
+end
+local crouch=pose.Decode(package.MovementClips['Crouch idle'])
+assert(crouch.tracks.TorsoRot and crouch.tracks.TorsoRot[1].w>.9,'Active crouch pose lost to an editor helper')
+assert(crouch.tracks.TorsoRot[1].c.Position.Y< -1,'Crouch root offset missing')
+passed('movement keys preserve active source poses')
+local standard=game:GetService('Players'):CreateHumanoidModelFromDescriptionAsync(Instance.new('HumanoidDescription'),Enum.HumanoidRigType.R6)
+standard.Name='RetargetValidation';standard.Parent=workspace
+local actual=pose.Motors(standard);assert(actual.Torso and actual.Head and actual['Right Arm'],'Avatar R6 joints missing')
+local expected=pose.WorldPose(crouch,.4,bindings);pose.Apply(crouch,actual,.4,1,bindings)
+local resolved={HumanoidRootPart=CFrame.identity}
+local function jointWorld(name)
+ if resolved[name]then return resolved[name]end
+ local m=assert(actual[name],'Missing actual joint '..name)
+ resolved[name]=jointWorld(m.Part0.Name)*m.C0*m.Transform*m.C1:Inverse();return resolved[name]
+end
+for _,name in ipairs({'Torso','Head','Right Arm','Left Arm','Right Leg','Left Leg'})do
+ local difference=expected[name]:ToObjectSpace(jointWorld(name));local _,angle=difference:ToAxisAngle()
+ assert(difference.Position.Magnitude<.001 and math.abs(angle)<.001,'Avatar appearance changed crouch pose: '..name)
+end
+standard:Destroy();passed('crouch retargets to standard avatar R6 joints')
+local Inventory=require(package.InventoryPolicy)
+local light,utility,unavailable,userEmote
+for _,item in ipairs(Config.Catalog)do if item.id=='flashlight'then light=item elseif item.id=='compass'then utility=item elseif item.id=='catjam'then unavailable=item end end
+userEmote=require(package.EmoteCatalog)[1]
+assert(Inventory.Visible(light,'Equipamento','Light',true),'Owned light excluded')
+assert(not Inventory.Visible(utility,'Equipamento','Light',true),'Utility offered in light slot')
+assert(not Inventory.Visible(light,'Equipamento','Light',false),'Unowned item offered for equip')
+assert(not Inventory.Visible(unavailable,'Animações',nil,false),'Unresolved animation offered in shop')
+assert(Inventory.Visible(userEmote,'Animações','Emote',true),'User emote lost')
+passed('inventory filters ownership slots and unavailable items')
+results.motion={sourceAssetId=package.MovementClips:GetAttribute('SourceAssetId'),sourceUnmodified=true,officialEvadeScripts=false,downedOriginalAvailable=false,speedFormulaOriginalVerified=false}
+
 local Maps=require(S.MapService)
 local sources={};for _,entry in ipairs(require(package.MapCatalog))do sources[entry.name]=string.format('%.0f',entry.assetId)end
 assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absent')

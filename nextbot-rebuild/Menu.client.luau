@@ -7,6 +7,8 @@ local Http=game:GetService('HttpService')
 local player=Players.LocalPlayer
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local config=require(package:WaitForChild('Config'))
+local inventoryPolicy=require(package:WaitForChild('InventoryPolicy'))
+local inventoryFilter=nil;local shopTabs={};local previewStarted=0
 local gui=Instance.new('ScreenGui');gui.Name='NextbotMenu';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=5;gui.Parent=player:WaitForChild('PlayerGui')
 local colors={Color3.fromRGB(91,127,198),Color3.fromRGB(77,147,104),Color3.fromRGB(181,145,82),Color3.fromRGB(142,98,180),Color3.fromRGB(177,75,86),Color3.fromRGB(72,152,166)}
 local emoteCatalog=require(package:WaitForChild('EmoteCatalog'))
@@ -63,7 +65,7 @@ local note=label(canvas,'',420,665,700,34,16)
 local function message(text)note.Text=text;task.delay(4,function()if note.Text==text then note.Text='' end end)end
 local shopCategory='Equipamento';local invCategory='Equipamento'
 local drawShop,drawInventory
-local shopCard=button(home,'LOJA',400,375,235,104,colors[3],function()show('Shop');drawShop(shopCategory)end)
+local shopCard=button(home,'LOJA',400,375,235,104,colors[3],function()inventoryFilter=nil;show('Shop');drawShop(shopCategory)end)
 local playCard=button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
  if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
  package.MatchAction:FireServer('Join');message('Entrando na arena…')
@@ -119,53 +121,65 @@ for i,card in ipairs({shopCard,playCard,inventoryCard})do
  end
 end
 local queue=label(home,'',520,518,510,35,20)
-for _,name in ipairs({'Shop','Inventory','Info'}) do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()show('Home')end) end
+for _,name in ipairs({'Shop','Inventory','Info'})do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()
+ if name=='Shop'and inventoryFilter then inventoryFilter=nil;show('Inventory');drawInventory(invCategory)else inventoryFilter=nil;show('Home')end
+end)end
 local selectedTitle=label(pages.Shop,'',963,457,220,46,25)
 local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label(description,'',16,10,374,110,23)
 local selectedItem
 local emoteSlot=1
 local equipmentSlot=1
 local perkSlot=1
-local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1006,650,132,46,colors[2],function()
- if selectedItem and selectedItem.available then if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end else message('Item ainda não disponível.')end
+local function owned(item)
+ return inventoryPolicy.IsOwned(item,player:GetAttribute('NBOwned_'..item.id),player:GetAttribute('NBEmoteOwned_'..item.id))
+end
+local function equipSelected()
+ if not selectedItem or not owned(selectedItem)then return end
+ if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot)
+ elseif selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id,perkSlot)
+ else package.Equipment:FireServer('Equip',selectedItem.id,equipmentSlot)end
+end
+local buyPanel,buy=button(pages.Shop,'COMPRAR',1078,650,198,46,colors[2],function()
+ if not selectedItem then return end
+ if inventoryFilter then equipSelected()
+ elseif selectedItem.available then
+  if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end
+ end
 end)
 buy.Active=false;buy.Selectable=false
-button(pages.Shop,'EQUIPAR',1148,650,128,46,colors[1],function()
- if not selectedItem then return end
- if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot);return end
- if selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id,perkSlot);return end
- local owned=player:GetAttribute('NBOwned_'..selectedItem.id) or 0
- if owned<=0 then message('Você não possui este item.');return end
- if player:GetAttribute('NBInRound') then message('Equipe no lobby antes da rodada.');return end
- package:WaitForChild('Equipment'):FireServer('Equip',selectedItem.id,equipmentSlot)
-end)
 local inspect=false
-button(pages.Shop,'INSPECIONAR',870,650,126,46,colors[1],function()
+button(pages.Shop,'INSPECIONAR',870,650,198,46,colors[1],function()
  inspect=not inspect;description.Visible=not inspect;buyPanel.Visible=not inspect
 end)
 local grid=make('ScrollingFrame',pages.Shop,{Position=UDim2.fromOffset(100,278),Size=UDim2.fromOffset(570,417),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y})
-make('UIGridLayout',grid,{CellSize=UDim2.fromOffset(136,200),CellPadding=UDim2.fromOffset(7,12),SortOrder=Enum.SortOrder.LayoutOrder})
+make('UIGridLayout',grid,{CellSize=UDim2.fromOffset(136,170),CellPadding=UDim2.fromOffset(7,12),SortOrder=Enum.SortOrder.LayoutOrder})
 local heading=label(pages.Shop,'',95,210,575,53,26);heading.TextXAlignment=Enum.TextXAlignment.Left
 local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA('GuiObject') then v:Destroy() end end end
-local function select(item)selectedItem=item;buy.Active=item.available==true;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.available and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
+local function select(item)
+ selectedItem=item;previewStarted=os.clock();buy.Active=item.available==true and (not inventoryFilter or owned(item));buy.Selectable=buy.Active
+ buy:FindFirstChildOfClass('TextLabel').Text=inventoryFilter and 'EQUIPAR'or ('COMPRAR '..item.price)
+ selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true
+end
 function drawShop(category)
- shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedItem=nil;buy.Active=false;buy.Selectable=false;buy:FindFirstChildOfClass('TextLabel').Text='COMPRAR';selectedTitle.Text='';detail.Text='Selecione um item.'
+ shopCategory=category;heading.Text=inventoryFilter and ('INVENTÁRIO • '..string.upper(category))or string.upper(category);for _,tab in ipairs(shopTabs)do tab.Visible=inventoryFilter==nil end
+ if inventoryFilter then player:SetAttribute('NBMenuPage','Inventory')end
+ clear(grid);selectedItem=nil;buy.Active=false;buy.Selectable=false;buy:FindFirstChildOfClass('TextLabel').Text='COMPRAR';selectedTitle.Text='';detail.Text='Selecione um item.'
  if category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',true);return end
  if category=='Robux'then detail.Text='Compras em Robux não estão configuradas neste teste.';buy.Active=false;buy.Selectable=false;return end
  for _,item in ipairs(combined) do
-  if item.category==category or category=='Em destaque' then
-   local p=panel(grid,0,0,136,200,colors[3]);p.LayoutOrder=(item.available and 0 or 1000)+#grid:GetChildren()
-   label(p,tostring(item.price),8,8,120,30,22)
-   label(p,item.name,6,145,124,49,18)
-   local thumb=make('ImageLabel',p,{Position=UDim2.fromOffset(15,40),Size=UDim2.fromOffset(106,100),BackgroundTransparency=1,Image=item.thumbnailId and 'rbxassetid://'..item.thumbnailId or ''})
+  if inventoryPolicy.Visible(item,category,inventoryFilter,owned(item))then
+   local p=panel(grid,0,0,136,170,colors[3]);p.LayoutOrder=(item.available and 0 or 1000)+#grid:GetChildren()
+   label(p,inventoryFilter and ''or tostring(item.price),8,8,120,30,22)
+   label(p,item.name,6,129,124,36,17)
+   local thumb=make('ImageLabel',p,{Position=UDim2.fromOffset(15,40),Size=UDim2.fromOffset(106,86),BackgroundTransparency=1,Image=item.thumbnailId and 'rbxassetid://'..item.thumbnailId or ''})
    if thumb.Image==''then require(package.ItemPreview).Create(thumb,item,player.Character)end
    local b=make('TextButton',p,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text=''});b.Activated:Connect(function()select(item)end)
   end
  end
- if #grid:GetChildren()==1 then label(grid,'Nenhum item validado nesta categoria.',0,0,530,70,20) end
+ if #grid:GetChildren()==1 then label(grid,inventoryFilter and 'Você ainda não possui itens para este espaço.'or 'Nenhum item disponível nesta categoria.',0,0,530,70,20) end
 end
 for i,name in ipairs({'Em destaque','Equipamento','Personagem','Animações','Caixa de som','Robux'}) do
- button(pages.Shop,string.upper(name),95+(i-1)*207,124,198,58,colors[i],function()drawShop(name)end)
+ table.insert(shopTabs,(button(pages.Shop,string.upper(name),95+(i-1)*207,124,198,58,colors[i],function()inventoryFilter=nil;drawShop(name)end)))
 end
 local slots=make('Frame',pages.Inventory,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=1})
 local itemsById={};for _,item in ipairs(combined)do itemsById[item.id]=item end
@@ -182,12 +196,16 @@ function drawInventory(category)
   elseif category=='Equipamento'then id=i==1 and (player:GetAttribute('NBLightID')or 'flashlight')or i==2 and player:GetAttribute('NBUtility')or i==3 and player:GetAttribute('NBPower')or i>=5 and player:GetAttribute('NBUsable'..(i-4))or ''
   elseif category=='Personagem'then id=player:GetAttribute(i==1 and 'NBPerk'or 'NBPerk2')end
   local item=id and itemsById[id]
-  local p=button(slots,item and item.name or '+',x,y,150,132,colors[3],function()
-   if category=='Emotes'then emoteSlot=i;show('Shop');drawShop('Animações');if item then select(item)end
-   elseif category=='Personagem'then perkSlot=i;show('Shop');drawShop('Personagem');if item then select(item)end
+  local p=button(slots,item and item.name or (category=='Equipamento'and i==4 and '🔒'or '+'),x,y,150,132,colors[3],function()
+   if category=='Emotes'then emoteSlot=i;inventoryFilter='Emote';show('Shop');drawShop('Animações');if item then select(item)end
+   elseif category=='Personagem'then perkSlot=i;inventoryFilter='Perk';show('Shop');drawShop('Personagem');if item then select(item)end
    elseif category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',not player:GetAttribute('NBOpenBoombox'))
    elseif category=='Cosméticos'then message('Os cosméticos desta versão ainda não estão disponíveis.')
-   else equipmentSlot=i>=5 and i-4 or 1;show('Shop');drawShop('Equipamento');if item then select(item)end end
+   else
+    if i==4 then message('O martelo ainda não está disponível.');return end
+    equipmentSlot=i>=5 and i-4 or 1;inventoryFilter=i==1 and 'Light'or i==2 and 'Utility'or i==3 and 'Power'or 'Usable'
+    show('Shop');drawShop('Equipamento');if item then select(item)end
+   end
   end)
   if item then
    local thumb=make('Frame',p,{Position=UDim2.fromOffset(20,8),Size=UDim2.fromOffset(110,78),BackgroundTransparency=1});require(package.ItemPreview).Create(thumb,item,player.Character)
@@ -243,12 +261,12 @@ show('Home')
 
 local function transaction(status)
  local messages={limit='Limite de equipamentos posicionados atingido.',purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
- message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)end
+ message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)elseif active=='Shop'and inventoryFilter then drawShop(shopCategory)end
 end
 package.MatchAction.OnClientEvent:Connect(function(status)if status=='loading'then message('A arena está carregando.')elseif status=='character'then message('Seu personagem está carregando.')end end)
 package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
 
-local pose=require(package.PosePlayer);local elapsed=0
+local pose=require(package.PosePlayer);local movementBindings=pose.Bindings(package.MovementSourceRig);local elapsed=0
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt
  local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
@@ -257,6 +275,6 @@ Run.RenderStepped:Connect(function(dt)
  local entry=previewFrames[active]
  if entry and entry.motors then
   local sequence=selectedItem and selectedItem.source and package.EmoteClips:FindFirstChild(selectedItem.id)or package.MovementClips:FindFirstChild('idle')
-  if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and elapsed%data.duration or 0,math.min(dt*15,1))end
+  if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and (os.clock()-previewStarted)%data.duration or 0,1,not (selectedItem and selectedItem.source)and movementBindings or nil)end
  end
 end)

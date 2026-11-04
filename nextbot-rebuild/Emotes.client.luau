@@ -27,7 +27,7 @@ end
 local function stop(p)
  local s=states[p];if not s then return end
  for _,motor in pairs(s.motors)do if motor.Parent then motor.Transform=CFrame.identity end end
- if s.animate and s.animate.Parent then s.animate.Enabled=s.animateEnabled end
+ if s.animate and s.animate.Parent and not s.character:GetAttribute('NBManualLocomotion')then s.animate.Enabled=s.animateEnabled end
  if s.sound then s.sound:Destroy()end
  states[p]=nil
 end
