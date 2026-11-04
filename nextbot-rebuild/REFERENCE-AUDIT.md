@@ -1,5 +1,7 @@
 # EXACT RUN — teste integrado
 
+Publicado: versão **311**, SHA-256 `e3a7fb2ed78e1fcaf25648966c87ac5df664a71ac2816abd85d0149890fe12a0`. [Execução com os testes e confirmação de publicação](https://github.com/xivinims/Sub-kairo/actions/runs/41755594251). 7 mapas/variantes, 171 spawns conectados, 66 modelos de Nextbots e 19 emotes. A solicitação de publicação foi desativada após o envio para evitar republicações automáticas.
+
 Referência visual: telas IMG_2671–IMG_2690 fornecidas pelo proprietário. Experiência 9421311218, place 118064584465155; branch dead-signal-publisher. Intervalo solicitado de 90 segundos, rodadas de 180 segundos.
 
 ## Implementação
