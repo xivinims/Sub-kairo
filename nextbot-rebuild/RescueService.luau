@@ -53,7 +53,7 @@ function Service.Down(p)
  if downed[p]or not p:GetAttribute('NBInRound')or workspace:GetServerTimeNow()<(p:GetAttribute('NBInvulnerableUntil')or 0)then return end
  Service.Drop(p)
  local c,r,h=rig(p);if not r or not h then return end
- p:SetAttribute('NBPlayingEmote','');p:SetAttribute('NBDowned',true);p:SetAttribute('NBDownUntil',workspace:GetServerTimeNow()+Config.BleedoutDuration)
+ p:SetAttribute('NBPlayingEmote','');p:SetAttribute('NBDowned',true);p:SetAttribute('NBDownUntil',workspace:GetServerTimeNow()+Config.BleedoutDuration+((p:GetAttribute('NBPerk')=='medkit'or p:GetAttribute('NBPerk2')=='medkit')and 30 or 0))
  h.WalkSpeed=3;h.JumpPower=0;h.Health=math.max(h.Health,1)
  downed[p]=true
  local revivePrompt=Instance.new('ProximityPrompt');revivePrompt.Name='NBRevive';revivePrompt.ActionText='Reanimar';revivePrompt.ObjectText=p.DisplayName;revivePrompt.KeyboardKeyCode=Enum.KeyCode.E;revivePrompt.GamepadKeyCode=Enum.KeyCode.ButtonX;revivePrompt.MaxActivationDistance=8;revivePrompt.HoldDuration=0;revivePrompt.RequiresLineOfSight=true;revivePrompt.Parent=r

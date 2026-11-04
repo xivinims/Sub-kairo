@@ -34,11 +34,13 @@ for _,name in ipairs(Maps.Names())do
  for i=2,math.min(#points,4)do
   local path=game:GetService('PathfindingService'):CreatePath({AgentRadius=2,AgentHeight=5,AgentCanJump=true})
   local ok,err=pcall(function()path:ComputeAsync(points[1].Position+Vector3.new(0,3,0),points[i].Position+Vector3.new(0,3,0))end)
+  assert(ok and path.Status==Enum.PathStatus.Success,'Disconnected spawn on '..name)
   table.insert(paths,{ok=ok,status=ok and path.Status.Name or tostring(err),waypoints=ok and #path:GetWaypoints()or 0})
  end
  local locations={};for i=1,math.min(6,#points)do local p=points[i].Position;table.insert(locations,{p.X,p.Y,p.Z})end
  table.insert(results.maps,{name=name,spawns=#points,parts=#workspace.ActiveMap.Geometry:GetDescendants(),paths=paths,locations=locations})
 end;passed('map load and grounded spawns')
+results.botCount=#Storage.NextbotTemplates:GetChildren();assert(results.botCount>=60,'Nextbot pack was not imported')
 for _,bot in ipairs(Storage.NextbotTemplates:GetChildren())do
  assert(bot:FindFirstChild('HumanoidRootPart')and bot:FindFirstChildOfClass('Humanoid'),'Invalid bot rig')
  for _,v in ipairs(bot:GetDescendants())do if v:IsA('BasePart')then assert(not v.Anchored,'Anchored bot')end end

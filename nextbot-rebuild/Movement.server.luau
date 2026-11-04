@@ -42,11 +42,13 @@ Run.Heartbeat:Connect(function(dt)
   local speed=down and 3 or s.crouch and config.CrouchSpeed or s.sprint and 33.3 or config.WalkSpeed
   if perk('stilts')and not down and not s.crouch then speed*=1.08 end
   if (p:GetAttribute('NBCarrying')or 0)>0 then speed*=.82 end
-  if (p:GetAttribute('NBSpeedBoostUntil')or 0)>workspace:GetServerTimeNow()then speed*=1.2 end
+  if (p:GetAttribute('NBSpeedBoostUntil')or 0)>workspace:GetServerTimeNow()then speed*=1.5 end
   local desired=active and speed or 16
   local acceleration=perk('hermes')and 1.7 or 1
+  if (p:GetAttribute('NBSpeedBoostUntil')or 0)>workspace:GetServerTimeNow()then acceleration*=1.5 end
+  local crawl=perk('medkit')and 3.6 or 3
   if h.MoveDirection.Magnitude<.1 and not down then s.speed=math.min(desired,16)else s.speed=math.min(desired,(s.speed or 16)+35*.05*acceleration)end
-  h.WalkSpeed=down and 3 or s.crouch and desired or s.speed;h.JumpPower=down and 0 or s.crouch and 0 or 45;h.UseJumpPower=true
+  h.WalkSpeed=down and crawl or s.crouch and desired or s.speed;h.JumpPower=down and 0 or s.crouch and 0 or 45;h.UseJumpPower=true
   h.HipHeight=s.hip-((s.crouch or down)and .7 or 0)
   if sliding then
    local velocity=s.direction*(30+20*math.clamp(((s.slideUntil or 0)-os.clock())/.65,0,1))

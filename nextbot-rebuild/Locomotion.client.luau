@@ -7,7 +7,7 @@ local function setup(p)
   local h=c:WaitForChild('Humanoid',10);local root=c:WaitForChild('HumanoidRootPart',10);if not h or not root then return end
   states[p]={char=c,h=h,root=root,motors=Pose.Motors(c),time=0,name=''}
  end
- p.CharacterAdded:Connect(char);if p.Character then task.spawn(char,p.Character)end
+ p.CharacterAdded:Connect(char);p:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()if p.Character then task.spawn(char,p.Character)end end);if p.Character then task.spawn(char,p.Character)end
 end
 Players.PlayerAdded:Connect(setup);Players.PlayerRemoving:Connect(function(p)states[p]=nil end);for _,p in ipairs(Players:GetPlayers())do setup(p)end
 Run.PreSimulation:Connect(function(dt)

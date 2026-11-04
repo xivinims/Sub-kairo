@@ -2,6 +2,9 @@ local Players=game:GetService('Players');local Debris=game:GetService('Debris')
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local Profiles=require(script.Parent.ProfileService);local Rules=require(package.EquipmentRules)
 local remote=package:WaitForChild('Equipment');local sessions={}
+local Collection=game:GetService('CollectionService')
+local deployed=Instance.new('Folder');deployed.Name='NBDeployables';deployed.Parent=workspace
+package:GetAttributeChangedSignal('Phase'):Connect(function()if package:GetAttribute('Phase')~='Round'then deployed:ClearAllChildren()end end)
 local decoys=Instance.new('Folder');decoys.Name='NBDecoys';decoys.Parent=workspace
 local function clear(p,s)
  s.light=false;if s.decoy then s.decoy:Destroy();s.decoy=nil end
@@ -53,12 +56,22 @@ remote.OnServerEvent:Connect(function(p,action,id,slot)
  if id=='flashlight'then light(p,s);return end
  local equipped=profile.utility==id or profile.power==id;for _,value in pairs(profile.usables)do if value==id then equipped=true end end;if not equipped then return end
  if id=='compass'or id=='timer'or id=='radar'then return end
+ if id=='cola'and (p:GetAttribute('NBCarrying')or 0)>0 then return end
+ if id=='barrier'then
+  local count=0;for _,v in ipairs(deployed:GetChildren())do if v:GetAttribute('Owner')==p.UserId then count+=1 end end
+  local maximum=(profile.perk=='military'or profile.perk2=='military')and 9 or 3
+  if count>=maximum then remote:FireClient(p,'limit');return end
+ end
  if workspace:GetServerTimeNow()<s.ready then return end
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Exclude;rp.FilterDescendantsInstances={char}
  if (id=='decoy'or id=='barrier')and workspace:Raycast(root.Position,root.CFrame.LookVector*5,rp)then return end
  if not consume(p,s,id,id=='baton'or id=='barrier'or id=='cola')then remote:FireClient(p,'empty');return end
- s.ready=workspace:GetServerTimeNow()+(id=='radio'and 5 or 15);p:SetAttribute('NBDecoyReadyAt',s.ready)
- if id=='cola'then p:SetAttribute('NBSpeedBoostUntil',workspace:GetServerTimeNow()+10);return end
+ s.ready=workspace:GetServerTimeNow()+(id=='radio'and 5 or id=='barrier'and 1 or id=='cola'and 8 or 15);p:SetAttribute('NBDecoyReadyAt',s.ready)
+ if id=='cola'then
+  p:SetAttribute('NBDrinkingUntil',workspace:GetServerTimeNow()+1.5)
+  task.delay(1.5,function()if p.Character==char and p:GetAttribute('NBInRound')and not p:GetAttribute('NBDowned')and hum.Health>0 then p:SetAttribute('NBSpeedBoostUntil',workspace:GetServerTimeNow()+6)end end)
+  return
+ end
  if id=='baton'then
   local hit=false
   for _,bot in ipairs(game:GetService('CollectionService'):GetTagged('NBNextbot'))do
@@ -76,7 +89,19 @@ remote.OnServerEvent:Connect(function(p,action,id,slot)
  end
  if id=='radio'then for _,other in ipairs(Players:GetPlayers())do if other:GetAttribute('NBInRound')then remote:FireClient(other,'ping',p.UserId,root.Position)end end;return end
  if id=='barrier'then
-  local wall=Instance.new('Part');wall.Name='PlayerBarrier';wall.Size=Vector3.new(10,8,1);wall.CFrame=root.CFrame*CFrame.new(0,1,-5);wall.Anchored=true;wall.Color=Color3.fromRGB(130,173,223);wall.Transparency=.35;wall.Material=Enum.Material.ForceField;wall.Parent=workspace;Debris:AddItem(wall,15);return
+  local wall=Instance.new('Part');wall.Name='PlayerBarrier';wall.Size=Vector3.new(10,8,1);wall.CFrame=root.CFrame*CFrame.new(0,1,-5);wall.Anchored=true;wall.Color=Color3.fromRGB(130,173,223);wall.Transparency=.35;wall.Material=Enum.Material.ForceField;wall:SetAttribute('Owner',p.UserId);wall.Parent=deployed;Debris:AddItem(wall,180)
+  task.spawn(function()
+   local durability=100
+   while wall.Parent and durability>0 do
+    for _,bot in ipairs(Collection:GetTagged('NBNextbot'))do local r=bot:FindFirstChild('HumanoidRootPart');if r then
+     local point=wall.CFrame:PointToObjectSpace(r.Position)
+     if math.abs(point.X)<7 and math.abs(point.Y)<6 and math.abs(point.Z)<4 then durability-=10 end
+    end end
+    wall:SetAttribute('Durability',math.max(durability,0));task.wait(.25)
+   end
+   if wall.Parent then wall:Destroy()end
+  end)
+  return
  end
  if id~='decoy'then return end
  local arch=char.Archivable;char.Archivable=true;local ok,copy=pcall(function()return char:Clone()end);char.Archivable=arch;if not ok or not copy then return end

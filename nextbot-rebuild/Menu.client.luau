@@ -237,7 +237,7 @@ UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCo
 show('Home')
 
 local function transaction(status)
- local messages={purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
+ local messages={limit='Limite de equipamentos posicionados atingido.',purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
  message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)end
 end
 package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)

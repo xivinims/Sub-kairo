@@ -22,7 +22,7 @@ return function(dm,package)
   local removed=0;local count=0
   for _,v in ipairs(geometry:GetDescendants())do
    if not v.Parent then continue end
-   if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('RemoteEvent') or v:IsA('RemoteFunction') or v:IsA('Sound') or v:IsA('KeyframeSequence') then v:Destroy();removed+=1
+   if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('RemoteEvent') or v:IsA('RemoteFunction') or v:IsA('Sound') or v:IsA('KeyframeSequence') or v:IsA('ScreenGui') then v:Destroy();removed+=1
    elseif v:IsA('Humanoid') then v.Parent:Destroy();removed+=1
    elseif v:IsA('SpawnLocation') then v.Enabled=false
    elseif v:IsA('BasePart')then v.Anchored=true;count+=1 end

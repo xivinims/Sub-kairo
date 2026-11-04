@@ -54,6 +54,7 @@ end
 local function watch(p)
  p:GetAttributeChangedSignal('NBPlayingEmote'):Connect(function()begin(p)end)
  p:GetAttributeChangedSignal('NBEmoteStarted'):Connect(function()begin(p)end)
+ p:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()begin(p)end)
  p.CharacterRemoving:Connect(function()stop(p)end)
  p.CharacterAdded:Connect(function()task.defer(begin,p)end)
  begin(p)

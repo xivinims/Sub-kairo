@@ -1,7 +1,8 @@
 local Storage=game:GetService('ServerStorage')
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local templates=Storage:WaitForChild('NBMaps')
-local Service={current=nil}
+local Service={current=nil};local validated={}
+local Pathfinding=game:GetService('PathfindingService')
 local function marker(folder,cf,index)
  local v=Instance.new('Part');v.Name=tostring(index);v.Size=Vector3.one;v.CFrame=cf;v.Transparency=1;v.Anchored=true;v.CanCollide=false;v.CanTouch=false;v.CanQuery=false;v.Parent=folder
 end
@@ -37,6 +38,17 @@ function Service.Load(name)
   end end
  end
  if #points<2 then map:Destroy();return false end
+ if validated[name]then points=validated[name]else
+  local connected={points[1]}
+  for i=2,math.min(#points,80)do
+   if #connected>=32 then break end
+   local path=Pathfinding:CreatePath({AgentRadius=2,AgentHeight=5,AgentCanJump=true})
+   local ok=pcall(function()path:ComputeAsync(points[1]+Vector3.new(0,3,0),points[i]+Vector3.new(0,3,0))end)
+   if ok and path.Status==Enum.PathStatus.Success then table.insert(connected,points[i])end
+  end
+  if #connected<2 then map:Destroy();return false end
+  points=connected;validated[name]=points
+ end
  local players=Instance.new('Folder');players.Name='RoundSpawns';players.Parent=workspace
  local bots=Instance.new('Folder');bots.Name='NextbotSpawns';bots.Parent=workspace
  for i,p in ipairs(points)do marker(players,CFrame.new(p),i);marker(bots,CFrame.new(p),i)end
