@@ -17,11 +17,13 @@ function Service.Load(name)
  local geometry=map:WaitForChild('Geometry')
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={geometry};rp.RespectCanCollide=true
  local points={}
+ local overlap=OverlapParams.new();overlap.FilterType=Enum.RaycastFilterType.Include;overlap.FilterDescendantsInstances={geometry};overlap.RespectCanCollide=true
  local function add(position)
   local below=workspace:Raycast(position+Vector3.new(0,1,0),Vector3.new(0,-8,0),rp)
   if not below or below.Normal.Y<.8 then return end
   local ground=below.Position
   if workspace:Raycast(ground+Vector3.new(0,.2,0),Vector3.new(0,6,0),rp)then return end
+  if #workspace:GetPartBoundsInBox(CFrame.new(ground+Vector3.new(0,3,0)),Vector3.new(4,5.4,4),overlap)>0 then return end
   for _,p in ipairs(points)do if (p-ground).Magnitude<16 then return end end
   table.insert(points,ground)
  end

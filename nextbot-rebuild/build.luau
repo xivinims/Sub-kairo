@@ -88,7 +88,7 @@ end
 local remote=R.Instance.new('RemoteEvent');remote.Name='Settings';remote.Parent=package
 local matchRemote=R.Instance.new('RemoteEvent');matchRemote.Name='MatchAction';matchRemote.Parent=package
 local equipmentRemote=R.Instance.new('RemoteEvent');equipmentRemote.Name='Equipment';equipmentRemote.Parent=package
-local W=dm:GetService('Workspace')
+local W=dm:GetService('Workspace');W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=256
 for _,name in ipairs({'Economy','Rescue','Movement','Boombox'})do local e=R.Instance.new('RemoteEvent');e.Name=name;e.Parent=package end
 local mapCatalog=require('./SceneBuild')(dm,package)
 W:SetAttribute('ReferencePreviewOnly',false)

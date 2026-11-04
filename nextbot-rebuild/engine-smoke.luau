@@ -14,6 +14,15 @@ end;passed('no imported scripts')
 local starter=game:GetService('StarterPlayer'):FindFirstChild('StarterCharacter');assert(starter and starter:FindFirstChild('HumanoidRootPart'),'R6 starter rig')
 assert(starter.Humanoid.RigType==Enum.HumanoidRigType.R6,'Wrong rig type')
 local motors=0;for _,v in ipairs(starter:GetDescendants())do if v:IsA('Motor6D')then assert(v.Part0 and v.Part1,'Unbound joint');motors+=1 end end;assert(motors>=6,'Missing rig joints');passed('R6 joints')
+local pose=require(package.PosePlayer);local dummy=starter:Clone();dummy.Parent=workspace;local motorMap=pose.Motors(dummy)
+results.emotePoses=0
+for _,clip in ipairs(package.EmoteClips:GetChildren())do
+ for _,m in pairs(motorMap)do m.Transform=CFrame.identity end
+ local data=pose.Decode(clip);assert(data.duration>0,'Empty clip '..clip.Name);pose.Apply(data,motorMap,data.duration*.4,1)
+ local changed=0;for _,m in pairs(motorMap)do if m.Transform~=CFrame.identity then changed+=1 end end
+ assert(changed>0,'Emote does not affect rig '..clip.Name);results.emotePoses+=1
+end
+dummy:Destroy();passed('19 emotes drive R6 motors')
 local Maps=require(S.MapService)
 for _,name in ipairs(Maps.Names())do
  assert(Maps.Load(name),'Map cannot load: '..name)
@@ -27,7 +36,8 @@ for _,name in ipairs(Maps.Names())do
   local ok,err=pcall(function()path:ComputeAsync(points[1].Position+Vector3.new(0,3,0),points[i].Position+Vector3.new(0,3,0))end)
   table.insert(paths,{ok=ok,status=ok and path.Status.Name or tostring(err),waypoints=ok and #path:GetWaypoints()or 0})
  end
- table.insert(results.maps,{name=name,spawns=#points,parts=#workspace.ActiveMap.Geometry:GetDescendants(),paths=paths})
+ local locations={};for i=1,math.min(6,#points)do local p=points[i].Position;table.insert(locations,{p.X,p.Y,p.Z})end
+ table.insert(results.maps,{name=name,spawns=#points,parts=#workspace.ActiveMap.Geometry:GetDescendants(),paths=paths,locations=locations})
 end;passed('map load and grounded spawns')
 for _,bot in ipairs(Storage.NextbotTemplates:GetChildren())do
  assert(bot:FindFirstChild('HumanoidRootPart')and bot:FindFirstChildOfClass('Humanoid'),'Invalid bot rig')
@@ -43,5 +53,21 @@ for _,id in ipairs({93112717809068,1836009626,1838591268,1839246711,1847238776})
  table.insert(results.assets,{id=id,metadata=ok,name=ok and info.Name or tostring(info),assetType=ok and info.AssetTypeId or 0})
  item:Destroy()
 end
+results.serverStartup={};local threads={};local startupErrors={}
+for _,original in ipairs(S:GetChildren())do if original:IsA('Script')then
+ local module=Instance.new('ModuleScript');module.Name='Validate_'..original.Name;module.Source='return function()\n'..original.Source..'\nend';module.Parent=S
+ local name=original.Name;results.serverStartup[name]='starting'
+ table.insert(threads,task.spawn(function()
+  local ok,err=pcall(function()require(module)()end)
+  results.serverStartup[name]=ok and 'initialized'or tostring(err)
+  if not ok then table.insert(startupErrors,name..': '..tostring(err))end
+ end))
+end end
+task.wait(3)
+assert(#startupErrors==0,table.concat(startupErrors,' | '))
+assert(package:GetAttribute('Phase')=='Intermission','Round service did not initialize')
+assert(workspace:FindFirstChild('NBDecoys'),'Equipment service did not initialize')
+for _,thread in ipairs(threads)do pcall(task.cancel,thread)end
+passed('all server services initialize')
 results.isRunning=game:GetService('RunService'):IsRunning()
 return results

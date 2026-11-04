@@ -43,6 +43,7 @@ local function targetFrom(position)
 end
 local function startBots()
  local templates=Storage.NextbotTemplates:GetChildren();local points=markers('NextbotSpawns');if #points==0 then return end
+ for i=#templates,2,-1 do local j=math.random(i);templates[i],templates[j]=templates[j],templates[i]end
  local count=package:GetAttribute('SpecialRound')=='double'and 6 or 3
  for i=1,count do
   local bot=templates[(i-1)%#templates+1]:Clone();local h=bot:FindFirstChildOfClass('Humanoid');local root=bot:FindFirstChild('HumanoidRootPart')

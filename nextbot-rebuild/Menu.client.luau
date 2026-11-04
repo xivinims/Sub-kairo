@@ -58,6 +58,7 @@ local amounts={}
 for i,entry in ipairs({{'Coins','MOEDAS',colors[2]},{'Points','PONTOS',white},{'Vouchers','CUPONS',colors[3]},{'Wisps','WISPS',colors[4]},{'Wins','VITÓRIAS',colors[3]}}) do
  local p=panel(home,95,167+(i-1)*48,138,40,entry[3]);amounts[entry[1]]=label(p,entry[2]..' —',4,0,130,40,17)
 end
+local shopMoney=label(pages.Shop,'',700,216,145,190,21);shopMoney.TextYAlignment=Enum.TextYAlignment.Top
 local note=label(canvas,'',420,665,700,34,16)
 local function message(text)note.Text=text;task.delay(4,function()if note.Text==text then note.Text='' end end)end
 local shopCategory='Equipamento';local invCategory='Equipamento'
@@ -120,11 +121,11 @@ local selectedItem
 local emoteSlot=1
 local equipmentSlot=1
 local perkSlot=1
-local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1078,650,198,46,colors[2],function()
+local buyPanel,buy=button(pages.Shop,'INDISPONÍVEL',1006,650,132,46,colors[2],function()
  if selectedItem and selectedItem.available then if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end else message('Item ainda não disponível.')end
 end)
 buy.Active=false;buy.Selectable=false
-button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
+button(pages.Shop,'EQUIPAR',1148,650,128,46,colors[1],function()
  if not selectedItem then return end
  if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot);return end
  if selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id,perkSlot);return end
@@ -134,7 +135,7 @@ button(pages.Shop,'EQUIPAR',1078,597,198,44,colors[1],function()
  package:WaitForChild('Equipment'):FireServer('Equip',selectedItem.id,equipmentSlot)
 end)
 local inspect=false
-button(pages.Shop,'INSPECIONAR',870,650,197,46,colors[1],function()
+button(pages.Shop,'INSPECIONAR',870,650,126,46,colors[1],function()
  inspect=not inspect;description.Visible=not inspect;buyPanel.Visible=not inspect
 end)
 local grid=make('ScrollingFrame',pages.Shop,{Position=UDim2.fromOffset(100,278),Size=UDim2.fromOffset(570,417),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y})
@@ -143,7 +144,7 @@ local heading=label(pages.Shop,'',95,210,575,53,26);heading.TextXAlignment=Enum.
 local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA('GuiObject') then v:Destroy() end end end
 local function select(item)selectedItem=item;buy.Active=item.available==true;buy.Selectable=buy.Active;buy:FindFirstChildOfClass('TextLabel').Text=item.available and ('COMPRAR '..item.price) or 'INDISPONÍVEL';selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true end
 function drawShop(category)
- shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedTitle.Text='';detail.Text='Selecione um item.'
+ shopCategory=category;heading.Text=string.upper(category);clear(grid);selectedItem=nil;buy.Active=false;buy.Selectable=false;buy:FindFirstChildOfClass('TextLabel').Text='COMPRAR';selectedTitle.Text='';detail.Text='Selecione um item.'
  if category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',true);return end
  if category=='Robux'then detail.Text='Compras em Robux não estão configuradas neste teste.';buy.Active=false;buy.Selectable=false;return end
  for _,item in ipairs(combined) do
@@ -183,7 +184,11 @@ function drawInventory(category)
    elseif category=='Cosméticos'then message('Os cosméticos desta versão ainda não estão disponíveis.')
    else equipmentSlot=i>=5 and i-4 or 1;show('Shop');drawShop('Equipamento');if item then select(item)end end
   end)
-  label(p,name,5,100,140,27,14)
+  if item then
+   local thumb=make('Frame',p,{Position=UDim2.fromOffset(20,8),Size=UDim2.fromOffset(110,78),BackgroundTransparency=1});require(package.ItemPreview).Create(thumb,item,player.Character)
+   local b=p:FindFirstChildOfClass('TextButton');b.ZIndex=3;local t=b:FindFirstChildOfClass('TextLabel');t.Position=UDim2.fromOffset(5,78);t.Size=UDim2.fromOffset(140,26);t.TextSize=16
+  end
+  label(p,name,5,105,140,22,13)
  end
 end
 for i,name in ipairs({'Equipamento','Personagem','Cosméticos','Emotes','Caixa de som'}) do
@@ -219,6 +224,7 @@ player.CharacterAppearanceLoaded:Connect(refreshAvatar)
 player:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()if player.Character then refreshAvatar(player.Character)end;if active=='Shop'then drawShop(shopCategory)end end)
 if player.Character then refreshAvatar(player.Character) end
 local function updateStats()
+ shopMoney.Text='MOEDAS\n'..tostring(player:GetAttribute('NBCoins')or 0)..'\n\nNÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)
  xpText.Text='NÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)..'                                    '..tostring((player:GetAttribute('NBXP')or 0)%250)..'/250'
  local names={Coins='MOEDAS',Points='PONTOS',Vouchers='CUPONS',Wisps='WISPS',Wins='VITÓRIAS'}
  for key,l in pairs(amounts) do l.Text=names[key]..' '..tostring(player:GetAttribute('NB'..key) or '—') end

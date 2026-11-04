@@ -18,7 +18,7 @@ return function(dm,package)
  for _,def in ipairs({{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
   local roots=load(def[1]);if not roots then continue end
   local map=new('Model',def[2],maps);local geometry=new('Model','Geometry',map)
-  for _,root in ipairs(roots)do root.Parent=geometry end
+  for _,root in ipairs(roots)do local inner=root.Name=='Game'and root:FindFirstChild('Map');if inner then inner.Parent=geometry;root:Destroy()else root.Parent=geometry end end
   local removed=0;local count=0
   for _,v in ipairs(geometry:GetDescendants())do
    if not v.Parent then continue end
@@ -37,6 +37,7 @@ return function(dm,package)
   for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')then v.CFrame+=offset end end
   map:SetAttribute('SourceAssetId',def[1]);map:SetAttribute('Width',high.X-low.X);map:SetAttribute('Depth',high.Z-low.Z);map:SetAttribute('Height',high.Y-low.Y)
   local points=new('Folder','Candidates',map);local candidates={}
+  for _,v in ipairs(geometry:GetDescendants())do if v:IsA('BasePart')and (v:IsA('SpawnLocation')or v.Name:lower():find('spawn')or v.Parent.Name:lower():find('spawn'))then new('Part','SpawnHint',points,{CFrame=v.CFrame+V.new(0,2,0),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,Transparency=1})end end
   for _,v in ipairs(geometry:GetDescendants())do
    if v:IsA('BasePart') and v.CanCollide and v.Size.X>=10 and v.Size.Z>=10 and math.abs(v.CFrame.UpVector.Y)>.98 then
     table.insert(candidates,v)
@@ -51,7 +52,7 @@ return function(dm,package)
  end
  assert(#mapCatalog>0,'No usable maps downloaded')
  local catalog=new('ModuleScript','MapCatalog',package);catalog.Source="return game:GetService('HttpService'):JSONDecode([==["..serde.encode('json',mapCatalog).."]==])"
- local W=dm:GetService('Workspace');local lobby=new('Model','LobbyScene',W)
+ local W=dm:GetService('Workspace');local lobby=new('Model','LobbyScene',W);lobby.ModelStreamingMode=R.Enum.ModelStreamingMode.Persistent
  local base=V.new(0,1100,0)
  part('LobbyFloor',lobby,base+V.new(0,-2,0),V.new(340,4,300),{210,220,205})
  -- A separate scene supplies the reference menu's pastel geometry and purple inventory garden.
@@ -80,15 +81,15 @@ return function(dm,package)
  new('Part','Lobby',lsp,{Position=base+V.new(0,3,-105),Size=V.new(1,1,1),Anchored=true,CanCollide=false,CanQuery=false,Transparency=1})
  new('SpawnLocation','LobbySpawn',W,{Position=base+V.new(0,.5,-105),Size=V.new(8,1,8),Transparency=1,Anchored=true,Neutral=true,Duration=0})
  local templates=new('Folder','NextbotTemplates',dm:GetService('ServerStorage'))
- for _,def in ipairs({{11128061931,'Freddy'},{14047690859,'Nextbot'},{11448641842,'Bobo'},{10844522204,'Eye'}})do
+ for _,def in ipairs({{11128061931,'Freddy'},{14047690859,'Nextbot'},{11448641842,'Bobo'},{10844522204,'Eye'},{13028240941,'Pack'}})do
   local roots=load(def[1]);if roots then for _,root in ipairs(roots)do
    local models={root};for _,v in ipairs(root:GetDescendants())do if v:IsA('Model') and v:FindFirstChildOfClass('Humanoid')then table.insert(models,v)end end
    for _,m in ipairs(models)do if m:IsA('Model') and m:FindFirstChildOfClass('Humanoid') and m:FindFirstChild('HumanoidRootPart')then
-    local bot=m:Clone();bot.Name=def[2]
+    local bot=m:Clone();bot.Name=def[2]=='Pack'and root.Name or def[2]
     for _,v in ipairs(bot:GetDescendants())do
-     if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('BodyMover')then v:Destroy()
+     if v:IsA('LuaSourceContainer') or v:IsA('PackageLink') or v:IsA('BodyMover')or v:IsA('ScreenGui')or v:IsA('RemoteEvent')or v:IsA('RemoteFunction')then v:Destroy()
      elseif v:IsA('BasePart')then v.Anchored=false
-     elseif v:IsA('Sound')then v.Playing=false end
+     elseif v:IsA('Sound')then v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
     end
     bot.Parent=templates;break
    end end
