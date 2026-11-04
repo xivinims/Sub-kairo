@@ -1,6 +1,6 @@
 # EXACT RUN — teste integrado
 
-Publicado: versão **311**, SHA-256 `e3a7fb2ed78e1fcaf25648966c87ac5df664a71ac2816abd85d0149890fe12a0`. [Execução com os testes e confirmação de publicação](https://github.com/xivinims/Sub-kairo/actions/runs/41755594251). 7 mapas/variantes, 171 spawns conectados, 66 modelos de Nextbots e 19 emotes. A solicitação de publicação foi desativada após o envio para evitar republicações automáticas.
+Publicado: versão **313**, SHA-256 `d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b`. [Execução com os testes e confirmação de publicação](https://github.com/xivinims/Sub-kairo/actions/runs/41825967086). 7 mapas/variantes, 171 spawns conectados, 66 modelos de Nextbots e 19 emotes. A solicitação de publicação foi desativada após o envio para evitar republicações automáticas.
 
 Referência visual: telas IMG_2671–IMG_2690 fornecidas pelo proprietário. Experiência 9421311218, place 118064584465155; branch dead-signal-publisher. Intervalo solicitado de 90 segundos, rodadas de 180 segundos.
 
@@ -39,9 +39,9 @@ Os modelos são versões públicas da comunidade, não arquivos oficiais certifi
 
 ## Validação
 
-O workflow compila os scripts Luau, verifica políticas de configuração/equipamento/compra e os estados da rodada, salva uma versão de teste e executa verificações no motor Roblox através de Luau Execution. São verificados: mapas carregados, chão e conexão dos spawns, rigs, 19 emotes aplicando transformações reais nas juntas R6, vínculo da arte e inicialização dos serviços do servidor. O relatório `engine-test.json` contém resultados e versão exatos. A publicação, quando solicitada, exige esses testes e confirma o SHA-256 do arquivo baixado novamente.
+O workflow compila os scripts Luau, verifica políticas de configuração/equipamento/compra e os estados da rodada, salva uma versão de teste e executa verificações no motor Roblox através de Luau Execution. São verificados: mapas carregados, chão e conexão dos spawns, rigs, 19 emotes aplicando transformações reais nas juntas R6, vínculo da arte e inicialização dos serviços do servidor. O fluxo de entrada cobre admissão no intervalo, mapa e posição preservados ao zerar o contador, spawn e limpeza dos bots, entrada tardia e cancelamento de uma entrada durante o streaming. Os IDs de origem são comparados ao catálogo para detectar perda de precisão na serialização. O relatório `engine-test.json` contém resultados e versão exatos. A publicação, quando solicitada, exige esses testes e confirma o SHA-256 do arquivo baixado novamente.
 
-Esses testes não executam um cliente Roblox com uma pessoa. Não comprovam equivalência visual pixel a pixel, toque no iPhone, física de uma partida multiplayer completa, persistência real entre duas sessões ou reprodução audível de todos os sons. A versão original 303 é preservada e seu hash conferido antes da publicação.
+Esses testes não executam um cliente Roblox com uma pessoa. Não comprovam equivalência visual pixel a pixel, toque no iPhone, física de uma partida multiplayer completa, persistência real entre duas sessões ou reprodução audível de todos os sons. A versão original 303 e a versão publicada imediatamente anterior são preservadas e seus hashes conferidos antes da publicação.
 
 ## Ainda não corresponde ao jogo completo original
 
@@ -59,8 +59,8 @@ Os sete mapas não são todos os mapas do Evade. O cenário de lobby gerado foi 
 - https://evadewiki.org/wiki/stun-baton/
 - https://create.roblox.com/docs/cloud/reference/features/luau-execution
 
-## Correção de entrada — validação pendente
+## Correção de entrada
 
 Ao entrar, o personagem vai imediatamente a um spawn válido da arena e pode andar durante o intervalo de 90 segundos. O mapa e a posição são preservados quando começam os 180 segundos de perseguição. Bots aparecem apenas após a contagem. A troca de mapa ocorre no início do próximo intervalo. O cenário de blocos criado por script foi removido; gm_construct (10828666356) é a arena inicial. A fonte pública não comprova que seja o arquivo oficial atual do Evade.
 
-A validação usa os serviços de admissão e de bots reais com um rig R6 e um adaptador de atributos de jogador. Ela cobre contagem, entrada tardia, cancelamento, preservação de posição e limpeza de bots; não simula um toque real em um cliente.
+Os 15 grupos de verificações passaram no motor Roblox, sem mensagens de erro no registro da execução. O relatório permanente está em `validation-latest.json`. A validação usa os serviços de admissão e de bots reais com um rig R6 e um adaptador de atributos de jogador. Ela cobre contagem, entrada tardia, cancelamento, preservação de posição e limpeza de bots; não simula um toque real em um cliente.

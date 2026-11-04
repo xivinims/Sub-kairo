@@ -1,6 +1,7 @@
 {
-  "enabled": true,
+  "enabled": false,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "purpose": "Owner-authorized test update: immediate arena entry during intermission; imported map scenery only"
+  "purpose": "Owner-authorized test update: immediate arena entry during intermission; imported map scenery only",
+  "completedVersion": 313
 }

@@ -1,0 +1,468 @@
+{
+  "workflowRun": 41825967086,
+  "sourceCommit": "bfa3a72421b26428a5994fa26547148482039be7",
+  "version": 313,
+  "sha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
+  "engineState": "COMPLETE",
+  "isRunning": false,
+  "placeVersion": 313,
+  "emotePoses": 19,
+  "botCount": 66,
+  "checks": [
+    "remotes",
+    "animation payloads",
+    "90/180 timing",
+    "no duplicate debit",
+    "settings validation",
+    "no imported scripts",
+    "R6 joints",
+    "19 emotes drive R6 motors",
+    "map load and grounded spawns",
+    "imported map menu without generated scenery",
+    "intermission entry preserves arena on countdown end",
+    "bots appear only after countdown and clear after round",
+    "nextbot rigs",
+    "menu artwork binding",
+    "all server services initialize"
+  ],
+  "admission": {
+    "sameMapAtZero": true,
+    "intermissionSeconds": 90,
+    "cancelledEntry": true,
+    "immediateArena": true,
+    "lateEntry": true,
+    "clientClickTest": false,
+    "samePositionAtZero": true,
+    "chaseSeconds": 180
+  },
+  "serverStartup": {
+    "Economy.server": "initialized",
+    "Equipment.server": "initialized",
+    "Movement.server": "initialized",
+    "Avatar.server": "initialized",
+    "Boombox.server": "initialized",
+    "Rounds.server": "running",
+    "Emotes.server": "initialized",
+    "Settings.server": "initialized"
+  },
+  "maps": [
+    {
+      "locations": [
+        [
+          -6.9765625,
+          85.2000961303711,
+          -91.7265625
+        ],
+        [
+          -423.9765625,
+          85.2000961303711,
+          23.7734375
+        ],
+        [
+          -415.7265625,
+          85.2000961303711,
+          -261.9765625
+        ],
+        [
+          -467.02734375,
+          85.2000961303711,
+          -112.5
+        ],
+        [
+          246.44921875,
+          85.2000961303711,
+          22.798828125
+        ],
+        [
+          24.82421875,
+          85.2000961303711,
+          -201.900390625
+        ]
+      ],
+      "spawns": 17,
+      "name": "Backrooms",
+      "parts": 8895,
+      "assetId": "10819434129",
+      "paths": [
+        {
+          "waypoints": 89,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 129,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 128,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          444.5625,
+          112.3499984741211,
+          -137.62503051757812
+        ],
+        [
+          353.6624755859375,
+          112.3499984741211,
+          -213.6749725341797
+        ],
+        [
+          112.16246032714844,
+          112.34993743896484,
+          -25.274993896484375
+        ],
+        [
+          -81.71250915527344,
+          73.9499282836914,
+          23.400039672851562
+        ],
+        [
+          480.1875,
+          112.34998321533203,
+          -313.04998779296875
+        ],
+        [
+          -301.0875549316406,
+          93.15000915527344,
+          -310.87493896484375
+        ]
+      ],
+      "spawns": 32,
+      "name": "Complex",
+      "parts": 26038,
+      "assetId": "10844642277",
+      "paths": [
+        {
+          "waypoints": 35,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 123,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 215,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          38.6400146484375,
+          102.88008880615234,
+          -146.56005859375
+        ],
+        [
+          -112.6400146484375,
+          94.88008880615234,
+          350.9599609375
+        ],
+        [
+          -76.55999755859375,
+          122.08003997802734,
+          310.7197265625
+        ],
+        [
+          -230.239990234375,
+          94.88008880615234,
+          365.19970703125
+        ],
+        [
+          -126.8800048828125,
+          72.47994232177734,
+          391.8388671875
+        ],
+        [
+          -176,
+          72.47994232177734,
+          191.59912109375
+        ]
+      ],
+      "spawns": 32,
+      "name": "Construct",
+      "parts": 9747,
+      "assetId": "123713126320438",
+      "paths": [
+        {
+          "waypoints": 148,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 168,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 183,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          211.55349731445312,
+          273.8399658203125,
+          -69.72926330566406
+        ],
+        [
+          152.193603515625,
+          280.9599914550781,
+          92.99075317382812
+        ],
+        [
+          157.15353393554688,
+          273.7599792480469,
+          -15.569198608398438
+        ],
+        [
+          92.70684814453125,
+          273.89599609375,
+          -47.38210678100586
+        ],
+        [
+          -82.68656921386719,
+          273.8399963378906,
+          -79.22459411621094
+        ],
+        [
+          23.95355224609375,
+          283.3599548339844,
+          24.415328979492188
+        ]
+      ],
+      "spawns": 31,
+      "name": "Elysium",
+      "parts": 7659,
+      "assetId": "10828489513",
+      "paths": [
+        {
+          "waypoints": 56,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 29,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 28,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          86.8800048828125,
+          39.520015716552734,
+          -29.360000610351562
+        ],
+        [
+          64.80001831054688,
+          39.520015716552734,
+          66.6400146484375
+        ],
+        [
+          -35.279998779296875,
+          39.520015716552734,
+          71.44001770019531
+        ],
+        [
+          -144.1599884033203,
+          39.600013732910156,
+          62.32000732421875
+        ],
+        [
+          -172.63999938964844,
+          39.520015716552734,
+          -59.20001220703125
+        ],
+        [
+          -99.12001037597656,
+          39.520015716552734,
+          -116.63999938964844
+        ]
+      ],
+      "spawns": 18,
+      "name": "Library",
+      "parts": 6088,
+      "assetId": "10828618634",
+      "paths": [
+        {
+          "waypoints": 31,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 36,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 77,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          -0.0850372314453125,
+          61.20000457763672,
+          112.43002319335938
+        ],
+        [
+          111.91496276855469,
+          61.20000457763672,
+          112.43002319335938
+        ],
+        [
+          111.91496276855469,
+          61.20000457763672,
+          0.430023193359375
+        ],
+        [
+          -0.0850372314453125,
+          61.20000457763672,
+          -111.56997680664062
+        ],
+        [
+          -0.0850372314453125,
+          61.20000457763672,
+          0.430023193359375
+        ],
+        [
+          -112.08503723144531,
+          61.20000457763672,
+          -111.56997680664062
+        ]
+      ],
+      "spawns": 9,
+      "name": "Rocket Arena",
+      "parts": 4838,
+      "assetId": "124805122537927",
+      "paths": [
+        {
+          "waypoints": 29,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 53,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 57,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "locations": [
+        [
+          -253.8453369140625,
+          226.2624053955078,
+          491.2875671386719
+        ],
+        [
+          -99.20535278320312,
+          247.46241760253906,
+          295.9283142089844
+        ],
+        [
+          139.83465576171875,
+          241.46241760253906,
+          297.768310546875
+        ],
+        [
+          298.5546875,
+          241.46241760253906,
+          188.9683074951172
+        ],
+        [
+          108.314697265625,
+          241.4624481201172,
+          -184.79168701171875
+        ],
+        [
+          29.274688720703125,
+          241.46241760253906,
+          -54.15168762207031
+        ]
+      ],
+      "spawns": 32,
+      "name": "gm_construct",
+      "parts": 9875,
+      "assetId": "10828666356",
+      "paths": [
+        {
+          "waypoints": 81,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 128,
+          "status": "Success",
+          "ok": true
+        },
+        {
+          "waypoints": 195,
+          "status": "Success",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "metadata": true,
+      "name": "Exact Run - Menu Cards",
+      "assetType": 1,
+      "id": 93112717809068
+    },
+    {
+      "metadata": true,
+      "name": "Halloween Horrors Waltz",
+      "assetType": 3,
+      "id": 1836009626
+    },
+    {
+      "metadata": true,
+      "name": "Halloween March",
+      "assetType": 3,
+      "id": 1838591268
+    },
+    {
+      "metadata": true,
+      "name": "Jumpstyle",
+      "assetType": 3,
+      "id": 1839246711
+    },
+    {
+      "metadata": true,
+      "name": "Electro Shuffle A",
+      "assetType": 3,
+      "id": 1847238776
+    }
+  ],
+  "clientPlaytest": false
+}

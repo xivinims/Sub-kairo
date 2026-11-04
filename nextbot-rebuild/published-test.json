@@ -1,13 +1,13 @@
 {
   "published": true,
-  "version": 312,
-  "stagedVersion": 312,
+  "version": 313,
+  "stagedVersion": 313,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "sha256": "6349e488c936074d6b3ecbaea356216addebaf02c9963844e1cc56c2ebadd2f6",
-  "sourceCommit": "7773af0612902b8149ccddefd7f3fec5be33fdea",
-  "previousPublishedVersion": 311,
-  "previousPublishedSha256": "e3a7fb2ed78e1fcaf25648966c87ac5df664a71ac2816abd85d0149890fe12a0",
+  "sha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
+  "sourceCommit": "bfa3a72421b26428a5994fa26547148482039be7",
+  "previousPublishedVersion": 312,
+  "previousPublishedSha256": "6349e488c936074d6b3ecbaea356216addebaf02c9963844e1cc56c2ebadd2f6",
   "admission": {
     "sameMapAtZero": true,
     "intermissionSeconds": 90,
@@ -23,31 +23,38 @@
   "maps": [
     {
       "name": "Backrooms",
-      "spawns": 17
+      "spawns": 17,
+      "assetId": "10819434129"
     },
     {
       "name": "Complex",
-      "spawns": 32
+      "spawns": 32,
+      "assetId": "10844642277"
     },
     {
       "name": "Construct",
-      "spawns": 32
+      "spawns": 32,
+      "assetId": "123713126320438"
     },
     {
       "name": "Elysium",
-      "spawns": 31
+      "spawns": 31,
+      "assetId": "10828489513"
     },
     {
       "name": "Library",
-      "spawns": 18
+      "spawns": 18,
+      "assetId": "10828618634"
     },
     {
       "name": "Rocket Arena",
-      "spawns": 9
+      "spawns": 9,
+      "assetId": "124805122537927"
     },
     {
       "name": "gm_construct",
-      "spawns": 32
+      "spawns": 32,
+      "assetId": "10828666356"
     }
   ],
   "nextbotTemplates": 66,
