@@ -13,12 +13,12 @@ for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/reference-m
     for _,pose in ipairs(v:GetDescendants())do if pose:IsA('Pose')then poseNames[pose.Name]=true end end
     if v.Name:lower():find('crouch')or v.Name:lower():find('down')or v.Name:lower():find('crawl')then local first=v:GetChildren()[1];if first then for _,pose in ipairs(first:GetDescendants())do if pose:IsA('Pose')then table.insert(report.firstPoses,{clip=v.Name,path=pose:GetFullName(),cf=tostring(pose.CFrame),weight=pose.Weight})end end end end
     table.insert(report.clips,{path=v:GetFullName(),name=v.Name,duration=max,frames=frames,poses=poseNames,loop=v.Loop})
-   elseif v:IsA('Animation')then local good,id=pcall(function()return v.AnimationId end);table.insert(report.animations,{path=v:GetFullName(),id=good and tostring(id)or ''})
+   elseif v:IsA('Animation')then local good,id=pcall(function()return v.AnimationContent end);table.insert(report.animations,{path=v:GetFullName(),id=good and tostring(id)or ''})
    elseif v:IsA('LuaSourceContainer')then
     local lines={};for line in v.Source:gmatch('[^\r\n]+')do if line:lower():find('speed')or line:lower():find('downed')or line:lower():find('crouch')or line:lower():find('crawl')or line:lower():find('animationid')then if #lines<32 then table.insert(lines,line:sub(1,220))end end end
     if #lines>0 then table.insert(report.settings,{path=v:GetFullName(),lines=lines})end
    elseif v:IsA('ImageLabel')or v:IsA('ImageButton')then
-    if #report.images<80 then local good,id=pcall(function()return v.Image end);table.insert(report.images,{path=v:GetFullName(),id=good and tostring(id)or ''})end
+    if #report.images<80 then local good,id=pcall(function()return v.ImageContent end);table.insert(report.images,{path=v:GetFullName(),id=good and tostring(id)or ''})end
    elseif v:IsA('Model')or v:IsA('Tool')then if #report.models<60 then table.insert(report.models,v:GetFullName())end end
   end
  end
