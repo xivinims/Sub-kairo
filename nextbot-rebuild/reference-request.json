@@ -1,18 +1,17 @@
 {
   "mode": "inspect",
   "queries": [
-    "Evade flashlight",
-    "Evade tools",
-    "Evade revive",
-    "Evade crouch"
+    "Evade kit",
+    "Evade system"
   ],
   "assetIds": [
-    74987847468722,
-    14480500369,
+    14026023204,
     14015271817,
     15516031564,
     12350711851,
     93848778681151,
-    11818843745
+    11818843745,
+    17308742859,
+    10768408987
   ]
 }
