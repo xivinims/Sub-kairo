@@ -10,9 +10,10 @@ for(const q of request.queries||[]){try{
  const details=ids.length?await(await get('https://apis.roblox.com/toolbox-service/v1/items/details?assetIds='+ids.join(','))).json():{};
  console.log('Reference search',JSON.stringify({q,items:(details.data||[]).map(x=>({id:x.asset?.id,name:x.asset?.name,creator:x.creator}))}));
 }catch(e){console.log('Reference search error',q,String(e));}}
-const metadata=[];const bulk=(request.assetIds||[]).length?await(await get('https://apis.roblox.com/toolbox-service/v1/items/details?assetIds='+request.assetIds.join(','))).json():{};
+const metadata=[];let bulk={};try{if(request.assetIds?.length)bulk=await(await get('https://apis.roblox.com/toolbox-service/v1/items/details?assetIds='+request.assetIds.join(','))).json();}catch(e){console.log('Bulk lookup unavailable; checking individual asset details.');}
 for(const id of request.assetIds||[]){try{
- const detail=(bulk.data||[]).find(x=>x.asset?.id===id);const meta={Name:detail?.asset?.name,Creator:detail?.creator};
+ const detail=(bulk.data||[]).find(x=>x.asset?.id===id);const meta=detail?{Name:detail.asset?.name,Creator:detail.creator}:await(await get(`https://economy.roblox.com/v2/assets/${id}/details`)).json();
+ console.log('Reference provenance',JSON.stringify({id,name:meta.Name,creator:meta.Creator}));
  const delivery=await(await get(`https://apis.roblox.com/asset-delivery-api/v1/assetId/${id}`,true)).json();
  const location=delivery.location||delivery.locations?.[0]?.location;
  const bytes=Buffer.from(await(await get(location)).arrayBuffer());
