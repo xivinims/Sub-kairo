@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 const reference=JSON.parse(await fs.readFile(new URL('reference-request.json',import.meta.url),'utf8').catch(()=>'{"mode":"build"}'));
 if(reference.mode==='inspect'){await import('./reference-audit.mjs');process.exit(0);}
+if(reference.mode==='promote'){await import('./promote-tested.mjs');process.exit(0);}
 const key=process.env.ROBLOX_API_KEY;
 if(!key) throw Error('ROBLOX_API_KEY missing');
 const hash=b=>createHash('sha256').update(b).digest('hex');

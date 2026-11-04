@@ -1,1 +1,1 @@
-nextbot-motion-inventory-validation-32
+nextbot-promote-tested-motion-inventory-33
