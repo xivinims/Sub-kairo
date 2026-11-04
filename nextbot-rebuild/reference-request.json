@@ -1,0 +1,13 @@
+{
+  "mode": "inspect",
+  "queries": [
+    "Evade Animations",
+    "Evade Overhaul Animations",
+    "Evade downed",
+    "Evade items",
+    "Evade GUI"
+  ],
+  "assetIds": [
+    14026023204
+  ]
+}
