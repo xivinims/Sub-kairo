@@ -1,5 +1,19 @@
 # ExtasyCatBOY
 
+## Universo de destino
+
+**Roblox Universe ID: `9421505041`**
+
+Dashboard: https://create.roblox.com/dashboard/creations/experiences/9421505041/overview
+
+A branch `ExtasyCatBOY` contém o instalador `deploy/deploy.mjs` e o workflow `.github/workflows/extasycatboy-deploy.yml`, disparado em push de arquivos de implantação ou manualmente. O instalador procura o Place ID inicial pela API do Roblox, valida `game.GameId` e `game.PlaceId` dentro da experiência e **altera apenas as três pastas próprias do projeto**. Usa Luau Execution e `AssetService:SavePlaceAsync()`; não sobrescreve o mapa por upload de um `.rbxlx` vazio.
+
+**Permissões:** a GitHub Secret `ROBLOX_API_KEY` precisa autorizar o universo `9421505041` para Luau Execution e para salvar o lugar. Uma chave restrita a outro universo não funciona. Não coloque a chave no código público nem envie no chat.
+
+**Se o lugar não for identificado automaticamente:** acesse Creator Dashboard > Places > lugar inicial > Configure. Copie o número após `/places/` na URL e cadastre-o como variável GitHub Actions `EXTASYCATBOY_PLACE_ID`; o instalador validará esse ID dentro do Roblox antes de alterar qualquer objeto.
+
+**Estado:** o alvo está configurado na branch; publicação e funcionamento dentro do jogo exigem retorno confirmado da Action e testes no Roblox Studio.
+
 Jogo Roblox de companheiros virtuais **catboy/dogboy** construídos usando **somente avatares de pessoas da lista de amizades do jogador**. NPCs são personagens fictícios inspirados nos avatares, não mensagens da conta real.
 
 ## O que está implementado
@@ -27,7 +41,7 @@ Projeto Rojo em **ExtasyCatBOY/default.project.json**:
 4. Habilite acesso à API de serviços do Studio se quiser testar DataStore no Studio. Quando publicar, mantenha a experiência privada até concluir os testes.
 5. No Play Test, teste amizades, carregar a aparência, caminhar, conversar, recriar o NPC, sair/entrar e mobile.
 
-**Importante:** criar a branch GitHub **não publica nem modifica o universo Roblox**. O link compartilhado para a experiência é insuficiente para obter acesso de edição ou confirmar os IDs de Universe/Place. Para publicar por API, serão necessários IDs do universo e do lugar corretos e credenciais Roblox com permissão de escrita. Não associe esta branch à rotina de publicação de outra experiência.
+**Importante:** criar a branch GitHub não publica automaticamente uma experiência. A Action específica faz a tentativa de implantação, sujeita à resolução do Place ID e às permissões da chave. Nenhuma Action de outros jogos é modificada.
 
 ### Animações pesquisadas
 
