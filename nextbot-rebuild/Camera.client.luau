@@ -3,6 +3,22 @@ local player=Players.LocalPlayer;local package=game:GetService('ReplicatedStorag
 local controls
 pcall(function()controls=require(player.PlayerScripts:WaitForChild('PlayerModule')):GetControls()end)
 local mode='';local time=0;local offset=Vector3.zero
+local viewState='';local viewCharacter;local zoomGeneration=0
+local function setView(first,emoting)
+ zoomGeneration+=1;local token=zoomGeneration
+ player.CameraMode=Enum.CameraMode.Classic
+ if first then
+  player.CameraMinZoomDistance=.5;player.CameraMaxZoomDistance=16
+  player.CameraMode=Enum.CameraMode.LockFirstPerson
+ else
+  -- Force a real zoom distance when leaving first person; Classic alone keeps the old distance.
+  player.CameraMaxZoomDistance=16;player.CameraMinZoomDistance=8;player.CameraMaxZoomDistance=8
+  task.delay(.15,function()
+   if token~=zoomGeneration then return end
+   player.CameraMaxZoomDistance=16;player.CameraMinZoomDistance=emoting and 4 or .5
+  end)
+ end
+end
 Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,function(dt)
  local camera=workspace.CurrentCamera;if not camera then return end
  local char=player.Character;local h=char and char:FindFirstChildOfClass('Humanoid');local root=char and char:FindFirstChild('HumanoidRootPart')
@@ -13,7 +29,7 @@ Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,functio
  if newMode~=mode then
   mode=newMode
   offset=Vector3.zero;if h then h.CameraOffset=Vector3.zero end
-  if menu then if controls then controls:Disable()end;UIS.MouseBehavior=Enum.MouseBehavior.Default
+  if menu then if h then h.AutoRotate=true end;viewState='';if controls then controls:Disable()end;UIS.MouseBehavior=Enum.MouseBehavior.Default
   else camera.CameraType=Enum.CameraType.Custom;if h then camera.CameraSubject=h end;if controls then controls:Enable()end end
  end
  if menu then
@@ -33,7 +49,19 @@ Run:BindToRenderStep('ExactRunCamera',Enum.RenderPriority.Camera.Value+1,functio
   local th=target and target.Character and target.Character:FindFirstChildOfClass('Humanoid')
   if th then camera.CameraSubject=th elseif h then camera.CameraSubject=h end
  elseif h and root then
-  camera.CameraSubject=h
+  camera.CameraType=Enum.CameraType.Custom;camera.CameraSubject=h
+  local emoting=(player:GetAttribute('NBPlayingEmote')or '')~=''
+  local firstRequested=player:GetAttribute('NBFirstPerson')==true and not emoting
+  local state=emoting and 'Emote'or firstRequested and 'First'or 'Third'
+  if viewState~=state or viewCharacter~=char or changed then
+   viewState=state;viewCharacter=char;setView(firstRequested,emoting)
+  end
+  local down=player:GetAttribute('NBDowned')==true
+  h.AutoRotate=emoting or down
+  if not emoting and not down and h.Health>0 and not root.Anchored then
+   local facing=camera.CFrame.LookVector;local flat=Vector3.new(facing.X,0,facing.Z)
+   if flat.Magnitude>.001 then root.CFrame=CFrame.lookAt(root.Position,root.Position+flat.Unit)end
+  end
   local crouch=player:GetAttribute('NBMobility')=='Crouch'or player:GetAttribute('NBMobility')=='Slide'or player:GetAttribute('NBDowned')
   time+=dt*math.clamp(h.WalkSpeed*.45,5,16)
   local moving=h.MoveDirection.Magnitude>.1 and h.FloorMaterial~=Enum.Material.Air
