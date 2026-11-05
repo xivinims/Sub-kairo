@@ -53,19 +53,19 @@ local function show(name)
  player:SetAttribute('NBMenuPage',name);player:SetAttribute('NBMenuOpen',true)
 end
 local home=pages.Home
-require(game:GetService('ReplicatedFirst'):WaitForChild('LoadingView')).Logo(home,UDim2.fromOffset(768,275),UDim2.fromOffset(440,125))
-local xp=panel(home,95,121,540,38,colors[1]);local xpText=label(xp,'NÍVEL —',8,0,520,38,20);xpText.TextXAlignment=Enum.TextXAlignment.Left
+require(game:GetService('ReplicatedFirst'):WaitForChild('LoadingView')).Logo(home,UDim2.fromOffset(295,210),UDim2.fromOffset(400,110))
+local xp=panel(home,95,92,440,38,colors[1]);local xpText=label(xp,'NÍVEL —',8,0,520,38,20);xpText.TextXAlignment=Enum.TextXAlignment.Left
 local amounts={}
 for i,entry in ipairs({{'Coins','MOEDAS',colors[2]},{'Points','PONTOS',white},{'Vouchers','CUPONS',colors[3]},{'Wisps','WISPS',colors[4]},{'Wins','VITÓRIAS',colors[3]}}) do
- local p=panel(home,95,167+(i-1)*48,138,40,entry[3]);amounts[entry[1]]=label(p,entry[2]..' —',4,0,130,40,17)
+ local p=panel(home,550,92+(i-1)*48,138,40,entry[3]);amounts[entry[1]]=label(p,entry[2]..' —',4,0,130,40,17)
 end
 local shopMoney=label(pages.Shop,'',700,216,145,190,21);shopMoney.TextYAlignment=Enum.TextYAlignment.Top
 local note=label(canvas,'',420,665,700,34,16)
 local function message(text)note.Text=text;task.delay(4,function()if note.Text==text then note.Text='' end end)end
 local shopCategory='Equipamento';local invCategory='Equipamento'
 local drawShop,drawInventory
-local shopCard=button(home,'LOJA',400,375,235,104,colors[3],function()inventoryFilter=nil;show('Shop');drawShop(shopCategory)end)
-local playCard=button(home,'ENTRAR NO JOGO',647,360,243,133,colors[2],function()
+local shopCard=button(home,'LOJA',95,406,340,84,colors[3],function()inventoryFilter=nil;show('Shop');drawShop(shopCategory)end)
+local playCard=button(home,'ENTRAR NO JOGO',95,302,340,84,colors[2],function()
  if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
  package.MatchAction:FireServer('Join');message('Entrando na arena…')
 end)
@@ -74,7 +74,7 @@ local function playAvailability()
  b.Active=ready;b.Selectable=ready;b:FindFirstChildOfClass('TextLabel').Text=ready and 'ENTRAR NO JOGO'or 'CARREGANDO MAPA'
 end
 package:GetAttributeChangedSignal('MapReady'):Connect(playAvailability);playAvailability()
-local inventoryCard=button(home,'INVENTÁRIO',903,375,234,104,colors[4],function()show('Inventory');drawInventory(invCategory)end)
+local inventoryCard=button(home,'INVENTÁRIO',95,510,340,84,colors[4],function()show('Inventory');drawInventory(invCategory)end)
 local infoTitle=label(pages.Info,'',350,180,840,65,30)
 local infoBody=label(pages.Info,'',350,270,840,200,23)
 local function info(title,text)infoTitle.Text=title;infoBody.Text=text;show('Info')end
@@ -119,7 +119,7 @@ for i,card in ipairs({shopCard,playCard,inventoryCard})do
   local b=card:FindFirstChildOfClass('TextButton');b.ZIndex=2;local l=b:FindFirstChildOfClass('TextLabel');l.ZIndex=3;l.Position=UDim2.new(0,5,1,-36);l.Size=UDim2.new(1,-10,0,32)
  end
 end
-local queue=label(home,'',520,518,510,35,20)
+local queue=label(home,'',740,566,470,35,20)
 for _,name in ipairs({'Shop','Inventory','Info'})do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()
  if name=='Shop'and inventoryFilter then inventoryFilter=nil;show('Inventory');drawInventory(invCategory)else inventoryFilter=nil;show('Home')end
 end)end
@@ -218,12 +218,13 @@ for i,name in ipairs({'Equipamento','Personagem','Cosméticos','Emotes','Caixa d
 end
 -- A WorldModel preview avoids assigning or moving Workspace.CurrentCamera.
 local previewFrames={}
-for _,name in ipairs({'Shop','Inventory'}) do
- local viewport=make('ViewportFrame',pages[name],{Position=UDim2.fromOffset(name=='Shop' and 890 or 530,195),Size=UDim2.fromOffset(name=='Shop' and 380 or 480,name=='Shop' and 260 or 480),BackgroundTransparency=1,Ambient=Color3.fromRGB(185,185,185),LightColor=Color3.new(1,1,1)})
+for _,name in ipairs({'Home','Shop','Inventory'}) do
+ local viewport=make('ViewportFrame',pages[name],{Position=UDim2.fromOffset(name=='Home' and 750 or name=='Shop' and 890 or 530,name=='Home' and 80 or 195),Size=UDim2.fromOffset(name=='Home' and 460 or name=='Shop' and 380 or 480,name=='Home' and 480 or name=='Shop' and 260 or 480),BackgroundTransparency=1,Ambient=Color3.fromRGB(185,185,185),LightColor=Color3.new(1,1,1)})
  local camera=make('Camera',viewport);viewport.CurrentCamera=camera
  local world=make('WorldModel',viewport)
- previewFrames[name]={world=world,camera=camera}
- label(pages[name],player.DisplayName,name=='Shop' and 890 or 530,195,name=='Shop' and 380 or 480,40,30)
+ camera.FieldOfView=32
+ previewFrames[name]={world=world,camera=camera,viewport=viewport}
+ label(pages[name],player.DisplayName,name=='Home' and 750 or name=='Shop' and 890 or 530,name=='Home' and 70 or 195,name=='Home' and 460 or name=='Shop' and 380 or 480,40,30)
 end
 local generation=0
 local function refreshAvatar(char)
@@ -237,7 +238,10 @@ local function refreshAvatar(char)
   for _,entry in pairs(previewFrames) do
    entry.world:ClearAllChildren();local copy=clone:Clone();copy.Parent=entry.world;entry.character=copy;entry.motors=require(package.PosePlayer).Motors(copy)
    local cf,size=copy:GetBoundingBox();local center=cf.Position
-   entry.camera.CFrame=CFrame.lookAt(center+Vector3.new(0,size.Y*.08,-math.max(size.Y*1.3,7)),center)
+   local aspect=entry.viewport.AbsoluteSize.X/math.max(1,entry.viewport.AbsoluteSize.Y)
+   local halfFov=math.rad(entry.camera.FieldOfView*.5)
+   local distance=math.max(size.Y*.5/math.tan(halfFov),size.X*.5/(math.tan(halfFov)*aspect))+size.Z*.5
+   entry.camera.CFrame=CFrame.lookAt(center+Vector3.new(0,size.Y*.025,-distance*1.08),center)
   end
   clone:Destroy()
  end)
@@ -273,7 +277,7 @@ Run.RenderStepped:Connect(function(dt)
  if not gui.Enabled then return end
  local entry=previewFrames[active]
  if entry and entry.motors then
-  local sequence=selectedItem and selectedItem.source and package.EmoteClips:FindFirstChild(selectedItem.id)or package.MovementClips:FindFirstChild('idle')
+  local sequence=active=='Shop' and selectedItem and selectedItem.source and package.EmoteClips:FindFirstChild(selectedItem.id)or package.MovementClips:FindFirstChild('idle')
   if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and (os.clock()-previewStarted)%data.duration or 0,1,not (selectedItem and selectedItem.source)and movementBindings or nil)end
  end
 end)
