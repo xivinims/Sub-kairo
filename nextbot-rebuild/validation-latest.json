@@ -1,24 +1,29 @@
 {
-  "stagedVersion": 314,
-  "sha256": "7ce3bf18c1c1c92f6672dc9b0de818b7c47ba6d3f1992aa5604df7042acb89c3",
-  "backupSha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
+  "stagedVersion": 317,
+  "sha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab",
+  "backupSha256": "77c389ac9f0754c0130232d35066be9162aa8e1c2c428cb81cb6d9a03d588a24",
   "task": {
-    "path": "universes/9421311218/places/118064584465155/versions/314/luau-execution-sessions/da1c4bdf-170d-4354-a751-50a125587421/tasks/da1c4bdf-170d-4354-a751-50a125587421",
-    "createTime": "2026-11-04T17:09:18.307Z",
-    "updateTime": "2026-11-04T17:09:57.685Z",
+    "path": "universes/9421311218/places/118064584465155/versions/317/luau-execution-sessions/ad55c9a1-31e1-4b0b-b871-a49294b885b7/tasks/ad55c9a1-31e1-4b0b-b871-a49294b885b7",
+    "createTime": "2026-11-05T01:24:08.566Z",
+    "updateTime": "2026-11-05T01:24:50.932Z",
     "user": "8344738123",
     "state": "COMPLETE",
     "output": {
       "results": [
         {
           "isRunning": false,
-          "placeVersion": 314,
+          "placeVersion": 317,
           "motion": {
             "officialEvadeScripts": false,
-            "sourceAssetId": "14026023204",
-            "downedOriginalAvailable": false,
             "speedFormulaOriginalVerified": false,
-            "sourceUnmodified": true
+            "sourceAssetId": "14026023204",
+            "sourceUnmodified": true,
+            "downedCommunityAvailable": true,
+            "downedOriginalAvailable": false,
+            "communitySourceIds": [
+              "74987847468722",
+              "4951486910"
+            ]
           },
           "emotePoses": 19,
           "botCount": 66,
@@ -34,6 +39,8 @@
             "movement keys preserve active source poses",
             "crouch retargets to standard avatar R6 joints",
             "inventory filters ownership slots and unavailable items",
+            "two-stage loading gates and shared logo build",
+            "community movement and prone crawl poses",
             "map load and grounded spawns",
             "imported map menu without generated scenery",
             "intermission entry preserves arena on countdown end",
@@ -112,7 +119,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 129,
+                  "waypoints": 128,
                   "status": "Success",
                   "ok": true
                 }
@@ -212,7 +219,7 @@
               "assetId": "123713126320438",
               "paths": [
                 {
-                  "waypoints": 148,
+                  "waypoints": 149,
                   "status": "Success",
                   "ok": true
                 },
@@ -222,7 +229,62 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 183,
+                  "waypoints": 171,
+                  "status": "Success",
+                  "ok": true
+                }
+              ]
+            },
+            {
+              "locations": [
+                [
+                  0,
+                  1.0999877452850342,
+                  2.4997100830078125
+                ],
+                [
+                  -17.50006103515625,
+                  1,
+                  -33.49983215332031
+                ],
+                [
+                  -17.50006103515625,
+                  1,
+                  -1.4998321533203125
+                ],
+                [
+                  -17.50006103515625,
+                  1,
+                  30.500167846679688
+                ],
+                [
+                  14.49993896484375,
+                  1,
+                  -33.49983215332031
+                ],
+                [
+                  14.49993896484375,
+                  1,
+                  30.500167846679688
+                ]
+              ],
+              "spawns": 6,
+              "name": "Desert Bus",
+              "parts": 288,
+              "assetId": "13634611708",
+              "paths": [
+                {
+                  "waypoints": 12,
+                  "status": "Success",
+                  "ok": true
+                },
+                {
+                  "waypoints": 6,
+                  "status": "Success",
+                  "ok": true
+                },
+                {
+                  "waypoints": 10,
                   "status": "Success",
                   "ok": true
                 }
@@ -277,7 +339,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 34,
+                  "waypoints": 35,
                   "status": "Success",
                   "ok": true
                 }
@@ -432,12 +494,12 @@
               "assetId": "10828666356",
               "paths": [
                 {
-                  "waypoints": 81,
+                  "waypoints": 87,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 128,
+                  "waypoints": 129,
                   "status": "Success",
                   "ok": true
                 },
@@ -489,12 +551,12 @@
   "logs": {
     "luauExecutionSessionTaskLogs": [
       {
-        "path": "universes/9421311218/places/118064584465155/versions/314/luau-execution-sessions/da1c4bdf-170d-4354-a751-50a125587421/tasks/da1c4bdf-170d-4354-a751-50a125587421/logs/1",
+        "path": "universes/9421311218/places/118064584465155/versions/317/luau-execution-sessions/ad55c9a1-31e1-4b0b-b871-a49294b885b7/tasks/ad55c9a1-31e1-4b0b-b871-a49294b885b7/logs/1",
         "messages": []
       }
     ]
   },
   "published": false,
-  "sourceCommit": "51d32241ddc134a01405620d5c6ba10e371ceee9",
-  "workflowRun": 41874600308
+  "sourceCommit": "2d9013c82d4393e632cbaddd1f9b9199c2118ad8",
+  "workflowRun": 41948129719
 }

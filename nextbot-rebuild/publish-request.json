@@ -1,5 +1,7 @@
 {
-  "enabled": false,
-  "completedVersion": 314,
-  "sha256": "7ce3bf18c1c1c92f6672dc9b0de818b7c47ba6d3f1992aa5604df7042acb89c3"
+  "enabled": true,
+  "universeId": "9421311218",
+  "placeId": "118064584465155",
+  "stagedVersion": 317,
+  "sha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab"
 }
