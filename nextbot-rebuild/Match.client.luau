@@ -33,13 +33,14 @@ for i=1,6 do
  new('UICorner',b,{CornerRadius=UDim.new(0,10)});emoteButtons[i]=b
  b.Activated:Connect(function()local id=player:GetAttribute('NBEmoteSlot'..i);if id and id~=''then package.Emotes:FireServer('Play',id)end;wheel.Visible=false end)
 end
-local function showWheel()wheel.Visible=not wheel.Visible;for i,b in ipairs(emoteButtons)do local item=byId[player:GetAttribute('NBEmoteSlot'..i)];b.Text=item and item.name or 'VAZIO\nEquipe no inventário'end end
+local function showWheel()wheel.Visible=not wheel.Visible;player:SetAttribute('NBOverlay',wheel.Visible and 'Emotes'or '');for i,b in ipairs(emoteButtons)do local item=byId[player:GetAttribute('NBEmoteSlot'..i)];b.Text=item and item.name or 'VAZIO\nEquipe no inventário'end end
 hud.Circle(canvas,'Emote',showWheel)
 local inventory=new('Frame',canvas,{Visible=false,Position=UDim2.fromOffset(1010,140),Size=UDim2.fromOffset(340,340),BackgroundColor3=Color3.fromRGB(24,25,30),BackgroundTransparency=.1})
 new('UICorner',inventory,{CornerRadius=UDim.new(0,12)});local invText=text(inventory,'',14,10,312,140,18);invText.TextWrapped=true
 for i=1,4 do local use=new('TextButton',inventory,{Position=UDim2.fromOffset(12+(i-1)%2*162,165+math.floor((i-1)/2)*78),Size=UDim2.fromOffset(152,68),BackgroundColor3=Color3.fromRGB(60,70,87),TextColor3=Color3.new(1,1,1),Text='USÁVEL '..i,TextSize=17,Font=Enum.Font.GothamBold});new('UICorner',use,{CornerRadius=UDim.new(0,8)});use.Activated:Connect(function()local id=player:GetAttribute('NBUsable'..i);if id and id~=''then package.Equipment:FireServer('Use',id)end end)end
 hud.Circle(canvas,'Bag',function()
  inventory.Visible=not inventory.Visible
+ player:SetAttribute('NBOverlay',inventory.Visible and 'Inventory'or '')
  local lines={'EQUIPAMENTO'};for _,item in ipairs(require(package.Config).Catalog)do local n=player:GetAttribute('NBOwned_'..item.id)or 0;if n>0 then table.insert(lines,item.name..' ×'..n)end end
  invText.Text=table.concat(lines,'\n')
 end)
@@ -50,7 +51,7 @@ new('ImageLabel',canvas,{Name='SpeedIcon',Image='rbxassetid://13492318225',Backg
 local cash=text(canvas,'',380,590,90,52,26);cash.TextColor3=Color3.fromRGB(244,185,77);cash.TextXAlignment=Enum.TextXAlignment.Left
 local phase=text(canvas,'',458,45,620,36,23)
 local mapLabel=text(canvas,'',458,78,620,26,16)
-local notice=text(canvas,'',358,505,820,54,27)
+local notice=text(canvas,'',408,112,720,46,18);notice.TextWrapped=true
 local dot=text(canvas,'·',758,340,20,20,28)
 local spectate=text(canvas,'',458,575,620,40,24)
 local previous=circle('‹',530,622,60,function()
@@ -89,6 +90,9 @@ local function tag(p)
 end
 Players.PlayerAdded:Connect(tag);Players.PlayerRemoving:Connect(function(p)if tags[p]then tags[p]:Destroy();tags[p]=nil end end);for _,p in ipairs(Players:GetPlayers())do tag(p)end
 
+player:GetAttributeChangedSignal('NBOverlay'):Connect(function()
+ local overlay=player:GetAttribute('NBOverlay');if overlay~='Inventory'then inventory.Visible=false end;if overlay~='Emotes'then wheel.Visible=false end
+end)
 local jumpOriginal;local jumpButton
 local function placeJump()
  local touch=player.PlayerGui:FindFirstChild('TouchGui');local controls=touch and touch:FindFirstChild('TouchControlFrame')
@@ -98,7 +102,14 @@ local function placeJump()
  if gui.Enabled then
   local viewport=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or gui.AbsoluteSize
   local d=hud.Layout.Jump;local factor=scale.Scale;local left=(viewport.X-1536*factor)/2;local top=(viewport.Y-709*factor)/2
-  jump.AnchorPoint=Vector2.zero;jump.Size=UDim2.fromOffset(d[3]*factor,d[3]*factor);jump.Position=UDim2.fromOffset(left+d[1]*factor,top+d[2]*factor)
+  local parent=jump.Parent
+  local origin=parent.AbsolutePosition
+  local safe=game:GetService('GuiService'):GetGuiInset()
+  local size=math.clamp(d[3]*factor,64,110)
+  local right=math.max(28,safe.X+20);local bottom=42
+  local x=math.min(left+d[1]*factor,viewport.X-size-right)
+  local y=math.min(top+d[2]*factor,viewport.Y-size-bottom)
+  jump.AnchorPoint=Vector2.zero;jump.Size=UDim2.fromOffset(size,size);jump.Position=UDim2.fromOffset(math.max(0,x-origin.X),math.max(0,y-origin.Y))
  elseif jumpOriginal then jump.Size=jumpOriginal.Size;jump.Position=jumpOriginal.Position;jump.AnchorPoint=jumpOriginal.AnchorPoint end
 end
 
