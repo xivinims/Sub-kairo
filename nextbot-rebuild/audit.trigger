@@ -1,1 +1,1 @@
-nextbot-promote-tested-motion-inventory-33
+nextbot-community-motion-maps-search-34

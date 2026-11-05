@@ -1,1 +1,15 @@
-{"mode":"build"}
+{
+  "mode": "inspect",
+  "queries": [
+    "Evade",
+    "Evade animations",
+    "Crawling",
+    "Desert Bus"
+  ],
+  "assetIds": [
+    74987847468722,
+    15684289557,
+    13149960932,
+    14093641613
+  ]
+}
