@@ -169,9 +169,19 @@ local function spawn(player, friendId, kind, personality, displayName)
         return Players:CreateHumanoidModelFromDescriptionAsync(description,Enum.HumanoidRigType.R6)
     end)
     if not okModel or not model then return false, "Falha ao criar o personagem R6." end
-    local old = byPlayer[player.UserId]
-    if old and old.model then old.model:Destroy() end
-    model.Name = "Companion_" .. tostring(player.UserId)
+    local companions = byPlayer[player.UserId] or {}
+    if #companions >= Config.MaxCompanionsPerPlayer then
+        model:Destroy()
+        return false,"Você já tem o máximo de companheiros."
+    end
+    for _,existing in ipairs(companions) do
+        if existing.friendId == friendId then
+            model:Destroy()
+            return false,"Esse amigo já tem um NPC! Escolha outro."
+        end
+    end
+    local slot = #companions + 1
+    model.Name = "Companion_" .. tostring(player.UserId) .. "_" .. tostring(friendId)
     model:SetAttribute("ExtasyNPC",true)
     model:SetAttribute("OwnerId",player.UserId)
     model:SetAttribute("InspiredByUserId",friendId)
@@ -187,7 +197,9 @@ local function spawn(player, friendId, kind, personality, displayName)
     humanoid.BreakJointsOnDeath = false
     local avatar = player.Character
     local playerRoot = avatar and avatar:FindFirstChild("HumanoidRootPart")
-    local targetCF = playerRoot and (playerRoot.CFrame * CFrame.new(4,1,4)) or CFrame.new(4,6,4)
+    local direction = slot * math.pi * 2 / Config.MaxCompanionsPerPlayer
+    local offset = CFrame.new(math.cos(direction) * 5,1,math.sin(direction) * 5)
+    local targetCF = playerRoot and (playerRoot.CFrame * offset) or (CFrame.new(0,6,0) * offset)
     model.Parent = companionsFolder
     model:PivotTo(targetCF)
     root:SetNetworkOwner(nil)
@@ -203,27 +215,33 @@ local function spawn(player, friendId, kind, personality, displayName)
         prompt.HoldDuration = 0
         prompt.Parent = head
         prompt.Triggered:Connect(function(who)
-            if who == player then notify(player,"openTalk") end
+            if who == player then notify(player,"openTalk",model) end
         end)
     end
-    byPlayer[player.UserId] = {
+    local rec = {
         model=model,friendId=friendId,kind=kind,personality=personality,
         displayName=displayName,phase=math.random()*6,lastFollow=0,
     }
-    notify(player,"spawned",model,kind,personality)
-    notify(player,"bubble",model,Dialogue.Respond("oi",kind,personality,tostring(player.UserId)))
-    return true,"Companheiro criado!"
+    table.insert(companions,rec)
+    byPlayer[player.UserId] = companions
+    notify(player,"spawned",model,kind,personality,#companions)
+    notify(player,"bubble",model,Dialogue.Respond("oi",kind,personality,tostring(player.UserId).."_"..friendId,player.DisplayName))
+    return true,"Companheiro criado! "..#companions.."/"..Config.MaxCompanionsPerPlayer
 end
 
 local function save(player)
-    local rec = byPlayer[player.UserId]
-    if not rec then return end
-    local payload = {
-        friendId=rec.friendId, kind=rec.kind,
-        personality=rec.personality, displayName=rec.displayName,
-    }
+    local companions = byPlayer[player.UserId] or {}
+    local payload = {}
+    for _,rec in ipairs(companions) do
+        if rec.model and rec.model.Parent then
+            table.insert(payload,{
+                friendId=rec.friendId, kind=rec.kind,
+                personality=rec.personality, displayName=rec.displayName,
+            })
+        end
+    end
     pcall(function()
-        profileStore:UpdateAsync(Config.SaveKeyPrefix .. player.UserId,function() return payload end)
+        profileStore:UpdateAsync(Config.SaveKeyPrefix..player.UserId,function() return payload end)
     end)
 end
 
@@ -253,25 +271,39 @@ request.OnServerInvoke = function(player,operation,payload)
     end
     if operation == "remove" then
         if not allowed(player,lastAction,2) then return false,"Espere um instante." end
-        local rec=byPlayer[player.UserId]
-        if rec and rec.model then rec.model:Destroy() end
-        byPlayer[player.UserId]=nil
-        pcall(function() profileStore:RemoveAsync(Config.SaveKeyPrefix..player.UserId) end)
-        notify(player,"removed")
-        return true,"Companheiro guardado."
+        local id = type(payload)=="table" and tonumber(payload.friendId) or nil
+        local list = byPlayer[player.UserId] or {}
+        for i,rec in ipairs(list) do
+            if rec.friendId == id then
+                rec.model:Destroy()
+                table.remove(list,i)
+                task.defer(save,player)
+                notify(player,"removed",id)
+                return true,"Companheiro guardado."
+            end
+        end
+        return false,"Esse companheiro não foi encontrado."
     end
     return false,"Operação desconhecida."
 end
 
-event.OnServerEvent:Connect(function(player,operation,message)
+event.OnServerEvent:Connect(function(player,operation,message,friendId)
     if operation ~= "talk" or not allowed(player,lastChat,Config.ChatReplyCooldown) then return end
-    local rec=byPlayer[player.UserId]
-    if not rec or not rec.model or not rec.model.Parent then return end
     if type(message)~="string" or #message<1 or #message>220 then return end
+    local list=byPlayer[player.UserId] or {}
+    local rec=nil
+    for _,companion in ipairs(list) do
+        if companion.friendId == tonumber(friendId) then
+            rec=companion
+            break
+        end
+    end
+    if not rec or not rec.model or not rec.model.Parent then return end
     local avatarRoot=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     local npcRoot=rec.model:FindFirstChild("HumanoidRootPart")
     if not avatarRoot or not npcRoot or (avatarRoot.Position-npcRoot.Position).Magnitude>70 then return end
-    local answer,context=Dialogue.Respond(message,rec.kind,rec.personality,tostring(player.UserId))
+    local answer,context=Dialogue.Respond(message,rec.kind,rec.personality,
+        tostring(player.UserId).."_"..rec.friendId,player.DisplayName)
     notify(player,"bubble",rec.model,answer,context)
 end)
 
@@ -281,24 +313,30 @@ end)
 local accumulated=0
 RunService.Heartbeat:Connect(function(dt)
     accumulated += dt
-    if accumulated<.10 then return end
+    if accumulated < 0.13 then return end
     accumulated=0
     local now=os.clock()
-    for userId,rec in pairs(byPlayer) do
+    for userId,companions in pairs(byPlayer) do
         local player=Players:GetPlayerByUserId(userId)
-        local model=rec.model
-        if not player or not model or not model.Parent then continue end
+        if not player then continue end
         local avatar=player.Character
         local charRoot=avatar and avatar:FindFirstChild("HumanoidRootPart")
-        local npcRoot=model:FindFirstChild("HumanoidRootPart")
-        local humanoid=model:FindFirstChildOfClass("Humanoid")
-        if charRoot and npcRoot and humanoid and humanoid.Health>0 then
+        if not charRoot then continue end
+        for slot,rec in ipairs(companions) do
+            local model=rec.model
+            if not model or not model.Parent then continue end
+            local npcRoot=model:FindFirstChild("HumanoidRootPart")
+            local humanoid=model:FindFirstChildOfClass("Humanoid")
+            if not npcRoot or not humanoid or humanoid.Health<=0 then continue end
             local dist=(charRoot.Position-npcRoot.Position).Magnitude
+            local angle=slot*math.pi*2/math.max(1,#companions)
+            local side=math.cos(angle)*5
+            local behind=math.sin(angle)*4-3
             if dist>85 then
-                model:PivotTo(charRoot.CFrame*CFrame.new(4,1,4))
+                model:PivotTo(charRoot.CFrame * CFrame.new(side,1,behind))
             elseif dist>Config.FollowDistance and now-rec.lastFollow>Config.FollowUpdateInterval then
                 rec.lastFollow=now
-                local target=charRoot.Position-charRoot.CFrame.LookVector*4+charRoot.CFrame.RightVector*2
+                local target=(charRoot.CFrame*CFrame.new(side,0,behind)).Position
                 humanoid:MoveTo(target)
             end
         end
@@ -363,25 +401,36 @@ end
 task.defer(buildCozyWorld)
 
 Players.PlayerAdded:Connect(function(player)
+    byPlayer[player.UserId]={}
     task.defer(function()
-        local ok, data=pcall(function() return profileStore:GetAsync(Config.SaveKeyPrefix..player.UserId) end)
+        local ok,data=pcall(function() return profileStore:GetAsync(Config.SaveKeyPrefix..player.UserId) end)
         if not ok or type(data)~="table" or not isOnline(player) then return end
-        if not Config.AllowedKinds[data.kind] or not moods[data.personality] then return end
-        if not safeFriend(player,tonumber(data.friendId)) then return end
+        -- Compatible with the original single-NPC save format.
+        local entries=(data.friendId and {data} or data)
         task.wait(4)
-        if isOnline(player) then
-            spawn(player,tonumber(data.friendId),data.kind,data.personality,tostring(data.displayName or "Amigo"))
+        for _,record in ipairs(entries) do
+            if not isOnline(player) then break end
+            if #byPlayer[player.UserId]>=Config.MaxCompanionsPerPlayer then break end
+            if type(record)=="table" and Config.AllowedKinds[record.kind]
+                and moods[record.personality] and safeFriend(player,tonumber(record.friendId)) then
+                spawn(player,tonumber(record.friendId),record.kind,record.personality,
+                    tostring(record.displayName or "Amigo"))
+                task.wait(0.4)
+            end
         end
     end)
 end)
 Players.PlayerRemoving:Connect(function(player)
     save(player)
-    local rec=byPlayer[player.UserId]
-    if rec and rec.model then rec.model:Destroy() end
+    local companions=byPlayer[player.UserId] or {}
+    for _,rec in ipairs(companions) do
+        if rec.model then rec.model:Destroy() end
+    end
     byPlayer[player.UserId]=nil
     lastAction[player.UserId]=nil
     lastChat[player.UserId]=nil
 end)
+
 game:BindToClose(function()
     for _,player in ipairs(Players:GetPlayers()) do save(player) end
 end)
