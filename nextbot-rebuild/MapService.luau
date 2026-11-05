@@ -44,7 +44,7 @@ function Service.Load(name)
  package:SetAttribute('MapRevision',(package:GetAttribute('MapRevision')or 0)+1)
  local old=workspace:FindFirstChild('ActiveMap');if old then old:Destroy()end
  for _,n in ipairs({'RoundSpawns','NextbotSpawns'})do local f=workspace:FindFirstChild(n);if f then f:Destroy()end end
- local map=template:Clone();map.Name='ActiveMap';map.Parent=workspace
+ local map=template:Clone();map.Name='ActiveMap';map:SetAttribute('MapRevision',package:GetAttribute('MapRevision'));map.Parent=workspace
  local geometry=map:WaitForChild('Geometry')
  require(script.Parent.DoorService).Load(geometry)
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={geometry};rp.RespectCanCollide=true
@@ -86,6 +86,7 @@ function Service.Load(name)
  frameMenu(points,rp,assetId)
  map.Candidates:Destroy();Service.current=name;package:SetAttribute('MapName',name)
  package:SetAttribute('MapAssetId',assetId);package:SetAttribute('MapSourceUrl','https://create.roblox.com/store/asset/'..tostring(assetId))
+ package:SetAttribute('MapReadyRevision',package:GetAttribute('MapRevision'))
  package:SetAttribute('MapReady',true)
  return true
 end

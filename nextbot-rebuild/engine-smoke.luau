@@ -96,6 +96,7 @@ assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absen
 for _,name in ipairs(Maps.Names())do
  assert(Maps.Load(name),'Map cannot load: '..name)
  task.wait(.5)
+ assert(workspace.ActiveMap:GetAttribute('MapRevision')==package:GetAttribute('MapReadyRevision'),'Ready revision mismatch')
  local points=workspace.RoundSpawns:GetChildren();assert(#points>=2,'Insufficient spawns')
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.ActiveMap.Geometry};rp.RespectCanCollide=true
  for _,p in ipairs(points)do assert(workspace:Raycast(p.Position+Vector3.new(0,.2,0),Vector3.new(0,-1,0),rp),'Spawn has no supporting floor')end

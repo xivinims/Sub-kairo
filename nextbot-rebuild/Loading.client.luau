@@ -15,7 +15,7 @@ local function loadMap()
  screen:Set('CARREGANDO MAPA',0,'Aguardando a arena…')
  playerGui:SetAttribute('NBMapLoadingVisible',true)
  local began=os.clock()
- while not package:GetAttribute('MapReady')do task.wait(.1);if not current(token)then return end end
+ while not package:GetAttribute('MapReady')or package:GetAttribute('MapReadyRevision')~=package:GetAttribute('MapRevision')do task.wait(.1);if not current(token)then return end end
  local revision=package:GetAttribute('MapRevision')or 0
  local name=package:GetAttribute('MapName')or ''
  screen:Set('CARREGANDO MAPA',.1,name)
@@ -23,7 +23,13 @@ local function loadMap()
  local point=anchor.Position
  pcall(function()player:RequestStreamAroundAsync(point,15)end)
  if not current(token)or revision~=(package:GetAttribute('MapRevision')or 0)then return end
- local map=workspace:WaitForChild('ActiveMap');local assets={};local seen={}
+ local map
+ repeat
+  map=workspace:FindFirstChild('ActiveMap')
+  if map and map:GetAttribute('MapRevision')==revision then break end
+  task.wait(.1);if not current(token)then return end
+ until false
+ local assets={};local seen={}
  -- Preload the visible menu area, not every map or thousands of distant meshes on mobile.
  for _,v in ipairs(map:GetDescendants())do
   if #assets>=200 then break end

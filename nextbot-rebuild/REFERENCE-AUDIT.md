@@ -73,3 +73,15 @@ Original Hexagon/Evade scripts have not been obtained or verified. Community kit
 Existing imported movement pack 14026023204 (XtraMoldy) retains its keyframes. Playback now de-duplicates zero-weight helper poses, preserves source joint bases when avatar appearance recreates standard R6 joints, suppresses the competing default Animator, and uses the pack's authored sprint clips. The duplicate hip lowering was removed. The existing acceleration controller now reads replicated horizontal velocity rather than non-replicated Humanoid.MoveDirection and uses elapsed frame time. Its numerical tuning remains an unverified custom implementation; the exact Evade friction/air acceleration/bunnyhop code is still missing.
 
 Inventory selection now lists only owned, compatible, available items. Unresolved emotes are excluded from sale; the 19 owner-provided emotes remain. Mobile control positions and circular outlines follow the screenshots. Bag, crouch and POV icon drawings are recreated UI, not extracted original icons; health 18788900977 and speed 13492318225 are referenced from the public HUD pack 93848778681151. The speed readout shows measured horizontal velocity. Full visual equivalence, the original downed animation, all item models, music, and native mobile/client playtesting remain outstanding.
+
+## Two-stage loading and additional community motion
+
+The new ReplicatedFirst boot screen precedes StarterPlayerScripts. It waits for game load and menu-art preloading. The map screen then requests streaming around the imported map's menu camera, preloads nearby visible textures, and waits for the menu interface to initialize. A monotonically increasing map revision cancels stale loading callbacks. The menu and gameplay HUD stay hidden until the matching revision is ready. Both screens use a centered EXACT RUN wordmark; this is recreated typography, not the official Evade logo.
+
+Community movement source: https://create.roblox.com/store/asset/74987847468722 by wifonn3 (SHA-256 a41ef524745b4c47e5d8979969f6e056a590469a344aac4ac014511903a1c4a4). Imported authored Idle, Walk, Run, Jump and Fall keyframes with their source rig's joint bindings.
+
+Prone source: https://create.roblox.com/store/asset/4951486910 by Caterlink (SHA-256 77200224b0658cff0898d06b629f6bf507e9869a6ac2965a839cfd12ef7f0420). The authored Crawl sequence replaces the crouching placeholder for downed players. Moving plays the sequence; stopping holds its first authored pose. These are community assets, not verified official Evade animation files. Imported scripts are removed.
+
+Additional map candidate: https://create.roblox.com/store/asset/70623307240060 by Satsion (SHA-256 450b5f99360d7bf911dd8b0e61b8e2b596d31d3834177460511e3bb5fbc983b0). Only its Desert Bus groups are selected; unrelated city/FNAF contents are excluded. Engine validation, not the asset name, determines whether it can be included in the playable rotation.
+
+Native visual/mobile playtesting remains outstanding. Engine tests establish structural and behavioral checks, not a pixel-identical recreation or an exact match to Evade's movement speeds.
