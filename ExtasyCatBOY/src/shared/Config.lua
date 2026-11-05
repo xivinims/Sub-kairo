@@ -1,6 +1,6 @@
 -- ExtasyCatBOY: jogo independente, NPCs inspirados nos amigos (nunca fingir ser o amigo real).
 return {
-    MaxCompanionsPerPlayer = 1,
+    MaxCompanionsPerPlayer = 4,
     FriendsPerPage = 200,
     MinActionInterval = 1.2,
     ChatReplyCooldown = 2.5,
