@@ -195,6 +195,40 @@ local function showWindow(which)
     TweenService:Create(panel,TweenInfo.new(.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=creatorPos}):Play()
     TweenService:Create(chatPane,TweenInfo.new(.28,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{Position=chatPos}):Play()
 end
+-- Seletor compacto de NPCs ativos. Cada botao abre a conversa daquele personagem.
+local ownedNPCs = {}
+local quickBar=make("Frame",{
+    Name="MeusCompanheiros",Position=UDim2.fromOffset(12,85),
+    Size=UDim2.fromOffset(77,248),BackgroundTransparency=1,
+},gui)
+local quickLayout=make("UIListLayout",{
+    FillDirection=Enum.FillDirection.Vertical,
+    Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder,
+},quickBar)
+local function redrawNPCs()
+    for _,child in ipairs(quickBar:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    local compact={}
+    for _,model in ipairs(ownedNPCs) do
+        if model and model.Parent then table.insert(compact,model) end
+    end
+    ownedNPCs=compact
+    for i,model in ipairs(ownedNPCs) do
+        local species=model:GetAttribute("Kind")=="dog" and "Au!" or "Miau!"
+        local title=tostring(model:GetAttribute("CompanionDisplayName") or "Amigo")
+        local b=button(quickBar,species.."\n"..string.sub(title,1,9),
+            UDim2.fromOffset(75,52),model==currentNPC and theme.accent or theme.accent2)
+        b.LayoutOrder=i
+        b.TextSize=11
+        b.TextWrapped=true
+        b.MouseButton1Click:Connect(function()
+            currentNPC=model
+            showWindow("chat")
+            redrawNPCs()
+        end)
+    end
+end
 toggle.MouseButton1Click:Connect(function()
     showWindow(window=="creator" and "none" or "creator")
 end)
@@ -312,11 +346,24 @@ remove.MouseButton1Click:Connect(function()
 end)
 event.OnClientEvent:Connect(function(kind,a,b,c)
     if kind=="spawned" then
-        currentNPC=a
+        if typeof(a)=="Instance" then
+            currentNPC=a
+            table.insert(ownedNPCs,a)
+            redrawNPCs()
+        end
     elseif kind=="removed" then
-        currentNPC=nil
+        for i=#ownedNPCs,1,-1 do
+            local model=ownedNPCs[i]
+            if not model or not model.Parent
+                or tonumber(model:GetAttribute("InspiredByUserId"))==tonumber(a) then
+                table.remove(ownedNPCs,i)
+            end
+        end
+        currentNPC=ownedNPCs[#ownedNPCs]
+        redrawNPCs()
     elseif kind=="openTalk" then
         if typeof(a)=="Instance" then currentNPC=a end
+        redrawNPCs()
         showWindow("chat")
     elseif kind=="bubble" then
         local model=a
