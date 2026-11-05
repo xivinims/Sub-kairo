@@ -34,8 +34,8 @@ Run.RenderStepped:Connect(function(dt)
  local camera=workspace.CurrentCamera
  if camera then lampPart.CFrame=camera.CFrame*CFrame.new(.5,-.3,-.8) end
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
- local id=player:GetAttribute('NBUtility');indicator.Visible=active
- if not id or id==''then indicator.Text='Nenhum'end
+ local id=player:GetAttribute('NBUtility');indicator.Visible=active and id~=nil and id~=''
+ if not id or id==''then indicator.Text=''end
  if not active then return end
  local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart');if not root or not camera then return end
  indicator.Rotation=0
