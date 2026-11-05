@@ -20,8 +20,7 @@ local sprint,crouch=false,false
 local function setSprint(on)sprint=on;package.Movement:FireServer('Sprint',on)end
 local function setCrouch(on)crouch=on;package.Movement:FireServer('Crouch',on)end
 hud.Circle(canvas,'Menu',function()package.MatchAction:FireServer('Lobby')end)
-local first=false
-hud.Circle(canvas,'POV',function()first=not first;player.CameraMode=first and Enum.CameraMode.LockFirstPerson or Enum.CameraMode.Classic end)
+hud.Circle(canvas,'POV',function()player:SetAttribute('NBFirstPerson',not player:GetAttribute('NBFirstPerson'))end)
 local crouchButton=hud.Circle(canvas,'Crouch',function()setCrouch(not crouch)end)
 local sprintButton=circle('CORRER',1280,414,90,function()setSprint(not sprint)end)
 local drop=circle('SOLTAR',1250,272,88,function()package.Rescue:FireServer('Drop')end)
