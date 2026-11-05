@@ -141,7 +141,7 @@ for i,item in ipairs(moods) do
     end)
 end
 moodButtons.timido.BackgroundColor3=theme.accent
-local createButton=button(panel,"Criar companheiro",UDim2.new(1,-36,0,44),theme.accent)
+local createButton=button(panel,"Adicionar companheiro",UDim2.new(1,-36,0,44),theme.accent)
 createButton.Position=UDim2.fromOffset(18,543)
 createButton.TextSize=15
 
@@ -272,26 +272,42 @@ createButton.MouseButton1Click:Connect(function()
         return request:InvokeServer("create",{friendId=currentFriend.id,kind=pickedKind,personality=pickedMood})
     end)
     message.Text=ok and tostring(answer) or "Erro na criação. Tente novamente."
-    createButton.Text="Criar companheiro"
+    createButton.Text="Adicionar companheiro"
     createButton.Active=true
     if ok and success then showWindow("chat") end
 end)
+local function selectedFriendId()
+    if currentNPC and currentNPC.Parent then
+        return tonumber(currentNPC:GetAttribute("InspiredByUserId"))
+    end
+    return nil
+end
 local function sendTalk()
     local text=talk.Text
     talk.Text=""
     if type(text)~="string" or #text==0 then return end
-    event:FireServer("talk",string.sub(text,1,200))
+    local friendId=selectedFriendId()
+    if not friendId then
+        message.Text="Escolha um NPC para conversar."
+        showWindow("creator")
+        return
+    end
+    event:FireServer("talk",string.sub(text,1,200),friendId)
 end
 send.MouseButton1Click:Connect(sendTalk)
 talk.FocusLost:Connect(function(enter)
     if enter then sendTalk() end
 end)
 remove.MouseButton1Click:Connect(function()
-    local ok,success=pcall(function() return request:InvokeServer("remove") end)
+    local friendId=selectedFriendId()
+    if not friendId then showWindow("creator") return end
+    local ok,success=pcall(function()
+        return request:InvokeServer("remove",{friendId=friendId})
+    end)
     if ok and success then
         currentNPC=nil
         showWindow("creator")
-        message.Text="Companheiro guardado."
+        message.Text="Companheiro guardado. Você pode criar outro."
     end
 end)
 event.OnClientEvent:Connect(function(kind,a,b,c)
@@ -300,6 +316,7 @@ event.OnClientEvent:Connect(function(kind,a,b,c)
     elseif kind=="removed" then
         currentNPC=nil
     elseif kind=="openTalk" then
+        if typeof(a)=="Instance" then currentNPC=a end
         showWindow("chat")
     elseif kind=="bubble" then
         local model=a
@@ -326,6 +343,7 @@ TextChatService.MessageReceived:Connect(function(msg)
     if msg.Text==lastNativeText and now-lastNativeTime<2 then return end
     lastNativeText=msg.Text
     lastNativeTime=now
-    event:FireServer("talk",string.sub(msg.Text,1,200))
+    local friendId=selectedFriendId()
+    if friendId then event:FireServer("talk",string.sub(msg.Text,1,200),friendId) end
 end)
 task.spawn(loadFriends)
