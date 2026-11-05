@@ -30,6 +30,8 @@ for(const id of [74987847468722,4951486910,13634611708,14026023204,11128061931,1
   const location=delivery.location||delivery.locations?.[0]?.location;
   if(!location)throw Error('No delivery location');
   const bytes=Buffer.from(await (await get(location)).arrayBuffer());
+  const pinned={74987847468722:'a41ef524745b4c47e5d8979969f6e056a590469a344aac4ac014511903a1c4a4',4951486910:'77200224b0658cff0898d06b629f6bf507e9869a6ac2965a839cfd12ef7f0420',13634611708:'5f343b5b702d324997cb28f6d8e006a5c64fc001f9aef932c2a39d573ef87b74'};
+  if(pinned[id]&&hash(bytes)!==pinned[id])throw Error('Inspected source changed: '+id);
   const file=`/tmp/nb-assets/${id}.rbxm`;await fs.writeFile(file,bytes);
   metadata.push({id,name:meta.Name,type:meta.AssetTypeId,bytes:bytes.length,creator:meta.Creator,created:meta.Created,updated:meta.Updated,sourceUrl:`https://create.roblox.com/store/asset/${id}`,file,sha256:hash(bytes)});
  }catch(e){metadata.push({id,error:String(e)});}

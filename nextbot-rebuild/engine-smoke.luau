@@ -79,6 +79,20 @@ for _,name in ipairs({'CommunityIdle','CommunityWalk','CommunityRun','CommunityJ
  local bind=pose.Bindings(package.MovementSourceRigs[clip:GetAttribute('SourceRig')])
  local data=pose.Decode(clip);assert(data.duration>0 and data.tracks.Torso,'Empty community animation')
  local world=pose.WorldPose(data,0,bind)
+ local targetRig=starter:Clone();targetRig.Parent=workspace
+ local targetMotors=pose.Motors(targetRig);pose.Apply(data,targetMotors,0,1,bind)
+ local positions={HumanoidRootPart=CFrame.identity}
+ local function targetWorld(part)
+  if positions[part]then return positions[part]end
+  local joint=assert(targetMotors[part],'Target joint missing '..part)
+  positions[part]=targetWorld(joint.Part0.Name)*joint.C0*joint.Transform*joint.C1:Inverse()
+  return positions[part]
+ end
+ for _,part in ipairs({'Torso','Head','Right Arm','Left Arm','Right Leg','Left Leg'})do
+  local delta=world[part]:ToObjectSpace(targetWorld(part));local _,angle=delta:ToAxisAngle()
+  assert(delta.Position.Magnitude<.002 and math.abs(angle)<.002,'Source animation failed on starter rig: '..name..'/'..part)
+ end
+ targetRig:Destroy()
  if name=='Downed'then
   assert(math.abs(world.Torso.UpVector.Y)<.4 and world.Torso.Position.Y< -1,'Downed pose must lie near the floor')
   local later=pose.WorldPose(data,.5,bind)
@@ -166,7 +180,10 @@ results.admission={immediateArena=true,intermissionSeconds=90,chaseSeconds=180,s
 results.botCount=#Storage.NextbotTemplates:GetChildren();assert(results.botCount>=60,'Nextbot pack was not imported')
 for _,bot in ipairs(Storage.NextbotTemplates:GetChildren())do
  assert(bot:FindFirstChild('HumanoidRootPart')and bot:FindFirstChildOfClass('Humanoid'),'Invalid bot rig')
- for _,v in ipairs(bot:GetDescendants())do if v:IsA('BasePart')then assert(not v.Anchored,'Anchored bot')end end
+ for _,v in ipairs(bot:GetDescendants())do
+  if v:IsA('BasePart')then assert(not v.Anchored,'Anchored bot')
+  elseif v:IsA('Sound')then local id=tonumber(v.SoundId:match('rbxassetid://(%d+)')or v.SoundId:match('[?&]id=(%d+)'));assert(id and id>0,'Invalid nextbot sound')end
+ end
 end;passed('nextbot rigs')
 assert(package:GetAttribute('MenuAtlas')and package:GetAttribute('MenuAtlas')~='','Missing menu art');passed('menu artwork binding')
 -- These tests use the real Roblox DataModel and raycasts; no player data is written.

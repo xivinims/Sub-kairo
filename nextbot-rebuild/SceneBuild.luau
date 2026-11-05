@@ -70,7 +70,8 @@ return function(dm,package)
      elseif v:IsA('BasePart')then v.Anchored=false
      elseif v:IsA('Sound')then
       local uri=tostring(v.AudioContent)
-      if uri:find('rbxassetid://0',1,true)or uri=='Content(None)'or uri:find('4316136477',1,true)or uri:find('6866520692',1,true)then v:Destroy();continue end
+      local soundId=tonumber(uri:match('rbxassetid://(%d+)')or uri:match('[?&]id=(%d+)'))
+      if not soundId or soundId<=0 or uri:find('4316136477',1,true)or uri:find('6866520692',1,true)then v:Destroy();continue end
       v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
     end
     if bot.Name=='Hitbox'then bot:Destroy();break end

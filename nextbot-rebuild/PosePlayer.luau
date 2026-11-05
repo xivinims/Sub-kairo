@@ -56,11 +56,21 @@ end
 function M.Apply(data,motors,t,blend,bindings)
  t=data.duration>0 and (data.loop and t%data.duration or math.min(t,data.duration))or 0
  local worlds=bindings and M.WorldPose(data,t,bindings)
+ local desired={HumanoidRootPart=CFrame.identity};local visiting={}
+ local function desiredWorld(name)
+  if desired[name]then return desired[name]end
+  if worlds and worlds[name]then desired[name]=worlds[name];return desired[name]end
+  local motor=motors[name]
+  if not motor or visiting[name]then return CFrame.identity end
+  visiting[name]=true
+  desired[name]=desiredWorld(motor.Part0.Name)*motor.C0*motor.C1:Inverse()
+  visiting[name]=nil;return desired[name]
+ end
  for name,motor in pairs(motors)do if motor.Parent and motor.Part0 and motor.Part1 then
   local target
-  if worlds and worlds[name]and worlds[motor.Part0.Name]then
+  if worlds then
    -- Preserve the authored world pose even after avatar appearance rebuilds R6 joints.
-   target=motor.C0:Inverse()*worlds[motor.Part0.Name]:Inverse()*worlds[name]*motor.C1
+   target=motor.C0:Inverse()*desiredWorld(motor.Part0.Name):Inverse()*desiredWorld(name)*motor.C1
   elseif not bindings then
    local keys=data.tracks[name]
    if keys then local cf,weight=M.Sample(keys,t);target=CFrame.identity:Lerp(cf,weight)end
