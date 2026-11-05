@@ -29,7 +29,7 @@ local elapsed=0;local phase=0
 Run.RenderStepped:Connect(function(dt)
  local active=player:GetAttribute('NBInArena')==true
  powerButton.Visible=active and (player:GetAttribute('NBPower')or '')~=''
- gui.Enabled=active;lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
+ gui.Enabled=active and player.PlayerGui:GetAttribute('NBLoadComplete')==true;lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
  night.Enabled=active and player:GetAttribute('NBFlashlight')==true and player:GetAttribute('NBLightID')=='nvg'
  local camera=workspace.CurrentCamera
  if camera then lampPart.CFrame=camera.CFrame*CFrame.new(.5,-.3,-.8) end

@@ -41,6 +41,7 @@ end
 function Service.Load(name)
  local template=templates:FindFirstChild(name);if not template then return false end
  package:SetAttribute('MapReady',false)
+ package:SetAttribute('MapRevision',(package:GetAttribute('MapRevision')or 0)+1)
  local old=workspace:FindFirstChild('ActiveMap');if old then old:Destroy()end
  for _,n in ipairs({'RoundSpawns','NextbotSpawns'})do local f=workspace:FindFirstChild(n);if f then f:Destroy()end end
  local map=template:Clone();map.Name='ActiveMap';map.Parent=workspace

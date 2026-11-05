@@ -1,1 +1,1 @@
-nextbot-crawl-desert-inspection-35
+nextbot-loading-community-animation-map-validation-36

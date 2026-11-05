@@ -9,7 +9,7 @@ local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReferenc
 local config=require(package:WaitForChild('Config'))
 local inventoryPolicy=require(package:WaitForChild('InventoryPolicy'))
 local inventoryFilter=nil;local shopTabs={};local previewStarted=0
-local gui=Instance.new('ScreenGui');gui.Name='NextbotMenu';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=5;gui.Parent=player:WaitForChild('PlayerGui')
+local gui=Instance.new('ScreenGui');gui.Name='NextbotMenu';gui.Enabled=false;gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=5;gui.Parent=player:WaitForChild('PlayerGui')
 local colors={Color3.fromRGB(91,127,198),Color3.fromRGB(77,147,104),Color3.fromRGB(181,145,82),Color3.fromRGB(142,98,180),Color3.fromRGB(177,75,86),Color3.fromRGB(72,152,166)}
 local emoteCatalog=require(package:WaitForChild('EmoteCatalog'))
 local combined=table.clone(config.Catalog)
@@ -53,8 +53,7 @@ local function show(name)
  player:SetAttribute('NBMenuPage',name);player:SetAttribute('NBMenuOpen',true)
 end
 local home=pages.Home
-local title=label(home,'EXACT RUN',550,210,440,110,78)
-make('UIGradient',title,{Color=ColorSequence.new({ColorSequenceKeypoint.new(0,colors[2]),ColorSequenceKeypoint.new(.45,Color3.fromRGB(164,239,243)),ColorSequenceKeypoint.new(1,colors[4])})})
+require(game:GetService('ReplicatedFirst'):WaitForChild('LoadingView')).Logo(home,UDim2.fromOffset(768,275),UDim2.fromOffset(440,125))
 local xp=panel(home,95,121,540,38,colors[1]);local xpText=label(xp,'NÍVEL —',8,0,520,38,20);xpText.TextXAlignment=Enum.TextXAlignment.Left
 local amounts={}
 for i,entry in ipairs({{'Coins','MOEDAS',colors[2]},{'Points','PONTOS',white},{'Vouchers','CUPONS',colors[3]},{'Wisps','WISPS',colors[4]},{'Wins','VITÓRIAS',colors[3]}}) do
@@ -254,7 +253,7 @@ local function updateStats()
 end
 for _,key in ipairs({'Level','Coins','Points','Vouchers','Wisps','Wins'}) do player:GetAttributeChangedSignal('NB'..key):Connect(updateStats) end
 updateStats()
-local function visibility()gui.Enabled=not player:GetAttribute('NBInArena')and not player:GetAttribute('NBSpectating')end
+local function visibility()gui.Enabled=player.PlayerGui:GetAttribute('NBLoadComplete')==true and not player:GetAttribute('NBInArena')and not player:GetAttribute('NBSpectating')end
 player:GetAttributeChangedSignal('NBInArena'):Connect(visibility);player:GetAttributeChangedSignal('NBSpectating'):Connect(visibility);visibility()
 UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInArena')then package.MatchAction:FireServer('Lobby')else show('Home')end end end)
 show('Home')
@@ -278,3 +277,7 @@ Run.RenderStepped:Connect(function(dt)
   if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and (os.clock()-previewStarted)%data.duration or 0,1,not (selectedItem and selectedItem.source)and movementBindings or nil)end
  end
 end)
+
+player.PlayerGui:GetAttributeChangedSignal('NBLoadComplete'):Connect(visibility)
+player.PlayerGui:SetAttribute('NBInterfaceReady',true)
+visibility()

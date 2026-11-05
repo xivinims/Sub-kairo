@@ -12,10 +12,15 @@ return function(dm,package)
  end
  local removals={};local mapCatalog={}
  local maps=new('Folder','NBMaps',dm:GetService('ServerStorage'))
- for _,def in ipairs({{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
+ for _,def in ipairs({{70623307240060,'Desert Bus'},{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
   local roots=load(def[1]);if not roots then continue end
   local map=new('Model',def[2],maps);local geometry=new('Model','Geometry',map)
-  for _,root in ipairs(roots)do local inner=root.Name=='Game'and root:FindFirstChild('Map');if inner then inner.Parent=geometry;root:Destroy()else root.Parent=geometry end end
+  for _,root in ipairs(roots)do
+   if def[1]==70623307240060 then
+    for _,child in ipairs(root:GetChildren())do if child.Name=='Desert Bus'then child.Parent=geometry end end
+    root:Destroy();continue
+   end
+   local inner=root.Name=='Game'and root:FindFirstChild('Map');if inner then inner.Parent=geometry;root:Destroy()else root.Parent=geometry end end
   local removed=0;local count=0
   for _,v in ipairs(geometry:GetDescendants())do
    if not v.Parent then continue end
@@ -98,6 +103,28 @@ return function(dm,package)
    for _,v in ipairs(root:GetDescendants())do if v:IsA('BasePart')then v.Anchored=false end end
   end
  end end
+
+ -- Preserve authored community keyframes and their own bind rig; never execute asset scripts.
+ local rigs=new('Folder','MovementSourceRigs',package)
+ for _,spec in ipairs({{74987847468722,'EvadeAnimations',{Idle='CommunityIdle',Walk='CommunityWalk',Run='CommunityRun',Jump='CommunityJump',Fall='CommunityFall'}},{4951486910,'Dummy',{Crawl='Downed'}}})do
+  local roots=assert(load(spec[1]),'Missing movement source '..spec[1]);local rig
+  for _,root in ipairs(roots)do
+   if root.Name==spec[2]then rig=root end
+   for _,v in ipairs(root:GetDescendants())do if v:IsA('Model')and v.Name==spec[2]then rig=v end end
+  end
+  assert(rig,'Missing source rig '..spec[2])
+  for _,v in ipairs(rig:GetDescendants())do
+   if v:IsA('KeyframeSequence')and spec[3][v.Name]then
+    local clip=v:Clone();clip.Name=spec[3][v.Name];clip:SetAttribute('SourceRig',spec[2]);clip:SetAttribute('SourceAssetId',string.format('%.0f',spec[1]));clip.Parent=movement
+   end
+  end
+  local copy=rig:Clone();copy.Name=spec[2];copy.Parent=rigs
+  for _,v in ipairs(copy:GetDescendants())do
+   if v:IsA('LuaSourceContainer')or v:IsA('KeyframeSequence')or v:IsA('Animation')or v:IsA('Sound')or v:IsA('RemoteEvent')or v:IsA('RemoteFunction')or v:IsA('PackageLink')then v:Destroy()
+   elseif v:IsA('BasePart')then v.Anchored=true;v.CanCollide=false;v.CanTouch=false end
+  end
+ end
+ assert(movement:FindFirstChild('Downed')and movement:FindFirstChild('CommunityRun'),'Movement clips missing')
  local lighting=dm:GetService('Lighting');lighting.ClockTime=15;lighting.Brightness=2;lighting.Ambient=R.Color3.fromRGB(110,110,135);lighting.OutdoorAmbient=R.Color3.fromRGB(140,150,170)
  new('Atmosphere','Air',lighting,{Density=.22,Haze=1,Color=R.Color3.fromRGB(192,210,235)})
  new('BloomEffect','Bloom',lighting,{Intensity=.25,Size=20,Threshold=1.6})

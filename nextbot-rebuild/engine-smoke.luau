@@ -61,6 +61,35 @@ assert(Inventory.Visible(userEmote,'Animações','Emote',true),'User emote lost'
 passed('inventory filters ownership slots and unavailable items')
 results.motion={sourceAssetId=package.MovementClips:GetAttribute('SourceAssetId'),sourceUnmodified=true,officialEvadeScripts=false,downedOriginalAvailable=false,speedFormulaOriginalVerified=false}
 
+local First=game:GetService('ReplicatedFirst')
+assert(First:FindFirstChild('Boot.client')and First['Boot.client']:IsA('LocalScript'),'Early loading screen missing')
+local Loading=require(package.LoadingPolicy)
+assert(not Loading.CanReveal(false,true,2,2,true),'Boot bypass')
+assert(not Loading.CanReveal(true,false,2,2,true),'Map bypass')
+assert(not Loading.CanReveal(true,true,3,2,true),'Stale map bypass')
+assert(not Loading.CanReveal(true,true,2,2,false),'Interface bypass')
+assert(Loading.CanReveal(true,true,2,2,true),'Ready menu blocked')
+local gui=Instance.new('Folder');gui.Parent=R
+local view=require(First.LoadingView).Create(gui,'LoadingTest',1000)
+view:Set('CARREGANDO JOGO',.5,'Test');assert(view.fill.Size.X.Scale==.5 and view.status.Text=='CARREGANDO JOGO')
+assert(view.gui:FindFirstChild('ExactRunLogo',true),'Centered wordmark missing');gui:Destroy()
+passed('two-stage loading gates and shared logo build')
+for _,name in ipairs({'CommunityIdle','CommunityWalk','CommunityRun','CommunityJump','CommunityFall','Downed'})do
+ local clip=assert(package.MovementClips:FindFirstChild(name),'Missing '..name)
+ local bind=pose.Bindings(package.MovementSourceRigs[clip:GetAttribute('SourceRig')])
+ local data=pose.Decode(clip);assert(data.duration>0 and data.tracks.Torso,'Empty community animation')
+ local world=pose.WorldPose(data,0,bind)
+ if name=='Downed'then
+  assert(math.abs(world.Torso.UpVector.Y)<.4 and world.Torso.Position.Y< -1,'Downed pose must lie near the floor')
+  local later=pose.WorldPose(data,.5,bind)
+  assert(later['Right Arm']~=world['Right Arm'],'Crawl is not animated')
+ end
+ for _,v in ipairs(package.MovementSourceRigs:GetDescendants())do assert(not v:IsA('LuaSourceContainer'),'Source rig contains script')end
+end
+results.motion.downedCommunityAvailable=true
+results.motion.communitySourceIds={'74987847468722','4951486910'}
+passed('community movement and prone crawl poses')
+
 local Maps=require(S.MapService)
 local sources={};for _,entry in ipairs(require(package.MapCatalog))do sources[entry.name]=string.format('%.0f',entry.assetId)end
 assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absent')

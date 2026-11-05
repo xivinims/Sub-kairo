@@ -106,7 +106,7 @@ local elapsed=0
 Run.RenderStepped:Connect(function(dt)
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
  placeJump()
- local active=player:GetAttribute('NBInArena');local watching=player:GetAttribute('NBSpectating');gui.Enabled=active==true or watching==true
+ local active=player:GetAttribute('NBInArena');local watching=player:GetAttribute('NBSpectating');gui.Enabled=player.PlayerGui:GetAttribute('NBLoadComplete')==true and (active==true or watching==true)
  previous.Visible=watching==true;nextButton.Visible=watching==true;stopWatch.Visible=watching==true;spectate.Visible=watching==true
  if watching then local target=Players:GetPlayerByUserId(player:GetAttribute('NBSpectateTarget')or 0);spectate.Text=target and 'ASSISTINDO '..target.DisplayName or 'ASSISTINDO A RODADA'end
  drop.Visible=(player:GetAttribute('NBCarrying')or 0)>0
