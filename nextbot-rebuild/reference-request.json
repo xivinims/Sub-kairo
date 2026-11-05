@@ -1,7 +1,3 @@
 {
-  "mode": "inspect",
-  "queries": [],
-  "assetIds": [
-    95512398319263
-  ]
+  "mode": "build"
 }
