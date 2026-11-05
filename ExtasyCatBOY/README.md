@@ -37,6 +37,12 @@ Projeto Rojo em **ExtasyCatBOY/default.project.json**:
 
 Esses são **modelos da Creator Store**, não IDs de AnimationTrack prontos para o jogo. Animações de terceiros exigem importação, inspeção de scripts e verificação de permissões de uso; **não foram implantadas automaticamente**. O jogo atualmente usa movimento R6 procedural próprio. Não foi verificada nenhuma autoria "3ppa".
 
+## Compilar sem computador local
+
+A GitHub Action `.github/workflows/extasycatboy-check.yml` verifica a contagem de diálogos, instala o **Rojo 7.7.1** e tenta gerar o artefato **ExtasyCatBOY-place**, contendo `ExtasyCatBOY.rbxlx`. Na aba **Actions**, abra a execução desta branch e, se o build terminar com sucesso, use **Artifacts** para baixar o lugar.
+
+Esse `.rbxlx` é um lugar independente para teste. **Não sobrescreva o lugar original apenas para instalá-lo**: para preservar um mapa existente, use a sincronização seletiva do projeto Rojo, configurada com `$ignoreUnknownInstances`. A Action nunca publica diretamente no Roblox.
+
 ## Segurança e limites
 
 - O servidor valida amizade e opera em nome do dono do NPC.
