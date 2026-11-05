@@ -1,49 +1,13 @@
 {
   "published": true,
-  "version": 318,
-  "stagedVersion": 318,
+  "version": 319,
+  "stagedVersion": 319,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "sha256": "329a21f97344096d1e3e2421e5177eb3a621416e6a91db7076bb265c8d1a6d2f",
-  "sourceCommit": "83ba89d8b8cac1d4883ff4b30333c5ca39d5f6b6",
-  "validationRun": 42054192415,
-  "publicationCommit": "dd7ec2726bb2cd45e804b75b709d7f370bc043da",
-  "previousPublishedVersion": 317,
-  "previousPublishedSha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab",
-  "checks": [
-    "remotes",
-    "animation payloads",
-    "90/180 timing",
-    "no duplicate debit",
-    "settings validation",
-    "no imported scripts",
-    "R6 joints",
-    "19 emotes drive R6 motors",
-    "movement keys preserve active source poses",
-    "crouch retargets to standard avatar R6 joints",
-    "inventory filters ownership slots and unavailable items",
-    "two-stage loading gates and shared logo build",
-    "community movement and prone crawl poses",
-    "map load and grounded spawns",
-    "imported map menu without generated scenery",
-    "intermission entry preserves arena on countdown end",
-    "bots appear only after countdown and clear after round",
-    "nextbot rigs",
-    "menu artwork binding",
-    "all server services initialize"
-  ],
-  "motion": {
-    "officialEvadeScripts": false,
-    "speedFormulaOriginalVerified": false,
-    "sourceAssetId": "14026023204",
-    "sourceUnmodified": true,
-    "downedCommunityAvailable": true,
-    "downedOriginalAvailable": false,
-    "communitySourceIds": [
-      "74987847468722",
-      "4951486910"
-    ]
-  },
+  "sha256": "c9216559b65c0c185e6106d70dce39d882e511a2c108dd1a0ee0228b65885540",
+  "sourceCommit": "27fd961f6351fcd692553f97e781a1358d0efa00",
+  "previousPublishedVersion": 318,
+  "previousPublishedSha256": "329a21f97344096d1e3e2421e5177eb3a621416e6a91db7076bb265c8d1a6d2f",
   "admission": {
     "sameMapAtZero": true,
     "intermissionSeconds": 90,
@@ -54,6 +18,8 @@
     "samePositionAtZero": true,
     "chaseSeconds": 180
   },
+  "originalBackupVersion": 303,
+  "originalBackupSha256": "7d575a803c47b6c0443f36835d27a9c0cb4f127ed48c53fa589b6d04d60575f7",
   "maps": [
     {
       "name": "Backrooms",
