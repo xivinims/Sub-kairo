@@ -1,18 +1,18 @@
 {
-  "stagedVersion": 317,
-  "sha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab",
-  "backupSha256": "77c389ac9f0754c0130232d35066be9162aa8e1c2c428cb81cb6d9a03d588a24",
+  "stagedVersion": 318,
+  "sha256": "329a21f97344096d1e3e2421e5177eb3a621416e6a91db7076bb265c8d1a6d2f",
+  "backupSha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab",
   "task": {
-    "path": "universes/9421311218/places/118064584465155/versions/317/luau-execution-sessions/ad55c9a1-31e1-4b0b-b871-a49294b885b7/tasks/ad55c9a1-31e1-4b0b-b871-a49294b885b7",
-    "createTime": "2026-11-05T01:24:08.566Z",
-    "updateTime": "2026-11-05T01:24:50.932Z",
+    "path": "universes/9421311218/places/118064584465155/versions/318/luau-execution-sessions/cde08e29-af2c-47e9-84fd-06ee9818fd48/tasks/cde08e29-af2c-47e9-84fd-06ee9818fd48",
+    "createTime": "2026-11-05T15:22:29.902Z",
+    "updateTime": "2026-11-05T15:23:09.961Z",
     "user": "8344738123",
     "state": "COMPLETE",
     "output": {
       "results": [
         {
           "isRunning": false,
-          "placeVersion": 317,
+          "placeVersion": 318,
           "motion": {
             "officialEvadeScripts": false,
             "speedFormulaOriginalVerified": false,
@@ -219,17 +219,17 @@
               "assetId": "123713126320438",
               "paths": [
                 {
-                  "waypoints": 149,
+                  "waypoints": 147,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 168,
+                  "waypoints": 167,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 171,
+                  "waypoints": 185,
                   "status": "Success",
                   "ok": true
                 }
@@ -339,7 +339,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 35,
+                  "waypoints": 34,
                   "status": "Success",
                   "ok": true
                 }
@@ -494,17 +494,17 @@
               "assetId": "10828666356",
               "paths": [
                 {
-                  "waypoints": 87,
+                  "waypoints": 81,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 129,
+                  "waypoints": 131,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 195,
+                  "waypoints": 197,
                   "status": "Success",
                   "ok": true
                 }
@@ -551,12 +551,12 @@
   "logs": {
     "luauExecutionSessionTaskLogs": [
       {
-        "path": "universes/9421311218/places/118064584465155/versions/317/luau-execution-sessions/ad55c9a1-31e1-4b0b-b871-a49294b885b7/tasks/ad55c9a1-31e1-4b0b-b871-a49294b885b7/logs/1",
+        "path": "universes/9421311218/places/118064584465155/versions/318/luau-execution-sessions/cde08e29-af2c-47e9-84fd-06ee9818fd48/tasks/cde08e29-af2c-47e9-84fd-06ee9818fd48/logs/1",
         "messages": []
       }
     ]
   },
   "published": false,
-  "sourceCommit": "2d9013c82d4393e632cbaddd1f9b9199c2118ad8",
-  "workflowRun": 41948129719
+  "sourceCommit": "83ba89d8b8cac1d4883ff4b30333c5ca39d5f6b6",
+  "workflowRun": 42054192415
 }
