@@ -3,11 +3,12 @@ for _,meta in ipairs(serde.decode('json',fs.readFile('/tmp/nb-assets/reference-m
  if meta.error then print('Reference model '..serde.encode('json',meta));continue end
  local ok,roots=pcall(R.deserializeModel,fs.readFile('/tmp/nb-assets/'..meta.id..'.rbxm'):gsub('^<%?xml.-%?>%s*',''))
  if not ok then print('Reference parse error '..tostring(roots));continue end
- local report={meta=meta,clips={},images={},settings={},models={},animations={},motors={},firstPoses={},parts=0,sounds={}}
+ local report={meta=meta,clips={},images={},settings={},models={},animations={},motors={},firstPoses={},parts=0,sounds={},floors={}}
  for _,root in ipairs(roots)do
   local descendants={root};for _,v in ipairs(root:GetDescendants())do table.insert(descendants,v)end
   for _,v in ipairs(descendants)do
    if v:IsA('BasePart')then report.parts+=1
+    if (v.CanCollide and v.Size.X>=10 and v.Size.Z>=10 and math.abs(v.CFrame.UpVector.Y)>.98)or v:IsA('SpawnLocation')then table.insert(report.floors,{path=v:GetFullName(),cf=tostring(v.CFrame),size=tostring(v.Size),transparency=v.Transparency})end
    elseif v:IsA('Sound')then table.insert(report.sounds,{path=v:GetFullName(),content=tostring(v.AudioContent),playing=v.Playing})
    elseif v:IsA('Motor6D')then table.insert(report.motors,{name=v.Name,part0=v.Part0 and v.Part0.Name,part1=v.Part1 and v.Part1.Name,c0=tostring(v.C0),c1=tostring(v.C1)})
    elseif v:IsA('KeyframeSequence')then
