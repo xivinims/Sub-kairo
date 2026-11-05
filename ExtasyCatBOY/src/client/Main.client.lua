@@ -180,7 +180,7 @@ local function fit()
     -- Em telas compactas, escala o conteudo vertical sem invadir o chat.
     local scale=panel:FindFirstChild("MobileScale")
     if not scale then scale=make("UIScale",{Name="MobileScale"},panel) end
-    scale.Scale=math.min(1,height/610)
+    scale.Scale=math.min(1,height/610,width/354)
     panel.Size=UDim2.fromOffset(width,math.min(height,610))
     local chatWidth=math.clamp(view.X-20,230,354)
     chatPane.Size=UDim2.fromOffset(chatWidth,166)
