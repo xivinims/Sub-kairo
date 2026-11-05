@@ -1,15 +1,15 @@
 {
   "published": true,
-  "version": 314,
-  "stagedVersion": 314,
+  "version": 317,
+  "stagedVersion": 317,
   "universeId": "9421311218",
   "placeId": "118064584465155",
-  "sha256": "7ce3bf18c1c1c92f6672dc9b0de818b7c47ba6d3f1992aa5604df7042acb89c3",
-  "sourceCommit": "51d32241ddc134a01405620d5c6ba10e371ceee9",
-  "validationRun": 41874600308,
-  "publicationCommit": "b178b5a5445c8882564bf56a2f30e021105c09f0",
-  "previousPublishedVersion": 313,
-  "previousPublishedSha256": "d0ebff672a9b31826ed5a8e7874c0d1c9ddbb15acc7ced98c7aa8e8191e0f80b",
+  "sha256": "86f8d059a1273992bb0e349fb2e67a9e48fb8475bcee654900b7e2acaddff1ab",
+  "sourceCommit": "2d9013c82d4393e632cbaddd1f9b9199c2118ad8",
+  "validationRun": 41948129719,
+  "publicationCommit": "f827f823e666bae24264aca728790b01b5f63e29",
+  "previousPublishedVersion": 314,
+  "previousPublishedSha256": "7ce3bf18c1c1c92f6672dc9b0de818b7c47ba6d3f1992aa5604df7042acb89c3",
   "checks": [
     "remotes",
     "animation payloads",
@@ -22,6 +22,8 @@
     "movement keys preserve active source poses",
     "crouch retargets to standard avatar R6 joints",
     "inventory filters ownership slots and unavailable items",
+    "two-stage loading gates and shared logo build",
+    "community movement and prone crawl poses",
     "map load and grounded spawns",
     "imported map menu without generated scenery",
     "intermission entry preserves arena on countdown end",
@@ -32,10 +34,15 @@
   ],
   "motion": {
     "officialEvadeScripts": false,
-    "sourceAssetId": "14026023204",
-    "downedOriginalAvailable": false,
     "speedFormulaOriginalVerified": false,
-    "sourceUnmodified": true
+    "sourceAssetId": "14026023204",
+    "sourceUnmodified": true,
+    "downedCommunityAvailable": true,
+    "downedOriginalAvailable": false,
+    "communitySourceIds": [
+      "74987847468722",
+      "4951486910"
+    ]
   },
   "admission": {
     "sameMapAtZero": true,
@@ -62,6 +69,11 @@
       "name": "Construct",
       "spawns": 32,
       "assetId": "123713126320438"
+    },
+    {
+      "name": "Desert Bus",
+      "spawns": 6,
+      "assetId": "13634611708"
     },
     {
       "name": "Elysium",
