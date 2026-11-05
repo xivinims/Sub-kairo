@@ -1,0 +1,24 @@
+{
+  "project": "ExtasyCatBOY",
+  "repository": "xivinims/Sub-kairo",
+  "branch": "ExtasyCatBOY",
+  "roblox": {
+    "universeId": 9421505041,
+    "placeId": null,
+    "creatorDashboard": "https://create.roblox.com/dashboard/creations/experiences/9421505041/overview"
+  },
+  "deployment": {
+    "mode": "additive-open-cloud-luau-execution",
+    "preserveExistingWorld": true,
+    "managedPaths": [
+      "ReplicatedStorage/ExtasyShared",
+      "ServerScriptService/ExtasyServer",
+      "StarterPlayer/StarterPlayerScripts/ExtasyClient"
+    ],
+    "requires": [
+      "ROBLOX_API_KEY",
+      "universe.place.luau-execution-session:write",
+      "universe.places:write"
+    ]
+  }
+}
