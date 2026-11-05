@@ -4,13 +4,15 @@
 
 **Roblox Universe ID: `9421505041`**
 
+**Place ID indicado: `87600271104551`** (informado pelo proprietário; associação ao universo ainda não confirmada por API pública).
+
 Dashboard: https://create.roblox.com/dashboard/creations/experiences/9421505041/overview
 
-A branch `ExtasyCatBOY` contém o instalador `deploy/deploy.mjs` e o workflow `.github/workflows/extasycatboy-deploy.yml`, disparado em push de arquivos de implantação ou manualmente. O instalador procura o Place ID inicial pela API do Roblox, valida `game.GameId` e `game.PlaceId` dentro da experiência e **altera apenas as três pastas próprias do projeto**. Usa Luau Execution e `AssetService:SavePlaceAsync()`; não sobrescreve o mapa por upload de um `.rbxlx` vazio.
+A branch `ExtasyCatBOY` contém o instalador `deploy/deploy.mjs` e o workflow `.github/workflows/extasycatboy-deploy.yml`, disparado em push de arquivos de implantação ou manualmente. O instalador usa o Place ID indicado no manifesto (ou a variável de Actions `EXTASYCATBOY_PLACE_ID`, se configurada), valida `game.GameId` e `game.PlaceId` dentro da experiência e **altera apenas as três pastas próprias do projeto**. Usa Luau Execution e `AssetService:SavePlaceAsync()`; não sobrescreve o mapa por upload de um `.rbxlx` vazio.
 
 **Permissões:** a GitHub Secret `ROBLOX_API_KEY` precisa autorizar o universo `9421505041` para Luau Execution e para salvar o lugar. Uma chave restrita a outro universo não funciona. Não coloque a chave no código público nem envie no chat.
 
-**Se o lugar não for identificado automaticamente:** acesse Creator Dashboard > Places > lugar inicial > Configure. Copie o número após `/places/` na URL e cadastre-o como variável GitHub Actions `EXTASYCATBOY_PLACE_ID`; o instalador validará esse ID dentro do Roblox antes de alterar qualquer objeto.
+**Verificação do ID:** confirme que o caminho no Creator Dashboard é `/experiences/9421505041/places/87600271104551/configure`. O instalador valida os IDs no próprio Roblox antes de alterar qualquer objeto. Se uma variável GitHub Actions `EXTASYCATBOY_PLACE_ID` já existir, ela tem precedência sobre o manifesto e deve conter este mesmo número.
 
 **Estado:** o alvo está configurado na branch; publicação e funcionamento dentro do jogo exigem retorno confirmado da Action e testes no Roblox Studio.
 
