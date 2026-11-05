@@ -1,1 +1,1 @@
-nextbot-community-motion-maps-search-34
+nextbot-crawl-desert-inspection-35
