@@ -8,7 +8,7 @@ Jogo Roblox de companheiros virtuais **catboy/dogboy** construídos usando **som
 - Validação de amizade no servidor com Player:IsFriendsWithAsync() antes de criar o NPC.
 - Aparência R6 do amigo com HumanoidDescription, orelhas e cauda tridimensionais.
 - Seis personalidades: tímido, tsundere, brincalhão, sonolento, bravinho, gentil.
-- Caminhada com balanço de braços/pernas e cauda, piscada da cabecinha, movimento de cabeça; sem depender de ID de asset externo.
+- Caminhada com balanço de braços/pernas e cauda, inclinação da cabecinha, movimento de cabeça; sem depender de ID de asset externo.
 - NPC segue o dono, volta quando se distancia e tem ProximityPrompt para conversar.
 - Biblioteca local de 2.832 combinações possíveis: 16 categorias x 10 bases x 17 finais, mais 28 saudações x 4 finais = 2.832. Não são 2.832 respostas escritas manualmente; são composições das frases. Ao não saber responder, usa uma das 10 falas de desconhecimento.
 - Chat pelo campo da interface, com suporte experimental a mensagens entregues pelo TextChatService quando a plataforma permite leitura.
