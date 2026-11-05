@@ -1,0 +1,35 @@
+name: Deploy ExtasyCatBOY to Universe 9421505041
+on:
+  push:
+    branches: [ExtasyCatBOY]
+    paths:
+      - "ExtasyCatBOY/deploy/**"
+      - ".github/workflows/extasycatboy-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: roblox-extasycatboy-universe-9421505041
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exactly this branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify installer syntax and game files
+        run: |
+          node --check ExtasyCatBOY/deploy/deploy.mjs
+          node ExtasyCatBOY/scripts/check.mjs
+      - name: Install scripts only in the authorized Roblox experience
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          EXTASYCATBOY_PLACE_ID: ${{ vars.EXTASYCATBOY_PLACE_ID }}
+        run: node ExtasyCatBOY/deploy/deploy.mjs
