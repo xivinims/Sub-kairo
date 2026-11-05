@@ -1,4 +1,4 @@
-name: ExtasyCatBOY source checks
+name: ExtasyCatBOY checks and playable place build
 on:
   push:
     branches: [ExtasyCatBOY]
@@ -9,8 +9,9 @@ on:
 permissions:
   contents: read
 jobs:
-  source:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,5 +19,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Check source consistency
+      - name: Verify dialogue and scripts
         run: node ExtasyCatBOY/scripts/check.mjs
+      - name: Install Rojo 7.7.1 (official release)
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 \
+            https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip \
+            --output "$RUNNER_TEMP/rojo.zip"
+          mkdir -p "$RUNNER_TEMP/rojo"
+          unzip -q "$RUNNER_TEMP/rojo.zip" -d "$RUNNER_TEMP/rojo"
+          chmod +x "$RUNNER_TEMP/rojo/rojo"
+          "$RUNNER_TEMP/rojo/rojo" --version
+      - name: Build ExtasyCatBOY place (never publish to any universe)
+        shell: bash
+        run: |
+          "$RUNNER_TEMP/rojo/rojo" build ExtasyCatBOY/default.project.json \
+            -o "$GITHUB_WORKSPACE/ExtasyCatBOY.rbxlx"
+          test -s "$GITHUB_WORKSPACE/ExtasyCatBOY.rbxlx"
+      - name: Upload build for private testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExtasyCatBOY-place
+          path: ExtasyCatBOY.rbxlx
+          if-no-files-found: error
+          retention-days: 14
