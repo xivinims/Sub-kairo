@@ -275,32 +275,8 @@ event.OnServerEvent:Connect(function(player,operation,message)
     notify(player,"bubble",rec.model,answer,context)
 end)
 
-local function animateR6(rec,timeNow)
-    local model=rec.model
-    local torso=model:FindFirstChild("Torso")
-    local humanoid=model:FindFirstChildOfClass("Humanoid")
-    if not torso or not humanoid then return end
-    local walking=humanoid.MoveDirection.Magnitude>.07
-    local stride=walking and 1 or 0
-    local t=timeNow*8+rec.phase
-    local swing=math.sin(t)*.42*stride
-    for jointName,angle in pairs({
-        ["Right Shoulder"]=-swing, ["Left Shoulder"]=swing,
-        ["Right Hip"]=swing, ["Left Hip"]=-swing,
-    }) do
-        local joint=torso:FindFirstChild(jointName)
-        if joint and joint:IsA("Motor6D") then
-            joint.Transform=CFrame.Angles(angle,0,0)
-        end
-    end
-    local neck=torso:FindFirstChild("Neck")
-    if neck then neck.Transform=CFrame.Angles(math.sin(timeNow*1.9+rec.phase)*.06,0, math.sin(timeNow*1.4+rec.phase)*.045) end
-    local root=model:FindFirstChild("HumanoidRootPart")
-    local rootJoint=root and root:FindFirstChild("RootJoint")
-    if rootJoint then rootJoint.Transform=CFrame.new(0,math.sin(t*2)*.028*stride,0)*CFrame.Angles(0,0,math.sin(t)*.025*stride) end
-    local tail=torso:FindFirstChild("CuteTailMotor")
-    if tail then tail.Transform=CFrame.Angles(0, math.sin(timeNow*4+rec.phase)*.22, math.sin(timeNow*3+rec.phase)*.28) end
-end
+-- Animacoes dos joints acontecem nos clientes em Animations.client.lua:
+-- Motor6D.Transform nao replica a partir do servidor.
 
 local accumulated=0
 RunService.Heartbeat:Connect(function(dt)
@@ -326,7 +302,6 @@ RunService.Heartbeat:Connect(function(dt)
                 humanoid:MoveTo(target)
             end
         end
-        animateR6(rec,now)
     end
 end)
 
