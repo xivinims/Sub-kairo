@@ -20,16 +20,16 @@ Jogo Roblox de companheiros virtuais **catboy/dogboy** construídos usando **som
 
 ## O que está implementado
 
-- Menu mobile/desktop para buscar um amigo e escolher gatinho/cachorrinho.
+- Menu mobile/desktop para buscar amigos e criar até quatro companheiros diferentes ao mesmo tempo.
 - Validação de amizade no servidor com Player:IsFriendsWithAsync() antes de criar o NPC.
 - Aparência R6 do amigo com HumanoidDescription, orelhas e cauda tridimensionais.
 - Seis personalidades: tímido, tsundere, brincalhão, sonolento, bravinho, gentil.
 - Caminhada com balanço de braços/pernas e cauda, inclinação da cabecinha, movimento de cabeça; sem depender de ID de asset externo.
-- NPC segue o dono, volta quando se distancia e tem ProximityPrompt para conversar.
-- Biblioteca local de 2.832 combinações possíveis: 16 categorias x 10 bases x 17 finais, mais 28 saudações x 4 finais = 2.832. Não são 2.832 respostas escritas manualmente; são composições das frases. Ao não saber responder, usa uma das 10 falas de desconhecimento.
+- Até quatro NPCs seguem o dono em posições distintas, voltam quando se distanciam e têm ProximityPrompt para conversar individualmente.
+- Biblioteca local de 3.228 combinações possíveis: 16 categorias x 10 bases x 17 finais (2.720), mais 127 saudações originais x 4 finais (508). São combinações, **não** 3.228 respostas inteiramente escritas. Inclui 10 respostas de desconhecimento e saudações personalizadas com nome do jogador.
 - Chat pelo campo da interface, com suporte experimental a mensagens entregues pelo TextChatService quando a plataforma permite leitura.
 - Conversas como bolhas locais sobre o NPC, sem replicar texto cru do jogador a outras pessoas.
-- Persistência DataStore de amigo escolhido, espécie e personalidade; remove personagem quando amizade é desfeita.
+- Persistência DataStore de uma lista de até quatro amigos, espécies e personalidades; não restaura personagem caso a amizade tenha sido desfeita.
 - Jardim/praça/casinhas decorativas gerados automaticamente **apenas em lugares quase vazios**. Mapas com mais de 12 BaseParts são preservados.
 - Nenhum código do jogo anterior é apagado nem modificado.
 
