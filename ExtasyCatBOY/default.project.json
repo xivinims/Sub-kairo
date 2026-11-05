@@ -3,15 +3,26 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "ExtasyShared": { "$path": "src/shared" }
+      "ExtasyShared": {
+        "$path": "src/shared"
+      },
+      "$ignoreUnknownInstances": true
     },
     "ServerScriptService": {
-      "ExtasyServer": { "$path": "src/server" }
+      "ExtasyServer": {
+        "$path": "src/server"
+      },
+      "$ignoreUnknownInstances": true
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "ExtasyClient": { "$path": "src/client" }
-      }
-    }
+        "ExtasyClient": {
+          "$path": "src/client"
+        },
+        "$ignoreUnknownInstances": true
+      },
+      "$ignoreUnknownInstances": true
+    },
+    "$ignoreUnknownInstances": true
   }
 }
