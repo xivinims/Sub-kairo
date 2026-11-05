@@ -4,7 +4,7 @@ const root = new URL("../", import.meta.url);
 const read = name => fs.readFileSync(new URL(name,root),"utf8");
 const src = read("src/shared/Dialogue.lua");
 function stringArray(name) {
-  const m = src.match(new RegExp("local "+name+" = \\\{([\\s\\S]*?)\\n\\\}"));
+  const m = src.match(new RegExp("local "+name+" = \\\{([\\s\\S]*?)\\\}"));
   assert(m, "Array not found: "+name);
   return (m[1].match(/"(?:[^"\\]|\\.)*"/g) || []).length;
 }
