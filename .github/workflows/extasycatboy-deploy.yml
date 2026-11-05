@@ -4,6 +4,8 @@ on:
     branches: [ExtasyCatBOY]
     paths:
       - "ExtasyCatBOY/deploy/**"
+      - "ExtasyCatBOY/src/**"
+      - "ExtasyCatBOY/scripts/check.mjs"
       - ".github/workflows/extasycatboy-deploy.yml"
   workflow_dispatch:
 permissions:
