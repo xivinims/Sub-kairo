@@ -7,7 +7,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = JSON.parse(fs.readFileSync(path.join(root,"deploy/target.json"),"utf8"));
 const universeId = String(target.roblox.universeId);
 const key = process.env.ROBLOX_API_KEY;
-const manualPlaceId = process.env.EXTASYCATBOY_PLACE_ID;
+const manualPlaceId = process.env.EXTASYCATBOY_PLACE_ID ||
+  (target.roblox.placeId ? String(target.roblox.placeId) : null);
 if (universeId !== "9421505041") throw Error("Universe mismatch: refusing deployment.");
 const sleep = ms => new Promise(resolve => setTimeout(resolve,ms));
 async function getJson(url,headers={},options={}) {
@@ -30,7 +31,7 @@ function rootId(obj) {
 async function resolvePlaceId() {
   if (manualPlaceId) {
     if (!/^[1-9][0-9]{3,20}$/.test(manualPlaceId)) throw Error("Invalid EXTASYCATBOY_PLACE_ID.");
-    console.log("Place configured by Actions variable:",manualPlaceId);
+    console.log("Place configured for ExtasyCatBOY:",manualPlaceId);
     return manualPlaceId;
   }
   const sources=[
