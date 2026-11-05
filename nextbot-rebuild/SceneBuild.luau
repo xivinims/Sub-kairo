@@ -12,14 +12,10 @@ return function(dm,package)
  end
  local removals={};local mapCatalog={}
  local maps=new('Folder','NBMaps',dm:GetService('ServerStorage'))
- for _,def in ipairs({{70623307240060,'Desert Bus'},{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
+ for _,def in ipairs({{13634611708,'Desert Bus'},{124805122537927,'Rocket Arena'},{123713126320438,'Construct'},{10828666356,'gm_construct'},{10828618634,'Library'},{10844642277,'Complex'},{10828489513,'Elysium'},{10819434129,'Backrooms'}})do
   local roots=load(def[1]);if not roots then continue end
   local map=new('Model',def[2],maps);local geometry=new('Model','Geometry',map)
   for _,root in ipairs(roots)do
-   if def[1]==70623307240060 then
-    for _,child in ipairs(root:GetChildren())do if child.Name=='Desert Bus'then child.Parent=geometry end end
-    root:Destroy();continue
-   end
    local inner=root.Name=='Game'and root:FindFirstChild('Map');if inner then inner.Parent=geometry;root:Destroy()else root.Parent=geometry end end
   local removed=0;local count=0
   for _,v in ipairs(geometry:GetDescendants())do
@@ -74,7 +70,7 @@ return function(dm,package)
      elseif v:IsA('BasePart')then v.Anchored=false
      elseif v:IsA('Sound')then
       local uri=tostring(v.AudioContent)
-      if uri:find('4316136477',1,true)or uri:find('6866520692',1,true)then v:Destroy();continue end
+      if uri:find('rbxassetid://0',1,true)or uri=='Content(None)'or uri:find('4316136477',1,true)or uri:find('6866520692',1,true)then v:Destroy();continue end
       v.Playing=false;if v.Parent.Name=='HumanoidRootPart'and v.Name=='sound id'then v.Name='Idle'end end
     end
     if bot.Name=='Hitbox'then bot:Destroy();break end

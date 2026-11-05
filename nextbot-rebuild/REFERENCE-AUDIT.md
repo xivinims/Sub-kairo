@@ -82,6 +82,6 @@ Community movement source: https://create.roblox.com/store/asset/74987847468722 
 
 Prone source: https://create.roblox.com/store/asset/4951486910 by Caterlink (SHA-256 77200224b0658cff0898d06b629f6bf507e9869a6ac2965a839cfd12ef7f0420). The authored Crawl sequence replaces the crouching placeholder for downed players. Moving plays the sequence; stopping holds its first authored pose. These are community assets, not verified official Evade animation files. Imported scripts are removed.
 
-Additional map candidate: https://create.roblox.com/store/asset/70623307240060 by Satsion (SHA-256 450b5f99360d7bf911dd8b0e61b8e2b596d31d3834177460511e3bb5fbc983b0). Only its Desert Bus groups are selected; unrelated city/FNAF contents are excluded. Engine validation, not the asset name, determines whether it can be included in the playable rotation.
+Additional map: https://create.roblox.com/store/asset/13634611708 by fishyifiyedn (SHA-256 5f343b5b702d324997cb28f6d8e006a5c64fc001f9aef932c2a39d573ef87b74), a community Desert Bus model with 261 parts. The previous road-only candidate 70623307240060 was rejected after testing because its only two connected spawn points were over 2 km apart. The replacement must pass the six-connected-spawn minimum before publication.
 
 Native visual/mobile playtesting remains outstanding. Engine tests establish structural and behavioral checks, not a pixel-identical recreation or an exact match to Evade's movement speeds.

@@ -91,6 +91,7 @@ results.motion.communitySourceIds={'74987847468722','4951486910'}
 passed('community movement and prone crawl poses')
 
 local Maps=require(S.MapService)
+assert(Storage.NBMaps:FindFirstChild('Desert Bus'),'Additional map missing')
 local sources={};for _,entry in ipairs(require(package.MapCatalog))do sources[entry.name]=string.format('%.0f',entry.assetId)end
 assert(not workspace:FindFirstChild('LobbyScene'),'Generated lobby must be absent')
 for _,name in ipairs(Maps.Names())do
@@ -100,6 +101,7 @@ for _,name in ipairs(Maps.Names())do
  local points=workspace.RoundSpawns:GetChildren();assert(#points>=2,'Insufficient spawns')
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.ActiveMap.Geometry};rp.RespectCanCollide=true
  for _,p in ipairs(points)do assert(workspace:Raycast(p.Position+Vector3.new(0,.2,0),Vector3.new(0,-1,0),rp),'Spawn has no supporting floor')end
+ if name=='Desert Bus'then assert(#points>=6,'Desert Bus needs six connected spawn points')end
  local paths={}
  for i=2,math.min(#points,4)do
   local path=game:GetService('PathfindingService'):CreatePath({AgentRadius=2,AgentHeight=5,AgentCanJump=true})
