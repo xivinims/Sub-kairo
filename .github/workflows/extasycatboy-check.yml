@@ -1,0 +1,22 @@
+name: ExtasyCatBOY source checks
+on:
+  push:
+    branches: [ExtasyCatBOY]
+    paths:
+      - "ExtasyCatBOY/**"
+      - ".github/workflows/extasycatboy-check.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check source consistency
+        run: node ExtasyCatBOY/scripts/check.mjs
