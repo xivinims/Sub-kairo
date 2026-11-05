@@ -1,0 +1,17 @@
+{
+  "name": "ExtasyCatBOY",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "ExtasyShared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "ExtasyServer": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "ExtasyClient": { "$path": "src/client" }
+      }
+    }
+  }
+}
