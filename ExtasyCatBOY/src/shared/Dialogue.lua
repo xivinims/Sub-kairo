@@ -1,5 +1,5 @@
 -- Falas originais. 16 contextos com 10 bases x 17 finais = 2720 combinacoes,
--- mais 28 saudacoes x 4 finais = 112. Total >= 2832 frases possiveis.
+-- mais de 100 saudacoes originais x 4 finais. Total acima de 3.000 combinacoes possiveis.
 -- O sistema NAO envia o texto do jogador a servicos externos e NAO imita falas reais do amigo.
 local D = {}
 local rng = Random.new()
@@ -10,11 +10,133 @@ local endings = {
 }
 local helloEndings = {"", " :3", "!!", " hehe!"}
 local hello = {
-    "Oi", "Oie", "Oieee", "Oiiii", "Olá", "Oláá", "Hey", "Ei",
-    "Opa", "Oi oi", "Oizinho", "Oie:3", "Hiii", "Bom dia", "Boa tarde",
-    "Boa noite", "Oioi", "Heey", "Hêê", "Alô", "Tudo bem",
-    "Cheguei", "Tcharam", "Você apareceu", "Eu tava te esperando",
-    "Eeeeei", "Ah, é você", "Olha só quem chegou",
+    "Oi",
+    "Oie",
+    "Oieee",
+    "Oiiii",
+    "Olá",
+    "Oláá",
+    "Hey",
+    "Ei",
+    "Opa",
+    "Oi oi",
+    "Oizinho",
+    "Oie:3",
+    "Hiii",
+    "Bom dia",
+    "Boa tarde",
+    "Boa noite",
+    "Oioi",
+    "Heey",
+    "Hêê",
+    "Alô",
+    "Tudo bem?",
+    "Cheguei!",
+    "Tcharam!",
+    "Você apareceu!",
+    "Eu tava te esperando!",
+    "Eeeeei",
+    "Ah, é você!",
+    "Olha só quem chegou!",
+    "Oiii, {user}!",
+    "Oieee, {user}, tudo bem com você?",
+    "Olá, {user}!",
+    "Oi, oi, {user}!",
+    "Êêê, {user} chegou!",
+    "Oiê, {user}!",
+    "Oi, humano!",
+    "Meu humano favorito chegou!",
+    "Cof cof... oi!",
+    "Oi, foi mal, me distraí.",
+    "H-hm... oi...",
+    "O-oi...",
+    "Oie, não me assusta assim!",
+    "Oi, que surpresa!",
+    "Opa, olha quem tá aqui!",
+    "Oi, como foi seu dia?",
+    "Oi, tudo certinho?",
+    "Oi, quer conversar?",
+    "Oi, vem cá!",
+    "Oi, vamos passear?",
+    "Oie, me conta uma novidade!",
+    "Oie, tô ouvindo!",
+    "Oiii, ouvi você chegando!",
+    "Oi, você me chamou?",
+    "Oi, pode falar!",
+    "Oie, eu tava cochilando.",
+    "Oi, acordei!",
+    "O-olá, que vergonha...",
+    "Oi, minhas orelhas te ouviram!",
+    "Ei, o que aconteceu?",
+    "Olha só, uma visita!",
+    "Oie, faz tempo!",
+    "Oi de novo!",
+    "Olá de novo, {user}!",
+    "Oizinho de novo!",
+    "Oi, me dá atenção um pouquinho?",
+    "Oi, dá pra brincar agora?",
+    "Oi, posso acompanhar?",
+    "Opa, que vento gostoso!",
+    "Oie, eu tava olhando as nuvens.",
+    "Opa, chegou na hora certa!",
+    "Oi, que alegria te ver por aqui!",
+    "Ei, quer ver uma coisa?",
+    "Oiii, tenho uma ideia!",
+    "Oi, tava pensando em você chegar.",
+    "E aí, {user}?",
+    "E aí, tudo bem?",
+    "Opa, como você tá?",
+    "Oi, tá me ouvindo?",
+    "Oiii, meu humor melhorou!",
+    "Olá, qual o plano de hoje?",
+    "Oi, onde vamos hoje?",
+    "Olá, gostei desse lugar!",
+    "Ei, não vai embora tão cedo!",
+    "Opa, bora explorar!",
+    "Oie, dá um oi de volta!",
+    "Oi, acabei de aparecer!",
+    "Hm? Oi!",
+    "Hã? Você me chamou?",
+    "Oie... tava distraído.",
+    "Ah, oi! Nem percebi você.",
+    "Ei, ei, ei!",
+    "Oi, olha minhas orelhas!",
+    "Oie, *balança a cauda*",
+    "Opa, *inclina a cabecinha*",
+    "Oi, que dia bom!",
+    "Olá, quer conhecer a praça?",
+    "Oi, bora caminhar!",
+    "Oi, eu tô aqui!",
+    "Oi, eu não esqueci você!",
+    "Oi, tenho uma história curtinha!",
+    "Oiii, que saudade das nossas brincadeiras!",
+    "Ei, vamos descobrir algo novo?",
+    "Oi, tá tudo tranquilo?",
+    "E aí, amigão?",
+    "Oie, tá precisando de companhia?",
+    "Oi, tô meio tímido hoje.",
+    "Oi, hoje acordei animado!",
+    "Opa, sem sustos dessa vez!",
+    "Olha só quem apareceu por aqui!",
+    "Oii, {user}, que bom te ver!",
+    "Eeei, você voltou!",
+    "Oi, quer jogar comigo?",
+    "Olá, {user}, eu estava aqui!",
+    "Oi, queria te dar um oi especial!",
+    "Oieee, já decidiu o que vamos fazer?",
+    "Oi, olha a hora!",
+    "Oi, tem alguma novidade?",
+    "Oie, fico feliz que apareceu!",
+    "Oláá, eu estava passeando!",
+    "Oie:3 Como tá indo?",
+    "Oi, escolhe um caminho!",
+    "Oi, quer explorar a casa?",
+    "Oi, estou praticando minhas falas!",
+    "Oi, quase esbarrei na porta!",
+    "Opa, tenho uma pergunta boba!",
+    "Oie, será que hoje tem petisco?",
+    "Ei, olha aqui!",
+    "Oi, agora somos uma equipe!",
 }
 local replies = {
     afirmacao = {
@@ -172,7 +294,7 @@ function D.CountVariations()
     for _, key in ipairs(order) do total += #replies[key] * #endings end
     return total
 end
-function D.Respond(message, species, personality, key)
+function D.Respond(message, species, personality, key, playerName)
     local kind = infer(message)
     local sentence
     for _ = 1, 5 do
@@ -183,12 +305,18 @@ function D.Respond(message, species, personality, key)
         end
         if sentence ~= recentByKey[key or ""] then break end
     end
+    if playerName and type(playerName) == "string" then
+        local shortName = string.sub(playerName, 1, 24)
+        sentence = sentence:gsub("{user}", function() return shortName end)
+    else
+        sentence = sentence:gsub("{user}", "amigo")
+    end
     recentByKey[key or ""] = sentence
     -- Substituir final incompatível com especie.
     if species == "cat" then sentence = sentence:gsub("au au!", "miau!")
     else sentence = sentence:gsub("miau!", "au au!") end
     -- Nao sobrepor saudacoes simples com prefixos longos.
-    if kind ~= "saudacao" and personality and personal[personality] then
+    if personality and personal[personality] then
         if rng:NextNumber() < 0.23 then sentence = pick(personal[personality]) .. sentence end
     end
     return sentence, kind
