@@ -1,7 +1,7 @@
 -- Screenshot reference: IMG_2671 through IMG_2690, supplied by the owner.
 -- Zero asset IDs are unresolved, deliberately not replaced by unrelated animations.
 return {
-	Build = "exact-run-motion-inventory-04", InitialMap = "gm_construct", Intermission = 90, RoundDuration = 180,
+	Build = "exact-run-wheel-mobile-vote-05", InitialMap = "gm_construct", Intermission = 30, VotingDuration = 12, BotWalkSpeed = 22, BotMaxSpeed = 30, ChaserWalkSpeed = 24, ChaserMaxSpeed = 31, RoundDuration = 180,
 	WalkSpeed = 26, CrouchSpeed = 12, ReviveDuration = 5, BleedoutDuration = 35,
 	Settings = {
 		GameMusic=1, LobbyMusic=1, BoomboxVolume=1, NextbotVolume=1, EmoteVolume=1,

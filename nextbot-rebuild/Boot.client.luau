@@ -12,7 +12,7 @@ view:Set('CARREGANDO JOGO',.25,'Carregando a interface…')
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local atlas=package:GetAttribute('MenuAtlas')
 if atlas and atlas~=''then pcall(function()Content:PreloadAsync({atlas})end)end
-view:Set('CARREGANDO JOGO',1,'Recursos prontos')
+view:Set('CARREGANDO JOGO',.4,'Preparando o mapa e os scripts…')
 if os.clock()-began<.8 then task.wait(.8-(os.clock()-began))end
 playerGui:SetAttribute('NBBootComplete',true)
 while not playerGui:GetAttribute('NBMapLoadingVisible')do playerGui:GetAttributeChangedSignal('NBMapLoadingVisible'):Wait()end

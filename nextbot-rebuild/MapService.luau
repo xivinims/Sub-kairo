@@ -41,6 +41,7 @@ end
 function Service.Load(name)
  local template=templates:FindFirstChild(name);if not template then return false end
  package:SetAttribute('MapReady',false)
+ package:SetAttribute('MapContentRevision',0)
  package:SetAttribute('MapRevision',(package:GetAttribute('MapRevision')or 0)+1)
  local old=workspace:FindFirstChild('ActiveMap');if old then old:Destroy()end
  for _,n in ipairs({'RoundSpawns','NextbotSpawns'})do local f=workspace:FindFirstChild(n);if f then f:Destroy()end end
@@ -86,6 +87,9 @@ function Service.Load(name)
  frameMenu(points,rp,assetId)
  map.Candidates:Destroy();Service.current=name;package:SetAttribute('MapName',name)
  package:SetAttribute('MapAssetId',assetId);package:SetAttribute('MapSourceUrl','https://create.roblox.com/store/asset/'..tostring(assetId))
+ -- Streaming is disabled by the build so this count is an actual replication gate.
+ map:SetAttribute('ExpectedDescendants',#map:GetDescendants())
+ package:SetAttribute('MapContentRevision',package:GetAttribute('MapRevision'))
  package:SetAttribute('MapReadyRevision',package:GetAttribute('MapRevision'))
  package:SetAttribute('MapReady',true)
  return true

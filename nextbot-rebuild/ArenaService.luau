@@ -19,6 +19,8 @@ function Service.Leave(p)
 end
 function Service.Enter(p,reposition)
  if not package:GetAttribute('MapReady')then return false,'loading'end
+ -- Server-only permission: a local loading-screen flag cannot admit an unready client.
+ if typeof(p)=='Instance'and p:IsA('Player')and p:GetAttribute('NBClientReadyRevision')~=package:GetAttribute('MapRevision')then return false,'loading'end
  local c,root,h=rig(p);if not root or not h or h.Health<=0 then return false,'character'end
  tickets[p]=(tickets[p]or 0)+1;local ticket=tickets[p]
  if not p:GetAttribute('NBInArena')or reposition then

@@ -5,19 +5,23 @@ local bindings=Pose.Bindings(package:WaitForChild('MovementSourceRig'))
 local sourceBindings={}
 for _,rig in ipairs(package:WaitForChild('MovementSourceRigs'):GetChildren())do sourceBindings[rig.Name]=Pose.Bindings(rig)end
 local states={}
+local generation={}
 local function release(p)
  local old=states[p];if old then for _,connection in ipairs(old.connections)do connection:Disconnect()end end
  states[p]=nil
 end
 local function setup(p)
  local function char(c)
+  generation[p]=(generation[p]or 0)+1;local token=generation[p]
   local h=c:WaitForChild('Humanoid',10);local root=c:WaitForChild('HumanoidRootPart',10);if not h or not root or p.Character~=c then return end
+  if generation[p]~=token or h.RigType~=Enum.HumanoidRigType.R6 then return end
   release(p)
-  local state={char=c,h=h,root=root,motors=Pose.Motors(c),time=0,name='',previous={},connections={}}
+  local state={char=c,h=h,root=root,motors=Pose.Motors(c),time=0,name='',previous={},connections={},animators={}}
   states[p]=state
   local function ownAnimations(v)
    if v:IsA('LocalScript')and v.Name=='Animate'then v.Enabled=false end
-   if v:IsA('Animator')then
+   if v:IsA('Animator')and not state.animators[v]then
+    state.animators[v]=true
     for _,track in ipairs(v:GetPlayingAnimationTracks())do track:Stop(0)end
     table.insert(state.connections,v.AnimationPlayed:Connect(function(track)track:Stop(0)end))
    end
@@ -26,17 +30,18 @@ local function setup(p)
   table.insert(state.connections,c.DescendantAdded:Connect(ownAnimations))
   c:SetAttribute('NBManualLocomotion',true)
  end
- p.CharacterAdded:Connect(char);p.CharacterRemoving:Connect(function()release(p)end)
+ p.CharacterAdded:Connect(char);p.CharacterRemoving:Connect(function()generation[p]=(generation[p]or 0)+1;release(p)end)
  p:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()if p.Character then task.spawn(char,p.Character)end end)
  if p.Character then task.spawn(char,p.Character)end
 end
-Players.PlayerAdded:Connect(setup);Players.PlayerRemoving:Connect(release);for _,p in ipairs(Players:GetPlayers())do setup(p)end
+Players.PlayerAdded:Connect(setup);Players.PlayerRemoving:Connect(function(p)generation[p]=nil;release(p)end);for _,p in ipairs(Players:GetPlayers())do setup(p)end
 Run.PreSimulation:Connect(function(dt)
  for p,s in pairs(states)do
   if not s.char.Parent or s.h.Health<=0 then continue end
   if (p:GetAttribute('NBPlayingEmote')or '')~=''then s.name='';table.clear(s.previous);continue end
   local velocity=s.root.CFrame:VectorToObjectSpace(s.root.AssemblyLinearVelocity)
-  local moving=Vector3.new(velocity.X,0,velocity.Z).Magnitude>1.5
+  local speed=Vector3.new(velocity.X,0,velocity.Z).Magnitude
+  local moving=speed>1.5
   local mode=p:GetAttribute('NBMobility');local name
   if mode=='Downed'then name='Downed'
   elseif mode=='Slide'then name='Slide'
@@ -47,7 +52,15 @@ Run.PreSimulation:Connect(function(dt)
   local sequence=clips:FindFirstChild(name)
   if sequence then
    if s.name~=name then s.name=name;s.time=0 end
-   local data=Pose.Decode(sequence);s.time+=dt
+   local data=Pose.Decode(sequence)
+   -- Match stride cadence to actual horizontal motion. Preserve authored keys;
+   -- only the playback clock changes while accelerating, crawling or boosted.
+   local rate=1
+   if moving and (name=='CommunityWalk'or name=='CommunityRun'or name=='Crouch forward'or name=='Downed')then
+    local reference=name=='CommunityRun'and 33.3 or name=='CommunityWalk'and 26 or name=='Downed'and 3 or 12
+    rate=math.clamp(speed/reference,.25,2)
+   end
+   s.time+=dt*rate
    if sequence.Loop and data.duration>0 then s.time%=data.duration end
    if mode=='Downed'and not moving then s.time=0 end
    -- Blend from our previous pose, not a default Animator overwrite each frame.

@@ -6,9 +6,9 @@ local dm=R.Instance.new('DataModel')
 local package=R.Instance.new('Folder');package.Name='NextbotReference';package.Parent=dm:GetService('ReplicatedStorage')
 local atlas=serde.decode('json',fs.readFile('/tmp/nb-assets/atlas-result.json'))
 if atlas.imageId then package:SetAttribute('MenuAtlas','rbxassetid://'..atlas.imageId)end
-local scripts={}
+local scripts={};local clientScripts={}
 local server=dm:GetService('ServerScriptService')
-for _,entry in ipairs({{'NextbotService','ModuleScript',server},{'ArenaService','ModuleScript',server},{'DoorService','ModuleScript',server},{'LoadingPolicy','ModuleScript',package},{'LoadingView','ModuleScript',dm:GetService('ReplicatedFirst')},{'Boot.client','LocalScript',dm:GetService('ReplicatedFirst')},{'HudControls','ModuleScript',package},{'InventoryPolicy','ModuleScript',package},{'ItemPreview','ModuleScript',package},{'Avatar.server','Script',server},{'AudioConfig','ModuleScript',package},{'Boombox.server','Script',server},{'Music.client','LocalScript'},{'Loading.client','LocalScript'},{'PosePlayer','ModuleScript',package},{'Movement.server','Script',server},{'Locomotion.client','LocalScript'},{'Camera.client','LocalScript'},{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
+for _,entry in ipairs({{'NextbotService','ModuleScript',server},{'ArenaService','ModuleScript',server},{'DoorService','ModuleScript',server},{'LoadingPolicy','ModuleScript',package},{'LoadingView','ModuleScript',dm:GetService('ReplicatedFirst')},{'Boot.client','LocalScript',dm:GetService('ReplicatedFirst')},{'HudControls','ModuleScript',package},{'HudLayout','ModuleScript',package},{'EmoteWheel','ModuleScript',package},{'Voting.client','LocalScript'},{'InventoryPolicy','ModuleScript',package},{'ItemPreview','ModuleScript',package},{'Avatar.server','Script',server},{'AudioConfig','ModuleScript',package},{'Boombox.server','Script',server},{'Music.client','LocalScript'},{'Loading.client','LocalScript'},{'PosePlayer','ModuleScript',package},{'Movement.server','Script',server},{'Locomotion.client','LocalScript'},{'Camera.client','LocalScript'},{'ProfileService','ModuleScript',server},{'MapService','ModuleScript',server},{'RescueService','ModuleScript',server},{'Economy.server','Script',server},{'Config','ModuleScript',package},{'EmotePolicy','ModuleScript',package},{'Emotes.server','Script',dm:GetService('ServerScriptService')},{'Emotes.client','LocalScript'},{'EquipmentRules','ModuleScript',package},{'Equipment.server','Script',dm:GetService('ServerScriptService')},{'Equipment.client','LocalScript'},{'SettingsPolicy','ModuleScript',package},{'RoundState','ModuleScript',package},{'Rounds.server','Script',dm:GetService('ServerScriptService')},{'Match.client','LocalScript'},{'Menu.client','LocalScript'},{'Settings.server','Script',dm:GetService('ServerScriptService')},{'Settings.client','LocalScript'}}) do
 	local name,class,parent=table.unpack(entry)
 	if class=='LocalScript' and not parent then
 		parent=dm:GetService('StarterPlayer'):FindFirstChild('StarterPlayerScripts')
@@ -16,12 +16,30 @@ for _,entry in ipairs({{'NextbotService','ModuleScript',server},{'ArenaService',
 	end
 	local source=fs.readFile(name..'.luau')
 	local ok,err=pcall(luau.load,source,{debugName=name});assert(ok,name..": "..tostring(err))
+	if class=='LocalScript'and name~='Boot.client'and name~='Loading.client'then table.insert(clientScripts,name);source=source..'\ngame:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):SetAttribute("NBReady_'..name..'",true)\n'end
 	local script=R.Instance.new(class);script.Name=name;script.Source=source;script.Parent=parent
 	table.insert(scripts,name)
 end
+package:SetAttribute('NBClientScripts',serde.encode('json',clientScripts))
+require('./ImportEmoteReference').Import(package)
 local clips=R.Instance.new('Folder');clips.Name='EmoteClips';clips.Parent=package
 local emoteCatalog={}
 local emoteRoots=R.deserializeModel(fs.readFile('assets/user-r6-emotes.rbxm'))
+local sourceRig
+for _,root in ipairs(emoteRoots)do
+ local all={root};for _,v in ipairs(root:GetDescendants())do table.insert(all,v)end
+ for _,v in ipairs(all)do if v:IsA('Model')and v:FindFirstChildOfClass('Humanoid')then sourceRig=v;break end end
+ if sourceRig then break end
+end
+assert(sourceRig,'Uploaded emotes require their source R6 rig')
+local rig=sourceRig:Clone();rig.Name='EmoteSourceRig';rig.Parent=package
+local rigDescendants=rig:GetDescendants();local removals={}
+for _,v in ipairs(rigDescendants)do
+ if v:IsA('LuaSourceContainer')or v:IsA('KeyframeSequence')or v:IsA('ObjectValue')or v.Name=='AnimSaves'then table.insert(removals,v)
+ elseif v:IsA('BasePart')then v.Anchored=true;v.CanCollide=false;v.CanTouch=false end
+end
+table.sort(removals,function(a,b)return #a:GetFullName()>#b:GetFullName()end)
+for _,v in ipairs(removals)do v:Destroy()end
 for _,root in ipairs(emoteRoots) do
  for _,sequence in ipairs(root:GetDescendants())do
   if sequence:IsA('KeyframeSequence') then
@@ -60,15 +78,15 @@ local clamped=policy(config.Settings,{FOV=300,GameMusic=-2,LobbyMusic=5,LowGraph
 assert(clamped.FOV==100 and clamped.GameMusic==0 and clamped.LobbyMusic==1 and clamped.LowGraphics)
 assert(config.Settings.LowGraphics==false,'policy mutated defaults')
 assert(policy(config.Settings,nil).FOV==70,'missing payload must restore defaults')
-assert(config.Intermission==90 and config.RoundDuration==180)
+assert(config.Intermission==30 and config.RoundDuration==180)
 local RoundState=luau.load(fs.readFile('RoundState.luau'))()
-local state=RoundState.new(100,90,180)
-assert(not RoundState.tick(state,189,true) and state.phase=='Intermission')
-assert(not RoundState.tick(state,190,false) and state.round==0)
-assert(RoundState.tick(state,191,true) and state.deadline==371 and state.round==1)
-assert(not RoundState.tick(state,370,true))
-assert(RoundState.tick(state,371,false) and state.phase=='Intermission' and state.deadline==461)
-assert(RoundState.tick(state,461,true) and state.round==2 and state.deadline==641)
+local state=RoundState.new(100,30,180)
+assert(not RoundState.tick(state,129,true) and state.phase=='Intermission')
+assert(not RoundState.tick(state,130,false) and state.round==0)
+assert(RoundState.tick(state,131,true) and state.deadline==311 and state.round==1)
+assert(not RoundState.tick(state,310,true))
+assert(RoundState.tick(state,311,false) and state.phase=='Intermission' and state.deadline==341)
+assert(RoundState.tick(state,341,true) and state.round==2 and state.deadline==521)
 local Rules=luau.load(fs.readFile('EquipmentRules.luau'))()
 local owned={flashlight=1,timer=2};local used={}
 assert(not Rules.canEquip('unknown',owned) and not Rules.canEquip({},owned))
@@ -88,7 +106,7 @@ end
 local remote=R.Instance.new('RemoteEvent');remote.Name='Settings';remote.Parent=package
 local matchRemote=R.Instance.new('RemoteEvent');matchRemote.Name='MatchAction';matchRemote.Parent=package
 local equipmentRemote=R.Instance.new('RemoteEvent');equipmentRemote.Name='Equipment';equipmentRemote.Parent=package
-local W=dm:GetService('Workspace');W.StreamingEnabled=true;W.StreamingMinRadius=64;W.StreamingTargetRadius=256
+local W=dm:GetService('Workspace');W.StreamingEnabled=false;W.StreamingMinRadius=64;W.StreamingTargetRadius=256
 for _,name in ipairs({'Economy','Rescue','Movement','Boombox'})do local e=R.Instance.new('RemoteEvent');e.Name=name;e.Parent=package end
 local mapCatalog=require('./SceneBuild')(dm,package)
 W:SetAttribute('ReferencePreviewOnly',false)

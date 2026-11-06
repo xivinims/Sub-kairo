@@ -8,13 +8,16 @@ const key=process.env.ROBLOX_API_KEY;
 if(!key) throw Error('ROBLOX_API_KEY missing');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 await fs.mkdir('/tmp/nb-assets',{recursive:true});
-async function get(url,auth=false){
- for(let attempt=0;attempt<5;attempt++){
-  const r=await fetch(url,{headers:auth?{'x-api-key':key}:{},signal:AbortSignal.timeout(120000)});
-  if(r.ok)return r;
-  if(r.status===429&&attempt<4){await new Promise(resolve=>setTimeout(resolve,Math.min(5000*2**attempt,40000)));continue;}
-  throw Error(`HTTP ${r.status} on ${new URL(url).hostname}`);
+async function get(url,auth=false,extraHeaders={}){
+ for(let attempt=0;attempt<6;attempt++){
+  try{
+   const r=await fetch(url,{headers:{...(auth?{'x-api-key':key}:{}),...extraHeaders},signal:AbortSignal.timeout(120000)});
+   if(r.ok)return r;
+   if(![408,429,500,502,503,504].includes(r.status)||attempt===5)throw Error(`HTTP ${r.status} on ${new URL(url).hostname}`);
+  }catch(error){if(attempt===5||String(error).includes('HTTP 401')||String(error).includes('HTTP 403'))throw error;}
+  await new Promise(resolve=>setTimeout(resolve,Math.min(1500*2**attempt,20000)));
  }
+ throw Error(`Download retries exhausted on ${new URL(url).hostname}`);
 }
 const original=Buffer.concat(await Promise.all(Array.from({length:7},(_,i)=>fs.readFile(new URL(`assets/emotes.part${i}`,import.meta.url)))));
 if(hash(original)!=='acc4f67fa3e686020dc7e4ed1302770156eb106837958ed691ae0acfa4546995')throw Error('Emote source integrity mismatch');
@@ -37,7 +40,7 @@ for(const id of [74987847468722,4951486910,13634611708,14026023204,11128061931,1
  }catch(e){metadata.push({id,error:String(e)});}
 }
 await fs.writeFile('/tmp/nb-assets/meta.json',JSON.stringify(metadata,null,2));
-const zip=Buffer.from(await (await get('https://github.com/lune-org/lune/releases/download/v0.11.1/lune-0.11.1-linux-x86_64.zip')).arrayBuffer());
+const zip=Buffer.from(await (await get('https://api.github.com/repos/lune-org/lune/releases/assets/662020558',false,{Accept:'application/octet-stream'})).arrayBuffer());
 if(hash(zip)!=='39859282ce677fce19e6eb45c37596a90a25c324c95b4e7e02d428b6cae294a1')throw Error('Lune integrity mismatch');
 await fs.writeFile('/tmp/nb-lune.zip',zip);
 execFileSync('unzip',['-q','-o','/tmp/nb-lune.zip','-d','/tmp/nb-lune']);

@@ -1,287 +1,313 @@
--- Screenshot-driven layout; functionality is supplied by validated server remotes.
+-- Safe-area menu. All content reflows from the actual client viewport.
 local Players=game:GetService('Players')
-local Tween=game:GetService('TweenService')
-local UIS=game:GetService('UserInputService')
 local Run=game:GetService('RunService')
-local Http=game:GetService('HttpService')
+local UIS=game:GetService('UserInputService')
 local player=Players.LocalPlayer
 local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReference')
 local config=require(package:WaitForChild('Config'))
-local inventoryPolicy=require(package:WaitForChild('InventoryPolicy'))
-local inventoryFilter=nil;local shopTabs={};local previewStarted=0
-local gui=Instance.new('ScreenGui');gui.Name='NextbotMenu';gui.Enabled=false;gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=5;gui.Parent=player:WaitForChild('PlayerGui')
-local colors={Color3.fromRGB(91,127,198),Color3.fromRGB(77,147,104),Color3.fromRGB(181,145,82),Color3.fromRGB(142,98,180),Color3.fromRGB(177,75,86),Color3.fromRGB(72,152,166)}
-local emoteCatalog=require(package:WaitForChild('EmoteCatalog'))
-local combined=table.clone(config.Catalog)
-for _,item in ipairs(emoteCatalog) do table.insert(combined,item) end
-local white=Color3.fromRGB(239,239,240)
-local function make(class,parent,props)
- local v=Instance.new(class);for k,val in pairs(props or {}) do v[k]=val end;v.Parent=parent;return v
+local policy=require(package:WaitForChild('InventoryPolicy'))
+local pose=require(package:WaitForChild('PosePlayer'))
+local catalog=table.clone(config.Catalog)
+for _,item in ipairs(require(package:WaitForChild('EmoteCatalog')))do table.insert(catalog,item)end
+local byId={};for _,item in ipairs(catalog)do byId[item.id]=item end
+local white=Color3.fromRGB(239,243,248)
+local muted=Color3.fromRGB(170,184,202)
+local accent=Color3.fromRGB(143,225,194)
+local function new(class,parent,props)
+ local o=Instance.new(class);for k,v in pairs(props or {})do o[k]=v end;o.Parent=parent;return o
 end
-local canvas=make('Frame',gui,{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(1536,709),BackgroundTransparency=1})
-local scale=make('UIScale',canvas)
-local function fit()local s=gui.AbsoluteSize;scale.Scale=math.min(s.X/1536,s.Y/709)end
-fit();gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(fit)
-local function label(parent,text,x,y,w,h,size)
- return make('TextLabel',parent,{Text=text,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundTransparency=1,Font=Enum.Font.GothamBold,TextSize=size or 22,TextColor3=white,TextStrokeColor3=Color3.fromRGB(20,20,23),TextStrokeTransparency=.15,TextWrapped=true})
+local gui=new('ScreenGui',player:WaitForChild('PlayerGui'),{Name='NextbotMenu',Enabled=false,ResetOnSpawn=false,IgnoreGuiInset=false,ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets,DisplayOrder=5,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
+new('Frame',gui,{Name='Shade',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(9,13,22),BackgroundTransparency=.22,BorderSizePixel=0})
+local root=new('Frame',gui,{Name='SafeContent',Position=UDim2.fromOffset(16,12),Size=UDim2.new(1,-32,1,-24),BackgroundTransparency=1})
+local function label(parent,value,size,color)
+ return new('TextLabel',parent,{Text=value,BackgroundTransparency=1,Font=Enum.Font.GothamBold,TextSize=size or 18,TextColor3=color or white,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center})
 end
-local function panel(parent,x,y,w,h,color)
- local p=make('Frame',parent,{Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundColor3=Color3.fromRGB(18,20,25),BackgroundTransparency=.2})
- make('UICorner',p,{CornerRadius=UDim.new(0,10)});make('UIStroke',p,{Color=color or colors[1],Thickness=3,Transparency=.15})
- local inner=make('Frame',p,{Position=UDim2.fromOffset(5,5),Size=UDim2.new(1,-10,1,-10),BackgroundTransparency=1})
- make('UICorner',inner,{CornerRadius=UDim.new(0,6)});make('UIStroke',inner,{Color=Color3.fromRGB(190,184,160),Transparency=.65,Thickness=1})
+local function surface(parent)
+ local p=new('Frame',parent,{BackgroundColor3=Color3.fromRGB(22,29,42),BackgroundTransparency=.12,BorderSizePixel=0})
+ new('UICorner',p,{CornerRadius=UDim.new(0,12)});new('UIStroke',p,{Color=Color3.fromRGB(81,104,130),Transparency=.4})
  return p
 end
-local function button(parent,text,x,y,w,h,color,fn)
- local p=panel(parent,x,y,w,h,color)
- local b=make('TextButton',p,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text='',AutoButtonColor=false})
- label(b,text,8,3,w-16,h-6,21)
- b.Activated:Connect(fn)
- b.MouseEnter:Connect(function()Tween:Create(p,TweenInfo.new(.12),{BackgroundTransparency=.05}):Play()end)
- b.MouseLeave:Connect(function()Tween:Create(p,TweenInfo.new(.12),{BackgroundTransparency=.2}):Play()end)
- return p,b
+local function button(parent,value,fn)
+ local b=new('TextButton',parent,{Text=value,Font=Enum.Font.GothamBold,TextSize=16,TextColor3=white,TextWrapped=true,BackgroundColor3=Color3.fromRGB(43,63,82),BorderSizePixel=0,AutoButtonColor=true})
+ new('UICorner',b,{CornerRadius=UDim.new(0,9)})
+ if fn then b.Activated:Connect(fn)end
+ return b
 end
-local pages={}
-for _,name in ipairs({'Home','Shop','Inventory','Info'}) do pages[name]=make('Frame',canvas,{Name=name,Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=name=='Home'}) end
-local active='Home';local transition
+local function place(o,x,y,w,h)o.Position=UDim2.fromOffset(x,y);o.Size=UDim2.fromOffset(math.max(w,0),math.max(h,0))end
+local function clear(o)for _,v in ipairs(o:GetChildren())do if v:IsA('GuiObject')then v:Destroy()end end end
+local function scroll(parent)
+ return new('ScrollingFrame',parent,{BackgroundTransparency=1,BorderSizePixel=0,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarThickness=4,ScrollBarImageColor3=muted,ClipsDescendants=true})
+end
+local header=new('Frame',root,{BackgroundTransparency=1})
+local heading=label(header,'EXACT RUN',24)
+local stats=label(header,'',15,accent);stats.TextXAlignment=Enum.TextXAlignment.Right;stats.TextTruncate=Enum.TextTruncate.AtEnd
+local back
+local toast=label(root,'',15,accent);toast.Name='TransactionStatus';toast.TextTruncate=Enum.TextTruncate.AtEnd
+local toastSerial=0
+local function message(value)
+ toastSerial+=1;local token=toastSerial;toast.Text=value
+ task.delay(5,function()if token==toastSerial then toast.Text=''end end)
+end
+local tabs=new('ScrollingFrame',root,{Name='Categories',BackgroundTransparency=1,BorderSizePixel=0,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.X,ScrollingDirection=Enum.ScrollingDirection.X,ScrollBarThickness=2})
+new('UIListLayout',tabs,{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder})
+local body=new('Frame',root,{BackgroundTransparency=1})
+local pages={};for _,name in ipairs({'Home','Shop','Inventory','Info'})do pages[name]=new('Frame',body,{Name=name,Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Visible=name=='Home'})end
+local active='Home';local category='Equipamento';local inventoryCategory='Equipamento';local inventoryFilter
+local selected;local emoteSlot=1;local equipmentSlot=1;local perkSlot=1;local previewStarted=0
+local layout,drawShop,drawInventory,drawTabs,refreshSelection
+local function owned(item)return policy.IsOwned(item,player:GetAttribute('NBOwned_'..item.id),player:GetAttribute('NBEmoteOwned_'..item.id))end
 local function show(name)
- if transition then transition:Cancel() end
- for key,p in pairs(pages) do p.Visible=key==name end
- active=name
- local page=pages[name];page.Position=UDim2.fromOffset(35,0)
- transition=Tween:Create(page,TweenInfo.new(.24,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.fromOffset(0,0)});transition:Play()
+ active=name;for key,p in pairs(pages)do p.Visible=key==name end
  player:SetAttribute('NBMenuPage',name);player:SetAttribute('NBMenuOpen',true)
+ if drawTabs then drawTabs()end;if layout then layout()end
 end
-local home=pages.Home
-require(game:GetService('ReplicatedFirst'):WaitForChild('LoadingView')).Logo(home,UDim2.fromOffset(295,210),UDim2.fromOffset(400,110))
-local xp=panel(home,95,92,440,38,colors[1]);local xpText=label(xp,'NÍVEL —',8,0,520,38,20);xpText.TextXAlignment=Enum.TextXAlignment.Left
-local amounts={}
-for i,entry in ipairs({{'Coins','MOEDAS',colors[2]},{'Points','PONTOS',white},{'Vouchers','CUPONS',colors[3]},{'Wisps','WISPS',colors[4]},{'Wins','VITÓRIAS',colors[3]}}) do
- local p=panel(home,550,92+(i-1)*48,138,40,entry[3]);amounts[entry[1]]=label(p,entry[2]..' —',4,0,130,40,17)
-end
-local shopMoney=label(pages.Shop,'',700,216,145,190,21);shopMoney.TextYAlignment=Enum.TextYAlignment.Top
-local note=label(canvas,'',420,665,700,34,16)
-local function message(text)note.Text=text;task.delay(4,function()if note.Text==text then note.Text='' end end)end
-local shopCategory='Equipamento';local invCategory='Equipamento'
-local drawShop,drawInventory
-local shopCard=button(home,'LOJA',95,406,340,84,colors[3],function()inventoryFilter=nil;show('Shop');drawShop(shopCategory)end)
-local playCard=button(home,'ENTRAR NO JOGO',95,302,340,84,colors[2],function()
- if not package:GetAttribute('MapReady') then message('O mapa está carregando.');return end
- package.MatchAction:FireServer('Join');message('Entrando na arena…')
+back=button(header,'VOLTAR',function()
+ if active=='Shop'and inventoryFilter then inventoryFilter=nil;show('Inventory');drawInventory(inventoryCategory)
+ else inventoryFilter=nil;show('Home')end
 end)
-local function playAvailability()
- local ready=package:GetAttribute('MapReady')==true;local b=playCard:FindFirstChildOfClass('TextButton')
- b.Active=ready;b.Selectable=ready;b:FindFirstChildOfClass('TextLabel').Text=ready and 'ENTRAR NO JOGO'or 'CARREGANDO MAPA'
+local hero=surface(pages.Home)
+local logo=require(game:GetService('ReplicatedFirst'):WaitForChild('LoadingView')).Logo(hero,UDim2.fromScale(.5,.2),UDim2.fromOffset(300,82))
+local heroAvatarFrame=new('Frame',hero,{Name='AvatarPreview',BackgroundTransparency=1,ClipsDescendants=true})
+local heroAvatar;local heroBindings
+local welcome=label(hero,'',17);welcome.TextXAlignment=Enum.TextXAlignment.Center
+local queue=label(hero,'',15,muted);queue.TextXAlignment=Enum.TextXAlignment.Center
+local homeActions=scroll(pages.Home)
+new('UIListLayout',homeActions,{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder})
+local actions={}
+local function homeButton(value,fn)
+ local b=button(homeActions,value,fn);b.LayoutOrder=#actions+1;b.Size=UDim2.new(1,-6,0,58);table.insert(actions,b);return b
 end
-package:GetAttributeChangedSignal('MapReady'):Connect(playAvailability);playAvailability()
-local inventoryCard=button(home,'INVENTÁRIO',95,510,340,84,colors[4],function()show('Inventory');drawInventory(invCategory)end)
-local infoTitle=label(pages.Info,'',350,180,840,65,30)
-local infoBody=label(pages.Info,'',350,270,840,200,23)
-local function info(title,text)infoTitle.Text=title;infoBody.Text=text;show('Info')end
-local infoContent=make('ScrollingFrame',pages.Info,{Position=UDim2.fromOffset(330,250),Size=UDim2.fromOffset(900,390),BackgroundTransparency=1,BorderSizePixel=0,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=5})
-local function resetInfo(title)
- for _,v in ipairs(infoContent:GetChildren())do v:Destroy()end
- infoTitle.Text=title;infoBody.Text='';show('Info')
+local play=homeButton('ENTRAR NO JOGO',function()
+ if not package:GetAttribute('MapReady')then message('O mapa está carregando.');return end
+ package.MatchAction:FireServer('Join');message('Carregando sua entrada na arena…')
+end)
+play.BackgroundColor3=Color3.fromRGB(37,107,86)
+homeButton('LOJA',function()inventoryFilter=nil;show('Shop');drawShop(category)end)
+homeButton('INVENTÁRIO',function()show('Inventory');drawInventory(inventoryCategory)end)
+local infoScroll=scroll(pages.Info);new('UIListLayout',infoScroll,{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder})
+local function info(title,rows)
+ clear(infoScroll);heading.Text=title;show('Info');heading.Text=title
+ for i,row in ipairs(rows)do local l=label(infoScroll,row,18);l.LayoutOrder=i;l.Size=UDim2.new(1,-12,0,76);l.TextYAlignment=Enum.TextYAlignment.Top end
 end
-local function leaderboard()
- resetInfo('TABELA DE CLASSIFICAÇÃO')
- local list=Players:GetPlayers();table.sort(list,function(a,b)return (a:GetAttribute('NBXP')or 0)>(b:GetAttribute('NBXP')or 0)end)
- for i,p in ipairs(list)do label(infoContent,i..'. '..p.DisplayName..'   •   Nível '..tostring(p:GetAttribute('NBLevel')or 1)..'   •   '..tostring(p:GetAttribute('NBWins')or 0)..' vitórias',0,(i-1)*52,890,46,23)end
-end
-local function missions()
- resetInfo('MISSÕES')
+homeButton('MISSÕES',function()
+ clear(infoScroll);show('Info');heading.Text='MISSÕES'
  for i,m in ipairs({{'survivor','Sobreviva a 2 rodadas','NBWins',2,150},{'medic','Reanime 3 jogadores','NBRescues',3,200},{'runner','Complete 5 rodadas','NBRounds',5,300}})do
-  local row=panel(infoContent,5,(i-1)*110,880,92,colors[2])
-  label(row,m[2]..'  '..math.min(player:GetAttribute(m[3])or 0,m[4])..'/'..m[4],10,10,600,65,23)
-  button(row,'RESGATAR '..m[5],640,20,220,52,colors[3],function()package.Economy:FireServer('Claim',m[1])end)
- end
-end
-local function maps()
- resetInfo('MAPAS • VOTE NA PRÓXIMA ARENA')
- local list=require(package.MapCatalog)
- for i,m in ipairs(list)do
-  button(infoContent,m.name,10,(i-1)*115,870,96,colors[(i-1)%6+1],function()package.MatchAction:FireServer('Vote',m.name);message('Voto enviado para '..m.name)end)
- end
-end
-button(home,'TABELA DE CLASSIFICAÇÃO',1230,450,210,52,colors[3],leaderboard)
-button(home,'MISSÕES',1230,514,210,52,colors[1],missions)
-button(home,'COMUNIDADE',1230,578,210,52,colors[4],function()resetInfo('COMUNIDADE');label(infoContent,'Jogue em equipe. Use o rádio para marcar sua posição, carregue colegas caídos e reanime para ganhar recompensas.',25,30,850,210,26)end)
-button(home,'COLETÍVEIS',1230,642,210,52,colors[3],function()show('Inventory');drawInventory('Cosméticos')end)
-button(home,'EVENTO',95,598,220,95,colors[6],function()resetInfo('RODADAS ESPECIAIS');label(infoContent,'A cada 3 rodadas: escuridão, Nextbots mais rápidos ou o dobro de bots. Sobreviva para receber moedas e experiência.',25,30,850,210,26)end)
-button(home,'REGISTRO DE MUDANÇAS',532,625,130,69,colors[6],function()resetInfo('REGISTRO DE MUDANÇAS');label(infoContent,'Arenas da comunidade, votação, lobby, 19 emotes R6, progressão, equipamentos, queda, resgate e carregamento. Intervalo de 1:30 e rodadas de 3:00.',25,25,850,240,24)end)
-button(home,'Navegador de Modos',672,610,192,84,colors[3],maps)
-button(home,'ASSISTIR',878,625,126,69,colors[4],function()package.MatchAction:FireServer('Spectate')end)
-for i,card in ipairs({shopCard,playCard,inventoryCard})do
- local atlas=package:GetAttribute('MenuAtlas')
- if atlas then
-  local art=make('ImageLabel',card,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Image=atlas,ImageRectOffset=Vector2.new(0,(i-1)*512),ImageRectSize=Vector2.new(1024,512),ScaleType=Enum.ScaleType.Crop,ZIndex=1})
-  make('UICorner',art,{CornerRadius=UDim.new(0,10)})
-  local b=card:FindFirstChildOfClass('TextButton');b.ZIndex=2;local l=b:FindFirstChildOfClass('TextLabel');l.ZIndex=3;l.Position=UDim2.new(0,5,1,-36);l.Size=UDim2.new(1,-10,0,32)
- end
-end
-local queue=label(home,'',740,566,470,35,20)
-for _,name in ipairs({'Shop','Inventory','Info'})do button(pages[name],'VOLTAR',1340,124,100,58,colors[5],function()
- if name=='Shop'and inventoryFilter then inventoryFilter=nil;show('Inventory');drawInventory(invCategory)else inventoryFilter=nil;show('Home')end
-end)end
-local selectedTitle=label(pages.Shop,'',963,457,220,46,25)
-local description=panel(pages.Shop,870,510,406,130,colors[3]);local detail=label(description,'',16,10,374,110,23)
-local selectedItem
-local emoteSlot=1
-local equipmentSlot=1
-local perkSlot=1
-local function owned(item)
- return inventoryPolicy.IsOwned(item,player:GetAttribute('NBOwned_'..item.id),player:GetAttribute('NBEmoteOwned_'..item.id))
-end
-local function equipSelected()
- if not selectedItem or not owned(selectedItem)then return end
- if selectedItem.source then package.Emotes:FireServer('Equip',selectedItem.id,emoteSlot)
- elseif selectedItem.category=='Personagem'then package.Economy:FireServer('Perk',selectedItem.id,perkSlot)
- else package.Equipment:FireServer('Equip',selectedItem.id,equipmentSlot)end
-end
-local buyPanel,buy=button(pages.Shop,'COMPRAR',1078,650,198,46,colors[2],function()
- if not selectedItem then return end
- if inventoryFilter then equipSelected()
- elseif selectedItem.available then
-  if selectedItem.source then package.Emotes:FireServer('Buy',selectedItem.id)else package.Economy:FireServer('Buy',selectedItem.id)end
+  local row=surface(infoScroll);row.Size=UDim2.new(1,-8,0,116);row.LayoutOrder=i
+  local t=label(row,m[2]..' • '..math.min(player:GetAttribute(m[3])or 0,m[4])..'/'..m[4],17);t.Position=UDim2.fromOffset(14,10);t.Size=UDim2.new(1,-28,0,34)
+  local claim=button(row,'RESGATAR '..m[5]..' MOEDAS',function()package.Economy:FireServer('Claim',m[1])end);claim.Position=UDim2.fromOffset(14,56);claim.Size=UDim2.new(1,-28,0,44)
  end
 end)
-buy.Active=false;buy.Selectable=false
-local inspect=false
-button(pages.Shop,'INSPECIONAR',870,650,198,46,colors[1],function()
- inspect=not inspect;description.Visible=not inspect;buyPanel.Visible=not inspect
+homeButton('CLASSIFICAÇÃO',function()
+ local list=Players:GetPlayers();table.sort(list,function(a,b)return (a:GetAttribute('NBXP')or 0)>(b:GetAttribute('NBXP')or 0)end)
+ local rows={};for i,p in ipairs(list)do table.insert(rows,i..'. '..p.DisplayName..' • Nível '..tostring(p:GetAttribute('NBLevel')or 1)..' • '..tostring(p:GetAttribute('NBWins')or 0)..' vitórias')end
+ info('CLASSIFICAÇÃO',rows)
 end)
-local grid=make('ScrollingFrame',pages.Shop,{Position=UDim2.fromOffset(100,278),Size=UDim2.fromOffset(570,417),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=5,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y})
-make('UIGridLayout',grid,{CellSize=UDim2.fromOffset(136,170),CellPadding=UDim2.fromOffset(7,12),SortOrder=Enum.SortOrder.LayoutOrder})
-local heading=label(pages.Shop,'',95,210,575,53,26);heading.TextXAlignment=Enum.TextXAlignment.Left
-local function clear(parent)for _,v in ipairs(parent:GetChildren()) do if v:IsA('GuiObject') then v:Destroy() end end end
-local function select(item)
- selectedItem=item;previewStarted=os.clock();buy.Active=item.available==true and (not inventoryFilter or owned(item));buy.Selectable=buy.Active
- buy:FindFirstChildOfClass('TextLabel').Text=inventoryFilter and 'EQUIPAR'or ('COMPRAR '..item.price)
- selectedTitle.Text=item.name;detail.Text=item.description;inspect=false;description.Visible=true;buyPanel.Visible=true
+homeButton('ASSISTIR À RODADA',function()package.MatchAction:FireServer('Spectate')end)
+homeButton('CAIXA DE SOM',function()player:SetAttribute('NBOpenBoombox',true)end)
+homeButton('RODADAS E AJUDA',function()
+ info('COMO JOGAR',{'Reanime colegas caídos, corra dos perseguidores e sobreviva para ganhar moedas. Equipe seus itens e até seis emotes no inventário.', 'O intervalo dura 30 segundos. Vote na próxima arena quando a votação abrir. A contagem de votos aparece em cada mapa.', 'A cada 3 rodadas normais podem vir 1 ou 2 rodadas especiais com perseguidores. O modo aparece no topo durante a partida.'})
+end)
+local grid=scroll(pages.Shop)
+local gridLayout=new('UIGridLayout',grid,{CellSize=UDim2.fromOffset(148,178),CellPadding=UDim2.fromOffset(10,10),SortOrder=Enum.SortOrder.LayoutOrder})
+local detail=surface(pages.Shop);detail.ClipsDescendants=true
+local itemTitle=label(detail,'Selecione um item',21)
+local itemDescription=label(detail,'Toque em um item para ver os detalhes.',15,muted);itemDescription.TextYAlignment=Enum.TextYAlignment.Top
+itemTitle.TextTruncate=Enum.TextTruncate.AtEnd;itemDescription.TextTruncate=Enum.TextTruncate.AtEnd
+local itemStatus=label(detail,'',14,accent)
+local art=new('Frame',detail,{Name='ItemPreview',BackgroundTransparency=1,ClipsDescendants=true})
+local buy=button(detail,'COMPRAR',function()
+ if not selected or not selected.available then return end
+ if selected.source then package.Emotes:FireServer('Buy',selected.id)else package.Economy:FireServer('Buy',selected.id)end
+end)
+local equip=button(detail,'EQUIPAR',function()
+ if not selected or not owned(selected)then return end
+ if selected.source then package.Emotes:FireServer('Equip',selected.id,emoteSlot)
+ elseif selected.category=='Personagem'then package.Economy:FireServer('Perk',selected.id,perkSlot)
+ else package.Equipment:FireServer('Equip',selected.id,equipmentSlot)end
+end)
+local empty=label(grid,'',17,muted);empty.Visible=false
+local inventory=scroll(pages.Inventory)
+local invLayout=new('UIGridLayout',inventory,{CellSize=UDim2.fromOffset(180,164),CellPadding=UDim2.fromOffset(12,12),SortOrder=Enum.SortOrder.LayoutOrder})
+local inventoryHint=label(pages.Inventory,'Selecione um espaço para equipar um item que você possui.',16,muted)
+local preview
+local function sourceThumbnail(item)
+ if item.thumbnailId and tonumber(item.thumbnailId)and tonumber(item.thumbnailId)>0 then return 'rbxassetid://'..item.thumbnailId end
+ local id=item.sourceAssetId or item.assetId
+ if id and tonumber(id)and tonumber(id)>0 then return 'rbxthumb://type=Asset&id='..tostring(id)..'&w=420&h=420'end
+ return ''
 end
-function drawShop(category)
- shopCategory=category;heading.Text=inventoryFilter and ('INVENTÁRIO • '..string.upper(category))or string.upper(category);for _,tab in ipairs(shopTabs)do tab.Visible=inventoryFilter==nil end
- if inventoryFilter then player:SetAttribute('NBMenuPage','Inventory')end
- clear(grid);selectedItem=nil;buy.Active=false;buy.Selectable=false;buy:FindFirstChildOfClass('TextLabel').Text='COMPRAR';selectedTitle.Text='';detail.Text='Selecione um item.'
- if category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',true);return end
- if category=='Robux'then detail.Text='Compras em Robux não estão configuradas neste teste.';buy.Active=false;buy.Selectable=false;return end
- for _,item in ipairs(combined) do
-  if inventoryPolicy.Visible(item,category,inventoryFilter,owned(item))then
-   local p=panel(grid,0,0,136,170,colors[3]);p.LayoutOrder=(item.available and 0 or 1000)+#grid:GetChildren()
-   label(p,inventoryFilter and ''or tostring(item.price),8,8,120,30,22)
-   label(p,item.name,6,129,124,36,17)
-   local thumb=make('ImageLabel',p,{Position=UDim2.fromOffset(15,40),Size=UDim2.fromOffset(106,86),BackgroundTransparency=1,Image=item.thumbnailId and 'rbxassetid://'..item.thumbnailId or ''})
-   if thumb.Image==''then require(package.ItemPreview).Create(thumb,item,player.Character)end
-   local b=make('TextButton',p,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text=''});b.Activated:Connect(function()select(item)end)
+local function itemArt(parent,item)
+ local image=sourceThumbnail(item)
+ if image~=''then new('ImageLabel',parent,{Image=image,Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ScaleType=Enum.ScaleType.Fit})
+ else
+  local l=label(parent,item.source and 'R6' or item.category=='Personagem'and 'VANTAGEM'or 'EQUIPAMENTO',14,muted);l.Size=UDim2.fromScale(1,1);l.TextXAlignment=Enum.TextXAlignment.Center
+ end
+end
+local function avatar(parent)
+ if not player.Character then return nil end
+ local original=player.Character.Archivable;player.Character.Archivable=true
+ local ok,clone=pcall(function()return player.Character:Clone()end);player.Character.Archivable=original
+ if not ok or not clone then return nil end
+ for _,v in ipairs(clone:GetDescendants())do
+  if v:IsA('LuaSourceContainer')or v:IsA('Sound')or v:IsA('Tool')or v:IsA('BillboardGui')or v:IsA('ProximityPrompt')then v:Destroy()
+  elseif v:IsA('BasePart')then v.Anchored=v.Name=='HumanoidRootPart';v.CanCollide=false end
+ end
+ clone:PivotTo(CFrame.new())
+ local viewport=new('ViewportFrame',parent,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Ambient=Color3.fromRGB(180,190,205),LightColor=Color3.new(1,1,1)})
+ local world=new('WorldModel',viewport);clone.Parent=world
+ local camera=new('Camera',viewport,{FieldOfView=36});viewport.CurrentCamera=camera
+ local cf,size=clone:GetBoundingBox();local aspect=math.max(parent.AbsoluteSize.X,1)/math.max(parent.AbsoluteSize.Y,1)
+ local distance=math.max(size.Y*.5/math.tan(math.rad(18)),size.X*.5/(math.tan(math.rad(18))*aspect))+size.Z*.5
+ camera.CFrame=CFrame.lookAt(cf.Position+Vector3.new(0,size.Y*.025,-distance*1.1),cf.Position)
+ return {viewport=viewport,character=clone,camera=camera,motors=pose.Motors(clone)}
+end
+refreshSelection=function()
+ clear(art);preview=nil
+ buy.Visible=selected~=nil and inventoryFilter==nil;equip.Visible=selected~=nil and owned(selected)
+ buy.Active=selected~=nil and selected.available==true;buy.Selectable=buy.Active
+ equip.Active=selected~=nil and owned(selected);equip.Selectable=equip.Active
+ if not selected then itemTitle.Text='Selecione um item';itemDescription.Text='Toque em um item para ver os detalhes.';itemStatus.Text='';return end
+ itemTitle.Text=selected.name;itemDescription.Text=selected.description or ''
+ local count=player:GetAttribute('NBOwned_'..selected.id)or 0
+ itemStatus.Text=owned(selected)and (selected.source and 'POSSUÍDO • EMOTE '..emoteSlot or selected.category=='Personagem'and 'POSSUÍDO • VANTAGEM '..perkSlot or 'NO INVENTÁRIO ×'..count)or tostring(selected.price or 0)..' MOEDAS'
+ buy.Text='COMPRAR • '..tostring(selected.price or 0)
+ if selected.source then preview=avatar(art)else itemArt(art,selected)end
+ if inventoryFilter and not owned(selected)then equip.Visible=false end
+ if layout then layout()end
+end
+local function choose(item)selected=item;previewStarted=os.clock();refreshSelection()end
+function drawShop(value)
+ category=value;clear(grid);empty=label(grid,'',17,muted);empty.Visible=false
+ selected=nil;refreshSelection();grid.CanvasPosition=Vector2.zero
+ local count=0
+ for _,item in ipairs(catalog)do
+  if policy.Visible(item,value,inventoryFilter,owned(item))then
+   count+=1;local card=button(grid,'',function()choose(item)end);card.Name='Item_'..item.id;card.LayoutOrder=count
+   local thumb=new('Frame',card,{Position=UDim2.fromOffset(10,9),Size=UDim2.new(1,-20,1,-78),BackgroundTransparency=1});itemArt(thumb,item)
+   local title=label(card,item.name,15);title.Position=UDim2.new(0,9,1,-65);title.Size=UDim2.new(1,-18,0,38);title.TextXAlignment=Enum.TextXAlignment.Center
+   local price=label(card,owned(item)and 'POSSUÍDO'or tostring(item.price or 0)..' MOEDAS',12,accent);price.Position=UDim2.new(0,8,1,-26);price.Size=UDim2.new(1,-16,0,20);price.TextXAlignment=Enum.TextXAlignment.Center
   end
  end
- if #grid:GetChildren()==1 then label(grid,inventoryFilter and 'Você ainda não possui itens para este espaço.'or 'Nenhum item disponível nesta categoria.',0,0,530,70,20) end
+ if count==0 then empty.Visible=true;empty.Text=inventoryFilter and 'Você ainda não possui itens para este espaço. Compre-os na loja e volte para equipar.'or 'Nenhum item disponível nesta categoria.'end
+ drawTabs();if layout then layout()end
 end
-for i,name in ipairs({'Em destaque','Equipamento','Personagem','Animações','Caixa de som','Robux'}) do
- table.insert(shopTabs,(button(pages.Shop,string.upper(name),95+(i-1)*207,124,198,58,colors[i],function()inventoryFilter=nil;drawShop(name)end)))
-end
-local slots=make('Frame',pages.Inventory,{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ZIndex=1})
-local itemsById={};for _,item in ipairs(combined)do itemsById[item.id]=item end
-function drawInventory(category)
- invCategory=category;clear(slots)
- local names=category=='Emotes'and {'EMOTE 1','EMOTE 2','EMOTE 3','EMOTE 4','EMOTE 5','EMOTE 6'}or category=='Equipamento'and {'LUZ','UTILIDADE','PODER','MARTELO','USÁVEL 1','USÁVEL 2','USÁVEL 3','USÁVEL 4'}or category=='Personagem'and {'VANTAGEM 1','VANTAGEM 2'}or category=='Caixa de som'and {'CAIXA DE SOM','LISTAS DE MÚSICAS'}or {'COSMÉTICO 1','COSMÉTICO 2','PERSONAGEM','EFEITO'}
- local count=#names;local half=math.ceil(count/2)
+function drawInventory(value)
+ inventoryCategory=value;clear(inventory);inventory.CanvasPosition=Vector2.zero
+ local names=value=='Emotes'and {'EMOTE 1','EMOTE 2','EMOTE 3','EMOTE 4','EMOTE 5','EMOTE 6'}or value=='Personagem'and {'VANTAGEM 1','VANTAGEM 2'}or {'LUZ','UTILIDADE','PODER','USÁVEL 1','USÁVEL 2','USÁVEL 3','USÁVEL 4'}
  for i,name in ipairs(names)do
-  local side=i>half;local index=side and i-half-1 or i-1
-  local x=side and 1120 or 95;local y=255+math.floor(index/2)*172
-  if count<=6 then y=245+index*143 else x+=index%2*168 end
   local id
-  if category=='Emotes'then id=player:GetAttribute('NBEmoteSlot'..i)
-  elseif category=='Equipamento'then id=i==1 and (player:GetAttribute('NBLightID')or 'flashlight')or i==2 and player:GetAttribute('NBUtility')or i==3 and player:GetAttribute('NBPower')or i>=5 and player:GetAttribute('NBUsable'..(i-4))or ''
-  elseif category=='Personagem'then id=player:GetAttribute(i==1 and 'NBPerk'or 'NBPerk2')end
-  local item=id and itemsById[id]
-  local p=button(slots,item and item.name or (category=='Equipamento'and i==4 and '🔒'or '+'),x,y,150,132,colors[3],function()
-   if category=='Emotes'then emoteSlot=i;inventoryFilter='Emote';show('Shop');drawShop('Animações');if item then select(item)end
-   elseif category=='Personagem'then perkSlot=i;inventoryFilter='Perk';show('Shop');drawShop('Personagem');if item then select(item)end
-   elseif category=='Caixa de som'then player:SetAttribute('NBOpenBoombox',not player:GetAttribute('NBOpenBoombox'))
-   elseif category=='Cosméticos'then message('Os cosméticos desta versão ainda não estão disponíveis.')
-   else
-    if i==4 then message('O martelo ainda não está disponível.');return end
-    equipmentSlot=i>=5 and i-4 or 1;inventoryFilter=i==1 and 'Light'or i==2 and 'Utility'or i==3 and 'Power'or 'Usable'
-    show('Shop');drawShop('Equipamento');if item then select(item)end
-   end
-  end)
-  if item then
-   local thumb=make('Frame',p,{Position=UDim2.fromOffset(20,8),Size=UDim2.fromOffset(110,78),BackgroundTransparency=1});require(package.ItemPreview).Create(thumb,item,player.Character)
-   local b=p:FindFirstChildOfClass('TextButton');b.ZIndex=3;local t=b:FindFirstChildOfClass('TextLabel');t.Position=UDim2.fromOffset(5,78);t.Size=UDim2.fromOffset(140,26);t.TextSize=16
-  end
-  label(p,name,5,105,140,22,13)
+  if value=='Emotes'then id=player:GetAttribute('NBEmoteSlot'..i)
+  elseif value=='Personagem'then id=player:GetAttribute(i==1 and 'NBPerk'or 'NBPerk2')
+  else id=i==1 and (player:GetAttribute('NBLightID')or 'flashlight')or i==2 and player:GetAttribute('NBUtility')or i==3 and player:GetAttribute('NBPower')or player:GetAttribute('NBUsable'..(i-3))end
+  local item=byId[id]
+  local b=button(inventory,'',function()
+   if value=='Emotes'then emoteSlot=i;inventoryFilter='Emote';category='Animações'
+   elseif value=='Personagem'then perkSlot=i;inventoryFilter='Perk';category='Personagem'
+   else equipmentSlot=i>=4 and i-3 or 1;inventoryFilter=i==1 and 'Light'or i==2 and 'Utility'or i==3 and 'Power'or 'Usable';category='Equipamento'end
+   show('Shop');drawShop(category);if item then choose(item)end
+  end);b.LayoutOrder=i;b.Name='Slot'..i
+  local top=label(b,name,12,accent);top.Position=UDim2.fromOffset(12,8);top.Size=UDim2.new(1,-24,0,22)
+  local frame=new('Frame',b,{Position=UDim2.fromOffset(20,34),Size=UDim2.new(1,-40,1,-89),BackgroundTransparency=1})
+  if item then itemArt(frame,item)else local plus=label(frame,'+',30,muted);plus.Size=UDim2.fromScale(1,1);plus.TextXAlignment=Enum.TextXAlignment.Center end
+  local title=label(b,item and item.name or 'TOQUE PARA EQUIPAR',14);title.Position=UDim2.new(0,10,1,-47);title.Size=UDim2.new(1,-20,0,38);title.TextXAlignment=Enum.TextXAlignment.Center
+ end
+ drawTabs();if layout then layout()end
+end
+function drawTabs()
+ clear(tabs);tabs.CanvasPosition=Vector2.zero
+ local list=active=='Shop'and (inventoryFilter and {'MEUS ITENS','VER LOJA'}or {'Equipamento','Personagem','Animações'})or active=='Inventory'and {'Equipamento','Emotes','Personagem'}or {}
+ for i,name in ipairs(list)do
+  local b=button(tabs,string.upper(name),function()
+   if active=='Shop'then if name=='VER LOJA'then inventoryFilter=nil;drawShop(category)elseif not inventoryFilter then drawShop(name)end
+   else drawInventory(name)end
+  end);b.LayoutOrder=i;b.Size=UDim2.fromOffset(math.max(128,#name*9+28),42)
+  if name==category or name==inventoryCategory or name=='MEUS ITENS'then b.BackgroundColor3=Color3.fromRGB(49,91,102)end
  end
 end
-for i,name in ipairs({'Equipamento','Personagem','Cosméticos','Emotes','Caixa de som'}) do
- button(pages.Inventory,string.upper(name),95+(i-1)*248,124,237,58,colors[i],function()drawInventory(name)end)
+layout=function()
+ local w,h=root.AbsoluteSize.X,root.AbsoluteSize.Y
+ if w<1 or h<1 then return end
+ local compact=w<700;local tabbed=active=='Shop'or active=='Inventory'
+ place(header,0,0,w,50);place(heading,0,0,w*.58,28)
+ place(stats,0,30,w-70,20);stats.TextXAlignment=compact and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+ back.Visible=active~='Home';place(back,w-92,0,92,40);if back.Visible then stats.Size=UDim2.fromOffset(math.max(w-108,0),20)end
+ if active~='Info'then heading.Text=active=='Home'and 'EXACT RUN'or active=='Inventory'and 'INVENTÁRIO'or inventoryFilter and 'EQUIPAR ITEM'or 'LOJA'end
+ if back.Visible then heading.Size=UDim2.fromOffset(math.max(w-108,0),28)end
+ tabs.Visible=tabbed;place(tabs,0,60,w,46)
+ local bodyY=tabbed and 116 or 64;local bodyH=math.max(80,h-bodyY-42)
+ place(body,0,bodyY,w,bodyH);place(toast,0,h-35,w,32)
+ place(infoScroll,0,0,w,bodyH)
+ local homeW=compact and w or math.min(400,w*.42)
+ place(homeActions,0,0,homeW,bodyH)
+ hero.Visible=not compact;place(hero,homeW+20,0,w-homeW-20,bodyH)
+ logo.Size=UDim2.fromOffset(math.min(320,w-homeW-36),60);logo.Position=UDim2.new(.5,0,0,40)
+ place(heroAvatarFrame,12,78,w-homeW-44,math.max(20,bodyH-198))
+ place(welcome,12,bodyH-114,w-homeW-44,50);place(queue,12,bodyH-64,w-homeW-44,54)
+ local horizontal=w>=760
+ if horizontal then
+  local left=math.floor(w*.56);place(grid,0,0,left,bodyH);place(detail,left+14,0,w-left-14,bodyH)
+ else
+  local dh=math.min(234,math.max(184,bodyH*.39));place(detail,0,0,w,dh);place(grid,0,dh+12,w,bodyH-dh-12)
+ end
+ local dw,dh=detail.Size.X.Offset,detail.Size.Y.Offset
+ local previewWidth=horizontal and dw-28 or math.min(94,dw*.27)
+ if horizontal then
+  place(art,14,12,dw-28,math.max(60,dh*.38));place(itemTitle,14,dh*.4,dw-28,48)
+  place(itemDescription,14,dh*.4+54,dw-28,math.max(40,dh*.6-148));place(itemStatus,14,dh-86,dw-28,28)
+ else
+  place(art,12,12,previewWidth,dh-78);place(itemTitle,previewWidth+24,10,dw-previewWidth-36,42)
+  place(itemDescription,previewWidth+24,57,dw-previewWidth-36,math.max(36,dh-142));place(itemStatus,12,dh-80,dw-24,28)
+ end
+ if preview then
+  local cf,size=preview.character:GetBoundingBox();local aspect=math.max(art.Size.X.Offset,1)/math.max(art.Size.Y.Offset,1)
+  local distance=math.max(size.Y*.5/math.tan(math.rad(18)),size.X*.5/(math.tan(math.rad(18))*aspect))+size.Z*.5
+  preview.camera.CFrame=CFrame.lookAt(cf.Position+Vector3.new(0,size.Y*.025,-distance*1.1),cf.Position)
+ end
+ local both=buy.Visible and equip.Visible;local bw=both and (dw-34)/2 or dw-28
+ place(buy,14,dh-48,bw,36);place(equip,both and 20+bw or 14,dh-48,bw,36)
+ local gw=grid.Size.X.Offset;local cols=math.max(1,math.floor((gw+10)/142));local cellW=math.floor((gw-6-(cols-1)*10)/cols)
+ gridLayout.CellSize=UDim2.fromOffset(cellW,164);empty.Size=UDim2.fromOffset(math.max(gw-16,0),156)
+ place(inventoryHint,0,0,w,44);place(inventory,0,54,w,bodyH-54)
+ local invCols=math.max(1,math.floor((w+12)/174));invLayout.CellSize=UDim2.fromOffset(math.floor((w-6-(invCols-1)*12)/invCols),166)
 end
--- A WorldModel preview avoids assigning or moving Workspace.CurrentCamera.
-local previewFrames={}
-for _,name in ipairs({'Home','Shop','Inventory'}) do
- local viewport=make('ViewportFrame',pages[name],{Position=UDim2.fromOffset(name=='Home' and 750 or name=='Shop' and 890 or 530,name=='Home' and 80 or 195),Size=UDim2.fromOffset(name=='Home' and 460 or name=='Shop' and 380 or 480,name=='Home' and 480 or name=='Shop' and 260 or 480),BackgroundTransparency=1,Ambient=Color3.fromRGB(185,185,185),LightColor=Color3.new(1,1,1)})
- local camera=make('Camera',viewport);viewport.CurrentCamera=camera
- local world=make('WorldModel',viewport)
- camera.FieldOfView=32
- previewFrames[name]={world=world,camera=camera,viewport=viewport}
- label(pages[name],player.DisplayName,name=='Home' and 750 or name=='Shop' and 890 or 530,name=='Home' and 70 or 195,name=='Home' and 460 or name=='Shop' and 380 or 480,40,30)
-end
-local generation=0
-local function refreshAvatar(char)
- generation+=1;local token=generation
- task.spawn(function()
-  if not char:WaitForChild('HumanoidRootPart',10) or token~=generation then return end
-  local original=char.Archivable;char.Archivable=true;local ok,clone=pcall(function()return char:Clone()end);char.Archivable=original
-  if not ok or not clone then return end
-  for _,v in ipairs(clone:GetDescendants()) do if v:IsA('LuaSourceContainer') or v:IsA('Sound') or v:IsA('Tool') then v:Destroy() elseif v:IsA('BasePart')then v.Anchored=v.Name=='HumanoidRootPart';v.CanCollide=false end end
-  clone:PivotTo(CFrame.new())
-  for _,entry in pairs(previewFrames) do
-   entry.world:ClearAllChildren();local copy=clone:Clone();copy.Parent=entry.world;entry.character=copy;entry.motors=require(package.PosePlayer).Motors(copy)
-   local cf,size=copy:GetBoundingBox();local center=cf.Position
-   local aspect=entry.viewport.AbsoluteSize.X/math.max(1,entry.viewport.AbsoluteSize.Y)
-   local halfFov=math.rad(entry.camera.FieldOfView*.5)
-   local distance=math.max(size.Y*.5/math.tan(halfFov),size.X*.5/(math.tan(halfFov)*aspect))+size.Z*.5
-   entry.camera.CFrame=CFrame.lookAt(center+Vector3.new(0,size.Y*.025,-distance*1.08),center)
-  end
-  clone:Destroy()
- end)
-end
-player.CharacterAppearanceLoaded:Connect(refreshAvatar)
-player:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()if player.Character then refreshAvatar(player.Character)end;if active=='Shop'then drawShop(shopCategory)end end)
-if player.Character then refreshAvatar(player.Character) end
+root:GetPropertyChangedSignal('AbsoluteSize'):Connect(layout)
 local function updateStats()
- shopMoney.Text='MOEDAS\n'..tostring(player:GetAttribute('NBCoins')or 0)..'\n\nNÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)
- xpText.Text='NÍVEL '..tostring(player:GetAttribute('NBLevel')or 1)..'                                    '..tostring((player:GetAttribute('NBXP')or 0)%250)..'/250'
- local names={Coins='MOEDAS',Points='PONTOS',Vouchers='CUPONS',Wisps='WISPS',Wins='VITÓRIAS'}
- for key,l in pairs(amounts) do l.Text=names[key]..' '..tostring(player:GetAttribute('NB'..key) or '—') end
+ stats.Text=string.format('NÍVEL %d  •  %d / 250 XP  •  %d MOEDAS',player:GetAttribute('NBLevel')or 1,(player:GetAttribute('NBXP')or 0)%250,player:GetAttribute('NBCoins')or 0)
+ welcome.Text=player.DisplayName..'\nSobreviva. Reanime. Fuja.'
 end
-for _,key in ipairs({'Level','Coins','Points','Vouchers','Wisps','Wins'}) do player:GetAttributeChangedSignal('NB'..key):Connect(updateStats) end
-updateStats()
-local function visibility()gui.Enabled=player.PlayerGui:GetAttribute('NBLoadComplete')==true and not player:GetAttribute('NBInArena')and not player:GetAttribute('NBSpectating')end
-player:GetAttributeChangedSignal('NBInArena'):Connect(visibility);player:GetAttributeChangedSignal('NBSpectating'):Connect(visibility);visibility()
-UIS.InputBegan:Connect(function(input,processed)if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInArena')then package.MatchAction:FireServer('Lobby')else show('Home')end end end)
-show('Home')
-
+for _,key in ipairs({'NBLevel','NBXP','NBCoins'})do player:GetAttributeChangedSignal(key):Connect(updateStats)end
+local function availability()local ready=package:GetAttribute('MapReady')==true;play.Text=ready and 'ENTRAR NO JOGO'or 'CARREGANDO MAPA…';play.Active=ready;play.Selectable=ready end
+package:GetAttributeChangedSignal('MapReady'):Connect(availability)
+local function visibility()
+ gui.Enabled=player.PlayerGui:GetAttribute('NBLoadComplete')==true and not player:GetAttribute('NBInArena')and not player:GetAttribute('NBSpectating')
+ player:SetAttribute('NBMenuOpen',gui.Enabled)
+end
+for _,key in ipairs({'NBInArena','NBSpectating'})do player:GetAttributeChangedSignal(key):Connect(visibility)end
+player.PlayerGui:GetAttributeChangedSignal('NBLoadComplete'):Connect(visibility)
 local function transaction(status)
- local messages={limit='Limite de equipamentos posicionados atingido.',purchased='Compra salva.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar a compra.',unavailable='Inventário ainda não carregado.'}
- message(messages[status]or 'Operação recusada.');if active=='Inventory'then drawInventory(invCategory)elseif active=='Shop'and inventoryFilter then drawShop(shopCategory)end
+ local messages={limit='Limite de equipamentos posicionados atingido.',purchased='Compra salva. Abra o inventário para equipar.',owned='Você já possui este item.',funds='Moedas insuficientes.',equipped='Item equipado.',claimed='Recompensa já resgatada.',reward='Recompensa recebida.',incomplete='Missão ainda incompleta.',empty='Você não possui este equipamento.',save_failed='Não foi possível salvar. Tente novamente.',unavailable='Seu inventário ainda está carregando.'}
+ if messages[status]then message(messages[status])end
+ if active=='Inventory'then drawInventory(inventoryCategory)elseif active=='Shop'then local previous=selected;drawShop(category);if previous then choose(previous)end end
 end
+package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction)
+package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
 package.MatchAction.OnClientEvent:Connect(function(status)if status=='loading'then message('A arena está carregando.')elseif status=='character'then message('Seu personagem está carregando.')end end)
-package.Emotes.OnClientEvent:Connect(transaction);package.Economy.OnClientEvent:Connect(transaction);package.Equipment.OnClientEvent:Connect(function(status)if status~='ping'then transaction(status)end end)
-
-local pose=require(package.PosePlayer);local movementBindings=pose.Bindings(package.MovementSourceRig);local elapsed=0
-Run.RenderStepped:Connect(function(dt)
- elapsed+=dt
- local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
- queue.Text=string.format('%s • %s %d:%02d',package:GetAttribute('MapName')or 'Carregando arena',package:GetAttribute('Phase')=='Round'and 'RODADA'or 'INTERVALO',math.floor(remaining/60),remaining%60)
+local function refreshHero()clear(heroAvatarFrame);heroAvatar=avatar(heroAvatarFrame);heroBindings=pose.Bindings(package.MovementSourceRig)end
+player.CharacterAppearanceLoaded:Connect(function()refreshHero();if active=='Shop'then refreshSelection()end end)
+player:GetAttributeChangedSignal('NBAppearanceRevision'):Connect(function()refreshHero();if active=='Shop'then refreshSelection()end end)
+UIS.InputBegan:Connect(function(input,processed)
+ if not processed and input.KeyCode==Enum.KeyCode.M then if player:GetAttribute('NBInArena')then package.MatchAction:FireServer('Lobby')else show('Home')end end
+end)
+Run.RenderStepped:Connect(function()
  if not gui.Enabled then return end
- local entry=previewFrames[active]
- if entry and entry.motors then
-  local sequence=active=='Shop' and selectedItem and selectedItem.source and package.EmoteClips:FindFirstChild(selectedItem.id)or package.MovementClips:FindFirstChild('idle')
-  if sequence then local data=pose.Decode(sequence);pose.Apply(data,entry.motors,data.duration>0 and (os.clock()-previewStarted)%data.duration or 0,1,not (selectedItem and selectedItem.source)and movementBindings or nil)end
+ local phase=package:GetAttribute('Phase')or 'Carregando'
+ local remaining=math.max(0,math.ceil((package:GetAttribute('Deadline')or workspace:GetServerTimeNow())-workspace:GetServerTimeNow()))
+ queue.Text=string.format('%s\n%s • %d:%02d',package:GetAttribute('MapName')or 'Carregando arena',phase=='Round'and 'RODADA'or phase=='Voting'and 'VOTAÇÃO'or 'INTERVALO',math.floor(remaining/60),remaining%60)
+ if active=='Home'and hero.Visible and heroAvatar then local sequence=package.MovementClips:FindFirstChild('idle');if sequence then local data=pose.Decode(sequence);pose.Apply(data,heroAvatar.motors,data.duration>0 and os.clock()%data.duration or 0,1,heroBindings)end end
+ if active=='Shop'and preview and selected and selected.source then
+  local sequence=package.EmoteClips:FindFirstChild(selected.id)
+  if sequence then local data=pose.Decode(sequence);pose.Apply(data,preview.motors,data.duration>0 and (os.clock()-previewStarted)%data.duration or 0,1)end
  end
 end)
-
-player.PlayerGui:GetAttributeChangedSignal('NBLoadComplete'):Connect(visibility)
+updateStats();availability();show('Home');layout();if player.Character then refreshHero()end;visibility()
 player.PlayerGui:SetAttribute('NBInterfaceReady',true)
-visibility()

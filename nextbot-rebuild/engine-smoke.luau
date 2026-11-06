@@ -4,7 +4,7 @@ local results={placeVersion=game.PlaceVersion,checks={},maps={}}
 local function passed(name)table.insert(results.checks,name)end
 for _,name in ipairs({'Settings','Emotes','Economy','Equipment','Movement','Rescue','MatchAction'})do assert(package:FindFirstChild(name)and package[name]:IsA('RemoteEvent'),'Missing '..name)end;passed('remotes')
 assert(#package.EmoteClips:GetChildren()==19,'Emote count');assert(#package.MovementClips:GetChildren()>=10,'Movement animations');passed('animation payloads')
-local Config=require(package.Config);assert(Config.Intermission==90 and Config.RoundDuration==180);passed('90/180 timing')
+local Config=require(package.Config);assert(Config.Intermission==30 and Config.RoundDuration==180);passed('30/180 timing')
 local policy=require(package.EmotePolicy);local v,status=policy.buy({coins=500},'test',250);assert(v.coins==250 and status=='purchased');assert(select(2,policy.buy(v,'test',250))=='owned');passed('no duplicate debit')
 local settings=require(package.SettingsPolicy);local clamped=settings(Config.Settings,{FOV=1e6,GameMusic=-10});assert(clamped.FOV==100 and clamped.GameMusic==0);passed('settings validation')
 local safe=true
@@ -69,6 +69,13 @@ assert(not Loading.CanReveal(true,false,2,2,true),'Map bypass')
 assert(not Loading.CanReveal(true,true,3,2,true),'Stale map bypass')
 assert(not Loading.CanReveal(true,true,2,2,false),'Interface bypass')
 assert(Loading.CanReveal(true,true,2,2,true),'Ready menu blocked')
+assert(not Loading.MapReplicated(nil,500)and not Loading.MapReplicated(100,99)and Loading.MapReplicated(100,100),'Incomplete model replication admitted')
+local clientNames=game:GetService('HttpService'):JSONDecode(assert(package:GetAttribute('NBClientScripts'),'Missing client initialization registry'))
+assert(#clientNames>=8,'Client readiness registry is incomplete')
+for _,name in ipairs(clientNames)do
+ local client=assert(game:GetService('StarterPlayer').StarterPlayerScripts:FindFirstChild(name),'Unregistered client script '..name)
+ assert(client.Source:find('NBReady_',1,true),'Client initialization marker missing '..name)
+end
 local gui=Instance.new('Folder');gui.Parent=R
 local view=require(First.LoadingView).Create(gui,'LoadingTest',1000)
 view:Set('CARREGANDO JOGO',.5,'Test');assert(view.fill.Size.X.Scale==.5 and view.status.Text=='CARREGANDO JOGO')
@@ -112,6 +119,8 @@ for _,name in ipairs(Maps.Names())do
  assert(Maps.Load(name),'Map cannot load: '..name)
  task.wait(.5)
  assert(workspace.ActiveMap:GetAttribute('MapRevision')==package:GetAttribute('MapReadyRevision'),'Ready revision mismatch')
+ assert(package:GetAttribute('MapContentRevision')==package:GetAttribute('MapRevision'),'Map content revision mismatch')
+ assert(workspace.ActiveMap:GetAttribute('ExpectedDescendants')==#workspace.ActiveMap:GetDescendants(),'Map replication count mismatch')
  local points=workspace.RoundSpawns:GetChildren();assert(#points>=2,'Insufficient spawns')
  local rp=RaycastParams.new();rp.FilterType=Enum.RaycastFilterType.Include;rp.FilterDescendantsInstances={workspace.ActiveMap.Geometry};rp.RespectCanCollide=true
  for _,p in ipairs(points)do assert(workspace:Raycast(p.Position+Vector3.new(0,.2,0),Vector3.new(0,-1,0),rp),'Spawn has no supporting floor')end
@@ -138,12 +147,22 @@ passed('imported map menu without generated scenery')
 -- Exercise the same admission and bot services used by the remote handler.
 -- The adapter supplies player attributes around a real R6 rig; this is not a client click test.
 local Arena=require(S.ArenaService);local Bots=require(S.NextbotService);local State=require(package.RoundState)
+local votes=State.CountVotes({a='Construct',b='Library',c='Library',invalid='fake'}, {'Construct','Library','Backrooms'})
+assert(votes.Construct==1 and votes.Library==2 and votes.Backrooms==0 and votes.fake==nil,'Vote counting failed')
+assert(State.Winner({a='Library',b='Library',c='Construct'}, {'Construct','Library'},'Construct')=='Library','Majority map selection failed')
+assert(State.Winner({}, {'Construct','Library'},'Construct')=='Construct','Empty vote fallback failed')
+local schedule=State.new(0,30,180)
+for i=1,3 do assert(State.NextKind(schedule,true,function()return 2 end)=='normal','Special round arrived before three normal rounds')end
+assert(State.NextKind(schedule,true,function()return 2 end)=='chasers'and State.NextKind(schedule,true)=='chasers'and State.NextKind(schedule,true)=='normal','Two-special-round schedule failed')
+local paused=State.new(0,30,180);paused.phase='Voting';paused.deadline=0;assert(not State.tick(paused,100,true)and not State.botsAllowed(paused),'Voting started a chase')
+paused.phase='Loading';assert(not State.tick(paused,100,true)and not State.botsAllowed(paused),'Loading started a chase')
+passed('map voting counts and three-normal special-round schedule')
 local character=starter:Clone();character.Name='AdmissionTestRig';character.Parent=workspace
 local attrs={};local actor={Character=character,Parent=true}
 function actor:GetAttribute(key)return attrs[key]end
 function actor:SetAttribute(key,value)attrs[key]=value end
 function actor:RequestStreamAroundAsync()end
-local phase=State.new(0,90,180);package:SetAttribute('Phase',phase.phase)
+local phase=State.new(0,30,180);package:SetAttribute('Phase',phase.phase)
 assert(Bots.Start(phase)==0 and #game:GetService('CollectionService'):GetTagged('NBNextbot')==0,'Bots appeared during intermission')
 Arena.Leave(actor)
 assert(not attrs.NBInArena and character.HumanoidRootPart.Anchored and character:GetPivot().Y<0,'Menu parking failed')
@@ -152,8 +171,8 @@ assert(attrs.NBInArena and not attrs.NBInRound and not character.HumanoidRootPar
 local placed=character:GetPivot();local originalMap=workspace.ActiveMap
 local nearest=math.huge;for _,point in ipairs(workspace.RoundSpawns:GetChildren())do nearest=math.min(nearest,(placed.Position-(point.Position+Vector3.new(0,4,0))).Magnitude)end
 assert(nearest<.01,'Entry did not place the rig on an arena spawn')
-assert(not State.tick(phase,89,true)and not State.botsAllowed(phase),'Countdown ended early')
-assert(State.tick(phase,90,true)and phase.deadline==270,'Countdown did not start a 180 second chase')
+assert(not State.tick(phase,29,true)and not State.botsAllowed(phase),'Countdown ended early')
+assert(State.tick(phase,30,true)and phase.deadline==210,'Countdown did not start a 180 second chase')
 package:SetAttribute('Phase',phase.phase)
 assert(Arena.Enter(actor,false)and attrs.NBInRound,'Waiting participant was not admitted to chase')
 assert(character:GetPivot()==placed and workspace.ActiveMap==originalMap,'Countdown teleported the participant or replaced the map')
@@ -161,7 +180,7 @@ assert(Bots.Start(phase)==3 and #game:GetService('CollectionService'):GetTagged(
 assert(Arena.Enter(actor,false)and character:GetPivot()==placed,'Repeated Join moved an active participant')
 Bots.Clear();assert(#game:GetService('CollectionService'):GetTagged('NBNextbot')==0,'Bots persisted after cleanup')
 Arena.Leave(actor);assert(Arena.Enter(actor,false)and attrs.NBInRound,'Late entry failed')
-assert(State.tick(phase,270,true)and phase.deadline==360,'Round did not return to 90 second intermission')
+assert(State.tick(phase,210,true)and phase.deadline==240,'Round did not return to 30 second intermission')
 package:SetAttribute('Phase',phase.phase);Arena.PrepareMapChange(actor)
 assert(not attrs.NBInRound and character.HumanoidRootPart.Anchored,'Map change did not suspend the participant')
 assert(Maps.Load(Config.InitialMap),'Initial imported arena could not load')
@@ -175,7 +194,7 @@ assert(not Arena.Enter(actor,false)and not attrs.NBInArena and character.Humanoi
 character:Destroy();actor.Parent=nil
 passed('intermission entry preserves arena on countdown end')
 passed('bots appear only after countdown and clear after round')
-results.admission={immediateArena=true,intermissionSeconds=90,chaseSeconds=180,sameMapAtZero=true,samePositionAtZero=true,lateEntry=true,cancelledEntry=true,clientClickTest=false}
+results.admission={immediateArena=true,intermissionSeconds=30,chaseSeconds=180,sameMapAtZero=true,samePositionAtZero=true,lateEntry=true,cancelledEntry=true,clientClickTest=false}
 
 results.botCount=#Storage.NextbotTemplates:GetChildren();assert(results.botCount>=60,'Nextbot pack was not imported')
 for _,bot in ipairs(Storage.NextbotTemplates:GetChildren())do

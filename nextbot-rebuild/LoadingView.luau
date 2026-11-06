@@ -13,7 +13,8 @@ function M.Logo(parent,position,size)
 end
 function M.Create(parent,name,order)
  local gui=new('ScreenGui',parent,{Name=name,DisplayOrder=order,IgnoreGuiInset=true,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
- local cover=new('CanvasGroup',gui,{Name='Cover',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(9,12,24),BorderSizePixel=0})
+ pcall(function()gui.ScreenInsets=Enum.ScreenInsets.None;gui.ClipToDeviceSafeArea=false end)
+ local cover=new('CanvasGroup',gui,{Name='Cover',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(9,12,24),BorderSizePixel=0,Active=true})
  local canvas=new('Frame',cover,{Name='Canvas',AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(1536,709),BackgroundTransparency=1})
  local scale=new('UIScale',canvas,{Scale=1})
  local function fit()scale.Scale=math.min(gui.AbsoluteSize.X/1536,gui.AbsoluteSize.Y/709)end
@@ -30,6 +31,10 @@ function M.Create(parent,name,order)
  gui.Destroying:Connect(function()rotation:Cancel()end)
  local view={gui=gui,cover=cover,status=status,detail=detail,tip=tip,fill=fill}
  function view:Set(text,progress,subtext)status.Text=text;fill.Size=UDim2.fromScale(math.clamp(progress or 0,0,1),1);detail.Text=subtext or ''end
+ function view:Retry(callback)
+  local button=new('TextButton',canvas,{Name='Retry',Text='TENTAR NOVAMENTE',Position=UDim2.fromOffset(568,520),Size=UDim2.fromOffset(400,64),BackgroundColor3=Color3.fromRGB(53,89,115),TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBold,TextSize=22})
+  new('UICorner',button,{CornerRadius=UDim.new(0,8)});button.Activated:Connect(function()button.Active=false;callback()end)
+ end
  function view:Close()
   local fade=Tween:Create(cover,TweenInfo.new(.35),{GroupTransparency=1});fade:Play();fade.Completed:Wait();rotation:Cancel();gui:Destroy()
  end

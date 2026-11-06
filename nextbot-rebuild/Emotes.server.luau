@@ -16,9 +16,10 @@ remote.OnServerEvent:Connect(function(p,action,id,slot)
  local profile=Profiles.Get(p);if not profile then remote:FireClient(p,'unavailable');return end
  if action=='Play'then
   local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid')
-  if p:GetAttribute('NBDowned')or not profile.owned[id]or not h or h.Health<=0 or h.RigType~=Enum.HumanoidRigType.R6 then return end
+  if not p:GetAttribute('NBInArena')or p:GetAttribute('NBDowned')or not profile.owned[id]or not h or h.Health<=0 or h.RigType~=Enum.HumanoidRigType.R6 then return end
   local equipped=false;for _,v in pairs(profile.slots)do if v==id then equipped=true end end
   if not equipped then return end
+  if p:GetAttribute('NBPlayingEmote')==id then p:SetAttribute('NBPlayingEmote','');return end
   p:SetAttribute('NBEmoteStarted',workspace:GetServerTimeNow());p:SetAttribute('NBPlayingEmote',id);return
  end
  if action~='Buy'and action~='Equip'then return end
@@ -40,9 +41,10 @@ Run.Heartbeat:Connect(function(dt)
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
  for _,p in ipairs(Players:GetPlayers())do
   if (p:GetAttribute('NBPlayingEmote')or '')~=''then
-   local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid');local item=items[p:GetAttribute('NBPlayingEmote')]
+   local h=p.Character and p.Character:FindFirstChildOfClass('Humanoid');local root=p.Character and p.Character:FindFirstChild('HumanoidRootPart');local item=items[p:GetAttribute('NBPlayingEmote')]
    local finished=item and item.duration>0 and not item.loop and workspace:GetServerTimeNow()-(p:GetAttribute('NBEmoteStarted')or 0)>=item.duration
-   if finished or p:GetAttribute('NBDowned')or not h or h.Health<=0 or h.MoveDirection.Magnitude>.1 or h.Jump then p:SetAttribute('NBPlayingEmote','')end
+   local moving=root and Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude>2
+   if finished or not p:GetAttribute('NBInArena')or p:GetAttribute('NBDowned')or not h or h.Health<=0 or moving or h.Jump then p:SetAttribute('NBPlayingEmote','')end
   end
  end
 end)

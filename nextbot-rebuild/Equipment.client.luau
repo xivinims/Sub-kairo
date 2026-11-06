@@ -7,14 +7,21 @@ local package=game:GetService('ReplicatedStorage'):WaitForChild('NextbotReferenc
 local remote=package:WaitForChild('Equipment')
 local rules=require(package:WaitForChild('EquipmentRules'))
 local hud=require(package:WaitForChild('HudControls'))
-local gui=Instance.new('ScreenGui');gui.Name='EquipmentHUD';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=11;gui.Parent=player:WaitForChild('PlayerGui')
-local canvas=Instance.new('Frame');canvas.Size=UDim2.fromOffset(1536,709);canvas.Position=UDim2.fromScale(.5,.5);canvas.AnchorPoint=Vector2.new(.5,.5);canvas.BackgroundTransparency=1;canvas.Parent=gui
-local scale=Instance.new('UIScale');scale.Parent=canvas
-local function fit()scale.Scale=math.min(gui.AbsoluteSize.X/1536,gui.AbsoluteSize.Y/709)end
-fit();gui:GetPropertyChangedSignal('AbsoluteSize'):Connect(fit)
+local gui=Instance.new('ScreenGui');gui.Name='EquipmentHUD';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets;gui.DisplayOrder=11;gui.Parent=player:WaitForChild('PlayerGui')
+local canvas=Instance.new('Frame');canvas.Name='SafeEquipment';canvas.Size=UDim2.fromScale(1,1);canvas.BackgroundTransparency=1;canvas.Parent=gui
 local lightButton=hud.Circle(canvas,'Light')
 local powerButton=hud.Circle(canvas,'Power')
-local utilityButton=Instance.new('TextButton');utilityButton.Position=UDim2.fromOffset(655,501);utilityButton.Size=UDim2.fromOffset(230,44);utilityButton.BackgroundTransparency=1;utilityButton.Text='Nenhum';utilityButton.Font=Enum.Font.GothamBold;utilityButton.TextSize=32;utilityButton.TextColor3=Color3.new(1,1,1);utilityButton.TextStrokeTransparency=.35;utilityButton.Parent=canvas
+local utilityButton=Instance.new('TextButton');utilityButton.Name='UtilityIndicator';utilityButton.BackgroundColor3=Color3.fromRGB(20,28,39);utilityButton.BackgroundTransparency=.2;utilityButton.Text='';utilityButton.Font=Enum.Font.GothamBold;utilityButton.TextSize=16;utilityButton.TextColor3=Color3.new(1,1,1);utilityButton.TextTruncate=Enum.TextTruncate.AtEnd;utilityButton.Parent=canvas
+local corner=Instance.new('UICorner');corner.CornerRadius=UDim.new(0,10);corner.Parent=utilityButton
+local function fit()
+ local w,h=canvas.AbsoluteSize.X,canvas.AbsoluteSize.Y
+ local size=math.clamp(math.min(w*.13,h*.14),44,60);local gap=10
+ local center=w*.5;local bottom=w<=480 and h-120 or h-20
+ lightButton.Size=UDim2.fromOffset(size,size);lightButton.Position=UDim2.fromOffset(center-size-gap/2,bottom-size)
+ powerButton.Size=UDim2.fromOffset(size,size);powerButton.Position=UDim2.fromOffset(center+gap/2,bottom-size)
+ utilityButton.Size=UDim2.fromOffset(math.min(180,w*.45),34);utilityButton.AnchorPoint=Vector2.new(.5,1);utilityButton.Position=UDim2.fromOffset(center,bottom-size-10)
+end
+fit();canvas:GetPropertyChangedSignal('AbsoluteSize'):Connect(fit)
 powerButton.Activated:Connect(function()local id=player:GetAttribute('NBPower');if id and id~=''then remote:FireServer('Use',id)end end)
 local indicator=utilityButton
 local function useLight()remote:FireServer('Use','flashlight')end
@@ -29,12 +36,12 @@ local elapsed=0;local phase=0
 Run.RenderStepped:Connect(function(dt)
  local active=player:GetAttribute('NBInArena')==true
  powerButton.Visible=active and (player:GetAttribute('NBPower')or '')~=''
- gui.Enabled=active and player.PlayerGui:GetAttribute('NBLoadComplete')==true;lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
+ gui.Enabled=active and player.PlayerGui:GetAttribute('NBLoadComplete')==true and not player.PlayerGui:GetAttribute('NBMapLoading');lamp.Enabled=active and player:GetAttribute('NBFlashlight')==true
  night.Enabled=active and player:GetAttribute('NBFlashlight')==true and player:GetAttribute('NBLightID')=='nvg'
  local camera=workspace.CurrentCamera
  if camera then lampPart.CFrame=camera.CFrame*CFrame.new(.5,-.3,-.8) end
  elapsed+=dt;if elapsed<.1 then return end;elapsed=0
- local id=player:GetAttribute('NBUtility');indicator.Visible=active and id~=nil and id~=''
+ local id=player:GetAttribute('NBUtility');indicator.Visible=active and id~=nil and id~='' and (player:GetAttribute('NBOverlay')or '')==''
  if not id or id==''then indicator.Text=''end
  if not active then return end
  local root=player.Character and player.Character:FindFirstChild('HumanoidRootPart');if not root or not camera then return end

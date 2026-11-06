@@ -13,7 +13,7 @@ local remote=package:WaitForChild('Settings')
 local values=table.clone(config.Settings)
 local colors={Audio=Color3.fromRGB(103,137,215),Visual=Color3.fromRGB(157,112,201),Game=Color3.fromRGB(105,174,74)}
 local gui=Instance.new('ScreenGui')
-gui.Name='NextbotSettingsReference';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=true;gui.DisplayOrder=40
+gui.Name='NextbotSettingsReference';gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets;gui.DisplayOrder=40
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 gui.Parent=player:WaitForChild('PlayerGui')
 local function make(class,parent,props)
@@ -25,24 +25,13 @@ local white=Color3.fromRGB(237,237,237)
 local function text(parent,value,x,y,w,h,size,bold)
 	return make('TextLabel',parent,{BackgroundTransparency=1,Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),Font=bold==false and Enum.Font.Gotham or Enum.Font.GothamBold,TextSize=size,TextColor3=white,TextStrokeTransparency=.35,TextStrokeColor3=Color3.new(0,0,0),TextXAlignment=Enum.TextXAlignment.Left,TextWrapped=true})
 end
-local canvas=make('Frame',gui,{Name='Canvas',Size=UDim2.fromOffset(1624,750),AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),BackgroundTransparency=1})
-local scaler=make('UIScale',canvas,{Scale=1})
-local cameraConnection
-local function resize()
-	local c=workspace.CurrentCamera;if not c then return end
-	scaler.Scale=math.min(c.ViewportSize.X/1624,c.ViewportSize.Y/750)
-end
-local function bindCamera()
-	if cameraConnection then cameraConnection:Disconnect() end
-	local c=workspace.CurrentCamera;if c then cameraConnection=c:GetPropertyChangedSignal('ViewportSize'):Connect(resize) end
-	resize()
-end
-workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(bindCamera);bindCamera()
+local canvas=make('Frame',gui,{Name='Canvas',Position=UDim2.fromOffset(12,10),Size=UDim2.new(1,-24,1,-20),BackgroundTransparency=1})
+local layoutWindow
 local shade=make('TextButton',gui,{Name='Dim',Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=.28,Text='',AutoButtonColor=false,Visible=false,ZIndex=1})
 canvas.ZIndex=2
 local open=make('TextButton',canvas,{Name='OpenSettings',Text='⚙',Font=Enum.Font.GothamBold,TextSize=48,TextColor3=white,BackgroundColor3=Color3.fromRGB(15,34,40),BackgroundTransparency=.12,Position=UDim2.fromOffset(1307,26),Size=UDim2.fromOffset(81,81),ZIndex=2})
 round(open,16);edge(open,Color3.fromRGB(57,108,123),4)
-local window=make('Frame',canvas,{Name='SettingsWindow',BackgroundTransparency=1,Position=UDim2.fromOffset(348,130),Size=UDim2.fromOffset(928,604),Visible=false,ZIndex=3})
+local window=make('Frame',canvas,{Name='SettingsWindow',BackgroundColor3=Color3.fromRGB(16,22,31),BackgroundTransparency=.03,Position=UDim2.fromOffset(0,56),Size=UDim2.fromOffset(928,604),Visible=false,ZIndex=3,ClipsDescendants=true});round(window,12)
 local tabs={};local active='Audio';local controls={};local drag=nil
 local bar=make('Frame',window,{Position=UDim2.fromOffset(0,74),Size=UDim2.fromOffset(928,74),BackgroundColor3=colors.Audio,BackgroundTransparency=.45})
 round(bar,13);edge(bar,Color3.fromRGB(15,18,18),3)
@@ -129,29 +118,31 @@ UIS.InputEnded:Connect(function(input)
 	if drag and (input==drag.input or input.UserInputType==Enum.UserInputType.MouseButton1) then drag=nil end
 end)
 local function draw(category)
+	local width=math.max(window.Size.X.Offset-40,220)
+	local rowHeight=116
 	active=category;drag=nil;controls={}
 	for _,o in ipairs(scroll:GetChildren()) do if o:IsA('Frame') then o:Destroy() end end
 	scroll.CanvasPosition=Vector2.zero
 	bar.BackgroundColor3=colors[category];heading.Text=definitions[category].title
 	for key,b in pairs(tabs) do b.BackgroundTransparency=key==category and .25 or .85 end
 	for index,section in ipairs(definitions[category].sections) do
-		local panel=make('Frame',scroll,{Name=section.title,Size=UDim2.new(1,-8,0,58+#section.rows*92),BackgroundColor3=Color3.fromRGB(25,26,28),BackgroundTransparency=.23,LayoutOrder=index})
+		local panel=make('Frame',scroll,{Name=section.title,Size=UDim2.new(1,-8,0,58+#section.rows*rowHeight),BackgroundColor3=Color3.fromRGB(25,26,28),BackgroundTransparency=.23,LayoutOrder=index})
 		round(panel,13);edge(panel,Color3.fromRGB(80,82,84),4)
-		text(panel,section.title,18,8,820,43,25)
+		text(panel,section.title,18,8,width-36,43,22)
 		make('Frame',panel,{Position=UDim2.fromOffset(18,58),Size=UDim2.new(1,-36,0,2),BorderSizePixel=0,BackgroundColor3=Color3.fromRGB(66,67,69),BackgroundTransparency=.2})
 		for i,item in ipairs(section.rows) do
 			local key,label,description,min,max=table.unpack(item)
-			local y=60+(i-1)*92
-			text(panel,label,18,y+(description=='' and 12 or 7),470,45,25)
-			if description~='' then text(panel,description,18,y+45,730,30,20,false) end
+			local y=60+(i-1)*rowHeight
+			local title=text(panel,label,18,y+4,min and width-36 or width-98,42,19);title.TextTruncate=Enum.TextTruncate.AtEnd
+			if description~='' then local sub=text(panel,description,18,y+50,width-36,54,15,false);sub.TextTruncate=Enum.TextTruncate.AtEnd end
 			if min then
-				local track=make('TextButton',panel,{Text='',AutoButtonColor=false,Position=UDim2.fromOffset(496,y+35),Size=UDim2.fromOffset(280,10),BackgroundColor3=Color3.fromRGB(37,39,43),BorderSizePixel=0})
+				local track=make('TextButton',panel,{Text='',AutoButtonColor=false,Position=UDim2.fromOffset(22,y+70),Size=UDim2.fromOffset(math.max(width-126,100),12),BackgroundColor3=Color3.fromRGB(37,39,43),BorderSizePixel=0})
 				round(track,8);edge(track,Color3.fromRGB(9,11,13),2)
 				local fill=make('Frame',track,{Size=UDim2.fromScale(0,1),BackgroundColor3=Color3.fromRGB(169,193,247),BorderSizePixel=0});round(fill,8)
 				for tick=1,11 do make('Frame',track,{Position=UDim2.new(tick/12,0,0,0),Size=UDim2.new(0,4,1,0),BackgroundColor3=Color3.fromRGB(28,30,33),BackgroundTransparency=.55,BorderSizePixel=0}) end
-				local knob=make('TextButton',track,{Text='',AutoButtonColor=false,AnchorPoint=Vector2.new(.5,.5),Size=UDim2.fromOffset(36,36),BackgroundColor3=Color3.fromRGB(40,42,45),ZIndex=5})
+				local knob=make('TextButton',track,{Text='',AutoButtonColor=false,AnchorPoint=Vector2.new(.5,.5),Size=UDim2.fromOffset(42,42),BackgroundColor3=Color3.fromRGB(40,42,45),ZIndex=5})
 				round(knob,40);edge(knob,Color3.fromRGB(90,92,96),2)
-				local valueLabel=text(panel,'',788,y+12,80,45,25);valueLabel.TextXAlignment=Enum.TextXAlignment.Right
+				local valueLabel=text(panel,'',width-86,y+48,68,45,19);valueLabel.TextXAlignment=Enum.TextXAlignment.Right
 				controls[key]={kind='slider',min=min,max=max,fill=fill,knob=knob,label=valueLabel}
 				local function begin(input)
 					if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
@@ -164,12 +155,12 @@ local function draw(category)
 					elseif input.KeyCode==Enum.KeyCode.DPadRight then set(key,math.min(max,values[key]+(max-min)/20)) end
 				end)
 			else
-				local b=make('TextButton',panel,{Position=UDim2.fromOffset(818,y+22),Size=UDim2.fromOffset(46,46),Text='',Font=Enum.Font.GothamBold,TextSize=40,TextColor3=Color3.fromRGB(52,67,42),BackgroundColor3=Color3.fromRGB(40,41,44)})
+				local b=make('TextButton',panel,{Position=UDim2.fromOffset(width-66,y+4),Size=UDim2.fromOffset(46,46),Text='',Font=Enum.Font.GothamBold,TextSize=40,TextColor3=Color3.fromRGB(52,67,42),BackgroundColor3=Color3.fromRGB(40,41,44)})
 				round(b,7);edge(b,Color3.fromRGB(107,110,110),2);controls[key]={kind='toggle',button=b}
 				b.Activated:Connect(function()set(key,not values[key])end)
 			end
 			refresh(key)
-			if i<#section.rows then make('Frame',panel,{Position=UDim2.fromOffset(18,y+82),Size=UDim2.new(1,-36,0,2),BorderSizePixel=0,BackgroundColor3=Color3.fromRGB(65,66,68),BackgroundTransparency=.2}) end
+			if i<#section.rows then make('Frame',panel,{Position=UDim2.fromOffset(18,y+110),Size=UDim2.new(1,-36,0,2),BorderSizePixel=0,BackgroundColor3=Color3.fromRGB(65,66,68),BackgroundTransparency=.2}) end
 		end
 	end
 end
@@ -179,11 +170,27 @@ for i,entry in ipairs({{'Audio','ÁUDIO'},{'Visual','VISUAIS'},{'Game','Jogabili
 	round(b,12);edge(b,colors[key]:Lerp(Color3.new(0,0,0),.3),4);tabs[key]=b
 	b.Activated:Connect(function()draw(key)end)
 end
-local close=make('TextButton',window,{Name='Close',Position=UDim2.fromOffset(807,0),Size=UDim2.fromOffset(120,62),Text='FECHAR',Font=Enum.Font.GothamBold,TextSize=23,TextColor3=white,TextStrokeTransparency=.3,BackgroundColor3=Color3.fromRGB(225,91,96)})
+local close=make('TextButton',window,{Name='Close',Position=UDim2.fromOffset(807,0),Size=UDim2.fromOffset(120,62),Text='✕',Font=Enum.Font.GothamBold,TextSize=23,TextColor3=white,TextStrokeTransparency=.3,BackgroundColor3=Color3.fromRGB(225,91,96)})
 round(close,12);edge(close,Color3.fromRGB(133,58,61),4)
+layoutWindow=function()
+ local size=canvas.AbsoluteSize;local w=math.min(960,size.X);local h=math.max(200,size.Y-58)
+ window.Position=UDim2.fromOffset((size.X-w)/2,58);window.Size=UDim2.fromOffset(w,h)
+ open.AnchorPoint=Vector2.new(1,0);open.Position=UDim2.new(1,-4,0,0);open.Size=UDim2.fromOffset(48,48);open.TextSize=30
+ local tabW=math.max(60,(w-82)/3)
+ for i,key in ipairs({'Audio','Visual','Game'})do local b=tabs[key];b.Position=UDim2.fromOffset((i-1)*(tabW+4)+8,8);b.Size=UDim2.fromOffset(tabW,42);b.TextSize=w<620 and 13 or 18 end
+ close.Position=UDim2.fromOffset(w-58,8);close.Size=UDim2.fromOffset(50,42);close.TextSize=24
+ bar.Position=UDim2.fromOffset(8,60);bar.Size=UDim2.fromOffset(w-16,68)
+ heading.Position=UDim2.fromOffset(12,4);heading.Size=UDim2.fromOffset(w-166,60);heading.TextSize=w<620 and 16 or 23
+ reset.Position=UDim2.fromOffset(w-148,13);reset.Size=UDim2.fromOffset(118,42);reset.TextSize=15
+ scroll.Position=UDim2.fromOffset(12,140);scroll.Size=UDim2.fromOffset(w-24,math.max(40,h-148))
+ if window.Visible then draw(active)end
+end
+canvas:GetPropertyChangedSignal('AbsoluteSize'):Connect(layoutWindow)
+layoutWindow()
 local function show(enabled)
-	window.Visible=enabled;shade.Visible=enabled;drag=nil
-	if enabled then draw(active);window.Position=UDim2.fromOffset(348,141);TweenService:Create(window,TweenInfo.new(.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.fromOffset(348,130)}):Play() end
+ window.Visible=enabled;shade.Visible=enabled;drag=nil
+ player:SetAttribute('NBOverlay',enabled and 'Settings'or '')
+ if enabled then layoutWindow();draw(active)end
 end
 open.Activated:Connect(function()show(not window.Visible)end)
 close.Activated:Connect(function()show(false)end)
@@ -203,3 +210,10 @@ end)
 remote:FireServer('Load')
 for key in pairs(values) do apply(key) end
 draw(active)
+
+player:GetAttributeChangedSignal('NBOverlay'):Connect(function()
+ if player:GetAttribute('NBOverlay')~='Settings'and window.Visible then window.Visible=false;shade.Visible=false;drag=nil end
+end)
+local function loaded()open.Visible=player.PlayerGui:GetAttribute('NBLoadComplete')==true and (player:GetAttribute('NBInArena')==true or player:GetAttribute('NBSpectating')==true or player:GetAttribute('NBMenuPage')=='Home')end
+player.PlayerGui:GetAttributeChangedSignal('NBLoadComplete'):Connect(loaded);loaded()
+for _,key in ipairs({'NBInArena','NBSpectating','NBMenuPage'})do player:GetAttributeChangedSignal(key):Connect(loaded)end
