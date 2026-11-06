@@ -1,18 +1,18 @@
 {
-  "stagedVersion": 319,
-  "sha256": "c9216559b65c0c185e6106d70dce39d882e511a2c108dd1a0ee0228b65885540",
-  "backupSha256": "329a21f97344096d1e3e2421e5177eb3a621416e6a91db7076bb265c8d1a6d2f",
+  "stagedVersion": 320,
+  "sha256": "4dcdf6222c206082cdba34c3c9d8783d587a9e1b4bc11435e5351e02ff6603a2",
+  "backupSha256": "c9216559b65c0c185e6106d70dce39d882e511a2c108dd1a0ee0228b65885540",
   "task": {
-    "path": "universes/9421311218/places/118064584465155/versions/319/luau-execution-sessions/10ad8bb1-30ed-41c8-8036-ba45aa0ab68f/tasks/10ad8bb1-30ed-41c8-8036-ba45aa0ab68f",
-    "createTime": "2026-11-05T15:29:47.808Z",
-    "updateTime": "2026-11-05T15:30:28.446Z",
+    "path": "universes/9421311218/places/118064584465155/versions/320/luau-execution-sessions/329debdc-1110-4fb7-a507-27a6260eb9ee/tasks/329debdc-1110-4fb7-a507-27a6260eb9ee",
+    "createTime": "2026-11-06T02:19:16.773Z",
+    "updateTime": "2026-11-06T02:20:03.597Z",
     "user": "8344738123",
     "state": "COMPLETE",
     "output": {
       "results": [
         {
           "isRunning": false,
-          "placeVersion": 319,
+          "placeVersion": 320,
           "motion": {
             "officialEvadeScripts": false,
             "speedFormulaOriginalVerified": false,
@@ -30,7 +30,7 @@
           "checks": [
             "remotes",
             "animation payloads",
-            "90/180 timing",
+            "30/180 timing",
             "no duplicate debit",
             "settings validation",
             "no imported scripts",
@@ -43,6 +43,7 @@
             "community movement and prone crawl poses",
             "map load and grounded spawns",
             "imported map menu without generated scenery",
+            "map voting counts and three-normal special-round schedule",
             "intermission entry preserves arena on countdown end",
             "bots appear only after countdown and clear after round",
             "nextbot rigs",
@@ -51,7 +52,7 @@
           ],
           "admission": {
             "sameMapAtZero": true,
-            "intermissionSeconds": 90,
+            "intermissionSeconds": 30,
             "cancelledEntry": true,
             "immediateArena": true,
             "lateEntry": true,
@@ -119,7 +120,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 129,
+                  "waypoints": 128,
                   "status": "Success",
                   "ok": true
                 }
@@ -219,7 +220,7 @@
               "assetId": "123713126320438",
               "paths": [
                 {
-                  "waypoints": 148,
+                  "waypoints": 149,
                   "status": "Success",
                   "ok": true
                 },
@@ -229,7 +230,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 183,
+                  "waypoints": 171,
                   "status": "Success",
                   "ok": true
                 }
@@ -339,7 +340,7 @@
                   "ok": true
                 },
                 {
-                  "waypoints": 28,
+                  "waypoints": 34,
                   "status": "Success",
                   "ok": true
                 }
@@ -494,12 +495,12 @@
               "assetId": "10828666356",
               "paths": [
                 {
-                  "waypoints": 81,
+                  "waypoints": 87,
                   "status": "Success",
                   "ok": true
                 },
                 {
-                  "waypoints": 128,
+                  "waypoints": 130,
                   "status": "Success",
                   "ok": true
                 },
@@ -551,12 +552,12 @@
   "logs": {
     "luauExecutionSessionTaskLogs": [
       {
-        "path": "universes/9421311218/places/118064584465155/versions/319/luau-execution-sessions/10ad8bb1-30ed-41c8-8036-ba45aa0ab68f/tasks/10ad8bb1-30ed-41c8-8036-ba45aa0ab68f/logs/1",
+        "path": "universes/9421311218/places/118064584465155/versions/320/luau-execution-sessions/329debdc-1110-4fb7-a507-27a6260eb9ee/tasks/329debdc-1110-4fb7-a507-27a6260eb9ee/logs/1",
         "messages": []
       }
     ]
   },
   "published": false,
-  "sourceCommit": "27fd961f6351fcd692553f97e781a1358d0efa00",
-  "workflowRun": 42055411153
+  "workflowRun": 42149481636,
+  "sourceCommit": "1ecb69664ce022219a93e8d920d29979d0a9890d"
 }
